@@ -1,0 +1,46 @@
+{
+  "name": "tooloo-ai",
+  "version": "1.0.0",
+  "description": "Self-Improving Development Intelligence Platform",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run dev --workspace=@tooloo/api",
+    "dev:web": "npm run dev --workspace=@tooloo/web",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "format": "prettier --write .",
+    "start": "npm run start --workspace=@tooloo/api",
+    "deploy": "npm run build && npm run start"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oripridan-dot/TooLoo.ai"
+  },
+  "keywords": [
+    "ai",
+    "development",
+    "automation",
+    "multi-provider",
+    "self-improving"
+  ],
+  "author": "Ori Pridan",
+  "license": "MIT"
+}
