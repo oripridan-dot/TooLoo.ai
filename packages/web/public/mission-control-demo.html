@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo.ai Mission Control Demo</title>
+  <style>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #0a192f;
+      color: #64ffda;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Import the full MissionControl styles */
+    @import url('./MissionControl.css');
+    
+    /* Demo-specific styles */
+    .demo-controls {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(10, 25, 47, 0.8);
+      border: 1px solid #64ffda;
+      border-radius: 4px;
+      padding: 10px;
+      z-index: 100;
+    }
+    
+    .demo-controls button {
+      background-color: rgba(100, 255, 218, 0.2);
+      border: 1px solid #64ffda;
+      color: #64ffda;
+      padding: 5px 10px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    
+    .demo-controls button:hover {
+      background-color: rgba(100, 255, 218, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <!-- Demo controls to trigger different states -->
+  <div class="demo-controls">
+    <h3>Demo Controls</h3>
+    <button id="idleBtn">Idle State</button>
+    <button id="processingBtn">Processing</button>
+    <button id="analyzingBtn">Analyzing</button>
+    <button id="respondingBtn">Responding</button>
+    <button id="approachingBtn">Director Approaching</button>
+  </div>
+
+  <!-- Mission Control UI -->
+  <div class="mission-control">
+    <div class="mission-header">
+      <h1>TOOLOO.AI MISSION CONTROL</h1>
+      <div class="status-indicator">Mission Control Ready</div>
+    </div>
+    
+    <div class="mission-viewport">
+      <!-- Main screens/monitors in the background -->
+      <div class="screens" id="screens">
+        <!-- Multiple monitor elements with code/data visualizations -->
+        <div class="screen screen-left">
+          <div class="code-visualization"></div>
+          <div class="screen-label">SYSTEM</div>
+        </div>
+        <div class="screen screen-center">
+          <div class="data-visualization"></div>
+        </div>
+        <div class="screen screen-right">
+          <div class="metrics-visualization"></div>
+          <div class="screen-label">EXECUTION</div>
+        </div>
+      </div>
+      
+      <!-- Director character -->
+      <div class="director" id="director">
+        <div class="director-chair"></div>
+        <div class="director-body"></div>
+        <div class="director-head"></div>
+      </div>
+      
+      <!-- Assistant robot -->
+      <div class="assistant" id="assistant">
+        <div class="assistant-body"></div>
+        <div class="assistant-head"></div>
+        <div class="message-packet" id="message-packet" style="display: none;"></div>
+      </div>
+      
+      <!-- Status message -->
+      <div class="status-message">
+        <p id="status-text">Systems normal. Awaiting your next directive.</p>
+      </div>
+      
+      <!-- Virtual distance marker -->
+      <div class="distance-marker">20 virtual meters</div>
+    </div>
+    
+    <!-- Prompt input area -->
+    <div class="mission-control-prompt">
+      <form id="prompt-form">
+        <input
+          type="text"
+          id="prompt-input"
+          placeholder="YOUR PROMPT HERE..."
+          class="prompt-input"
+        />
+        <button type="submit" class="send-button">
+          Send
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts for generating backgrounds -->
+  <script src="./assets/mission-control-backgrounds.js"></script>
+  
+  <!-- Demo control script -->
+  <script>
+    // Elements
+    const director = document.getElementById('director');
+    const assistant = document.getElementById('assistant');
+    const screens = document.getElementById('screens');
+    const messagePacket = document.getElementById('message-packet');
+    const statusText = document.getElementById('status-text');
+    const promptForm = document.getElementById('prompt-form');
+    const promptInput = document.getElementById('prompt-input');
+    
+    // Demo control buttons
+    const idleBtn = document.getElementById('idleBtn');
+    const processingBtn = document.getElementById('processingBtn');
+    const analyzingBtn = document.getElementById('analyzingBtn');
+    const respondingBtn = document.getElementById('respondingBtn');
+    const approachingBtn = document.getElementById('approachingBtn');
+    
+    // Set animation state
+    function setAnimationState(state) {
+      // Reset all classes first
+      director.className = 'director';
+      assistant.className = 'assistant';
+      screens.className = 'screens';
+      messagePacket.style.display = 'none';
+      
+      // Apply state-specific classes and settings
+      switch (state) {
+        case 'idle':
+          statusText.textContent = 'Systems normal. Awaiting your next directive.';
+          break;
+          
+        case 'processing':
+          assistant.className = 'assistant assistant-running';
+          screens.className = 'screens screens-active';
+          messagePacket.style.display = 'block';
+          statusText.textContent = 'Assistant delivering your request...';
+          break;
+          
+        case 'analyzing':
+          director.className = 'director director-working';
+          screens.className = 'screens screens-analyzing';
+          statusText.textContent = 'Director analyzing request...';
+          break;
+          
+        case 'responding':
+          assistant.className = 'assistant assistant-returning';
+          screens.className = 'screens screens-responding';
+          statusText.textContent = 'Preparing response...';
+          break;
+          
+        case 'approaching':
+          director.className = 'director director-approaching';
+          statusText.textContent = 'Director has important information!';
+          break;
+      }
+    }
+    
+    // Button event listeners
+    idleBtn.addEventListener('click', () => setAnimationState('idle'));
+    processingBtn.addEventListener('click', () => setAnimationState('processing'));
+    analyzingBtn.addEventListener('click', () => setAnimationState('analyzing'));
+    respondingBtn.addEventListener('click', () => setAnimationState('responding'));
+    approachingBtn.addEventListener('click', () => setAnimationState('approaching'));
+    
+    // Form submission
+    promptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const userInput = promptInput.value.trim();
+      
+      if (userInput) {
+        // Show processing animation
+        setAnimationState('processing');
+        
+        // Clear input
+        promptInput.value = '';
+        
+        // Simulate processing sequence
+        setTimeout(() => {
+          setAnimationState('analyzing');
+          
+          setTimeout(() => {
+            // Randomly choose between regular response or director approaching
+            if (Math.random() > 0.7) {
+              setAnimationState('approaching');
+            } else {
+              setAnimationState('responding');
+            }
+            
+            // Return to idle after response is "delivered"
+            setTimeout(() => {
+              setAnimationState('idle');
+            }, 2000);
+            
+          }, 2000);
+          
+        }, 1500);
+      }
+    });
+    
+    // Generate background images on load
+    window.onload = function() {
+      // Create off-screen canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      
+      // Simplified background patterns
+      function generatePatterns() {
+        // Code background
+        ctx.fillStyle = '#0a192f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#64ffda';
+        
+        for (let i = 0; i < 20; i++) {
+          ctx.fillText('function() { return data; }', 10, 15 + i * 15);
+          ctx.fillText('const result = await process();', 10, 30 + i * 15);
+        }
+        
+        const codeBg = canvas.toDataURL();
+        
+        // Data background
+        ctx.fillStyle = '#0a192f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#64ffda';
+        
+        for (let i = 0; i < 10; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, 40 * i);
+          ctx.lineTo(canvas.width, 40 * i);
+          ctx.stroke();
+        }
+        
+        const dataBg = canvas.toDataURL();
+        
+        // Set backgrounds
+        document.querySelector('.code-visualization').style.backgroundImage = `url(${codeBg})`;
+        document.querySelector('.data-visualization').style.backgroundImage = `url(${dataBg})`;
+        document.querySelector('.metrics-visualization').style.backgroundImage = `url(${codeBg})`;
+      }
+      
+      generatePatterns();
+    };
+  </script>
+</body>
+</html>
