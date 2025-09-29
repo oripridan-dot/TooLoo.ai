@@ -234,7 +234,18 @@ class PersonalAIManager {
       'how do you work': 'analyze-code',
       'show your structure': 'code-structure',
       'show code structure': 'code-structure',
-      'code structure': 'code-structure'
+      'code structure': 'code-structure',
+      // Capability/awareness intents
+      'self aware': 'capabilities',
+      'self-aware': 'capabilities',
+      'self awareness': 'capabilities',
+      'self-awareness': 'capabilities',
+      'can you see your files': 'capabilities',
+      'see your files': 'capabilities',
+      'access your files': 'capabilities',
+      'filesystem access': 'capabilities',
+      'can you access your code': 'capabilities',
+      'access your code': 'capabilities'
     };
 
     const lowerPrompt = prompt.toLowerCase();
@@ -249,6 +260,28 @@ class PersonalAIManager {
   async handleFilesystemCommand(fsCommand, prompt) {
     try {
       switch (fsCommand.command) {
+        case 'capabilities':
+          {
+            const summary = await this.filesystemManager.getWorkspaceSummary().catch(() => null);
+            // Try reading a well-known file to prove access
+            let proofSnippet = '';
+            try {
+              const proof = await this.selfAwarenessManager.getSourceCode('simple-api-server.js');
+              if (proof && proof.success && proof.content) {
+                const lines = proof.content.split('\n').slice(0, 30).join('\n');
+                proofSnippet = `\n\n### Proof: First 30 lines of simple-api-server.js\n\n\u0060\u0060\u0060javascript\n${lines}\n\u0060\u0060\u0060`;
+              }
+            } catch {}
+
+            const workspaceText = summary ? `\n\n### Workspace\n- Path: \`${summary.workspace.path}\`\n- Projects: ${summary.projects.count}\n- Files: ${summary.projects.files}` : '';
+
+            return {
+              content: `## 🧠 Self-awareness: Enabled\n\nI can read and modify my own code and manage files within the workspace.${workspaceText}${proofSnippet}\n\nAsk me to: \n- \'show your code <file>\'\n- \'search your code for \"term\"\'\n- \'analyze code <file>\'\n- \'list files\'`,
+              provider: 'self-awareness',
+              cost: 0,
+              tokens: { input: 0, output: 0 }
+            };
+          }
         case 'list':
           const listing = await this.filesystemManager.listDirectory();
           return {
@@ -1112,6 +1145,16 @@ app.post('/api/v1/files/delete', async (req, res) => {
 // WebSocket for real-time interaction
 io.on('connection', (socket) => {
   console.log(`👋 Personal session connected: ${socket.id}`);
+
+  // Proactive welcome proving self-awareness
+  try {
+    socket.emit('response', {
+      content: `## 👋 Welcome to TooLoo.ai\n\n🧠 Self-awareness is enabled by default. I can list, read, and modify files in this workspace.\n\nTry: \n- \'list files\'\n- \'show your code simple-api-server.js\'\n- \'search your code for \"Self-awareness\"\'`,
+      provider: 'system',
+      cost: 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch {}
 
   socket.on('generate', async (data) => {
     try {
