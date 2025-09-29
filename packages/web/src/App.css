@@ -1,0 +1,45 @@
+/* App.css */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Courier New', monospace;
+  background-color: #0a192f;
+  color: #ffffff;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.messages-container {
+  padding: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: rgba(10, 25, 47, 0.8);
+  border-top: 1px solid #64ffda;
+}
+
+.message {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.user-message {
+  background-color: rgba(100, 255, 218, 0.2);
+  align-self: flex-end;
+}
+
+.assistant-message {
+  background-color: rgba(16, 36, 64, 0.7);
+  align-self: flex-start;
+}
