@@ -40,6 +40,9 @@ const FileSystemPanel: React.FC<FileSystemPanelProps> = ({ isVisible, onClose })
   const [editedContent, setEditedContent] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [ghPath, setGhPath] = useState<string>('');
+  const [ghItems, setGhItems] = useState<any[]>([]);
+  const [ghError, setGhError] = useState<string>('');
 
   useEffect(() => {
     if (isVisible) {
@@ -66,6 +69,19 @@ const FileSystemPanel: React.FC<FileSystemPanelProps> = ({ isVisible, onClose })
       setError(`Error loading directory: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // --- GitHub browsing ---
+  const loadGitHubPath = async (path: string) => {
+    setGhError('');
+    try {
+      const res = await callApi<{ success: boolean; data: any }>(`/github/contents?owner=oripridan-dot&repo=TooLoo.ai&path=${encodeURIComponent(path)}&ref=main`);
+      if (!res.success) throw new Error('Failed to load GitHub contents');
+      setGhItems(res.data);
+      setGhPath(path);
+    } catch (e) {
+      setGhError(e instanceof Error ? e.message : String(e));
     }
   };
 

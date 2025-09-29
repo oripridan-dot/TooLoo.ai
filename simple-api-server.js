@@ -15,6 +15,7 @@ const { Server } = require('socket.io');
 const SecureCodeExecutor = require('./secure-code-executor');
 const PersonalFilesystemManager = require('./personal-filesystem-manager');
 const SelfAwarenessManager = require('./self-awareness-manager');
+const GitHubManager = require('./github-manager');
 require('dotenv').config();
 
 const app = express();
@@ -89,6 +90,10 @@ class PersonalAIManager {
     });
     this.selfAwarenessManager = new SelfAwarenessManager({
       workspaceRoot: process.cwd()
+    });
+    this.github = new GitHubManager({
+      defaultOwner: 'oripridan-dot',
+      defaultRepo: 'TooLoo.ai'
     });
     this.selfAwarenessEnabled = true; // Enable self-awareness by default
     this.offline = process.env.OFFLINE_ONLY === 'true';
@@ -1019,6 +1024,37 @@ app.get('/api/v1/workspace/summary', async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GitHub access endpoints (public repo OK; uses token if configured)
+app.get('/api/v1/github/repo', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    const result = await aiManager.github.getRepo(owner, repo);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/github/contents', async (req, res) => {
+  try {
+    const { owner, repo, path: p = '', ref = 'main' } = req.query;
+    const result = await aiManager.github.listContents({ owner, repo, path: p, ref });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/github/file', async (req, res) => {
+  try {
+    const { owner, repo, path: p, ref = 'main' } = req.query;
+    const result = await aiManager.github.readFile({ owner, repo, path: p, ref });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 
