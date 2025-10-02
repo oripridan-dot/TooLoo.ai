@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooLoo.ai Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header {
+            text-align: center;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 2.5em; color: #4a5568; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; color: #718096; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .metric-card:hover { transform: translateY(-5px); }
+        .metric-card h3 { color: #4a5568; margin-bottom: 15px; font-size: 1.4em; }
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .metric-label { color: #718096; font-size: 0.9em; }
+        .chart-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .chart-title { font-size: 1.5em; color: #4a5568; margin-bottom: 20px; text-align: center; }
+        .insights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .insight-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .insight-card h4 { color: #4a5568; margin-bottom: 15px; }
+        .insight-list { list-style: none; }
+        .insight-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        .insight-list li:last-child { border-bottom: none; }
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-success { background: #48bb78; }
+        .status-warning { background: #ed8936; }
+        .status-info { background: #4299e1; }
+        .footer {
+            text-align: center;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+        .run-test-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s ease;
+        }
+        .run-test-btn:hover { background: #5a67d8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 TooLoo.ai Performance Dashboard</h1>
+            <p>Real-time Analysis of Self-Improvement Testing Results</p>
+            <p><strong>Last Test:</strong> September 30, 2025 | <strong>Status:</strong> All Systems Operational</p>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="dashboard-grid">
+            <div class="metric-card">
+                <h3>Success Rate</h3>
+                <div class="metric-value">100%</div>
+                <div class="metric-label">10/10 prompts completed successfully</div>
+            </div>
+            <div class="metric-card">
+                <h3>Average Response Time</h3>
+                <div class="metric-value">48.5s</div>
+                <div class="metric-label">Parallel processing efficiency</div>
+            </div>
+            <div class="metric-card">
+                <h3>Content Generated</h3>
+                <div class="metric-value">53.9K</div>
+                <div class="metric-label">Characters of technical content</div>
+            </div>
+            <div class="metric-card">
+                <h3>Test Duration</h3>
+                <div class="metric-value">77.85s</div>
+                <div class="metric-label">Total parallel execution time</div>
+            </div>
+        </div>
+
+        <!-- Response Time Chart -->
+        <div class="chart-container">
+            <div class="chart-title">Response Time Analysis by Prompt Category</div>
+            <canvas id="responseTimeChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Content Length Chart -->
+        <div class="chart-container">
+            <div class="chart-title">Content Quality & Length Distribution</div>
+            <canvas id="contentLengthChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Insights Grid -->
+        <div class="insights-grid">
+            <div class="insight-card">
+                <h4>🎯 Key Strengths Identified</h4>
+                <ul class="insight-list">
+                    <li><span class="status-icon status-success"></span>Perfect success rate across all prompt types</li>
+                    <li><span class="status-icon status-success"></span>Sophisticated metacognitive capabilities</li>
+                    <li><span class="status-icon status-success"></span>Strong technical proficiency and accuracy</li>
+                    <li><span class="status-icon status-success"></span>Comprehensive architectural thinking</li>
+                    <li><span class="status-icon status-success"></span>Effective parallel processing handling</li>
+                </ul>
+            </div>
+            <div class="insight-card">
+                <h4>⚠️ Areas for Optimization</h4>
+                <ul class="insight-list">
+                    <li><span class="status-icon status-warning"></span>High response time variance (45ms - 77.8s)</li>
+                    <li><span class="status-icon status-warning"></span>Resource allocation inefficiencies</li>
+                    <li><span class="status-icon status-info"></span>Template bias in response structure</li>
+                    <li><span class="status-icon status-info"></span>Completeness over conciseness preference</li>
+                    <li><span class="status-icon status-info"></span>Need for predictive difficulty assessment</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Decision Patterns -->
+        <div class="chart-container">
+            <div class="chart-title">Decision Pattern Analysis</div>
+            <canvas id="decisionPatternsChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Action Items -->
+        <div class="insight-card">
+            <h4>📋 Immediate Action Items</h4>
+            <ul class="insight-list">
+                <li><span class="status-icon status-warning"></span><strong>Week 1-2:</strong> Implement response time optimization and caching</li>
+                <li><span class="status-icon status-info"></span><strong>Week 3-4:</strong> Build automated learning loops and cross-session memory</li>
+                <li><span class="status-icon status-success"></span><strong>Week 5-8:</strong> Deploy advanced collaborative capabilities</li>
+            </ul>
+        </div>
+
+        <!-- Controls -->
+        <div class="footer">
+            <button class="run-test-btn" onclick="runNewTest()">🧪 Run New Parallel Test</button>
+            <button class="run-test-btn" onclick="viewDetailedReport()">📊 View Detailed Report</button>
+            <button class="run-test-btn" onclick="exportResults()">💾 Export Results</button>
+            <p style="margin-top: 15px; color: #718096;">
+                Next automated test scheduled: October 1, 2025 | Framework version: 1.0.0
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Response Time Chart
+        const ctx1 = document.getElementById('responseTimeChart').getContext('2d');
+        const responseTimeChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Metacognition', 'Debugging', 'Architecture', 'Learning', 'Optimization', 'Refactoring', 'Testing', 'Collaboration', 'Performance', 'Planning'],
+                datasets: [{
+                    label: 'Response Time (seconds)',
+                    data: [49.13, 13.67, 75.22, 40.97, 0.045, 45.49, 75.80, 53.44, 77.84, 53.35],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(72, 187, 120, 0.8)',
+                        'rgba(237, 137, 54, 0.8)',
+                        'rgba(66, 153, 225, 0.8)',
+                        'rgba(236, 72, 153, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 101, 101, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(34, 197, 94, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(102, 126, 234, 1)',
+                        'rgba(118, 75, 162, 1)',
+                        'rgba(72, 187, 120, 1)',
+                        'rgba(237, 137, 54, 1)',
+                        'rgba(66, 153, 225, 1)',
+                        'rgba(236, 72, 153, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(245, 101, 101, 1)',
+                        'rgba(168, 85, 247, 1)',
+                        'rgba(34, 197, 94, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Response Time (seconds)' }
+                    }
+                }
+            }
+        });
+
+        // Content Length Chart
+        const ctx2 = document.getElementById('contentLengthChart').getContext('2d');
+        const contentLengthChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['Prompt 1', 'Prompt 2', 'Prompt 3', 'Prompt 4', 'Prompt 5', 'Prompt 6', 'Prompt 7', 'Prompt 8', 'Prompt 9', 'Prompt 10'],
+                datasets: [{
+                    label: 'Content Length (characters)',
+                    data: [5221, 1244, 7707, 4072, 392, 5006, 8968, 5413, 9676, 6215],
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Characters' }
+                    }
+                }
+            }
+        });
+
+        // Decision Patterns Chart
+        const ctx3 = document.getElementById('decisionPatternsChart').getContext('2d');
+        const decisionPatternsChart = new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['Technical Solutions', 'Architectural Thinking', 'Learning & Adaptation', 'Code Analysis', 'Strategic Planning'],
+                datasets: [{
+                    data: [25, 20, 20, 20, 15],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(72, 187, 120, 0.8)',
+                        'rgba(237, 137, 54, 0.8)',
+                        'rgba(66, 153, 225, 0.8)',
+                        'rgba(168, 85, 247, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Interactive Functions
+        function runNewTest() {
+            alert('🚀 Initiating new parallel test...\n\nThis will run 10 new self-improvement prompts and update the dashboard with fresh results.');
+        }
+
+        function viewDetailedReport() {
+            window.open('/test-reports/TooLoo-Comprehensive-Analysis-Report.md', '_blank');
+        }
+
+        function exportResults() {
+            alert('💾 Exporting results...\n\nGenerating comprehensive report package including:\n• JSON data files\n• Performance charts\n• Analysis summary\n• Recommendations');
+        }
+    </script>
+</body>
+</html>

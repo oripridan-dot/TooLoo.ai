@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open TooLoo.ai</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            margin: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .info {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 5px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 TooLoo.ai</h1>
+        <p class="subtitle">Your Personal AI Development Assistant</p>
+        
+        <div id="status" class="status checking">
+            🔄 Checking server status...
+        </div>
+
+        <div class="info">
+            <strong>📝 Quick Start:</strong>
+            <ol style="text-align: left; margin-top: 10px;">
+                <li>Make sure both servers are running (<code>npm run dev</code>)</li>
+                <li>Click "Open TooLoo" below</li>
+                <li>Start building amazing apps with AI assistance!</li>
+            </ol>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <a href="http://localhost:5173" target="_blank" class="btn btn-primary" id="openBtn">
+                🚀 Open TooLoo
+            </a>
+            <a href="http://localhost:3001/api/v1/health" target="_blank" class="btn btn-secondary">
+                ❤️ API Health Check
+            </a>
+        </div>
+
+        <div style="margin-top: 30px; font-size: 0.9em; color: #666;">
+            <p><strong>Codespaces Users:</strong> GitHub will automatically forward the ports. Use the "Ports" tab in VS Code to open the forwarded URL for port 5173.</p>
+        </div>
+    </div>
+
+    <script>
+        async function checkStatus() {
+            const statusDiv = document.getElementById('status');
+            try {
+                const response = await fetch('http://localhost:3001/api/v1/health');
+                if (response.ok) {
+                    statusDiv.className = 'status online';
+                    statusDiv.textContent = '✅ TooLoo.ai is running and ready!';
+                } else {
+                    statusDiv.className = 'status offline';
+                    statusDiv.textContent = '⚠️ API server responded but may have issues';
+                }
+            } catch (error) {
+                statusDiv.className = 'status offline';
+                statusDiv.textContent = '❌ Servers not running. Please run: npm run dev';
+            }
+        }
+
+        // Check status on load
+        checkStatus();
+        
+        // Check status every 5 seconds
+        setInterval(checkStatus, 5000);
+
+        // For Codespaces, try to detect and update the link
+        if (window.location.hostname.includes('github.dev')) {
+            const codespaceName = window.location.hostname.split('-')[0];
+            const domain = window.location.hostname.split('.').slice(-3).join('.');
+            const codespaceUrl = `https://${codespaceName}-5173.${domain}`;
+            document.getElementById('openBtn').href = codespaceUrl;
+        }
+    </script>
+</body>
+</html>
