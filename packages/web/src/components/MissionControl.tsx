@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { callApi } from '../utils/apiUtils';
 import './MissionControl.css';
 import FileSystemPanel from './FileSystemPanel';
 
@@ -29,6 +30,8 @@ const MissionControl: React.FC<MissionControlProps> = ({
   const [promptText, setPromptText] = useState('');
   const [statusMessage, setStatusMessage] = useState(systemStatus);
   const [isFileSystemVisible, setIsFileSystemVisible] = useState(false);
+  const [briefing, setBriefing] = useState<any>(null);
+  const [persona, setPersona] = useState<'assistant' | 'director' | 'auto'>('auto');
   const assistantRef = useRef(null);
   
   // Update animation state based on thinking status
@@ -64,12 +67,44 @@ const MissionControl: React.FC<MissionControlProps> = ({
     }
   }, [isThinking, systemStatus]);
 
+  // Prefetch system + workspace + GitHub briefing on mount
+  useEffect(() => {
+    const loadBriefing = async () => {
+      try {
+        const res = await callApi<any>('/briefing');
+        if (res?.success) setBriefing(res);
+      } catch (e) {
+        // Non-fatal
+      }
+    };
+    loadBriefing();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (promptText.trim()) {
-      onSendMessage(promptText);
+      // Attach persona instructions and pre-briefing context
+      const instructions = getPersonaInstructions(persona, briefing);
+      const enriched = instructions
+        ? `${instructions}\n\nUser: ${promptText}`
+        : promptText;
+      onSendMessage(enriched);
       setPromptText('');
     }
+  };
+
+  // Persona instruction scripts
+  const getPersonaInstructions = (
+    p: 'assistant' | 'director' | 'auto',
+    b: any
+  ) => {
+    const base = `You are part of TooLoo.ai Mission Control. Always act autonomously within safe bounds: analyze, plan, and execute changes when asked. Provide a concise plan and then act. Avoid code dumps unless explicitly requested.`;
+    const assistant = `${base}\nRole: Assistant (Ops/Advisor)\n- Pre-check system health, providers, and security posture.\n- Provide risks, dependencies, and success criteria before acting.\n- If deployment/migration is requested, propose a concrete, minimal plan and begin scaffolding.\nStatus: ${JSON.stringify(b?.assistant?.status || {})}`;
+    const director = `${base}\nRole: Director (Builder/Filesystem)\n- Manage filesystem and projects; search, analyze, and modify code.\n- Import from GitHub when helpful.\n- Verify changes by reading back and reporting deltas.\nWorkspace: ${JSON.stringify(b?.director?.workspace || {})}`;
+    if (p === 'assistant') return assistant;
+    if (p === 'director') return director;
+    // auto: both condensed
+    return `${assistant}\n\n${director}`;
   };
 
   // Helper to get animation classes based on current state
@@ -166,6 +201,16 @@ const MissionControl: React.FC<MissionControlProps> = ({
         {/* Status message */}
         <div className="status-message">
           <p>{statusMessage}</p>
+        </div>
+
+        {/* Persona switcher */}
+        <div className="persona-switcher">
+          <label>Persona:</label>
+          <select value={persona} onChange={(e) => setPersona(e.target.value as any)}>
+            <option value="auto">Auto (Assistant + Director)</option>
+            <option value="assistant">Assistant</option>
+            <option value="director">Director</option>
+          </select>
         </div>
         
         {/* Virtual distance marker */}

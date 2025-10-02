@@ -66,4 +66,23 @@ Dockerfile.local
 
 # Backup files
 *.backup
+*.bak
+*.bak.*
+*~
 backup-*
+
+# Temporary files
+*.tmp
+j lhjkn
+
+# Response files
+*.response.json
+
+# Test outputs
+test-reports/
+
+cd /workspaces/TooLoo.ai/web-app
+npm run dev       # start the React dev server
+# or
+npm run build     # type-check & build for production
+npm run test      # run the Vitest suite (needs the API if you want integration checks)

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MissionControl from './components/MissionControl';
 import './App.css';
+import { callApi } from './utils/apiUtils';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -11,6 +12,16 @@ function AppMissionControl() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [systemStatus, setSystemStatus] = useState('Systems normal. Awaiting your next directive.');
+  const [briefing, setBriefing] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await callApi<any>('/briefing');
+        if (res?.success) setBriefing(res);
+      } catch {}
+    })();
+  }, []);
 
   // Simulate sending a message to TooLoo.ai
   const handleSendMessage = async (messageText: string) => {
@@ -20,22 +31,19 @@ function AppMissionControl() {
     // Set thinking state to true to trigger animations
     setIsThinking(true);
     setSystemStatus('Processing your request...');
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      // Generate a response (in a real app, this would come from your API)
-      const response: Message = {
-        role: 'assistant',
-        content: `I've processed your request: "${messageText}". Here's what I found...`,
-      };
-      
-      // Add assistant response to the conversation
-      setMessages([...messages, { role: 'user', content: messageText }, response]);
-      
-      // Update system status and stop thinking animation
+    try {
+      const payload = { prompt: messageText, context: { briefing } };
+      const res = await callApi<any>('/generate', 'POST', payload);
+      const content = res?.content || 'No response.';
+      const response: Message = { role: 'assistant', content };
+      setMessages(prev => [...prev, response]);
       setSystemStatus('Ready for your next command.');
+    } catch (e) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${e instanceof Error ? e.message : String(e)}` }]);
+      setSystemStatus('Encountered an error.');
+    } finally {
       setIsThinking(false);
-    }, 3000);
+    }
   };
 
   return (

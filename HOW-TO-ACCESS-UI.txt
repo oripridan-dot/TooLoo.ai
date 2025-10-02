@@ -1,0 +1,103 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    ⚠️  IMPORTANT: HOW TO ACCESS THE UI                   ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+🚨 YOU'RE SEEING THE WHITE SCREEN BECAUSE YOU'RE ACCESSING THE WRONG URL!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ WRONG: Clicking globe icon that leads to GitHub auth page
+   (You'll see: "Not Found" or "404" error)
+
+✅ CORRECT: Access the VITE dev server directly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 STEP-BY-STEP INSTRUCTIONS:
+
+1. In VS Code, look at the BOTTOM PANEL
+2. Click the "PORTS" tab
+3. You'll see a list of ports like:
+
+   PORT    LABEL         RUNNING ON             VISIBILITY
+   3001    API Server    localhost:3001         Public
+   5173    Web UI        localhost:5173         Public  ← THIS ONE!
+
+4. Find the row for port 5173
+5. In that row, you'll see TWO icons:
+   - 🌐 Globe icon (opens forwarded URL) ❌ DON'T CLICK THIS
+   - 📋 Copy icon (copies URL) ← OR CLICK THIS
+
+6. INSTEAD: Right-click on port 5173 and select:
+   "Open in Browser" or "Preview in Editor"
+
+7. OR manually type in your browser:
+   http://localhost:5173
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 HOW TO TELL IF YOU'RE ON THE RIGHT PAGE:
+
+✅ CORRECT URL should look like:
+   • http://localhost:5173
+   • OR: https://<codespace-name>-5173.app.github.dev (forwarded, should work too)
+
+❌ WRONG URL looks like:
+   • https://github.dev/pf-signin?id=...
+   • Shows "Not Found" or GitHub login page
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎨 WHAT YOU SHOULD SEE (on correct page):
+
+  ✅ Dark purple/pink gradient background
+  ✅ "TooLoo.ai" header at top
+  ✅ Speaker icon (🔊) in header
+  ✅ Chart icon (📊) in header  
+  ✅ "Personal Development Assistant" subtitle
+  ✅ Chat input box at bottom
+  ✅ Glass-effect cards
+
+❌ WHAT YOU'RE SEEING NOW (wrong page):
+
+  ❌ White background
+  ❌ "Not Found" text
+  ❌ GitHub authentication page
+  ❌ No TooLoo.ai interface
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 ALTERNATIVE METHOD (if forwarding issues):
+
+1. In VS Code terminal, run:
+   npm run dev
+
+2. Look for this output:
+   ➜  Local:   http://localhost:5173/
+   ➜  Network: http://10.0.11.95:5173/
+
+3. COPY the Network URL (10.0.11.95:5173)
+
+4. In PORTS tab, find port 5173
+
+5. Right-click → "Port Forwarding Visibility" → "Public"
+
+6. Then click the globe icon on port 5173
+
+7. You should see your dark theme UI!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 IF STILL NOT WORKING:
+
+Run this in terminal:
+  curl http://localhost:5173
+
+If you see HTML with "<div id=\"root\"></div>", the server is working!
+The issue is just accessing it through the browser.
+
+Try opening Chrome DevTools (F12) and check the Console tab for errors.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

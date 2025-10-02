@@ -219,6 +219,75 @@
   margin: 0;
   font-size: 0.9rem;
 }
+.persona-switcher {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9ee7ff;
+}
+.persona-switcher select {
+  background: rgba(0, 26, 54, 0.8);
+  color: #cbefff;
+  border: 1px solid rgba(158, 231, 255, 0.3);
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+/* Environment Hub status indicators */
+.environment-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.health-indicator {
+  font-size: 12px;
+  cursor: help;
+}
+
+.awareness-indicator {
+  font-size: 14px;
+  cursor: help;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.github-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.github-actions button {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: rgba(100, 255, 218, 0.1);
+  color: #64ffda;
+  border: 1px solid rgba(100, 255, 218, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.github-actions button:hover {
+  background: rgba(100, 255, 218, 0.2);
+}
+
+.environment-info {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background: rgba(100, 255, 218, 0.05);
+  border-radius: 4px;
+  color: #64ffda;
+  font-size: 11px;
+}
 
 /* Distance marker */
 .distance-marker {

@@ -1,0 +1,1 @@
+for main React Native app with visual schedule, learning activities, and rewards tabs

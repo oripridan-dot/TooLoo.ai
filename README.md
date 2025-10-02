@@ -14,13 +14,11 @@ A sophisticated AI-powered development platform that learns, evolves, and adapts
 
 ```
 TooLoo.ai/
-├── packages/
-│   ├── api/          # Core API and AI engine
-│   ├── web/          # React frontend interface
-│   ├── core/         # Shared utilities and types
-│   └── engine/       # AI orchestration engine
-├── docs/             # Documentation
-└── deploy/           # Deployment configurations
+├── simple-api-server.js    # Production API server (Express + Socket.IO)
+├── web-app/                # Vite + React TypeScript frontend
+├── packages/               # Experimental modular services (optional)
+├── scripts/                # Automation and maintenance helpers
+└── docs/                   # Project documentation
 ```
 
 ## 🚦 Quick Start
@@ -35,10 +33,11 @@ npm install
 cp .env.example .env
 # Add your AI provider API keys
 
-# Start development
+# Start development (API: 3001, Web: 5173)
 npm run dev
 
-# Visit http://localhost:3000
+# Visit the web UI in your browser
+# http://localhost:5173
 ```
 
 ## 🔧 Configuration
@@ -75,4 +74,4 @@ NODE_ENV=development
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details.# TooLoo.ai
+MIT License - see [LICENSE](LICENSE) file for details.

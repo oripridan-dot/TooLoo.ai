@@ -1,0 +1,117 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║              🔧 TROUBLESHOOTING: WHITE SCREEN ISSUE                      ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+You're seeing a WHITE SCREEN because the JavaScript isn't loading in your browser.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SERVERS ARE RUNNING (VERIFIED)
+   • API: Port 3001 ✅
+   • Vite: Port 5173 ✅
+   • WebSocket connections detected ✅
+
+❌ PROBLEM: React JavaScript not executing in browser
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 DEBUGGING STEPS:
+
+1️⃣  OPEN BROWSER DEVELOPER TOOLS (Press F12)
+   • Look at the "Console" tab
+   • Do you see RED ERROR messages?
+   • Common errors:
+     - "Failed to fetch module"
+     - "net::ERR_CONNECTION_REFUSED"
+     - CORS errors
+     - JavaScript syntax errors
+
+2️⃣  CHECK THE NETWORK TAB (in DevTools)
+   • Click "Network" tab
+   • Refresh the page (Ctrl+Shift+R)
+   • Look for files with RED status (404, 500, etc.)
+   • Check if these files are loading:
+     ✅ /@vite/client (should be 200 OK)
+     ✅ /src/main.jsx (should be 200 OK)
+     ✅ /src/App.jsx (should be 200 OK)
+     ✅ /src/index.css (should be 200 OK)
+
+3️⃣  TRY THESE FIXES (in order):
+
+   A. HARD REFRESH
+      • Windows/Linux: Ctrl + Shift + R
+      • Mac: Cmd + Shift + R
+      • This clears browser cache
+
+   B. CLEAR ALL BROWSER DATA
+      • Chrome: Settings → Privacy → Clear browsing data
+      • Select "Cached images and files"
+      • Time range: "All time"
+      • Click "Clear data"
+
+   C. TRY INCOGNITO/PRIVATE MODE
+      • Ctrl + Shift + N (Chrome)
+      • Cmd + Shift + N (Mac)
+      • This bypasses all cache
+
+   D. TRY A DIFFERENT BROWSER
+      • Firefox, Edge, Safari
+      • Sometimes browser extensions block JavaScript
+
+4️⃣  CHECK PORT FORWARDING VISIBILITY
+   • In VS Code, bottom panel → PORTS tab
+   • Find port 5173
+   • Right-click → "Port Forwarding Visibility"
+   • Set to "Public"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 COPY-PASTE THESE COMMANDS TO TEST:
+
+# Test if Vite is serving correctly:
+curl http://localhost:5173
+
+# Test if you can reach the JavaScript:
+curl http://localhost:5173/src/main.jsx
+
+# Restart with fresh state:
+npm start
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 WHAT TO LOOK FOR IN BROWSER CONSOLE:
+
+✅ GOOD (App working):
+   • No red errors
+   • Message: "React is running in development mode"
+   • You see: "[vite] connected."
+
+❌ BAD (App broken):
+   • Red errors about "Failed to fetch"
+   • "Uncaught SyntaxError"
+   • "Module not found"
+   • "Connection refused"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 MOST COMMON FIX:
+
+Open the page in INCOGNITO MODE with a HARD REFRESH:
+1. Ctrl+Shift+N to open incognito
+2. Go to: https://fluffy-doodle-q7gg7rx5wrxjh9v77-5173.app.github.dev
+3. Press Ctrl+Shift+R to hard refresh
+4. If dark theme appears → it was a caching issue!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📸 IF STILL NOT WORKING:
+
+Please share a screenshot of:
+1. Browser console (F12 → Console tab) showing any errors
+2. Network tab showing failed requests (red items)
+
+This will help me see exactly what's blocking the JavaScript.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

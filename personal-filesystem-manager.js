@@ -19,7 +19,7 @@ class PersonalFilesystemManager {
       '.js', '.ts', '.jsx', '.tsx', '.json', '.md', '.txt', '.html', '.css', 
       '.py', '.java', '.cpp', '.c', '.go', '.rs', '.php', '.rb', '.sh',
       '.yaml', '.yml', '.xml', '.csv', '.sql', '.env', '.gitignore',
-      '.dockerfile', '.dockerignore', '.readme'
+      '.dockerfile', '.dockerignore', '.readme', '' // allow files without an extension (e.g., .gitkeep)
     ]);
     
     // Security boundaries - paths that are off-limits
@@ -68,6 +68,7 @@ class PersonalFilesystemManager {
   // Validate file extensions
   validateFileExtension(filePath) {
     const ext = path.extname(filePath).toLowerCase();
+    // Allow files with no extension and dotfiles like .gitkeep
     if (ext && !this.allowedExtensions.has(ext)) {
       throw new Error(`File type not allowed: ${ext}. Allowed types: ${Array.from(this.allowedExtensions).join(', ')}`);
     }

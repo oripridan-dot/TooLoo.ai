@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏀 Basketball English Coach - מאמן כדורסל אנגלית</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff7b00, #ff9500, #ffb347);
+            min-height: 100vh;
+            direction: rtl;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header {
+            text-align: center;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .coach-avatar {
+            width: 120px;
+            height: 120px;
+            background: #8B4513;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            position: relative;
+            border: 5px solid #FF6B35;
+        }
+        .coach-avatar::before {
+            content: "🏀";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+        }
+        .section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #FF6B35;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: #E55A2B; transform: translateY(-2px); }
+        .drill-card {
+            background: #f8f9fa;
+            border-left: 5px solid #FF6B35;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .vocabulary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #e8f4fd;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .level-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B35, #FFB347);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .coach-speech {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            position: relative;
+        }
+        .coach-speech::before {
+            content: "🗣️";
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: white;
+            padding: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="coach-avatar"></div>
+            <h1>🏀 Coach Mike - Basketball English</h1>
+            <p>מאמן מייק - ללמוד אנגלית דרך כדורסל</p>
+            <div class="level-badge" id="currentLevel">Level: Beginner</div>
+        </div>
+
+        <!-- Coach Speech -->
+        <div class="coach-speech" id="coachSpeech">
+            <strong>Coach Mike:</strong> "שלום! Ready to practice basketball and English together? בואו נתחיל!"
+        </div>
+
+        <!-- Progress Section -->
+        <div class="section">
+            <h2>🎯 Progress - התקדמות</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p>English Words Learned: <span id="wordsLearned">0</span>/50</p>
+            <p>Drills Completed: <span id="drillsCompleted">0</span>/10</p>
+        </div>
+
+        <!-- Vocabulary Section -->
+        <div class="section">
+            <h2>📚 Basketball Vocabulary - אוצר מילים</h2>
+            <div class="vocabulary-item">
+                <span><strong>Basketball</strong> - כדורסל</span>
+                <button class="btn" onclick="playSound('basketball'); learnWord()">🔊 Listen</button>
+            </div>
+            <div class="vocabulary-item">
+                <span><strong>Shoot</strong> - לזרוק</span>
+                <button class="btn" onclick="playSound('shoot'); learnWord()">🔊 Listen</button>
+            </div>
+            <div class="vocabulary-item">
+                <span><strong>Dribble</strong> - לכדרר</span>
+                <button class="btn" onclick="playSound('dribble'); learnWord()">🔊 Listen</button>
+            </div>
+            <div class="vocabulary-item">
+                <span><strong>Pass</strong> - למסור</span>
+                <button class="btn" onclick="playSound('pass'); learnWord()">🔊 Listen</button>
+            </div>
+        </div>
+
+        <!-- Drills Section -->
+        <div class="section">
+            <h2>🏃‍♂️ Basketball Drills - תרגילי כדורסל</h2>
+            
+            <div class="drill-card">
+                <h3>🎯 Shooting Practice</h3>
+                <p><strong>Hebrew:</strong> תרגיל זריקות - תגיד "I will shoot" לפני שאתה זורק</p>
+                <p><strong>English:</strong> Say "I will shoot the ball" before taking your shot</p>
+                <button class="btn" onclick="startDrill('shooting')">Start Drill</button>
+            </div>
+
+            <div class="drill-card">
+                <h3>⚡ Dribbling Challenge</h3>
+                <p><strong>Hebrew:</strong> תרגיל כדרור - ספור באנגלית בזמן כדרור</p>
+                <p><strong>English:</strong> Count in English while dribbling: "One, Two, Three..."</p>
+                <button class="btn" onclick="startDrill('dribbling')">Start Drill</button>
+            </div>
+
+            <div class="drill-card">
+                <h3>🤝 Passing Game</h3>
+                <p><strong>Hebrew:</strong> תרגיל מסירות - תגיד "Pass to me" כשאתה רוצה כדור</p>
+                <p><strong>English:</strong> Practice saying "Pass to me please!"</p>
+                <button class="btn" onclick="startDrill('passing')">Start Drill</button>
+            </div>
+        </div>
+
+        <!-- Parent Dashboard -->
+        <div class="section">
+            <h2>👨‍👩‍👧‍👦 Parent Dashboard - לוח הורים</h2>
+            <p><strong>Today's Session:</strong> 15 minutes</p>
+            <p><strong>Words Practiced:</strong> basketball, shoot, dribble, pass</p>
+            <p><strong>Recommended Next:</strong> Learn "defense" and "offense"</p>
+            <button class="btn" onclick="sendProgressToParents()">📧 Send Progress Report</button>
+        </div>
+
+        <!-- Special Guest -->
+        <div class="section" id="guestSection" style="display:none;">
+            <h2>⭐ Special Guest Legend!</h2>
+            <div class="coach-speech">
+                <strong>Michael Jordan:</strong> "Great job! Keep practicing and never give up! באנגלית: Never give up!"
+            </div>
+            <button class="btn" onclick="playGuestMessage()">🔊 Hear from the Legend</button>
+        </div>
+
+        <!-- Parallel Test -->
+        <div class="section">
+            <h2>🧪 Parallel Test</h2>
+            <button class="btn" onclick="runParallelTest()">Run Parallel Test</button>
+        </div>
+    </div>
+
+    <script>
+        let wordsLearned = 0;
+        let drillsCompleted = 0;
+        let currentLevel = 'Beginner';
+        
+        const coachPhrases = [
+            "Great job! כל הכבוד!",
+            "Keep practicing! תמשיך להתרגל!",
+            "You're improving! אתה משתפר!",
+            "Excellent! מעולה!"
+        ];
+
+        function playSound(word) {
+            // Simulate sound playing
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+            
+            // Coach encouragement
+            setTimeout(() => {
+                const hebrewUtterance = new SpeechSynthesisUtterance("כל הכבוד");
+                hebrewUtterance.lang = 'he-IL';
+                speechSynthesis.speak(hebrewUtterance);
+            }, 1500);
+        }
+
+        function learnWord() {
+            wordsLearned++;
+            document.getElementById('wordsLearned').textContent = wordsLearned;
+            updateProgress();
+            
+            if (wordsLearned > 0 && wordsLearned % 5 === 0) {
+                showGuestLegend();
+            }
+        }
+
+        function startDrill(drillType) {
+            drillsCompleted++;
+            document.getElementById('drillsCompleted').textContent = drillsCompleted;
+            
+            const randomPhrase = coachPhrases[Math.floor(Math.random() * coachPhrases.length)];
+            document.getElementById('coachSpeech').innerHTML = 
+                `<strong>Coach Mike:</strong> "${randomPhrase}"`;
+            
+            // Play drill sound effects
+            playDrillSounds(drillType);
+            updateProgress();
+        }
+
+        function playDrillSounds(drillType) {
+            const sounds = {
+                'shooting': 'Swish! Perfect shot!',
+                'dribbling': 'Bounce, bounce, bounce!',
+                'passing': 'Nice pass, teammate!'
+            };
+            
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(sounds[drillType]);
+                utterance.lang = 'en-US';
+                speechSynthesis.speak(utterance);
+            }, 500);
+        }
+
+        function updateProgress() {
+            const totalProgress = (wordsLearned * 2) + (drillsCompleted * 10);
+            const progressPercent = Math.min(totalProgress, 100);
+            document.getElementById('progressFill').style.width = progressPercent + '%';
+            
+            // Level up system
+            if (wordsLearned >= 10 && currentLevel === 'Beginner') {
+                currentLevel = 'Intermediate';
+                document.getElementById('currentLevel').textContent = 'Level: Intermediate';
+                document.getElementById('coachSpeech').innerHTML = 
+                    '<strong>Coach Mike:</strong> "Level up! עלית רמה! Now you\'re Intermediate!"';
+            }
+        }
+
+        function showGuestLegend() {
+            document.getElementById('guestSection').style.display = 'block';
+            document.getElementById('guestSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function playGuestMessage() {
+            const utterance = new SpeechSynthesisUtterance("Hello champion! Keep working hard and practice every day!");
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            speechSynthesis.speak(utterance);
+        }
+
+        function sendProgressToParents() {
+            alert(`Progress Report Sent!\n\nWords Learned: ${wordsLearned}\nDrills Completed: ${drillsCompleted}\nCurrent Level: ${currentLevel}\n\nKeep up the great work!`);
+        }
+
+        // Parallel Test prompts
+        const parallelPrompts = [
+            "Prompt 1",
+            "Prompt 2",
+            "Prompt 3",
+            "Prompt 4",
+            "Prompt 5",
+            "Prompt 6",
+            "Prompt 7",
+            "Prompt 8",
+            "Prompt 9",
+            "Prompt 10"
+        ];
+
+        async function runParallelTest() {
+            try {
+                const responses = await Promise.all(parallelPrompts.map(async (prompt, i) => {
+                    const res = await fetch('http://localhost:3001/api/v1/generate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({prompt})
+                    });
+                    const json = await res.json();
+                    console.log(`Result ${i+1}:`, json.content);
+                    return json.content;
+                }));
+                alert("Parallel Test Complete. Check console for results.");
+            } catch (err) {
+                console.error("Error during parallel test:", err);
+                alert("Error during parallel test. Check console.");
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeMessage = new SpeechSynthesisUtterance("Welcome to Basketball English! Let's start learning!");
+            welcomeMessage.lang = 'en-US';
+            setTimeout(() => speechSynthesis.speak(welcomeMessage), 1000);
+        });
+    </script>
+</body>
+</html>

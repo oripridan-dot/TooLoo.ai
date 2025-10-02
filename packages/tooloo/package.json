@@ -1,0 +1,14 @@
+{
+  "name": "@tooloo/tooloo",
+  "version": "1.0.0",
+  "description": "Core TooLoo.ai orchestration layer - assistant, director, and rhythm components",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^29.5.8",
+    "jest": "^29.7.0"
+  }
+}
