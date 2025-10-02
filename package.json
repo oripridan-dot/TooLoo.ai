@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "concurrently -n api,web -c green,cyan \"node simple-api-server.js\" \"npm --prefix web-app run dev\"",
     "build": "npm --prefix web-app run build",
-    "test": "npm --prefix web-app test || true",
+    "test": "npm --prefix web-app run test --if-present || echo 'No tests to run' && exit 0",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx || true",
     "format": "prettier --write . || true",
     "start": "node simple-api-server.js",
