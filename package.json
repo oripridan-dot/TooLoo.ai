@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c green,cyan \"PORT=3006 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
+    "dev": "concurrently -n api,web -c green,cyan \"PORT=3005 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
     "dev:clean": "bash dev-start.sh",
     "build": "npm --prefix web-app run build",
     "test": "npm --prefix web-app test || true",
@@ -51,5 +51,14 @@
     "self-improving"
   ],
   "author": "Ori Pridan",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "socket.io": "^4.8.1"
+  },
+  "type": "module"
 }
