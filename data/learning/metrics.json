@@ -1,0 +1,102 @@
+{
+  "sessions": [
+    {
+      "id": "session-1759430286752",
+      "startTime": "2025-10-02T18:38:06.752Z",
+      "type": "code-generation",
+      "goal": "No goal specified",
+      "provider": "unknown",
+      "sessionId": "session-1759430286752",
+      "timestamp": "2025-10-02T18:38:06.752Z",
+      "responseTime": 0,
+      "firstTrySuccess": true,
+      "description": "",
+      "outcome": "success"
+    },
+    {
+      "id": "session-1759430286752",
+      "startTime": "2025-10-02T18:38:06.752Z",
+      "type": "code-generation",
+      "goal": "No goal specified",
+      "provider": "unknown",
+      "sessionId": "session-1759430286752",
+      "timestamp": "2025-10-02T18:49:22.347Z",
+      "responseTime": 0,
+      "firstTrySuccess": true,
+      "description": "",
+      "outcome": "success"
+    },
+    {
+      "id": "session-1759432088097",
+      "startTime": "2025-10-02T19:08:08.097Z",
+      "type": "code-generation",
+      "goal": "No goal specified",
+      "provider": "unknown",
+      "sessionId": "session-1759432088097",
+      "timestamp": "2025-10-02T19:08:08.097Z",
+      "responseTime": 0,
+      "firstTrySuccess": true,
+      "description": "",
+      "outcome": "success"
+    },
+    {
+      "id": "session-1759432088097",
+      "startTime": "2025-10-02T19:08:08.097Z",
+      "type": "code-generation",
+      "goal": "No goal specified",
+      "provider": "unknown",
+      "sessionId": "session-1759432088097",
+      "timestamp": "2025-10-02T19:08:52.709Z",
+      "responseTime": 0,
+      "firstTrySuccess": true,
+      "description": "",
+      "outcome": "success"
+    },
+    {
+      "id": "session-1759435424897",
+      "startTime": "2025-10-02T20:03:44.897Z",
+      "type": "code-generation",
+      "goal": "No goal specified",
+      "provider": "unknown",
+      "sessionId": "session-1759435424897",
+      "timestamp": "2025-10-02T20:03:44.897Z",
+      "responseTime": 0,
+      "firstTrySuccess": true,
+      "description": "",
+      "outcome": "success"
+    },
+    {
+      "id": "session-1759435424897",
+      "startTime": "2025-10-02T20:03:44.897Z",
+      "type": "code-generation",
+      "goal": "No goal specified",
+      "provider": "unknown",
+      "sessionId": "session-1759435424897",
+      "timestamp": "2025-10-02T20:05:10.853Z",
+      "responseTime": 0,
+      "firstTrySuccess": true,
+      "description": "",
+      "outcome": "success"
+    }
+  ],
+  "baseline": {
+    "contextReexplanationTime": 900,
+    "repeatProblemRate": 0.3,
+    "firstTrySuccessRate": 0.4,
+    "timeToPrototype": 7200
+  },
+  "targets": {
+    "contextReexplanationTime": 120,
+    "repeatProblemRate": 0.1,
+    "firstTrySuccessRate": 0.7,
+    "timeToPrototype": 3600
+  },
+  "current": {
+    "totalSessions": 3,
+    "successfulGenerations": 6,
+    "failedGenerations": 0,
+    "averageResponseTime": 0,
+    "patternsDiscovered": 0,
+    "firstTrySuccessRate": 1
+  }
+}
