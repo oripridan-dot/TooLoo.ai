@@ -1,0 +1,78 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                    🧠 TooLoo CLI Quick Reference                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📋 BASIC COMMANDS
+─────────────────────────────────────────────────────────────────────
+npm run tooloo "your request"        Execute AI request
+npm run tooloo -- --help             Show help
+npm run tooloo -- --health           Check API status
+npm run tooloo -- --interactive      Start chat mode
+
+
+💡 COMMON TASKS
+─────────────────────────────────────────────────────────────────────
+npm run tooloo "create a function to [task]"
+npm run tooloo "analyze [filename] for bugs"
+npm run tooloo "generate tests for [filename]"
+npm run tooloo "explain [concept]"
+npm run tooloo "refactor [code] to use [pattern]"
+npm run tooloo "document [function/file]"
+
+
+🤖 AI PROVIDERS
+─────────────────────────────────────────────────────────────────────
+Default:     deepseek      (Best for code)
+TOOLOO_PROVIDER=claude     (Best for reasoning)
+TOOLOO_PROVIDER=openai     (Most reliable)
+TOOLOO_PROVIDER=gemini     (Most creative)
+TOOLOO_PROVIDER=huggingface (Free tier)
+TOOLOO_PROVIDER=grok       (Experimental)
+
+Usage: TOOLOO_PROVIDER=claude npm run tooloo "request"
+
+
+🎯 QUICK EXAMPLES
+─────────────────────────────────────────────────────────────────────
+Code Gen:    npm run tooloo "create a REST API endpoint"
+Analysis:    npm run tooloo "review auth.js for security"
+Testing:     npm run tooloo "generate tests for utils.js"
+Docs:        npm run tooloo "write JSDoc for functions"
+Debug:       npm run tooloo "find the bug in this code"
+Optimize:    npm run tooloo "optimize database queries"
+
+
+💬 INTERACTIVE MODE
+─────────────────────────────────────────────────────────────────────
+npm run tooloo -- --interactive
+
+Then:
+  🧠 TooLoo> create a function
+  🧠 TooLoo> add error handling
+  🧠 TooLoo> generate tests
+  🧠 TooLoo> exit
+
+
+⚙️  CONFIGURATION
+─────────────────────────────────────────────────────────────────────
+export TOOLOO_API_URL=http://localhost:3005
+export TOOLOO_PROVIDER=deepseek
+
+
+🔧 TROUBLESHOOTING
+─────────────────────────────────────────────────────────────────────
+API not running?    npm run dev
+Check health?       npm run tooloo -- --health
+Connection error?   curl http://localhost:3005/api/v1/health
+
+
+📚 MORE INFO
+─────────────────────────────────────────────────────────────────────
+Full Guide:  cat docs/CLI_GUIDE.md
+Demo:        bash demo-cli.sh
+README:      cat CLI-READY.md
+
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  Try: npm run tooloo "tell me a coding joke"  🚀                     ║
+╚══════════════════════════════════════════════════════════════════════╝

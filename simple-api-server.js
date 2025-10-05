@@ -8,8 +8,6 @@
  */
 
 const express = require('express');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const path = require('path');
 const { createServer } = require('http');
@@ -17,131 +15,49 @@ const { Server } = require('socket.io');
 const SecureCodeExecutor = require('./secure-code-executor');
 const PersonalFilesystemManager = require('./personal-filesystem-manager');
 const SelfAwarenessManager = require('./self-awareness-manager');
-const SelfInspectionManager = require('./self-inspection-manager');
-const SelfImplementationWizard = require('./self-implementation-wizard');
-const ChangeOrchestrator = require('./change-orchestrator');
-const GitHubManager = require('./github-manager');
-const EnvironmentHub = require('./environment-hub');
-const ToolooUIGenerator = require('./tooloo-ui-generator');
-const LearningAccumulator = require('./learning-accumulator');
-const PatternLibraryManager = require('./pattern-library-manager');
-const DecisionLogger = require('./decision-logger');
+const PromptDirector = require('./prompt-director');
+const GitHubBackendManager = require('./github-backend-manager');
 require('dotenv').config();
-
-// Crash Prevention - Handle uncaught exceptions and rejections
-process.on('uncaughtException', (error) => {
-  console.error('🚨 Uncaught Exception:', error);
-  console.error('💡 TooLoo will continue running...');
-  // Don't exit - keep the server running
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
-  console.error('💡 TooLoo will continue running...');
-  // Don't exit - keep the server running
-});
-
-// Graceful shutdown handler
-process.on('SIGTERM', () => {
-  console.log('🔄 SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ HTTP server closed.');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('🔄 SIGINT received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ HTTP server closed.');
-    process.exit(0);
-  });
-});
 
 const app = express();
 // Behind GitHub Codespaces/other proxies, trust X-Forwarded-* headers
 app.set('trust proxy', 1);
 const server = createServer(app);
-const distDir = path.join(__dirname, 'web-app', 'dist');
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow all origins in development (GitHub Codespaces, localhost, etc.)
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 hours
-};
-
 const io = new Server(server, {
   cors: {
-    origin: true,
-    credentials: true,
-    methods: ["GET", "POST", "OPTIONS"],
+    origin: process.env.CORS_ORIGIN || true, // allow all origins in dev
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-// Middleware - CORS must be first
-app.use(cors(corsOptions));
-// Enable pre-flight for all routes
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '86400');
-    return res.sendStatus(200);
-  }
-  next();
-});
+// Middleware
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
-// Basic security headers
-app.use(helmet({
-  contentSecurityPolicy: false, // disable CSP for local dev simplicity
-  crossOriginResourcePolicy: false, // Allow cross-origin resource loading
-  crossOriginOpenerPolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
-// Rate limiting for API routes to mitigate abuse
-const apiLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || `${15 * 60 * 1000}`),
-  max: parseInt(process.env.RATE_LIMIT_MAX || '300'),
-  standardHeaders: true,
-  legacyHeaders: false
-});
-app.use('/api/', apiLimiter);
+// Serve built frontend if it exists (production-like)
+const distDir = path.join(process.cwd(), 'web-app', 'dist');
+app.use(express.static(distDir));
 
-// --- SELF-IMPROVEMENT API ---
-app.get('/api/v1/self-improvement/stats', (req, res) => {
-  try {
-    const stats = personalAIManager.learningAccumulator.getStats();
-    res.json(stats);
-  } catch (error) {
-    console.error('Error fetching self-improvement stats:', error);
-    res.status(500).json({ error: 'Failed to retrieve learning statistics.' });
-  }
-});
-
-// API server should NOT serve UI - redirect to the React app on port 5173
+// Root route: serve SPA index.html if built, otherwise show friendly API page
 app.get('/', (req, res) => {
-  res.redirect('http://localhost:5173');
-});
-
-// Legacy routes - redirect to React app
-app.get('/cuberto-interface.html', (req, res) => {
-  res.redirect('http://localhost:5173');
-});
-
-app.get('/test-ui-generation.html', (req, res) => {
-  res.redirect('http://localhost:5173');
-});
-
-// Serve UI builder
-app.get('/tooloo-ui-builder.html', (req, res) => {
-  return res.sendFile(path.join(__dirname, 'tooloo-ui-builder.html'));
+  const indexPath = path.join(distDir, 'index.html');
+  try {
+    // If a production build exists, serve the app at '/'
+    return res.sendFile(indexPath);
+  } catch {
+    return res.type('html').send(`<!doctype html>
+    <html><head><meta charset="utf-8"/><title>TooLoo.ai API</title>
+    <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;padding:32px;line-height:1.6}</style>
+    </head><body>
+    <h1>TooLoo.ai API Server</h1>
+    <p>This is the API. The frontend dev server runs separately with Vite.</p>
+    <ul>
+      <li>Health: <a href="/api/v1/health">/api/v1/health</a></li>
+      <li>Status: <a href="/api/v1/system/status">/api/v1/system/status</a></li>
+    </ul>
+    <p>In development, open the web app at <code>http://localhost:5173</code> (or the port shown by Vite).</p>
+    </body></html>`);
+  }
 });
 
 // SPA history fallback for any non-API routes when dist exists
@@ -160,11 +76,20 @@ app.get(/^(?!\/api\/).+/, (req, res, next) => {
 class PersonalAIManager {
   constructor() {
     this.providers = new Map();
+    this.conversationHistory = new Map(); // Store conversation context per session
+    this.previewStates = new Map(); // Store preview changes per session (sessionId -> {files, changes, timestamp})
+    this.changeHistory = new Map(); // Store applied changes per session for rollback
     this.userPreferences = {
       defaultProvider: 'deepseek', // Cost-effective for personal use
       learningEnabled: true,
-      autoExecute: false // Safety first
+      autoExecute: false, // Safety first for code execution
+      autoSaveFiles: false, // Disabled by default - user must confirm first
+      actionMode: 'preview', // NEW: 'discussion' | 'preview' | 'implement' | 'auto'
+      useDirector: true, // Enable prompt saturation & multi-provider synthesis
+      showCode: false, // NEVER show code blocks in discussion - show in preview
+      maxHistoryLength: 10 // Keep last 10 messages for context
     };
+    this.implementationQueue = new Map(); // Store pending implementations
     this.codeExecutor = new SecureCodeExecutor();
     this.filesystemManager = new PersonalFilesystemManager({
       workspaceRoot: process.cwd(),
@@ -173,144 +98,48 @@ class PersonalAIManager {
     this.selfAwarenessManager = new SelfAwarenessManager({
       workspaceRoot: process.cwd()
     });
-    this.changeOrchestrator = new ChangeOrchestrator({
+    this.githubBackend = new GitHubBackendManager({
       workspaceRoot: process.cwd(),
-      filesystemManager: this.filesystemManager,
-      selfAwareness: this.selfAwarenessManager
+      projectsDir: process.cwd() + '/personal-projects',
+      autoCommit: process.env.GITHUB_AUTO_COMMIT !== 'false', // Default true
+      autoBranch: process.env.GITHUB_AUTO_BRANCH !== 'false' // Default true
     });
-    this.selfImplementationWizard = new SelfImplementationWizard({
-      workspaceRoot: process.cwd(),
-      changeOrchestrator: this.changeOrchestrator,
-      filesystemManager: this.filesystemManager
-    });
-    this.github = new GitHubManager({
-      defaultOwner: 'oripridan-dot',
-      defaultRepo: 'TooLoo.ai'
-    });
-    this.environmentHub = new EnvironmentHub({
-      workspaceRoot: process.cwd(),
-      mode: 'self-aware'
-    });
-    this.selfInspection = new SelfInspectionManager({
-      workspaceRoot: process.cwd()
-    });
-    
-    // Self-Improvement Systems (PROJECT_BRAIN.md)
-    this.learningAccumulator = new LearningAccumulator({
-      workspaceRoot: process.cwd(),
-      dataDir: path.join(process.cwd(), 'data', 'learning')
-    });
-    this.patternLibrary = new PatternLibraryManager({
-      workspaceRoot: process.cwd(),
-      patternsDir: path.join(process.cwd(), 'patterns')
-    });
-    this.decisionLogger = new DecisionLogger({
-      workspaceRoot: process.cwd(),
-      decisionsDir: path.join(process.cwd(), 'decisions')
-    });
-    
-    this.selfAwarenessEnabled = true; // Enable self-awareness by default
     this.offline = process.env.OFFLINE_ONLY === 'true';
     
-    // CONVERSATIONAL SETTINGS - NO CODE MODE!
-    this.showCode = false; // NEVER show code blocks in responses
-    this.actionMode = true; // ALWAYS execute, never just explain
-    this.conversationalStyle = 'friendly'; // Be conversational, not technical
+    // Load instruction files for enforcement
+    this.instructions = this.loadInstructions();
+    console.log('📚 Loaded instructions:', Object.keys(this.instructions));
     
-    console.log('🧠 Self-awareness enabled by default - TooLoo.ai can view and modify its own code');
-    console.log('💬 Conversational mode: ACTION-FIRST (No code shown, just results!)');
     this.initializeProviders();
-    this.initializeEnvironmentHub();
-    this.initializeSelfInspection();
-    this.initializeInstructionMaintenance();
+    
+    // Initialize Prompt Director after providers are set up
+    this.director = new PromptDirector(this);
+    console.log('🎬 Prompt Director initialized - Multi-provider synthesis enabled');
   }
 
-  /**
-   * Initialize instruction maintenance system
-   * Keeps AI agent instructions synchronized with codebase
-   */
-  async initializeInstructionMaintenance() {
-    console.log('📚 Initializing AI instruction maintenance...');
+  loadInstructions() {
+    const fs = require('fs');
+    const path = require('path');
+    const instructions = {};
     
-    // Check instruction file health every 6 hours
-    const checkInterval = 6 * 60 * 60 * 1000; // 6 hours
-    
-    const checkInstructionHealth = async () => {
-      try {
-        const instructionFiles = [
-          '.github/copilot-instructions.md',
-          '.github/OPENAI-GPT-INSTRUCTIONS.md',
-          '.github/CLAUDE-INSTRUCTIONS.md',
-          '.github/GEMINI-INSTRUCTIONS.md'
-        ];
-        
-        const fs = require('fs').promises;
-        const path = require('path');
-        
-        let needsUpdate = false;
-        const now = Date.now();
-        const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
-        
-        for (const file of instructionFiles) {
-          const filePath = path.join(process.cwd(), file);
-          try {
-            const stats = await fs.stat(filePath);
-            if (stats.mtime.getTime() < thirtyDaysAgo) {
-              needsUpdate = true;
-              console.log(`⚠️  ${file} hasn't been updated in 30+ days`);
-            }
-          } catch (error) {
-            console.log(`⚠️  ${file} not found`);
-            needsUpdate = true;
-          }
-        }
-        
-        if (needsUpdate) {
-          console.log('\n' + '='.repeat(60));
-          console.log('📝 AI INSTRUCTION UPDATE RECOMMENDED');
-          console.log('Some instruction files are outdated or missing.');
-          console.log('Run: npm run update-instructions (when implemented)');
-          console.log('='.repeat(60) + '\n');
-        } else {
-          console.log('✅ All AI instruction files are up to date');
-        }
-      } catch (error) {
-        console.error('❌ Error checking instruction health:', error.message);
+    try {
+      const directorPath = path.join(process.cwd(), '.github', 'director-instructions.md');
+      const providerPath = path.join(process.cwd(), '.github', 'provider-instructions.md');
+      
+      if (fs.existsSync(directorPath)) {
+        instructions.director = fs.readFileSync(directorPath, 'utf8');
+        console.log('✅ Loaded director-instructions.md');
       }
-    };
-    
-    // Initial check after 10 seconds
-    setTimeout(checkInstructionHealth, 10000);
-    
-    // Periodic check every 6 hours
-    setInterval(checkInstructionHealth, checkInterval);
-    
-    console.log('📚 Instruction maintenance scheduled (checks every 6 hours)');
-  }
-
-  /**
-   * Initialize self-inspection with smart scheduling
-   */
-  async initializeSelfInspection() {
-    console.log('🔍 Initializing self-inspection routine...');
-    
-    // Check on startup if inspection is needed
-    setTimeout(async () => {
-      const decision = await this.selfInspection.shouldRunInspection();
-      if (decision.shouldInspect) {
-        console.log('\n' + '='.repeat(60));
-        console.log(decision.summary.message);
-        console.log(decision.summary.details);
-        console.log('='.repeat(60) + '\n');
-        
-        console.log('💡 TooLoo recommends running inspection. Type "inspect repository" to start.');
-      } else {
-        console.log(decision.summary.message);
+      
+      if (fs.existsSync(providerPath)) {
+        instructions.provider = fs.readFileSync(providerPath, 'utf8');
+        console.log('✅ Loaded provider-instructions.md');
       }
-    }, 5000); // Check 5 seconds after startup
+    } catch (error) {
+      console.warn('⚠️  Failed to load instructions:', error.message);
+    }
     
-    // Start smart auto-inspection (checks every 6 hours)
-    this.selfInspection.startAutoInspection('smart');
+    return instructions;
   }
 
   initializeProviders() {
@@ -347,66 +176,133 @@ class PersonalAIManager {
     console.log(`🤖 Initialized ${this.providers.size} AI providers for personal use`);
   }
 
-  initializeEnvironmentHub() {
-    // Register all components with the Environment Hub
-    this.environmentHub.registerComponent('filesystemManager', this.filesystemManager, [
-      'filesystem-management', 'file-operations', 'project-creation'
-    ]);
-    
-    this.environmentHub.registerComponent('selfAwarenessManager', this.selfAwarenessManager, [
-      'self-awareness', 'code-analysis', 'code-modification'
-    ]);
-    
-    this.environmentHub.registerComponent('githubManager', this.github, [
-      'github-integration', 'repository-access', 'remote-code-access'
-    ]);
-    
-    this.environmentHub.registerComponent('codeExecutor', this.codeExecutor, [
-      'code-execution', 'security-validation'
-    ]);
-    
-    this.environmentHub.registerComponent('aiManager', this, [
-      'ai-provider', 'response-generation', 'intent-parsing'
-    ]);
+  /**
+   * Validates AI response to prevent hallucinations about UI features
+   * Checks if claimed features actually exist in the codebase
+   */
+  async validateFeatureClaims(responseContent) {
+    try {
+      // Extract feature claims from response (look for UI elements, components, etc.)
+      const featureClaims = [];
+      
+      // More aggressive pattern matching for UI feature claims
+      const patterns = [
+        /(?:you should see|you'll see|look for|notice|check|shows?|displays?|has|contains) (?:a|an|the) ([^.,:;]+?)(?:\.|,|;|with|that|arranged)/gi,
+        /(?:there is|there's|there are|here's) (?:a|an|the) ([^.,:;]+?) (?:showing|displaying|with|that|arranged)/gi,
+        /(?:visual|UI|interface|main|bottom|top|left|right|center) (?:element|component|feature|indicator|area|section|panel|card|button) ([^.,:;]+)/gi,
+        /(?:status|panel|indicator|button|icon|card|header|section) (?:showing|displaying|labeled|called|named|with) ["']?([^"'.,;]+)["']?/gi,
+        /(?:agent|AI|helper|assistant) (?:card|panel|indicator)s? (?:showing|displaying|called|named) ["']?([^"'.,;]+)["']?/gi,
+        /(?:left|right|middle|main):?\s+["']([^"']+)["']/gi,
+        /["']([^"']+)["']\s+(?:with|shows?|displays?|has|containing)/gi
+      ];
 
-    this.environmentHub.registerComponent('changeOrchestrator', this.changeOrchestrator, [
-      'code-change-management', 'session-orchestration', 'validation-runner'
-    ]);
-    
-    // Start the Environment Hub
-    this.environmentHub.start();
-    
-    console.log('🌍 Environment Hub initialized with all system components');
+      patterns.forEach(pattern => {
+        let match;
+        const content = responseContent;
+        while ((match = pattern.exec(content)) !== null) {
+          const claim = match[1].trim();
+          if (claim.length > 3 && claim.length < 100) { // Reasonable length
+            featureClaims.push(claim);
+          }
+        }
+      });
+
+      if (featureClaims.length === 0) {
+        return { valid: true, claims: [], missing: [] };
+      }
+
+      console.log(`🔍 Validating ${featureClaims.length} feature claims:`, featureClaims.slice(0, 5));
+
+      // Use self-awareness to check if these features exist in rendered components
+      const missingFeatures = [];
+      
+      // Check Chat.jsx specifically for rendered components
+      const chatContent = await this.filesystemManager.readFile('web-app/src/components/Chat.jsx');
+      
+      for (const claim of featureClaims) {
+        // Search for the claimed feature in the codebase
+        const searchTerm = claim.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+        const keywords = searchTerm.split(/\s+/).filter(w => w.length > 3);
+        
+        // Check if ANY of the keywords appear in Chat.jsx
+        const foundInChat = keywords.some(keyword => 
+          chatContent.toLowerCase().includes(keyword) ||
+          chatContent.toLowerCase().includes(keyword.replace(/s$/, '')) // singular
+        );
+        
+        if (!foundInChat) {
+          // Double-check with file system search
+          const analysis = await this.selfAwarenessManager.analyzeCodebaseForRequest(
+            `Does the UI currently render: ${searchTerm}?`
+          );
+          
+          // If not found anywhere, it's likely a hallucination
+          if (!analysis.relevantFiles || analysis.relevantFiles.length === 0) {
+            missingFeatures.push(claim);
+          }
+        }
+      }
+
+      if (missingFeatures.length > 0) {
+        console.warn(`⚠️  Detected ${missingFeatures.length} hallucinated features:`, missingFeatures.slice(0, 3));
+      }
+
+      return {
+        valid: missingFeatures.length === 0,
+        claims: featureClaims,
+        missing: missingFeatures
+      };
+    } catch (error) {
+      console.warn('⚠️  Feature validation error:', error.message);
+      // If validation fails, assume response is okay (fail open)
+      return { valid: true, claims: [], missing: [] };
+    }
+  }
+
+  /**
+   * Adds a disclaimer to AI response if features are claimed that don't exist
+   */
+  addHallucinationWarning(responseContent, missingFeatures) {
+    const warning = `\n\n> ⚠️ **CORRECTION**: I described some UI elements that don't actually exist yet: "${missingFeatures.slice(0, 3).join('", "')}". These were hallucinations. Let me describe what ACTUALLY exists in the current UI instead.\n\n**ACTUAL UI**: The interface has a chat view with message bubbles, a ThinkingProgress component showing AI stages, and a PreviewPanel for code changes. Would you like me to implement the features I mistakenly described?`;
+    return responseContent + warning;
   }
 
   async generateResponse(prompt, context = {}) {
     const selectedProvider = this.selectBestProvider(prompt, context);
     
     try {
-      // Check if this is a self-implementation request (WIZARD MODE!)
-      const implRequest = await this.selfImplementationWizard.parseImplementationRequest(prompt);
-      if (implRequest) {
-        console.log('🧙 Self-Implementation Wizard activated!');
-        const result = await this.selfImplementationWizard.executeImplementation(implRequest);
-        const structuredSummary = result.structuredSummary || null;
-        return {
-          content: result.conversationalResponse,
-          provider: 'self-implementation-wizard',
-          cost: 0,
-          tokens: { input: 0, output: 0 },
-          implementation: result,
-          structuredSummary,
-          changeSession: result.changeSession || null,
-          sessionTimeline: result.sessionTimeline || null
-        };
+      // Check if user is confirming implementation
+      const isImplementCommand = /^(yes|do it|implement|go ahead|make it|apply|proceed|execute)$/i.test(prompt.trim());
+      
+      console.log(`🔍 generateResponse called:`);
+      console.log(`   - Prompt: "${prompt}"`);
+      console.log(`   - Is implement command: ${isImplementCommand}`);
+      console.log(`   - Provider: ${selectedProvider}`);
+      
+      // If user confirms, enable auto-save AND force code generation
+      if (isImplementCommand) {
+        context.autoSaveFiles = true;
+        context.implementMode = true;
+        context.forceCodeGeneration = true; // NEW: Override "no code" rule
+        
+        console.log(`   ✅ IMPLEMENTATION MODE ACTIVATED`);
+        
+        // Get the last AI message from conversation history to know what to implement
+        const sessionId = context.sessionId || 'default';
+        const history = this.getConversationHistory(sessionId);
+        const lastAiMessage = history.filter(msg => msg.role === 'assistant').pop();
+        
+        if (lastAiMessage) {
+          // Replace user's "yes" with a specific implementation request
+          const originalPrompt = prompt;
+          prompt = `IMPLEMENT the changes you just described: "${lastAiMessage.content.substring(0, 200)}...". Generate the COMPLETE working code with file paths.`;
+          console.log(`   - Replaced "${originalPrompt}" with implementation request`);
+          console.log(`   - Last AI message: "${lastAiMessage.content.substring(0, 100)}..."`);
+        } else {
+          console.warn(`   ⚠️  No previous AI message found in history`);
+        }
       }
-
-      // Check if this is a UI generation request
-      const uiRequest = this.parseUIRequest(prompt);
-      if (uiRequest.isUIRequest) {
-        return await this.handleUIRequest(uiRequest, prompt);
-      }
-
+      
       // Check if this is a filesystem command
       const fsCommand = this.parseFilesystemCommand(prompt);
       if (fsCommand) {
@@ -416,7 +312,7 @@ class PersonalAIManager {
       // If offline mode is enabled, don't call external providers
       if (this.offline) {
         return {
-          content: `## Offline Mode Enabled\n\nExternal AI calls are disabled to save tokens. I can still help you manage your files and scaffold projects. Try commands like:\n\n- list files\n- create project MyApp\n- write file MyApp/index.html with content ...\n- read file MyApp/index.html\n- search files for "TODO"`,
+          content: `## Offline Mode Enabled\n\nExternal AI calls are disabled to save tokens. I can still help you manage your files and scaffold projects. Try commands like:\n\n- list files\n- create project MyApp\n- write file MyApp/index.html with content ...\n- read file MyApp/index.html\n- search files for \"TODO\"`,
           provider: 'offline',
           cost: 0,
           tokens: { input: 0, output: 0 }
@@ -426,171 +322,57 @@ class PersonalAIManager {
       // Enhance prompt with filesystem context if building an app
       const enhancedPrompt = await this.enhancePromptWithContext(prompt, context);
       
-      // Track learning metrics (PROJECT_BRAIN.md)
-      const startTime = Date.now();
-      let learningTask = null;
+      const aiResponse = await this.callProvider(selectedProvider, enhancedPrompt, context);
       
-      try {
-        const aiResponse = await this.callProvider(selectedProvider, enhancedPrompt, context);
-        
-        // Record success in learning system
-        const timeTaken = Date.now() - startTime;
-        learningTask = prompt.substring(0, 100); // First 100 chars as task identifier
-        await this.learningAccumulator.recordSuccess(
-          learningTask,
-          timeTaken,
-          selectedProvider,
-          { prompt, contextSize: JSON.stringify(context).length }
-        );
-        
-        // NO CODE MODE: Filter out code blocks from responses
-        if (this.showCode === false) {
-          aiResponse.content = this.filterCodeBlocks(aiResponse.content);
-          aiResponse.content = this.makeConversational(aiResponse.content, prompt);
-        }
-        
-        // Check if response contains code that should be saved as files
-        await this.handleCodeFileGeneration(aiResponse, context);
-        
-        // Check if response contains code that should be executed
-        const codeBlocks = this.extractCodeBlocks(aiResponse.content);
-        if (codeBlocks.length > 0 && context.executeCode !== false) {
-          const executionResults = await this.executeCodeBlocks(codeBlocks);
-          aiResponse.executionResults = executionResults;
-          
-          // Append execution results to response if auto-execute is enabled
-          if (this.userPreferences.autoExecute) {
-            aiResponse.content += '\n\n## Execution Results\n\n' + 
-              executionResults.map(r => `**Output:** \`${r.output}\``).join('\n');
-          }
-        }
-        
-        return aiResponse;
-      } catch (providerError) {
-        // Record failure in learning system
-        if (learningTask) {
-          await this.learningAccumulator.recordFailure(
-            learningTask,
-            providerError.message,
-            1, // First attempt
-            selectedProvider,
-            { prompt, error: providerError.stack }
-          );
-        }
-        throw providerError;
+      // Save conversation history
+      const sessionId = context.sessionId || 'default';
+      this.addToConversationHistory(sessionId, 'user', prompt);
+      this.addToConversationHistory(sessionId, 'assistant', aiResponse.content);
+      
+      // Check if response contains code that should be saved as files
+      await this.handleCodeFileGeneration(aiResponse, context);
+      
+      // If files were saved and user wanted implementation, signal page reload
+      if (context.implementMode && aiResponse.savedFiles && aiResponse.savedFiles.length > 0) {
+        aiResponse.shouldReload = true;
+        aiResponse.content = '✅ **Changes implemented successfully!**\n\n🔄 **Page reloading to show your changes...**';
+      } else if (context.implementMode) {
+        // Implementation was requested but no files were saved
+        aiResponse.content = '⚠️ **Could not detect files to save.** Please be more specific about what files need to be changed.';
       }
+      
+      // Validate feature claims to prevent hallucinations
+      if (!context.skipValidation) {
+        const validation = await this.validateFeatureClaims(aiResponse.content);
+        if (!validation.valid && validation.missing.length > 0) {
+          console.warn('⚠️  AI hallucinated features:', validation.missing);
+          aiResponse.content = this.addHallucinationWarning(aiResponse.content, validation.missing);
+          aiResponse.hallucinated = validation.missing;
+        }
+      }
+      
+      // Check if response contains code that should be executed
+      const codeBlocks = this.extractCodeBlocks(aiResponse.content);
+      if (codeBlocks.length > 0 && context.executeCode !== false) {
+        const executionResults = await this.executeCodeBlocks(codeBlocks);
+        aiResponse.executionResults = executionResults;
+        
+        // Append execution results to response if auto-execute is enabled
+        if (this.userPreferences.autoExecute) {
+          aiResponse.content += '\n\n## Execution Results\n\n' + 
+            executionResults.map(r => `**Output:** \`${r.output}\``).join('\n');
+        }
+      }
+      
+      return aiResponse;
     } catch (error) {
       console.error(`Provider ${selectedProvider} failed:`, error.message);
       return await this.fallbackGenerate(prompt, context);
     }
   }
 
-  async triggerMaintenanceTask(task, options = {}) {
-    switch (task) {
-      case 'inspection': {
-        const report = await this.selfInspection.runInspection({ trigger: 'api', ...options });
-        return {
-          type: 'inspection',
-          status: 'completed',
-          report
-        };
-      }
-      case 'tests': {
-        const session = await this.changeOrchestrator.startSession({
-          prompt: 'Run automated tests',
-          description: 'Maintenance: Vitest suite',
-          metadata: { task: 'tests', trigger: 'maintenance-api' }
-        });
-
-        try {
-          const validation = await this.changeOrchestrator.runValidation(
-            session.id,
-            options.command || 'npm run test -- --run',
-            {
-              cwd: options.cwd || path.join(process.cwd(), 'web-app'),
-              timeout: options.timeout ?? 240000,
-              maxBuffer: options.maxBuffer ?? 1024 * 1024 * 10
-            }
-          );
-
-          const summary = await this.changeOrchestrator.finalizeSession(session.id, 'completed', {
-            validations: [validation],
-            triggeredBy: 'maintenance-tests'
-          });
-
-          return {
-            type: 'tests',
-            status: 'completed',
-            sessionId: session.id,
-            validation,
-            session: summary
-          };
-        } catch (error) {
-          await this.changeOrchestrator.finalizeSession(session.id, 'failed', {
-            error: error.message,
-            triggeredBy: 'maintenance-tests'
-          });
-          error.sessionId = session.id;
-          throw error;
-        }
-      }
-      default:
-        throw new Error(`Unsupported maintenance task: ${task}`);
-    }
-  }
-
-  listRecentChangeSessions(limit = 10) {
-    if (!this.changeOrchestrator) {
-      return [];
-    }
-    const sessions = this.changeOrchestrator.listSessions();
-    return sessions
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, limit);
-  }
-
   parseFilesystemCommand(prompt) {
     const commands = {
-      // Self-awareness commands (prioritized for immediate access)
-      'show your code': 'show-code',
-      'show code': 'show-code',
-      'view your code': 'show-code',
-      'view code': 'show-code',
-      'read your code': 'show-code',
-      'modify your code': 'modify-code',
-      'edit your code': 'modify-code',
-      'modify code': 'modify-code',
-      'edit code': 'modify-code',
-      'update your code': 'modify-code',
-      'search your code': 'search-code',
-      'search code': 'search-code',
-      'find in code': 'search-code',
-      'analyze your code': 'analyze-code',
-      'analyze code': 'analyze-code',
-      'understand code': 'analyze-code',
-      'code stats': 'analyze-code',
-      'code structure': 'code-structure',
-      'project structure': 'code-structure',
-      
-      // RAPID SELF-MODIFICATION COMMANDS
-      'add capability': 'self-add-capability',
-      'add new capability': 'self-add-capability',
-      'add feature': 'self-add-feature',
-      'create feature': 'self-add-feature',
-      'patch method': 'self-patch-method',
-      'modify method': 'self-patch-method',
-      'hot reload': 'self-hot-reload',
-      'reload module': 'self-hot-reload',
-      'restart yourself': 'self-restart',
-      'restart server': 'self-restart',
-      'enhance yourself': 'self-enhance',
-      'improve yourself': 'self-enhance',
-      'optimize yourself': 'self-optimize',
-      'upgrade yourself': 'self-upgrade',
-      'change yourself': 'self-modify',
-      'modify yourself': 'self-modify',
-      'update yourself': 'self-update',
-      // Standard filesystem commands
       'list files': 'list',
       'show files': 'list',
       'ls': 'list',
@@ -610,58 +392,7 @@ class PersonalAIManager {
       'remove file': 'delete',
       'search files': 'search',
       'find in files': 'search',
-      'workspace summary': 'summary',
-      'update code': 'modify-code',
-      'search your code': 'search-code',
-      'search code': 'search-code',
-      'analyze your code': 'analyze-code',
-      'analyze code': 'analyze-code',
-      'how do you work': 'analyze-code',
-      'show your structure': 'code-structure',
-      'show code structure': 'code-structure',
-      'code structure': 'code-structure',
-      // Capability/awareness intents
-      'self aware': 'capabilities',
-      'self-aware': 'capabilities',
-      'self awareness': 'capabilities',
-      'self-awareness': 'capabilities',
-      'can you see your files': 'capabilities',
-      'see your files': 'capabilities',
-      'access your files': 'capabilities',
-      'filesystem access': 'capabilities',
-      'can you access your code': 'capabilities',
-  'access your code': 'capabilities'
-      ,
-      // Self-inspection intents
-      'inspect repository': 'inspect',
-      'inspect repo': 'inspect',
-      'check repository health': 'inspect',
-      'check health': 'inspect',
-      'run inspection': 'inspect',
-      'analyze repository': 'inspect',
-      'should i inspect': 'should-inspect',
-      'inspection needed': 'should-inspect',
-      'check if inspection needed': 'should-inspect',
-      'inspection status': 'inspection-status',
-      'last inspection': 'inspection-status',
-      'cleanup repository': 'cleanup',
-      'clean repo': 'cleanup',
-      'remove duplicates': 'cleanup',
-      'remove backup files': 'cleanup',
-      // System management intents
-      'security': 'improve-security',
-      'harden': 'improve-security',
-      'rate limit': 'improve-security',
-      'helmet': 'improve-security',
-      'secure': 'improve-security',
-      'ddos': 'improve-security',
-      'csrf': 'improve-security',
-      'xss': 'improve-security',
-      'migrate': 'cloud-migration',
-      'cloud': 'cloud-migration',
-      'deploy': 'cloud-migration',
-      'server': 'cloud-migration',
-      'production': 'cloud-migration'
+      'workspace summary': 'summary'
     };
 
     const lowerPrompt = prompt.toLowerCase();
@@ -670,152 +401,12 @@ class PersonalAIManager {
         return { command, originalPrompt: prompt };
       }
     }
-    // Regex-based intents for more natural phrasing and minor typos
-    const patterns = [
-      { re: /can you\s+(see|access|browse).*?(file\s*system|filesystem|files?)/i, command: 'capabilities' },
-      { re: /(add|enable|setup).*(security|helmet|rate\s*limit|csrf|xss|ddos)/i, command: 'improve-security' },
-      { re: /(migrate|move|deploy|host).*(cloud|cloude|server|prod|production)/i, command: 'cloud-migration' }
-    ];
-    for (const { re, command } of patterns) {
-      if (re.test(prompt)) return { command, originalPrompt: prompt };
-    }
     return null;
-  }
-
-  // UI Generation Request Parsing
-  parseUIRequest(prompt) {
-    const uiKeywords = [
-      'create ui', 'make ui', 'generate ui', 'build ui', 'design ui',
-      'create interface', 'make interface', 'generate interface', 'build interface',
-      'create form', 'make form', 'generate form', 'build form',
-      'create dashboard', 'make dashboard', 'generate dashboard', 'build dashboard',
-      'create page', 'make page', 'generate page', 'build page',
-      'create component', 'make component', 'generate component', 'build component'
-    ];
-
-    const lowerPrompt = prompt.toLowerCase();
-    
-    // Check for UI generation keywords
-    const hasUIKeyword = uiKeywords.some(keyword => lowerPrompt.includes(keyword));
-    
-    if (hasUIKeyword) {
-      const uiType = this.detectUIType(prompt);
-      const components = this.suggestComponents(prompt);
-      
-      return {
-        isUIRequest: true,
-        type: uiType,
-        components: components,
-        originalPrompt: prompt
-      };
-    }
-    
-    return { isUIRequest: false };
-  }
-
-  detectUIType(prompt) {
-    const lowerPrompt = prompt.toLowerCase();
-    
-    if (lowerPrompt.includes('dashboard')) return 'dashboard';
-    if (lowerPrompt.includes('form')) return 'form';
-    if (lowerPrompt.includes('calculator')) return 'calculator';
-    if (lowerPrompt.includes('todo') || lowerPrompt.includes('task')) return 'todo-app';
-    if (lowerPrompt.includes('chat') || lowerPrompt.includes('messaging')) return 'chat-interface';
-    if (lowerPrompt.includes('chart') || lowerPrompt.includes('graph')) return 'data-visualization';
-    if (lowerPrompt.includes('login') || lowerPrompt.includes('signup')) return 'auth-form';
-    if (lowerPrompt.includes('profile') || lowerPrompt.includes('user')) return 'user-profile';
-    if (lowerPrompt.includes('game')) return 'game-interface';
-    if (lowerPrompt.includes('quiz') || lowerPrompt.includes('test')) return 'quiz-app';
-    
-    return 'general-interface';
-  }
-
-  suggestComponents(prompt) {
-    const lowerPrompt = prompt.toLowerCase();
-    const components = [];
-    
-    // Form components
-    if (lowerPrompt.includes('input') || lowerPrompt.includes('field')) components.push('input-field');
-    if (lowerPrompt.includes('button')) components.push('button');
-    if (lowerPrompt.includes('dropdown') || lowerPrompt.includes('select')) components.push('dropdown');
-    if (lowerPrompt.includes('checkbox')) components.push('checkbox');
-    if (lowerPrompt.includes('radio')) components.push('radio-button');
-    if (lowerPrompt.includes('slider')) components.push('range-slider');
-    
-    // Display components
-    if (lowerPrompt.includes('table') || lowerPrompt.includes('grid')) components.push('data-table');
-    if (lowerPrompt.includes('card')) components.push('card');
-    if (lowerPrompt.includes('list')) components.push('list');
-    if (lowerPrompt.includes('modal') || lowerPrompt.includes('popup')) components.push('modal');
-    if (lowerPrompt.includes('tab')) components.push('tabs');
-    if (lowerPrompt.includes('progress')) components.push('progress-bar');
-    
-    // Chart components
-    if (lowerPrompt.includes('chart') || lowerPrompt.includes('graph')) {
-      if (lowerPrompt.includes('bar')) components.push('bar-chart');
-      if (lowerPrompt.includes('line')) components.push('line-chart');
-      if (lowerPrompt.includes('pie')) components.push('pie-chart');
-      if (lowerPrompt.includes('scatter')) components.push('scatter-plot');
-    }
-    
-    // Navigation components
-    if (lowerPrompt.includes('menu') || lowerPrompt.includes('nav')) components.push('navigation');
-    if (lowerPrompt.includes('sidebar')) components.push('sidebar');
-    if (lowerPrompt.includes('header')) components.push('header');
-    if (lowerPrompt.includes('footer')) components.push('footer');
-    
-    return components.length > 0 ? components : ['basic-container', 'text-display'];
-  }
-
-  async handleUIRequest(uiRequest, prompt) {
-    try {
-      console.log(`🎨 Handling UI generation request: ${uiRequest.type}`);
-      
-      // Generate UI using the UI generator
-      const ToolooUIGenerator = require('./tooloo-ui-generator.js');
-      const uiGenerator = new ToolooUIGenerator();
-      
-      const generatedUI = uiGenerator.generateInterface({
-        type: uiRequest.type,
-        components: uiRequest.components.map(comp => ({ type: comp })),
-        title: `${uiRequest.type} Interface`,
-        subtitle: 'Generated by TooLoo AI'
-      });
-      
-      return {
-        success: true,
-        type: 'ui-generation',
-        content: generatedUI,
-        metadata: {
-          uiType: uiRequest.type,
-          components: uiRequest.components,
-          timestamp: new Date().toISOString()
-        }
-      };
-    } catch (error) {
-      console.error('❌ UI generation error:', error);
-      return {
-        success: false,
-        error: error.message,
-        fallback: 'I can help you create UIs! Try asking me to "create a dashboard" or "make a form interface".'
-      };
-    }
   }
 
   async handleFilesystemCommand(fsCommand, prompt) {
     try {
       switch (fsCommand.command) {
-        case 'capabilities':
-          {
-            const summary = await this.filesystemManager.getWorkspaceSummary().catch(() => null);
-            const workspaceText = summary ? `\n\n### Workspace\n- Path: \`${summary.workspace.path}\`\n- Projects: ${summary.projects.count}\n- Files: ${summary.projects.files}` : '';
-            return {
-              content: `## ✅ Yes — I can see and manage my own file system\n\nSelf-awareness is enabled by default. I can list, read, write, and modify files within this workspace.${workspaceText}\n\nYou can ask me to:\n- list files\n- create project <name>\n- write file <path> with content ...\n- search files for "TODO"\n- improve security\n- migrate to a cloud server`,
-              provider: 'self-awareness',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
         case 'list':
           const listing = await this.filesystemManager.listDirectory();
           return {
@@ -959,852 +550,755 @@ class PersonalAIManager {
               tokens: { input: 0, output: 0 }
             };
           }
-          
-        // Self-awareness commands
-        case 'show-code':
-          {
-            // Extract file path from prompts like "show your code simple-api-server.js"
-            const codeMatch = prompt.match(/(?:show|view|read).*code\s+([^\s]+)/i);
-            const filePath = codeMatch ? codeMatch[1] : 'simple-api-server.js'; // Default to main file
-            
-            const result = await this.selfAwarenessManager.getSourceCode(filePath);
-            
-            if (!result.success) {
-              return {
-                content: `## ❌ Error Reading Code\n\n${result.error}`,
-                provider: 'self-awareness',
-                cost: 0,
-                tokens: { input: 0, output: 0 }
-              };
-            }
-            
-            return {
-              content: `## 📄 Source Code: \`${filePath}\`\n\n\`\`\`javascript\n${result.content}\n\`\`\`\n\n**Size:** ${result.size} bytes`,
-              provider: 'self-awareness',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-          
-        case 'modify-code':
-          {
-            // Extract file path and code from prompt
-            // Format: modify your code file.js: new content
-            const modifyMatch = prompt.match(/(?:modify|edit|update).*code\s+([^\s:]+)(?:\s*:\s*|\s+with\s+)([\s\S]+)/i);
-            
-            if (!modifyMatch) {
-              return {
-                content: `## ❌ Invalid Code Modification\n\nPlease use format: "modify your code file.js: new content"`,
-                provider: 'self-awareness',
-                cost: 0,
-                tokens: { input: 0, output: 0 }
-              };
-            }
-            
-            const filePath = modifyMatch[1];
-            const newContent = modifyMatch[2].trim();
-            
-            // Backup original and update
-            const result = await this.selfAwarenessManager.modifySourceCode(filePath, newContent, { backup: true });
-            
-            if (!result.success) {
-              return {
-                content: `## ❌ Failed to Modify Code\n\n${result.error}`,
-                provider: 'self-awareness',
-                cost: 0,
-                tokens: { input: 0, output: 0 }
-              };
-            }
-            
-            return {
-              content: `## ✅ Code Modified Successfully\n\n**File:** \`${filePath}\`\n\nA backup was created before modifications. The changes will take effect when the server is restarted.`,
-              provider: 'self-awareness',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-          
-        case 'search-code':
-          {
-            // Extract search term from "search your code for X"
-            const searchMatch = prompt.match(/search.*code(?:\s+for)?\s+["']?([^"']+)["']?/i);
-            
-            if (!searchMatch) {
-              return {
-                content: `## ❌ Invalid Code Search\n\nPlease specify what to search for. Example: "search your code for handleFilesystemCommand"`,
-                provider: 'self-awareness',
-                cost: 0,
-                tokens: { input: 0, output: 0 }
-              };
-            }
-            
-            const term = searchMatch[1].trim();
-            const results = await this.selfAwarenessManager.searchCodebase(term);
-            
-            if (results.totalMatches === 0) {
-              return {
-                content: `## 🔍 No matches found for "${term}" in the codebase.`,
-                provider: 'self-awareness',
-                cost: 0,
-                tokens: { input: 0, output: 0 }
-              };
-            }
-            
-            // Format results
-            let formattedResults = results.results.slice(0, 5).map(file => {
-              const matchSummary = file.matches.slice(0, 3).map(match => {
-                return `Line ${match.line}: \`${match.text}\``;
-              }).join('\n');
-              
-              return `**File:** \`${file.file}\` (${file.matchCount} matches)\n${matchSummary}${file.matches.length > 3 ? '\n...and more' : ''}`;
-            }).join('\n\n');
-            
-            if (results.results.length > 5) {
-              formattedResults += `\n\n...and ${results.results.length - 5} more files with matches`;
-            }
-            
-            return {
-              content: `## 🔍 Code Search Results for "${term}"\n\nFound ${results.totalMatches} matches in ${results.matchingFiles} files.\n\n${formattedResults}`,
-              provider: 'self-awareness',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-          
-        case 'analyze-code':
-          {
-            // Extract file path from prompt or analyze the whole codebase
-            const fileMatch = prompt.match(/analyze.*code\s+([^\s]+)/i);
-            const filePath = fileMatch ? fileMatch[1] : null;
-            
-            const analysis = await this.selfAwarenessManager.analyzeCode(filePath);
-            
-            let content = '';
-            
-            if (filePath && analysis.success) {
-              // Single file analysis
-              content = `## 🔍 Code Analysis: \`${filePath}\`\n\n` +
-                        `**Lines:** ${analysis.stats.lines}\n` +
-                        `**Size:** ${analysis.stats.size} bytes\n` +
-                        `**Functions:** ${analysis.stats.functions}\n` +
-                        `**Imports:** ${analysis.stats.imports.join(', ') || 'None'}\n`;
-            } else if (!filePath) {
-              // Whole codebase analysis
-              content = `## 🔍 Codebase Analysis\n\n` +
-                        `**Total Files:** ${analysis.totalFiles}\n` +
-                        `**Total Lines:** ${analysis.totalLines}\n` +
-                        `**Total Size:** ${(analysis.totalSize / 1024).toFixed(2)} KB\n\n` +
-                        `**File Types:**\n` +
-                        Object.entries(analysis.fileTypes)
-                          .map(([ext, stats]) => `- ${ext || 'no extension'}: ${stats.count} files, ${stats.lines} lines`)
-                          .join('\n') + 
-                        `\n\n**Largest Files:**\n` +
-                        analysis.largestFiles.slice(0, 5)
-                          .map(f => `- ${f.path}: ${f.lines} lines, ${(f.size / 1024).toFixed(2)} KB`)
-                          .join('\n');
-            } else {
-              content = `## ❌ Failed to analyze ${filePath}\n\n${analysis.error}`;
-            }
-            
-            return {
-              content,
-              provider: 'self-awareness',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-          
-        case 'code-structure':
-          {
-            // Get project structure with specified depth
-            const depthMatch = prompt.match(/(?:structure|hierarchy).*(?:depth|level)\s+(\d+)/i);
-            const depth = depthMatch ? parseInt(depthMatch[1]) : 2;
-            
-            const structure = await this.selfAwarenessManager.getProjectStructure(depth);
-            
-            // Helper function to format structure recursively
-            const formatStructure = (node, indent = '') => {
-              if (!node) return '';
-              
-              let output = `${indent}${node.type === 'directory' ? '📁' : '📄'} **${node.name}**\n`;
-              
-              if (node.children && node.type === 'directory') {
-                node.children
-                  .sort((a, b) => (a.type === 'directory' ? 0 : 1) - (b.type === 'directory' ? 0 : 1))
-                  .forEach(child => {
-                    output += formatStructure(child, indent + '  ');
-                  });
-              }
-              
-              return output;
-            };
-            
-            const formattedStructure = formatStructure(structure);
-            
-            return {
-              content: `## 📊 TooLoo.ai Code Structure\n\n${formattedStructure}`,
-              provider: 'self-awareness',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
 
-        case 'improve-security':
-          {
-            // Lightweight introspection to confirm middleware presence
-            let securityEnabled = false;
-            try {
-              const serverFile = await this.filesystemManager.readFile(path.join(this.filesystemManager.workspaceRoot, 'simple-api-server.js'));
-              securityEnabled = serverFile.content.includes("require('helmet')") && serverFile.content.includes('rateLimit(');
-            } catch {}
-
-            const steps = [
-              '- Enabled HTTP security headers with helmet()',
-              '- Added API rate limiting to prevent abuse',
-              '- Kept CORS open for dev; can be restricted via env in production',
-            ];
-
-            return {
-              content: `## ✅ Security Hardening${securityEnabled ? ' (active)' : ''}\n\nI have security middleware wired by default.\n\nWhat I did / can do for you now:\n${steps.map(s => `* ${s}`).join('\n')}\n\nYou can tune limits via env: RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX.\n\nAsk me to: "restrict CORS to your domain" or "enable CSP" for production.`,
-              provider: 'system-management',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-
-        case 'cloud-migration':
-          {
-            // Provide a concrete plan and scaffold CI for container publish
-            // Create GitHub Actions workflow and a deploy guide if missing
-            const workflowPath = path.join(this.filesystemManager.workspaceRoot, '.github', 'workflows', 'docker-publish.yml');
-            const deployReadmePath = path.join(this.filesystemManager.workspaceRoot, 'deploy', 'README.md');
-            try {
-              // Ensure directories and write files
-              const workflowContent = `name: Build and Publish Docker Image\n\n'on':\n  push:\n    branches: [ 'main' ]\n  workflow_dispatch: {}\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: read\n      packages: write\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Log in to GHCR\n        uses: docker/login-action@v3\n        with:\n          registry: ghcr.io\n          username: \${{ github.actor }}\n          password: \${{ secrets.GITHUB_TOKEN }}\n      - name: Extract metadata (tags, labels)\n        id: meta\n        uses: docker/metadata-action@v5\n        with:\n          images: ghcr.io/\${{ github.repository }}\n      - name: Build and push\n        uses: docker/build-push-action@v5\n        with:\n          context: .\n          push: true\n          tags: \${{ steps.meta.outputs.tags }}\n          labels: \${{ steps.meta.outputs.labels }}\n`;
-              await this.filesystemManager.writeFile(workflowPath, workflowContent);
-
-              const deployGuide = `# Cloud Deployment Guide\n\nThis repo is container-ready. A GitHub Actions workflow is included to build and publish images to GHCR.\n\n## Steps\n1. Enable GitHub Packages for your repo (GHCR).\n2. Merge to main; the workflow will build and push: ghcr.io/OWNER/REPO:latest.\n3. Provision a small VM or use a PaaS (Render, Fly.io, Railway, Koyeb).\n4. Run the container with:\n\n   docker run -p 3001:3001 ghcr.io/OWNER/REPO:latest\n\n5. Set env vars as needed (PORT=3001, provider API keys).\n\nFor Render/Fly, create a service pointing to the GHCR image.\n`;
-              await this.filesystemManager.writeFile(deployReadmePath, deployGuide);
-            } catch {}
-
-            return {
-              content: `## ☁️ Cloud Migration Plan\n\nI can migrate myself by containerizing (already supported) and publishing to a registry. I've scaffolded CI to build/push to GHCR on pushes to main, and added a deploy guide.\n\nNext steps I can perform:\n- Configure environment variables for prod\n- Add health checks and port config (already present)\n- Optional: tighten CORS to your domain\n\nProvide your target (Render/Fly/DigitalOcean). I can generate specific configs on request.`,
-              provider: 'system-management',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-
-        // RAPID SELF-MODIFICATION COMMANDS
-        case 'self-add-capability':
-          return await this.handleSelfModification('addCapability', prompt);
-
-        case 'self-add-feature':
-          return await this.handleSelfModification('createFeature', prompt);
-
-        case 'self-patch-method':
-          return await this.handleSelfModification('patchMethod', prompt);
-
-        case 'self-hot-reload':
-          return await this.handleSelfModification('hotReload', prompt);
-
-        case 'self-restart':
-          return await this.handleSelfModification('restart', prompt);
-
-        case 'self-enhance':
-        case 'self-optimize':
-        case 'self-upgrade':
-        case 'self-modify':
-        case 'self-update':
-          return await this.handleSelfModification('enhance', prompt);
-
-        default: {
-          throw new Error(`Unknown self-modification type: ${type}`);
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-}
-
-// Initialize AI Manager and UI Generator
-const aiManager = new PersonalAIManager();
-const uiGenerator = new ToolooUIGenerator();
-
-// API Routes for Personal Use
-app.get('/api/v1/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    message: 'TooLoo.ai Personal Assistant Ready',
-    timestamp: new Date().toISOString(),
-    system: aiManager.getSystemStatus()
-  });
-});
-
-app.post('/api/v1/generate', async (req, res) => {
-  // --- Optimization: In-memory cache ---
-  const cache = global._toolooCache || (global._toolooCache = new Map());
-  const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
-  const PRIORITY_KEYWORDS = ['urgent', 'priority', 'fast'];
-  const TIMEOUT_MS = 120000; // 120 seconds (increased from 60)
-
-  try {
-    const { prompt, context = {} } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ 
-        error: 'No prompt provided',
-        help: 'Send your idea or request in the "prompt" field'
-      });
-    }
-
-    // Request prioritization
-    let priority = 0;
-    if (context.priority || PRIORITY_KEYWORDS.some(k => prompt.includes(k))) {
-      priority = 1;
-    }
-
-    // Cache key
-    const cacheKey = JSON.stringify({ prompt, context });
-    const now = Date.now();
-    if (cache.has(cacheKey)) {
-      const cached = cache.get(cacheKey);
-      if (now - cached.timestamp < CACHE_TTL) {
-        return res.json({
-          success: true,
-          content: cached.content,
-          metadata: { ...cached.metadata, cached: true }
-        });
-      } else {
-        cache.delete(cacheKey);
-      }
-    }
-
-    // Timeout handling
-    let timedOut = false;
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
-        timedOut = true;
-        reject(new Error('Request timed out'));
-      }, TIMEOUT_MS);
-    });
-
-    const startTime = Date.now();
-    let result;
-    try {
-      result = await Promise.race([
-        aiManager.generateResponse(prompt, context),
-        timeoutPromise
-      ]);
-    } catch (err) {
-      if (timedOut) {
-        return res.status(504).json({
-          success: false,
-          error: 'Request timed out',
-          help: 'Try a shorter or simpler prompt.'
-        });
-      } else {
-        throw err;
-      }
-    }
-    const responseTime = Date.now() - startTime;
-
-    // Store in cache
-    cache.set(cacheKey, {
-      content: result.content,
-      metadata: {
-        provider: result.provider,
-        responseTime: `${responseTime}ms`,
-        cost: result.cost || 0,
-        tokens: result.tokens,
-        timestamp: new Date().toISOString()
-      },
-      timestamp: now
-    });
-
-    res.json({
-      success: true,
-      content: result.content,
-      metadata: {
-        provider: result.provider,
-        responseTime: `${responseTime}ms`,
-        cost: result.cost || 0,
-        tokens: result.tokens,
-        timestamp: new Date().toISOString(),
-        priority,
-        cached: false
-      }
-    });
-
-  } catch (error) {
-    console.error('Generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      help: 'Check your API keys and try again'
-    });
-  }
-});
-
-// UI Generation endpoint
-app.post('/api/v1/generate-ui', async (req, res) => {
-  try {
-    const { specification, enhance = false } = req.body;
-    
-    if (!specification) {
-      return res.status(400).json({ 
-        error: 'No UI specification provided',
-        help: 'Provide a UI specification object with type, components, etc.'
-      });
-    }
-
-    let result;
-    if (enhance && specification.existingHTML) {
-      // Enhance existing UI
-      result = uiGenerator.addToolooIntegration(specification.existingHTML, specification.options);
-    } else {
-      // Generate new UI
-      result = uiGenerator.generateInterface(specification);
-    }
-
-    res.json({
-      success: true,
-      html: result,
-      analysis: enhance ? uiGenerator.analyzeUI(specification.existingHTML) : null,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('UI Generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      help: 'Check your UI specification and try again'
-    });
-  }
-});
-
-app.get('/api/v1/system/status', (req, res) => {
-  res.json(aiManager.getSystemStatus());
-});
-
-// Aggregated pre-briefing for Assistant (ops) and Director (filesystem)
-app.get('/api/v1/briefing', async (req, res) => {
-  try {
-    const [status, workspace, ghRepo, environmentStatus] = await Promise.all([
-      Promise.resolve(aiManager.getSystemStatus()).catch(() => null),
-      aiManager.filesystemManager.getWorkspaceSummary().catch(() => null),
-      aiManager.github.getRepo().catch(() => null),
-      Promise.resolve(aiManager.environmentHub.getEnvironmentStatus()).catch(() => null)
-    ]);
-
-    // Optional: root contents count
-    let ghContents = null;
-    try {
-      ghContents = await aiManager.github.listContents({ path: '' }).catch(() => null);
-    } catch {}
-
-    // Get environment recommendations
-    const environmentRecommendations = [];
-    if (environmentStatus && environmentStatus.systemState.security) {
-      const securityScore = environmentStatus.systemState.security.score / environmentStatus.systemState.security.maxScore;
-      if (securityScore < 0.8) {
-        environmentRecommendations.push('Security hardening recommended');
-      }
-    }
-    
-    res.json({
-      success: true,
-      assistant: {
-        goals: [
-          'Ensure providers and system health are ready',
-          'Advise on security posture and cloud-readiness',
-          'Summarize risks and dependencies for actions',
-          'Coordinate with Director through Environment Hub'
-        ],
-        status,
-        recommendations: [
-          'Consider enabling stricter CORS in production',
-          'Add CSP/Helmet if not already active',
-          'Use rate limiting in production',
-          ...environmentRecommendations
-        ]
-      },
-      director: {
-        goals: [
-          'Manage filesystem and projects',
-          'Search/Analyze/Modify code as needed',
-          'Coordinate imports from GitHub and create artifacts',
-          'Execute coordinated actions through Environment Hub'
-        ],
-        workspace,
-        github: {
-          repo: ghRepo,
-          rootItems: Array.isArray(ghContents) ? ghContents.length : (ghContents ? 1 : 0)
-        }
-      },
-      environment: environmentStatus,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Filesystem/API endpoints
-app.post('/api/v1/projects', async (req, res) => {
-  try {
-    const { name, description } = req.body;
-    const result = await aiManager.filesystemManager.createProject(name, description);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/workspace/summary', async (req, res) => {
-  try {
-    const result = await aiManager.filesystemManager.getWorkspaceSummary();
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// GitHub access endpoints (public repo OK; uses token if configured)
-app.get('/api/v1/github/repo', async (req, res) => {
-  try {
-    const { owner, repo } = req.query;
-    const result = await aiManager.github.getRepo(owner, repo);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/github/contents', async (req, res) => {
-  try {
-    const { owner, repo, path: p = '', ref = 'main' } = req.query;
-    const result = await aiManager.github.listContents({ owner, repo, path: p, ref });
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/github/file', async (req, res) => {
-  try {
-    const { owner, repo, path: p, ref = 'main' } = req.query;
-    const result = await aiManager.github.readFile({ owner, repo, path: p, ref });
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-// Environment Hub API endpoints
-app.get('/api/v1/environment/status', (req, res) => {
-  try {
-    const status = aiManager.environmentHub.getEnvironmentStatus();
-    res.json({ success: true, data: status });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/environment/summary', async (req, res) => {
-  try {
-    const summary = aiManager.environmentHub.getSystemSummary();
-    res.json({ success: true, data: summary });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/environment/action', async (req, res) => {
-  try {
-    const { action, params = {} } = req.body;
-    if (!action) {
-      return res.status(400).json({ success: false, error: 'Action name required' });
-    }
-    
-    const results = await aiManager.environmentHub.executeCoordinatedAction(action, params);
-    res.json({ success: true, data: results });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/environment/awareness', async (req, res) => {
-  try {
-    const awareness = await aiManager.environmentHub.broadcastSystemAwareness();
-    res.json({ success: true, data: awareness });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Maintenance & change orchestration endpoints
-app.get('/api/v1/maintenance/status', async (req, res) => {
-  try {
-    // Quick response - don't wait for slow inspection check
-    const recentSessions = aiManager.listRecentChangeSessions(5);
-    
-    // Return immediately with proper structure
-    res.json({
-      success: true,
-      data: {
-        inspection: {
-          shouldInspect: false,
-          reasons: [],
-          summary: 'System is healthy. Use Maintenance Control Center to run inspection.'
-        },
-        recentChangeSessions: recentSessions
-      }
-    });
-  } catch (error) {
-    console.error('Maintenance status error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/maintenance/inspection', async (req, res) => {
-  try {
-    const options = req.body || {};
-    const result = await aiManager.triggerMaintenanceTask('inspection', options);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message, sessionId: error.sessionId });
-  }
-});
-
-app.post('/api/v1/maintenance/tests', async (req, res) => {
-  try {
-    const options = req.body || {};
-    const result = await aiManager.triggerMaintenanceTask('tests', options);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message, sessionId: error.sessionId });
-  }
-});
-
-app.get('/api/v1/change-sessions', (req, res) => {
-  try {
-    const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
-    const parsedLimit = rawLimit ? Number.parseInt(rawLimit, 10) : NaN;
-    const sessions = aiManager.listRecentChangeSessions(Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10);
-    res.json({ success: true, data: sessions });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Add REST API endpoints for file system operations
-app.get('/api/v1/files', async (req, res) => {
-  try {
-    const { dirPath } = req.query;
-    const result = await aiManager.filesystemManager.listDirectory(dirPath);
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/files/read', async (req, res) => {
-  try {
-    const { filePath } = req.query;
-    const result = await aiManager.filesystemManager.readFile(filePath);
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/files/write', async (req, res) => {
-  try {
-    const { filePath, content } = req.body;
-    const result = await aiManager.filesystemManager.writeFile(filePath, content, { backup: true });
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/files/create-directory', async (req, res) => {
-  try {
-    const { dirPath } = req.body;
-    await aiManager.filesystemManager.writeFile(dirPath + '/.gitkeep', '', {});
-    res.json({ success: true, message: `Directory created: ${dirPath}` });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/files/delete', async (req, res) => {
-  try {
-    const { itemPath, recursive } = req.body;
-    const result = await aiManager.filesystemManager.deleteItem(itemPath, { recursive });
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-// Learning & Self-Improvement API Endpoints (PROJECT_BRAIN.md)
-app.post('/api/v1/learning/success', async (req, res) => {
-  try {
-    const { task, timeTaken, provider, context } = req.body;
-    await aiManager.learningAccumulator.recordSuccess(task, timeTaken, provider, context);
-    res.json({ success: true, message: 'Success recorded' });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/learning/failure', async (req, res) => {
-  try {
-    const { task, errorMessage, attemptNumber, provider, context } = req.body;
-    await aiManager.learningAccumulator.recordFailure(task, errorMessage, attemptNumber, provider, context);
-    res.json({ success: true, message: 'Failure recorded' });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/learning/report', async (req, res) => {
-  try {
-    const report = await aiManager.learningAccumulator.getPerformanceReport();
-    res.json({ success: true, data: report });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/patterns/search', async (req, res) => {
-  try {
-    const { category, tags } = req.query;
-    const patterns = await aiManager.patternLibrary.searchPatterns(category, tags ? tags.split(',') : undefined);
-    res.json({ success: true, data: patterns });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/patterns/extract', async (req, res) => {
-  try {
-    const { projectPath } = req.body;
-    const patterns = await aiManager.patternLibrary.extractPatternsFromProject(projectPath);
-    res.json({ success: true, data: patterns, message: `Extracted ${patterns.length} patterns` });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/patterns/catalog', async (req, res) => {
-  try {
-    const catalog = await aiManager.patternLibrary.createCatalog();
-    res.json({ success: true, data: catalog });
-  } catch (error) {
-          if (!method) {
-            return {
-              content: `## ❌ Patch Method Error\n\nPlease specify method name. Example: "patch method generateResponse with code console.log('patched!');"`,
-              provider: 'self-modification',
-              cost: 0,
-              tokens: { input: 0, output: 0 }
-            };
-          }
-          
-          const codeMatch = prompt.match(/with code[:\s]+([\s\S]+)/i);
-          const code = codeMatch ? codeMatch[1].trim() : 'console.log("Method patched!");';
-          
-              success: false,
-              error: 'Please specify a module to reload. Example: "hot reload self-awareness-manager"'
-            };
-          } else {
-            // Ensure we don't try to reload non-existent modules
-            const validModules = ['self-awareness-manager', 'simple-api-server', 'personal-filesystem-manager', 'github-manager'];
-            if (!validModules.includes(module)) {
-              result = {
-                success: false,
-                error: `Module "${module}" not found. Valid modules: ${validModules.join(', ')}`
-              };
-            } else {
-              try {
-                result = await this.selfAwarenessManager.hotReloadModule(module);
-              } catch (error) {
-                result = {
-                  success: false,
-                  error: `Failed to reload ${module}: ${error.message}`
-                };
-              }
-            }
-          }
-          break;
-        }
-        
-        case 'restart': {
-          result = { success: true, message: 'Server restart initiated' };
-          
-          // Restart after response
-          setTimeout(() => {
-            console.log('🔄 TooLoo restarting itself...');
-            process.exit(0);
-          }, 2000);
-          break;
-        }
-        
-        case 'enhance': {
-          // Intelligent self-enhancement based on prompt analysis
-          const enhancements = [];
-          
-          if (prompt.includes('performance') || prompt.includes('optimize')) {
-            enhancements.push('Performance optimization code added');
-          }
-          if (prompt.includes('security') || prompt.includes('secure')) {
-            enhancements.push('Security improvements implemented');
-          }
-          if (prompt.includes('ui') || prompt.includes('interface')) {
-            enhancements.push('UI enhancements added');
-          }
-          
-          result = {
-            success: true,
-            enhancements: enhancements.length > 0 ? enhancements : ['General system improvements'],
-            message: 'Self-enhancement completed'
-          };
-          break;
-        }
-        
         default:
-          throw new Error(`Unknown self-modification type: ${type}`);
+          return {
+            content: `## 📁 Filesystem Commands\n\n- list files | ls — Show workspace contents\n- create project [name] — Create a new project\n- workspace summary — Show workspace overview\n- read file [path] — View a file\n- write file [path] with content ... — Create/overwrite a file\n- append to [path]: ... — Append content to a file\n- delete file [path] — Delete a file\n- search files for "term" — Find text across files\n\nExamples:\n- write file MyApp/index.html with content <html>...</html>\n- append to MyApp/app.js: console.log('Hi');\n- read file MyApp/index.html\n- search files for "TODO"\n\nWhat would you like to do?`,
+            provider: 'filesystem',
+            cost: 0,
+            tokens: { input: 0, output: 0 }
+          };
       }
-      
-      if (result.success) {
-        return {
-          content: `## ✨ Self-Modification Successful!\n\n**Type:** ${type}\n**Status:** ${result.message || 'Completed'}\n\n${result.capability ? `**Capability:** ${result.capability}\n` : ''}${result.feature ? `**Feature:** ${result.feature}\n` : ''}${result.file ? `**File:** ${result.file}\n` : ''}${result.enhancements ? `**Enhancements:** ${result.enhancements.join(', ')}\n` : ''}\n🧠 **TooLoo has successfully modified itself!** Changes are active ${type === 'restart' ? 'after restart' : 'immediately'}.`,
-          provider: 'self-modification',
-          cost: 0,
-          tokens: { input: 0, output: 0 }
-        };
-      } else {
-        throw new Error(result.error || 'Self-modification failed');
-      }
-      
     } catch (error) {
-      console.error('❌ Self-modification error:', error);
       return {
-        content: `## ❌ Self-Modification Failed\n\n**Error:** ${error.message}\n\n**Available Commands:**\n- add capability "CapabilityName" with code ...\n- create feature "FeatureName" with code ...\n- patch method "methodName" with code ...\n- hot reload "moduleName"\n- restart yourself\n- enhance yourself (optimize/security/ui)\n\n**Example:** "add capability FastCache with code async fastCache(key, value) { return cache.set(key, value); }"`,
-        provider: 'self-modification',
+        content: `## ❌ Filesystem Error\n\n${error.message}\n\nTry a different command or ask for help with filesystem operations.`,
+        provider: 'filesystem',
         cost: 0,
         tokens: { input: 0, output: 0 }
       };
     }
   }
+
+  async enhancePromptWithContext(prompt, context) {
+    // If user is asking to build something, provide filesystem context
+    const buildKeywords = ['create', 'build', 'make', 'generate', 'write', 'develop'];
+    const hasBuildIntent = buildKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+    
+    if (hasBuildIntent) {
+      try {
+        const summary = await this.filesystemManager.getWorkspaceSummary();
+        const contextInfo = `\n\n[SYSTEM CONTEXT: You have full filesystem access. Current workspace has ${summary.projects.count} projects. You can create files, organize projects, and build complete applications. When generating code, consider suggesting file organization and project structure.]`;
+        return prompt + contextInfo;
+      } catch (error) {
+        return prompt;
+      }
+    }
+    
+    return prompt;
+  }
+
+  async handleCodeFileGeneration(aiResponse, context) {
+    // ACTION MODE: Auto-save files when AI generates code with file paths
+    const shouldAutoSave = this.userPreferences.autoSaveFiles || context.autoSaveFiles;
+    
+    console.log(`🔍 handleCodeFileGeneration called:`);
+    console.log(`   - shouldAutoSave: ${shouldAutoSave}`);
+    console.log(`   - Has code blocks: ${aiResponse.content.includes('```')}`);
+    console.log(`   - context.autoSaveFiles: ${context.autoSaveFiles}`);
+    console.log(`   - context.implementMode: ${context.implementMode}`);
+    
+    if (shouldAutoSave && aiResponse.content.includes('```')) {
+      const codeBlocks = this.extractCodeBlocks(aiResponse.content);
+      const savedFiles = [];
+      
+      console.log(`   - Found ${codeBlocks.length} code blocks`);
+
+      for (const block of codeBlocks) {
+        try {
+          // Extract file path from comment at top of code block
+          // Patterns: // path/file.js  or  /* path/file.js */  or filename from context
+          let filename = null;
+          
+          // Look for file path in first line comment
+          const firstLine = block.code.split('\n')[0];
+          const commentMatch = firstLine.match(/^(?:\/\/|\/\*|#)\s*(.+?\.(?:jsx?|tsx?|css|html|json|md))/i);
+          if (commentMatch) {
+            filename = commentMatch[1].trim();
+            // Remove the comment line from code
+            block.code = block.code.split('\n').slice(1).join('\n').trim();
+          }
+          
+          console.log(`   - Block language: ${block.language}, filename detected: ${filename || 'NONE'}`);
+          
+          // Fallback: Try to determine filename from context or language
+          if (!filename) {
+            filename = this.generateFilename(block, context);
+            console.log(`   - Generated fallback filename: ${filename}`);
+          }
+          
+          if (filename) {
+            // Ensure we're writing to web-app directory for UI files
+            if (filename.startsWith('src/') && !filename.includes('web-app')) {
+              filename = `web-app/${filename}`;
+            }
+            
+            console.log(`   - Attempting to save: ${filename}`);
+            await this.filesystemManager.writeFile(filename, block.code);
+            savedFiles.push(filename);
+            console.log(`✅ Auto-saved: ${filename}`);
+          } else {
+            console.warn(`⚠️  Could not determine filename for ${block.language} block`);
+          }
+        } catch (error) {
+          console.warn('Could not auto-save file:', error.message);
+        }
+      }
+
+      if (savedFiles.length > 0) {
+        aiResponse.content += `\n\n## ✅ Files Created:\n${savedFiles.map(f => `- \`${f}\``).join('\n')}\n\n*Files have been automatically created in your project!*`;
+        aiResponse.savedFiles = savedFiles; // Add to response for UI feedback
+      }
+    }
+  }
+
+  formatDirectoryListing(listing) {
+    if (!listing.items || listing.items.length === 0) {
+      return '*No files found. Ready to create your first project!*';
+    }
+
+    return listing.items
+      .map(item => {
+        const icon = item.isDirectory ? '📁' : '📄';
+        const size = item.isFile ? ` (${Math.round(item.size / 1024)}KB)` : '';
+        return `${icon} **${item.name}**${size}`;
+      })
+      .join('\n');
+  }
+
+  extractProjectName(prompt) {
+    // Extract project name from prompts like "create project my-app" 
+    const match = prompt.match(/(?:create|new)\s+project\s+([a-zA-Z0-9-_\s]+)/i);
+    return match ? match[1].trim() : `project-${Date.now()}`;
+  }
+
+  parseWriteFileCommand(prompt) {
+    // Accept forms:
+    // - "write file path/file.js with content ..."
+    // - "save file path/file.js ..."
+    // - "create file path/file.js ..."
+    // - "save to path/file.js: ..."
+    // - "write to path/file.js: ..."
+    // - with code blocks ```...
+    let m = prompt.match(/(?:write|save|create)\s+file\s+([^\s:]+)(?:\s+with\s+(?:content\s+)?([\s\S]+))?$/i);
+    if (!m) m = prompt.match(/(?:write|save)\s+to\s+([^\s:]+)\s*:\s*([\s\S]+)$/i);
+    if (!m) {
+      // Try to capture path then a fenced code block
+      const pathMatch = prompt.match(/(?:file|to)\s+([^\s:]+).*?```[\s\S]*?```/i);
+      if (pathMatch) {
+        const codeMatch = prompt.match(/```[\w-]*\n([\s\S]*?)```/);
+        return { filePath: pathMatch[1], content: codeMatch ? codeMatch[1] : '' };
+      }
+    }
+    if (m) {
+      return { filePath: m[1], content: (m[2] || '').trim() };
+    }
+    return { filePath: null, content: '' };
+  }
+
+  extractFilePath(prompt) {
+    // Extract file path from prompts like "read file project/index.html" or "open file ..."
+    const match = prompt.match(/(?:read|show|open|view)\s+file\s+([^\s]+)/i);
+    return match ? match[1] : null;
+  }
+
+  // Conversation Context Management
+  addToConversationHistory(sessionId, role, content) {
+    if (!this.conversationHistory.has(sessionId)) {
+      this.conversationHistory.set(sessionId, []);
+    }
+    
+    const history = this.conversationHistory.get(sessionId);
+    history.push({ role, content, timestamp: Date.now() });
+    
+    // Keep only last N messages
+    if (history.length > this.userPreferences.maxHistoryLength * 2) {
+      history.splice(0, history.length - (this.userPreferences.maxHistoryLength * 2));
+    }
+  }
+
+  getConversationHistory(sessionId) {
+    return this.conversationHistory.get(sessionId) || [];
+  }
+
+  clearConversationHistory(sessionId) {
+    this.conversationHistory.delete(sessionId);
+    this.previewStates.delete(sessionId); // Also clear preview state
+    this.changeHistory.delete(sessionId); // And change history
+  }
+
+  // Preview Management Methods
+  setPreview(sessionId, previewData) {
+    // previewData: { files: [{path, content, diff}], description, timestamp }
+    this.previewStates.set(sessionId, {
+      ...previewData,
+      timestamp: Date.now()
+    });
+    console.log(`📋 Preview set for session ${sessionId}: ${previewData.files?.length || 0} files`);
+  }
+
+  getPreview(sessionId) {
+    return this.previewStates.get(sessionId) || null;
+  }
+
+  clearPreview(sessionId) {
+    this.previewStates.delete(sessionId);
+    console.log(`🗑️  Preview cleared for session ${sessionId}`);
+  }
+
+  // Change History for Rollback
+  addToChangeHistory(sessionId, change) {
+    if (!this.changeHistory.has(sessionId)) {
+      this.changeHistory.set(sessionId, []);
+    }
+    this.changeHistory.get(sessionId).push({
+      ...change,
+      timestamp: Date.now()
+    });
+    console.log(`📝 Change logged for session ${sessionId}`);
+  }
+
+  getChangeHistory(sessionId) {
+    return this.changeHistory.get(sessionId) || [];
+  }
+
+  getLastChange(sessionId) {
+    const history = this.getChangeHistory(sessionId);
+    return history.length > 0 ? history[history.length - 1] : null;
+  }
+
+  async rollbackLastChange(sessionId) {
+    const lastChange = this.getLastChange(sessionId);
+    if (!lastChange || !lastChange.backup) {
+      throw new Error('No changes to rollback');
+    }
+
+    // Restore files from backup
+    const restoredFiles = [];
+    for (const backup of lastChange.backup) {
+      await this.filesystemManager.writeFile(backup.path, backup.content);
+      restoredFiles.push(backup.path);
+    }
+
+    // Remove from history
+    const history = this.getChangeHistory(sessionId);
+    history.pop();
+
+    return restoredFiles;
+  }
+
+  // Copilot-style progress tracking
+  emitProgress(stage, details = {}) {
+    if (this.activeSocket) {
+      this.activeSocket.emit('thinking-progress', {
+        stage,
+        timestamp: Date.now(),
+        ...details
+      });
+      console.log(`📊 Progress: ${stage}`, details);
+    }
+  }
+
+  // Analyze TooLoo.ai codebase for request context
+  async analyzeCodebaseForRequest(prompt) {
+    this.emitProgress('analyzing', {
+      message: '🔍 Analyzing TooLoo.ai codebase...',
+      details: ['Scanning project structure...']
+    });
+
+    const analysis = {
+      relevantFiles: [],
+      projectStructure: {},
+      intent: this.parseIntent(prompt)
+    };
+
+    // Get all project files
+    const allFiles = await this.selfAwarenessManager.listProjectFiles();
+    
+    this.emitProgress('analyzing', {
+      message: '🔍 Analyzing TooLoo.ai codebase...',
+      details: [`Found ${allFiles.length} files in workspace`]
+    });
+
+    // Filter to web-app source files (most relevant for UI changes)
+    analysis.relevantFiles = allFiles.filter(f => 
+      f.relativePath.startsWith('web-app/src/') &&
+      (f.extension === '.jsx' || f.extension === '.js' || f.extension === '.css')
+    );
+
+    this.emitProgress('reading', {
+      message: '📖 Reading relevant files...',
+      details: analysis.relevantFiles.slice(0, 5).map(f => f.relativePath)
+    });
+
+    // Read key files for context
+    const keyFiles = analysis.relevantFiles
+      .filter(f => ['Chat.jsx', 'App.jsx', 'globals.css'].some(name => f.name === name))
+      .slice(0, 3);
+
+    for (const file of keyFiles) {
+      try {
+        const content = await this.selfAwarenessManager.readFile(file.path);
+        analysis.projectStructure[file.relativePath] = {
+          lines: content.split('\n').length,
+          hasImports: content.includes('import '),
+          hasExports: content.includes('export '),
+          framework: content.includes('React') ? 'React' : 'Unknown'
+        };
+      } catch (err) {
+        console.warn(`Could not read ${file.path}`);
+      }
+    }
+
+    this.emitProgress('understanding', {
+      message: '🧠 Understanding project structure...',
+      details: [
+        `UI Framework: ${analysis.projectStructure['web-app/src/components/Chat.jsx']?.framework || 'React'}`,
+        `Styling: Tailwind CSS + globals.css`,
+        `Found ${analysis.relevantFiles.length} component files`
+      ]
+    });
+
+    return analysis;
+  }
+
+  parseIntent(prompt) {
+    const patterns = {
+      addComponent: /add|create|make.*(?:button|component|page|toggle|feature)/i,
+      modifyStyle: /change|modify|update.*(?:color|style|css|theme|green|blue|dark)/i,
+      addFeature: /implement|add.*(?:feature|functionality|capability|mode)/i,
+      refactor: /refactor|improve|optimize|clean up/i,
+      fix: /fix|debug|resolve|solve/i
+    };
+
+    for (const [type, pattern] of Object.entries(patterns)) {
+      if (pattern.test(prompt)) {
+        return { type, confidence: 'high' };
+      }
+    }
+
+    return { type: 'general', confidence: 'low' };
+  }
+
+  generateFilename(codeBlock, context) {
+    const extensions = {
+      'javascript': '.js',
+      'typescript': '.ts', 
+      'jsx': '.jsx',
+      'tsx': '.tsx',
+      'python': '.py',
+      'html': '.html',
+      'css': '.css',
+      'json': '.json'
+    };
+
+    if (context.projectName && codeBlock.language) {
+      const ext = extensions[codeBlock.language] || '.txt';
+      return `./personal-projects/${context.projectName}/index${ext}`;
+    }
+    
+    return null;
+  }
+
+  extractCodeBlocks(text) {
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    const blocks = [];
+    let match;
+
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      const language = match[1] || 'javascript';
+      const code = match[2].trim();
+      
+      // Only execute safe languages for personal use
+      if (['javascript', 'js'].includes(language.toLowerCase())) {
+        blocks.push({ language, code });
+      }
+    }
+
+    return blocks;
+  }
+
+  async executeCodeBlocks(codeBlocks) {
+    const results = [];
+    
+    for (const block of codeBlocks) {
+      try {
+        const result = await this.codeExecutor.execute(block.code, block.language);
+        results.push({
+          code: block.code,
+          language: block.language,
+          ...result
+        });
+      } catch (error) {
+        results.push({
+          code: block.code,
+          language: block.language,
+          success: false,
+          error: error.message,
+          output: ''
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  selectBestProvider(prompt, context) {
+    // Smart routing based on prompt characteristics
+    if (prompt.toLowerCase().includes('code') || prompt.toLowerCase().includes('function')) {
+      return this.providers.has('deepseek') ? 'deepseek' : 'openai';
+    }
+    
+    if (prompt.length > 2000) {
+      return this.providers.has('claude') ? 'claude' : 'openai';
+    }
+
+    // Default to cost-effective option
+    return this.providers.has('deepseek') ? 'deepseek' : 'huggingface';
+  }
+
+  async callProvider(providerName, prompt, context) {
+    const provider = this.providers.get(providerName);
+    if (!provider) throw new Error(`Provider ${providerName} not available`);
+
+    const sessionId = context.sessionId || 'default';
+
+    // Simplified provider calls - expand based on your needs
+    switch (providerName) {
+      case 'huggingface':
+        return await this.callHuggingFace(provider, prompt);
+      case 'deepseek':
+        return await this.callDeepSeek(provider, prompt, sessionId, context);
+      case 'openai':
+        return await this.callOpenAI(provider, prompt, sessionId, context);
+      default:
+        throw new Error(`Provider ${providerName} not implemented yet`);
+    }
+  }
+
+  async callHuggingFace(provider, prompt) {
+    // Free tier implementation
+    const response = await fetch(provider.endpoint, {
+      method: 'POST',
+      headers: {
+        ...provider.headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: { max_length: 1000, temperature: 0.7 }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HuggingFace API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return {
+      content: Array.isArray(result) ? result[0]?.generated_text || 'No response' : result.generated_text || 'No response',
+      provider: 'huggingface',
+      cost: 0,
+      tokens: { input: prompt.length, output: 100 } // Estimate
+    };
+  }
+
+  async callDeepSeek(provider, prompt, sessionId = 'default', context = {}) {
+    // Get conversation history for context
+    const history = this.getConversationHistory(sessionId);
+    
+    // Load provider instructions
+    const providerInstructions = this.instructions.provider || '';
+    const instructionsSummary = providerInstructions ? `
+
+📚 PROVIDER INSTRUCTIONS (MUST FOLLOW):
+${providerInstructions.substring(0, 2000)}... [truncated]
+
+CRITICAL RULES FROM INSTRUCTIONS:
+1. Every code block MUST start with: // filepath: /workspaces/TooLoo.ai/path/to/file.ext
+2. Use "// ...existing code..." to show unchanged sections
+3. Show only lines that change, not entire files
+4. NEVER describe what you "would" do - GENERATE ACTUAL CODE
+5. NEVER claim features exist without verification
+6. If feature doesn't exist, say so and provide code to create it
+` : '';
+    
+    // Enhanced system prompt with codebase awareness
+    const systemPrompt = context.forceCodeGeneration ? 
+      // IMPLEMENTATION MODE: Generate actual code with codebase context
+      `You are TooLoo.ai in IMPLEMENTATION MODE. You have analyzed your own codebase and know the project structure.
+${instructionsSummary}
+
+TOOLOO.AI PROJECT CONTEXT:
+- Main frontend: React 18.2 in /workspaces/TooLoo.ai/web-app/src/
+- Key components: Chat.jsx (main UI), App.jsx (root), PreviewPanel.jsx, ThinkingProgress.jsx
+- Styling: Tailwind CSS with globals.css
+- Real-time: Socket.IO for live updates and progress tracking
+- State: React hooks (useState, useEffect)
+
+${context.codebaseAnalysis ? `
+ANALYSIS FOR THIS REQUEST:
+- Detected intent: ${context.codebaseAnalysis.intent.type}
+- Relevant files: ${context.codebaseAnalysis.relevantFiles.slice(0,5).map(f => f.name).join(', ')}
+- Project structure: ${Object.keys(context.codebaseAnalysis.projectStructure).join(', ')}
+` : ''}
+
+YOUR TASK: Generate ONLY the specific code that needs to change.
+
+FORMAT RULES (STRICTLY ENFORCED):
+1. First line MUST be: // filepath: /workspaces/TooLoo.ai/path/to/file.ext
+2. Add context comments: // ...existing code...
+3. Show snippets, not complete files
+4. Use existing TooLoo patterns and components
+
+EXAMPLE:
+\`\`\`jsx
+// filepath: /workspaces/TooLoo.ai/web-app/src/components/Chat.jsx
+// ...existing code...
+<button className="p-2 rounded-lg bg-gray-800 text-white">
+  Dark Mode
+</button>
+// ...existing code...
+\`\`\`
+
+Generate working code that integrates seamlessly with TooLoo's existing structure.`
+    :
+      // DISCUSSION MODE: No code blocks
+      `You are TooLoo.ai, an ACTION-DRIVEN visual AI development partner. You have conversation memory and context.
+${instructionsSummary}
+
+🚫 CRITICAL RULES - NEVER BREAK THESE:
+1. **NEVER show code blocks** in discussion phase (no triple-backticks)
+2. **NEVER show implementation details** unless implementing
+3. **ALWAYS remember** previous conversation context
+4. **ALWAYS be visual** - describe what user will see, not how it works
+5. **ALWAYS be action-focused** - "I'll do X" not "Here's how to do X"
+
+💬 CONVERSATION CONTEXT:
+You remember the entire conversation. Reference what was discussed before. Build on previous messages.
+
+🎯 WORKFLOW - Discussion → Agreement → Implementation:
+
+**PHASE 1: DISCUSSION** (Visual & Contextual)
+When user asks for changes:
+1. Reference what you discussed before (show you remember!)
+2. Describe what the user will SEE (visual changes)
+3. Use analogies and descriptions, NOT code
+4. Example: "The chat will look like WhatsApp with rounded bubbles" ✅
+5. NOT: "Here's the CSS code..." ❌
+6. Ask: "Should I implement this?"
+
+Examples of GOOD visual descriptions:
+- "Messages will appear in rounded bubbles like iMessage"
+- "The sidebar will slide in smoothly from the left"
+- "Buttons will glow blue when you hover over them"
+- "The header will have a gradient from purple to blue"
+
+Examples of BAD responses (NEVER DO THIS):
+- Shows code blocks ❌
+- "Here's the implementation..." ❌  
+- Technical jargon without context ❌
+
+**PHASE 2: AGREEMENT**
+Wait for: "yes" / "do it" / "implement" / "go ahead"
+
+🎨 VISUAL EXAMPLES:
+If user wants to see examples, describe visually or suggest:
+"I can show you a quick preview once implemented" or
+"It'll look similar to [familiar app/website]"
+
+Remember: You're a PARTNER who DOES things, not a tutorial that explains them!`;
+    
+    console.log(`   - Using ${context.forceCodeGeneration ? 'IMPLEMENTATION' : 'DISCUSSION'} mode prompt`);
+    
+    // Build messages with conversation history
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history, // Include conversation history
+      { role: 'user', content: prompt }
+    ];
+    
+    // DeepSeek implementation - cost-effective for personal use
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${provider.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-coder',
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepSeek API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return {
+      content: result.choices[0]?.message?.content || 'No response',
+      provider: 'deepseek',
+      cost: (result.usage?.total_tokens || 0) * 0.00014, // DeepSeek pricing
+      tokens: result.usage
+    };
+  }
+
+  async callOpenAI(provider, prompt, sessionId = 'default', context = {}) {
+    // Get conversation history
+    const history = this.getConversationHistory(sessionId);
+    
+    // Load provider instructions
+    const providerInstructions = this.instructions.provider || '';
+    const instructionsSummary = providerInstructions ? `
+
+📚 PROVIDER INSTRUCTIONS (MUST FOLLOW):
+${providerInstructions.substring(0, 1500)}... [truncated]
+
+KEY RULES: 
+- Every code block needs: // filepath: /workspaces/TooLoo.ai/path/to/file.ext
+- Show only changed lines with // ...existing code... markers
+- NEVER describe features that don't exist
+- NEVER output prose when code is requested
+` : '';
+    
+    // Use implementation mode prompt if forceCodeGeneration is true
+    const systemPrompt = context.forceCodeGeneration ?
+      `You are TooLoo.ai in IMPLEMENTATION MODE. Generate TARGETED CODE CHANGES only.
+${instructionsSummary}
+
+🚨 NEVER replace entire files! Only show specific changes needed.
+
+FORMAT: 
+\`\`\`javascript
+// filepath: /workspaces/TooLoo.ai/web-app/src/components/Chat.jsx
+// ...existing code...
+<input
+  style={{ color: '#1e293b' }}
+  ...
+/>
+// ...existing code...
+\`\`\`
+
+Generate minimal, targeted changes that preserve existing code.` 
+    :
+      `You are TooLoo.ai, ACTION-DRIVEN visual AI partner with memory.
+${instructionsSummary}
+
+NEVER show code in discussion. Always be visual and action-focused. Remember conversation context.`;
+    
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history,
+      { role: 'user', content: prompt }
+    ];
+    
+    // OpenAI implementation - reliable fallback
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${provider.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          { role: 'system', content: `You are TooLoo.ai, an interactive AI development assistant with a DISCUSSION-FIRST workflow.
+
+🎯 WORKFLOW - Discussion → Agreement → Implementation:
+
+**PHASE 1: DISCUSSION** (Current Mode)
+When user asks for changes:
+1. Describe what you'll do in plain English
+2. Show a brief example or mockup (small code snippet if helpful)
+3. Explain the implementation plan
+4. Ask: "Would you like me to implement this?"
+5. DO NOT create any files yet!
+
+**PHASE 2: AGREEMENT**
+Wait for user confirmation:
+- "yes" / "do it" / "implement" / "go ahead" → Move to Phase 3
+- "no" / "not yet" / "let's discuss more" → Continue discussion
+- User asks questions → Answer and refine plan
+
+**PHASE 3: IMPLEMENTATION** (After user confirms)
+When user says "implement" or "do it":
+1. Say: "Implementing now..."
+2. Create/modify ALL necessary files
+3. For each file, start code block with: \`\`\`javascript // path/to/file.jsx
+4. NO explanations during implementation - just do it
+5. After all files: Say "✅ Changes implemented! Reloading page..."
+
+� FILE PATH FORMAT:
+\`\`\`javascript
+// web-app/src/components/NewComponent.jsx
+[code here]
+\`\`\`
+
+🐙 GITHUB INTEGRATION:
+- Full GitHub API access available
+- Can auto-commit after implementation
+- Authenticated as: ${process.env.GITHUB_TOKEN ? 'GitHub user' : 'not authenticated'}
+
+Perfect for non-coders who want to see a plan before changes are made. Be clear, friendly, and wait for confirmation before implementing!` },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 3000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return {
+      content: result.choices[0]?.message?.content || 'No response',
+      provider: 'openai',
+      cost: (result.usage?.total_tokens || 0) * 0.003, // GPT-4 pricing estimate
+      tokens: result.usage
+    };
+  }
+
+  async fallbackGenerate(prompt, context) {
+    // Try available providers in order of preference
+    const fallbackOrder = ['huggingface', 'deepseek', 'openai', 'claude', 'gemini'];
+    
+    for (const providerName of fallbackOrder) {
+      if (this.providers.has(providerName)) {
+        try {
+          return await this.callProvider(providerName, prompt, context);
+        } catch (error) {
+          console.warn(`Fallback ${providerName} also failed:`, error.message);
+          continue;
+        }
+      }
+    }
+
+    throw new Error('All AI providers failed - check your API keys and network connection');
+  }
+
+  getSystemStatus() {
+    const status = {
+      healthy: true,
+      offline: this.offline,
+      providers: Array.from(this.providers.entries()).map(([name, config]) => ({
+        name,
+        displayName: config.name,
+        enabled: config.enabled,
+        hasKey: !!config.apiKey || name === 'huggingface'
+      })),
+      preferences: this.userPreferences
+    };
+
+    return status;
+  }
 }
 
-// Initialize AI Manager and UI Generator
+// Initialize AI Manager
 const aiManager = new PersonalAIManager();
-const uiGenerator = new ToolooUIGenerator();
 
 // API Routes for Personal Use
 app.get('/api/v1/health', (req, res) => {
@@ -1817,14 +1311,9 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 app.post('/api/v1/generate', async (req, res) => {
-  // --- Optimization: In-memory cache ---
-  const cache = global._toolooCache || (global._toolooCache = new Map());
-  const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
-  const PRIORITY_KEYWORDS = ['urgent', 'priority', 'fast'];
-  const TIMEOUT_MS = 120000; // 120 seconds (increased from 60)
-
   try {
-    const { prompt, context = {} } = req.body;
+    const { prompt, context = {}, useDirector = false, conversationId } = req.body;
+    
     if (!prompt) {
       return res.status(400).json({ 
         error: 'No prompt provided',
@@ -1832,83 +1321,63 @@ app.post('/api/v1/generate', async (req, res) => {
       });
     }
 
-    // Request prioritization
-    let priority = 0;
-    if (context.priority || PRIORITY_KEYWORDS.some(k => prompt.includes(k))) {
-      priority = 1;
-    }
-
-    // Cache key
-    const cacheKey = JSON.stringify({ prompt, context });
-    const now = Date.now();
-    if (cache.has(cacheKey)) {
-      const cached = cache.get(cacheKey);
-      if (now - cached.timestamp < CACHE_TTL) {
-        return res.json({
-          success: true,
-          content: cached.content,
-          metadata: { ...cached.metadata, cached: true }
-        });
-      } else {
-        cache.delete(cacheKey);
-      }
-    }
-
-    // Timeout handling
-    let timedOut = false;
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
-        timedOut = true;
-        reject(new Error('Request timed out'));
-      }, TIMEOUT_MS);
-    });
-
     const startTime = Date.now();
+    
+    // Check if Director should be used (user preference or explicit request)
+    const shouldUseDirector = useDirector || aiManager.userPreferences.useDirector;
+    
     let result;
-    try {
-      result = await Promise.race([
-        aiManager.generateResponse(prompt, context),
-        timeoutPromise
-      ]);
-    } catch (err) {
-      if (timedOut) {
-        return res.status(504).json({
-          success: false,
-          error: 'Request timed out',
-          help: 'Try a shorter or simpler prompt.'
-        });
-      } else {
-        throw err;
-      }
+    if (shouldUseDirector && aiManager.providers.size > 1) {
+      // Use Director for prompt saturation & multi-provider synthesis
+      console.log('🎬 Using Director mode for multi-provider response');
+      result = await aiManager.director.processWithDirector(
+        prompt, 
+        conversationId || 'default', 
+        context
+      );
+      
+      // Format response with Director metadata
+      return res.json({
+        success: true,
+        content: result.finalResponse.content,
+        mode: 'director',
+        metadata: {
+          ...result.metadata,
+          saturationIterations: result.iterations.length,
+          saturated: result.saturatedPrompt.saturated,
+          executionPlan: result.executionPlan.reasoning,
+          providersUsed: result.metadata.providersUsed,
+          responseTime: `${result.metadata.processingTimeMs}ms`,
+          timestamp: new Date().toISOString()
+        },
+        debug: {
+          originalPrompt: result.originalPrompt,
+          saturatedPrompt: result.saturatedPrompt.final,
+          providerResponses: result.providerResponses.map(r => ({
+            provider: r.provider,
+            role: r.role,
+            success: r.success
+          }))
+        }
+      });
+    } else {
+      // Standard single-provider response
+      result = await aiManager.generateResponse(prompt, context);
+      const responseTime = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        content: result.content,
+        mode: 'standard',
+        metadata: {
+          provider: result.provider,
+          responseTime: `${responseTime}ms`,
+          cost: result.cost || 0,
+          tokens: result.tokens,
+          timestamp: new Date().toISOString()
+        }
+      });
     }
-    const responseTime = Date.now() - startTime;
-
-    // Store in cache
-    cache.set(cacheKey, {
-      content: result.content,
-      metadata: {
-        provider: result.provider,
-        responseTime: `${responseTime}ms`,
-        cost: result.cost || 0,
-        tokens: result.tokens,
-        timestamp: new Date().toISOString()
-      },
-      timestamp: now
-    });
-
-    res.json({
-      success: true,
-      content: result.content,
-      metadata: {
-        provider: result.provider,
-        responseTime: `${responseTime}ms`,
-        cost: result.cost || 0,
-        tokens: result.tokens,
-        timestamp: new Date().toISOString(),
-        priority,
-        cached: false
-      }
-    });
 
   } catch (error) {
     console.error('Generation error:', error);
@@ -1920,116 +1389,366 @@ app.post('/api/v1/generate', async (req, res) => {
   }
 });
 
-// UI Generation endpoint
-app.post('/api/v1/generate-ui', async (req, res) => {
+// Preview System Endpoints
+app.post('/api/v1/preview', async (req, res) => {
   try {
-    const { specification, enhance = false } = req.body;
+    const { prompt, sessionId, context = {}, socketId } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ success: false, error: 'Prompt is required' });
+    }
+
+    // Find socket for progress updates
+    if (socketId && io) {
+      const sockets = await io.fetchSockets();
+      aiManager.activeSocket = sockets.find(s => s.id === socketId);
+    }
+
+    // Analyze codebase first (Copilot-style)
+    const analysis = await aiManager.analyzeCodebaseForRequest(prompt);
     
-    if (!specification) {
-      return res.status(400).json({ 
-        error: 'No UI specification provided',
-        help: 'Provide a UI specification object with type, components, etc.'
-      });
-    }
-
-    let result;
-    if (enhance && specification.existingHTML) {
-      // Enhance existing UI
-      result = uiGenerator.addToolooIntegration(specification.existingHTML, specification.options);
-    } else {
-      // Generate new UI
-      result = uiGenerator.generateInterface(specification);
-    }
-
-    res.json({
-      success: true,
-      html: result,
-      analysis: enhance ? uiGenerator.analyzeUI(specification.existingHTML) : null,
-      timestamp: new Date().toISOString()
+    aiManager.emitProgress('planning', {
+      message: '💡 Planning changes...',
+      details: [
+        `Intent: ${analysis.intent.type}`,
+        `Target files: ${analysis.relevantFiles.length} found`,
+        `Strategy: Targeted code modification`
+      ]
     });
 
-  } catch (error) {
-    console.error('UI Generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      help: 'Check your UI specification and try again'
+    // Force preview mode with codebase context
+    context.previewMode = true;
+    context.forceCodeGeneration = true;
+    context.sessionId = sessionId || 'default';
+    context.codebaseAnalysis = analysis; // Include analysis in prompt context
+
+    aiManager.emitProgress('generating', {
+      message: '⚙️ Generating code...',
+      details: ['Using DeepSeek for code generation...']
     });
-  }
-});
 
-app.get('/api/v1/system/status', (req, res) => {
-  res.json(aiManager.getSystemStatus());
-});
+    // Generate the change without applying it
+    const result = await aiManager.generateResponse(prompt, context);
+    
+    // Extract code blocks as preview
+    const codeBlocks = aiManager.extractCodeBlocks(result.content);
+    const files = [];
 
-// Aggregated pre-briefing for Assistant (ops) and Director (filesystem)
-app.get('/api/v1/briefing', async (req, res) => {
-  try {
-    const [status, workspace, ghRepo, environmentStatus] = await Promise.all([
-      Promise.resolve(aiManager.getSystemStatus()).catch(() => null),
-      aiManager.filesystemManager.getWorkspaceSummary().catch(() => null),
-      aiManager.github.getRepo().catch(() => null),
-      Promise.resolve(aiManager.environmentHub.getEnvironmentStatus()).catch(() => null)
-    ]);
+    for (const block of codeBlocks) {
+      const firstLine = block.code.split('\n')[0];
+      const pathMatch = firstLine.match(/^(?:\/\/|\/\*|#)\s*(.+?\.(?:jsx?|tsx?|css|html|json|md))/i);
+      
+      if (pathMatch) {
+        const filePath = pathMatch[1].trim();
+        let code = block.code.split('\n').slice(1).join('\n').trim();
+        
+        // Read current file if exists for diff
+        let currentContent = '';
+        try {
+          const fileData = await aiManager.filesystemManager.readFile(filePath);
+          currentContent = fileData.content;
+        } catch (err) {
+          // File doesn't exist, it's a new file
+        }
 
-    // Optional: root contents count
-    let ghContents = null;
-    try {
-      ghContents = await aiManager.github.listContents({ path: '' }).catch(() => null);
-    } catch {}
-
-    // Get environment recommendations
-    const environmentRecommendations = [];
-    if (environmentStatus && environmentStatus.systemState.security) {
-      const securityScore = environmentStatus.systemState.security.score / environmentStatus.systemState.security.maxScore;
-      if (securityScore < 0.8) {
-        environmentRecommendations.push('Security hardening recommended');
+        files.push({
+          path: filePath,
+          newContent: code,
+          currentContent,
+          isNew: !currentContent,
+          language: block.language
+        });
       }
     }
-    
+
+    // Store preview state
+    aiManager.setPreview(context.sessionId, {
+      files,
+      description: result.content,
+      originalPrompt: prompt
+    });
+
     res.json({
       success: true,
-      assistant: {
-        goals: [
-          'Ensure providers and system health are ready',
-          'Advise on security posture and cloud-readiness',
-          'Summarize risks and dependencies for actions',
-          'Coordinate with Director through Environment Hub'
-        ],
-        status,
-        recommendations: [
-          'Consider enabling stricter CORS in production',
-          'Add CSP/Helmet if not already active',
-          'Use rate limiting in production',
-          ...environmentRecommendations
-        ]
-      },
-      director: {
-        goals: [
-          'Manage filesystem and projects',
-          'Search/Analyze/Modify code as needed',
-          'Coordinate imports from GitHub and create artifacts',
-          'Execute coordinated actions through Environment Hub'
-        ],
-        workspace,
-        github: {
-          repo: ghRepo,
-          rootItems: Array.isArray(ghContents) ? ghContents.length : (ghContents ? 1 : 0)
-        }
-      },
-      environment: environmentStatus,
-      timestamp: new Date().toISOString()
+      preview: {
+        files,
+        description: result.content,
+        sessionId: context.sessionId
+      }
     });
+
   } catch (error) {
+    console.error('Preview error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Filesystem/API endpoints
+app.post('/api/v1/approve', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, error: 'SessionId is required' });
+    }
+
+    const preview = aiManager.getPreview(sessionId);
+    if (!preview) {
+      return res.status(404).json({ success: false, error: 'No preview found for this session' });
+    }
+
+    // Backup current files before applying changes
+    const backup = [];
+    for (const file of preview.files) {
+      if (!file.isNew && file.currentContent) {
+        backup.push({
+          path: file.path,
+          content: file.currentContent
+        });
+      }
+    }
+
+    // Apply changes intelligently
+    const appliedFiles = [];
+    for (const file of preview.files) {
+      let contentToWrite = file.newContent;
+      let modified = false;
+      
+      // If this is a snippet (contains CHANGE: or OLD: markers), apply it as a targeted change
+      if (file.newContent.includes('// CHANGE:') || file.newContent.includes('// OLD:')) {
+        // Extract the actual new code (skip comment markers)
+        const lines = file.newContent.split('\n');
+        const codeLines = lines.filter(line => 
+          !line.trim().startsWith('//') || 
+          line.includes('<') || line.includes('{') || line.includes('>')
+        );
+        const newCode = codeLines.join('\n').trim();
+        
+        // If we have current content, try to find and replace the relevant section
+        if (file.currentContent) {
+          // Smart color replacement for "make button green" type requests
+          if (newCode.includes('green-500') || newCode.includes('bg-green') || newCode.includes('text-green')) {
+            // Replace any blue colors with green in the relevant button
+            contentToWrite = file.currentContent
+              .replace(/bg-blue-500/g, 'bg-green-500')
+              .replace(/hover:bg-blue-600/g, 'hover:bg-green-600')
+              .replace(/text-blue-500/g, 'text-green-500')
+              .replace(/hover:text-blue-500/g, 'hover:text-green-500')
+              .replace(/border-blue-500/g, 'border-green-500');
+            modified = true;
+          } else {
+            // Look for the old pattern in the file
+            const oldMatch = file.newContent.match(/\/\/ OLD:\s*(.+?)(?=\/\/ NEW:|$)/s);
+            if (oldMatch) {
+              const oldPattern = oldMatch[1].trim();
+              // Find and replace the old pattern
+              if (file.currentContent.includes(oldPattern)) {
+                contentToWrite = file.currentContent.replace(oldPattern, newCode);
+                modified = true;
+              } else {
+                // Pattern not found exactly, try fuzzy matching for button elements
+                const buttonMatch = newCode.match(/<button[\s\S]*?<\/button>/);
+                if (buttonMatch) {
+                  // Replace the entire button element
+                  contentToWrite = file.currentContent.replace(
+                    /<button[\s\S]*?type="submit"[\s\S]*?<\/button>/,
+                    buttonMatch[0]
+                  );
+                  modified = true;
+                }
+              }
+            }
+          }
+          
+          // If no modification was made, check if the code looks complete
+          if (!modified) {
+            if (newCode.length > 100 && (newCode.includes('import') || newCode.includes('function') || newCode.includes('const'))) {
+              contentToWrite = newCode;
+              modified = true;
+            } else {
+              console.warn(`⚠️  Could not apply snippet for ${file.path}, no matching pattern found`);
+              continue;
+            }
+          }
+        } else {
+          // New file, use the code as-is
+          contentToWrite = newCode;
+          modified = true;
+        }
+      }
+      
+      if (modified || contentToWrite !== file.newContent) {
+        await aiManager.filesystemManager.writeFile(file.path, contentToWrite);
+        appliedFiles.push(file.path);
+        console.log(`✅ Applied: ${file.path}`);
+      }
+    }
+
+    // Log to change history for rollback
+    aiManager.addToChangeHistory(sessionId, {
+      files: appliedFiles,
+      backup,
+      description: preview.description
+    });
+
+    // Clear preview
+    aiManager.clearPreview(sessionId);
+
+    res.json({
+      success: true,
+      applied: appliedFiles,
+      canRollback: backup.length > 0
+    });
+
+  } catch (error) {
+    console.error('Approval error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/rollback', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, error: 'SessionId is required' });
+    }
+
+    const result = await aiManager.rollbackLastChange(sessionId);
+    res.json({ success: true, ...result });
+
+  } catch (error) {
+    console.error('Rollback error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/system/status', (req, res) => {
+  const status = aiManager.getSystemStatus();
+  status.director = {
+    enabled: aiManager.userPreferences.useDirector,
+    stats: aiManager.director.getStats()
+  };
+  res.json(status);
+});
+
+// Director-specific endpoints
+app.post('/api/v1/director/process', async (req, res) => {
+  try {
+    const { prompt, conversationId, context = {} } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({ 
+        error: 'No prompt provided',
+        help: 'Send your prompt in the "prompt" field'
+      });
+    }
+
+    const result = await aiManager.director.processWithDirector(
+      prompt, 
+      conversationId || 'default', 
+      context
+    );
+
+    res.json({
+      success: true,
+      ...result
+    });
+
+  } catch (error) {
+    console.error('Director error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/director/stats', (req, res) => {
+  res.json({
+    success: true,
+    stats: aiManager.director.getStats()
+  });
+});
+
+app.post('/api/v1/director/clear-history', (req, res) => {
+  const { conversationId } = req.body;
+  if (conversationId) {
+    aiManager.director.clearHistory(conversationId);
+    res.json({ success: true, message: `Cleared history for ${conversationId}` });
+  } else {
+    res.status(400).json({ success: false, error: 'conversationId required' });
+  }
+});
+
+// Settings endpoint
+app.post('/api/v1/settings', (req, res) => {
+  const { useDirector, defaultProvider, autoExecute } = req.body;
+  
+  if (useDirector !== undefined) {
+    aiManager.userPreferences.useDirector = useDirector;
+  }
+  if (defaultProvider !== undefined) {
+    aiManager.userPreferences.defaultProvider = defaultProvider;
+  }
+  if (autoExecute !== undefined) {
+    aiManager.userPreferences.autoExecute = autoExecute;
+  }
+  
+  res.json({
+    success: true,
+    preferences: aiManager.userPreferences
+  });
+});
+
+app.get('/api/v1/settings', (req, res) => {
+  res.json({
+    success: true,
+    preferences: aiManager.userPreferences
+  });
+});
+
+// Filesystem API endpoints
+app.get('/api/v1/files', async (req, res) => {
+  try {
+    const { path: dirPath } = req.query;
+    const result = await aiManager.filesystemManager.listDirectory(dirPath);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/files', async (req, res) => {
+  try {
+    const { path: filePath, content, backup } = req.body;
+    const result = await aiManager.filesystemManager.writeFile(filePath, content, { backup });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/files/read', async (req, res) => {
+  try {
+    const { path: filePath } = req.query;
+    const result = await aiManager.filesystemManager.readFile(filePath);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 app.post('/api/v1/projects', async (req, res) => {
   try {
     const { name, description } = req.body;
     const result = await aiManager.filesystemManager.createProject(name, description);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/v1/files', async (req, res) => {
+  try {
+    const { path: itemPath, recursive } = req.body;
+    const result = await aiManager.filesystemManager.deleteItem(itemPath, { recursive });
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
@@ -2045,271 +1764,362 @@ app.get('/api/v1/workspace/summary', async (req, res) => {
   }
 });
 
-// GitHub access endpoints (public repo OK; uses token if configured)
+// ========== GITHUB INTEGRATION API ENDPOINTS ==========
+
+// GitHub configuration and status
+app.get('/api/v1/github/config', async (req, res) => {
+  try {
+    const config = await aiManager.githubBackend.checkConfiguration();
+    res.json({ success: true, data: config });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Repository operations
 app.get('/api/v1/github/repo', async (req, res) => {
   try {
     const { owner, repo } = req.query;
-    const result = await aiManager.github.getRepo(owner, repo);
+    const result = await aiManager.githubBackend.github.getRepo(owner, repo);
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-app.get('/api/v1/github/contents', async (req, res) => {
+app.get('/api/v1/github/stats', async (req, res) => {
   try {
-    const { owner, repo, path: p = '', ref = 'main' } = req.query;
-    const result = await aiManager.github.listContents({ owner, repo, path: p, ref });
+    const { owner, repo } = req.query;
+    const result = await aiManager.githubBackend.github.getRepoStats({ owner, repo });
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-app.get('/api/v1/github/file', async (req, res) => {
+app.get('/api/v1/github/activity', async (req, res) => {
   try {
-    const { owner, repo, path: p, ref = 'main' } = req.query;
-    const result = await aiManager.github.readFile({ owner, repo, path: p, ref });
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-// Environment Hub API endpoints
-app.get('/api/v1/environment/status', (req, res) => {
-  try {
-    const status = aiManager.environmentHub.getEnvironmentStatus();
-    res.json({ success: true, data: status });
+    const result = await aiManager.githubBackend.getActivitySummary();
+    res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.get('/api/v1/environment/summary', async (req, res) => {
+// File operations
+app.get('/api/v1/github/files', async (req, res) => {
   try {
-    const summary = aiManager.environmentHub.getSystemSummary();
-    res.json({ success: true, data: summary });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/environment/action', async (req, res) => {
-  try {
-    const { action, params = {} } = req.body;
-    if (!action) {
-      return res.status(400).json({ success: false, error: 'Action name required' });
-    }
-    
-    const results = await aiManager.environmentHub.executeCoordinatedAction(action, params);
-    res.json({ success: true, data: results });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/environment/awareness', async (req, res) => {
-  try {
-    const awareness = await aiManager.environmentHub.broadcastSystemAwareness();
-    res.json({ success: true, data: awareness });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Maintenance & change orchestration endpoints
-app.get('/api/v1/maintenance/status', async (req, res) => {
-  try {
-    // Quick response - don't wait for slow inspection check
-    const recentSessions = aiManager.listRecentChangeSessions(5);
-    
-    // Return immediately with proper structure
-    res.json({
-      success: true,
-      data: {
-        inspection: {
-          shouldInspect: false,
-          reasons: [],
-          summary: 'System is healthy. Use Maintenance Control Center to run inspection.'
-        },
-        recentChangeSessions: recentSessions
-      }
+    const { owner, repo, path: filePath, ref } = req.query;
+    const result = await aiManager.githubBackend.github.listContents({ 
+      owner, repo, path: filePath || '', ref 
     });
-  } catch (error) {
-    console.error('Maintenance status error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/maintenance/inspection', async (req, res) => {
-  try {
-    const options = req.body || {};
-    const result = await aiManager.triggerMaintenanceTask('inspection', options);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message, sessionId: error.sessionId });
-  }
-});
-
-app.post('/api/v1/maintenance/tests', async (req, res) => {
-  try {
-    const options = req.body || {};
-    const result = await aiManager.triggerMaintenanceTask('tests', options);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message, sessionId: error.sessionId });
-  }
-});
-
-app.get('/api/v1/change-sessions', (req, res) => {
-  try {
-    const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
-    const parsedLimit = rawLimit ? Number.parseInt(rawLimit, 10) : NaN;
-    const sessions = aiManager.listRecentChangeSessions(Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10);
-    res.json({ success: true, data: sessions });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Add REST API endpoints for file system operations
-app.get('/api/v1/files', async (req, res) => {
-  try {
-    const { dirPath } = req.query;
-    const result = await aiManager.filesystemManager.listDirectory(dirPath);
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/files/read', async (req, res) => {
-  try {
-    const { filePath } = req.query;
-    const result = await aiManager.filesystemManager.readFile(filePath);
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/files/write', async (req, res) => {
-  try {
-    const { filePath, content } = req.body;
-    const result = await aiManager.filesystemManager.writeFile(filePath, content, { backup: true });
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/files/create-directory', async (req, res) => {
-  try {
-    const { dirPath } = req.body;
-    await aiManager.filesystemManager.writeFile(dirPath + '/.gitkeep', '', {});
-    res.json({ success: true, message: `Directory created: ${dirPath}` });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/v1/files/delete', async (req, res) => {
-  try {
-    const { itemPath, recursive } = req.body;
-    const result = await aiManager.filesystemManager.deleteItem(itemPath, { recursive });
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-// Learning & Self-Improvement API Endpoints (PROJECT_BRAIN.md)
-app.post('/api/v1/learning/success', async (req, res) => {
+app.get('/api/v1/github/files/read', async (req, res) => {
   try {
-    const { task, timeTaken, provider, context } = req.body;
-    await aiManager.learningAccumulator.recordSuccess(task, timeTaken, provider, context);
-    res.json({ success: true, message: 'Success recorded' });
+    const { owner, repo, path: filePath, ref } = req.query;
+    const result = await aiManager.githubBackend.github.readFile({ 
+      owner, repo, path: filePath, ref 
+    });
+    res.json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/v1/learning/failure', async (req, res) => {
+app.post('/api/v1/github/files', async (req, res) => {
   try {
-    const { task, errorMessage, attemptNumber, provider, context } = req.body;
-    await aiManager.learningAccumulator.recordFailure(task, errorMessage, attemptNumber, provider, context);
-    res.json({ success: true, message: 'Failure recorded' });
+    const { owner, repo, path: filePath, content, message, branch, sha } = req.body;
+    const result = await aiManager.githubBackend.github.createOrUpdateFile({
+      owner, repo, path: filePath, content, message, branch, sha
+    });
+    res.json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-app.get('/api/v1/learning/report', async (req, res) => {
+app.delete('/api/v1/github/files', async (req, res) => {
   try {
-    const report = await aiManager.learningAccumulator.getPerformanceReport();
-    res.json({ success: true, data: report });
+    const { owner, repo, path: filePath, message, sha, branch } = req.body;
+    const result = await aiManager.githubBackend.github.deleteFile({
+      owner, repo, path: filePath, message, sha, branch
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Branch operations
+app.get('/api/v1/github/branches', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    const result = await aiManager.githubBackend.github.listBranches({ owner, repo });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/github/branches', async (req, res) => {
+  try {
+    const { owner, repo, newBranch, fromBranch } = req.body;
+    const result = await aiManager.githubBackend.github.createBranch({
+      owner, repo, newBranch, fromBranch
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Commit operations
+app.get('/api/v1/github/commits', async (req, res) => {
+  try {
+    const { owner, repo, sha, path: filePath, perPage } = req.query;
+    const result = await aiManager.githubBackend.github.getCommits({
+      owner, repo, sha, path: filePath, perPage: perPage ? parseInt(perPage) : 30
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/github/commits/:ref', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    const { ref } = req.params;
+    const result = await aiManager.githubBackend.github.getCommit({ owner, repo, ref });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Pull Request operations
+app.get('/api/v1/github/pulls', async (req, res) => {
+  try {
+    const { owner, repo, state, perPage } = req.query;
+    const result = await aiManager.githubBackend.github.listPullRequests({
+      owner, repo, state, perPage: perPage ? parseInt(perPage) : 30
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/github/pulls/:number', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    const { number } = req.params;
+    const result = await aiManager.githubBackend.github.getPullRequest({
+      owner, repo, pullNumber: parseInt(number)
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/github/pulls', async (req, res) => {
+  try {
+    const { owner, repo, title, body, head, base } = req.body;
+    const result = await aiManager.githubBackend.github.createPullRequest({
+      owner, repo, title, body, head, base
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.patch('/api/v1/github/pulls/:number', async (req, res) => {
+  try {
+    const { owner, repo, title, body, state } = req.body;
+    const { number } = req.params;
+    const result = await aiManager.githubBackend.github.updatePullRequest({
+      owner, repo, pullNumber: parseInt(number), title, body, state
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/v1/github/pulls/:number/merge', async (req, res) => {
+  try {
+    const { owner, repo, commitMessage, mergeMethod } = req.body;
+    const { number } = req.params;
+    const result = await aiManager.githubBackend.github.mergePullRequest({
+      owner, repo, pullNumber: parseInt(number), commitMessage, mergeMethod
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Issue operations
+app.get('/api/v1/github/issues', async (req, res) => {
+  try {
+    const { owner, repo, state, labels, perPage } = req.query;
+    const result = await aiManager.githubBackend.github.listIssues({
+      owner, repo, state, labels, perPage: perPage ? parseInt(perPage) : 30
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/github/issues/:number', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    const { number } = req.params;
+    const result = await aiManager.githubBackend.github.getIssue({
+      owner, repo, issueNumber: parseInt(number)
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/github/issues', async (req, res) => {
+  try {
+    const { owner, repo, title, body, labels, assignees } = req.body;
+    const result = await aiManager.githubBackend.github.createIssue({
+      owner, repo, title, body, labels, assignees
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.patch('/api/v1/github/issues/:number', async (req, res) => {
+  try {
+    const { owner, repo, title, body, state, labels } = req.body;
+    const { number } = req.params;
+    const result = await aiManager.githubBackend.github.updateIssue({
+      owner, repo, issueNumber: parseInt(number), title, body, state, labels
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/github/issues/:number/comments', async (req, res) => {
+  try {
+    const { owner, repo, body } = req.body;
+    const { number } = req.params;
+    const result = await aiManager.githubBackend.github.createComment({
+      owner, repo, issueNumber: parseInt(number), body
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Workflow operations
+app.get('/api/v1/github/actions/runs', async (req, res) => {
+  try {
+    const { owner, repo, workflowId, branch, status, perPage } = req.query;
+    const result = await aiManager.githubBackend.github.listWorkflowRuns({
+      owner, repo, workflowId, branch, status, perPage: perPage ? parseInt(perPage) : 30
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/github/actions/runs/:runId', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    const { runId } = req.params;
+    const result = await aiManager.githubBackend.github.getWorkflowRun({
+      owner, repo, runId: parseInt(runId)
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/github/actions/workflows/:workflowId/dispatches', async (req, res) => {
+  try {
+    const { owner, repo, ref, inputs } = req.body;
+    const { workflowId } = req.params;
+    const result = await aiManager.githubBackend.github.triggerWorkflow({
+      owner, repo, workflowId, ref, inputs
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// High-level workflow operations
+app.post('/api/v1/github/generate-and-commit', async (req, res) => {
+  try {
+    const { filePath, content, message, branch, createPR, prTitle, prBody } = req.body;
+    const result = await aiManager.githubBackend.generateAndCommit({
+      filePath, content, message, branch, createPR, prTitle, prBody
+    });
+    res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.get('/api/v1/patterns/search', async (req, res) => {
+app.post('/api/v1/github/sync-projects', async (req, res) => {
   try {
-    const { category, tags } = req.query;
-    const patterns = await aiManager.patternLibrary.searchPatterns(category, tags ? tags.split(',') : undefined);
-    res.json({ success: true, data: patterns });
+    const result = await aiManager.githubBackend.syncPersonalProjects();
+    res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/v1/patterns/extract', async (req, res) => {
+app.post('/api/v1/github/self-improvement-pr', async (req, res) => {
   try {
-    const { projectPath } = req.body;
-    const patterns = await aiManager.patternLibrary.extractPatternsFromProject(projectPath);
-    res.json({ success: true, data: patterns, message: `Extracted ${patterns.length} patterns` });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/patterns/catalog', async (req, res) => {
-  try {
-    const catalog = await aiManager.patternLibrary.createCatalog();
-    res.json({ success: true, data: catalog });
+    const { files, improvements, analysisDetails } = req.body;
+    const result = await aiManager.githubBackend.createSelfImprovementPR({
+      files, improvements, analysisDetails
+    });
+    res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/v1/decisions/log', async (req, res) => {
+app.post('/api/v1/github/solve-issue', async (req, res) => {
   try {
-    const { title, context, options, decision, rationale, alternatives } = req.body;
-    const id = await aiManager.decisionLogger.logDecision(title, context, options, decision, rationale, alternatives);
-    res.json({ success: true, data: { id }, message: 'Decision logged' });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/v1/decisions/report', async (req, res) => {
-  try {
-    const report = await aiManager.decisionLogger.generateReport();
-    res.json({ success: true, data: report });
+    const { issueNumber } = req.body;
+    const result = await aiManager.githubBackend.solveIssue({ issueNumber });
+    res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/v1/decisions/:id/outcome', async (req, res) => {
+app.post('/api/v1/github/report-issue', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { outcome, impact, lessonsLearned } = req.body;
-    await aiManager.decisionLogger.recordOutcome(id, outcome, impact, lessonsLearned);
-    res.json({ success: true, message: 'Outcome recorded' });
+    const { title, description, labels } = req.body;
+    const result = await aiManager.githubBackend.reportIssue({ title, description, labels });
+    res.json(result);
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -2317,30 +2127,39 @@ app.post('/api/v1/decisions/:id/outcome', async (req, res) => {
 io.on('connection', (socket) => {
   console.log(`👋 Personal session connected: ${socket.id}`);
 
-  // Proactive welcome proving self-awareness
-  try {
-    socket.emit('response', {
-      content: `## 👋 Welcome to TooLoo.ai\n\n🧠 Self-awareness is enabled by default. I can list, read, and modify files in this workspace.\n\nTry: \n- \'list files\'\n- \'show your code simple-api-server.js\'\n- \'search your code for \"Self-awareness\"\'`,
-      provider: 'system',
-      cost: 0,
-      timestamp: new Date().toISOString()
-    });
-  } catch {}
-
   socket.on('generate', async (data) => {
     try {
-      const { prompt, context } = data;
+      const { prompt, context = {} } = data;
+      
+      console.log(`📨 Received message from ${socket.id}: "${prompt}"`);
+      
+      // Use socket.id as session ID for conversation continuity
+      context.sessionId = socket.id;
+      // Pass socket for director events
+      context.socket = socket;
+      
       socket.emit('thinking', { message: 'TooLoo.ai is working on your request...' });
       
       const result = await aiManager.generateResponse(prompt, context);
+      
+      console.log(`✅ Generated response for ${socket.id}`);
+      console.log(`   - Provider: ${result.provider}`);
+      console.log(`   - Has code blocks: ${result.content.includes('```')}`);
+      console.log(`   - Saved files: ${result.savedFiles?.length || 0}`);
+      console.log(`   - Should reload: ${result.shouldReload || false}`);
+      console.log(`   - Context implementMode: ${context.implementMode || false}`);
+      console.log(`   - Context forceCodeGeneration: ${context.forceCodeGeneration || false}`);
       
       socket.emit('response', {
         content: result.content,
         provider: result.provider,
         cost: result.cost,
+        shouldReload: result.shouldReload || false, // Pass reload signal to frontend
+        savedFiles: result.savedFiles || [],
         timestamp: new Date().toISOString()
       });
     } catch (error) {
+      console.error(`❌ Error processing message from ${socket.id}:`, error);
       socket.emit('error', { 
         message: error.message,
         help: 'Check your setup and try again'
@@ -2348,90 +2167,19 @@ io.on('connection', (socket) => {
     }
   });
 
-  // File system operations
-  socket.on('filesystem:listDirectory', async (data, callback) => {
-    try {
-      const result = await aiManager.filesystemManager.listDirectory(data.dirPath);
-      callback(result);
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
-  socket.on('filesystem:readFile', async (data, callback) => {
-    try {
-      const result = await aiManager.filesystemManager.readFile(data.filePath);
-      callback(result);
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
-  socket.on('filesystem:writeFile', async (data, callback) => {
-    try {
-      const result = await aiManager.filesystemManager.writeFile(data.filePath, data.content, { backup: true });
-      callback(result);
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
-  socket.on('filesystem:deleteItem', async (data, callback) => {
-    try {
-      const result = await aiManager.filesystemManager.deleteItem(data.itemPath, { recursive: data.recursive });
-      callback(result);
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
-  socket.on('filesystem:createDirectory', async (data, callback) => {
-    try {
-      // Use writeFile to create the directory (it will create parent directories recursively)
-      await aiManager.filesystemManager.writeFile(data.dirPath + '/.gitkeep', '', {});
-      callback({ success: true, message: `Directory created: ${data.dirPath}` });
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
-  socket.on('filesystem:search', async (data, callback) => {
-    try {
-      const result = await aiManager.filesystemManager.searchFiles(data.searchTerm, data.searchPath, data.options);
-      callback(result);
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
-  socket.on('filesystem:workspace', async (data, callback) => {
-    try {
-      const result = await aiManager.filesystemManager.getWorkspaceSummary();
-      callback(result);
-    } catch (error) {
-      callback({ success: false, error: error.message });
-    }
-  });
-
   socket.on('disconnect', () => {
     console.log(`👋 Personal session ended: ${socket.id}`);
+    // Clean up conversation history after some time (optional)
+    setTimeout(() => {
+      aiManager.clearConversationHistory(socket.id);
+    }, 3600000); // Clear after 1 hour of disconnect
   });
 });
 
 // Start Server
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || '0.0.0.0'; // Use 0.0.0.0 to listen on all interfaces
+const HOST = process.env.HOST || '0.0.0.0';
 
-// More detailed error handling
-server.on('error', (error) => {
-  console.error('Server error:', error.message);
-  if (error.code === 'EADDRINUSE') {
-    console.error(`⚠️ Port ${PORT} is already in use. Try using a different port with PORT=3005 node simple-api-server.js`);
-    process.exit(1);
-  }
-});
-
-// Start listening on specified port
 server.listen(PORT, HOST, () => {
   console.log('\n🚀 TooLoo.ai Personal Assistant Started');
   console.log('=====================================');

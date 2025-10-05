@@ -1,30 +1,17 @@
-import { useState } from 'react';
-import Layout from './components/Layout';
-import SelfImprovement from './components/SelfImprovement';
-import ActivityFeed from './components/ActivityFeed';
-import UICustomizer from './components/UICustomizer';
+import React from 'react';
 import Chat from './components/Chat';
+import './styles/globals.css';
 
 function App() {
-  const [activeComponent, setActiveComponent] = useState('Chat');
-
-  const renderComponent = () => {
-    switch (activeComponent) {
-      case 'Self-Improvement':
-        return <SelfImprovement />;
-      case 'Activity Feed':
-        return <ActivityFeed />;
-      case 'UI Customizer':
-        return <UICustomizer />;
-      default:
-        return <Chat />;
-    }
-  };
-
   return (
-    <Layout setActiveComponent={setActiveComponent}>
-      {renderComponent()}
-    </Layout>
+    <div className="min-h-screen bg-white font-sans antialiased">
+      <div className="flex h-screen">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          <Chat />
+        </div>
+      </div>
+    </div>
   );
 }
 

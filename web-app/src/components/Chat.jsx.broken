@@ -1,0 +1,155 @@
+// CHANGE: Complete Cuberto-inspired redesign with modern minimalist aesthetic
+import React, { useState, useRef, useEffect } from 'react';
+import ThinkingProgress from './ThinkingProgress';
+import PreviewPanel from './PreviewPanel';
+
+const Chat = () => {
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: "Hi! I'm TooLoo.ai, your visual development partner. Let's create something amazing together.",
+      isUser: false,
+      timestamp: new Date()
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+
+    const userMessage = {
+      id: messages.length + 1,
+      text: inputText,
+      isUser: true,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsThinking(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const aiMessage = {
+        id: messages.length + 2,
+        text: "I understand you're looking for a Cuberto Studio-inspired design. I've implemented a clean, modern interface with smooth animations and elegant typography. What would you like to build next?",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsThinking(false);
+    }, 2000);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="px-8 py-6 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
+              <span className="text-white font-semibold text-lg">T</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-light text-gray-900 tracking-tight">TooLoo.ai</h1>
+              <p className="text-sm text-gray-500 font-light">Visual Development Partner</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-light transition-colors duration-200">
+              Settings
+            </button>
+            <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-2xl rounded-3xl px-6 py-4 transition-all duration-500 transform hover:scale-[1.02] ${
+                    message.isUser
+                      ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-md shadow-lg shadow-blue-500/25'
+                      : 'bg-gray-50 text-gray-900 rounded-bl-md shadow-sm shadow-gray-200/50 border border-gray-100'
+                  }`}
+                >
+                  <p className="text-[15px] leading-relaxed font-light tracking-wide">
+                    {message.text}
+                  </p>
+                  <div className={`text-xs mt-2 ${message.isUser ? 'text-blue-100' : 'text-gray-400'} font-light`}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {isThinking && <ThinkingProgress />}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="px-8 py-6 border-t border-gray-100 bg-white">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-end space-x-4">
+                <div className="flex-1 relative">
+                  <textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Describe what you'd like to build..."
+                    className="w-full px-6 py-4 bg-gray-50 border-0 rounded-2xl text-gray-900 placeholder-gray-400 text-[15px] font-light resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 shadow-sm"
+                    rows="1"
+                    style={{ minHeight: '56px', maxHeight: '120px' }}
+                  />
+                </div>
+                <button
+                  onClick={handleSend}
+                  disabled={!inputText.trim() || isThinking}
+                  className="px-6 py-4 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl font-light text-[15px] tracking-wide disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                >
+                  Send
+                </button>
+              </div>
+              <div className="text-center mt-4">
+                <p className="text-xs text-gray-400 font-light tracking-wide">
+                  Press Enter to send • Shift+Enter for new line
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Preview Panel */}
+        <PreviewPanel />
+      </div>
+    </div>
+  );
+};
+
+export default Chat;

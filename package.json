@@ -7,18 +7,26 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c green,cyan \"PORT=3005 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
-    "dev:clean": "bash dev-start.sh",
+    "dev": "concurrently -n api,web -c green,cyan \"PORT=3005 node tooloo-server.js\" \"npm --prefix web-app run dev\"",
+    "dev:old": "bash start-stable.sh",
     "build": "npm --prefix web-app run build",
     "test": "npm --prefix web-app test || true",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx || true",
     "format": "prettier --write . || true",
-    "start": "PORT=3005 node simple-api-server.js",
-    "start:api": "PORT=3005 node simple-api-server.js",
+    "start": "PORT=3005 node tooloo-server.js",
+    "start:api": "PORT=3005 node tooloo-server.js",
     "start:web": "npm --prefix web-app run dev",
-    "start:all": "concurrently -n api,web -c green,cyan \"PORT=3005 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
-    "start:prod": "npm --prefix web-app run build && PORT=3005 node simple-api-server.js",
-    "health": "curl -s http://localhost:3005/api/v1/health"
+    "start:prod": "npm --prefix web-app run build && PORT=3005 NODE_ENV=production node tooloo-server.js",
+    "stop": "pkill -9 -f 'node.*tooloo-server' && pkill -9 -f 'vite'",
+    "restart": "npm run stop && sleep 2 && npm start",
+    "status": "ps aux | grep -E '(vite|tooloo-server)' | grep -v grep",
+    "health": "curl -s http://localhost:3005/api/v1/health | jq",
+    "tooloo": "node tooloo-cli.js",
+    "backup:old-server": "cp simple-api-server.js simple-api-server.js.backup",
+    "test:new-server": "PORT=3005 node tooloo-server.js"
+  },
+  "bin": {
+    "tooloo": "./tooloo-cli.js"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -59,6 +67,5 @@
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
     "socket.io": "^4.8.1"
-  },
-  "type": "module"
+  }
 }

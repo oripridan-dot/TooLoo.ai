@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ToolooMonitor from './ToolooMonitor';
 import '@testing-library/jest-dom/vitest';
 
@@ -12,7 +12,7 @@ type FetchResponseOptions = {
 };
 
 const originalFetch = global.fetch;
-const originalLocation = window.location;
+let originalLocation: Location;
 
 function mockFetchResponse({ ok, status, json, text }: FetchResponseOptions) {
   const response = {
@@ -51,6 +51,10 @@ function stubLocation({
 }
 
 describe('ToolooMonitor', () => {
+  beforeEach(() => {
+    originalLocation = window.location;
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     if (originalFetch) {

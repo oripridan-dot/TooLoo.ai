@@ -1,5 +1,5 @@
 # 🧠 TooLoo.ai PROJECT BRAIN
-*Living Memory System - Last Updated: 2025-10-02*
+*Living Memory System - Last Updated: 2025-10-03*
 
 ---
 
@@ -9,6 +9,8 @@
 **Purpose**: Single-user AI toolkit that transforms ideas into working applications without coding  
 **Owner**: Non-coder developer building professional applications through AI partnership  
 **Vision**: Self-improving Meta-AI system that recursively enhances its own capabilities
+
+**Unique Feature**: **Prompt Director** - Multi-provider orchestration with prompt saturation loops
 
 ---
 
@@ -20,6 +22,7 @@
 - **AI Providers**: Multi-provider orchestration (DeepSeek, Claude, OpenAI, Gemini, Hugging Face)
 - **Execution**: Sandboxed code execution with VM2
 - **Storage**: Local-first, filesystem-based persistence
+- **Orchestration**: **Prompt Director** for intelligent multi-provider synthesis
 
 **Rationale**: Monorepo structure allows modular development while maintaining single-user simplicity.
 
@@ -28,6 +31,7 @@
 2. **Filesystem Manager**: Direct file creation/manipulation capabilities
 3. **Multi-Provider Routing**: Intelligent AI model selection per task type
 4. **Learning Weights**: Tracks which AI models perform best for specific tasks
+5. **🎬 Prompt Director**: Saturation loops + parallel execution + response synthesis (NEW!)
 
 ---
 
@@ -73,11 +77,13 @@
 ## 🎪 ACTIVE MODULES & STATUS
 
 ### ✅ Completed & Working
-- `simple-api-server.js` - Main backend (PORT 3001)
+- `simple-api-server.js` - Main backend (PORT 3005)
+- `prompt-director.js` - **NEW!** Prompt saturation & multi-provider synthesis
 - `self-awareness-manager.js` - Code introspection system
 - `filesystem-manager.js` - File operations
 - Web interface with real-time chat
 - Multi-provider AI orchestration
+- CLI tool (`tooloo-cli.js`)
 - Basic learning weights system
 
 ### 🚧 In Development
@@ -91,14 +97,47 @@
 - Advanced learning accumulator
 - Automated pattern extraction from successful code
 - Performance metrics tracking dashboard
+- User feedback loop for prompt saturation
 
 ---
 
 ## 🧩 COMMON PATTERNS (Your Solutions)
 
+### 🎬 Prompt Director Pattern (NEW!)
+```javascript
+// TooLoo's unique approach to AI orchestration:
+// 1. Saturate the prompt (refine through conversation)
+// 2. Create execution plan (break into sub-tasks)
+// 3. Execute in parallel (multiple providers)
+// 4. Compile response (synthesize perspectives)
+
+// Enable/disable:
+aiManager.userPreferences.useDirector = true; // ON by default
+
+// When to use:
+- Complex tasks: Multiple sub-problems
+- High quality needed: Multi-perspective valuable
+- Learning: Compare AI reasoning styles
+
+// When to skip:
+- Simple queries: "What is X?"
+- Speed critical: 2-3x slower than standard
+- Token conservation: Uses 3x more tokens
+```
+
 ### AI Provider Selection Strategy
 ```javascript
-// Use this decision tree:
+// Director automatically routes based on task type:
+// Code-heavy:
+//   - DeepSeek (generation) → Claude (review) → OpenAI (edge cases)
+// Reasoning:
+//   - Claude (deep analysis) → OpenAI (examples) → Gemini (alternatives)
+// Creative:
+//   - Gemini (ideas) → Claude (refinement) → DeepSeek (implementation)
+// Balanced:
+//   - DeepSeek (primary) → Claude (validation)
+
+// Manual selection (if Director disabled):
 - Quick code generation → DeepSeek (cost-effective)
 - Complex reasoning → Claude (best for architecture)
 - General purpose → GPT-4 (reliable baseline)

@@ -1,0 +1,30 @@
+{
+  "scripts_to_add": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:api": "vitest run tests/api",
+    "test:unit": "vitest run tests/unit",
+    "lint": "eslint . --ext .js,.jsx --fix",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "type-check": "tsc --noEmit"
+  },
+  
+  "devDependencies_to_add": {
+    "vitest": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "supertest": "^6.3.3",
+    "@types/supertest": "^6.0.2",
+    "c8": "^9.0.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  
+  "instructions": [
+    "1. Merge these scripts into your existing package.json",
+    "2. Run: npm install",
+    "3. Run: npm test to verify setup"
+  ]
+}
