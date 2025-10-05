@@ -17,41 +17,36 @@ function App() {
     
     setIsAnalyzing(true);
     
-    // Simulate API call to market intelligence backend
-    setTimeout(() => {
-      const mockAnalysis = {
-        validationScore: 90,
-        verdict: 'Strong Opportunity',
-        competition: {
-          count: 8,
-          saturation: 'medium',
-          topCompetitors: [
-            { name: 'Bonsai', pricing: '$24/mo', votes: 1250 },
-            { name: 'Hectic', pricing: '$15/mo', votes: 450 },
-            { name: 'HoneyBook', pricing: '$39/mo', votes: 890 }
-          ]
+    try {
+      // Call real API backend
+      const response = await fetch('http://localhost:3001/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        trends: {
-          discussions: 23,
-          themes: [
-            { name: 'automation', mentions: 28 },
-            { name: 'time-saving', mentions: 34 }
-          ]
-        },
-        opportunities: [
-          { type: 'weak-competition', description: 'Few established players' },
-          { type: 'growth-trend', description: 'Rising automation demand' }
-        ],
-        nextSteps: [
-          'Build minimal prototype (2-3 core features)',
-          'Validate with 10 freelancers',
-          'Set up landing page for early access'
-        ]
-      };
+        body: JSON.stringify({ idea: currentIdea })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      setMarketAnalysis(mockAnalysis);
+      if (data.success) {
+        setMarketAnalysis(data.analysis);
+      } else {
+        console.error('Analysis failed:', data.error);
+        // Fallback to empty state on error
+        setMarketAnalysis(null);
+      }
+    } catch (error) {
+      console.error('Failed to analyze idea:', error);
+      // Fallback to empty state on network error
+      setMarketAnalysis(null);
+    } finally {
       setIsAnalyzing(false);
-    }, 2000);
+    }
   };
 
   return (
