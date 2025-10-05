@@ -1,55 +1,27 @@
 {
-  "name": "tooloo-ai",
-  "version": "1.0.0",
-  "description": "Self-Improving Development Intelligence Platform",
-  "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "name": "tooloo-v2",
+  "version": "2.0.0",
+  "description": "TooLoo.ai V2 - Transform ideas into profitable products",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently -n api,web -c green,cyan \"PORT=3006 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
-    "dev:clean": "bash dev-start.sh",
-    "build": "npm --prefix web-app run build",
-    "test": "npm --prefix web-app run test --if-present || echo 'No tests to run' && exit 0",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx || true",
-    "format": "prettier --write . || true",
-    "start": "PORT=3005 node simple-api-server.js",
-    "start:api": "PORT=3005 node simple-api-server.js",
-    "start:web": "npm --prefix web-app run dev",
-    "start:all": "concurrently -n api,web -c green,cyan \"PORT=3005 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
-    "start:prod": "npm --prefix web-app run build && PORT=3005 node simple-api-server.js",
-    "health": "curl -s http://localhost:3005/api/v1/health"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
-    "@types/node": "^20.10.0",
-    "@types/supertest": "^6.0.3",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "concurrently": "^8.2.2",
-    "eslint": "^8.56.0",
-    "jsdom": "^27.0.0",
-    "prettier": "^3.1.1",
-    "supertest": "^7.1.4",
-    "typescript": "^5.3.3",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oripridan-dot/TooLoo.ai"
+    "dev": "npm run dev:workshop",
+    "dev:workshop": "echo 'Phase 1: Idea Workshop coming soon...'",
+    "start": "npm run dev",
+    "clean": "rm -rf node_modules dist build logs temp",
+    "test": "echo 'Tests coming soon...'"
   },
   "keywords": [
     "ai",
-    "development",
-    "automation",
-    "multi-provider",
-    "self-improving"
+    "business",
+    "entrepreneurship",
+    "product-development",
+    "market-intelligence"
   ],
   "author": "Ori Pridan",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }

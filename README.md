@@ -1,78 +1,76 @@
-# TooLoo.ai - Self-Improving Development Intelligence Platform
+# 🧠 TooLoo.ai V2 - Your Personal Product Factory
 
-A sophisticated AI-powered development platform that learns, evolves, and adapts to create better code through multi-provider orchestration and recursive self-improvement.
+> **Transform ideas into profitable products with AI-powered business intelligence**
 
-## 🚀 Features
+## What is TooLoo.ai V2?
 
-- **Multi-Provider AI Orchestration**: Intelligent routing across OpenAI, Claude, Gemini, and DeepSeek
-- **Self-Improving Engine**: Recursive learning and pattern recognition
-- **Real-Time Performance Analytics**: Code execution metrics and complexity analysis
-- **Visual Development Interface**: Live prompt evolution and execution visualization
-- **Production-Ready Infrastructure**: Scalable, secure, and enterprise-grade
+TooLoo.ai V2 is a **two-phase product development system** designed for non-technical entrepreneurs:
 
-## 🏗️ Architecture
+### Phase 1: Idea Refinery Workshop 🎨
+- **Visual idea canvas** - Drag-drop blocks, no coding required
+- **Market intelligence** - Auto-analyze profitable opportunities
+- **Revenue modeling** - Calculate potential earnings before building
+- **Risk scoring** - Understand complexity vs. reward
+- **Timeline builder** - Visualize your product journey
 
-```
-TooLoo.ai/
-├── packages/
-│   ├── api/          # Core API and AI engine
-│   ├── web/          # React frontend interface
-│   ├── core/         # Shared utilities and types
-│   └── engine/       # AI orchestration engine
-├── docs/             # Documentation
-└── deploy/           # Deployment configurations
-```
+### Phase 2: Production Pipeline 🚀
+- **Rapid prototyping** - Build testable MVPs in hours
+- **Real-world testing** - Get actual user feedback
+- **One-click deployment** - Vercel, Netlify, Railway integration
+- **Payment setup** - Stripe/PayPal wizard
+- **Analytics dashboard** - Track real revenue and users
 
-## 🚦 Quick Start
+## Current Status
+
+**🚧 Under Active Development - Phase 1 Focus**
+
+We're building the Idea Workshop first. Watch this space for updates.
+
+## Quick Start
 
 ```bash
-# Clone and install
-git clone https://github.com/oripridan-dot/TooLoo.ai
+# Clone the repository
+git clone https://github.com/oripridan-dot/TooLoo.ai.git
 cd TooLoo.ai
+
+# Install dependencies
 npm install
 
-# Set up environment
-cp .env.example .env
-# Add your AI provider API keys
-
-# Start development
+# Start the workshop (Phase 1)
 npm run dev
-
-# Visit http://localhost:3000
 ```
 
-## 🔧 Configuration
+## Architecture
 
-Create `.env` file:
-```env
-# AI Providers
-OPENAI_API_KEY=your_key_here
-CLAUDE_API_KEY=your_key_here
-GEMINI_API_KEY=your_key_here
-DEEPSEEK_API_KEY=your_key_here
-
-# Database
-DATABASE_URL=sqlite:./data/tooloo.db
-
-# Server
-PORT=3001
-NODE_ENV=development
+```
+TooLoo.ai V2/
+├── workshop/        # Phase 1: Idea Refinery (Current Focus)
+│   ├── canvas/      # Visual idea builder UI
+│   ├── market/      # Market intelligence engine
+│   ├── revenue/     # Revenue modeling
+│   └── timeline/    # Journey visualization
+├── integrations/    # External APIs (Product Hunt, Reddit, etc.)
+├── knowledge/       # Your learning hub + news feed
+└── shared/          # Common utilities
 ```
 
-## 📚 Documentation
+## Philosophy
 
-- [API Documentation](./docs/api.md)
-- [Architecture Guide](./docs/architecture.md)
-- [Deployment Guide](./docs/deployment.md)
+**Action-first, not explanation-first.** TooLoo executes tasks and shows results, not instructions.
 
-## 🤝 Contributing
+**Visual-first design.** Everything is visual blocks and dashboards, not code.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**Real-world validation.** Build → Test → Feedback → Improve → Deploy.
 
-## 📄 License
+## Version History
 
-MIT License - see [LICENSE](LICENSE) file for details.# TooLoo.ai
+- **V2** (Current) - Two-phase product factory
+- **[V1](https://github.com/oripridan-dot/TooLoo.ai/tree/archive/v1-original)** (Archived) - AI development assistant
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details
+
+---
+
+**Built for entrepreneurs who want to build products, not learn to code.**
