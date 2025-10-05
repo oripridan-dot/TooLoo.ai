@@ -38,39 +38,12 @@ const loadMarketIntelligence = async () => {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware - Allow all origins in development
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow all origins in development (localhost + Codespaces forwarded URLs)
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:5174', 
-      'http://localhost:5175',
-      /\.app\.github\.dev$/, // Codespaces domains
-      /\.preview\.app\.github\.dev$/ // Codespaces preview domains
-    ];
-    
-    // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin matches any allowed pattern
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
-        return origin === allowed;
-      } else if (allowed instanceof RegExp) {
-        return allowed.test(origin);
-      }
-      return false;
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-  methods: ['GET', 'POST'],
-  credentials: true
+  origin: true, // Allow all origins in development
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
