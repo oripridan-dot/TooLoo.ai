@@ -90,6 +90,7 @@ function App() {
               onIdeaChange={handleIdeaChange}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
+              refinedIdea={currentIdea}
             />
           </div>
 

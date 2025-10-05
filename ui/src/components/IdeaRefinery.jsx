@@ -37,6 +37,17 @@ export default function IdeaRefinery({ idea, onApplyRefinement }) {
       const data = await response.json();
       
       if (data.success) {
+        // Check if validation failed (score too low)
+        if (data.validationOnly) {
+          const v = data.validation;
+          alert(`❌ Validation Score Too Low: ${v.overallScore}/100\n\n` +
+                `Verdict: ${v.verdict}\n\n` +
+                `${v.criticalFeedback}\n\n` +
+                `Fix the red flags before refining.`);
+          return;
+        }
+
+        // Validation passed, show refinement
         setRefinement(data.refinement);
         // Auto-select all high-impact refinements
         const autoSelected = {};
@@ -47,6 +58,7 @@ export default function IdeaRefinery({ idea, onApplyRefinement }) {
       }
     } catch (error) {
       console.error('Refinement failed:', error);
+      alert('Failed to refine idea. Check console for details.');
     } finally {
       setIsRefining(false);
     }

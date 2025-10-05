@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function IdeaCanvas({ onIdeaChange, onAnalyze, isAnalyzing }) {
+export default function IdeaCanvas({ onIdeaChange, onAnalyze, isAnalyzing, refinedIdea }) {
   const [idea, setIdea] = useState({
     title: '',
     problem: '',
     solution: '',
     target: ''
   });
+
+  // Sync with refined idea from parent (when Apply Selected is clicked)
+  useEffect(() => {
+    if (refinedIdea) {
+      setIdea(refinedIdea);
+    }
+  }, [refinedIdea]);
 
   const handleChange = (field, value) => {
     const updated = { ...idea, [field]: value };
