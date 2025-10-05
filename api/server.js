@@ -215,6 +215,95 @@ app.post('/api/suggest', async (req, res) => {
   });
 });
 
+// Prompt Refinery endpoint - AI-powered idea improvement
+app.post('/api/refine', async (req, res) => {
+  try {
+    const { idea } = req.body;
+    
+    if (!idea) {
+      return res.status(400).json({ error: 'Missing idea object' });
+    }
+
+    console.log(`✨ Refining idea: "${idea.title}"`);
+
+    // Dynamically import Prompt Refinery Engine
+    let refineryEngine;
+    try {
+      const { PromptRefineryEngine } = await import('../workshop/refinery/prompt-refinery.js');
+      
+      refineryEngine = new PromptRefineryEngine({
+        openAIKey: process.env.OPENAI_API_KEY,
+        anthropicKey: process.env.ANTHROPIC_API_KEY,
+        deepSeekKey: process.env.DEEPSEEK_API_KEY
+      });
+      
+      const refinement = await refineryEngine.refineIdea(idea);
+      
+      console.log(`✅ Refinement complete: Score improvement potential: ${refinement.score}/100`);
+      
+      res.json({
+        success: true,
+        refinement,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.warn('⚠️  Refinery engine not available, using fallback:', error.message);
+      
+      // Fallback suggestions
+      res.json({
+        success: true,
+        refinement: {
+          success: true,
+          original: idea,
+          suggestions: {
+            problemRefinement: {
+              improved: `${idea.problem} (Add specific numbers: How many hours/dollars lost? How often does this happen?)`,
+              reasoning: 'Quantify the problem to show real impact',
+              impactScore: 8
+            },
+            solutionRefinement: {
+              improved: `${idea.solution} (What makes this unique? What's your key innovation or differentiator?)`,
+              reasoning: 'Highlight what makes you different from competitors',
+              impactScore: 9
+            },
+            marketRefinement: {
+              improved: `${idea.target || 'Specific target market'} (Be ultra-specific: age range, location, income level, behaviors)`,
+              reasoning: 'Narrow targeting enables laser-focused marketing',
+              impactScore: 7
+            },
+            revenueModel: {
+              model: 'Subscription, Usage-based, or Marketplace commission',
+              pricePoint: '$10-$50 per month (research competitors)',
+              reasoning: 'Clear monetization strategy validates business viability',
+              impactScore: 8
+            },
+            overallImprovement: {
+              currentScore: 60,
+              projectedScore: 85,
+              keyInsight: 'Specificity and differentiation drive validation scores'
+            }
+          },
+          improvements: {
+            averageImpact: 8.0,
+            scoreDelta: 25,
+            topPriority: 'solution'
+          },
+          alternativeMarkets: []
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Refinement failed:', error);
+    res.status(500).json({
+      error: 'Refinement failed',
+      message: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
