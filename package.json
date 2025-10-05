@@ -1,27 +1,18 @@
 {
-  "name": "tooloo-v2",
+  "name": "tooloo-copilot-workspace",
   "version": "2.0.0",
-  "description": "TooLoo.ai V2 - Transform ideas into profitable products",
+  "description": "GitHub Copilot partnership workspace for building proven AI-human collaboration workflows",
   "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "npm run dev:workshop",
-    "dev:workshop": "echo 'Phase 1: Idea Workshop coming soon...'",
-    "start": "npm run dev",
-    "clean": "rm -rf node_modules dist build logs temp",
-    "test": "echo 'Tests coming soon...'"
+    "info": "echo '📋 This is a Copilot partnership workspace, not an app project. See README.md for details.'"
   },
   "keywords": [
-    "ai",
-    "business",
-    "entrepreneurship",
-    "product-development",
-    "market-intelligence"
+    "github-copilot",
+    "ai-collaboration",
+    "workflow",
+    "partnership"
   ],
   "author": "Ori Pridan",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {},
-  "devDependencies": {}
+  "license": "MIT"
 }

@@ -1,7 +1,0 @@
-# Files to KEEP in V2
-README.md
-LICENSE
-.gitignore
-.env.example
-package.json
-.github/copilot-instructions.md

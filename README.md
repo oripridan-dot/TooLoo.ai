@@ -1,76 +1,91 @@
-# 🧠 TooLoo.ai V2 - Your Personal Product Factory
+# 🧠 TooLoo.ai - GitHub Copilot Partnership Workspace
 
-> **Transform ideas into profitable products with AI-powered business intelligence**
+> **Building proven, future-adaptive AI-human collaboration workflows**
 
-## What is TooLoo.ai V2?
+## What Is This?
 
-TooLoo.ai V2 is a **two-phase product development system** designed for non-technical entrepreneurs:
+This is NOT an app project. This is a **workspace for developing a high-performance partnership** between a product visionary (human) and GitHub Copilot (AI).
 
-### Phase 1: Idea Refinery Workshop 🎨
-- **Visual idea canvas** - Drag-drop blocks, no coding required
-- **Market intelligence** - Auto-analyze profitable opportunities
-- **Revenue modeling** - Calculate potential earnings before building
-- **Risk scoring** - Understand complexity vs. reward
-- **Timeline builder** - Visualize your product journey
+### The Mission
 
-### Phase 2: Production Pipeline 🚀
-- **Rapid prototyping** - Build testable MVPs in hours
-- **Real-world testing** - Get actual user feedback
-- **One-click deployment** - Vercel, Netlify, Railway integration
-- **Payment setup** - Stripe/PayPal wizard
-- **Analytics dashboard** - Track real revenue and users
+Build a **proven, successful, and future-adaptive workflow** where:
+- AI executes flawlessly based on product vision
+- Communication is clear and action-first
+- Context is remembered across sessions
+- Decisions are intelligent and autonomous
+- Results are tested and verified
+
+Once the partnership workflow is proven, building actual products becomes trivial.
+
+## Core Principles
+
+### Zero Code Visibility
+Code is implementation detail (like DNA). The human focuses on outcomes, AI handles execution.
+
+### Quality Over Speed
+No deadline pressure. Supreme reliability, functionality, and quality always.
+
+### Done + Verified + Tested + Next
+Every response shows: what was accomplished, how it was verified, what the impact is, and what comes next.
+
+### Context Memory
+AI remembers all decisions, builds on previous work, anticipates needs before being asked.
+
+### Timeline as Version Control
+DAW-style project history: save states, branch decisions, rollback to any phase, compare versions.
+
+## Workspace Contents
+
+```
+TooLoo.ai/
+├── .github/copilot-instructions.md    # Partnership rules and AI behavior
+├── .copilot-profile.md                 # Human profile and preferences
+├── README.md                           # This file
+├── .env.example                        # Template for future projects
+└── .gitignore                          # Standard ignores
+```
+
+## How It Works
+
+### 1. Learning Phase (Current)
+- Human gives real tasks
+- AI executes and reports results
+- Human provides feedback on what worked/didn't
+- AI adjusts communication and decision patterns
+
+### 2. Refinement Phase
+- Lock in proven communication protocols
+- Establish decision-making intelligence
+- Build reliable context memory
+- Test edge cases and stress scenarios
+
+### 3. Production Phase
+- Consistent success across diverse tasks
+- Fast, autonomous execution with verified results
+- Future-adaptive patterns that scale to any project
 
 ## Current Status
 
-**🚧 Under Active Development - Phase 1 Focus**
+**Phase:** Learning  
+**Focus:** Understanding work style and building trust  
+**Progress:** Workspace cleaned, partnership rules established
 
-We're building the Idea Workshop first. Watch this space for updates.
+## Key Documents
 
-## Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/oripridan-dot/TooLoo.ai.git
-cd TooLoo.ai
-
-# Install dependencies
-npm install
-
-# Start the workshop (Phase 1)
-npm run dev
-```
-
-## Architecture
-
-```
-TooLoo.ai V2/
-├── workshop/        # Phase 1: Idea Refinery (Current Focus)
-│   ├── canvas/      # Visual idea builder UI
-│   ├── market/      # Market intelligence engine
-│   ├── revenue/     # Revenue modeling
-│   └── timeline/    # Journey visualization
-├── integrations/    # External APIs (Product Hunt, Reddit, etc.)
-├── knowledge/       # Your learning hub + news feed
-└── shared/          # Common utilities
-```
+- [**Copilot Instructions**](.github/copilot-instructions.md) - Complete AI behavior guide (741 lines)
+- [**User Profile**](.copilot-profile.md) - Human preferences and work style
+- [**License**](LICENSE) - MIT
 
 ## Philosophy
 
-**Action-first, not explanation-first.** TooLoo executes tasks and shows results, not instructions.
+**Quality over speed.** No deadline pressure, supreme reliability always.
 
-**Visual-first design.** Everything is visual blocks and dashboards, not code.
+**Outcomes over process.** Show what changed for users, not how code works.
 
-**Real-world validation.** Build → Test → Feedback → Improve → Deploy.
+**Context memory.** Remember everything, build on all previous decisions.
 
-## Version History
-
-- **V2** (Current) - Two-phase product factory
-- **[V1](https://github.com/oripridan-dot/TooLoo.ai/tree/archive/v1-original)** (Archived) - AI development assistant
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details
+**Timeline as version control.** DAW-style: save states, branch, rollback, compare.
 
 ---
 
-**Built for entrepreneurs who want to build products, not learn to code.**
+**This workspace exists to prove that AI-human partnership can be better than either working alone.**
