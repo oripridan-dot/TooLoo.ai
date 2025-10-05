@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import IdeaCanvas from './components/IdeaCanvas';
 import MarketInsights from './components/MarketInsights';
+import IdeaRefinery from './components/IdeaRefinery';
 import Header from './components/Header';
 
 function App() {
@@ -10,6 +11,12 @@ function App() {
 
   const handleIdeaChange = (idea) => {
     setCurrentIdea(idea);
+  };
+
+  const handleApplyRefinement = (refinedIdea) => {
+    setCurrentIdea(refinedIdea);
+    // Optionally auto-analyze the refined idea
+    // handleAnalyze();
   };
 
   const handleAnalyze = async () => {
@@ -76,7 +83,8 @@ function App() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Idea Input */}
           <div className="space-y-6">
             <IdeaCanvas 
               onIdeaChange={handleIdeaChange}
@@ -85,6 +93,15 @@ function App() {
             />
           </div>
 
+          {/* Middle Column - AI Refinery */}
+          <div className="space-y-6">
+            <IdeaRefinery
+              idea={currentIdea}
+              onApplyRefinement={handleApplyRefinement}
+            />
+          </div>
+
+          {/* Right Column - Market Analysis */}
           <div className="space-y-6">
             <MarketInsights 
               analysis={marketAnalysis}
