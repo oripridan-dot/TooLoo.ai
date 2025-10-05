@@ -18,8 +18,21 @@ function App() {
     setIsAnalyzing(true);
     
     try {
-      // Call API backend (proxied by Vite in development)
-      const response = await fetch('/api/analyze', {
+      // Determine API URL based on environment
+      let apiUrl;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Local development
+        apiUrl = 'http://localhost:3001/api/analyze';
+      } else {
+        // Codespaces - use same hostname but port 3001
+        const baseUrl = window.location.origin.replace(/-\d{4}\.app\.github\.dev/, '-3001.app.github.dev');
+        apiUrl = `${baseUrl}/api/analyze`;
+      }
+      
+      console.log('🔍 Calling API:', apiUrl);
+      console.log('📦 Sending idea:', currentIdea);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
