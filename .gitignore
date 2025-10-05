@@ -18,6 +18,10 @@ build/
 logs/
 *.log
 
+# Cache
+cache/
+*.cache
+
 # IDE
 .vscode/
 .idea/

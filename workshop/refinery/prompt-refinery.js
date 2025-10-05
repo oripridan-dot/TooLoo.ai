@@ -6,10 +6,11 @@
  */
 
 export class PromptRefineryEngine {
-  constructor({ openAIKey, anthropicKey, deepSeekKey }) {
+  constructor({ openAIKey, anthropicKey, deepSeekKey, budgetManager = null }) {
     this.openAIKey = openAIKey;
     this.anthropicKey = anthropicKey;
     this.deepSeekKey = deepSeekKey;
+    this.budgetManager = budgetManager;
   }
 
   /**
@@ -39,24 +40,81 @@ export class PromptRefineryEngine {
   async _generateRefinements(idea) {
     const prompt = this._buildRefinementPrompt(idea);
     
+    // Check cache first if budget manager is available
+    let cacheKey = null;
+    if (this.budgetManager) {
+      cacheKey = this.budgetManager.hashPrompt(prompt);
+      const cached = await this.budgetManager.getCached(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+    
     try {
+      let result;
+      let provider;
+      let tokens;
+      
       // Try DeepSeek first (cost-effective for this task)
       if (this.deepSeekKey) {
-        return await this._callDeepSeek(prompt);
+        // Check budget before making call
+        if (this.budgetManager) {
+          const budgetCheck = this.budgetManager.canMakeCall('deepseek', { input: 1500, output: 2000 });
+          if (!budgetCheck.allowed) {
+            console.warn(`⚠️ Budget limit reached: ${budgetCheck.reason}`);
+            return this._generateMockRefinements(idea);
+          }
+        }
+        
+        result = await this._callDeepSeek(prompt);
+        provider = 'deepseek';
+        tokens = { input: 1500, output: 2000 }; // Approximate
       }
-      
       // Fallback to Claude (best reasoning)
-      if (this.anthropicKey) {
-        return await this._callClaude(prompt);
+      else if (this.anthropicKey) {
+        if (this.budgetManager) {
+          const budgetCheck = this.budgetManager.canMakeCall('claude', { input: 1500, output: 2000 });
+          if (!budgetCheck.allowed) {
+            console.warn(`⚠️ Budget limit reached: ${budgetCheck.reason}`);
+            return this._generateMockRefinements(idea);
+          }
+        }
+        
+        result = await this._callClaude(prompt);
+        provider = 'claude';
+        tokens = { input: 1500, output: 2000 };
       }
-      
       // Fallback to OpenAI
-      if (this.openAIKey) {
-        return await this._callOpenAI(prompt);
+      else if (this.openAIKey) {
+        if (this.budgetManager) {
+          const budgetCheck = this.budgetManager.canMakeCall('openai', { input: 1500, output: 2000 });
+          if (!budgetCheck.allowed) {
+            console.warn(`⚠️ Budget limit reached: ${budgetCheck.reason}`);
+            return this._generateMockRefinements(idea);
+          }
+        }
+        
+        result = await this._callOpenAI(prompt);
+        provider = 'openai';
+        tokens = { input: 1500, output: 2000 };
+      }
+      else {
+        // No API keys - return smart mock refinements
+        return this._generateMockRefinements(idea);
       }
       
-      // No API keys - return smart mock refinements
-      return this._generateMockRefinements(idea);
+      // Track the call if budget manager is available
+      if (this.budgetManager && provider) {
+        await this.budgetManager.trackCall(provider, tokens);
+        
+        // Cache the result
+        if (cacheKey) {
+          const estimatedCost = this.budgetManager.estimateCost(provider, tokens);
+          await this.budgetManager.setCached(cacheKey, result, estimatedCost);
+        }
+      }
+      
+      return result;
       
     } catch (error) {
       console.warn('⚠️  AI refinement failed, using smart analysis:', error.message);

@@ -10,6 +10,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { BudgetManager } from './budget-manager.js';
 
 // Load environment variables
 dotenv.config({ path: '../.env' });
@@ -38,6 +39,17 @@ const loadMarketIntelligence = async () => {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Initialize Budget Manager
+const budgetManager = new BudgetManager({
+  dailyLimit: parseFloat(process.env.DAILY_BUDGET_LIMIT) || 5.00,
+  monthlyLimit: parseFloat(process.env.MONTHLY_BUDGET_LIMIT) || 100.00,
+  cacheDir: path.join(__dirname, '../cache'),
+  logFile: path.join(__dirname, '../logs/budget.jsonl')
+});
+
+// Clean old cache on startup
+budgetManager.cleanCache().catch(() => {});
+
 // Middleware - Allow all origins in development
 app.use(cors({
   origin: true, // Allow all origins in development
@@ -55,6 +67,8 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const budgetStatus = budgetManager.getStatus();
+  
   res.json({
     status: 'ok',
     service: 'TooLoo.ai Market Intelligence API',
@@ -62,8 +76,38 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     apis: {
       productHunt: !!process.env.PRODUCTHUNT_API_KEY,
-      reddit: !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET)
+      reddit: !!(process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET),
+      ai: {
+        openai: !!process.env.OPENAI_API_KEY,
+        claude: !!process.env.ANTHROPIC_API_KEY,
+        deepseek: !!process.env.DEEPSEEK_API_KEY
+      }
+    },
+    budget: {
+      dailySpent: budgetStatus.daily.spent,
+      dailyLimit: budgetStatus.daily.limit,
+      dailyRemaining: budgetStatus.daily.remaining,
+      callsToday: budgetStatus.callsToday
     }
+  });
+});
+
+// Budget status endpoint
+app.get('/api/budget', (req, res) => {
+  const status = budgetManager.getStatus();
+  const breakdown = budgetManager.getBreakdown();
+  
+  res.json({
+    success: true,
+    status,
+    breakdown,
+    recommendations: {
+      cheapestProvider: status.cheapestProvider,
+      message: status.daily.percentage > 80 
+        ? `⚠️ High daily usage (${status.daily.percentage}%). Consider using ${status.cheapestProvider} for cost savings.`
+        : `✅ Budget healthy. Current cheapest option: ${status.cheapestProvider}`
+    },
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -234,16 +278,25 @@ app.post('/api/refine', async (req, res) => {
       refineryEngine = new PromptRefineryEngine({
         openAIKey: process.env.OPENAI_API_KEY,
         anthropicKey: process.env.ANTHROPIC_API_KEY,
-        deepSeekKey: process.env.DEEPSEEK_API_KEY
+        deepSeekKey: process.env.DEEPSEEK_API_KEY,
+        budgetManager // Pass budget manager to refinery engine
       });
       
       const refinement = await refineryEngine.refineIdea(idea);
       
       console.log(`✅ Refinement complete: Score improvement potential: ${refinement.score}/100`);
       
+      // Get budget status after refinement
+      const budgetStatus = budgetManager.getStatus();
+      
       res.json({
         success: true,
         refinement,
+        budget: {
+          spent: budgetStatus.daily.spent,
+          remaining: budgetStatus.daily.remaining,
+          percentage: budgetStatus.daily.percentage
+        },
         timestamp: new Date().toISOString()
       });
       
