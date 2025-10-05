@@ -18,8 +18,8 @@ function App() {
     setIsAnalyzing(true);
     
     try {
-      // Call real API backend
-      const response = await fetch('http://localhost:3001/api/analyze', {
+      // Call API backend (proxied by Vite in development)
+      const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
