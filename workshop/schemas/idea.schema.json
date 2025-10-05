@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tooloo.ai/schemas/idea.json",
+  "title": "Idea",
+  "description": "Core data structure for a product idea in TooLoo.ai V2",
+  "type": "object",
+  "required": ["id", "title", "problem", "solution", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier (UUID)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short, memorable name for the idea",
+      "minLength": 3,
+      "maxLength": 100
+    },
+    "tagline": {
+      "type": "string",
+      "description": "One-sentence description",
+      "maxLength": 200
+    },
+    "problem": {
+      "type": "object",
+      "description": "The problem being solved",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What problem does this solve?"
+        },
+        "targetAudience": {
+          "type": "string",
+          "description": "Who has this problem?"
+        },
+        "painLevel": {
+          "type": "string",
+          "enum": ["mild", "moderate", "severe", "critical"],
+          "description": "How painful is this problem?"
+        },
+        "currentSolutions": {
+          "type": "array",
+          "description": "How do people solve this today?",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "solution": {
+      "type": "object",
+      "description": "Your proposed solution",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "How will you solve the problem?"
+        },
+        "uniqueValue": {
+          "type": "string",
+          "description": "What makes this different/better?"
+        },
+        "keyFeatures": {
+          "type": "array",
+          "description": "Core features (max 5 for MVP)",
+          "maxItems": 5,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "market": {
+      "type": "object",
+      "description": "Market analysis data",
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Product category (SaaS, marketplace, tool, etc.)"
+        },
+        "competitors": {
+          "type": "array",
+          "description": "Known competitors",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string", "format": "uri" },
+              "pricing": { "type": "string" },
+              "weakness": { "type": "string" }
+            }
+          }
+        },
+        "marketSize": {
+          "type": "object",
+          "description": "TAM/SAM/SOM estimates",
+          "properties": {
+            "tam": { "type": "number", "description": "Total Addressable Market ($)" },
+            "sam": { "type": "number", "description": "Serviceable Addressable Market ($)" },
+            "som": { "type": "number", "description": "Serviceable Obtainable Market ($)" }
+          }
+        },
+        "trends": {
+          "type": "array",
+          "description": "Relevant market trends",
+          "items": {
+            "type": "object",
+            "properties": {
+              "topic": { "type": "string" },
+              "source": { "type": "string" },
+              "relevance": { "type": "string", "enum": ["low", "medium", "high"] }
+            }
+          }
+        }
+      }
+    },
+    "revenue": {
+      "type": "object",
+      "description": "Revenue model and projections",
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": ["subscription", "one-time", "freemium", "marketplace", "ads", "hybrid"],
+          "description": "Primary revenue model"
+        },
+        "pricing": {
+          "type": "object",
+          "properties": {
+            "currency": { "type": "string", "default": "USD" },
+            "tiers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "price": { "type": "number" },
+                  "period": { "type": "string", "enum": ["month", "year", "lifetime"] }
+                }
+              }
+            }
+          }
+        },
+        "projections": {
+          "type": "object",
+          "description": "First year revenue estimates",
+          "properties": {
+            "year1": { "type": "number" },
+            "year2": { "type": "number" },
+            "year3": { "type": "number" }
+          }
+        }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "description": "Development phases",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase": { "type": "string" },
+          "duration": { "type": "string" },
+          "milestones": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "dependencies": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "description": "Risk assessment",
+      "properties": {
+        "complexity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "very-high"],
+          "description": "Technical complexity"
+        },
+        "timeToMarket": {
+          "type": "string",
+          "description": "Estimated time to MVP (e.g., '2 weeks', '3 months')"
+        },
+        "estimatedCost": {
+          "type": "number",
+          "description": "Development cost estimate ($)"
+        },
+        "mainRisks": {
+          "type": "array",
+          "description": "Top 3-5 risks",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "analyzing", "validated", "prototyping", "testing", "production", "archived"],
+      "default": "draft",
+      "description": "Current state of the idea"
+    },
+    "tags": {
+      "type": "array",
+      "description": "Searchable tags",
+      "items": { "type": "string" }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    }
+  }
+}
