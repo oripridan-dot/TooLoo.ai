@@ -5,7 +5,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "info": "echo '📋 This is a Copilot partnership workspace, not an app project. See README.md for details.'"
+    "info": "echo '📋 This is a Copilot partnership workspace, not an app project. See README.md for details.'",
+    "milestone": "node timeline.js create",
+    "milestone:list": "node timeline.js list",
+    "milestone:suggest": "node timeline.js suggest",
+    "timeline": "node timeline.js list"
   },
   "keywords": [
     "github-copilot",
