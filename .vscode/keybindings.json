@@ -1,0 +1,63 @@
+
+[
+  {
+    "key": "cmd+shift+r",
+    "command": "workbench.action.tasks.runTask", 
+    "args": "Speak Selection (ElevenLabs)",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "cmd+shift+alt+r",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Voice Settings"
+  },
+  {
+    "key": "ctrl+shift+r",
+    "command": "workbench.action.tasks.runTask", 
+    "args": "Speak Selection (ElevenLabs)",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "cmd+shift+i",
+    "command": "workbench.action.chat.open"
+  },
+  {
+    "key": "cmd+shift+e", 
+    "command": "github.copilot.interactiveEditor.explain",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "cmd+shift+f",
+    "command": "github.copilot.interactiveEditor.fix",
+    "when": "editorHasSelection"  
+  },
+  {
+    "key": "cmd+shift+t",
+    "command": "github.copilot.interactiveEditor.generate",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+shift+o",
+    "command": "github.copilot.interactiveEditor.optimize", 
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "cmd+shift+s",
+    "command": "codesnap.start",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+shift+ctrl+p",
+    "command": "workbench.action.showCommands"
+  },
+  {
+    "key": "cmd+shift+m",
+    "command": "workbench.action.terminal.sendSequence",
+    "args": { "text": "npm run milestone\n" }
+  },
+  {
+    "key": "cmd+shift+h", 
+    "command": "workbench.action.terminal.sendSequence",
+    "args": { "text": "npm run timeline\n" }
+  }
+]

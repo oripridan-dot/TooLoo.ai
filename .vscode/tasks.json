@@ -1,0 +1,93 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "voicePick",
+      "type": "pickString",
+      "description": "Select ElevenLabs voice",
+      "options": [
+        "rachel",
+        "josh", 
+        "bella",
+        "antoni",
+        "elli",
+        "adam",
+        "arnold",
+        "sam"
+      ],
+      "default": "rachel"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Speak Selection (ElevenLabs)",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/speak-selection.js", "${selectedText}"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Speak selected text with current voice settings"
+    },
+    {
+      "label": "Speak Selection (Direct Input)",
+      "type": "shell", 
+      "command": "echo",
+      "args": ["'${selectedText}'", "|", "node", "scripts/speak-direct.js"],
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-c"]
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Alternative method using direct input"
+    },
+    {
+      "label": "Voice Settings",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/voice-picker.js"], 
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "problemMatcher": [],
+      "detail": "Configure ElevenLabs voice and emotion settings"
+    },
+    {
+      "label": "Open Last Audio",
+      "type": "shell",
+      "command": "node", 
+      "args": ["scripts/open-audio.js"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Open the last generated audio file in VS Code"
+    }
+  ]
+}
