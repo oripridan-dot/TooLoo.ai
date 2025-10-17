@@ -5,6 +5,9 @@ To keep development streamlined, each major capability should live in its own fe
 ## Workflow Checklist
 
 1. **Create a feature branch**: use a descriptive name such as `feature/api-rate-limits` or `fix/ui-latency`.
+   - Execute `bash scripts/create-feature-branch.sh feature/api-rate-limits` from the repository root to branch from `work` automatically.
+   - Supply a different base when needed: `bash scripts/create-feature-branch.sh fix/ui-latency main`.
+   - Alternatively, run `npm run create:branch -- feature/api-rate-limits` to call the helper through npm (append the base as an extra argument if you do not want to branch from `work`).
 2. **Implement the change**: commit early and often while keeping work scoped to the branch.
 3. **Run validation**:
    - `npm run lint` to maintain consistent style.
