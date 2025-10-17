@@ -1,0 +1,37 @@
+{
+  "sessionId": "SYN-007",
+  "createdAt": "2025-10-08T11:00:00Z",
+  "title": "Deliverable Framing Style",
+  "purpose": "Demonstrate outcome/test/impact/next pattern",
+  "macroWorkflows": ["Iterative Spec Refinement", "Execution Kickoff"],
+  "participants": [
+    {"id": "user", "role": "user", "persona": "Product Visionary"},
+    {"id": "ai", "role": "assistant", "persona": "Execution Partner"}
+  ],
+  "messages": [
+    {"id": "m1", "author": "user", "ts": 0, "type": "text", "content": "When you report progress use that clean structure."},
+    {"id": "m2", "author": "ai", "ts": 4000, "type": "text", "content": "Sample framing: Outcome: synthetic pack skeleton created. Tested: schema validated. Impact: enables scoring calibration. Next: populate remaining scenarios. Accept?"},
+    {"id": "m3", "author": "user", "ts": 9000, "type": "text", "content": "Yes that's the format. Keep it always."}
+  ],
+  "segments": [
+    {"id": "s1", "label": "Format Request", "startMessageId": "m1", "endMessageId": "m1", "rationale": "User defines reporting convention"},
+    {"id": "s2", "label": "Demonstration", "startMessageId": "m2", "endMessageId": "m2", "rationale": "Assistant examples structure"},
+    {"id": "s3", "label": "Convention Lock", "startMessageId": "m3", "endMessageId": "m3", "rationale": "User cements format"}
+  ],
+  "patternInstances": [
+    {"id": "pInst1", "patternId": "deliverable-framing-quad", "messageIds": ["m2"], "confidence": 0.9, "signals": ["Outcome:", "Tested:", "Impact:", "Next:"], "notes": "Canonical quadruple structure"},
+    {"id": "pInst2", "patternId": "next-step-authorization", "messageIds": ["m3"], "confidence": 0.68, "signals": ["Keep it always"], "notes": "Mandate for future communications"}
+  ],
+  "summaries": {
+    "micro": "Assistant proposes deliverable framing format; user accepts pattern; execution proceeds.",
+    "macro": "Establishes structured output format as workflow standard for clarity and accountability.",
+    "insights": ["Standardized formats reduce cognitive load", "Outcome/test/impact structure builds trust"],
+    "recommendations": ["Apply framing to all deliverables", "Maintain consistent format terminology"]
+  },
+  "expectedTraits": {
+    "decisionCompression": 0.75,
+    "riskDiscipline": 0.40,
+    "trustPriority": 0.30,
+    "structureExpectation": 0.95
+  }
+}

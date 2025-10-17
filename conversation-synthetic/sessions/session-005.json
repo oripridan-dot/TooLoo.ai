@@ -1,0 +1,38 @@
+{
+  "sessionId": "SYN-005",
+  "createdAt": "2025-10-08T10:40:00Z",
+  "title": "Local-First Principle Assertion",
+  "purpose": "Capture privacy emphasis dynamic",
+  "macroWorkflows": ["Data Privacy Assurance"],
+  "participants": [
+    {"id": "user", "role": "user", "persona": "Product Visionary"},
+    {"id": "ai", "role": "assistant", "persona": "Execution Partner"}
+  ],
+  "messages": [
+    {"id": "m1", "author": "ai", "ts": 0, "type": "text", "content": "For pattern mining at scale we could centralize raw chat logs—faster iteration but data risk."},
+    {"id": "m2", "author": "user", "ts": 4500, "type": "text", "content": "No central raw storage. Local-only analysis. If anything is shared it's anonymized pattern signatures."},
+    {"id": "m3", "author": "ai", "ts": 8000, "type": "text", "content": "Understood: adopting strict local-first model. I'll define: local processing pipeline, ephemeral memory, optional opt-in hashed pattern signature upstream."},
+    {"id": "m4", "author": "user", "ts": 12000, "type": "text", "content": "yes. reflect that in onboarding messaging."}
+  ],
+  "segments": [
+    {"id": "s1", "label": "Centralization Proposal", "startMessageId": "m1", "endMessageId": "m1", "rationale": "Assistant explores tradeoff"},
+    {"id": "s2", "label": "Privacy Principle Set", "startMessageId": "m2", "endMessageId": "m2", "rationale": "User sets constraint"},
+    {"id": "s3", "label": "Model Adjustment", "startMessageId": "m3", "endMessageId": "m4", "rationale": "Assistant adapts + instruction for onboarding"}
+  ],
+  "patternInstances": [
+    {"id": "pInst1", "patternId": "local-first-principle", "messageIds": ["m2"], "confidence": 0.94, "signals": ["Local-only", "anonymized pattern signatures"], "notes": "Clear privacy boundary"},
+    {"id": "pInst2", "patternId": "next-step-authorization", "messageIds": ["m4"], "confidence": 0.7, "signals": ["reflect"], "notes": "Direction to implement principle in UX"}
+  ],
+  "summaries": {
+    "micro": "User poses centralization risk; assistant commits to local-first model; user approves onboarding integration.",
+    "macro": "Establishes privacy-first architecture as fundamental design constraint and trust signal.",
+    "insights": ["Privacy concerns drive architecture decisions", "Local-first messaging builds user confidence"],
+    "recommendations": ["Lead with privacy guarantees", "Make local processing visible to users"]
+  },
+  "expectedTraits": {
+    "decisionCompression": 0.45,
+    "riskDiscipline": 0.60,
+    "trustPriority": 0.95,
+    "structureExpectation": 0.70
+  }
+}

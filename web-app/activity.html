@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>TooLoo Activity</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; color: #0f172a; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:12px; background:#eef2ff; color:#3730a3; font-size:12px; margin-left:6px; }
+    .grid { display:grid; grid-template-columns: 1fr 120px 120px 160px; gap:10px; align-items:center; }
+    .row { padding:8px 0; border-bottom:1px solid #e5e7eb; }
+    .muted { color:#6b7280; font-size:12px; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    button { background:#111827; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    button.secondary { background:#374151; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Recent Activity</h2>
+    <div>
+      <button id="refresh">Refresh</button>
+      <button id="clear" class="secondary">Clear</button>
+    </div>
+  </header>
+  <div id="summary" class="muted"></div>
+  <div class="grid muted" style="font-weight:600;">
+    <div>Text (first 80 chars)</div>
+    <div>Provider</div>
+    <div>Latency</div>
+    <div>Spend (today)</div>
+  </div>
+  <div id="items"></div>
+
+  <script>
+    async function load(){
+      const r = await fetch('/api/v1/activity/recent');
+      const j = await r.json();
+      const items = j.items || [];
+      const s = j.summary || {};
+      document.getElementById('summary').textContent = `Items: ${s.count||0} · Avg latency: ${s.avgLatencyMs||0}ms · By provider: ${Object.entries(s.byProvider||{}).map(([k,v])=>`${k}:${v}`).join(', ')} · Last total spend: $${(s.lastCostUsed||0).toFixed ? (s.lastCostUsed||0).toFixed(4) : s.lastCostUsed}`;
+      const cont = document.getElementById('items');
+      cont.innerHTML = '';
+      for (const it of items){
+        const row = document.createElement('div');
+        row.className='grid row';
+        const text = (it.text||'').slice(0,80).replace(/\n/g,' ');
+        const prov = `${it.providerUsed||'n/a'} ${(it.providerBadge?.percent||'')}%`;
+        const lat = `${it.meta?.latencyMs||0} ms`;
+        const spend = `$${(it.costBadge?.usd||0).toFixed ? (it.costBadge.usd||0).toFixed(4) : it.costBadge?.usd} / $${it.costBadge?.limit}`;
+        row.innerHTML = `<div>${text}</div><div><span class="badge">${prov}</span></div><div>${lat}</div><div>${spend}</div>`;
+        cont.appendChild(row);
+      }
+    }
+    document.getElementById('refresh').onclick = load;
+    document.getElementById('clear').onclick = async ()=>{ await fetch('/api/v1/activity/clear',{method:'POST'}); load(); };
+    load();
+  </script>
+</body>
+</html>

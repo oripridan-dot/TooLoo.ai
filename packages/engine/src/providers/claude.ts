@@ -18,7 +18,7 @@ export class ClaudeProvider implements AIProviderClient {
   async generate(request: AIRequest): Promise<AIResponse> {
     const { result: response, executionTimeMs } = await measureExecutionTime(async () => {
       const message = await this.client.messages.create({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: request.maxTokens ?? 4000,
         temperature: request.temperature ?? 0.7,
         system: request.systemMessage,
@@ -55,7 +55,7 @@ export class ClaudeProvider implements AIProviderClient {
     try {
       // Try a minimal request to check availability
       await this.client.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 10,
         messages: [{ role: 'user', content: 'Hi' }],
       });

@@ -1,0 +1,124 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "voicePick",
+      "type": "pickString",
+      "description": "Select ElevenLabs voice",
+      "options": [
+        "rachel",
+        "josh", 
+        "bella",
+        "antoni",
+        "elli",
+        "adam",
+        "arnold",
+        "sam"
+      ],
+      "default": "rachel"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Speak Selection (ElevenLabs)",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/speak-selection.js", "${selectedText}"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Speak selected text with current voice settings"
+    },
+    {
+      "label": "Speak Selection (Direct Input)",
+      "type": "shell", 
+      "command": "echo",
+      "args": ["'${selectedText}'", "|", "node", "scripts/speak-direct.js"],
+      "options": {
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-c"]
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Alternative method using direct input"
+    },
+    {
+      "label": "Voice Settings",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/voice-picker.js"], 
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "problemMatcher": [],
+      "detail": "Configure ElevenLabs voice and emotion settings"
+    },
+    {
+      "label": "Open Last Audio",
+      "type": "shell",
+      "command": "node", 
+      "args": ["scripts/open-audio.js"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Open the last generated audio file in VS Code"
+    },
+    {
+      "label": "Start Control Room + Orchestrator",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-lc", "node servers/web-server.js & sleep 1 && curl -s -X POST http://127.0.0.1:${WEB_PORT:-3000}/system/start -H 'Content-Type: application/json' -d '{\\\"autoOpen\\\":false}'"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Start web proxy then orchestrator (pre-arms services)."
+    }
+    ,
+    {
+      "label": "Design: Guiding Star",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/design-guiding-star.js"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Generate real design artifacts (brand board PDF + product page)"
+    }
+  ]
+}

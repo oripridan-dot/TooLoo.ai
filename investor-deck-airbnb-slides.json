@@ -1,0 +1,75 @@
+{
+  "generated": "2025-10-08T21:33:02.590Z",
+  "slideCount": 10,
+  "slides": [
+    {
+      "title": "Title & Mission",
+      "bullets": [
+        "\"Unlocking trusted stays everywhere\"",
+        "One-liner: Liquidity & trust layer for under-utilized space."
+      ]
+    },
+    {
+      "title": "Problem",
+      "bullets": [
+        "Fragmented trust ➜ high friction booking decisions.",
+        "Idle inventory yields zero revenue."
+      ]
+    },
+    {
+      "title": "Solution",
+      "bullets": [
+        "Adaptive trust + dynamic liquidity engine (beyond static listings).",
+        "Seamless UX: search → confidence → book."
+      ]
+    },
+    {
+      "title": "Market Opportunity",
+      "bullets": [
+        "TAM: Global short-stay + adjacent experience cross-sell.",
+        "Underserved long-tail hosts."
+      ]
+    },
+    {
+      "title": "Product Roadmap",
+      "bullets": [
+        "P1 MVP (listing + booking + reviews).",
+        "P2 Trust layering.",
+        "P3 Pricing intelligence.",
+        "P4 Platform/API."
+      ]
+    },
+    {
+      "title": "Traction & Early Signals (fill once live)",
+      "bullets": [
+        "Activation %, Repeat booking %, Dispute rate, Net supply growth."
+      ]
+    },
+    {
+      "title": "Business Model",
+      "bullets": [
+        "Take rate on bookings, trust services, pricing optimization upsell."
+      ]
+    },
+    {
+      "title": "Moat & Defensibility",
+      "bullets": [
+        "Reputation graph depth, fraud data corpus, regulatory expertise flywheel."
+      ]
+    },
+    {
+      "title": "Go-To-Market",
+      "bullets": [
+        "City seeding → host ambassador loops → review velocity engine."
+      ]
+    },
+    {
+      "title": "Financial Ask & Use of Funds",
+      "bullets": [
+        "Engineering (trust + pricing), market expansion, regulatory compliance buffer.",
+        "24 month runway; milestones: X bookings, Y cities, Z% repeat.",
+        "Appendix: Risk matrix, regulatory playbook, trust architecture diagram."
+      ]
+    }
+  ]
+}

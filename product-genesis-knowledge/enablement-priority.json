@@ -1,0 +1,2377 @@
+{
+  "generated": "2025-10-08T18:25:59.071Z",
+  "count": 210,
+  "rows": [
+    {
+      "product": "Datadog",
+      "category": "EnterpriseSaaS",
+      "score": 8,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision",
+        "riskIntelligence",
+        "executionDiscipline",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.06190476190476191,
+      "reliabilityPct": 0.06666666666666667,
+      "overConcentration": true
+    },
+    {
+      "product": "iPhone",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence",
+        "innovationDrive",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.004761904761904762,
+      "reliabilityPct": 0.10476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "GoPro",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "executionDiscipline",
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.16666666666666666,
+      "reliabilityPct": 0.20952380952380953,
+      "overConcentration": false
+    },
+    {
+      "product": "PlayStation",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "executionDiscipline",
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.19047619047619047,
+      "reliabilityPct": 0.2523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Xbox",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline",
+        "innovationDrive",
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.19523809523809524,
+      "reliabilityPct": 0.22857142857142856,
+      "overConcentration": false
+    },
+    {
+      "product": "Sonos",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.20476190476190476,
+      "reliabilityPct": 0.09047619047619047,
+      "overConcentration": false
+    },
+    {
+      "product": "Oculus Quest",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline",
+        "innovationDrive",
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.20952380952380953,
+      "reliabilityPct": 0.19523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Steam Deck",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence",
+        "innovationDrive",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.009523809523809525,
+      "reliabilityPct": 0.21428571428571427,
+      "overConcentration": false
+    },
+    {
+      "product": "Tile Tracker",
+      "category": "ConsumerTech",
+      "score": 7,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "riskIntelligence",
+        "executionDiscipline",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.21428571428571427,
+      "reliabilityPct": 0.014285714285714285,
+      "overConcentration": false
+    },
+    {
+      "product": "Slack",
+      "category": "EnterpriseSaaS",
+      "score": 7,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline",
+        "innovationDrive",
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.22380952380952382,
+      "reliabilityPct": 0.28095238095238095,
+      "overConcentration": false
+    },
+    {
+      "product": "Jira",
+      "category": "EnterpriseSaaS",
+      "score": 7,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision",
+        "riskIntelligence",
+        "innovationDrive",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.05714285714285714,
+      "reliabilityPct": 0.1523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Cohere",
+      "category": "AIData",
+      "score": 7,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence",
+        "innovationDrive",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.014285714285714285,
+      "reliabilityPct": 0.18571428571428572,
+      "overConcentration": false
+    },
+    {
+      "product": "RunwayML",
+      "category": "AIData",
+      "score": 7,
+      "gaps": [
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "innovationDrive",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.01904761904761905,
+      "reliabilityPct": 0.02857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "StockX",
+      "category": "MarketplacePlatform",
+      "score": 7,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision",
+        "executionDiscipline",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.08571428571428572,
+      "reliabilityPct": 0.16666666666666666,
+      "overConcentration": true
+    },
+    {
+      "product": "Telegram",
+      "category": "SocialMedia",
+      "score": 7,
+      "gaps": [
+        "riskIntelligence",
+        "decisionClarity",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.09523809523809523,
+      "reliabilityPct": 0.03333333333333333,
+      "overConcentration": true
+    },
+    {
+      "product": "Meta Portal",
+      "category": "HardwareInnovation",
+      "score": 7,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "strategicVision",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.05238095238095238,
+      "reliabilityPct": 0.004761904761904762,
+      "overConcentration": true
+    },
+    {
+      "product": "AirPods",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.15714285714285714,
+      "reliabilityPct": 0.5714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "Fitbit",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.1619047619047619,
+      "reliabilityPct": 0.6428571428571429,
+      "overConcentration": false
+    },
+    {
+      "product": "Kindle",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.17142857142857143,
+      "reliabilityPct": 0.5142857142857142,
+      "overConcentration": false
+    },
+    {
+      "product": "Nest Thermostat",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.1761904761904762,
+      "reliabilityPct": 0.4142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "Ring Doorbell",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "riskIntelligence",
+        "innovationDrive",
+        "decisionClarity",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.18095238095238095,
+      "reliabilityPct": 0.43333333333333335,
+      "overConcentration": false
+    },
+    {
+      "product": "Nintendo Switch",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.18571428571428572,
+      "reliabilityPct": 0.7857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "Roku",
+      "category": "ConsumerTech",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "decisionClarity",
+        "riskIntelligence",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2,
+      "reliabilityPct": 0.8380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Salesforce",
+      "category": "EnterpriseSaaS",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.21904761904761905,
+      "reliabilityPct": 0.5095238095238095,
+      "overConcentration": false
+    },
+    {
+      "product": "Zoom",
+      "category": "EnterpriseSaaS",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.22857142857142856,
+      "reliabilityPct": 0.7238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "Notion",
+      "category": "EnterpriseSaaS",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.23333333333333334,
+      "reliabilityPct": 0.5,
+      "overConcentration": false
+    },
+    {
+      "product": "Asana",
+      "category": "EnterpriseSaaS",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.23809523809523808,
+      "reliabilityPct": 0.7380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Confluence",
+      "category": "EnterpriseSaaS",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.24285714285714285,
+      "reliabilityPct": 0.8095238095238095,
+      "overConcentration": false
+    },
+    {
+      "product": "HubSpot",
+      "category": "EnterpriseSaaS",
+      "score": 6.5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.24761904761904763,
+      "reliabilityPct": 0.5428571428571428,
+      "overConcentration": false
+    },
+    {
+      "product": "Robinhood",
+      "category": "Fintech",
+      "score": 6,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence",
+        "executionDiscipline",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.023809523809523808,
+      "reliabilityPct": 0.08095238095238096,
+      "overConcentration": false
+    },
+    {
+      "product": "Adyen",
+      "category": "Fintech",
+      "score": 6,
+      "gaps": [
+        "executionDiscipline",
+        "decisionClarity",
+        "riskIntelligence",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.03333333333333333,
+      "reliabilityPct": 0.009523809523809525,
+      "overConcentration": false
+    },
+    {
+      "product": "ServiceNow",
+      "category": "EnterpriseSaaS",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2523809523809524,
+      "reliabilityPct": 0.6714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "Workday",
+      "category": "EnterpriseSaaS",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2571428571428571,
+      "reliabilityPct": 0.5285714285714286,
+      "overConcentration": false
+    },
+    {
+      "product": "GitHub",
+      "category": "EnterpriseSaaS",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2619047619047619,
+      "reliabilityPct": 0.8,
+      "overConcentration": false
+    },
+    {
+      "product": "GitLab",
+      "category": "EnterpriseSaaS",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.26666666666666666,
+      "reliabilityPct": 0.9476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "Snowflake",
+      "category": "EnterpriseSaaS",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2714285714285714,
+      "reliabilityPct": 0.6095238095238096,
+      "overConcentration": false
+    },
+    {
+      "product": "MongoDB",
+      "category": "EnterpriseSaaS",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2761904761904762,
+      "reliabilityPct": 0.6333333333333333,
+      "overConcentration": false
+    },
+    {
+      "product": "ChatGPT",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.28095238095238095,
+      "reliabilityPct": 0.6619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Claude",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2857142857142857,
+      "reliabilityPct": 0.48095238095238096,
+      "overConcentration": false
+    },
+    {
+      "product": "Midjourney",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.2904761904761905,
+      "reliabilityPct": 0.4714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "Stability AI",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.29523809523809524,
+      "reliabilityPct": 0.6523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Perplexity",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.3,
+      "reliabilityPct": 0.5476190476190477,
+      "overConcentration": false
+    },
+    {
+      "product": "Hugging Face",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.3047619047619048,
+      "reliabilityPct": 0.8857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "Anthropic Console",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.30952380952380953,
+      "reliabilityPct": 0.6,
+      "overConcentration": false
+    },
+    {
+      "product": "Replica Studios",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.3142857142857143,
+      "reliabilityPct": 0.8047619047619048,
+      "overConcentration": false
+    },
+    {
+      "product": "OpenAI API",
+      "category": "AIData",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.319047619047619,
+      "reliabilityPct": 0.36666666666666664,
+      "overConcentration": false
+    },
+    {
+      "product": "Cash App",
+      "category": "Fintech",
+      "score": 5,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.02857142857142857,
+      "reliabilityPct": 0.15714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "Lyft",
+      "category": "MobilityEnergy",
+      "score": 5,
+      "gaps": [
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.0380952380952381,
+      "reliabilityPct": 0.01904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "Vercel",
+      "category": "DeveloperTools",
+      "score": 5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.10952380952380952,
+      "reliabilityPct": 0.20476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "Okta",
+      "category": "SecurityPrivacy",
+      "score": 5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.11428571428571428,
+      "reliabilityPct": 0.1619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Khan Academy",
+      "category": "EdTech",
+      "score": 5,
+      "gaps": [
+        "innovationDrive",
+        "strategicVision",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.11904761904761904,
+      "reliabilityPct": 0.04285714285714286,
+      "overConcentration": false
+    },
+    {
+      "product": "DJI Phantom",
+      "category": "HardwareInnovation",
+      "score": 5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.13333333333333333,
+      "reliabilityPct": 0.19047619047619047,
+      "overConcentration": false
+    },
+    {
+      "product": "Twilio API",
+      "category": "LogisticsOps",
+      "score": 5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.1523809523809524,
+      "reliabilityPct": 0.023809523809523808,
+      "overConcentration": false
+    },
+    {
+      "product": "Stripe",
+      "category": "Fintech",
+      "score": 4.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.34285714285714286,
+      "reliabilityPct": 0.09523809523809523,
+      "overConcentration": false
+    },
+    {
+      "product": "Square",
+      "category": "Fintech",
+      "score": 4.5,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline",
+        "innovationDrive",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.3476190476190476,
+      "reliabilityPct": 0.18095238095238095,
+      "overConcentration": false
+    },
+    {
+      "product": "Airbnb",
+      "category": "MarketplacePlatform",
+      "score": 4.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.5523809523809524,
+      "reliabilityPct": 0.06190476190476191,
+      "overConcentration": true
+    },
+    {
+      "product": "LangChain",
+      "category": "AIData",
+      "score": 4,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.3238095238095238,
+      "reliabilityPct": 0.49523809523809526,
+      "overConcentration": false
+    },
+    {
+      "product": "Pinecone",
+      "category": "AIData",
+      "score": 4,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.32857142857142857,
+      "reliabilityPct": 0.7,
+      "overConcentration": false
+    },
+    {
+      "product": "Waymo",
+      "category": "MobilityEnergy",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.06666666666666667,
+      "reliabilityPct": 0.24285714285714285,
+      "overConcentration": false
+    },
+    {
+      "product": "Headspace",
+      "category": "HealthBio",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.0761904761904762,
+      "reliabilityPct": 0.26666666666666666,
+      "overConcentration": false
+    },
+    {
+      "product": "Amazon Marketplace",
+      "category": "MarketplacePlatform",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.04285714285714286,
+      "reliabilityPct": 0.13333333333333333,
+      "overConcentration": false
+    },
+    {
+      "product": "Instacart",
+      "category": "MarketplacePlatform",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.08095238095238096,
+      "reliabilityPct": 0.2619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Travis CI",
+      "category": "DeveloperTools",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.10476190476190476,
+      "reliabilityPct": 0.2571428571428571,
+      "overConcentration": false
+    },
+    {
+      "product": "Sentry",
+      "category": "DeveloperTools",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.047619047619047616,
+      "reliabilityPct": 0.14761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "edX",
+      "category": "EdTech",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.12380952380952381,
+      "reliabilityPct": 0.2857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "Climeworks DAC",
+      "category": "GreenTech",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.14285714285714285,
+      "reliabilityPct": 0.2714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "AWS Lambda",
+      "category": "LogisticsOps",
+      "score": 4,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.14761904761904762,
+      "reliabilityPct": 0.2904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "Coinbase",
+      "category": "Fintech",
+      "score": 3.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.3523809523809524,
+      "reliabilityPct": 0.0761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "Revolut",
+      "category": "Fintech",
+      "score": 3.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.3619047619047619,
+      "reliabilityPct": 0.11904761904761904,
+      "overConcentration": false
+    },
+    {
+      "product": "Plaid",
+      "category": "Fintech",
+      "score": 3.5,
+      "gaps": [
+        "executionDiscipline",
+        "riskIntelligence",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.36666666666666664,
+      "reliabilityPct": 0.12380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Uber",
+      "category": "MobilityEnergy",
+      "score": 3.5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.07142857142857142,
+      "reliabilityPct": 0.30952380952380953,
+      "overConcentration": false
+    },
+    {
+      "product": "Facebook",
+      "category": "SocialMedia",
+      "score": 3.5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.09047619047619047,
+      "reliabilityPct": 0.3238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "WhatsApp",
+      "category": "SocialMedia",
+      "score": 3.5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.1,
+      "reliabilityPct": 0.3047619047619048,
+      "overConcentration": false
+    },
+    {
+      "product": "Google Classroom",
+      "category": "EdTech",
+      "score": 3.5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.12857142857142856,
+      "reliabilityPct": 0.3,
+      "overConcentration": false
+    },
+    {
+      "product": "Nothing Phone",
+      "category": "HardwareInnovation",
+      "score": 3.5,
+      "gaps": [
+        "decisionClarity",
+        "strategicVision"
+      ],
+      "decisionClarityPct": 0.1380952380952381,
+      "reliabilityPct": 0.3142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "VectorDB",
+      "category": "AIData",
+      "score": 3,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.3333333333333333,
+      "reliabilityPct": 0.6666666666666666,
+      "overConcentration": false
+    },
+    {
+      "product": "Weights & Biases",
+      "category": "AIData",
+      "score": 3,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence",
+        "decisionClarity"
+      ],
+      "decisionClarityPct": 0.3380952380952381,
+      "reliabilityPct": 0.9857142857142858,
+      "overConcentration": false
+    },
+    {
+      "product": "Tesla Model S",
+      "category": "MobilityEnergy",
+      "score": 2.5,
+      "gaps": [
+        "executionDiscipline",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.4,
+      "reliabilityPct": 0.2761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "Grail Test",
+      "category": "HealthBio",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.49523809523809526,
+      "reliabilityPct": 0.10952380952380952,
+      "overConcentration": false
+    },
+    {
+      "product": "Fiverr",
+      "category": "MarketplacePlatform",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.5428571428571428,
+      "reliabilityPct": 0.07142857142857142,
+      "overConcentration": false
+    },
+    {
+      "product": "Snapchat",
+      "category": "SocialMedia",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.5904761904761905,
+      "reliabilityPct": 0.1,
+      "overConcentration": false
+    },
+    {
+      "product": "Miro",
+      "category": "DeveloperTools",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.6666666666666666,
+      "reliabilityPct": 0.11428571428571428,
+      "overConcentration": false
+    },
+    {
+      "product": "Jenkins",
+      "category": "DeveloperTools",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.6761904761904762,
+      "reliabilityPct": 0.08571428571428572,
+      "overConcentration": false
+    },
+    {
+      "product": "ElasticSearch",
+      "category": "DeveloperTools",
+      "score": 2.5,
+      "gaps": [
+        "executionDiscipline",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.680952380952381,
+      "reliabilityPct": 0.0380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "LastPass",
+      "category": "SecurityPrivacy",
+      "score": 2.5,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.7095238095238096,
+      "reliabilityPct": 0.1380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Darktrace",
+      "category": "SecurityPrivacy",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.7238095238095238,
+      "reliabilityPct": 0.14285714285714285,
+      "overConcentration": false
+    },
+    {
+      "product": "Quizlet",
+      "category": "EdTech",
+      "score": 2.5,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.7761904761904762,
+      "reliabilityPct": 0.22380952380952382,
+      "overConcentration": false
+    },
+    {
+      "product": "Outschool",
+      "category": "EdTech",
+      "score": 2.5,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.8142857142857143,
+      "reliabilityPct": 0.05238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "GoPro Hero",
+      "category": "HardwareInnovation",
+      "score": 2.5,
+      "gaps": [
+        "executionDiscipline",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.8285714285714286,
+      "reliabilityPct": 0.21904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "SolarCity",
+      "category": "GreenTech",
+      "score": 2.5,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.8761904761904762,
+      "reliabilityPct": 0.17142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "Impossible Burger",
+      "category": "GreenTech",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.9047619047619048,
+      "reliabilityPct": 0.12857142857142856,
+      "overConcentration": false
+    },
+    {
+      "product": "Terrapower Reactor",
+      "category": "GreenTech",
+      "score": 2.5,
+      "gaps": [
+        "riskIntelligence",
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.9238095238095239,
+      "reliabilityPct": 0.05714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "SendGrid",
+      "category": "LogisticsOps",
+      "score": 2.5,
+      "gaps": [
+        "strategicVision",
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.9714285714285714,
+      "reliabilityPct": 0.1761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "Shopify Fulfillment",
+      "category": "LogisticsOps",
+      "score": 2.5,
+      "gaps": [
+        "executionDiscipline",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.9857142857142858,
+      "reliabilityPct": 0.047619047619047616,
+      "overConcentration": false
+    },
+    {
+      "product": "PayPal",
+      "category": "Fintech",
+      "score": 2,
+      "gaps": [
+        "innovationDrive",
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.35714285714285715,
+      "reliabilityPct": 0.9761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "Reddit",
+      "category": "SocialMedia",
+      "score": 1.5,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.6095238095238096,
+      "reliabilityPct": 0.23333333333333334,
+      "overConcentration": false
+    },
+    {
+      "product": "Kubernetes",
+      "category": "DeveloperTools",
+      "score": 1.5,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.6476190476190476,
+      "reliabilityPct": 0.24761904761904763,
+      "overConcentration": false
+    },
+    {
+      "product": "CircleCI",
+      "category": "DeveloperTools",
+      "score": 1.5,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.6714285714285714,
+      "reliabilityPct": 0.29523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "CrowdStrike",
+      "category": "SecurityPrivacy",
+      "score": 1.5,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.7142857142857143,
+      "reliabilityPct": 0.23809523809523808,
+      "overConcentration": false
+    },
+    {
+      "product": "Byju's",
+      "category": "EdTech",
+      "score": 1.5,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.7857142857142857,
+      "reliabilityPct": 0.2,
+      "overConcentration": false
+    },
+    {
+      "product": "Chime",
+      "category": "Fintech",
+      "score": 1,
+      "gaps": [
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.37142857142857144,
+      "reliabilityPct": 0.35714285714285715,
+      "overConcentration": false
+    },
+    {
+      "product": "Venmo",
+      "category": "Fintech",
+      "score": 1,
+      "gaps": [
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.3761904761904762,
+      "reliabilityPct": 0.9047619047619048,
+      "overConcentration": false
+    },
+    {
+      "product": "SoFi",
+      "category": "Fintech",
+      "score": 1,
+      "gaps": [
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.38095238095238093,
+      "reliabilityPct": 0.9952380952380953,
+      "overConcentration": false
+    },
+    {
+      "product": "Brex",
+      "category": "Fintech",
+      "score": 1,
+      "gaps": [
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.38571428571428573,
+      "reliabilityPct": 0.9809523809523809,
+      "overConcentration": false
+    },
+    {
+      "product": "Marqeta",
+      "category": "Fintech",
+      "score": 1,
+      "gaps": [
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.3904761904761905,
+      "reliabilityPct": 0.3476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "Wise",
+      "category": "Fintech",
+      "score": 1,
+      "gaps": [
+        "innovationDrive"
+      ],
+      "decisionClarityPct": 0.3952380952380952,
+      "reliabilityPct": 0.6142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "Lime",
+      "category": "MobilityEnergy",
+      "score": 1,
+      "gaps": [
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.4142857142857143,
+      "reliabilityPct": 0.34285714285714286,
+      "overConcentration": false
+    },
+    {
+      "product": "Rivian R1T",
+      "category": "MobilityEnergy",
+      "score": 1,
+      "gaps": [
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.41904761904761906,
+      "reliabilityPct": 0.3952380952380952,
+      "overConcentration": false
+    },
+    {
+      "product": "Whoop Band",
+      "category": "HealthBio",
+      "score": 1,
+      "gaps": [
+        "riskIntelligence"
+      ],
+      "decisionClarityPct": 0.4714285714285714,
+      "reliabilityPct": 0.44285714285714284,
+      "overConcentration": false
+    },
+    {
+      "product": "eBay",
+      "category": "MarketplacePlatform",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.5285714285714286,
+      "reliabilityPct": 0.319047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Lyft Platform",
+      "category": "MarketplacePlatform",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.5619047619047619,
+      "reliabilityPct": 0.32857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "Discord",
+      "category": "SocialMedia",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.6142857142857143,
+      "reliabilityPct": 0.4238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "Grafana",
+      "category": "DeveloperTools",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.6857142857142857,
+      "reliabilityPct": 0.47619047619047616,
+      "overConcentration": false
+    },
+    {
+      "product": "Malwarebytes",
+      "category": "SecurityPrivacy",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.7523809523809524,
+      "reliabilityPct": 0.3333333333333333,
+      "overConcentration": false
+    },
+    {
+      "product": "Splunk",
+      "category": "SecurityPrivacy",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.7571428571428571,
+      "reliabilityPct": 0.41904761904761906,
+      "overConcentration": false
+    },
+    {
+      "product": "Oura Ring",
+      "category": "HardwareInnovation",
+      "score": 1,
+      "gaps": [
+        "executionDiscipline"
+      ],
+      "decisionClarityPct": 0.8666666666666667,
+      "reliabilityPct": 0.38571428571428573,
+      "overConcentration": false
+    },
+    {
+      "product": "Tesla Supercharger",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.40476190476190477,
+      "reliabilityPct": 0.37142857142857144,
+      "overConcentration": false
+    },
+    {
+      "product": "Bird Scooter",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.4095238095238095,
+      "reliabilityPct": 0.5190476190476191,
+      "overConcentration": false
+    },
+    {
+      "product": "Lucid Air",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.4238095238095238,
+      "reliabilityPct": 0.9428571428571428,
+      "overConcentration": false
+    },
+    {
+      "product": "Hyundai IONIQ",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.42857142857142855,
+      "reliabilityPct": 0.9904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "BYD Atto",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.43333333333333335,
+      "reliabilityPct": 0.3523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Cruise AV",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.4380952380952381,
+      "reliabilityPct": 0.7523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "ChargePoint",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.44285714285714284,
+      "reliabilityPct": 0.8142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "Blink Charging",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.44761904761904764,
+      "reliabilityPct": 0.6761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "NIO ES8",
+      "category": "MobilityEnergy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.4523809523809524,
+      "reliabilityPct": 0.5761904761904761,
+      "overConcentration": false
+    },
+    {
+      "product": "23andMe",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.45714285714285713,
+      "reliabilityPct": 0.9095238095238095,
+      "overConcentration": false
+    },
+    {
+      "product": "Fitbit Health",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.46190476190476193,
+      "reliabilityPct": 0.5857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "Peloton Bike",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.4666666666666667,
+      "reliabilityPct": 0.7714285714285715,
+      "overConcentration": false
+    },
+    {
+      "product": "Dexcom G6",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.47619047619047616,
+      "reliabilityPct": 0.5333333333333333,
+      "overConcentration": false
+    },
+    {
+      "product": "Theranos",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.48095238095238096,
+      "reliabilityPct": 0.7333333333333333,
+      "overConcentration": false
+    },
+    {
+      "product": "Moderna mRNA Vaccine",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.4857142857142857,
+      "reliabilityPct": 0.9380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "CRISPR Therapeutics",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.49047619047619045,
+      "reliabilityPct": 0.8809523809523809,
+      "overConcentration": false
+    },
+    {
+      "product": "Apple HealthKit",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5,
+      "reliabilityPct": 0.44761904761904764,
+      "overConcentration": false
+    },
+    {
+      "product": "Google DeepMind AlphaFold",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5047619047619047,
+      "reliabilityPct": 0.9285714285714286,
+      "overConcentration": false
+    },
+    {
+      "product": "Omada Health",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5095238095238095,
+      "reliabilityPct": 0.9142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "Calm App",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5142857142857142,
+      "reliabilityPct": 0.8761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "MyFitnessPal",
+      "category": "HealthBio",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5190476190476191,
+      "reliabilityPct": 0.7476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "Etsy",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5238095238095238,
+      "reliabilityPct": 0.4380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Uber Eats",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5333333333333333,
+      "reliabilityPct": 0.7142857142857143,
+      "overConcentration": false
+    },
+    {
+      "product": "DoorDash",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5380952380952381,
+      "reliabilityPct": 0.6190476190476191,
+      "overConcentration": false
+    },
+    {
+      "product": "Upwork",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5476190476190477,
+      "reliabilityPct": 0.9571428571428572,
+      "overConcentration": false
+    },
+    {
+      "product": "Booking.com",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5571428571428572,
+      "reliabilityPct": 0.8238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "Turo",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5666666666666667,
+      "reliabilityPct": 0.8714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "Poshmark",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5714285714285714,
+      "reliabilityPct": 0.719047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "TaskRabbit",
+      "category": "MarketplacePlatform",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5761904761904761,
+      "reliabilityPct": 0.9238095238095239,
+      "overConcentration": false
+    },
+    {
+      "product": "Instagram",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.580952380952381,
+      "reliabilityPct": 0.7428571428571429,
+      "overConcentration": false
+    },
+    {
+      "product": "Twitter",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5857142857142857,
+      "reliabilityPct": 0.4095238095238095,
+      "overConcentration": false
+    },
+    {
+      "product": "TikTok",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.5952380952380952,
+      "reliabilityPct": 0.7047619047619048,
+      "overConcentration": false
+    },
+    {
+      "product": "LinkedIn",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6,
+      "reliabilityPct": 0.5619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Pinterest",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6047619047619047,
+      "reliabilityPct": 0.780952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Twitch",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6190476190476191,
+      "reliabilityPct": 0.5904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "BeReal",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6238095238095238,
+      "reliabilityPct": 0.8428571428571429,
+      "overConcentration": false
+    },
+    {
+      "product": "Clubhouse",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6285714285714286,
+      "reliabilityPct": 0.7666666666666667,
+      "overConcentration": false
+    },
+    {
+      "product": "WeChat",
+      "category": "SocialMedia",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6333333333333333,
+      "reliabilityPct": 0.7904761904761904,
+      "overConcentration": false
+    },
+    {
+      "product": "VS Code",
+      "category": "DeveloperTools",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.638095238095238,
+      "reliabilityPct": 0.8666666666666667,
+      "overConcentration": false
+    },
+    {
+      "product": "Docker",
+      "category": "DeveloperTools",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6428571428571429,
+      "reliabilityPct": 0.5380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Terraform",
+      "category": "DeveloperTools",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6523809523809524,
+      "reliabilityPct": 0.8571428571428571,
+      "overConcentration": false
+    },
+    {
+      "product": "Postman",
+      "category": "DeveloperTools",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6571428571428571,
+      "reliabilityPct": 0.8333333333333334,
+      "overConcentration": false
+    },
+    {
+      "product": "Figma",
+      "category": "DeveloperTools",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6619047619047619,
+      "reliabilityPct": 0.3904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "Prometheus",
+      "category": "DeveloperTools",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6904761904761905,
+      "reliabilityPct": 0.7761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "Cloudflare",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.6952380952380952,
+      "reliabilityPct": 0.6952380952380952,
+      "overConcentration": false
+    },
+    {
+      "product": "Auth0",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7,
+      "reliabilityPct": 0.7285714285714285,
+      "overConcentration": false
+    },
+    {
+      "product": "1Password",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7047619047619048,
+      "reliabilityPct": 0.38095238095238093,
+      "overConcentration": false
+    },
+    {
+      "product": "SentinelOne",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.719047619047619,
+      "reliabilityPct": 0.5952380952380952,
+      "overConcentration": false
+    },
+    {
+      "product": "Tailscale",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7285714285714285,
+      "reliabilityPct": 0.7952380952380952,
+      "overConcentration": false
+    },
+    {
+      "product": "ProtonMail",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7333333333333333,
+      "reliabilityPct": 0.819047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Signal",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7380952380952381,
+      "reliabilityPct": 0.4857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "Tor Browser",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7428571428571429,
+      "reliabilityPct": 0.40476190476190477,
+      "overConcentration": false
+    },
+    {
+      "product": "Norton 360",
+      "category": "SecurityPrivacy",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7476190476190476,
+      "reliabilityPct": 0.9523809523809523,
+      "overConcentration": false
+    },
+    {
+      "product": "Coursera",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7619047619047619,
+      "reliabilityPct": 0.6904761904761905,
+      "overConcentration": false
+    },
+    {
+      "product": "Udemy",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7666666666666667,
+      "reliabilityPct": 0.4666666666666667,
+      "overConcentration": false
+    },
+    {
+      "product": "Duolingo",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7714285714285715,
+      "reliabilityPct": 0.5666666666666667,
+      "overConcentration": false
+    },
+    {
+      "product": "Chegg",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.780952380952381,
+      "reliabilityPct": 0.5047619047619047,
+      "overConcentration": false
+    },
+    {
+      "product": "MasterClass",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7904761904761904,
+      "reliabilityPct": 0.638095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "Skillshare",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.7952380952380952,
+      "reliabilityPct": 0.6238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "Brilliant",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8,
+      "reliabilityPct": 0.8904761904761904,
+      "overConcentration": false
+    },
+    {
+      "product": "Codecademy",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8047619047619048,
+      "reliabilityPct": 0.6476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "Photomath",
+      "category": "EdTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8095238095238095,
+      "reliabilityPct": 0.9619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Raspberry Pi",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.819047619047619,
+      "reliabilityPct": 0.919047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Arduino",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8238095238095238,
+      "reliabilityPct": 0.8523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Apple M1 Chip",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8333333333333334,
+      "reliabilityPct": 0.6857142857142857,
+      "overConcentration": false
+    },
+    {
+      "product": "NVIDIA RTX 4090",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8380952380952381,
+      "reliabilityPct": 0.6285714285714286,
+      "overConcentration": false
+    },
+    {
+      "product": "Intel Xeon",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8428571428571429,
+      "reliabilityPct": 0.7619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Boston Dynamics Spot",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8476190476190476,
+      "reliabilityPct": 0.4,
+      "overConcentration": false
+    },
+    {
+      "product": "Formlabs Printer",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8523809523809524,
+      "reliabilityPct": 0.3619047619047619,
+      "overConcentration": false
+    },
+    {
+      "product": "Apple Watch",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8571428571428571,
+      "reliabilityPct": 0.49047619047619045,
+      "overConcentration": false
+    },
+    {
+      "product": "Google Glass",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.861904761904762,
+      "reliabilityPct": 0.46190476190476193,
+      "overConcentration": false
+    },
+    {
+      "product": "Framework Laptop",
+      "category": "HardwareInnovation",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8714285714285714,
+      "reliabilityPct": 0.9,
+      "overConcentration": false
+    },
+    {
+      "product": "Nest Solar Integration",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8809523809523809,
+      "reliabilityPct": 0.8476190476190476,
+      "overConcentration": false
+    },
+    {
+      "product": "Tesla Powerwall",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8857142857142857,
+      "reliabilityPct": 0.7095238095238096,
+      "overConcentration": false
+    },
+    {
+      "product": "Enphase Microinverter",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8904761904761904,
+      "reliabilityPct": 0.9714285714285714,
+      "overConcentration": false
+    },
+    {
+      "product": "Sunrun Platform",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.8952380952380953,
+      "reliabilityPct": 0.7571428571428571,
+      "overConcentration": false
+    },
+    {
+      "product": "Beyond Meat Burger",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9,
+      "reliabilityPct": 0.42857142857142855,
+      "overConcentration": false
+    },
+    {
+      "product": "Ørsted Offshore Wind",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9095238095238095,
+      "reliabilityPct": 0.9666666666666667,
+      "overConcentration": false
+    },
+    {
+      "product": "First Solar Series 6",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9142857142857143,
+      "reliabilityPct": 0.861904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "CarbonCure",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.919047619047619,
+      "reliabilityPct": 0.8285714285714286,
+      "overConcentration": false
+    },
+    {
+      "product": "ZeroAvia Hydrogen",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9285714285714286,
+      "reliabilityPct": 0.580952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Rivian Charging",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9333333333333333,
+      "reliabilityPct": 0.680952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Vestas Turbine",
+      "category": "GreenTech",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9380952380952381,
+      "reliabilityPct": 0.8952380952380953,
+      "overConcentration": false
+    },
+    {
+      "product": "Azure Functions",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9428571428571428,
+      "reliabilityPct": 0.5571428571428572,
+      "overConcentration": false
+    },
+    {
+      "product": "Google Cloud Run",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9476190476190476,
+      "reliabilityPct": 0.3380952380952381,
+      "overConcentration": false
+    },
+    {
+      "product": "Cloudflare Workers",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9523809523809523,
+      "reliabilityPct": 0.9333333333333333,
+      "overConcentration": false
+    },
+    {
+      "product": "Datadog RUM",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9571428571428572,
+      "reliabilityPct": 1,
+      "overConcentration": false
+    },
+    {
+      "product": "New Relic One",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9619047619047619,
+      "reliabilityPct": 0.3761904761904762,
+      "overConcentration": false
+    },
+    {
+      "product": "PagerDuty",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9666666666666667,
+      "reliabilityPct": 0.5238095238095238,
+      "overConcentration": false
+    },
+    {
+      "product": "Fastly Edge",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9761904761904762,
+      "reliabilityPct": 0.4523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "Akamai CDN",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9809523809523809,
+      "reliabilityPct": 0.5523809523809524,
+      "overConcentration": false
+    },
+    {
+      "product": "ShipBob",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9904761904761905,
+      "reliabilityPct": 0.6571428571428571,
+      "overConcentration": false
+    },
+    {
+      "product": "Flexport",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 0.9952380952380953,
+      "reliabilityPct": 0.45714285714285713,
+      "overConcentration": false
+    },
+    {
+      "product": "Maersk API",
+      "category": "LogisticsOps",
+      "score": 0,
+      "gaps": [],
+      "decisionClarityPct": 1,
+      "reliabilityPct": 0.6047619047619047,
+      "overConcentration": false
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "ChatTimeline - AI Conversation Navigator",
+  "version": "2.4.5",
+  "description": "Transform your AI conversations into navigable timelines. Add structure to ChatGPT and Claude chats.",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "contextMenus"
+  ],
+  
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://chatgpt.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://claude.ai/*", 
+        "https://chatgpt.com/*"
+      ],
+      "js": ["parallel-threads.js", "content.js"],
+  "css": ["timeline.css", "timeline-theme-chatgpt.css", "timeline-theme-claude.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ChatTimeline"
+  },
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png", 
+    "128": "icons/icon-128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["timeline-sidebar.html", "timeline.css"],
+      "matches": ["https://chat.openai.com/*", "https://claude.ai/*", "https://chatgpt.com/*"]
+    }
+  ]
+}

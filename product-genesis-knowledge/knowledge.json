@@ -1,0 +1,393 @@
+{
+  "version": 1,
+  "created": "2025-10-08T00:00:00.000Z",
+  "lastUpdated": "2025-10-08T17:35:59.372Z",
+  "rounds": [
+    {
+      "timestamp": "2025-10-08T14:24:49.723Z",
+      "draftSummary": "We keep tripping over the same core user friction around adaptive orchestration layer. | The root dysfunction isn't surface UX—it's workflow fragmentation in how adaptive orchestration layer is approached. (aligned)",
+      "patternCount": 36,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7705607282773994,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.908009724048115,
+        "novelty": 0,
+        "reliability": 0.8789212632864422
+      }
+    },
+    {
+      "timestamp": "2025-10-08T14:24:49.727Z",
+      "draftSummary": "We keep tripping over the same core user friction around adaptive orchestration layer. | We keep tripping over the same core user friction around adaptive orchestration layer.",
+      "patternCount": 31,
+      "uniquePatterns": [
+        "option-framing-request",
+        "pivot-trigger-question",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.783097717453782,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.8806324879280991,
+        "novelty": 0,
+        "reliability": 0.8753263644388964
+      }
+    },
+    {
+      "timestamp": "2025-10-08T16:48:58.405Z",
+      "draftSummary": "The root dysfunction isn't surface UX—it's workflow fragmentation in how NovaPlatform is approached. | The root dysfunction isn't surface UX—it's workflow fragmentation in how NovaPlatform is approached.",
+      "patternCount": 44,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7657924305624045,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.9128232703481591,
+        "novelty": 0,
+        "reliability": 0.8791687278892018,
+        "compositeReliability": 0.8791687278892018
+      }
+    },
+    {
+      "timestamp": "2025-10-08T16:48:58.409Z",
+      "draftSummary": "We keep tripping over the same core user friction around iPhone. | The root dysfunction isn't surface UX—it's workflow fragmentation in how iPhone is approached.",
+      "patternCount": 28,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.782646616673966,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.9066369206115558,
+        "novelty": 0,
+        "reliability": 0.8804595858586154,
+        "compositeReliability": 0.8804595858586154
+      }
+    },
+    {
+      "timestamp": "2025-10-08T16:48:58.410Z",
+      "draftSummary": "The root dysfunction isn't surface UX—it's workflow fragmentation in how GoogleSearch is approached. | We keep tripping over the same core user friction around GoogleSearch.",
+      "patternCount": 37,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7908427906998808,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.8967498911025831,
+        "novelty": 0,
+        "reliability": 0.879711606060708,
+        "compositeReliability": 0.879711606060708
+      }
+    },
+    {
+      "timestamp": "2025-10-08T16:48:58.411Z",
+      "draftSummary": "The root dysfunction isn't surface UX—it's workflow fragmentation in how Tesla is approached. | The root dysfunction isn't surface UX—it's workflow fragmentation in how Tesla is approached. (increasingly aligned)",
+      "patternCount": 34,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7720532886481835,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.8962256816115868,
+        "novelty": 0,
+        "reliability": 0.8767883388547542,
+        "compositeReliability": 0.8767883388547542
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:55.602Z",
+      "draftSummary": "We keep tripping over the same core user friction around NovaPlatform. | We keep tripping over the same core user friction around NovaPlatform. (increasingly aligned)",
+      "patternCount": 27,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.787897495414826,
+        "traitMean": 0.7572871572871573,
+        "traitDiversity": 0.8,
+        "stability": 0.9333837993926926,
+        "novelty": 0,
+        "reliability": 0.8388188156481938,
+        "compositeReliability": 0.8388188156481938
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:55.610Z",
+      "draftSummary": "We keep tripping over the same core user friction around iPhone. | The root dysfunction isn't surface UX—it's workflow fragmentation in how iPhone is approached. (increasingly aligned)",
+      "patternCount": 31,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7960810255123403,
+        "traitMean": 0.8017316017316019,
+        "traitDiversity": 1,
+        "stability": 0.887432957523932,
+        "novelty": 0,
+        "reliability": 0.8697450656779578,
+        "compositeReliability": 0.8697450656779578
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:55.613Z",
+      "draftSummary": "The root dysfunction isn't surface UX—it's workflow fragmentation in how GoogleSearch is approached. | We keep tripping over the same core user friction around GoogleSearch.",
+      "patternCount": 34,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7696339482642798,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.9115483779429766,
+        "novelty": 0,
+        "reliability": 0.8794899770634466,
+        "compositeReliability": 0.8794899770634466
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:55.616Z",
+      "draftSummary": "We keep tripping over the same core user friction around Tesla. | The root dysfunction isn't surface UX—it's workflow fragmentation in how Tesla is approached. (increasingly aligned)",
+      "patternCount": 34,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7738021348747315,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.8482767140116,
+        "novelty": 0,
+        "reliability": 0.8674608722687389,
+        "compositeReliability": 0.8674608722687389
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:59.362Z",
+      "draftSummary": "The root dysfunction isn't surface UX—it's workflow fragmentation in how NovaPlatform is approached. (increasingly aligned) | The root dysfunction isn't surface UX—it's workflow fragmentation in how NovaPlatform is approached.",
+      "patternCount": 35,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7581448533867533,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.8951268986690051,
+        "novelty": 0,
+        "reliability": 0.8744823169770233,
+        "compositeReliability": 0.8744823169770233
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:59.368Z",
+      "draftSummary": "We keep tripping over the same core user friction around iPhone. | We keep tripping over the same core user friction around iPhone.",
+      "patternCount": 33,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7871239906345724,
+        "traitMean": 0.6718614718614718,
+        "traitDiversity": 0.6,
+        "stability": 0.9027233689923077,
+        "novelty": 0,
+        "reliability": 0.7854855667659417,
+        "compositeReliability": 0.7854855667659417
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:59.370Z",
+      "draftSummary": "We keep tripping over the same core user friction around GoogleSearch. | We keep tripping over the same core user friction around GoogleSearch.",
+      "patternCount": 31,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7746165677250436,
+        "traitMean": 0.7653679653679653,
+        "traitDiversity": 0.8,
+        "stability": 0.909295144805411,
+        "novelty": 0,
+        "reliability": 0.8336251071934319,
+        "compositeReliability": 0.8336251071934319
+      }
+    },
+    {
+      "timestamp": "2025-10-08T17:35:59.372Z",
+      "draftSummary": "We keep tripping over the same core user friction around Tesla. (increasingly aligned) | The root dysfunction isn't surface UX—it's workflow fragmentation in how Tesla is approached.",
+      "patternCount": 40,
+      "uniquePatterns": [
+        "pivot-trigger-question",
+        "option-framing-request",
+        "risk-surfacing",
+        "deliverable-framing-quad",
+        "scope-compression",
+        "decision-shorthand-affirm",
+        "next-step-authorization"
+      ],
+      "adoptedPatterns": [],
+      "metrics": {
+        "coverage": 0.875,
+        "avgConfidence": 0.7877203151764193,
+        "traitMean": 0.8461760461760462,
+        "traitDiversity": 1,
+        "stability": 0.9080797164574159,
+        "novelty": 0,
+        "reliability": 0.8815091998031553,
+        "compositeReliability": 0.8815091998031553
+      }
+    }
+  ],
+  "patternLibrary": {
+    "core": [
+      "pivot-trigger-question",
+      "option-framing-request",
+      "risk-surfacing",
+      "scope-compression",
+      "decision-shorthand-affirm",
+      "deliverable-framing-quad",
+      "next-step-authorization"
+    ],
+    "learned": []
+  },
+  "traitsModel": {
+    "strategicVision": {
+      "weight": 0.25
+    },
+    "riskIntelligence": {
+      "weight": 0.2
+    },
+    "decisionClarity": {
+      "weight": 0.2
+    },
+    "innovationDrive": {
+      "weight": 0.2
+    },
+    "executionDiscipline": {
+      "weight": 0.15
+    }
+  },
+  "metrics": {
+    "totalRounds": 14,
+    "averageNovelty": 0,
+    "averageReliability": 0.8643566291276077,
+    "coverage": 0.875,
+    "traitDiversity": 1,
+    "stability": 0.9080797164574159
+  },
+  "history": []
+}

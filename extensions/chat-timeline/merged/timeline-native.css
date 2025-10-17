@@ -1,0 +1,590 @@
+/* AI Chat Timeline Navigator - Native Sidebar Replacement v2.5 */
+
+/* ========================================
+   CSS CUSTOM PROPERTIES - Easy Theming
+   ======================================== */
+
+:root {
+  /* Primary Colors */
+  --timeline-primary: #667eea;
+  --timeline-primary-dark: #5a67d8;
+  --timeline-accent: #764ba2;
+  
+  /* Background Colors */
+  --timeline-bg-light: rgba(0, 0, 0, 0.03);
+  --timeline-bg-light-hover: rgba(0, 0, 0, 0.05);
+  --timeline-bg-dark: rgba(255, 255, 255, 0.05);
+  --timeline-bg-dark-hover: rgba(255, 255, 255, 0.08);
+  
+  /* Text Colors */
+  --timeline-text-light: #666;
+  --timeline-text-light-active: #1a1a1a;
+  --timeline-text-dark: #999;
+  --timeline-text-dark-active: #e5e5e5;
+  
+  /* Shadows */
+  --timeline-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --timeline-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --timeline-shadow-dark: 0 1px 3px rgba(0, 0, 0, 0.3);
+  
+  /* Borders */
+  --timeline-border-radius: 8px;
+  --timeline-border-radius-sm: 6px;
+}
+
+/* ========================================
+   SIDEBAR REPLACEMENT - Looks Native
+   ======================================== */
+
+.ai-timeline-sidebar-replacement,
+.ai-timeline-sidebar-new {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* View Toggle (Timeline / Chats) */
+.ai-timeline-view-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: var(--timeline-bg-light);
+  border-radius: var(--timeline-border-radius);
+  margin: 12px 12px 16px 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-view-toggle {
+    background: var(--timeline-bg-dark);
+  }
+}
+
+.view-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1a1a;
+}
+
+.view-toggle-btn.active {
+  background: white;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .view-toggle-btn {
+    color: #999;
+  }
+  
+  .view-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e5e5e5;
+  }
+  
+  .view-toggle-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e5e5e5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.view-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Timeline Content Area */
+.ai-timeline-content,
+.ai-chats-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-timeline-content.active,
+.ai-chats-content.active {
+  display: flex;
+}
+
+/* Timeline Header */
+.ai-timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-header {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.ai-timeline-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-title {
+    color: #e5e5e5;
+  }
+}
+
+.ai-timeline-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.ai-timeline-btn-small {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #666;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-timeline-btn-small:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-btn-small {
+    color: #999;
+  }
+  
+  .ai-timeline-btn-small:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Timeline Segments List */
+.ai-timeline-segments {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.ai-timeline-segments::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ai-timeline-segments::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-timeline-segments::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-segments::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Timeline Segment Item */
+.ai-timeline-segment {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid transparent;
+}
+
+.ai-timeline-segment:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  transform: translateX(-2px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-segment {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  
+  .ai-timeline-segment:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.ai-timeline-segment-marker {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%);
+  font-size: 14px;
+}
+
+/* Different colors for different segment types - Match ChatGPT's green theme */
+.ai-timeline-segment[data-type="question"] .ai-timeline-segment-marker {
+  background: linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%);
+}
+
+.ai-timeline-segment[data-type="code"] .ai-timeline-segment-marker {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.ai-timeline-segment[data-type="idea"] .ai-timeline-segment-marker {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.ai-timeline-segment[data-type="problem"] .ai-timeline-segment-marker {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.ai-timeline-segment[data-type="conclusion"] .ai-timeline-segment-marker {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.ai-timeline-segment-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.ai-timeline-segment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-timeline-segment-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-segment-title {
+    color: #e5e5e5;
+  }
+}
+
+.ai-timeline-segment-meta {
+  font-size: 11px;
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-segment-meta {
+    color: #999;
+  }
+}
+
+/* Loading / Empty States */
+.ai-timeline-loading,
+.ai-timeline-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: #666;
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-timeline-loading,
+  .ai-timeline-empty {
+    color: #999;
+  }
+}
+
+/* Animation for new segments */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ai-timeline-segment {
+  animation: slideInLeft 0.2s ease;
+}
+
+/* ========================================
+   TEMPLATE MODE STYLES (Integrated)
+   ======================================== */
+
+.template-mode-active {
+  padding: 12px;
+  margin: 0 12px 12px 12px;
+  border-radius: 10px;
+  background: rgba(16, 163, 127, 0.05);
+  border: 1px solid rgba(16, 163, 127, 0.15);
+  animation: slideInDown 0.3s ease;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.template-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .template-title {
+    color: #e5e5e5;
+  }
+  
+  .template-mode-active {
+    background: rgba(16, 163, 127, 0.08);
+    border-color: rgba(16, 163, 127, 0.2);
+  }
+}
+
+.template-icon {
+  font-size: 18px;
+}
+
+/* Progress Bar */
+.template-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-bar {
+  display: flex;
+  gap: 6px;
+}
+
+.progress-step {
+  flex: 1;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: #10a37f;
+  height: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .progress-step {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .progress-step.active {
+    background: #10a37f;
+  }
+}
+
+.current-phase {
+  font-size: 11px;
+  color: #10a37f;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Statistics */
+.learning-stats,
+.brainstorm-stats,
+.debug-stats {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .learning-stats,
+  .brainstorm-stats,
+  .debug-stats {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #10a37f;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .stat-label {
+    color: #999;
+  }
+}
+
+/* Template Actions */
+.template-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.template-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: #10a37f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.template-btn:hover {
+  background: #0d8a6a;
+  transform: translateY(-1px);
+}
+
+.template-btn:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .ai-timeline-view-toggle {
+    margin: 8px;
+  }
+  
+  .view-toggle-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .ai-timeline-segments {
+    padding: 8px;
+  }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+}

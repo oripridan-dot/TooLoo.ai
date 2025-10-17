@@ -1,0 +1,24 @@
+/* Claude host theme overrides for ChatTimeline */
+:root, body.claude-host {
+  --timeline-accent-start: #5b5bd6; /* Claude indigo tone */
+  --timeline-accent-end: #7f67d6;
+  --timeline-accent-soft: rgba(91,91,214,0.15);
+  --timeline-accent-border: rgba(91,91,214,0.35);
+  --timeline-text-strong: #1d2230;
+  --timeline-text-subtle: #4b5563;
+  --timeline-surface: #ffffff;
+  --timeline-surface-alt: #f6f6fb;
+  --timeline-border: #e5e7eb;
+  --timeline-header-bg: linear-gradient(135deg,var(--timeline-accent-start),var(--timeline-accent-end));
+}
+@media (prefers-color-scheme: dark) {
+  :root, body.claude-host {
+    --timeline-text-strong: #f1f5f9;
+    --timeline-text-subtle: #94a3b8;
+    --timeline-surface: #1e1f24;
+    --timeline-surface-alt: #262830;
+    --timeline-border: #3a3f4a;
+  }
+}
+/* Claude-specific minor tweaks */
+.claude-host .segment-number { background: var(--timeline-header-bg)!important; }
