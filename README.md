@@ -62,9 +62,17 @@ See the [Branching Strategy guide](docs/branching-strategy.md) for more detailed
   - `curl -X POST http://127.0.0.1:3000/api/v1/providers/burst -H 'Content-Type: application/json' -d '{"prompt":"startup check"}'`
   - `curl http://127.0.0.1:3000/api/v1/system/processes`
 - Segmentation sanity: `curl http://127.0.0.1:3000/api/v1/segmentation/status`
-- Use `npm run clean` to clear background processes before re-running checks
+- `npm run clean` now clears background services and runs the hygiene sweep
+
+## 🧹 Repository Hygiene
+
+- Preview deletions with `npm run hygiene -- --dry-run`
+- Apply the sweep with `npm run hygiene` (also runs automatically via `npm run clean`)
+- Generated caches, logs, release bundles, and AI analysis exports are removed while `data/.gitkeep` preserves the directory skeleton
+
 
 ## 📚 Further Reading
+
 - [`docs/architecture/overview.md`](docs/architecture/overview.md) for deep architecture context
 - [`OSS-PROVIDERS-GUIDE.md`](OSS-PROVIDERS-GUIDE.md) for local/OSS provider setup
 - [`launch-tooloo.sh`](launch-tooloo.sh) documents the unified launch workflow
