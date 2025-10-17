@@ -8,6 +8,21 @@ A sophisticated AI-powered development platform that learns, evolves, and adapts
 - **Self-Improving Engine**: Recursive learning and pattern recognition
 - **Real-Time Performance Analytics**: Code execution metrics and complexity analysis
 - **Visual Development Interface**: Live prompt evolution and execution visualization
+
+## 🛠️ Development Workflow
+
+This repository follows a feature-branch workflow to keep changes focused and easy to review. When you start new work:
+
+1. Create a branch named after the capability you are building (for example, `feature/improved-prompt-visuals`).
+2. Install dependencies (`npm install`) if you have not already, then implement and test your changes on that branch.
+3. Run `npm run validate` to execute automated tests and the API performance probe before opening a pull request.
+4. If the performance probe fails, inspect the console output saved by the script, address regressions, and re-run `npm run validate`.
+5. Open a pull request that links back to the tracked task or issue.
+
+> **Tip:** The validation script starts the local API automatically. Ensure the default entry point `simple-api-server.js` (or the backup listed in `PERF_SERVER_ENTRIES`) reflects the code you intend to benchmark.
+
+See the [Branching Strategy guide](docs/branching-strategy.md) for more detailed instructions, including testing expectations before opening a pull request.
+
 - **Production-Ready Infrastructure**: Scalable, secure, and enterprise-grade
 
 ## 🏗️ Architecture
