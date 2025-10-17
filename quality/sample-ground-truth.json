@@ -1,0 +1,9 @@
+{
+  "conversation_id": "sample1",
+  "patterns": [
+    { "name": "Strategic Problem Framing" },
+    { "name": "Option Diversification" },
+    { "name": "Risk Surfacing Discipline" },
+    { "name": "Decision Compression" }
+  ]
+}

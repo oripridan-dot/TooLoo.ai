@@ -1,0 +1,31 @@
+/* ChatGPT host theme overrides for ChatTimeline */
+:root, body.chatgpt-host {
+  --timeline-accent-start: #10a37f; /* ChatGPT green */
+  --timeline-accent-end: #10a37f;
+  --timeline-accent-soft: rgba(16,163,127,0.15);
+  --timeline-accent-border: rgba(16,163,127,0.35);
+  --timeline-text-strong: #1a1f23;
+  --timeline-text-subtle: #4a5562;
+  --timeline-surface: #ffffff;
+  --timeline-surface-alt: #f5f7f8;
+  --timeline-border: #e2e8f0;
+  --timeline-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  --timeline-header-bg: linear-gradient(135deg,var(--timeline-accent-start),var(--timeline-accent-end));
+}
+@media (prefers-color-scheme: dark) {
+  :root, body.chatgpt-host {
+    --timeline-text-strong: #f1f5f9;
+    --timeline-text-subtle: #a0b3c2;
+    --timeline-surface: #1f2937;
+    --timeline-surface-alt: #243143;
+    --timeline-border: #334155;
+    --timeline-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+}
+/* Adjust mode toggle background to feel native */
+.chat-timeline-sidebar-mode .timeline-mode-toggle { background: var(--timeline-surface-alt)!important; border-color: var(--timeline-border)!important; }
+.timeline-mode-toggle .mode-btn.active { background: var(--timeline-header-bg)!important; }
+
+/* Remove leftover purple specifics inside ChatGPT */
+.chatgpt-host .segment-number { background: var(--timeline-header-bg)!important; }
+.chatgpt-host .upgrade-now-btn, .chatgpt-host .timeline-toggle-btn { background: var(--timeline-header-bg)!important; box-shadow:none; }

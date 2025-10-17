@@ -1,96 +1,70 @@
-# TooLoo.ai - Self-Improving Development Intelligence Platform
+# TooLoo.ai Control Network
+TooLoo.ai is a multi-service personal AI development environment that orchestrates training, segmentation, coaching, and provider management from a single Control Room.
 
-A sophisticated AI-powered development platform that learns, evolves, and adapts to create better code through multi-provider orchestration and recursive self-improvement.
+## ⚡️ Quick Start
+- `npm install`
+- `npm run dev` → launches the web proxy (3000) and boots every service through the orchestrator
+- Open `http://127.0.0.1:3000/control-room` for the Control Room, or `/tooloo-hub` for the conversational Hub
+- Stop everything with `npm run stop:all`
 
-## 🚀 Features
+## 🧭 Service Map
+- `servers/web-server.js` (3000): static UI + proxy router + `/system/*`
+- `servers/training-server.js` (3001): selection engine, rounds, hyper-speed training
+- `servers/meta-server.js` (3002): meta-learning reports & retention boosts
+- `servers/budget-server.js` (3003): provider status, burst cache, policy tuning
+- `servers/coach-server.js` (3004): Auto-Coach + Fast Lane
+- `servers/cup-server.js` (3005): provider tournaments and comparisons
+- `servers/product-development-server.js` (3006): workflow + artifact pipelines
+- `servers/segmentation-server.js` (3007): conversation intelligence + traits
+- `servers/reports-server.js` (3008) and `servers/capabilities-server.js` (3009)
+- `servers/orchestrator.js` (3123): boots/monitors services, exposes `/api/v1/system/processes`
+- Legacy simple backend still available via `npm run start:simple`
 
-- **Multi-Provider AI Orchestration**: Intelligent routing across OpenAI, Claude, Gemini, and DeepSeek
-- **Self-Improving Engine**: Recursive learning and pattern recognition
-- **Real-Time Performance Analytics**: Code execution metrics and complexity analysis
-- **Visual Development Interface**: Live prompt evolution and execution visualization
+## 🚀 Platform Capabilities
+
+- **Multi-Provider AI Orchestration**: Intelligent routing across OpenAI, Claude, Gemini, DeepSeek, and on-device models
+- **Self-Improving Engine**: Recursive learning and pattern recognition that strengthen every cycle
+- **Real-Time Performance Analytics**: Code execution metrics, latency tracking, and regression detection
+- **Visual Development Interface**: Live prompt evolution, execution visualization, and artifact review
+- **Production-Ready Infrastructure**: Scalable, secure, and enterprise-grade
+
+## 🤖 Default Provider Policy
+
+- Claude Haiku **4.5 preview** (`claude-3-5-haiku-20241022`) is the default Anthropic model
+- Provider fallback chain prioritises local providers (Ollama) → Anthropic → OpenAI → Gemini → DeepSeek → others
+- Check live status with `curl http://127.0.0.1:3003/api/v1/providers/status`
 
 ## 🛠️ Development Workflow
 
 This repository follows a feature-branch workflow to keep changes focused and easy to review. When you start new work:
 
 1. Create a branch named after the capability you are building (for example, `feature/improved-prompt-visuals`).
-2. Install dependencies (`npm install`) if you have not already, then implement and test your changes on that branch. You can run `scripts/create-feature-branch.sh <your-branch-name>` to create and switch to a feature branch automatically (defaults to using `work` as the base).
-   - From the repository root, execute `bash scripts/create-feature-branch.sh feature/amazing-feature`.
-   - To choose a different base branch, pass it as the second argument: `bash scripts/create-feature-branch.sh feature/amazing-feature main`.
-   - If you prefer using npm scripts, run `npm run create:branch -- feature/amazing-feature` (append the base name if you want something other than `work`).
-3. Run `npm run validate` to execute automated tests and the API performance probe before opening a pull request.
-4. If the performance probe fails, inspect the console output saved by the script, address regressions, and re-run `npm run validate`.
-5. Open a pull request that links back to the tracked task or issue.
+2. Install dependencies (`npm install`) if you have not already, then implement and test your changes on that branch. You can run `scripts/create-feature-branch.sh` with the appropriate flags to create and switch to a feature or experiment branch automatically (defaults to using `origin/main` as the base).
+  - Example: `bash scripts/create-feature-branch.sh --product control-room --capability burst-coach`
+  - To choose a different base branch, pass `--base origin/release/v1.7` (or another ref).
+  - Prefer `npm run branch:status` before opening a PR to ensure alignment with governance expectations.
+3. Run `npm run docs` or `npm run benchmark` variants when your work touches documentation or performance-critical flows.
+4. Validate end-to-end flows with `npm run benchmark:basic`, `npm run test:parser`, or the relevant suite for your capability.
+5. Open a pull request that links back to the tracked task or issue and attach artefacts (benchmarks, screenshots, transcripts) for reviewers.
 
-> **Tip:** The validation script starts the local API automatically. Ensure the default entry point `simple-api-server.js` (or the backup listed in `PERF_SERVER_ENTRIES`) reflects the code you intend to benchmark.
+> **Tip:** The unified tooling scripts (`launch-tooloo.sh`, `scripts/tooloo.js`, `scripts/repo-hygiene.sh`) keep the workspace deterministic. Use `npm run clean` to stop services and sweep generated artefacts before switching branches.
 
 See the [Branching Strategy guide](docs/branching-strategy.md) for more detailed instructions, including testing expectations before opening a pull request.
 
-- **Production-Ready Infrastructure**: Scalable, secure, and enterprise-grade
+## 🔀 Branching Strategy
+- Strategy documented in [`docs/branching-strategy.md`](docs/branching-strategy.md)
+- Run `npm run branch:status` to view current branch, cleanliness, and sync guidance
+- New features branch from `main`, release branches follow `release/v{major}.{minor}`, hotfixes use `hotfix/{ticket}`
 
-## 🏗️ Architecture
+## 🧪 Verification Checklist
+- Smoke tests (via proxy):
+  - `curl http://127.0.0.1:3000/api/v1/training/overview`
+  - `curl -X POST http://127.0.0.1:3000/api/v1/providers/burst -H 'Content-Type: application/json' -d '{"prompt":"startup check"}'`
+  - `curl http://127.0.0.1:3000/api/v1/system/processes`
+- Segmentation sanity: `curl http://127.0.0.1:3000/api/v1/segmentation/status`
+- Use `npm run clean` to clear background processes before re-running checks
 
-```
-TooLoo.ai/
-├── packages/
-│   ├── api/          # Core API and AI engine
-│   ├── web/          # React frontend interface
-│   ├── core/         # Shared utilities and types
-│   └── engine/       # AI orchestration engine
-├── docs/             # Documentation
-└── deploy/           # Deployment configurations
-```
-
-## 🚦 Quick Start
-
-```bash
-# Clone and install
-git clone https://github.com/oripridan-dot/TooLoo.ai
-cd TooLoo.ai
-npm install
-
-# Set up environment
-cp .env.example .env
-# Add your AI provider API keys
-
-# Start development
-npm run dev
-
-# Visit http://localhost:3000
-```
-
-## 🔧 Configuration
-
-Create `.env` file:
-```env
-# AI Providers
-OPENAI_API_KEY=your_key_here
-CLAUDE_API_KEY=your_key_here
-GEMINI_API_KEY=your_key_here
-DEEPSEEK_API_KEY=your_key_here
-
-# Database
-DATABASE_URL=sqlite:./data/tooloo.db
-
-# Server
-PORT=3001
-NODE_ENV=development
-```
-
-## 📚 Documentation
-
-- [API Documentation](./docs/api.md)
-- [Architecture Guide](./docs/architecture.md)
-- [Deployment Guide](./docs/deployment.md)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.# TooLoo.ai
+## 📚 Further Reading
+- [`docs/architecture/overview.md`](docs/architecture/overview.md) for deep architecture context
+- [`OSS-PROVIDERS-GUIDE.md`](OSS-PROVIDERS-GUIDE.md) for local/OSS provider setup
+- [`launch-tooloo.sh`](launch-tooloo.sh) documents the unified launch workflow

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooLoo.ai – Product Development Control Room</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%);
+            color: #ffffff; 
+            min-height: 100vh;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 16px;
+        }
+        .logo { 
+            font-size: 20px; 
+            font-weight: 700; 
+            background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            background-clip: text; 
+        }
+        .header-stats { display: flex; gap: 12px; align-items: center; }
+        .pill { 
+            padding: 6px 12px; 
+            border-radius: 12px; 
+            font-size: 11px; 
+            font-weight: 600;
+            background: rgba(255,255,255,0.08); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            color: #eee; 
+        }
+        .btn { 
+            padding: 8px 16px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            border: none;
+            background: rgba(0,212,255,0.2); 
+            color: #cfefff; 
+            border: 1px solid rgba(0,212,255,0.4); 
+            transition: all 0.2s; 
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover { background: rgba(0,212,255,0.3); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-success { background: rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.4); color: #9effc2; }
+        .btn-success:hover { background: rgba(0,255,136,0.3); }
+        .btn-danger { background: rgba(255,99,71,0.2); border-color: rgba(255,99,71,0.4); color: #ffccc7; }
+        .btn-danger:hover { background: rgba(255,99,71,0.3); }
+        .btn-purple { background: rgba(148,0,211,0.2); border-color: rgba(148,0,211,0.4); color: #e8c5ff; }
+        .btn-purple:hover { background: rgba(148,0,211,0.3); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        
+        .panel {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .panel-title { 
+            font-size: 16px; 
+            font-weight: 700; 
+            margin-bottom: 12px; 
+            color: #00d4ff; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .panel-controls { display: flex; gap: 10px; align-items: center; }
+        
+        .metric-card {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .metric-label { 
+            font-size: 11px; 
+            color: #aaa; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            margin-bottom: 8px; 
+        }
+        .metric-value { 
+            font-size: 28px; 
+            font-weight: 700; 
+            color: #00d4ff; 
+            margin-bottom: 4px;
+        }
+        .metric-subtext { font-size: 12px; color: #ccc; }
+        
+        .workflow-card {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .workflow-card:hover { background: rgba(255,255,255,0.12); border-color: rgba(0,212,255,0.4); }
+        .workflow-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px; 
+        }
+        .workflow-title { font-weight: 700; font-size: 16px; color: #00d4ff; }
+        .workflow-status { 
+            padding: 4px 10px; 
+            border-radius: 8px; 
+            font-size: 10px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+        }
+        .status-active { background: rgba(0,255,136,0.2); color: #9effc2; }
+        .status-completed { background: rgba(0,212,255,0.2); color: #cfefff; }
+        .status-idle { background: rgba(128,128,128,0.2); color: #ccc; }
+        
+        .progress-container { margin: 12px 0; }
+        .progress-bar { 
+            width: 100%; 
+            height: 8px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 4px; 
+            overflow: hidden; 
+            margin-bottom: 8px;
+        }
+        .progress-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #00ff88, #00d4ff); 
+            transition: width 0.6s ease; 
+            position: relative; 
+        }
+        .progress-text { font-size: 11px; color: #ccc; }
+        
+        .phases-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .phase-pill {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .phase-active { background: rgba(0,255,136,0.3); color: #9effc2; }
+        .phase-completed { background: rgba(0,212,255,0.3); color: #cfefff; }
+        .phase-pending { background: rgba(128,128,128,0.2); color: #ccc; }
+        
+        .artifacts-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 12px;
+        }
+        .artifacts-count { font-size: 12px; color: #aaa; }
+        .quality-score { 
+            font-weight: 700; 
+            color: #00ff88;
+            font-size: 14px;
+        }
+        
+        .demo-highlight {
+            border: 2px solid rgba(255,215,0,0.6);
+            background: rgba(255,215,0,0.1);
+            box-shadow: 0 0 20px rgba(255,215,0,0.2);
+        }
+        
+        .event-log {
+            max-height: 200px;
+            overflow-y: auto;
+            display: grid;
+            gap: 6px;
+        }
+        .event-item {
+            font-size: 11px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            border-left: 3px solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .event-time { color: #888; font-size: 10px; }
+        
+        .bookworm-panel {
+            background: linear-gradient(135deg, rgba(148,0,211,0.2) 0%, rgba(75,0,130,0.2) 100%);
+            border: 1px solid rgba(148,0,211,0.4);
+        }
+        
+        .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right: 6px; }
+        .dot.ok { background:#00ff88; }
+        .dot.bad { background:#ff5c5c; }
+        .dot.warn { background:#ffa500; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:center;gap:20px;">
+            <div class="logo">🏭 TooLoo.ai Product Development Control Room</div>
+            <div class="pill" id="systemStatus">🟢 All Systems Operational</div>
+        </div>
+        <div class="header-stats">
+            <div class="pill">
+                <span id="hWeb" class="dot ok"></span> Web :3000
+            </div>
+            <div class="pill">
+                <span id="hProduct" class="dot ok"></span> Product Dev
+            </div>
+            <div class="pill">
+                <span id="hWorkflows" class="dot ok"></span> Workflows
+            </div>
+            <a href="/control-room" class="btn">🧠 Training Control Room</a>
+            <a href="/design-demo" class="btn btn-purple">🎨 Design Studio</a>
+        </div>
+    </div>
+
+    <!-- Top Metrics -->
+    <div class="grid-3">
+        <div class="metric-card">
+            <div class="metric-label">Active Workflows</div>
+            <div class="metric-value" id="activeWorkflows">1</div>
+            <div class="metric-subtext">B2B SaaS Analytics running</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Avg Quality Score</div>
+            <div class="metric-value" id="avgQuality">85%</div>
+            <div class="metric-subtext">Enterprise-grade validation</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Artifacts Generated</div>
+            <div class="metric-value" id="totalArtifacts">7</div>
+            <div class="metric-subtext">Production-ready deliverables</div>
+        </div>
+    </div>
+
+    <!-- Main Workflows Panel -->
+    <div class="panel">
+        <div class="panel-title">
+            🚀 Active Product Development Workflows
+            <div class="panel-controls">
+                <button id="startNewBtn" class="btn btn-success">+ New Workflow</button>
+                <button id="exportAllBtn" class="btn">📊 Export All</button>
+                <button id="refreshBtn" class="btn">🔄 Refresh</button>
+            </div>
+        </div>
+        
+        <!-- Live Demo Workflow -->
+        <div class="workflow-card demo-highlight" id="demoWorkflow">
+            <div class="workflow-header">
+                <div>
+                    <div class="workflow-title">🎯 B2B SaaS Analytics Platform</div>
+                    <div style="font-size: 12px; color: #ffd700; font-weight: 600; margin-top: 4px;">
+                        ⭐ LIVE CLIENT DEMO - Concept-to-Market Workflow
+                    </div>
+                </div>
+                <div class="workflow-status status-active">Discovery Active</div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 35%;"></div>
+                </div>
+                <div class="progress-text">Week 3 of 12 • Discovery → Strategy transition</div>
+            </div>
+            
+            <div class="phases-list">
+                <div class="phase-pill phase-completed">✓ Discovery (84%)</div>
+                <div class="phase-pill phase-active">⏳ Strategy</div>
+                <div class="phase-pill phase-pending">Development</div>
+                <div class="phase-pill phase-pending">Launch</div>
+                <div class="phase-pill phase-pending">Scale</div>
+            </div>
+            
+            <div style="font-size: 12px; color: #ccc; margin-bottom: 8px;">
+                <strong>Target Market:</strong> Enterprise analytics buyers • <strong>Revenue Model:</strong> SaaS subscriptions • <strong>Competition:</strong> Tableau, PowerBI
+            </div>
+            
+            <div class="artifacts-summary">
+                <div class="artifacts-count">
+                    📋 Discovery Report • 📈 Business Plan • 🏗️ Technical Architecture • 🎯 Marketing Strategy
+                </div>
+                <div class="quality-score">Quality: 86%</div>
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn btn-success" onclick="executePhase()">▶️ Execute Strategy Phase</button>
+                <button class="btn" onclick="viewArtifacts()">📋 View Artifacts</button>
+                <button class="btn btn-purple" onclick="bookWormAnalysis()">🔮 Book Worm Analysis</button>
+            </div>
+        </div>
+        
+        <!-- Template for new workflows -->
+        <div style="text-align: center; padding: 20px; color: #666; font-style: italic;">
+            Click "New Workflow" to start additional concept-to-market processes
+        </div>
+    </div>
+
+    <!-- Bottom Grid: Book Worm Mode + Event Log -->
+    <div class="grid-2">
+        <div class="panel bookworm-panel">
+            <div class="panel-title">
+                🔮 Book Worm Mode
+                <div class="panel-controls">
+                    <button id="bookWormBtn" class="btn btn-purple">Analyze Document</button>
+                    <button id="insightsBtn" class="btn">💡 Insights</button>
+                </div>
+            </div>
+            <div id="bookWormStatus" style="font-size:12px;color:#e8c5ff;">
+                <div style="margin-bottom: 8px;">
+                    <strong>Last Analysis:</strong> B2B SaaS market brief (2,400 words)
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>Quality Score:</strong> 82% • <strong>Professional Grade:</strong> ✅ Yes
+                </div>
+                <div>
+                    <strong>Key Insights:</strong> Market validation strong, competitive differentiation needed, go-to-market strategy requires enterprise focus
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-title">📝 Workflow Event Log</div>
+            <div class="event-log" id="eventLog">
+                <div class="event-item">
+                    <span>Strategy phase quality gate: 86% (PASSED)</span>
+                    <span class="event-time">2 mins ago</span>
+                </div>
+                <div class="event-item">
+                    <span>Generated Technical Architecture artifact</span>
+                    <span class="event-time">5 mins ago</span>
+                </div>
+                <div class="event-item">
+                    <span>Discovery phase completed with validation score 84%</span>
+                    <span class="event-time">15 mins ago</span>
+                </div>
+                <div class="event-item">
+                    <span>Market analysis artifact generated and validated</span>
+                    <span class="event-time">22 mins ago</span>
+                </div>
+                <div class="event-item">
+                    <span>B2B SaaS Analytics workflow started</span>
+                    <span class="event-time">28 mins ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let demoWorkflowId = 'wf-demo-b2b-saas-analytics';
+        let eventCount = 5;
+
+        // Initialize the demo
+        function initializeDemo() {
+            console.log('🏭 Product Development Control Room initialized');
+            updateSystemStatus();
+            startEventSimulation();
+        }
+
+        // Update with real system status
+        function updateSystemStatus() {
+            // Check actual system health via proxy
+            fetch('http://127.0.0.1:3006/api/v1/workflows')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok && data.workflows) {
+                        document.getElementById('activeWorkflows').textContent = data.workflows.length;
+                        document.getElementById('systemStatus').innerHTML = '🟢 All Systems Operational';
+                        
+                        // Update with real workflow if available
+                        if (data.workflows.length > 0) {
+                            const latestWorkflow = data.workflows[data.workflows.length - 1];
+                            updateWorkflowCard(latestWorkflow);
+                        }
+                    } else {
+                        document.getElementById('systemStatus').innerHTML = '🟡 Demo Mode (API Connected)';
+                    }
+                })
+                .catch(error => {
+                    console.log('API connection failed, using demo mode:', error);
+                    document.getElementById('systemStatus').innerHTML = '🟡 Demo Mode (Backend Simulated)';
+                });
+        }
+
+        // Update workflow card with real data
+        function updateWorkflowCard(workflow) {
+            const progressPercent = Math.round(workflow.progress * 100);
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = `${progressPercent}%`;
+            }
+            
+            const progressText = document.querySelector('.progress-text');
+            if (progressText) {
+                const phase = workflow.currentPhase || 'discovery';
+                progressText.textContent = `Workflow ID: ${workflow.id.substring(0, 12)}... • ${phase} phase • ${progressPercent}% complete`;
+            }
+        }
+
+        // Execute next phase using real API
+        function executePhase() {
+            addEvent('Executing next workflow phase...');
+            
+            // Get the latest workflow ID
+            fetch('http://127.0.0.1:3006/api/v1/workflows')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok && data.workflows && data.workflows.length > 0) {
+                        const latestWorkflow = data.workflows[data.workflows.length - 1];
+                        const workflowId = latestWorkflow.id;
+                        const currentPhase = latestWorkflow.currentPhase || 'discovery';
+                        
+                        // Execute the current phase
+                        return fetch(`http://127.0.0.1:3006/api/v1/workflows/${workflowId}/execute`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Workflow-Token': 'demo-token-2025'
+                            },
+                            body: JSON.stringify({ phase: currentPhase })
+                        });
+                    } else {
+                        throw new Error('No active workflows found');
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.ok) {
+                        addEvent(`${result.phase} phase completed (${Math.round(result.qualityScore * 100)}% quality)`);
+                        addEvent(`Generated ${result.artifactsGenerated} artifacts`);
+                        updatePhaseProgress(result.progress * 100);
+                        
+                        // Update system status
+                        setTimeout(updateSystemStatus, 1000);
+                    } else {
+                        addEvent('Phase execution failed: ' + result.error);
+                    }
+                })
+                .catch(error => {
+                    console.log('API call failed, using demo mode:', error);
+                    // Fallback to demo behavior
+                    setTimeout(() => {
+                        addEvent('Demo: Strategy phase executing - generating business model');
+                        updatePhaseProgress(40);
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        addEvent('Demo: Business model validation completed (87% score)');
+                        updatePhaseProgress(50);
+                        showPhaseCompletion();
+                    }, 3000);
+                });
+        }
+
+        // View generated artifacts
+        function viewArtifacts() {
+            const artifacts = [
+                '📋 Discovery Report: Market validation, competitive analysis, user research findings',
+                '📈 Business Plan: Executive summary, financial projections, go-to-market strategy',  
+                '🏗️ Technical Architecture: Scalable system design, API specifications, security framework',
+                '🎯 Marketing Strategy: Enterprise buyer personas, content strategy, sales enablement'
+            ];
+            
+            alert('Generated Artifacts:\n\n' + artifacts.join('\n\n'));
+        }
+
+        // Trigger Book Worm analysis using real API
+        function bookWormAnalysis() {
+            addEvent('Book Worm analysis initiated...');
+            
+            const sampleContent = `B2B SaaS Analytics Platform Business Analysis:
+            
+            Market Overview: The enterprise analytics market is experiencing exponential growth, driven by organizations' need for data-driven decision making. Current market size exceeds $25B with 15% CAGR expected through 2028.
+            
+            Competitive Landscape: Primary competitors include Tableau ($15.7B acquisition by Salesforce), Microsoft PowerBI (integrated with Office 365), Looker ($2.6B acquisition by Google), and emerging players like Sisense and Qlik.
+            
+            Value Proposition: Our platform will differentiate through real-time processing capabilities, enterprise-grade security (SOC2 Type II compliance), and AI-powered insights generation that reduces time-to-insight from days to minutes.
+            
+            Target Market: Mid to large enterprises (1000+ employees) in financial services, healthcare, and retail sectors with existing data infrastructure but lacking real-time analytics capabilities.
+            
+            Go-to-Market Strategy: Direct enterprise sales with technical pilots, partnership channel through systems integrators, and strategic alliances with cloud providers.`;
+            
+            fetch('http://127.0.0.1:3006/api/v1/bookworm/activate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content: sampleContent,
+                    analysisType: 'business-plan',
+                    depth: 'comprehensive'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.ok && result.bookWormResults) {
+                    const analysis = result.bookWormResults.analysis;
+                    const qualityScore = Math.round(analysis.metadata.qualityScore * 100);
+                    
+                    addEvent(`Book Worm analysis complete: ${qualityScore}% quality score`);
+                    
+                    const insights = result.bookWormResults.insights.map(i => `• ${i.description}`).join('\n');
+                    const recommendations = analysis.feedback.recommendations.map(r => `• ${r.description}`).join('\n');
+                    
+                    alert(`Book Worm Analysis Results:\n\nQuality Score: ${qualityScore}%\nDocument Type: ${analysis.metadata.documentType}\nWord Count: ${analysis.metadata.wordCount}\n\nKey Insights:\n${insights}\n\nRecommendations:\n${recommendations}\n\nArtifacts Generated: ${result.bookWormResults.artifacts.length}`);
+                } else {
+                    throw new Error('Analysis failed');
+                }
+            })
+            .catch(error => {
+                console.log('Book Worm API failed, using demo:', error);
+                addEvent('Demo: Book Worm analysis complete (89% quality score)');
+                alert('Book Worm Analysis Results (Demo Mode):\n\nQuality Score: 89%\n\nKey Insights:\n• Market timing optimal for B2B analytics platform\n• Enterprise buyers prioritize security and compliance\n• Competitive differentiation through real-time processing\n\nRecommendations:\n• Emphasize SOC2 compliance in positioning\n• Develop enterprise pilot program\n• Build technical differentiators around performance');
+            });
+        }
+
+        // Add event to log
+        function addEvent(message) {
+            const eventLog = document.getElementById('eventLog');
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            eventItem.innerHTML = `
+                <span>${message}</span>
+                <span class="event-time">just now</span>
+            `;
+            eventLog.insertBefore(eventItem, eventLog.firstChild);
+            
+            // Keep only last 8 events
+            if (eventLog.children.length > 8) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+
+        // Update progress bar
+        function updatePhaseProgress(percent) {
+            const progressFill = document.querySelector('.progress-fill');
+            progressFill.style.width = `${percent}%`;
+        }
+
+        // Show phase completion
+        function showPhaseCompletion() {
+            const phaseStrategy = document.querySelector('.phase-active');
+            phaseStrategy.className = 'phase-pill phase-completed';
+            phaseStrategy.innerHTML = '✓ Strategy (87%)';
+            
+            // Update status
+            const workflowStatus = document.querySelector('.workflow-status');
+            workflowStatus.innerHTML = 'Development Pending';
+            workflowStatus.className = 'workflow-status status-idle';
+        }
+
+        // Simulate periodic updates for demo
+        function startEventSimulation() {
+            setInterval(() => {
+                const simulatedEvents = [
+                    'Quality gate validation running...',
+                    'Artifact backup completed',
+                    'Workflow health check passed',
+                    'Market data refresh completed',
+                    'Provider performance optimized'
+                ];
+                
+                const randomEvent = simulatedEvents[Math.floor(Math.random() * simulatedEvents.length)];
+                if (Math.random() > 0.7) { // 30% chance every interval
+                    addEvent(randomEvent);
+                }
+            }, 15000); // Every 15 seconds
+        }
+
+        // New workflow creation
+        document.getElementById('startNewBtn').addEventListener('click', () => {
+            const workflowTypes = [
+                'concept-to-market: Transform ideas into market-ready products',
+                'product-enhancement: Improve existing products for better market fit', 
+                'market-expansion: Scale successful products to new markets/segments'
+            ];
+            
+            const choice = prompt(`Select workflow type:\n\n${workflowTypes.map((type, i) => `${i+1}. ${type}`).join('\n')}\n\nEnter 1, 2, or 3:`);
+            
+            if (choice && choice.match(/[123]/)) {
+                addEvent(`New ${workflowTypes[parseInt(choice)-1].split(':')[0]} workflow requested`);
+                alert('Workflow creation would start here with requirements gathering...');
+            }
+        });
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeDemo);
+    </script>
+</body>
+</html>

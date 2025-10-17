@@ -1,0 +1,11 @@
+Summary,Description,ValueScore,Effort,Priority,Labels,Epic
+Host Onboarding Wizard,"Guided flow to publish first listing in <10 mins",5,3,High,onboarding;host,Host Activation
+Photo Quality Hints,"Inline ML tips for photo improvement",4,2,Medium,ml;ux,Host Activation
+Review Integrity Layer,"Fraud pattern detection + weighted trust score",5,5,High,trust;fraud,Trust Fabric
+Dynamic Pricing v1,"Baseline supply/demand model for nightly rate suggestions",5,5,High,pricing;data,Pricing Intelligence
+Dispute Resolution Portal,"Unified UI for issue reporting and status tracking",4,3,High,trust;support,Trust Fabric
+Semantic Search Upgrade,"Intent + attribute filtering for faster match",4,4,Medium,search;ranking,Discovery
+Geo Expansion Playbook,"Repeatable checklist for new city launch",3,2,Medium,expansion,Market Expansion
+Regulatory Compliance Tracker,"Dashboard of city-specific requirements",4,3,High,regulatory,Market Expansion
+Referral Program v1,"Incentives for hosts & guests to invite network",4,3,Medium,growth;referral,Growth Engine
+Fraud Analytics Dashboard,"Real-time anomaly & dispute metrics",5,4,High,trust;data,Trust Fabric

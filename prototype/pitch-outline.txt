@@ -1,0 +1,56 @@
+TooLoo.ai Structured Intelligence Module — Internal 7-Frame Narrative
+
+Purpose: Anchor TooLoo.ai as the order layer inside a broader Human Intent & Best Practices service. No fundraising framing — pure strategic leverage narrative.
+
+1. Friction / Current Reality
+   - Strategic thinking quality is latent — only surfaces after costly build cycles.
+   - Conversations overflow; insight fragments vanish into docs / chat silos.
+   - No shared metric for cognitive balance: vision vs. execution vs. innovation.
+   - Coaching relies on senior intuition → inconsistent, non-compounding.
+
+2. Structural Shift (Why This Works Now)
+   - Generative synthesis = instant high-fidelity founding / strategy dialogues.
+   - Pattern extraction + benchmarking converts raw talk into comparable signals.
+   - Libraries of success + failure stories unlock grounded pattern prescriptions.
+   - Demand for deliberate operating cadence in an AI-saturated noise environment.
+
+3. Core Mechanism (Loop)
+   INGEST (real + synthetic convo seeds)
+     → EXTRACT (traits, patterns, reliability)
+       → COMPARE (benchmark percentiles, gaps, balance)
+         → COACH (narrative strengths, leverage, growth drills, watch risks)
+           → EVOLVE (pattern library upgrades; raises baseline)
+             → FEEDS NEXT INGEST (better prompts, richer scenarios)
+
+4. Distinct Edge
+   - Conversation-first fidelity (captures nuance forms miss).
+   - Living benchmark (200+ signatures; improves as library compounds).
+   - Action layer native (outputs = prescriptions & priority, not dashboards alone).
+   - Balance & focus risk detection prevents over-concentration early.
+   - Self-evolving library = structural compounding moat (not static scoring).
+
+5. Validation Signals (Internal Confidence)
+   - Stable reliability trajectories across synthetic evolution cycles.
+   - Clear archetype separation (innovation-heavy vs. execution-heavy signatures).
+   - Prescriptions demonstrably rebalance over-concentrated profiles in tests.
+   - Incremental rebuild path proves fast iteration viability (seconds-scale refresh).
+
+6. Integration Use Cases (Platform Synergy)
+   - Story Library Alignment: Map live patterns to prior success/failure analogs.
+   - Coaching Cadence: Weekly intelligence packet drives focused enablement moves.
+   - Portfolio / Program Oversight: Surface where intent clarity is decaying.
+   - Talent Development: Trait gap drills tied to real conversational exemplars.
+   - Strategic Retros: Show thinking evolution pre/post intervention.
+   Value Levers: Reduced misbuild, faster convergence, institutionalized learning.
+
+7. Forward Path (Capability Maturation)
+   Phase 1 (Now → 3 mo): Real transcript ingestion, semantic novelty enrichment, refined reliability composite.
+   Phase 2 (3 → 6 mo): Live meeting overlay feedback, SaaS workspace + API endpoints, cluster-based pattern families.
+   Phase 3 (6 → 12 mo): Cross-organization benchmark graph, predictive decision-quality early warning, adaptive coaching playbooks.
+   Strategic Outcome: A continuously upgrading cognitive infrastructure layer standardizing strategic dialogue quality.
+
+Appendix (Expandable Artifacts)
+   - Dashboard & packet samples (visual anchors)
+   - Trait taxonomy + scoring guardrails
+   - Pattern promotion lifecycle (from novel to canonical)
+   - Reliability & balance methodology notes

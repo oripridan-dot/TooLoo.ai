@@ -1,0 +1,4 @@
+user: Analyze everything so far and give me a cognitive profile.
+ai: Acknowledged. I'll extract macro workflows, micro decision patterns, compression tokens, risk posture, and guidance preferences.
+ai: Profile: High decisiveness; prefers triads; values risk surfacing; demands outcome/test/impact/next framing; privacy-first stance.
+user: solid. continue building towards that intelligence engine.

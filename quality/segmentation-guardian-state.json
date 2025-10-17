@@ -1,0 +1,18 @@
+{
+  "lastGood": {
+    "at": "2025-10-09T17:22:32.564Z",
+    "config": {
+      "mode": "hybrid",
+      "rule": {
+        "variant": "advanced"
+      },
+      "canaryRatio": 0.31,
+      "thresholds": {
+        "maxSegments": 20,
+        "minMessagesPerSegment": 2
+      },
+      "version": 1
+    },
+    "accuracy": 76.19047619047619
+  }
+}

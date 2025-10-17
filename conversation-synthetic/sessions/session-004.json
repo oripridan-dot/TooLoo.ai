@@ -1,0 +1,39 @@
+{
+  "sessionId": "SYN-004",
+  "createdAt": "2025-10-08T10:30:00Z",
+  "title": "Pattern Mining Invocation",
+  "purpose": "Exhibit user triggering meta-analysis of conversation",
+  "macroWorkflows": ["Cognitive Pattern Mining"],
+  "participants": [
+    {"id": "user", "role": "user", "persona": "Product Visionary"},
+    {"id": "ai", "role": "assistant", "persona": "Execution Partner"}
+  ],
+  "messages": [
+    {"id": "m1", "author": "user", "ts": 0, "type": "text", "content": "Analyze everything so far and give me a cognitive profile."},
+    {"id": "m2", "author": "ai", "ts": 5000, "type": "text", "content": "Acknowledged. I'll extract macro workflows, micro decision patterns, compression tokens, risk posture, and guidance preferences."},
+    {"id": "m3", "author": "ai", "ts": 9000, "type": "text", "content": "Profile: High decisiveness; prefers triads; values risk surfacing; demands outcome/test/impact/next framing; privacy-first stance."},
+    {"id": "m4", "author": "user", "ts": 14000, "type": "text", "content": "solid. continue building towards that intelligence engine."}
+  ],
+  "segments": [
+    {"id": "s1", "label": "Profile Request", "startMessageId": "m1", "endMessageId": "m1", "rationale": "User initiates meta-analysis"},
+    {"id": "s2", "label": "Extraction Acknowledgment", "startMessageId": "m2", "endMessageId": "m2", "rationale": "Assistant scoping"},
+    {"id": "s3", "label": "Profile Delivery", "startMessageId": "m3", "endMessageId": "m4", "rationale": "Output + approval"}
+  ],
+  "patternInstances": [
+    {"id": "pInst1", "patternId": "pattern-mining-invoke", "messageIds": ["m1"], "confidence": 0.93, "signals": ["Analyze", "cognitive profile"], "notes": "Direct meta-analysis request"},
+    {"id": "pInst2", "patternId": "deliverable-framing-quad", "messageIds": ["m2", "m3"], "confidence": 0.72, "signals": ["extract", "Profile:"], "notes": "Assistant aligns to expected framing structure"},
+    {"id": "pInst3", "patternId": "next-step-authorization", "messageIds": ["m4"], "confidence": 0.77, "signals": ["continue"], "notes": "Approval to proceed"}
+  ],
+  "summaries": {
+    "micro": "User requests cognitive analysis; assistant extracts patterns and delivers profile; user accepts.",
+    "macro": "Demonstrates pattern recognition capabilities and cognitive trait synthesis from conversation history.",
+    "insights": ["Profile synthesis requires diverse pattern evidence", "Trait delivery needs structured format"],
+    "recommendations": ["Maintain cognitive profiling as value demonstration", "Structure trait output for clarity"]
+  },
+  "expectedTraits": {
+    "decisionCompression": 0.55,
+    "riskDiscipline": 0.70,
+    "trustPriority": 0.80,
+    "structureExpectation": 0.85
+  }
+}

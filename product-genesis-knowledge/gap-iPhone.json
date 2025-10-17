@@ -1,0 +1,59 @@
+{
+  "generated": "2025-10-08T17:44:49.313Z",
+  "product": "iPhone",
+  "category": "ConsumerTech",
+  "signature": {
+    "product": "iPhone",
+    "traitScores": {
+      "strategicVision": 0.9090909090909091,
+      "riskIntelligence": 0.7272727272727273,
+      "decisionClarity": 0.6666666666666666,
+      "innovationDrive": 0.8571428571428571,
+      "executionDiscipline": 0.8888888888888888
+    },
+    "patterns": [
+      "pivot-trigger-question",
+      "option-framing-request",
+      "risk-surfacing",
+      "deliverable-framing-quad",
+      "scope-compression",
+      "decision-shorthand-affirm",
+      "next-step-authorization"
+    ],
+    "metrics": {
+      "coverage": 0.875,
+      "reliability": 0.8713613625771828,
+      "traitDiversity": 1,
+      "traitMean": 0.8098124098124098
+    },
+    "category": "ConsumerTech"
+  },
+  "topGlobalTraitGaps": [
+    {
+      "trait": "decisionClarity",
+      "delta": 0.0888888888888889,
+      "dir": 0.0888888888888889
+    },
+    {
+      "trait": "riskIntelligence",
+      "delta": 0.07272727272727275,
+      "dir": -0.07272727272727275
+    },
+    {
+      "trait": "strategicVision",
+      "delta": 1.1102230246251565e-16,
+      "dir": 1.1102230246251565e-16
+    },
+    {
+      "trait": "executionDiscipline",
+      "delta": 1.1102230246251565e-16,
+      "dir": -1.1102230246251565e-16
+    },
+    {
+      "trait": "innovationDrive",
+      "delta": 0,
+      "dir": 0
+    }
+  ],
+  "summary": "decisionClarity: +8.9pp vs global; riskIntelligence: -7.3pp vs global; strategicVision: +0.0pp vs global; executionDiscipline: -0.0pp vs global; innovationDrive: 0.0pp vs global"
+}

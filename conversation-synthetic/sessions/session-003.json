@@ -1,0 +1,40 @@
+{
+  "sessionId": "SYN-003",
+  "createdAt": "2025-10-08T10:20:00Z",
+  "title": "Risk Enumeration Discipline",
+  "purpose": "Capture assistant's structured risk surfacing technique",
+  "macroWorkflows": ["Risk Assessment & Pivot"],
+  "participants": [
+    {"id": "user", "role": "user", "persona": "Product Visionary"},
+    {"id": "ai", "role": "assistant", "persona": "Execution Partner"}
+  ],
+  "messages": [
+    {"id": "m1", "author": "user", "ts": 0, "type": "text", "content": "list the blockers stopping us from launching"},
+    {"id": "m2", "author": "ai", "ts": 4000, "type": "text", "content": "Enumerating launch blockers across 4 categories: Technical, Legal, UX, Data."},
+    {"id": "m3", "author": "ai", "ts": 7000, "type": "text", "content": "Technical: missing synthetic dataset, scoring heuristic undefined. Legal: overlay potential TOS friction. UX: no onboarding flow artifact. Data: no privacy policy doc."},
+    {"id": "m4", "author": "ai", "ts": 11000, "type": "text", "content": "Mitigation sequence: 1) Synthetic pack → calibrate scoring 2) Draft privacy/local-first statement 3) Onboarding flow spec 4) Lightweight heuristic scaffold."},
+    {"id": "m5", "author": "user", "ts": 15000, "type": "text", "content": "good ordering. proceed with step 1 now."}
+  ],
+  "segments": [
+    {"id": "s1", "label": "Blocker Request", "startMessageId": "m1", "endMessageId": "m1", "rationale": "User initiates risk query"},
+    {"id": "s2", "label": "Categorized Risks", "startMessageId": "m2", "endMessageId": "m3", "rationale": "Assistant structures risks by category"},
+    {"id": "s3", "label": "Mitigation Plan", "startMessageId": "m4", "endMessageId": "m5", "rationale": "Prioritized sequence then approval"}
+  ],
+  "patternInstances": [
+    {"id": "pInst1", "patternId": "risk-surfacing", "messageIds": ["m2", "m3"], "confidence": 0.9, "signals": ["Enumerating", "Technical", "Legal"], "notes": "Structured categorization"},
+    {"id": "pInst2", "patternId": "scope-compression", "messageIds": ["m4"], "confidence": 0.76, "signals": ["sequence", "→"], "notes": "Condensed actionable plan"},
+    {"id": "pInst3", "patternId": "next-step-authorization", "messageIds": ["m5"], "confidence": 0.8, "signals": ["proceed", "step 1"], "notes": "Approval to execute first item"}
+  ],
+  "summaries": {
+    "micro": "User requests blockers; assistant categorizes and sequences mitigations; user authorizes first step.",
+    "macro": "Demonstrates disciplined risk surfacing feeding directly into prioritized execution.",
+    "insights": ["Categorization increases clarity", "Sequencing fosters quick approval"],
+    "recommendations": ["Maintain four-category template", "Auto-generate mitigation sequencing"]
+  },
+  "expectedTraits": {
+    "decisionCompression": 0.65,
+    "riskDiscipline": 0.95,
+    "trustPriority": 0.40,
+    "structureExpectation": 0.75
+  }
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      height: 400px;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .popup-container {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .logo {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin: 4px 0 0 0;
+    }
+    
+    .status {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .status-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .status-text {
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+    
+    .action-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .action-icon {
+      font-size: 16px;
+    }
+    
+    .action-text {
+      flex: 1;
+    }
+    
+    .action-title {
+      font-weight: 600;
+      margin: 0 0 2px 0;
+    }
+    
+    .action-desc {
+      font-size: 12px;
+      opacity: 0.8;
+      margin: 0;
+    }
+    
+    .upgrade-btn {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border: none;
+    }
+    
+    .upgrade-btn:hover {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    }
+    
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .footer a {
+      color: white;
+      text-decoration: none;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-container">
+    <div class="header">
+      <div class="logo">📍</div>
+      <h1 class="title">ChatTimeline</h1>
+      <p class="subtitle">AI Conversation Navigator</p>
+    </div>
+    
+    <div class="status">
+      <div class="status-icon">✅</div>
+      <p class="status-text">Ready to organize your conversations</p>
+    </div>
+    
+    <div class="actions">
+      <button class="action-btn" id="openTimeline">
+        <span class="action-icon">📍</span>
+        <div class="action-text">
+          <div class="action-title">Open Timeline</div>
+          <div class="action-desc">View current conversation structure</div>
+        </div>
+      </button>
+      
+      <button class="action-btn" id="quickHelp">
+        <span class="action-icon">❓</span>
+        <div class="action-text">
+          <div class="action-title">How It Works</div>
+          <div class="action-desc">Learn about timeline navigation</div>
+        </div>
+      </button>
+      
+      <button class="action-btn upgrade-btn" id="upgradeBtn">
+        <span class="action-icon">⭐</span>
+        <div class="action-text">
+          <div class="action-title">Upgrade to Premium</div>
+          <div class="action-desc">Templates, export & more - $19/month</div>
+        </div>
+      </button>
+      
+      <button class="action-btn" id="settings">
+        <span class="action-icon">⚙️</span>
+        <div class="action-text">
+          <div class="action-title">Settings</div>
+          <div class="action-desc">Configure timeline preferences</div>
+        </div>
+      </button>
+    </div>
+    
+    <div class="footer">
+      <a href="https://chattimeline.com" target="_blank">chattimeline.com</a>
+      •
+      <a href="https://chattimeline.com/support" target="_blank">Support</a>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

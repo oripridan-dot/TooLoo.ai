@@ -1,0 +1,25 @@
+TooLoo.ai Quick Demo (No Code, 3 Minutes)
+
+1. Benchmark Context (10s)
+Say: “We’ve profiled 200+ landmark products. Each gets a thinking signature.”
+Show: multi-dashboard HTML (pre-generated) – point at a gap cell.
+
+2. Single Product Deep Dive (50s)
+Open: dashboard-iPhone.html
+Highlight: narrative line, sparkline, growth gaps, prescriptions table.
+Say: “In one glance: where it’s strong, where it’s underpowered, how to train it.”
+
+3. Coaching Angle (40s)
+Open: enablement-priority.json top 5 list.
+Say: “Instead of guessing, we know who to coach first — objective learning ROI.”
+
+4. Action Artifact (40s)
+Open: coaching-packet PDF page.
+Say: “Investor‑ready: quantified cognition, improvement path.”
+
+5. Improvement Loop (30s)
+Explain: new conversations feed novel patterns back → future profiles tighten.
+Point: essence.md core loop bullets.
+
+Closing (10s)
+“One engine: generate, benchmark, coach, evolve. It raises thinking quality like CI raises code quality.”

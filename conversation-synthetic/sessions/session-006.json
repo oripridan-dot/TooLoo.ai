@@ -1,0 +1,41 @@
+{
+  "sessionId": "SYN-006",
+  "createdAt": "2025-10-08T10:50:00Z",
+  "title": "Onboarding Flow Sketch",
+  "purpose": "Show early exploration of 60s onboarding pipeline",
+  "macroWorkflows": ["Onboarding Guidance Design", "Iterative Spec Refinement"],
+  "participants": [
+    {"id": "user", "role": "user", "persona": "Product Visionary"},
+    {"id": "ai", "role": "assistant", "persona": "Execution Partner"}
+  ],
+  "messages": [
+    {"id": "m1", "author": "user", "ts": 0, "type": "text", "content": "Onboarding should deliver value in under a minute. Outline it."},
+    {"id": "m2", "author": "ai", "ts": 4000, "type": "text", "content": "Proposed 60s pipeline: (0-10s) drag & drop recent chat → (10-25s) local parse + segment progress bar → (25-40s) highlight 3 detected micro patterns → (40-55s) generate draft cognitive snapshot → (55-60s) present 'Next Action' card."},
+    {"id": "m3", "author": "user", "ts": 9000, "type": "text", "content": "good. add explicit privacy reassurance copy early."},
+    {"id": "m4", "author": "ai", "ts": 13000, "type": "text", "content": "Inserted at 6s: 'All processing stays on your device. Optional anonymous pattern sharing later.'"},
+    {"id": "m5", "author": "user", "ts": 17000, "type": "text", "content": "approved."}
+  ],
+  "segments": [
+    {"id": "s1", "label": "Value Time Constraint", "startMessageId": "m1", "endMessageId": "m1", "rationale": "User sets time budget"},
+    {"id": "s2", "label": "Pipeline Draft", "startMessageId": "m2", "endMessageId": "m2", "rationale": "Assistant outlines discrete time slices"},
+    {"id": "s3", "label": "Privacy Augmentation", "startMessageId": "m3", "endMessageId": "m4", "rationale": "User adds requirement; assistant integrates"},
+    {"id": "s4", "label": "Approval", "startMessageId": "m5", "endMessageId": "m5", "rationale": "User confirms pipeline"}
+  ],
+  "patternInstances": [
+    {"id": "pInst1", "patternId": "scope-compression", "messageIds": ["m2"], "confidence": 0.8, "signals": ["time slices"], "notes": "Compact timeline articulation"},
+    {"id": "pInst2", "patternId": "local-first-principle", "messageIds": ["m4"], "confidence": 0.82, "signals": ["All processing stays on your device"], "notes": "Privacy reassurance integrated"},
+    {"id": "pInst3", "patternId": "next-step-authorization", "messageIds": ["m5"], "confidence": 0.74, "signals": ["approved"], "notes": "Green-light"}
+  ],
+  "summaries": {
+    "micro": "Assistant proposes 60s onboarding pipeline; user requests privacy copy; assistant adds it; user approves.",
+    "macro": "Defines time-bounded value demonstration with integrated privacy messaging for user confidence.",
+    "insights": ["60s constraint forces prioritization", "Privacy messaging placement matters"],
+    "recommendations": ["Maintain strict timing boundaries", "Embed privacy early in flow"]
+  },
+  "expectedTraits": {
+    "decisionCompression": 0.70,
+    "riskDiscipline": 0.50,
+    "trustPriority": 0.85,
+    "structureExpectation": 0.90
+  }
+}

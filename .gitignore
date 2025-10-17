@@ -66,3 +66,39 @@ Dockerfile.local
 # Backup files
 *.backup
 backup-*
+*.bak
+*.bak.*
+*.old-backup
+
+# Generated caches & state
+data/*
+!data/.gitkeep
+data/**/capabilities-state.backup-*.json
+data/workflows/active-workflows.json.bak*
+data/workflows/*.bak
+engine/*.bak
+servers/*.bak
+
+# Generated outputs & exports
+output/
+auto-screenshots/
+web-app/beast-mode-backups/
+web-app/beast-mode-learning/user-exports/
+web-app/ai-chat-analysis/analysis-history.json
+web-app/ai-chat-analysis/claude-exports/
+web-app/ai-chat-analysis/chatgpt-exports/
+web-app/ai-chat-analysis/insights/
+web-app/ai-chat-analysis/reports/
+web-app/nohup.out
+product-genesis-knowledge/coaching-packet-*.pdf
+
+# Packaged artifacts
+releases/
+ai-chat-timeline-*.zip
+ChatTimeline-*.zip
+extensions/chat-timeline/**/*.zip
+chrome-extension/**/*.zip
+chrome-extension-merged/**/*.zip
+
+# Media exports
+*.mp3
