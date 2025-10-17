@@ -1,0 +1,4 @@
+ai: Extension merge status: overlay stable, event timeline integrated, risk remains on DOM volatility.
+user: If volatility remains we shift investment elsewhere.
+ai: Alternate investment: conversation intelligence platform leveraging pattern mining vs UI injection.
+user: Yes transition focus. Document merge lessons then move.

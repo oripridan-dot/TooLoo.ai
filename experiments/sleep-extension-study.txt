@@ -1,0 +1,30 @@
+Title: Sleep Extension and Cognitive / Mood Outcomes in Healthy Adults (Paraphrased Open-Access Abstract)
+
+Context: Chronic mild sleep restriction impairs daytime performance. A small controlled intervention explored whether extending time in bed for habitual short sleepers (approx 6 h) improves objective and subjective outcomes over ~2 weeks.
+
+Design (paraphrased):
+Participants: 40 healthy adults (20F/20M), age 21–35, habitual sleep < 6.5 h self‑reported.
+Baseline Week: Maintain usual schedule; actigraphy + sleep diaries collected.
+Intervention Week: Target 8.0–8.5 h time in bed; coaching + nightly reminders.
+
+Measured Variables (original list paraphrased):
+- Objective sleep duration (actigraphy)
+- Sleep efficiency
+- Reaction time (psychomotor vigilance test)
+- Working memory accuracy (n‑back task)
+- Subjective sleepiness (Karolinska scale)
+- Mood / affect balance (PANAS composite)
+- Daily caffeine intake (self‑report)
+- Morning cortisol (saliva)
+
+Primary Findings (paraphrased):
+1. Sleep duration increased ~68 ± 20 minutes (p < 0.001).
+2. Reaction time lapses decreased (medium effect size ~0.55).
+3. Working memory accuracy improved modestly (small effect size ~0.30).
+4. Subjective sleepiness scores improved (lower sleepiness) (p < 0.01).
+5. Positive mood increased; negative affect slightly decreased (net affect balance +0.25 SD).
+6. No significant change in morning cortisol or caffeine use.
+
+Conclusions (paraphrased): Extending opportunity to sleep for short-sleeping young adults yields measurable gains in vigilance, cognitive efficiency, and mood without physiological stress marker shifts after two weeks.
+
+Note: All content paraphrased to avoid verbatim reproduction; values approximated for demonstration.

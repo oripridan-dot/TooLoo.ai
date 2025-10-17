@@ -1,0 +1,5 @@
+user: list the blockers stopping us from launching
+ai: Enumerating launch blockers across 4 categories: Technical, Legal, UX, Data.
+ai: Technical: missing synthetic dataset, scoring heuristic undefined. Legal: overlay potential TOS friction. UX: no onboarding flow artifact. Data: no privacy policy doc.
+ai: Mitigation sequence: 1) Synthetic pack → calibrate scoring 2) Draft privacy/local-first statement 3) Onboarding flow spec 4) Lightweight heuristic scaffold.
+user: good ordering. proceed with step 1 now.

@@ -1,0 +1,39 @@
+{
+  "sessionId": "SYN-002",
+  "createdAt": "2025-10-08T10:10:00Z",
+  "title": "Decision Compression Style",
+  "purpose": "Demonstrate shorthand multi-decision authorization pattern",
+  "macroWorkflows": ["Rapid Option Selection", "Execution Kickoff"],
+  "participants": [
+    {"id": "user", "role": "user", "persona": "Product Visionary"},
+    {"id": "ai", "role": "assistant", "persona": "Execution Partner"}
+  ],
+  "messages": [
+    {"id": "m1", "author": "ai", "ts": 0, "type": "text", "content": "Three levers to move forward: 1) Generate synthetic sessions 2) Define onboarding 3) Draft scoring heuristic. Preference order?"},
+    {"id": "m2", "author": "user", "ts": 4000, "type": "text", "content": "1.y / 2.ok / 3.3.go"},
+    {"id": "m3", "author": "ai", "ts": 7000, "type": "text", "content": "Interpreted: Primary yes on synthetic sessions, acceptable on onboarding flow, proceed (tier 3) on heuristic. I'll start with dataset creation now."},
+    {"id": "m4", "author": "user", "ts": 11000, "type": "text", "content": "correct. execute."}
+  ],
+  "segments": [
+    {"id": "s1", "label": "Option Framing", "startMessageId": "m1", "endMessageId": "m1", "rationale": "Assistant enumerates choices"},
+    {"id": "s2", "label": "Compressed Decision", "startMessageId": "m2", "endMessageId": "m2", "rationale": "User uses shorthand multi decision token"},
+    {"id": "s3", "label": "Clarification + Authorization", "startMessageId": "m3", "endMessageId": "m4", "rationale": "Assistant decodes; user confirms"}
+  ],
+  "patternInstances": [
+    {"id": "pInst1", "patternId": "option-framing-request", "messageIds": ["m1"], "confidence": 0.7, "signals": ["Three levers"], "notes": "Implicit framing by assistant"},
+    {"id": "pInst2", "patternId": "decision-shorthand-affirm", "messageIds": ["m2"], "confidence": 0.95, "signals": ["1.y", "2.ok", "3.3.go"], "notes": "Canonical compressed pattern"},
+    {"id": "pInst3", "patternId": "next-step-authorization", "messageIds": ["m4"], "confidence": 0.78, "signals": ["execute"], "notes": "Explicit start command"}
+  ],
+  "summaries": {
+    "micro": "Assistant frames tasks; user authorizes with compressed tokens; execution begins.",
+    "macro": "Illustrates high-bandwidth decision compression enabling rapid sequencing without negotiation overhead.",
+    "insights": ["Shorthand encodes priority + approval state", "Assistant decoding maintains alignment"],
+    "recommendations": ["Maintain parser for multi-token decision strings", "Surface misparsed tokens immediately"]
+  },
+  "expectedTraits": {
+    "decisionCompression": 0.90,
+    "riskDiscipline": 0.35,
+    "trustPriority": 0.25,
+    "structureExpectation": 0.55
+  }
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capabilities Dashboard – TooLoo.ai</title>
+  <style>
+    :root { --bg:#0B0D10; --surface:#14181E; --muted:#96A0AF; --text:#E6E9EE; --brand:#7C5CFF; --ok:#1fbf74; --warn:#ffbd2e; --bad:#ff5c7c; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #1e242c; background:linear-gradient(180deg,#0e1117, #0b0d10 60%); position:sticky; top:0; z-index:10; }
+    header h1 { font-size:18px; margin:0; letter-spacing:0.2px; }
+    header .row { display:flex; gap:8px; align-items:center; }
+    main { padding:20px; max-width:1200px; margin:0 auto; }
+    .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap:16px; }
+    .card { background:var(--surface); border:1px solid #202733; border-radius:12px; padding:16px; }
+    .col-12{ grid-column: span 12; } .col-8{ grid-column: span 8; } .col-4{ grid-column: span 4; } .col-6{ grid-column: span 6; } .col-3{ grid-column: span 3; }
+    .pill { padding:4px 8px; border-radius:999px; font-size:11px; border:1px solid #273041; color:#c4ccd6; background:#0e1420; text-decoration:none; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .bar { height:8px; border-radius:6px; background:#1a2230; overflow:hidden; }
+    .bar > i { display:block; height:100%; background: linear-gradient(90deg, #8b7dff, #00e9b0); }
+    .muted { color:var(--muted); font-size:12px; }
+    .domain { background:#10151c; border:1px solid #1b2230; border-radius:10px; padding:12px; }
+    h3 { margin:0 0 8px 0; font-size:14px; }
+    canvas { width: 100%; height: 220px; background:#0e1420; border:1px solid #232b38; border-radius:8px; }
+    table { width:100%; border-collapse: collapse; font-size:12px; }
+    th, td { padding:6px 8px; border-bottom:1px solid #242c38; }
+    th { text-align:left; color:#aab4c0; }
+  </style>
+  <script>
+    async function j(url){ const r = await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+    function pct(n){ return Math.max(0, Math.min(100, Number(n||0))); }
+    function el(id){ return document.getElementById(id); }
+    function drawSeries(canvasId, series, color){ const c=el(canvasId); if(!c) return; const ctx=c.getContext('2d'); const W=c.width = c.clientWidth; const H=c.height = c.clientHeight; ctx.clearRect(0,0,W,H); const pad=20; const xs=(i)=> pad + (W-2*pad) * (i/Math.max(1,series.length-1)); const ys=(v)=> H-pad - (H-2*pad)*(v/100); ctx.strokeStyle=color||'#8b7dff'; ctx.lineWidth=2; ctx.beginPath(); series.forEach((p,i)=>{ const x=xs(i), y=ys(p.v||0); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke(); }
+    function renderComponents(components){ const container=el('components'); container.innerHTML=''; Object.entries(components||{}).forEach(([name,cfg])=>{ const div=document.createElement('div'); div.className='domain'; const prog = cfg.discovered>0? Math.round((cfg.activated||0)/cfg.discovered*100) : 0; div.innerHTML=`<h4 style='margin:0 0 6px 0;'>${name}</h4><div class='bar'><i style='width:${prog}%;'></i></div><div class='muted'>${cfg.activated}/${cfg.discovered} active · failed ${cfg.failed||0}</div>`; div.onclick=()=> loadCharts(name); container.appendChild(div); }); }
+    async function loadCharts(component){ const perf = await j(`/api/v1/reports/performance?recentWindow=100&component=${encodeURIComponent(component||'all')}`); const series=perf?.series||{}; drawSeries('progressChart', series.progress||[], '#7C5CFF'); drawSeries('successChart', series.successRate||[], '#00E9B0'); const sum=perf?.summary||{}; el('summary').textContent = component && sum.component? `${component}: ${sum.componentActivated}/${sum.componentDiscovered} (${sum.componentProgress||0}%)` : `All: ${sum.totalActivated}/${sum.totalDiscovered} (${sum.progress||0}%), recent ok ${sum.recentSuccessRate||0}%`; }
+    async function refresh(){ try{ const st = await j('/api/v1/capabilities/status'); renderComponents(st.activation?.components||{}); await loadCharts('all'); const q = await j('/api/v1/capabilities/retry-status'); const tbody = el('retryBody'); tbody.innerHTML=''; (q.items||[]).forEach(it=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${it.key}</td><td>${it.failures}</td><td>${it.modeIndex}</td><td>${new Date(it.nextAt).toLocaleTimeString()}</td>`; tbody.appendChild(tr); }); }catch(e){ console.warn('refresh failed', e); } }
+    async function doReset(){ try{ if(!confirm('Reset all capability activation state?')) return; const r = await fetch('/api/v1/capabilities/reset', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ autoStart: false }) }); const jx = await r.json(); alert(jx.ok? 'Reset complete' : 'Reset failed'); refresh(); }catch(e){ alert('Reset failed'); } }
+    async function doSprint(){ try{ const r = await fetch('/api/v1/capabilities/sprint', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ mode:'aggressive', maxConcurrency:60 }) }); const jx = await r.json(); alert(jx.ok? `Sprint completed: +${jx.sprint?.successful||0}` : 'Sprint failed'); refresh(); }catch(e){ alert('Sprint failed'); } }
+    async function startAuto(){ await fetch('/api/v1/capabilities/auto/start', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ intervalMs: 1000, mode: 'production', maxPerCycle: 20, maxPerComponent: 6, sequencing: 'intelligent' }) }); setTimeout(refresh, 500); }
+    async function stopAuto(){ await fetch('/api/v1/capabilities/auto/stop', { method:'POST' }); setTimeout(refresh, 500); }
+    document.addEventListener('DOMContentLoaded', ()=>{ refresh(); setInterval(refresh, 4000); });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Capabilities Dashboard</h1>
+    <div class="row">
+      <a href="/knowledge" class="pill">📚 Knowledge</a>
+      <a href="/control-room" class="pill">← Control Room</a>
+      <a href="/capabilities" class="pill">Capability Activation</a>
+      <a href="/segmentation" class="pill">Segmentation Demo</a>
+      <button class="pill" onclick="doReset()">Reset State</button>
+      <button class="pill" onclick="startAuto()">Start Auto</button>
+      <button class="pill" onclick="stopAuto()">Stop Auto</button>
+      <button class="pill" onclick="doSprint()">Auto Sprint</button>
+    </div>
+  </header>
+  <main>
+    <div class="grid">
+      <div class="col-8 card">
+        <h3>Activation Progress</h3>
+        <canvas id="progressChart"></canvas>
+      </div>
+      <div class="col-4 card">
+        <h3>Success Rate (rolling)</h3>
+        <canvas id="successChart"></canvas>
+      </div>
+      <div class="col-12 card">
+        <h3>Components</h3>
+        <div id="components" class="row" style="gap:10px;"></div>
+      </div>
+      <div class="col-12 card">
+        <h3>Retry Queue</h3>
+        <table>
+          <thead><tr><th>Key</th><th>Failures</th><th>Mode</th><th>Next Attempt</th></tr></thead>
+          <tbody id="retryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

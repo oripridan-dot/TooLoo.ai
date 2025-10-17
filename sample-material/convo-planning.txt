@@ -1,0 +1,17 @@
+[Planning Session]
+User: Objective: reduce host time-to-first-booking from 14 days to 5 days this quarter.
+Assistant: Key levers: onboarding friction, listing quality, early demand visibility.
+User: List friction hypotheses.
+Assistant: (1) Photo confusion, (2) Pricing uncertainty, (3) Trust checklist overwhelm.
+User: Define success metric precisely.
+Assistant: Median days from signup to first accepted booking.
+User: Brainstorm interventions fast.
+Assistant: Rapid ideas: Photo AI assistant, Smart starter price band, Progressive trust checklist, Demo demand preview.
+User: Prioritize by predicted impact.
+Assistant: Rank: 1) Progressive checklist, 2) Smart starter price, 3) Photo AI, 4) Demand preview.
+User: Give experiment framing for top two.
+Assistant: Experiment A: Progressive trust checklist vs full list (A/B). KPI: activation completion %. Experiment B: Smart starter price suggestion vs manual. KPI: listing publish rate.
+User: Provide minimal instrumentation spec.
+Assistant: Events: checklist_step_view, checklist_complete, price_suggestion_shown, price_suggestion_accepted, listing_published.
+User: Summarize in one crisp narrative.
+Assistant: We compress onboarding by sequencing trust requirements and removing pricing paralysis via calibrated starter bands.

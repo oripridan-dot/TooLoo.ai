@@ -1,0 +1,72 @@
+{
+  "name": "basic-segmentation",
+  "description": "Basic conversation segmentation accuracy test",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "seg_001",
+      "description": "Simple user-assistant conversation",
+      "input": {
+        "text": "User: I need help with my project.\nAssistant: I'd be happy to help! What kind of project are you working on?\nUser: It's a web application for task management.\nAssistant: Great! Task management apps are very useful. What specific features are you planning to include?\nUser: I want users to create tasks, set deadlines, and track progress.\nAssistant: Those are excellent core features. For the user interface, are you thinking of a simple list view or something more visual like a Kanban board?"
+      },
+      "expected": {
+        "type": "segments",
+        "segments": 3,
+        "tolerance": 1
+      },
+      "endpoint": "/api/v1/analyze-text"
+    },
+    {
+      "id": "seg_002", 
+      "description": "Planning conversation with clear boundaries",
+      "input": {
+        "text": "User: Let's plan our marketing strategy.\nAssistant: Excellent idea. What's our primary goal for this quarter?\nUser: Increase user acquisition by 40%.\nAssistant: That's ambitious but achievable. What channels have worked best so far?\nUser: Social media and content marketing have been our strongest.\nAssistant: Let's double down on those while exploring new channels.\nUser: Now let's talk about budget allocation.\nAssistant: For budget, I recommend 60% to proven channels and 40% to experimentation.\nUser: That sounds reasonable. What about timeline?\nAssistant: I suggest a 12-week sprint with bi-weekly reviews and adjustments."
+      },
+      "expected": {
+        "type": "segments", 
+        "segments": 4,
+        "tolerance": 1
+      },
+      "endpoint": "/api/v1/analyze-text"
+    },
+    {
+      "id": "seg_003",
+      "description": "Troubleshooting conversation",
+      "input": {
+        "text": "User: My app is crashing when users upload large files.\nAssistant: That's a common issue with file uploads. What's the current file size limit?\nUser: We set it to 10MB but some users are trying to upload 50MB files.\nAssistant: The crash suggests the upload is being attempted rather than rejected. Let's check the server configuration.\nUser: How do I check that?\nAssistant: Look at your web server config file, usually nginx.conf or apache.conf.\nUser: Found it. The client_max_body_size is set to 100MB.\nAssistant: That's not the issue then. The problem might be in your application code.\nUser: What should I look for?\nAssistant: Check for memory allocation issues and implement streaming uploads for large files."
+      },
+      "expected": {
+        "type": "segments",
+        "segments": 3,
+        "tolerance": 1 
+      },
+      "endpoint": "/api/v1/analyze-text"
+    },
+    {
+      "id": "seg_004",
+      "description": "Brainstorming session",
+      "input": {
+        "text": "User: Let's brainstorm ideas for improving user engagement.\nAssistant: Great topic! What metrics are you currently tracking?\nUser: Daily active users, session duration, and feature adoption.\nAssistant: Those are solid metrics. For engagement, have you considered gamification?\nUser: Interesting. What kind of gamification?\nAssistant: Points, badges, streaks, leaderboards - things that create habit loops.\nUser: I like the streaks idea. Users could maintain daily login streaks.\nAssistant: Exactly! And you could offer streak rewards or showcase top performers.\nUser: What about push notifications?\nAssistant: Smart notifications work well - progress updates, achievement unlocks, gentle reminders.\nUser: Should we also think about social features?\nAssistant: Absolutely. User-generated content, sharing achievements, collaborative features."
+      },
+      "expected": {
+        "type": "segments",
+        "segments": 4,
+        "tolerance": 1
+      },
+      "endpoint": "/api/v1/analyze-text"
+    },
+    {
+      "id": "seg_005",
+      "description": "Mixed topic conversation",
+      "input": {
+        "text": "User: I'm having trouble with my email setup.\nAssistant: I can help with that. What email provider are you using?\nUser: Gmail for business.\nAssistant: Gmail for business has good documentation. What specific issue are you facing?\nUser: Actually, let me ask about something else. Do you know about React hooks?\nAssistant: Yes, React hooks are functions that let you use state and lifecycle features in functional components.\nUser: Can you explain useState?\nAssistant: useState is a hook that lets you add state to functional components. You call it with an initial value and it returns an array with the current state and a setter function.\nUser: Back to the email - I can't get SMTP working.\nAssistant: For Gmail SMTP, you need to enable 2-factor auth and create an app password.\nUser: How do I create an app password?\nAssistant: Go to your Google Account settings, then Security, then App passwords. Generate a new one for your application."
+      },
+      "expected": {
+        "type": "segments",
+        "segments": 4,
+        "tolerance": 1
+      },
+      "endpoint": "/api/v1/analyze-text"
+    }
+  ]
+}

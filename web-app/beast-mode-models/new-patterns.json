@@ -1,0 +1,78 @@
+[
+  {
+    "id": "question-answer-sequence",
+    "description": "Direct question followed by answer pattern",
+    "category": "communication",
+    "indicators": [
+      "question-mark",
+      "response-without-question"
+    ],
+    "confidence": 4.568627450980392,
+    "occurrences": 466,
+    "conversationCoverage": 101,
+    "validationScore": 0.93,
+    "accuracyScore": 1,
+    "uniquenessScore": 0.9,
+    "stabilityScore": 0.8
+  },
+  {
+    "id": "clarification-seeking",
+    "description": "Active seeking of clarification or understanding",
+    "category": "communication",
+    "indicators": [
+      "clarification-requests"
+    ],
+    "confidence": 0.7647058823529411,
+    "occurrences": 78,
+    "conversationCoverage": 78,
+    "validationScore": 0.93,
+    "accuracyScore": 1,
+    "uniquenessScore": 0.9,
+    "stabilityScore": 0.8
+  },
+  {
+    "id": "agreement-expression",
+    "description": "Explicit agreement or confirmation",
+    "category": "consensus",
+    "indicators": [
+      "agreement-words"
+    ],
+    "confidence": 0.5490196078431373,
+    "occurrences": 56,
+    "conversationCoverage": 40,
+    "validationScore": 0.68,
+    "accuracyScore": 0.5,
+    "uniquenessScore": 0.9,
+    "stabilityScore": 0.8
+  },
+  {
+    "id": "option-evaluation",
+    "description": "Systematic evaluation of multiple options",
+    "category": "decision-making",
+    "indicators": [
+      "option-references"
+    ],
+    "confidence": 0.19607843137254902,
+    "occurrences": 20,
+    "conversationCoverage": 20,
+    "validationScore": 0.93,
+    "accuracyScore": 1,
+    "uniquenessScore": 0.9,
+    "stabilityScore": 0.8
+  },
+  {
+    "id": "decision-announcement",
+    "description": "Clear announcement of final decision",
+    "category": "decision-making",
+    "indicators": [
+      "decision-statements"
+    ],
+    "confidence": 0.19607843137254902,
+    "occurrences": 20,
+    "conversationCoverage": 20,
+    "validationScore": 0.93,
+    "accuracyScore": 1,
+    "uniquenessScore": 0.9,
+    "stabilityScore": 0.8
+  }
+]

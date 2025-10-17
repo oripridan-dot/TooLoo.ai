@@ -1,0 +1,4 @@
+ai: Three levers to move forward: 1) Generate synthetic sessions 2) Define onboarding 3) Draft scoring heuristic. Preference order?
+user: 1.y / 2.ok / 3.3.go
+ai: Interpreted: Primary yes on synthetic sessions, acceptable on onboarding flow, proceed (tier 3) on heuristic. I'll start with dataset creation now.
+user: correct. execute.

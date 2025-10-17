@@ -1,0 +1,81 @@
+{
+  "version": "0.1.0",
+  "description": "Schema for synthetic conversation sessions used to seed Conversation Intelligence engine.",
+  "entities": {
+    "Session": {
+      "fields": {
+        "sessionId": "string - unique identifier",
+        "createdAt": "ISO timestamp (synthetic)",
+        "title": "short human label",
+        "purpose": "one-line why the session exists",
+        "macroWorkflows": ["array of macro workflow labels"],
+        "participants": [
+          {
+            "id": "string",
+            "role": "e.g., user|assistant",
+            "persona": "concise descriptor"
+          }
+        ],
+        "messages": [
+          {
+            "id": "m<n>",
+            "author": "participant.id",
+            "ts": "relative ms from start or ISO",
+            "type": "text|system|meta",
+            "content": "raw text",
+            "tags": ["optional lexical tags"]
+          }
+        ],
+        "segments": [
+          {
+            "id": "s<n>",
+            "label": "High-level phase label",
+            "startMessageId": "id of first message in segment",
+            "endMessageId": "id of last message in segment",
+            "rationale": "why boundaries chosen"
+          }
+        ],
+        "patternInstances": [
+          {
+            "id": "pInst<n>",
+            "patternId": "reference to canonical pattern catalog id",
+            "messageIds": ["array of message ids participating"],
+            "confidence": "0-1 provisional score",
+            "signals": ["list of extracted signal tokens"],
+            "notes": "brief explanation"
+          }
+        ],
+        "summaries": {
+          "micro": "1-2 sentence operational summary",
+          "macro": "Broader narrative summary",
+          "insights": ["bullet noteworthy dynamics"],
+          "recommendations": ["actionable follow-ups"]
+        }
+      }
+    }
+  },
+  "macroWorkflowCatalog": [
+    "Strategic Pivot Exploration",
+    "Rapid Option Selection",
+    "Architecture Merge & Refactor",
+    "Risk Assessment & Pivot",
+    "Cognitive Pattern Mining",
+    "Onboarding Guidance Design",
+    "Budget / Constraint Negotiation",
+    "Data Privacy Assurance",
+    "Iterative Spec Refinement",
+    "Execution Kickoff"
+  ],
+  "microPatternCatalog": [
+    {"id": "option-framing-request", "label": "Option Framing Request", "trigger": "User asks for 2-3 options framed succinctly"},
+    {"id": "decision-shorthand-affirm", "label": "Decision Shorthand Affirmation", "trigger": "Compressed confirmation tokens (e.g., '1.y / 2.ok')"},
+    {"id": "pivot-trigger-question", "label": "Pivot Trigger Question", "trigger": "User challenges current path viability"},
+    {"id": "quality-bar-assert", "label": "Quality Bar Assertion", "trigger": "Explicit non-negotiable quality statement"},
+    {"id": "risk-surfacing", "label": "Risk Surfacing", "trigger": "Assistant enumerates structural/legal/stability risks"},
+    {"id": "pattern-mining-invoke", "label": "Pattern Mining Invocation", "trigger": "User requests meta-analysis of conversation"},
+    {"id": "scope-compression", "label": "Scope Compression", "trigger": "Assistant condenses multi-step plan into minimal actionable set"},
+    {"id": "next-step-authorization", "label": "Next-Step Authorization", "trigger": "User gives green-light tokens to proceed"},
+    {"id": "local-first-principle", "label": "Local-First Principle Assertion", "trigger": "Privacy / local processing emphasis"},
+    {"id": "deliverable-framing-quad", "label": "Deliverable Framing (Outcome/Test/Impact/Next)", "trigger": "Assistant frames output using four-part summary structure"}
+  ]
+}

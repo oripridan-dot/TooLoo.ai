@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooLoo.ai - Live Genius Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            grid-template-rows: 80px 1fr;
+            grid-template-areas: 
+                "header header"
+                "main chat";
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .header {
+            grid-area: header;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .budget-pill {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #eee;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .main-dashboard {
+            grid-area: main;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .mastery-overview {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .domain-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .domain-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        .domain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .domain-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .domain-level {
+            background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .domain-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #cccccc;
+        }
+
+        .velocity-indicator {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .real-time-feed {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .feed-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feed-icon {
+            font-size: 18px;
+        }
+
+        .feed-content {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .feed-time {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .chat-panel {
+            grid-area: chat;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .chat-subtitle {
+            font-size: 12px;
+            color: #cccccc;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            animation: messageAppear 0.3s ease;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: white;
+        }
+
+        .message.tooloo {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .message.tooloo::before {
+            content: '🧠';
+            margin-right: 8px;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            color: #cccccc;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #00d4ff;
+            border-radius: 50%;
+            animation: typingPulse 1.4s ease-in-out infinite both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingPulse {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input::placeholder {
+            color: #888;
+        }
+
+        .chat-input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sound-visualizer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sound-visualizer:hover {
+            transform: scale(1.1);
+            background: rgba(0, 212, 255, 0.3);
+        }
+
+        .sound-waves {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+        }
+
+        .wave {
+            width: 3px;
+            background: #00d4ff;
+            border-radius: 2px;
+            animation: soundWave 1s ease-in-out infinite;
+        }
+
+        .wave:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .wave:nth-child(2) { height: 12px; animation-delay: 0.1s; }
+        .wave:nth-child(3) { height: 16px; animation-delay: 0.2s; }
+        .wave:nth-child(4) { height: 12px; animation-delay: 0.3s; }
+        .wave:nth-child(5) { height: 8px; animation-delay: 0.4s; }
+
+        @keyframes soundWave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .mastery-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mastery-subtitle {
+            color: #cccccc;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">TooLoo.ai</div>
+            <div class="status-indicator">
+                <div class="pulse"></div>
+                <span class="live-indicator">LIVE GENIUS MODE</span>
+                <span id="budgetPill" class="budget-pill">Budget: loading…</span>
+            </div>
+        </header>
+
+        <main class="main-dashboard scrollbar-custom">
+            <div class="mastery-overview">
+                <h1 class="mastery-title">Doctoral Mastery Dashboard</h1>
+                <p class="mastery-subtitle">Real-time intelligence evolution across all domains of human knowledge</p>
+                
+                <div class="domains-grid" id="domainsGrid">
+                    <!-- Domains will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="real-time-feed">
+                <h3 style="margin-bottom: 15px; color: #00d4ff;">🧠 Live Learning Feed</h3>
+                <div id="learningFeed" class="scrollbar-custom">
+                    <!-- Feed items will be populated by JavaScript -->
+                </div>
+            </div>
+        </main>
+
+        <aside class="chat-panel">
+            <div class="chat-header">
+                <div>
+                    <div class="chat-title">Chat with TooLoo</div>
+                    <div class="chat-subtitle">Your evolving genius AI companion</div>
+                </div>
+                <div id="providerChip" class="budget-pill" style="margin-left: 10px;">Provider: —</div>
+            </div>
+            
+                <div id="chatMessages" class="scrollbar-custom">
+                    <div class="message tooloo">
+                        Hey! I'm TooLoo, your evolving genius AI companion. I'm currently mastering 10 major domains through automated learning loops. 
+
+                        🧠 **Computer Science**: 85% mastery (doctoral level)
+                        📐 **Mathematics**: 56% mastery (advancing rapidly)
+                        ⚛️ **Physics**: 48% mastery (quantum mechanics focus)
+                        
+                        Ask me anything about technology, science, philosophy, or any other field. I love making complex topics accessible and finding unexpected connections between ideas! 🚀
+                    </div>
+                </div>
+            
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Ask TooLoo anything..."
+                    autocomplete="off"
+                >
+            </div>
+        </aside>
+    </div>
+
+    <div class="sound-visualizer" id="soundVisualizer">
+        <div class="sound-waves">
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+            <div class="wave"></div>
+        </div>
+    </div>
+
+    <script>
+        class TooLooDashboard {
+            constructor() {
+                this.domains = {};
+                this.isTyping = false;
+                this.soundEnabled = true;
+                this.metrics = null;
+                this.lastProvider = null;
+                this.lastConfidence = null;
+                this.lastCached = false;
+
+                this.initializeUI();
+                this.fetchInitialData();
+                this.startRealTimeUpdates();
+                this.initializeChat();
+                this.initializeSoundVisualizer();
+            }
+
+            initializeUI() {
+                this.renderDomains();
+                this.startLearningFeed();
+            }
+
+            async fetchInitialData() {
+                try {
+                    const [masteryRes, learningRes] = await Promise.all([
+                        fetch('/api/mastery'),
+                        fetch('/api/learning')
+                    ]);
+                    const masteryData = await masteryRes.json();
+                    const learningData = await learningRes.json();
+                    if (masteryData && masteryData.domains) {
+                        this.domains = masteryData.domains;
+                        this.renderDomains();
+                    }
+                    if (learningData && learningData.metrics) {
+                        this.metrics = learningData.metrics;
+                        // Optionally reflect metrics subtly in UI (muted)
+                        console.log('Learning metrics loaded', this.metrics);
+                    }
+                    // Budget (lightweight, one-time)
+                    this.fetchBudget();
+                } catch (e) {
+                    console.log('Using default UI data (API not available yet)');
+                }
+            }
+
+            async fetchBudget() {
+                try {
+                    const res = await fetch('/api/budget');
+                    const data = await res.json();
+                    const pill = document.getElementById('budgetPill');
+                    if (data && data.ok && data.budget) {
+                        const { used, limit, percent, warning, blocked } = data.budget;
+                        const pct = Math.min(100, Math.round(percent * 100));
+                        pill.textContent = `$${used} of $${limit} (${pct}%)`;
+                        pill.style.borderColor = blocked ? 'rgba(255,0,0,0.6)' : warning ? 'rgba(255,165,0,0.6)' : 'rgba(0,255,136,0.5)';
+                        pill.style.color = blocked ? '#ff6b6b' : warning ? '#ffd27a' : '#9effc2';
+                    } else {
+                        pill.textContent = 'Budget: N/A';
+                    }
+                } catch {
+                    const pill = document.getElementById('budgetPill');
+                    pill.textContent = 'Budget: N/A';
+                }
+            }
+
+            renderDomains() {
+                const grid = document.getElementById('domainsGrid');
+                grid.innerHTML = '';
+
+                Object.entries(this.domains).forEach(([key, domain]) => {
+                    const card = document.createElement('div');
+                    card.className = 'domain-card';
+                    card.innerHTML = `
+                        <div class="domain-header">
+                            <div class="domain-name">${domain.emoji} ${domain.name}</div>
+                            <div class="domain-level">${domain.level}</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${domain.mastery}%"></div>
+                        </div>
+                        <div class="domain-stats">
+                            <span>${domain.mastery}% mastery</span>
+                            <span class="velocity-indicator">×${domain.velocity} velocity</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            startRealTimeUpdates() {
+                // Muted - no auto updates to reduce noise
+                // Users can manually refresh if needed
+                console.log('Real-time updates muted for peaceful experience');
+            }
+
+            updateDomainProgress() {
+                Object.keys(this.domains).forEach(key => {
+                    const domain = this.domains[key];
+                    
+                    // Simulate real learning progress
+                    const progressGain = (Math.random() * domain.velocity * 0.5);
+                    domain.mastery = Math.min(100, domain.mastery + progressGain);
+                    
+                    // Level advancement
+                    if (domain.mastery >= 60 && domain.level === 'undergraduate') {
+                        domain.level = 'graduate';
+                        this.addLearningFeedItem(`🎓 ${domain.name} advanced to graduate level!`, 'achievement');
+                    } else if (domain.mastery >= 80 && domain.level === 'graduate') {
+                        domain.level = 'doctoral';
+                        this.addLearningFeedItem(`👨‍🎓 ${domain.name} reached doctoral level!`, 'achievement');
+                    } else if (domain.mastery >= 95 && domain.level === 'doctoral') {
+                        domain.level = 'expert';
+                        this.addLearningFeedItem(`🌟 ${domain.name} achieved expert mastery!`, 'achievement');
+                    }
+                    
+                    // Velocity adjustments
+                    domain.velocity = Math.min(3.0, domain.velocity + (Math.random() * 0.05));
+                });
+            }
+
+            async startLearningFeed() {
+                // Muted - minimal updates; try fetching feed from server if available
+                try {
+                    const res = await fetch('/api/dashboard', { method: 'POST' });
+                    const data = await res.json();
+                    const feedItems = data && data.feed ? data.feed.slice(0, 5) : [];
+                    if (feedItems.length) {
+                        feedItems.forEach(item => this.addLearningFeedItem(item.content || item, item.type || 'insight'));
+                        return;
+                    }
+                } catch {}
+
+                // Fallback static items
+                this.addLearningFeedItem('Processing "Advanced Computer Science" textbook', 'book');
+                this.addLearningFeedItem('Connected quantum mechanics with AI principles', 'connection');
+                this.addLearningFeedItem('Generated novel optimization algorithm', 'insight');
+                this.addLearningFeedItem('Synthesizing cross-domain knowledge', 'synthesis');
+            }
+
+            addLearningFeedItem(content, type) {
+                const feed = document.getElementById('learningFeed');
+                const item = document.createElement('div');
+                item.className = 'feed-item';
+                
+                const typeIcons = {
+                    book: '📚',
+                    paper: '📄',
+                    connection: '🔗',
+                    insight: '💡',
+                    synthesis: '🧠',
+                    achievement: '🎯'
+                };
+                
+                item.innerHTML = `
+                    <div class="feed-icon">${typeIcons[type] || '📝'}</div>
+                    <div class="feed-content">${content}</div>
+                    <div class="feed-time">${new Date().toLocaleTimeString()}</div>
+                `;
+                
+                feed.insertBefore(item, feed.firstChild);
+                
+                // Keep only last 5 items for cleaner UI
+                while (feed.children.length > 5) {
+                    feed.removeChild(feed.lastChild);
+                }
+
+                // Muted - no sound effects
+            }
+
+            initializeChat() {
+                const chatInput = document.getElementById('chatInput');
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !this.isTyping) {
+                        this.sendMessage(chatInput.value);
+                        chatInput.value = '';
+                    }
+                });
+            }
+
+            async sendMessage(message) {
+                if (!message.trim()) return;
+
+                this.addChatMessage(message, 'user');
+                this.showTypingIndicator();
+
+                try {
+                    // Real API call to TooLoo through Smart Server
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            prompt: message,
+                            taskType: 'chat',
+                            context: {
+                                dashboard: true,
+                                domains: this.domains,
+                                conversational: true
+                            }
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    this.hideTypingIndicator();
+                    
+                    if (data.ok && data.text) {
+                        this.addChatMessage(data.text, 'tooloo');
+                        // Update provider chip and budget pill
+                        this.lastProvider = data.provider || 'unknown';
+                        this.lastConfidence = typeof data.confidence === 'number' ? Math.round(data.confidence * 100) : null;
+                        this.lastCached = !!data.cached;
+                        this.updateProviderChip();
+                        this.fetchBudget();
+                        // Muted - no automatic speech
+                    } else {
+                        const err = data && data.error ? String(data.error) : null;
+                        if (err && err.toLowerCase().includes('budget')) {
+                            this.addChatMessage('Budget reached for today. Please try later or adjust the limit.', 'tooloo');
+                            this.fetchBudget();
+                        } else {
+                            this.addChatMessage("Hey! I'm TooLoo, actively evolving across 10 domains. What would you like to know about my learning journey?", 'tooloo');
+                        }
+                    }
+                } catch (error) {
+                    this.hideTypingIndicator();
+                    this.addChatMessage("Hi! I'm TooLoo, your evolving AI. I'm currently mastering computer science, mathematics, physics, and 7 other domains. What interests you?", 'tooloo');
+                }
+            }
+
+            updateProviderChip() {
+                const chip = document.getElementById('providerChip');
+                const parts = [];
+                if (this.lastProvider) parts.push(this.lastProvider);
+                if (this.lastConfidence != null) parts.push(`${this.lastConfidence}%`);
+                if (this.lastCached) parts.push('cached');
+                chip.textContent = `Provider: ${parts.join(' · ') || '—'}`;
+            }
+
+            addChatMessage(content, sender) {
+                const messagesContainer = document.getElementById('chatMessages');
+                const message = document.createElement('div');
+                message.className = `message ${sender}`;
+                message.textContent = content;
+                
+                messagesContainer.appendChild(message);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            showTypingIndicator() {
+                this.isTyping = true;
+                const messagesContainer = document.getElementById('chatMessages');
+                const indicator = document.createElement('div');
+                indicator.className = 'typing-indicator';
+                indicator.id = 'typingIndicator';
+                indicator.innerHTML = `
+                    <span>🧠 TooLoo is thinking</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                
+                messagesContainer.appendChild(indicator);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                this.isTyping = false;
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+
+            initializeSoundVisualizer() {
+                const visualizer = document.getElementById('soundVisualizer');
+                // Muted by default - user can enable if desired
+                this.soundEnabled = false;
+                visualizer.style.opacity = '0.3';
+                
+                visualizer.addEventListener('click', () => {
+                    this.soundEnabled = !this.soundEnabled;
+                    visualizer.style.opacity = this.soundEnabled ? '1' : '0.3';
+                    
+                    if (this.soundEnabled) {
+                        console.log('🔊 Sound enabled');
+                    } else {
+                        console.log('🔇 Sound muted');
+                    }
+                });
+            }
+
+            playNotificationSound() {
+                // Muted - no automatic sounds
+                if (!this.soundEnabled) return;
+                
+                // Only play if explicitly enabled by user
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.05);
+                
+                    gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+                
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.05);
+                } catch (error) {
+                    // Silently fail if audio context not available
+                }
+            }            speakResponse(text) {
+                // Muted - no automatic speech
+                if (!this.soundEnabled) return;
+                
+                // Only speak if explicitly enabled by user
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 1.1;
+                    utterance.pitch = 1.1;
+                    utterance.volume = 0.5;
+                    
+                    const voices = speechSynthesis.getVoices();
+                    const preferredVoice = voices.find(voice =>
+                        voice.name.includes('Google') ||
+                        voice.name.includes('Microsoft') ||
+                        voice.name.includes('Alex')
+                    );
+                    
+                    if (preferredVoice) {
+                        utterance.voice = preferredVoice;
+                    }
+                    
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TooLooDashboard();
+        });
+    </script>
+</body>
+</html>

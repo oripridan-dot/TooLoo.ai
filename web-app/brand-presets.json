@@ -1,0 +1,97 @@
+[
+  {
+    "key": "neo-tech",
+    "name": "Neo Tech Minimal",
+    "tokens": {
+      "brand": "#7C5CFF",
+      "brandAlt": "#00E9B0",
+      "bg": "#0B0D10",
+      "surface": "#14181E",
+      "text": "#E6E9EE",
+      "muted": "#96A0AF",
+      "accent": "#FFE770",
+      "danger": "#FF5C7C"
+    },
+    "fonts": {
+      "display": "Playfair Display",
+      "body": "Inter"
+    },
+    "notes": "High-contrast minimal with subtle glow, ideal for AI products and dashboards."
+  },
+  {
+    "key": "heritage-luxe",
+    "name": "Heritage Luxe",
+    "tokens": {
+      "brand": "#A27B5C",
+      "brandAlt": "#D8B4A0",
+      "bg": "#0E0D0B",
+      "surface": "#191713",
+      "text": "#F2EDE7",
+      "muted": "#B9AFA5",
+      "accent": "#E8C872",
+      "danger": "#D16A5E"
+    },
+    "fonts": {
+      "display": "Cormorant Garamond",
+      "body": "Source Sans 3"
+    },
+    "notes": "Editorial serif elegance with warm metals and parchment neutrals."
+  },
+  {
+    "key": "solar-bright",
+    "name": "Solar Bright",
+    "tokens": {
+      "brand": "#FF6B6B",
+      "brandAlt": "#FFD93D",
+      "bg": "#0A0A0A",
+      "surface": "#141414",
+      "text": "#F5F5F5",
+      "muted": "#BDBDBD",
+      "accent": "#6BCB77",
+      "danger": "#E84545"
+    },
+    "fonts": {
+      "display": "Poppins",
+      "body": "Inter"
+    },
+    "notes": "Vibrant, optimistic palette with joyful accents for consumer products."
+  },
+  {
+    "key": "deep-sea",
+    "name": "Deep Sea Pro",
+    "tokens": {
+      "brand": "#0984E3",
+      "brandAlt": "#00CEC9",
+      "bg": "#071018",
+      "surface": "#0E1A24",
+      "text": "#E3F2FD",
+      "muted": "#9DB3C8",
+      "accent": "#64FFDA",
+      "danger": "#FF7675"
+    },
+    "fonts": {
+      "display": "Plus Jakarta Sans",
+      "body": "Inter"
+    },
+    "notes": "Trustworthy fintech/enterprise tone with cool aquatic gradients."
+  },
+  {
+    "key": "atelier",
+    "name": "Atelier Craft",
+    "tokens": {
+      "brand": "#7A5C58",
+      "brandAlt": "#C99789",
+      "bg": "#0F0E0E",
+      "surface": "#1B1A1A",
+      "text": "#EFEAE7",
+      "muted": "#B8ADA8",
+      "accent": "#A0C1B8",
+      "danger": "#C2847A"
+    },
+    "fonts": {
+      "display": "Spectral",
+      "body": "Work Sans"
+    },
+    "notes": "Artisanal vibes with editorial structure—great for brand storytelling."
+  }
+]

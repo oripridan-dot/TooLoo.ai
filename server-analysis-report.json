@@ -1,0 +1,191 @@
+{
+  "timestamp": "2025-10-10T13:33:30.460Z",
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "status": "FAILED",
+      "responseTime": 15,
+      "error": ""
+    },
+    {
+      "url": "http://localhost:3001/health",
+      "status": "FAILED",
+      "responseTime": 2,
+      "error": ""
+    },
+    {
+      "url": "http://localhost:3001/control-room",
+      "status": "FAILED",
+      "responseTime": 1,
+      "error": ""
+    },
+    {
+      "url": "http://localhost:3002",
+      "status": "FAILED",
+      "responseTime": 1,
+      "error": ""
+    },
+    {
+      "url": "http://localhost:8080",
+      "status": "FAILED",
+      "responseTime": 1,
+      "error": ""
+    },
+    {
+      "url": "http://localhost:8080/control-room",
+      "status": "FAILED",
+      "responseTime": 1,
+      "error": ""
+    }
+  ],
+  "processes": [
+    {
+      "pid": "573",
+      "command": "sh /home/codespace/.vscode-remote/bin/03c265b1adee71ac88f833e065f7bb956b60550a/bin/code-server --log trace --force-disable-user-env --server-data-dir /home/codespace/.vscode-remote --accept-server-license-terms --host 127.0.0.1 --port 0 --connection-token-file /home/codespace/.vscode-remote/data/Machine/.connection-token-03c265b1adee71ac88f833e065f7bb956b60550a --extensions-download-dir /home/codespace/.vscode-remote/extensionsCache --start-server --enable-remote-auto-shutdown --skip-requirements-check",
+      "raw": "codespa+     573  0.0  0.0   2808  1664 ?        Ss   12:01   0:00 sh /home/codespace/.vscode-remote/bin/03c265b1adee71ac88f833e065f7bb956b60550a/bin/code-server --log trace --force-disable-user-env --server-data-dir /home/codespace/.vscode-remote --accept-server-license-terms --host 127.0.0.1 --port 0 --connection-token-file /home/codespace/.vscode-remote/data/Machine/.connection-token-03c265b1adee71ac88f833e065f7bb956b60550a --extensions-download-dir /home/codespace/.vscode-remote/extensionsCache --start-server  --enable-remote-auto-shutdown --skip-requirements-check"
+    },
+    {
+      "pid": "581",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/server-main.js --log trace --force-disable-user-env --server-data-dir /home/codespace/.vscode-remote --accept-server-license-terms --host 127.0.0.1 --port 0 --connection-token-file /home/codespace/.vscode-remote/data/Machine/.connection-token-03c265b1adee71ac88f833e065f7bb956b60550a --extensions-download-dir /home/codespace/.vscode-remote/extensionsCache --start-server --enable-remote-auto-shutdown --skip-requirements-check",
+      "raw": "codespa+     581  0.2  1.9 11880664 158600 ?     Sl   12:01   0:12 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/server-main.js --log trace --force-disable-user-env --server-data-dir /home/codespace/.vscode-remote --accept-server-license-terms --host 127.0.0.1 --port 0 --connection-token-file /home/codespace/.vscode-remote/data/Machine/.connection-token-03c265b1adee71ac88f833e065f7bb956b60550a --extensions-download-dir /home/codespace/.vscode-remote/extensionsCache --start-server  --enable-remote-auto-shutdown --skip-requirements-check"
+    },
+    {
+      "pid": "603",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --dns-result-order=ipv4first /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=extensionHost --transformURIs --useHostProxy=false",
+      "raw": "codespa+     603  0.6 10.4 55084988 849164 ?     Sl   12:01   0:38 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --dns-result-order=ipv4first /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=extensionHost --transformURIs --useHostProxy=false"
+    },
+    {
+      "pid": "633",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=fileWatcher",
+      "raw": "codespa+     633  0.0  0.8 1394548 70924 ?       Sl   12:01   0:02 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=fileWatcher"
+    },
+    {
+      "pid": "1081",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=ptyHost --logsPath /home/codespace/.vscode-remote/data/logs/20251010T120100",
+      "raw": "codespa+    1081  0.1  1.0 1186252 81684 ?       Rl   12:01   0:07 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=ptyHost --logsPath /home/codespace/.vscode-remote/data/logs/20251010T120100"
+    },
+    {
+      "pid": "1092",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/vscode-typescript1000/714e8519f7e6ceb1ff04/tscancellation-1f953ec0c712fa7fda0b.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc",
+      "raw": "codespa+    1092  0.0  2.2 1116092 179652 ?      Sl   12:01   0:03 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/vscode-typescript1000/714e8519f7e6ceb1ff04/tscancellation-1f953ec0c712fa7fda0b.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc"
+    },
+    {
+      "pid": "1093",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName /tmp/vscode-typescript1000/714e8519f7e6ceb1ff04/tscancellation-f4ddc8029ecd6d7d3093.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc",
+      "raw": "codespa+    1093  0.2  4.4 1289456 364652 ?      Sl   12:01   0:16 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName /tmp/vscode-typescript1000/714e8519f7e6ceb1ff04/tscancellation-f4ddc8029ecd6d7d3093.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc"
+    },
+    {
+      "pid": "1107",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation /home/codespace/.cache/typescript/5.9 --enableTelemetry --typesMapLocation /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation",
+      "raw": "codespa+    1107  0.0  1.2 1053492 100796 ?      Sl   12:01   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation /home/codespace/.cache/typescript/5.9 --enableTelemetry --typesMapLocation /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation"
+    },
+    {
+      "pid": "1985",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /home/codespace/.vscode-remote/extensions/dbaeumer.vscode-eslint-3.0.16/server/out/eslintServer.js --node-ipc --clientProcessId=603",
+      "raw": "codespa+    1985  0.0  0.8 1052384 66812 ?       Sl   12:01   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /home/codespace/.vscode-remote/extensions/dbaeumer.vscode-eslint-3.0.16/server/out/eslintServer.js --node-ipc --clientProcessId=603"
+    },
+    {
+      "pid": "1993",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/markdown-language-features/dist/serverWorkerMain --node-ipc --clientProcessId=603",
+      "raw": "codespa+    1993  0.0  0.7 1019128 62776 ?       Sl   12:01   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/markdown-language-features/dist/serverWorkerMain --node-ipc --clientProcessId=603"
+    },
+    {
+      "pid": "2004",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/html-language-features/server/dist/node/htmlServerMain --node-ipc --clientProcessId=603",
+      "raw": "codespa+    2004  0.0  2.2 1113020 181392 ?      Sl   12:01   0:03 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/html-language-features/server/dist/node/htmlServerMain --node-ipc --clientProcessId=603"
+    },
+    {
+      "pid": "2475",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/json-language-features/server/dist/node/jsonServerMain --node-ipc --clientProcessId=603",
+      "raw": "codespa+    2475  0.0  0.9 1060776 73512 ?       Sl   12:01   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/json-language-features/server/dist/node/jsonServerMain --node-ipc --clientProcessId=603"
+    },
+    {
+      "pid": "4758",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --dns-result-order=ipv4first /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=extensionHost --transformURIs --useHostProxy=false",
+      "raw": "codespa+    4758  5.2 18.8 67981672 1532556 ?    Sl   12:05   4:38 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --dns-result-order=ipv4first /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=extensionHost --transformURIs --useHostProxy=false"
+    },
+    {
+      "pid": "4769",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=fileWatcher",
+      "raw": "codespa+    4769  0.0  0.8 1460112 71524 ?       Sl   12:05   0:02 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/out/bootstrap-fork --type=fileWatcher"
+    },
+    {
+      "pid": "4822",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/vscode-typescript1000/7b4211c877b49d35170c/tscancellation-351ab76031aa30933b36.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc",
+      "raw": "codespa+    4822  0.1  2.8 1172948 228140 ?      Sl   12:05   0:05 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/vscode-typescript1000/7b4211c877b49d35170c/tscancellation-351ab76031aa30933b36.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc"
+    },
+    {
+      "pid": "4823",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName /tmp/vscode-typescript1000/7b4211c877b49d35170c/tscancellation-67301cc28889a629348c.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc",
+      "raw": "codespa+    4823  0.9  5.7 1387684 469728 ?      Sl   12:05   0:49 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node --max-old-space-size=3072 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/tsserver.js --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName /tmp/vscode-typescript1000/7b4211c877b49d35170c/tscancellation-67301cc28889a629348c.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/codespace/.vscode-remote/extensions/github.copilot-chat-0.32.0 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc"
+    },
+    {
+      "pid": "4837",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation /home/codespace/.cache/typescript/5.9 --enableTelemetry --typesMapLocation /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation",
+      "raw": "codespa+    4837  0.0  1.2 1054260 102104 ?      Sl   12:05   0:01 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation /home/codespace/.cache/typescript/5.9 --enableTelemetry --typesMapLocation /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation"
+    },
+    {
+      "pid": "5044",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /home/codespace/.vscode-remote/extensions/dbaeumer.vscode-eslint-3.0.16/server/out/eslintServer.js --node-ipc --clientProcessId=4758",
+      "raw": "codespa+    5044  0.0  0.8 1054108 69900 ?       Sl   12:05   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /home/codespace/.vscode-remote/extensions/dbaeumer.vscode-eslint-3.0.16/server/out/eslintServer.js --node-ipc --clientProcessId=4758"
+    },
+    {
+      "pid": "5051",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/markdown-language-features/dist/serverWorkerMain --node-ipc --clientProcessId=4758",
+      "raw": "codespa+    5051  0.0  0.8 1025616 69368 ?       Sl   12:05   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/markdown-language-features/dist/serverWorkerMain --node-ipc --clientProcessId=4758"
+    },
+    {
+      "pid": "5071",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/html-language-features/server/dist/node/htmlServerMain --node-ipc --clientProcessId=4758",
+      "raw": "codespa+    5071  0.1  2.4 1121452 197716 ?      Sl   12:05   0:09 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/html-language-features/server/dist/node/htmlServerMain --node-ipc --clientProcessId=4758"
+    },
+    {
+      "pid": "5269",
+      "command": "/vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/json-language-features/server/dist/node/jsonServerMain --node-ipc --clientProcessId=4758",
+      "raw": "codespa+    5269  0.0  0.9 1059988 75312 ?       Sl   12:05   0:00 /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/node /vscode/bin/linux-x64/03c265b1adee71ac88f833e065f7bb956b60550a/extensions/json-language-features/server/dist/node/jsonServerMain --node-ipc --clientProcessId=4758"
+    },
+    {
+      "pid": "47650",
+      "command": "node deep-server-analysis.js",
+      "raw": "codespa+   47650 80.0  0.6 11501448 54400 pts/7  Sl+  13:33   0:00 node deep-server-analysis.js"
+    }
+  ],
+  "ports": [
+    {
+      "port": 3001,
+      "status": "FREE",
+      "details": "No process listening"
+    },
+    {
+      "port": 3002,
+      "status": "FREE",
+      "details": "No process listening"
+    },
+    {
+      "port": 8080,
+      "status": "FREE",
+      "details": "No process listening"
+    },
+    {
+      "port": 5173,
+      "status": "FREE",
+      "details": "No process listening"
+    }
+  ],
+  "networkTest": {},
+  "recommendations": [
+    "NO WORKING SERVERS DETECTED - Critical issue",
+    "Start with a simple HTTP server on a standard port",
+    "NO PORTS BOUND - No servers listening",
+    "Check server startup processes and error logs",
+    "In Codespaces: Use \"Forward a Port\" in PORTS panel",
+    "In Codespaces: Ensure server binds to 0.0.0.0, not 127.0.0.1"
+  ],
+  "summary": {
+    "totalServers": 6,
+    "workingServers": 0,
+    "totalProcesses": 22,
+    "boundPorts": 0,
+    "criticalIssues": 1
+  }
+}
