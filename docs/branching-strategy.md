@@ -1,27 +1,69 @@
-# Branching Strategy and Performance Validation
+# TooLoo.ai Branching Strategy
 
-To keep development streamlined, each major capability should live in its own feature branch. This isolates experiments, simplifies pull requests, and makes it easier to measure the impact of each change.
+## 🎯 Purpose
 
-## Workflow Checklist
+Standardise how every capability graduates into a sellable product while keeping the network deployable, auditable, and performance-safe.
 
-1. **Create a feature branch**: use a descriptive name such as `feature/api-rate-limits` or `fix/ui-latency`.
-   - Execute `bash scripts/create-feature-branch.sh feature/api-rate-limits` from the repository root to branch from `work` automatically.
-   - Supply a different base when needed: `bash scripts/create-feature-branch.sh fix/ui-latency main`.
-   - Alternatively, run `npm run create:branch -- feature/api-rate-limits` to call the helper through npm (append the base as an extra argument if you do not want to branch from `work`).
-2. **Implement the change**: commit early and often while keeping work scoped to the branch.
-3. **Run validation**:
-   - `npm run lint` to maintain consistent style.
-   - `npm run validate` to execute the automated test suite and API performance probe. The helper automatically launches `simple-api-server.js` (or the next configured fallback) so you only need the latest code and dependencies installed.
-   - Additional package-specific checks if your work affects tooling under `packages/`.
-4. **Review analytics**: if your change has measurable performance impact, record before-and-after metrics in the pull request description.
-5. **Open a pull request**: reference the relevant task and clearly summarize the scope.
+## 🌿 Branch Portfolio
 
-## Performance Validation Tips
+| Branch | Purpose | Base | Naming | Merge Target |
+| --- | --- | --- | --- | --- |
+| `main` | Production truth; always releasable | — | n/a | — |
+| `release/v{major}.{minor}` | Bundle of productised capabilities headed to market | `main` | `release/v1.7` | `main` (tagged) |
+| `feature/{product}-{capability}` | Revenue-grade feature work (UI, orchestrator, services, docs) | `main` | `feature/provider-burst-coach` | `main` → release |
+| `experiment/{hypothesis}` | Short-lived spikes to validate feasibility/perf | `main` or feature branch | `experiment/agentic-batching` | Promote into feature/* or delete |
+| `hotfix/{ticket}` | Urgent production fix while release in flight | `main` | `hotfix/HF-142-provider-null` | `main` + cherry-pick to release |
+| `docs/{topic}` | Documentation-only updates | `main` | `docs/branching-refresh` | `main` |
 
-- For frontend updates, rely on Vitest and Testing Library coverage to ensure component behavior stays responsive.
-- Use `npm run perf` (or `npm run validate`) to confirm the `/api/v1/health` endpoint maintains a p95 latency under 250ms by default. Override `PERF_P95_THRESHOLD_MS` if you need a stricter budget.
-- When the probe fails, review the printed log excerpt for the affected entry point, fix the regression, and rerun the command until it passes.
-- Backend API updates should be accompanied by integration checks or local profiling runs using `simple-api-server.js`.
-- When adding heavy computations, prefer asynchronous patterns to avoid blocking event loops.
+## 🔁 Product Feature Lifecycle
 
-Following this process keeps the main branch stable while allowing rapid, parallel development across the platform.
+1. **Discover** – Capture the customer SKU and capability scope in Linear/Jira.
+2. **Branch** – Create `feature/{product}-{capability}` from `main` using `scripts/create-feature-branch.sh`.
+3. **Build** – Keep commits tight; include orchestrator/web/per-service changes plus benchmarks.
+4. **Harden** – Run reliability + performance probes; attach artefacts to the PR.
+5. **Promote** – Merge into `main`, then include in the next `release/v{major}.{minor}` bundle.
+6. **Package** – Tag the release, update pricing collateral, and backfill docs.
+
+## 🧪 Experiment Flow
+
+Experiments stay isolated in `experiment/{hypothesis}`. Trial integrations that prove out become feature branches via `git checkout -b feature/... origin/main` once scope is clear. Close stale experiments weekly to prevent drift.
+
+## ⚙️ CLI Support
+
+- `npm run branch:status` – Prints current branch, working tree state, divergence from `origin/main`.
+- `scripts/create-feature-branch.sh` – Generates compliant feature or experiment branch names (see below).
+- `npm run clean` – Stops background services prior to switching branches.
+
+### `create-feature-branch.sh` usage
+
+```bash
+./scripts/create-feature-branch.sh --product "control-room" --capability "burst-coach"
+./scripts/create-feature-branch.sh --type experiment --hypothesis "routing-delta"
+```
+
+## 🔁 Standard Workflow
+
+1. Sync: `git checkout main && git pull --ff-only`
+2. Branch via script (feature or experiment)
+3. Develop + commit (reference ticket IDs; keep commits under 200 LOC where possible)
+4. Self-review with `npm run branch:status` and attach benchmark artefacts
+5. Open PR targeting `main` or active release branch including:
+
+      - Capability SKU + customer outcome
+      - Tests performed (`npm run validate`, load/perf scripts, UI smoke)
+      - Rollback plan or feature flag toggle
+6. After merge, delete the feature branch locally/remotely
+
+## ✅ Readiness Checklist (add to PR)
+
+- [ ] `npm run branch:status` shows clean tree
+- [ ] Functional + performance probes listed with outputs
+- [ ] Documentation and pricing notes updated
+- [ ] `npm run clean` executed (no stray servers)
+
+## 🔒 Governance Notes
+
+- Rebase onto `main` before requesting review to keep history linear
+- Never force-push to shared branches (`main`, `release/*`)
+- Tag from `main` immediately after release merge: `git tag vX.Y.Z && git push --tags`
+- Archive experiments after 14 days unless promoted to feature
