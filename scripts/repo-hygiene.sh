@@ -7,16 +7,34 @@ usage() {
 Usage: ./scripts/repo-hygiene.sh [options]
 
 Options:
-  -n, --dry-run   Show what would be removed without deleting anything
-  -y, --yes       Skip the confirmation prompt (non-interactive)
-  -v, --verbose   Report patterns that produced no matches
-  -h, --help      Display this help message
+  -n, --dry-run         Show what would be removed without deleting anything
+  -y, --yes             Skip the confirmation prompt (non-interactive)
+  -v, --verbose         Report patterns that produced no matches
+      --include <glob>  Add an additional glob to the removal list (may repeat)
+      --patterns <file> Load extra globs from a file (defaults to scripts/repo-hygiene.extra when present)
+      --list            Print the effective glob list and exit
+  -h, --help            Display this help message
 EOF
 }
 
 DRY_RUN=false
 FORCE=false
 VERBOSE=false
+LIST_ONLY=false
+EXTRA_FILE=""
+INCLUDES=()
+REMOVED_COUNT=0
+shopt -s nullglob 2>/dev/null || true
+shopt -s globstar 2>/dev/null || true
+
+DEFAULT_EXTRA_FILE="scripts/repo-hygiene.extra"
+if [[ -z "$EXTRA_FILE" ]]; then
+  if [[ -n "${REPO_HYGIENE_EXTRA:-}" ]]; then
+    EXTRA_FILE="$REPO_HYGIENE_EXTRA"
+  elif [[ -f "$DEFAULT_EXTRA_FILE" ]]; then
+    EXTRA_FILE="$DEFAULT_EXTRA_FILE"
+  fi
+fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -30,6 +48,26 @@ while [[ $# -gt 0 ]]; do
       ;;
     -v|--verbose)
       VERBOSE=true
+      shift
+      ;;
+    --include)
+      if [[ $# -lt 2 ]]; then
+        echo "--include requires a glob argument" >&2
+        exit 1
+      fi
+      INCLUDES+=("$2")
+      shift 2
+      ;;
+    --patterns)
+      if [[ $# -lt 2 ]]; then
+        echo "--patterns requires a file path" >&2
+        exit 1
+      fi
+      EXTRA_FILE="$2"
+      shift 2
+      ;;
+    --list)
+      LIST_ONLY=true
       shift
       ;;
     -h|--help)
@@ -59,7 +97,7 @@ if command -v git >/dev/null 2>&1; then
   cd "$repo_root"
 fi
 
-if ! $FORCE && ! $DRY_RUN; then
+if ! $LIST_ONLY && ! $FORCE && ! $DRY_RUN; then
   read -r -p "This will remove generated caches and logs. Continue? [y/N] " reply || reply="n"
   case "$reply" in
     [yY]|[yY][eE][sS])
@@ -125,8 +163,6 @@ clean_data_tree() {
   fi
 }
 
-REMOVED_COUNT=0
-
 TARGET_PATTERNS=(
   'output'
   'auto-screenshots'
@@ -150,6 +186,37 @@ TARGET_PATTERNS=(
   'smart-server.log'
   'training-server.log'
 )
+
+load_extra_patterns() {
+  local file="$1"
+  [[ -z "$file" ]] && return
+  if [[ ! -f "$file" ]]; then
+    if $VERBOSE; then
+      printf 'Extra patterns file not found: %s\n' "$file" >&2
+    fi
+    return
+  fi
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    line="${line//$'\r'/}"
+    line=$(printf '%s
+' "$line" | sed -e 's/[[:space:]]*$//' -e 's/^[[:space:]]*//')
+    if [[ -n "$line" ]]; then
+      TARGET_PATTERNS+=("$line")
+    fi
+  done < "$file"
+}
+
+load_extra_patterns "$EXTRA_FILE"
+
+if ((${#INCLUDES[@]})); then
+  TARGET_PATTERNS+=("${INCLUDES[@]}")
+fi
+
+if $LIST_ONLY; then
+  printf '%s\n' "${TARGET_PATTERNS[@]}"
+  exit 0
+fi
 
 clean_data_tree
 

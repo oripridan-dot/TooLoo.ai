@@ -1,0 +1,16 @@
+# Additional generated artifacts beyond the core defaults
+# Keep patterns lightweight and aligned with .gitignore
+dist
+build
+.next
+.nuxt
+coverage
+.nyc_output
+.cache
+.parcel-cache
+.local
+tmp
+temp
+ai-chat-timeline-*.zip
+ChatTimeline-*.zip
+product-genesis-knowledge/coaching-packet-*.pdf
