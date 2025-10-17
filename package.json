@@ -20,7 +20,8 @@
     "start:web": "npm --prefix web-app run dev",
     "start:all": "concurrently -n api,web -c green,cyan \"PORT=3005 node simple-api-server.js\" \"npm --prefix web-app run dev\"",
     "start:prod": "npm --prefix web-app run build && PORT=3005 node simple-api-server.js",
-    "health": "curl -s http://localhost:3005/api/v1/health"
+    "health": "curl -s http://localhost:3005/api/v1/health",
+    "create:branch": "bash scripts/create-feature-branch.sh"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
