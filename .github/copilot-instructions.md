@@ -27,7 +27,8 @@ Port 3123  → servers/orchestrator.js (/api/v1/system/*)
 2. Control the system directly via the web proxy: `curl -X POST http://127.0.0.1:3000/system/start`
 3. Shutdown helpers:
    - `npm run stop:all` → targeted `pkill`
-   - `npm run clean` → kill any stray `node servers/*`
+   - `npm run clean` → kill any stray `node servers/*` **and** run the repo hygiene sweep
+   - `npm run hygiene -- --dry-run` → preview deletions without touching files
 4. Smoke checks (via proxy):
    - Training: `curl http://127.0.0.1:3000/api/v1/training/overview`
    - Provider burst: `curl -X POST http://127.0.0.1:3000/api/v1/providers/burst -H 'Content-Type: application/json' -d '{"prompt":"status"}'`
