@@ -40,6 +40,11 @@ app.use(express.json({ limit: '10mb' }));
 const CAPABILITIES_URL = process.env.CAPABILITIES_URL || 'http://127.0.0.1:3009';
 const PRODUCT_DEV_URL = process.env.PRODUCT_DEV_URL || 'http://127.0.0.1:3006';
 const TRAINING_URL = process.env.TRAINING_URL || 'http://127.0.0.1:3001';
+const SEGMENTATION_URL = process.env.SEGMENTATION_URL || 'http://127.0.0.1:3007';
+
+// Phase 2: Cohort trait cache (5-min TTL)
+const cohortTraitsCache = {};
+const COHORT_CACHE_TTL = 300000; // 5 minutes
 
 // In-memory state
 const state = {
@@ -98,6 +103,97 @@ async function persistState() {
   }
 }
 
+// ==================== PHASE 2: COHORT CONTEXT ====================
+
+/**
+ * Fetch cohort traits from segmentation-server
+ * Implements 5-minute caching to reduce load
+ */
+async function fetchCohortTraits(cohortId) {
+  // Check cache
+  if (cohortTraitsCache[cohortId]) {
+    const cached = cohortTraitsCache[cohortId];
+    if (Date.now() - cached.fetchedAt < COHORT_CACHE_TTL) {
+      return cached.data;
+    }
+    delete cohortTraitsCache[cohortId];
+  }
+
+  try {
+    const response = await fetch(
+      `${SEGMENTATION_URL}/api/v1/segmentation/cohorts/${cohortId}`,
+      { timeout: 5000 }
+    );
+    
+    if (!response.ok) {
+      console.warn(`[bridge] Cohort fetch failed: ${response.status} for ${cohortId}`);
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.ok && data.cohort) {
+      // Cache with TTL
+      cohortTraitsCache[cohortId] = {
+        data: data.cohort,
+        fetchedAt: Date.now()
+      };
+      
+      // Set automatic cleanup
+      setTimeout(() => {
+        delete cohortTraitsCache[cohortId];
+      }, COHORT_CACHE_TTL);
+
+      return data.cohort;
+    }
+  } catch (error) {
+    console.warn(`[bridge] Failed to fetch cohort traits for ${cohortId}:`, error.message);
+  }
+
+  return null;
+}
+
+/**
+ * Pre-warm cohort cache on startup
+ * Fetches all available cohorts to reduce latency on first request
+ */
+async function warmCohortCache() {
+  try {
+    const response = await fetch(`${SEGMENTATION_URL}/api/v1/segmentation/cohorts`, {
+      timeout: 5000
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok && data.cohorts) {
+        data.cohorts.forEach((cohort) => {
+          cohortTraitsCache[cohort.id] = {
+            data: cohort,
+            fetchedAt: Date.now()
+          };
+        });
+        console.log(`✅ Warmed cohort cache: ${data.cohorts.length} cohorts preloaded`);
+      }
+    }
+  } catch (error) {
+    console.warn('[bridge] Cohort cache warmup failed:', error.message);
+  }
+}
+
+/**
+ * Get user's cohort from segmentation-server (future enhancement)
+ * Currently for future-proofing; will be used when user profiles available
+ */
+async function getUserCohortId(userId) {
+  try {
+    // Future: Implement user → cohort mapping
+    // For now, returns null (use explicit cohortId parameter)
+    return null;
+  } catch (error) {
+    console.error(`[bridge] Failed to get cohort for user ${userId}:`, error.message);
+    return null;
+  }
+}
+
 // ==================== SERVICE DISCOVERY & HEALTH ====================
 
 async function fetchService(url, endpoint, options = {}) {
@@ -119,7 +215,12 @@ app.get('/health', (req, res) => {
     ok: true,
     server: 'capability-workflow-bridge',
     port: PORT,
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
+    phase2: {
+      cohortContextEnabled: true,
+      cohortsCached: Object.keys(cohortTraitsCache).length,
+      segmentationUrl: SEGMENTATION_URL
+    }
   });
 });
 
@@ -453,11 +554,13 @@ app.get('/api/v1/bridge/loop-status', async (req, res) => {
 
 const server = app.listen(PORT, async () => {
   await initializeStorage();
+  await warmCohortCache(); // Phase 2: Warm cohort cache
   console.log(`🌉 Capability-Workflow Bridge listening on port ${PORT}`);
   console.log(`📡 Connected services:`);
   console.log(`   • Capabilities: ${CAPABILITIES_URL}`);
   console.log(`   • Product Development: ${PRODUCT_DEV_URL}`);
   console.log(`   • Training: ${TRAINING_URL}`);
+  console.log(`   • Segmentation: ${SEGMENTATION_URL} (Phase 2: Cohort context)`);
 });
 
 process.on('SIGTERM', async () => {
