@@ -579,6 +579,248 @@ app.get('/api/v1/bridge/gaps-per-cohort/:cohortId', async (req, res) => {
   }
 });
 
+// ==================== COHORT-SPECIFIC WORKFLOW SUGGESTIONS ====================
+
+/**
+ * Score a workflow against cohort traits & gaps
+ * Scoring formula: (40% domain affinity + 30% pace match + 20% engagement fit + 10% retention strength)
+ */
+function scoreWorkflowForCohort(workflow, cohort, gaps) {
+  const traits = cohort.avgTraits || {};
+  
+  // 1. Domain Affinity Match (40%)
+  // Workflows with domain-specific components score higher for specialists
+  const domainComponents = (workflow.components || []).filter(c => 
+    c.toLowerCase().includes('domain') || 
+    c.toLowerCase().includes('pattern') ||
+    c.toLowerCase().includes('specialized')
+  );
+  const domainScore = Math.min(1.0, (domainComponents.length / Math.max(workflow.components?.length || 1, 1)) * 1.2);
+  const domainWeight = traits.domainAffinity || 0.5;
+  const domainAdjusted = domainScore * 0.4 * domainWeight;
+
+  // 2. Pace Match (30%)
+  // Fast Learners prefer shorter, high-difficulty workflows
+  // Methodical learners prefer longer, deeper dives
+  const estimatedDuration = workflow.estimatedDuration || 600;
+  const learningVelocity = traits.learningVelocity || 0.5;
+  
+  let paceScore = 0.5; // Baseline
+  if (learningVelocity > 0.7 && estimatedDuration <= 300) {
+    paceScore = 0.9; // Fast learner + short workshop = good fit
+  } else if (learningVelocity < 0.4 && estimatedDuration >= 600) {
+    paceScore = 0.85; // Slow learner + deep dive = good fit
+  } else if (Math.abs(learningVelocity - 0.5) < 0.2) {
+    paceScore = 0.8; // Moderate learner + moderate duration = good fit
+  }
+  const paceAdjusted = paceScore * 0.3;
+
+  // 3. Engagement Fit (20%)
+  // Workflows with hands-on activities score higher for high-interaction cohorts
+  const hasInteractiveLabs = workflow.phases?.some(p => 
+    p.type === 'hands-on' || p.type === 'lab' || (p.activities?.length || 0) > 0
+  );
+  const interactionFrequency = traits.interactionFrequency || 0.5;
+  const engagementScore = hasInteractiveLabs ? interactionFrequency : (1 - interactionFrequency) * 0.6;
+  const engagementAdjusted = engagementScore * 0.2;
+
+  // 4. Retention Strength (10%)
+  // Workflows targeting gaps with high severity get retention boost
+  const topGapSeverity = gaps && gaps.length > 0 ? gaps[0].archetypeModifiedSeverity : 0.5;
+  const retentionStrength = traits.retentionStrength || 0.5;
+  const retentionBoost = Math.min(0.5, (topGapSeverity / 2.5) * retentionStrength);
+  const retentionAdjusted = retentionBoost * 0.1;
+
+  // 5. Total Score (0-1.0)
+  const totalScore = domainAdjusted + paceAdjusted + engagementAdjusted + retentionAdjusted;
+
+  return {
+    score: parseFloat(Math.min(1.0, totalScore).toFixed(3)),
+    breakdown: {
+      domain: parseFloat(domainAdjusted.toFixed(3)),
+      pace: parseFloat(paceAdjusted.toFixed(3)),
+      engagement: parseFloat(engagementAdjusted.toFixed(3)),
+      retention: parseFloat(retentionAdjusted.toFixed(3))
+    }
+  };
+}
+
+/**
+ * Generate cohort-specific workflow recommendations
+ */
+async function suggestWorkflowsForCohort(cohortId) {
+  try {
+    // 1. Fetch cohort traits (with Task 2 cache)
+    const cohort = await fetchCohortTraits(cohortId);
+    if (!cohort) {
+      throw new Error(`Cohort not found: ${cohortId}`);
+    }
+
+    // 2. Get per-cohort gap analysis
+    const gapAnalysis = await analyzeGapsPerCohort(cohortId);
+    const topGaps = gapAnalysis.gaps.slice(0, 5);
+
+    // 3. Fetch all available workflows from Product Dev server
+    const workflowsResp = await fetchService(PRODUCT_DEV_URL, '/api/v1/workflows/list');
+    let workflows = workflowsResp?.workflows || [];
+
+    // 4. Score each workflow against cohort + gaps
+    const scoredWorkflows = workflows.map(workflow => {
+      const scored = scoreWorkflowForCohort(workflow, cohort, gapAnalysis.gaps);
+      return {
+        ...workflow,
+        scoredForCohort: {
+          ...scored,
+          matchedGaps: topGaps.filter(g => 
+            (workflow.components || []).some(c => 
+              c.toLowerCase().includes(g.component.split('-')[0])
+            )
+          ).map(g => ({ component: g.component, severity: g.archetypeModifiedSeverity }))
+        }
+      };
+    });
+
+    // 5. Sort by score and return top 5 with reasoning
+    const topWorkflows = scoredWorkflows
+      .sort((a, b) => (b.scoredForCohort.score || 0) - (a.scoredForCohort.score || 0))
+      .slice(0, 5)
+      .map(wf => ({
+        workflowId: wf.id,
+        name: wf.name,
+        description: wf.description,
+        estimatedDuration: wf.estimatedDuration,
+        difficulty: wf.difficulty,
+        matchScore: wf.scoredForCohort.score,
+        scoreBreakdown: wf.scoredForCohort.breakdown,
+        matchedGaps: wf.scoredForCohort.matchedGaps,
+        recommendation: generateWorkflowRecommendation(
+          cohort.archetype,
+          wf.scoredForCohort.score,
+          wf.scoredForCohort.matchedGaps
+        ),
+        recommendedOrder: scoredWorkflows.indexOf(wf) + 1
+      }));
+
+    return {
+      timestamp: new Date().toISOString(),
+      cohortId,
+      archetype: cohort.archetype,
+      cohortSize: cohort.size,
+      topGaps: topGaps.map(g => ({ 
+        component: g.component, 
+        severity: g.archetypeModifiedSeverity, 
+        urgency: g.urgency 
+      })),
+      suggestedWorkflows: topWorkflows,
+      totalWorkflowsEvaluated: workflows.length,
+      nextSteps: generateWorkflowNextSteps(cohort.archetype, topWorkflows)
+    };
+  } catch (error) {
+    console.error(`Workflow suggestions failed for ${cohortId}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Generate recommendation text for why a workflow is matched
+ */
+function generateWorkflowRecommendation(archetype, matchScore, matchedGaps) {
+  if (matchScore >= 0.85) {
+    const gapsList = matchedGaps.map(g => g.component).join(', ');
+    return `Excellent match for ${archetype} - directly addresses ${gapsList}`;
+  } else if (matchScore >= 0.70) {
+    const primary = matchedGaps[0]?.component || 'key gaps';
+    return `Good fit for ${archetype} - primarily targets ${primary}`;
+  } else if (matchScore >= 0.50) {
+    return `Moderate relevance for ${archetype} - supplements current learning focus`;
+  } else {
+    return `Consider as supplementary learning for ${archetype}`;
+  }
+}
+
+/**
+ * Generate next steps for workflow enrollment
+ */
+function generateWorkflowNextSteps(archetype, topWorkflows) {
+  const workflow = topWorkflows[0];
+  if (!workflow) {
+    return 'No workflows available at this time';
+  }
+
+  const steps = [];
+  if (archetype === 'Fast Learner') {
+    steps.push('Start with the top-ranked workflow for rapid capability growth');
+    steps.push('Complete modules 1-2 in parallel for accelerated pace');
+  } else if (archetype === 'Specialist') {
+    steps.push('Deep-dive into the top workflow to build domain expertise');
+    steps.push('Complete all modules sequentially for thorough understanding');
+  } else if (archetype === 'Power User') {
+    steps.push('Enroll in top workflow, then immediately proceed to #2 and #3');
+    steps.push('Manage multiple streams in parallel to maximize capability coverage');
+  } else if (archetype === 'Long-term Retainer') {
+    steps.push('Start with the top workflow - focus on consolidation');
+    steps.push('Plan for multi-week engagement for long-term retention');
+  } else {
+    steps.push(`Begin with top workflow for ${archetype}`);
+  }
+
+  return steps;
+}
+
+/**
+ * Endpoint: POST /api/v1/bridge/workflows-per-cohort/:cohortId
+ * Suggest workflows tailored to cohort traits & gaps
+ */
+app.post('/api/v1/bridge/workflows-per-cohort/:cohortId', async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const suggestions = await suggestWorkflowsForCohort(cohortId);
+
+    res.json({
+      ok: true,
+      suggestions
+    });
+  } catch (error) {
+    if (error.message.includes('Cohort not found')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Endpoint: GET /api/v1/bridge/workflows-per-cohort/:cohortId
+ * Retrieve cached workflow suggestions for cohort
+ */
+app.get('/api/v1/bridge/workflows-per-cohort/:cohortId', async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const suggestions = await suggestWorkflowsForCohort(cohortId);
+
+    res.json({
+      ok: true,
+      suggestions
+    });
+  } catch (error) {
+    if (error.message.includes('Cohort not found')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== WORKFLOW SUGGESTIONS ====================
 
 app.get('/api/v1/bridge/suggested-workflows', async (req, res) => {
