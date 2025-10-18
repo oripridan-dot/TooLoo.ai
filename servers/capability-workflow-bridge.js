@@ -821,6 +821,255 @@ app.get('/api/v1/bridge/workflows-per-cohort/:cohortId', async (req, res) => {
   }
 });
 
+// ==================== ROI TRACKING PER COHORT ====================
+
+/**
+ * Record ROI metrics when a training workflow is completed
+ * Persists time-series data to data/bridge/cohort-roi.jsonl
+ */
+async function trackROIMetrics(cohortId, metrics) {
+  try {
+    const { workflowId, capabilitiesAdded = 0, cost = 0, duration = 0, completionRate = 1.0, archetype } = metrics;
+    
+    // Calculate ROI metrics
+    const costPerCapability = capabilitiesAdded > 0 ? cost / capabilitiesAdded : cost;
+    const roiMultiplier = capabilitiesAdded > cost ? (capabilitiesAdded / cost) : 1.0;
+    
+    // Get estimated baseline ROI from archetype
+    const archetypeBaseROI = {
+      'Fast Learner': 1.8,
+      'Specialist': 1.6,
+      'Power User': 1.4,
+      'Long-term Retainer': 1.5,
+      'Generalist': 1.0
+    };
+    const estimatedROI = archetypeBaseROI[archetype] || 1.2;
+    const roiAchieved = roiMultiplier >= estimatedROI ? (roiMultiplier / estimatedROI) : (roiMultiplier / 1.2);
+    
+    // Create ROI record (JSONL format: one JSON per line)
+    const roiRecord = {
+      timestamp: new Date().toISOString(),
+      cohortId,
+      archetype,
+      workflowId,
+      metrics: {
+        capabilitiesAdded,
+        cost,
+        duration,
+        completionRate,
+        costPerCapability: parseFloat(costPerCapability.toFixed(2)),
+        roiMultiplier: parseFloat(roiMultiplier.toFixed(2)),
+        estimatedROI: parseFloat(estimatedROI.toFixed(2)),
+        roiAchieved: parseFloat(roiAchieved.toFixed(2))
+      }
+    };
+    
+    // Append to JSONL file
+    const roiFile = path.join(DATA_DIR, 'cohort-roi.jsonl');
+    await fs.appendFile(roiFile, JSON.stringify(roiRecord) + '\n');
+    
+    state.stats.capabilitiesUpdated += capabilitiesAdded;
+    
+    return roiRecord;
+  } catch (error) {
+    console.error(`Failed to track ROI for ${cohortId}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Retrieve ROI trajectory for a cohort
+ */
+async function getCohortROITrajectory(cohortId, limit = 50) {
+  try {
+    const roiFile = path.join(DATA_DIR, 'cohort-roi.jsonl');
+    
+    // Check if file exists
+    try {
+      await fs.access(roiFile);
+    } catch {
+      return { cohortId, records: [], trend: null };
+    }
+    
+    // Read JSONL file
+    const content = await fs.readFile(roiFile, 'utf8');
+    const lines = content.trim().split('\n').filter(line => line.length > 0);
+    
+    // Parse and filter records for this cohort
+    const records = lines
+      .map(line => {
+        try {
+          return JSON.parse(line);
+        } catch {
+          return null;
+        }
+      })
+      .filter(record => record && record.cohortId === cohortId)
+      .slice(-limit);
+    
+    // Calculate trend (improvement/degradation)
+    let trend = null;
+    if (records.length >= 2) {
+      const first = records[0].metrics.roiAchieved;
+      const last = records[records.length - 1].metrics.roiAchieved;
+      trend = {
+        direction: last > first ? 'improving' : (last < first ? 'degrading' : 'stable'),
+        improvement: parseFloat((((last - first) / first) * 100).toFixed(1)),
+        firstROI: parseFloat(first.toFixed(2)),
+        lastROI: parseFloat(last.toFixed(2))
+      };
+    }
+    
+    // Calculate aggregate stats
+    const aggregateStats = {
+      totalRecords: records.length,
+      avgROI: parseFloat((records.reduce((sum, r) => sum + r.metrics.roiAchieved, 0) / Math.max(records.length, 1)).toFixed(2)),
+      avgCostPerCapability: parseFloat((records.reduce((sum, r) => sum + r.metrics.costPerCapability, 0) / Math.max(records.length, 1)).toFixed(2)),
+      totalCapabilitiesAdded: records.reduce((sum, r) => sum + r.metrics.capabilitiesAdded, 0),
+      totalCost: parseFloat(records.reduce((sum, r) => sum + r.metrics.cost, 0).toFixed(2))
+    };
+    
+    return {
+      cohortId,
+      records,
+      trend,
+      aggregateStats
+    };
+  } catch (error) {
+    console.error(`Failed to fetch ROI trajectory for ${cohortId}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Endpoint: POST /api/v1/bridge/roi/track/:cohortId
+ * Record ROI metrics after workflow completion
+ */
+app.post('/api/v1/bridge/roi/track/:cohortId', async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const { workflowId, capabilitiesAdded, cost, duration, completionRate, archetype } = req.body;
+    
+    if (!workflowId || capabilitiesAdded === undefined || cost === undefined) {
+      return res.status(400).json({
+        ok: false,
+        error: 'workflowId, capabilitiesAdded, and cost required'
+      });
+    }
+    
+    const record = await trackROIMetrics(cohortId, {
+      workflowId,
+      capabilitiesAdded,
+      cost,
+      duration: duration || 0,
+      completionRate: completionRate !== undefined ? completionRate : 1.0,
+      archetype: archetype || 'Generalist'
+    });
+    
+    res.json({
+      ok: true,
+      record,
+      message: `ROI tracked for ${cohortId}: ${capabilitiesAdded} capabilities, $${cost} cost, ${parseFloat((capabilitiesAdded/cost).toFixed(2))} ROI multiplier`
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Endpoint: GET /api/v1/bridge/roi/trajectory/:cohortId
+ * Retrieve ROI trajectory and trend analysis
+ */
+app.get('/api/v1/bridge/roi/trajectory/:cohortId', async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const { limit = 50 } = req.query;
+    
+    const trajectory = await getCohortROITrajectory(cohortId, parseInt(limit));
+    
+    res.json({
+      ok: true,
+      trajectory
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Endpoint: GET /api/v1/bridge/roi/compare
+ * Compare ROI across multiple cohorts
+ */
+app.get('/api/v1/bridge/roi/compare', async (req, res) => {
+  try {
+    const roiFile = path.join(DATA_DIR, 'cohort-roi.jsonl');
+    
+    // Check if file exists
+    try {
+      await fs.access(roiFile);
+    } catch {
+      return res.json({ ok: true, cohortComparison: {} });
+    }
+    
+    // Read and parse JSONL
+    const content = await fs.readFile(roiFile, 'utf8');
+    const lines = content.trim().split('\n').filter(line => line.length > 0);
+    
+    // Group by cohort and calculate stats
+    const cohortMap = {};
+    lines.forEach(line => {
+      try {
+        const record = JSON.parse(line);
+        if (!cohortMap[record.cohortId]) {
+          cohortMap[record.cohortId] = [];
+        }
+        cohortMap[record.cohortId].push(record);
+      } catch {
+        // Skip malformed lines
+      }
+    });
+    
+    // Calculate comparison metrics
+    const cohortComparison = {};
+    Object.entries(cohortMap).forEach(([cohortId, records]) => {
+      const avgROI = records.reduce((sum, r) => sum + r.metrics.roiAchieved, 0) / records.length;
+      const avgCost = records.reduce((sum, r) => sum + r.metrics.cost, 0) / records.length;
+      const totalCaps = records.reduce((sum, r) => sum + r.metrics.capabilitiesAdded, 0);
+      
+      cohortComparison[cohortId] = {
+        recordCount: records.length,
+        archetype: records[0].archetype,
+        avgROI: parseFloat(avgROI.toFixed(2)),
+        avgCost: parseFloat(avgCost.toFixed(2)),
+        totalCapabilities: totalCaps,
+        totalCost: parseFloat(records.reduce((sum, r) => sum + r.metrics.cost, 0).toFixed(2))
+      };
+    });
+    
+    res.json({
+      ok: true,
+      cohortComparison,
+      cohortCount: Object.keys(cohortComparison).length,
+      summary: {
+        avgROIAllCohorts: parseFloat((Object.values(cohortComparison).reduce((sum, c) => sum + c.avgROI, 0) / Math.max(Object.values(cohortComparison).length, 1)).toFixed(2)),
+        totalCapabilities: Object.values(cohortComparison).reduce((sum, c) => sum + c.totalCapabilities, 0),
+        totalCost: parseFloat(Object.values(cohortComparison).reduce((sum, c) => sum + c.totalCost, 0).toFixed(2))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== WORKFLOW SUGGESTIONS ====================
 
 app.get('/api/v1/bridge/suggested-workflows', async (req, res) => {
