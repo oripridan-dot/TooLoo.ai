@@ -11,9 +11,13 @@
  * 5. Data persistence and retrieval
  */
 
-const http = require('http');
-const fs = require('fs').promises;
-const path = require('path');
+import http from 'http';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SEGMENTATION_PORT = process.env.SEGMENTATION_PORT || 3007;
 const COHORTS_PATH = path.join(__dirname, '..', 'data', 'segmentation', 'cohorts.json');
@@ -34,37 +38,15 @@ let testsFailed = 0;
  * Helper: Make HTTP request
  */
 function httpRequest(method, pathname, data = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: '127.0.0.1',
-      port: SEGMENTATION_PORT,
-      path: pathname,
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const req = http.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => {
-        body += chunk;
-      });
-      res.on('end', () => {
-        resolve({
-          status: res.statusCode,
-          body: body ? JSON.parse(body) : null,
-        });
-      });
-    });
-
-    req.on('error', reject);
-
-    if (data) {
-      req.write(JSON.stringify(data));
-    }
-    req.end();
-  });
+  return fetch(`http://127.0.0.1:${SEGMENTATION_PORT}${pathname}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: data ? JSON.stringify(data) : null,
+  })
+    .then(res => res.json().then(body => ({ status: res.status, body })))
+    .catch(err => ({ status: 0, body: null, error: err.message }));
 }
 
 /**
