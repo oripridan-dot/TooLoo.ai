@@ -11,7 +11,8 @@ const services = [
   { name:'product-dev', cmd:['node','servers/product-development-server.js'], port: Number(process.env.PRODUCT_PORT||3006), health:'/health' },
   { name:'segmentation', cmd:['node','servers/segmentation-server.js'], port: Number(process.env.SEGMENTATION_PORT||3007), health:'/health' },
   { name:'reports', cmd:['node','servers/reports-server.js'], port: Number(process.env.REPORTS_PORT||3008), health:'/health' },
-  { name:'capabilities', cmd:['node','servers/capabilities-server.js'], port: Number(process.env.CAPABILITIES_PORT||3009), health:'/health' }
+  { name:'capabilities', cmd:['node','servers/capabilities-server.js'], port: Number(process.env.CAPABILITIES_PORT||3009), health:'/health' },
+  { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3010), health:'/health' }
 ];
 
 function waitForHealth(port, path, retries=30, delayMs=300){
