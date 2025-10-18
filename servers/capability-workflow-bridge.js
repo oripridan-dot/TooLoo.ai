@@ -226,6 +226,66 @@ app.get('/health', (req, res) => {
 
 // ==================== GAP ANALYSIS ====================
 
+// Archetype-specific gap severity weights for Phase 2
+const ARCHETYPE_GAP_WEIGHTS = {
+  'Fast Learner': {
+    learningVelocity: 2.0,    // Prioritize fast-paced learning gaps
+    domainGap: 1.2,
+    frameworkAdoption: 1.8,
+    asyncPatterns: 2.0,
+    default: 1.5
+  },
+  'Specialist': {
+    learningVelocity: 1.2,
+    domainGap: 2.5,            // Prioritize deep domain expertise gaps
+    frameworkAdoption: 1.1,
+    asyncPatterns: 1.1,
+    default: 1.0
+  },
+  'Power User': {
+    learningVelocity: 1.5,
+    domainGap: 1.2,
+    frameworkAdoption: 1.8,    // Prioritize high-volume adoption gaps
+    asyncPatterns: 1.6,
+    default: 1.8
+  },
+  'Long-term Retainer': {
+    learningVelocity: 1.2,
+    domainGap: 1.2,
+    frameworkAdoption: 1.5,
+    asyncPatterns: 2.0,        // Prioritize foundational capability gaps
+    default: 2.0
+  },
+  'Generalist': {
+    learningVelocity: 1.0,
+    domainGap: 1.0,
+    frameworkAdoption: 1.0,
+    asyncPatterns: 1.0,
+    default: 1.0              // Standard severity (no modification)
+  }
+};
+
+/**
+ * Get weight multiplier for a gap component given cohort archetype
+ */
+function getGapWeight(archetype, componentName) {
+  const weights = ARCHETYPE_GAP_WEIGHTS[archetype] || ARCHETYPE_GAP_WEIGHTS['Generalist'];
+  
+  // Check for exact component match
+  if (weights[componentName]) {
+    return weights[componentName];
+  }
+  
+  // Check for partial matches
+  const lowerComponent = componentName.toLowerCase();
+  if (lowerComponent.includes('async')) return weights.asyncPatterns || weights.default;
+  if (lowerComponent.includes('domain')) return weights.domainGap || weights.default;
+  if (lowerComponent.includes('framework')) return weights.frameworkAdoption || weights.default;
+  if (lowerComponent.includes('learning')) return weights.learningVelocity || weights.default;
+  
+  return weights.default;
+}
+
 async function analyzeCapabilityGaps() {
   try {
     // 1. Fetch discovered capabilities
@@ -299,6 +359,219 @@ app.post('/api/v1/bridge/analyze-gaps', async (req, res) => {
       analysis
     });
   } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+// ==================== PHASE 2: PER-COHORT GAP ANALYSIS ====================
+
+/**
+ * Analyze capability gaps tailored to a specific cohort
+ * Applies archetype-specific severity weights to prioritize relevant gaps
+ */
+async function analyzeGapsPerCohort(cohortId) {
+  try {
+    // 1. Fetch cohort traits (using Task 2 cache)
+    const cohort = await fetchCohortTraits(cohortId);
+    if (!cohort) {
+      throw new Error(`Cohort not found: ${cohortId}`);
+    }
+
+    // 2. Fetch global gaps
+    const capsData = await fetchService(CAPABILITIES_URL, '/api/v1/capabilities/status');
+    if (!capsData) throw new Error('Capabilities service unavailable');
+
+    const discoveredCapabilities = capsData.status?.componentStatus || {};
+    const totalActivated = capsData.status?.totalActivated || 0;
+    const totalDiscovered = capsData.status?.totalDiscovered || 0;
+
+    // 3. Build gap list with archetype-modified severity
+    const gaps = [];
+    for (const [component, status] of Object.entries(discoveredCapabilities)) {
+      const pending = (status.discovered || 0) - (status.activated || 0);
+      if (pending > 0) {
+        // Get base severity from pending ratio
+        const baseSeverity = Math.min(1.0, pending / Math.max(1, status.discovered || 1));
+        
+        // Apply archetype-specific weight
+        const archetypeWeight = getGapWeight(cohort.archetype, component);
+        const archetypeModifiedSeverity = baseSeverity * archetypeWeight;
+        
+        // Normalize to reasonable scale (can exceed 1.0 due to weights)
+        const normalizedSeverity = Math.min(2.5, archetypeModifiedSeverity);
+        
+        gaps.push({
+          component,
+          discovered: status.discovered || 0,
+          activated: status.activated || 0,
+          pending,
+          baseSeverity: parseFloat(baseSeverity.toFixed(2)),
+          archetypeWeight,
+          archetypeModifiedSeverity: parseFloat(normalizedSeverity.toFixed(2)),
+          urgency: normalizedSeverity > 1.5 ? 'critical' : 
+                   normalizedSeverity > 0.8 ? 'high' : 
+                   normalizedSeverity > 0.5 ? 'medium' : 'low',
+          lastActivation: status.lastActivation,
+          relevanceReason: generateGapReason(cohort.archetype, component, baseSeverity)
+        });
+      }
+    }
+
+    // 4. Sort by archetype-modified severity (highest first)
+    gaps.sort((a, b) => b.archetypeModifiedSeverity - a.archetypeModifiedSeverity);
+
+    // 5. Include top 10 gaps + aggregate stats
+    const analysis = {
+      timestamp: new Date().toISOString(),
+      cohortId,
+      archetype: cohort.archetype,
+      cohortSize: cohort.size,
+      cohortTraits: cohort.avgTraits,
+      totalDiscovered,
+      totalActivated,
+      activationRate: totalDiscovered > 0 ? (totalActivated / totalDiscovered * 100).toFixed(2) + '%' : '0%',
+      gaps: gaps.slice(0, 10),
+      gapCount: gaps.length,
+      criticalGaps: gaps.filter(g => g.urgency === 'critical').length,
+      recommendedFocus: generateArchetypeRecommendation(cohort.archetype),
+      estimatedROI: estimateROIMultiplier(cohort.archetype, gaps)
+    };
+
+    return analysis;
+  } catch (error) {
+    console.error(`Per-cohort gap analysis failed for ${cohortId}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Generate human-readable reason why a gap is relevant to this cohort
+ */
+function generateGapReason(archetype, component, baseSeverity) {
+  const reasons = {
+    'Fast Learner': {
+      async: 'High-priority for rapid async/await mastery',
+      framework: 'Critical for framework adoption velocity',
+      learning: 'Essential for accelerating capability adoption',
+      default: 'Relevant to fast-paced learning trajectory'
+    },
+    'Specialist': {
+      domain: 'Core to deep domain expertise development',
+      async: 'Important for domain-specific async patterns',
+      framework: 'Supports specialized framework knowledge',
+      default: 'Part of focused domain specialization'
+    },
+    'Power User': {
+      framework: 'High-value for broad capability adoption',
+      async: 'Supports high-volume async operations',
+      learning: 'Enables scaling to more capabilities',
+      default: 'Relevant to expansive capability coverage'
+    },
+    'Long-term Retainer': {
+      framework: 'Foundational for long-term capability retention',
+      async: 'Core pattern for robust system design',
+      learning: 'Essential for sustainable mastery',
+      default: 'Important for durable capability foundation'
+    },
+    'Generalist': {
+      default: 'Relevant to balanced skill development'
+    }
+  };
+
+  const archetypeReasons = reasons[archetype] || reasons['Generalist'];
+  const lowerComponent = component.toLowerCase();
+  
+  if (lowerComponent.includes('async')) return archetypeReasons.async || archetypeReasons.default;
+  if (lowerComponent.includes('domain')) return archetypeReasons.domain || archetypeReasons.default;
+  if (lowerComponent.includes('framework')) return archetypeReasons.framework || archetypeReasons.default;
+  if (lowerComponent.includes('learning')) return archetypeReasons.learning || archetypeReasons.default;
+  
+  return archetypeReasons.default;
+}
+
+/**
+ * Generate archetype-specific focus recommendation
+ */
+function generateArchetypeRecommendation(archetype) {
+  const recommendations = {
+    'Fast Learner': 'Focus on rapid-cycle training variants with high difficulty progression',
+    'Specialist': 'Prioritize deep dives into top critical gaps within your domain',
+    'Power User': 'Adopt high-volume workflows to expand capability breadth',
+    'Long-term Retainer': 'Build strong foundations through spaced repetition patterns',
+    'Generalist': 'Balance learning across identified gap areas'
+  };
+  return recommendations[archetype] || recommendations['Generalist'];
+}
+
+/**
+ * Estimate potential ROI multiplier for this cohort based on archetype + gaps
+ */
+function estimateROIMultiplier(archetype, gaps) {
+  const criticalCount = gaps.filter(g => g.urgency === 'critical').length;
+  const baseMultiplier = {
+    'Fast Learner': 1.8,
+    'Specialist': 1.6,
+    'Power User': 1.4,
+    'Long-term Retainer': 1.5,
+    'Generalist': 1.0
+  };
+  
+  // Boost by 0.1x for every 3 critical gaps
+  const boost = Math.floor(criticalCount / 3) * 0.1;
+  const estimated = (baseMultiplier[archetype] || 1.0) + boost;
+  
+  return parseFloat(estimated.toFixed(2));
+}
+
+/**
+ * Endpoint: POST /api/v1/bridge/gaps-per-cohort/:cohortId
+ */
+app.post('/api/v1/bridge/gaps-per-cohort/:cohortId', async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const analysis = await analyzeGapsPerCohort(cohortId);
+    
+    res.json({
+      ok: true,
+      analysis
+    });
+  } catch (error) {
+    if (error.message.includes('Cohort not found')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Endpoint: GET /api/v1/bridge/gaps-per-cohort/:cohortId
+ * Retrieve cached or fresh per-cohort gap analysis
+ */
+app.get('/api/v1/bridge/gaps-per-cohort/:cohortId', async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const analysis = await analyzeGapsPerCohort(cohortId);
+    
+    res.json({
+      ok: true,
+      analysis
+    });
+  } catch (error) {
+    if (error.message.includes('Cohort not found')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
     res.status(500).json({
       ok: false,
       error: error.message
