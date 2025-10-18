@@ -6,8 +6,12 @@
  * conversation segmentation. Enables per-cohort optimization in Phase 2 Sprint 2+.
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const COHORTS_PATH = path.join(__dirname, '..', 'data', 'segmentation', 'cohorts.json');
 const MIN_COHORT_SIZE = 2;
@@ -297,7 +301,7 @@ async function getAllCohorts() {
   return cohortData.cohorts;
 }
 
-module.exports = {
+export {
   discoverCohorts,
   getUserCohort,
   getAllCohorts,
