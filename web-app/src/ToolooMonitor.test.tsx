@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ToolooMonitor from './ToolooMonitor';
 import '@testing-library/jest-dom/vitest';
@@ -86,8 +85,8 @@ describe('ToolooMonitor', () => {
     const statusLine = await screen.findByText(/Status:/i);
   expect(statusLine).toHaveTextContent(/Status: healthy/i);
 
-    const providersLine = await screen.findByText(/Providers ready:/i);
-    expect(providersLine).toHaveTextContent('Providers ready: 1/2');
+  const providersLine = await screen.findByText(/AI Providers:/i);
+  expect(providersLine).toHaveTextContent('AI Providers: 1/2 ready to help');
   });
 
   it('prompts the user to start the backend when the health check returns 500', async () => {

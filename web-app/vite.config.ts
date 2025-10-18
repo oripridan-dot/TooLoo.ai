@@ -35,4 +35,10 @@ export default defineConfig({
     hmr: hmrConfig,
     cors: true, // Enable CORS on Vite dev server
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['@testing-library/jest-dom/vitest'],
+    watch: false,
+  },
 });
