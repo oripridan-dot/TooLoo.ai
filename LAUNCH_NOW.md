@@ -1,6 +1,6 @@
 # 🚀 LAUNCH INSTRUCTIONS - Oct 19, 2025
 
-**PUBLIC URL:** https://tooloo2025.loca.lt
+**PUBLIC URL:** https://neat-mayfly-54.loca.lt
 
 ---
 
@@ -15,7 +15,7 @@ Show HN: TooLoo – Extract thinking patterns from any conversation using AI
 
 **URL:** 
 ```
-https://tooloo2025.loca.lt
+https://neat-mayfly-54.loca.lt
 ```
 
 **Text:**
@@ -37,7 +37,7 @@ Use cases:
 
 It's early beta but fully functional. Uses Claude + OpenAI under the hood. Would love feedback from the HN community.
 
-Try it free: https://tooloo2025.loca.lt
+Try it free: https://neat-mayfly-54.loca.lt
 ```
 
 ---
@@ -50,7 +50,7 @@ Just shipped TooLoo.ai – analyze conversations to understand how people actual
 
 Paste email, chat, interview → get reasoning patterns & decision frameworks instantly.
 
-Free to try: https://tooloo2025.loca.lt
+Free to try: https://neat-mayfly-54.loca.lt
 ```
 
 **Post 2 (Reply):**
@@ -108,7 +108,7 @@ Hey r/MachineLearning! I built TooLoo.ai, a free tool that analyzes conversation
 
 The tool is live and fully functional. Would love feedback from this community on model selection, prompt effectiveness, and what insights you'd want to extract.
 
-Try it: https://tooloo2025.loca.lt
+Try it: https://neat-mayfly-54.loca.lt
 ```
 
 ---
@@ -139,7 +139,7 @@ Hey r/learnprogramming! Just launched TooLoo.ai – a free tool that analyzes co
 
 Built with Claude + OpenAI. Early beta but fully functional. Free to try.
 
-Check it out: https://tooloo2025.loca.lt
+Check it out: https://neat-mayfly-54.loca.lt
 
 Feedback welcome!
 ```
@@ -175,7 +175,7 @@ So I built TooLoo – paste a conversation, get instant insights into reasoning 
 
 Would love feedback on model selection, prompt effectiveness, and what patterns matter most to you.
 
-Try it free: https://tooloo2025.loca.lt
+Try it free: https://neat-mayfly-54.loca.lt
 ```
 
 ---
@@ -206,7 +206,7 @@ Built a free tool called TooLoo that analyzes conversations to extract thinking 
 
 Early beta, fully free. Would love your feedback.
 
-Try it: https://tooloo2025.loca.lt
+Try it: https://neat-mayfly-54.loca.lt
 ```
 
 ---
@@ -226,7 +226,7 @@ Try it: https://tooloo2025.loca.lt
 
 ## 🎯 LIVE URL STATUS
 
-✅ **PUBLIC URL LIVE:** https://tooloo2025.loca.lt
+✅ **PUBLIC URL LIVE:** https://neat-mayfly-54.loca.lt
 
 **Verified endpoints:**
 - Root page ✅
