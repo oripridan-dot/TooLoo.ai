@@ -7,6 +7,7 @@ import fs from 'fs';
 import { spawn } from 'child_process';
 import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
+import ReferralSystem from '../referral-system.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -109,6 +110,12 @@ app.get(['/knowledge','/books','/bibliography'], async (req,res)=>{
 app.get(['/feedback', '/bug-report', '/support'], async (req,res)=>{
   const f = path.join(webDir,'feedback.html');
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Feedback page missing'); }
+});
+
+// Referral page alias
+app.get(['/referral', '/referrals', '/refer'], async (req,res)=>{
+  const f = path.join(webDir,'referral.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Referral page missing'); }
 });
 
 // Smart Control Room alias
@@ -347,6 +354,95 @@ app.post('/api/v1/feedback/submit', async (req,res)=>{
   }catch(e){
     console.error('[FEEDBACK ERROR]', e.message);
     res.status(500).json({ ok:false, error:e.message });
+  }
+});
+
+// Referral System API endpoints (local, not proxied)
+const referralSystem = new ReferralSystem();
+
+// Get or create user referral code
+app.post('/api/v1/referral/create', async (req, res) => {
+  try {
+    const { userId, email } = req.body;
+    if (!userId) return res.status(400).json({ ok: false, error: 'userId required' });
+
+    // Check if user already has a code
+    let existing = await referralSystem.getUserReferral(userId);
+    if (!existing) {
+      existing = await referralSystem.createReferral(userId, email);
+    }
+
+    res.json({
+      ok: true,
+      code: existing.code,
+      share_url: `${process.env.APP_URL || 'http://127.0.0.1:3000'}?ref=${existing.code}`,
+      referred_count: existing.referred_count
+    });
+  } catch (e) {
+    console.error('Referral create error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Redeem referral code
+app.post('/api/v1/referral/redeem', async (req, res) => {
+  try {
+    const { code, newUserId } = req.body;
+    if (!code || !newUserId) return res.status(400).json({ ok: false, error: 'code and newUserId required' });
+
+    const result = await referralSystem.redeemCode(code, newUserId);
+    res.json(result);
+  } catch (e) {
+    console.error('Referral redeem error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get leaderboard (top referrers)
+app.get('/api/v1/referral/leaderboard', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+    const leaderboard = await referralSystem.getLeaderboard(limit);
+    res.json({
+      ok: true,
+      leaderboard,
+      count: leaderboard.length
+    });
+  } catch (e) {
+    console.error('Leaderboard error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get referral stats
+app.get('/api/v1/referral/stats', async (req, res) => {
+  try {
+    const stats = await referralSystem.getStats();
+    res.json({
+      ok: true,
+      stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Stats error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get user's referral info
+app.get('/api/v1/referral/me', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ ok: false, error: 'userId query param required' });
+
+    const referral = await referralSystem.getUserReferral(userId);
+    res.json({
+      ok: true,
+      referral: referral || null
+    });
+  } catch (e) {
+    console.error('User referral error:', e);
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
