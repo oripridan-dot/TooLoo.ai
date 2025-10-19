@@ -106,9 +106,9 @@ export function clusterUsersByTraitsOptimized(userTraitsMap, k = null) {
   const userIds = Array.from(userTraitsMap.keys());
   if (userIds.length === 0) return [];
   
-  // Auto-detect optimal k (3-5 clusters)
+  // Auto-detect optimal k (3-5 clusters per cohort archetype)
   if (k === null) {
-    k = Math.min(5, Math.max(3, Math.ceil(userIds.length / 100)));
+    k = Math.min(5, Math.max(3, Math.ceil(userIds.length / 20)));  // ~5 clusters per 100 users
   }
   
   // K-means++ initialization
