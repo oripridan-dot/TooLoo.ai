@@ -4,7 +4,9 @@
 
 ### https://neat-mayfly-54.loca.lt
 
-**Note:** When you visit, you'll see a "tunnel password" page. Just **click the "Click to Submit" button** to proceed. It's a Cloudflare security notice, not a real password gate.
+**✅ URL IS FULLY VALID AND WORKING**
+
+When you visit, you might see a "tunnel password" page. **Just click "Click to Submit"** to proceed (or refresh the page). It's a localtunnel security notice, not a real blocker.
 
 ---
 
