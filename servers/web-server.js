@@ -5,7 +5,6 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'url';
 import ReferralSystem from '../referral-system.js';
 
