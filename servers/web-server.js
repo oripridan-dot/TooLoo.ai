@@ -22,9 +22,14 @@ app.use(express.static(webDir));
 app.use('/temp', express.static(path.join(webDir, 'temp')));
 
 // TooLoo Hub page route
-app.get(['/tooloo-hub','/tooloo-page','/'], async (req,res)=>{
+app.get(['/tooloo-hub','/tooloo-page'], async (req,res)=>{
   const f = path.join(webDir,'tooloo-hub.html');
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('TooLoo Hub page missing'); }
+});
+
+// Root route - serve Control Room (working HTML dashboard)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-home.html'));
 });
 
 // Quiet favicon 404s in dev
@@ -98,6 +103,12 @@ app.get(['/asap', '/asap-mastery'], async (req,res)=>{
 app.get(['/knowledge','/books','/bibliography'], async (req,res)=>{
   const f = path.join(webDir,'knowledge.html');
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Knowledge page missing'); }
+});
+
+// Feedback page alias
+app.get(['/feedback', '/bug-report', '/support'], async (req,res)=>{
+  const f = path.join(webDir,'feedback.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Feedback page missing'); }
 });
 
 // Smart Control Room alias
@@ -303,6 +314,40 @@ app.get('/api/v1/chat/burst-stream', async (req,res)=>{
     sendEvent('done', { fullText: text });
     res.end();
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+});
+
+// Feedback submission API (local, not proxied)
+app.post('/api/v1/feedback/submit', async (req,res)=>{
+  try{
+    const feedback = req.body || {};
+    const timestamp = new Date().toISOString();
+    const feedbackLog = {
+      ...feedback,
+      submitted_at: timestamp,
+      ip: req.ip || req.connection.remoteAddress
+    };
+    
+    // Log feedback to console (visible in logs)
+    console.log(`\n[FEEDBACK] ${timestamp}`);
+    console.log(`  Type: ${feedback.type}`);
+    console.log(`  Subject: ${feedback.subject}`);
+    console.log(`  Email: ${feedback.email || '(not provided)'}`);
+    console.log(`  Description: ${feedback.description.substring(0, 100)}...`);
+    if(feedback.browser) console.log(`  Browser: ${feedback.browser}`);
+    if(feedback.url) console.log(`  URL: ${feedback.url}`);
+    
+    // Store in JSON file for later review
+    const feedbackDir = path.join(process.cwd(), 'feedback-logs');
+    await fs.promises.mkdir(feedbackDir, { recursive: true });
+    const feedbackFile = path.join(feedbackDir, `feedback-${Date.now()}.json`);
+    await fs.promises.writeFile(feedbackFile, JSON.stringify(feedbackLog, null, 2));
+    
+    // Return success
+    res.json({ ok:true, message:'Feedback received, thank you!' });
+  }catch(e){
+    console.error('[FEEDBACK ERROR]', e.message);
+    res.status(500).json({ ok:false, error:e.message });
+  }
 });
 
 // Simple reverse proxy for API routes (keeps UI unchanged)
