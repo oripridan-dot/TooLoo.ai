@@ -4,7 +4,7 @@
 
 **Title:** Show HN: TooLoo – Extract thinking patterns from any conversation using AI
 
-**URL:** http://127.0.0.1:3000/
+**URL:** https://tooloo-ai.loca.lt
 
 **Text:**
 ```
@@ -28,7 +28,7 @@ It's early beta but fully functional. Uses Claude + OpenAI under the hood. Would
 - What insights are missing?
 - Should there be team/organization features?
 
-Try it free: http://127.0.0.1:3000/
+Try it free: https://tooloo-ai.loca.lt
 
 GitHub: [repo link if public]
 
@@ -51,7 +51,7 @@ Upload any conversation. Get instant insights into reasoning frameworks, decisio
 
 Think: "How does this person actually think?" Now you can know.
 
-🔗 http://127.0.0.1:3000/
+🔗 https://tooloo-ai.loca.lt
 ```
 
 **Post 2 of 3 (Reply to Post 1):**
@@ -68,14 +68,14 @@ It's like reverse-engineering someone's mental model.
 **Post 3 of 3 (Reply to Post 2):**
 ```
 Use cases:
-- Learn how great mentors think
+- Learn from mentors or great thinkers
 - Understand team collaboration patterns
 - Analyze customer needs (beyond what they say)
 - Self-reflect on your own reasoning
 
 Early beta, fully free. Built with Claude + OpenAI.
 
-Feedback welcome. Come try it: http://127.0.0.1:3000/
+Feedback welcome. Come try it: https://tooloo-ai.loca.lt
 ```
 
 **Schedule:** Post all 3 NOW (stagger by 2-3 minutes)
@@ -115,7 +115,7 @@ Hey r/MachineLearning! I built TooLoo.ai, a free tool that analyzes conversation
 
 The tool is live and fully functional. Would love feedback from this community on model selection, prompt effectiveness, and what insights you'd want to extract.
 
-Try it: http://127.0.0.1:3000/
+Try it: https://tooloo-ai-3jnlb8i6.onrender.com
 
 [Looking for collaborators on the ML side – DM me if interested]
 ```
@@ -145,7 +145,7 @@ Hey r/learnprogramming! Just launched TooLoo.ai – a free tool that analyzes co
 
 Built with Claude + OpenAI. Early beta but fully functional. Free to try.
 
-Check it out: http://127.0.0.1:3000/
+Check it out: https://tooloo-ai-3jnlb8i6.onrender.com
 
 Feedback welcome!
 ```
@@ -178,7 +178,7 @@ So I built TooLoo – paste a conversation, get instant insights into reasoning 
 
 Would love feedback on model selection, prompt effectiveness, and what patterns matter most to you.
 
-Try it free: http://127.0.0.1:3000/
+Try it free: https://tooloo-ai-3jnlb8i6.onrender.com
 ```
 
 ---
@@ -206,7 +206,7 @@ Built a free tool called TooLoo that analyzes conversations to extract thinking 
 
 Early beta, fully free. Would love your feedback.
 
-Try it: http://127.0.0.1:3000/
+Try it: https://tooloo-ai-3jnlb8i6.onrender.com
 ```
 
 ---
@@ -216,7 +216,7 @@ Try it: http://127.0.0.1:3000/
 ### Hacker News
 - [ ] Go to https://news.ycombinator.com/submit
 - [ ] Title: "Show HN: TooLoo – Extract thinking patterns from any conversation using AI"
-- [ ] URL: http://127.0.0.1:3000/
+- [ ] URL: https://tooloo-ai-3jnlb8i6.onrender.com
 - [ ] Copy text from Post 1 above into "Text" field
 - [ ] Submit
 - [ ] **CRITICAL:** Reply to every comment in first 2 hours (engagement = ranking)
