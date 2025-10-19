@@ -10,7 +10,7 @@
 ---
 
 ## ✅ NEW WORKING URL
-✅ **https://tooloo2025.loca.lt**
+✅ **https://neat-mayfly-54.loca.lt**
 
 **All endpoints verified working:**
 - Root page ✅
@@ -26,7 +26,7 @@ If you posted links with the broken Cloudflare URL:
 
 **Option 1: Post again with new URL**
 - Copy from LAUNCH_SIMPLE.md
-- New URL: https://tooloo2025.loca.lt
+- New URL: https://neat-mayfly-54.loca.lt
 - Post to same platforms (HN, Twitter, Reddit)
 
 **Option 2: Edit existing posts**
@@ -42,21 +42,21 @@ If you need to post corrections:
 
 ### For Hacker News (Edit your post):
 ```
-CORRECTION: Use this working URL: https://tooloo2025.loca.lt
+CORRECTION: Use this working URL: https://neat-mayfly-54.loca.lt
 
 (Include your original description)
 ```
 
 ### For Twitter (Reply):
 ```
-Correction - use this link: https://tooloo2025.loca.lt
+Correction - use this link: https://neat-mayfly-54.loca.lt
 
 Previous URL had issues. Thanks for patience!
 ```
 
 ### For Reddit (Comment):
 ```
-**Update:** Use this URL instead: https://tooloo2025.loca.lt
+**Update:** Use this URL instead: https://neat-mayfly-54.loca.lt
 
 Previous link had connectivity issues. Full working now!
 ```
@@ -70,7 +70,7 @@ Previous link had connectivity issues. Full working now!
 - All endpoints: Working ✅
 - Ready for traffic: YES ✅
 
-**The platform is live and ready. Use https://tooloo2025.loca.lt**
+**The platform is live and ready. Use https://neat-mayfly-54.loca.lt**
 
 ---
 

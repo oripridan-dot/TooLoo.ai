@@ -8,7 +8,7 @@
 
 The Cloudflare tunnel is asking for a password. **To bypass it:**
 
-1. Click the URL: https://tooloo2025.loca.lt
+1. Click the URL: https://neat-mayfly-54.loca.lt
 2. See the password page? **Click "Click to Submit"** button
 3. Password: `5.28.168.163` (shown on page)
 4. You're in!
@@ -23,7 +23,7 @@ Just shipped TooLoo.ai - extract thinking patterns from conversations.
 
 Paste email/chat → get reasoning frameworks & mental models instantly.
 
-Try free: https://tooloo2025.loca.lt
+Try free: https://neat-mayfly-54.loca.lt
 ```
 
 **Post 2 (280 chars):**
@@ -60,7 +60,7 @@ All 4 Reddit posts are ready. Copy from LAUNCH_NOW.md:
 
 ### Step 1: Test the URL (5 seconds)
 ```
-https://tooloo2025.loca.lt
+https://neat-mayfly-54.loca.lt
 ```
 Click submit on password page → You're in!
 
