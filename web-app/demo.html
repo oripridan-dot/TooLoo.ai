@@ -538,8 +538,26 @@
             </div>
         </div>
 
-        <div style="margin-top: 30px; padding: 20px; background: #f0f0ff; border-radius: 8px; text-align: center;">
-            <p style="font-size: 14px; color: #667eea; font-weight: 600;">🌟 Use cases: Learn from mentors • Understand your team • Analyze creators • Self-reflect • Research interviews • Customer feedback analysis</p>
+        <div style="margin-top: 30px; padding: 20px; background: #f0f0ff; border-radius: 8px;">
+            <p style="font-size: 14px; color: #667eea; font-weight: 600; margin-bottom: 12px;">🌟 Use cases: Learn from mentors • Understand your team • Analyze creators • Self-reflect • Research interviews • Customer feedback analysis</p>
+        </div>
+
+        <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-left: 4px solid #667eea; border-radius: 8px;">
+            <h3 style="font-size: 16px; color: #667eea; margin-bottom: 10px;">💬 Analyze Your Own Thinking Patterns</h3>
+            <p style="font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 10px;">
+                Get personalized, actionable insights about <strong>how YOU think</strong>. Paste any of your conversations, emails, or chat histories:
+            </p>
+            <ul style="font-size: 13px; color: #555; line-height: 1.8; margin-left: 20px;">
+                <li>💭 Slack conversations with colleagues</li>
+                <li>📧 Email exchanges with mentors or team</li>
+                <li>🗣️ Interview transcripts or discussions</li>
+                <li>💼 Decision-making conversations</li>
+                <li>🤝 Relationship or feedback discussions</li>
+                <li>📝 Your own problem-solving dialogue</li>
+            </ul>
+            <p style="font-size: 12px; color: #667eea; font-weight: 600; margin-top: 12px;">
+                Discover what you naturally prioritize, how you make decisions, and how to leverage your unique thinking style. 🚀
+            </p>
         </div>
     </div>
 
@@ -556,72 +574,124 @@
         const examples = {
             engineer: {
                 label: "💻 Engineer - Problem Solver",
-                text: `Manager: How would you approach this scaling problem?
+                text: `Manager: We're getting performance complaints. What's your approach?
 
-Engineer: First I'd understand the bottleneck - is it CPU, memory, or I/O? I'd profile in production, then look at three angles: optimize the current architecture, add caching, or redesign. 
+Engineer: First, let me understand the scope. Are we talking about latency, throughput, or both? On which operations? I'd pull metrics from production, profile the hot spots, then analyze three angles: can we optimize within current architecture? Can we add caching layers? Or do we need fundamental redesign?
 
-Manager: What if optimization takes too long?
+Manager: Timeline is tight. How do you prioritize?
 
-Engineer: I'd prioritize by impact. Get 80% gains first, then iterate. Quick wins with caching might buy us time while we design the real solution. I prefer incremental improvements you can measure.`,
+Engineer: I separate the work into: quick wins (30% improvement in 1 day), medium-term (60% in a week), and long-term redesign (80%+ in a month). I'd tackle quick wins first - maybe optimize N+1 queries, add Redis caching for hot data, batch certain operations. That buys time while we design the real solution.
+
+Manager: How confident are you in these estimates?
+
+Engineer: Based on similar past work, I'm pretty confident about quick wins. The 60% and 80% targets depend on what the profiling shows. That's why the first step - actually measuring - is crucial. I can't optimize blind.
+
+Manager: What if we're wrong about what's slow?
+
+Engineer: Exactly why we profile first. I've learned that assumptions about performance are usually wrong. The bottleneck is rarely where people guess. Once we measure, we'll know exactly where to focus.`,
                 comparison: {
-                    box1: { title: "Approach", text: "Data-driven, bottleneck-focused, multi-angle analysis" },
-                    box2: { title: "Style", text: "Pragmatic, iterative, measurable outcomes" }
+                    box1: { title: "Approach", text: "Measurement-first, breaks into components, prioritizes by impact and confidence" },
+                    box2: { title: "Style", text: "Pragmatic & data-driven, iterative progress, manages uncertainty with testing" }
                 }
             },
             artist: {
                 label: "🎨 Artist - Creative Thinker",
-                text: `Friend: How did you decide on this art direction?
+                text: `Interviewer: Walk me through your creative process for this series.
 
-Artist: I started by feeling what emotion I wanted to evoke, then played with colors and shapes until something clicked. I didn't have a plan - I let the canvas tell me what it needed. It's like conversation with the medium itself.
+Artist: I started with a feeling - this tension between control and chaos. I didn't sketch or plan. I just started making marks, watching what emerged. Early pieces were awkward, but that awkwardness told me something important about what I was trying to express. So I leaned into it.
 
-Friend: Did you struggle with it?
+Interviewer: Did you know what you wanted before you started?
 
-Artist: Constantly. But struggle is part of the dialogue. I iterate based on intuition, not rules. Sometimes the "mistakes" become the best parts.`,
+Artist: No, that's the thing. I had a vague emotional landscape, but the work teaches me what I actually want to say. It's almost like negotiation with the materials. I try something, the paint responds in a way I didn't expect, and now I'm pursuing that surprise. Sometimes my "mistakes" are the most honest moments.
+
+Interviewer: How do you know when something's finished?
+
+Artist: When it stops arguing with me. When all the elements feel like they're in conversation rather than conflict. It's very intuitive - not a checklist thing. Some pieces took weeks, others were done in a day. The time doesn't matter. The rightness does.
+
+Interviewer: Right for whom?
+
+Artist: For me, first. But then, for the viewer who hasn't seen it yet. There's this balance - it needs to be true to my vision, but open enough for someone else to find themselves in it. Too controlled and it's boring. Too loose and it's just noise.`,
                 comparison: {
-                    box1: { title: "Approach", text: "Intuition-driven, exploratory, emergent discovery" },
-                    box2: { title: "Style", text: "Iterative, embraces uncertainty, values feeling over metrics" }
+                    box1: { title: "Approach", text: "Emergent discovery, responsive to feedback from process, embraces uncertainty as creative" },
+                    box2: { title: "Style", text: "Intuitive judgment, tolerates ambiguity, values authenticity over efficiency" }
                 }
             },
             mentor: {
                 label: "👨‍🏫 Mentor - Teacher & Guide",
-                text: `Student: How do I get better at writing?
+                text: `Student: I want to improve my communication. Where do I start?
 
-Mentor: Read widely, write daily, but more importantly - study why good writers make their choices. When you read something beautiful, pause and ask: why did they use that word? What's the rhythm here? 
+Mentor: First, understand that communication isn't about being eloquent - it's about clarity of thought. Before you write or speak, can you explain it simply to yourself? If you can't, your audience won't either. So start there: practice explaining ideas simply.
 
-Student: Is it about following rules?
+Student: Should I study writing techniques?
 
-Mentor: Rules are training wheels. Learn them so you know when to break them. Great writing comes from understanding your reader's mind and speaking directly to it. Everything else flows from that empathy.`,
+Mentor: Study technique, yes, but learn it through examples. Read widely - not just "good writers," but writers who solve different problems. A journalist writes for clarity. A novelist for resonance. A scientist for precision. Each is communicating something different. Notice how each solves their specific challenge.
+
+Student: But what about rules? Should I follow them?
+
+Mentor: Learn the rules thoroughly. Then break them deliberately, not accidentally. Most beginners break rules because they don't know them. Most masters break them because they understand why they exist and when to ignore them. Get to the second category.
+
+Student: How do I know what I'm actually trying to say?
+
+Mentor: That's the hardest part. Readers sense when a writer isn't sure. The way you get sure is by writing badly first, then rewriting. Your first draft is thinking. Your revisions are clarifying. Don't confuse the two. Too many people try to get it right immediately, which means they never get it right at all.
+
+Student: How long does it take to get good?
+
+Mentor: Depends on how much you read and write. I've seen people improve dramatically in a year of deliberate practice. I've seen people write for decades and barely improve because they're not paying attention to why things work. The question isn't time - it's feedback and reflection.`,
                 comparison: {
-                    box1: { title: "Approach", text: "Principle-based, pattern-learning, meta-learning" },
-                    box2: { title: "Style", text: "Guides discovery, emphasizes empathy and foundations" }
+                    box1: { title: "Approach", text: "Principle-first, teaches patterns rather than rules, emphasizes deliberate practice and reflection" },
+                    box2: { title: "Style", text: "Guides discovery, asks questions, builds from fundamentals to mastery" }
                 }
             },
             analyst: {
                 label: "📊 Analyst - Data Detective",
-                text: `Colleague: Why did our conversion rate drop?
+                text: `Manager: Our engagement dropped 15% last month. What happened?
 
-Analyst: I looked at three dimensions: traffic source, device type, and time period. Conversion dropped 8% overall, but it's concentrated in mobile traffic from paid ads. When I segment by geography, the US is down 15%, Europe steady, Asia up.
+Analyst: Let me decompose this before we guess. First, is it consistent across all users? Let me segment by: user cohort (new vs. established), geography, device type, and product area. I'm seeing the drop is primarily in mobile users from the US who use Feature X, added two months ago. It's not universal.
 
-Colleague: So it's the traffic source?
+Manager: So it's Feature X?
 
-Analyst: Not necessarily. Could be the audience, the ad creative, or a platform change. Let me test by controlling one variable at a time. I want to isolate the true driver with confidence intervals.`,
+Analyst: Possibly. But I need to separate correlation from causation. The feature launched two months ago. Other things also happened: we changed the algorithm two weeks ago, iOS updated three weeks ago, a competitor launched something similar four weeks ago. I need to isolate which variable is the driver.
+
+Manager: How do we do that?
+
+Analyst: A few approaches. I can look at users who have Feature X but opted out - are they retaining normally? I can compare Android users - did they drop too, since they weren't affected by the iOS update? I can look at our most engaged users - did they drop the same percentage? This is controlled experimentation. We change one variable at a time mentally, holding others constant.
+
+Manager: That sounds complex.
+
+Analyst: It is, but necessary. I've seen organizations burn resources fixing the wrong thing because they didn't understand the actual driver. I'd rather spend two days investigating properly than a month optimizing the wrong lever. Also, I'll want to know your confidence interval - what data are we confident in?
+
+Manager: Confidence interval?
+
+Analyst: The 15% drop - is that significant or noise? If we're seeing a 15% drop but it's within normal variance, we might be solving for randomness. I'll calculate a confidence interval and p-value. If it's statistically significant, we should absolutely investigate. If it's barely significant, we monitor before acting.`,
                 comparison: {
-                    box1: { title: "Approach", text: "Systematic decomposition, multi-dimensional analysis" },
-                    box2: { title: "Style", text: "Evidence-first, hypothesis-driven, statistical rigor" }
+                    box1: { title: "Approach", text: "Decomposition first, tests assumptions systematically, separates signal from noise" },
+                    box2: { title: "Style", text: "Statistical rigor, hypothesis-driven, evidence-first before action" }
                 }
             },
             creator: {
                 label: "✍️ Writer - Storyteller",
-                text: `Publisher: What's the theme of your story?
+                text: `Publisher: Your protagonist seems to change their mind constantly. Is that a flaw?
 
-Writer: It started as a question: what if someone discovered they'd been wrong about something fundamental? The whole narrative grew from exploring that discomfort. I follow my characters' logic - they make choices, I write the consequences.
+Writer: Initially, I thought so. But the more I worked with her, the more I realized it's not a flaw - it's her truth. She's someone who thinks through doing. She makes a choice, lives with the consequences, learns something, changes course. That's not inconsistency - that's growth. But I had to understand her logic deeply enough to show why each change made sense from inside her perspective.
 
-Publisher: Do you plan the ending?
+Publisher: How did you get there?
 
-Writer: Not really. I know the emotional arc, but the specific path emerges as I write. The best moments surprise me too. I trust the process more than the plan.`,
+Writer: By writing her badly first, many times. I started with a character who was more static, who made a big decision and stuck with it. But she felt false to me. Real people are more complex. So I let her contradict herself, then I had to understand why. What was she learning? What was making her vulnerable enough to change? That investigation made the character real.
+
+Publisher: What about plot? Doesn't her constantly changing mind make the plot messy?
+
+Writer: It could, if I didn't understand the arc. Plot isn't about events - it's about transformation. The events are just the catalysts. What's changing in her? Her confidence? Her understanding? Her priorities? Once I knew that arc - the emotional journey - the individual plot points made sense. She's not changing randomly. She's responding intelligently to information.
+
+Publisher: Did you outline this before writing?
+
+Writer: I outlined the emotional arc. Three major shifts in her understanding, roughly where they'd occur. But the specific scenes, the conversations that sparked change? Those emerged in writing. I'd discover something true about her character and suddenly need to rewrite earlier scenes. Or I'd realize a future scene needed to change because of something she just said.
+
+Publisher: Doesn't that mean a lot of rewriting?
+
+Writer: Yes, but that's where the real writing happens. First draft is discovery. Second draft is architecture. Third draft is polish. Most people see only the final draft and think it was intentional from the start. It wasn't. It became intentional through revision. You have to be willing to destroy things to find what's true.`,
                 comparison: {
-                    box1: { title: "Approach", text: "Character-driven, emotional arc-focused, emergent narrative" },
-                    box2: { title: "Style", text: "Trusts intuition, explores contradictions, discovers through writing" }
+                    box1: { title: "Approach", text: "Character-driven logic, discovers through writing, revision as core creative work" },
+                    box2: { title: "Style", text: "Trusts intuition and character, works with emergence, builds coherence through rewriting" }
                 }
             }
         };
@@ -718,66 +788,126 @@ Writer: Not really. I know the emotional arc, but the specific path emerges as I
         function generateMockAnalysis(text) {
             const wordCount = text.split(/\s+/).length;
             const hasQuestion = text.includes('?');
-            const hasFramework = /approach|method|framework|process/.test(text.toLowerCase());
-            const hasEmotional = /feel|emotion|intuition|sense/.test(text.toLowerCase());
-            const hasData = /data|metric|measure|analyze|calculate/.test(text.toLowerCase());
-            const hasIteration = /iterate|improve|refine|adjust|try/.test(text.toLowerCase());
+            const hasFramework = /approach|method|framework|process|angle|lever|dimension|variable/.test(text.toLowerCase());
+            const hasEmotional = /feel|emotion|intuition|sense|authentic|truth|resonate|trust/.test(text.toLowerCase());
+            const hasData = /data|metric|measure|analyze|calculate|decompose|segment|isolate|confidence/.test(text.toLowerCase());
+            const hasIteration = /iterate|improve|refine|adjust|try|experiment|test|rewrite|revision/.test(text.toLowerCase());
+            const hasUncertainty = /might|could|possibly|depends|uncertain|unknown|assume|guess|hypothesis/.test(text.toLowerCase());
+            const hasPrioritization = /priorit|important|critical|impact|first|quick|urgent|major/.test(text.toLowerCase());
+            const hasRisk = /risk|fail|mistake|wrong|error|uncertain|challenge|difficult/.test(text.toLowerCase());
+            const hasLearning = /learn|understand|discover|insight|pattern|lesson|realize/.test(text.toLowerCase());
 
-            let reasoningPatterns = [
-                '✓ Asks clarifying questions before deciding'
-            ];
-
+            let reasoningPatterns = [];
+            let actionableInsights = [];
             let thinkingStyle = [];
             let frameworks = [];
+            let strengths = [];
+            let considerations = [];
+
+            // Core patterns
+            if (hasQuestion) {
+                reasoningPatterns.push('✓ Tests assumptions by asking clarifying questions');
+            }
 
             if (hasFramework) {
-                reasoningPatterns.push('✓ Uses structured frameworks');
+                reasoningPatterns.push('✓ Uses structured, multi-dimensional frameworks to break down problems');
                 thinkingStyle.push('Systematic & methodical');
-                frameworks.push('• Multi-angle analysis: Breaks problems into components');
+                frameworks.push('• Multi-angle decomposition: Separates variables to understand interactions');
+                strengths.push('🎯 Strength: Can handle complex problems with multiple dimensions');
+                actionableInsights.push('💡 For you: Break big problems into smaller, measurable components. This applies to learning, decision-making, and goal-setting.');
             }
 
             if (hasData) {
-                reasoningPatterns.push('✓ Evidence-driven decision making');
-                thinkingStyle.push('Data-focused & rigorous');
-                frameworks.push('• Quantitative approach: Measures and validates');
+                reasoningPatterns.push('✓ Data-driven decision making - measures before acting');
+                thinkingStyle.push('Rigorously evidence-based');
+                frameworks.push('• Measurement-first: Gathers data before drawing conclusions');
+                strengths.push('🎯 Strength: Makes decisions based on evidence, not assumptions');
+                actionableInsights.push('💡 For you: Leverage your measurement mindset. Track progress on goals, gather feedback before major decisions, quantify what matters to you.');
             }
 
             if (hasEmotional) {
-                reasoningPatterns.push('✓ Intuition-guided exploration');
-                thinkingStyle.push('Intuitive & exploratory');
-                frameworks.push('• Emergent discovery: Lets patterns emerge');
+                reasoningPatterns.push('✓ Intuition-guided exploration - follows what feels authentic');
+                thinkingStyle.push('Intuitive & authentic');
+                frameworks.push('• Emergent discovery: Lets patterns and insights emerge through exploration');
+                strengths.push('🎯 Strength: Stays true to authentic instincts even when uncertain');
+                actionableInsights.push('💡 For you: Trust your gut feeling about what\'s important. Your intuition often contains wisdom you can\'t fully explain. Give it weight in decisions.');
             }
 
             if (hasIteration) {
-                reasoningPatterns.push('✓ Iterative improvement mindset');
+                reasoningPatterns.push('✓ Iterative mindset - improves through cycles of testing and refinement');
                 thinkingStyle.push('Incremental & adaptive');
-                frameworks.push('• Quick wins first: Prioritizes momentum');
+                frameworks.push('• Rapid iteration: Values learning from attempts over perfect planning');
+                strengths.push('🎯 Strength: Gets better through feedback loops rather than planning');
+                actionableInsights.push('💡 For you: Embrace a "draft and revise" approach. First attempts don\'t need to be perfect. Build feedback loops into important areas of your life.');
             }
 
-            if (hasQuestion && hasFramework) {
-                reasoningPatterns.push('✓ Tests assumptions methodically');
-                frameworks.push('• Hypothesis testing: Validates systematically');
+            if (hasUncertainty && hasQuestion) {
+                reasoningPatterns.push('✓ Explicitly acknowledges uncertainty - plans for multiple scenarios');
+                considerations.push('⚠️ Note: You acknowledge ambiguity, which means you think probabilistically, not deterministically');
+                actionableInsights.push('💡 For you: This skill helps with risk management and contingency planning. Use it to identify "what could go wrong" and prepare.');
             }
 
-            if (wordCount > 150) {
-                reasoningPatterns.push('✓ Thinks deeply & contextually');
+            if (hasPrioritization) {
+                reasoningPatterns.push('✓ Prioritizes by impact - focuses effort where it matters most');
+                frameworks.push('• Impact-first planning: Separates quick wins from long-term work');
+                strengths.push('🎯 Strength: Focuses energy on high-impact activities');
+                actionableInsights.push('💡 For you: Apply this prioritization skill to your time. What 20% of your efforts create 80% of your results? Double down there.');
+            }
+
+            if (hasRisk) {
+                reasoningPatterns.push('✓ Risk-aware thinking - considers failure modes and edge cases');
+                considerations.push('⚠️ Note: You think about what could go wrong, which helps avoid costly mistakes');
+                actionableInsights.push('💡 For you: Your risk awareness is an asset. Use it to stress-test decisions and identify hidden assumptions.');
+            }
+
+            if (hasLearning) {
+                reasoningPatterns.push('✓ Learning-oriented - sees challenges as opportunities to understand');
+                thinkingStyle.push('Growth-focused');
+                strengths.push('🎯 Strength: Continuously learning and adapting from experience');
+                actionableInsights.push('💡 For you: This growth mindset is your superpower. Seek feedback, study what works, and commit to deliberate practice.');
+            }
+
+            if (wordCount > 200) {
+                reasoningPatterns.push('✓ Thinks deeply and contextually - explains reasoning thoroughly');
                 thinkingStyle.push('Comprehensive & nuanced');
             }
 
-            const analysis = `Reasoning Patterns Detected:
-${reasoningPatterns.join('\n')}
+            if (wordCount > 300) {
+                considerations.push('⚠️ Note: Verbose communication style - you explain thoroughly. Great for clarity, but watch for over-explaining in fast-paced contexts.');
+            }
 
-Thinking Style: ${thinkingStyle.length > 0 ? thinkingStyle.join(' + ') : 'Balanced & contextual'}
+            // Default if no patterns detected
+            if (reasoningPatterns.length === 0) {
+                reasoningPatterns.push('✓ Seeks to understand before deciding');
+                actionableInsights.push('💡 For you: Start tracking your thinking process. What patterns do you notice?');
+            }
 
-Problem-Solving Framework:
-${frameworks.length > 0 ? frameworks.join('\n') : '• Adaptive: Adjusts approach based on context'}
+            const patternsText = reasoningPatterns.join('\n');
+            const styleText = thinkingStyle.length > 0 ? thinkingStyle.join(' + ') : 'Balanced & contextual';
+            const frameworksText = frameworks.length > 0 ? frameworks.join('\n') : '• Adaptive approach based on context';
+            const strengthsText = strengths.join('\n');
+            const insightsText = actionableInsights.slice(0, 3).join('\n'); // Limit to 3 insights
+            const considerationsText = considerations.length > 0 ? '\n\n⚡ Additional Notes:\n' + considerations.join('\n') : '';
 
-Communication Traits:
-• Explains their reasoning
-• Considers multiple perspectives
-• Links choices to outcomes
+            const analysis = `🔍 YOUR THINKING PATTERNS DETECTED:
+${patternsText}
 
-Overall Approach: Seeks understanding before acting`;
+🧠 Thinking Style: ${styleText}
+
+🛠️ Problem-Solving Framework:
+${frameworksText}
+
+💪 ${strengthsText}
+
+🎯 ACTIONABLE INSIGHTS FOR YOU:
+${insightsText}
+
+📊 Communication:
+• You explain your reasoning clearly
+• You consider multiple perspectives
+• You link thinking to outcomes
+
+Overall Approach: Thoughtful decision-maker who balances analysis with intuition${considerationsText}`;
 
             return analysis;
         }
