@@ -82,80 +82,188 @@
       <a href="/tooloo-showcase">Showcase</a>
       <a href="/temp/index">Artifacts</a>
     </div>
+
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:#9fb0c6;display:flex;gap:16px;flex-wrap:wrap">
+      <a href="/feedback" style="color:#00e9b0;text-decoration:none">💬 Send Feedback</a>
+      <a href="/BETA-DISCLAIMER.html" style="color:#00e9b0;text-decoration:none">Beta Disclaimer</a>
+      <a href="/TERMS-OF-SERVICE.html" style="color:#00e9b0;text-decoration:none">Terms of Service</a>
+      <a href="/PRIVACY-POLICY.html" style="color:#00e9b0;text-decoration:none">Privacy Policy</a>
+    </div>
   </div>
   <script>
     const $ = (id) => document.getElementById(id);
-    const safeJson = async (res) => { try { return await res.json(); } catch { return null; } };
+    
+    // Enhanced JSON parsing with error logging
+    const safeJson = async (res) => { 
+      try { 
+        return await res.json(); 
+      } catch (e) { 
+        console.error('JSON parse error:', e);
+        return null; 
+      } 
+    };
+
+    // Error handler for user feedback
+    const showError = (element, message) => {
+      if (element) {
+        element.textContent = message;
+        element.style.color = '#ff5c7c';
+      }
+      console.error('[TooLoo]', message);
+    };
 
     async function loadStatus(){
       try{
-        const s = await fetch('/system/status');
-        const j = await safeJson(s);
-        if(j?.ok){
-          const svcs = j.services||{};
-          const dot = (ok)=>`<span class="dots ${ok?'ok':'bad'}"></span>`;
-          $('svcRow').innerHTML = `Web ${dot(true)} Training ${dot(svcs.training)} Meta ${dot(svcs.meta)} Budget ${dot(svcs.budget)} Coach ${dot(svcs.coach)}`;
-          $('svcPorts').textContent = `Ports: web ${j.ports.web}, training ${j.ports.training}, budget ${j.ports.budget}, coach ${j.ports.coach}`;
-          $('coachStatus').textContent = j.autoCoach?.active? 'On':'Off';
-          // Orchestrator status
-          $('orchStatus').textContent = j.orchestrator?.running ? 'Running' : 'Stopped';
-          $('orchPid').textContent = `PID: ${j.orchestrator?.pid||'—'}`;
-        }
-      }catch{}
-      try{
-        const p = await fetch('/api/v1/providers/policy');
-        const pj = await safeJson(p);
-        if(pj?.ok){
-          $('policyPill').textContent = `Policy: ${pj.policy.criticality} • ${pj.policy.maxConcurrency}`;
-          $('policyValue').textContent = `${pj.policy.criticality.toUpperCase()} • ${pj.policy.maxConcurrency}`;
-        }
-      }catch{}
-      try{
-        const o = await fetch('/api/v1/training/overview');
-        const oj = await safeJson(o);
-        const nd = await fetch('/api/v1/next-domain').then(safeJson);
-        if(oj?.ok){
-          const domains = oj.data?.domains||[];
-          const avg = domains.length? Math.round(domains.reduce((a,d)=>a+d.mastery,0)/domains.length):0;
-          $('avgMastery').textContent = `${avg}%`;
-          // Sparkline
-          if(domains.length){
-            $('masterySpark').innerHTML = domains.map(d=>`<span style="display:inline-block;width:22px;height:18px;margin-right:2px;background:linear-gradient(180deg,#00e9b0 ${(100-d.mastery)}%,#7c5cff ${d.mastery}%);border-radius:4px;text-align:center;font-size:10px;color:#fff;vertical-align:bottom;" title="${d.domain}: ${d.mastery}%">${d.mastery}</span>`).join('');
+        // System status
+        try{
+          const s = await fetch('/system/status', { signal: AbortSignal.timeout(5000) });
+          if (!s.ok) throw new Error(`HTTP ${s.status}`);
+          const j = await safeJson(s);
+          if(j?.ok){
+            const svcs = j.services||{};
+            const dot = (ok)=>`<span class="dots ${ok?'ok':'bad'}"></span>`;
+            $('svcRow').innerHTML = `Web ${dot(true)} Training ${dot(svcs.training)} Meta ${dot(svcs.meta)} Budget ${dot(svcs.budget)} Coach ${dot(svcs.coach)}`;
+            $('svcPorts').textContent = `Ports: web ${j.ports.web}, training ${j.ports.training}, budget ${j.ports.budget}, coach ${j.ports.coach}`;
+            $('coachStatus').textContent = j.autoCoach?.active? 'On':'Off';
+            $('orchStatus').textContent = j.orchestrator?.running ? 'Running' : 'Stopped';
+            $('orchPid').textContent = `PID: ${j.orchestrator?.pid||'—'}`;
           }else{
-            $('masterySpark').innerHTML = '';
+            showError($('svcRow'), 'System status unavailable');
           }
+        }catch(e){
+          console.warn('System status fetch failed:', e.message);
+          $('svcRow').textContent = 'Status check failed';
         }
-        if(nd?.ok){ $('nextDomain').textContent = `Next: ${nd.next.domain} • readiness ${nd.next.readiness}%`; }
-      }catch{}
-      try{
-        const ac = await fetch('/api/v1/auto-coach/status');
-        const aj = await safeJson(ac);
-        const th = aj?.status?.thresholds||{};
-        const fl = th.fastLane?.enabled? 'On':'Off';
-        $('fastLane').textContent = `Fast Lane: ${fl} • μ ${th.microBatchesPerTick||1} • B ${th.batchSize||1}`;
-      }catch{}
+
+        // Provider policy
+        try{
+          const p = await fetch('/api/v1/providers/policy', { signal: AbortSignal.timeout(5000) });
+          if (p.ok) {
+            const pj = await safeJson(p);
+            if(pj?.ok){
+              $('policyPill').textContent = `Policy: ${pj.policy.criticality} • ${pj.policy.maxConcurrency}`;
+              $('policyValue').textContent = `${pj.policy.criticality.toUpperCase()} • ${pj.policy.maxConcurrency}`;
+            }
+          }
+        }catch(e){
+          console.warn('Provider policy fetch failed:', e.message);
+        }
+
+        // Training overview and next domain
+        try{
+          const [oRes, ndRes] = await Promise.all([
+            fetch('/api/v1/training/overview', { signal: AbortSignal.timeout(5000) }),
+            fetch('/api/v1/next-domain', { signal: AbortSignal.timeout(5000) })
+          ]);
+          
+          if (oRes.ok) {
+            const oj = await safeJson(oRes);
+            if(oj?.ok){
+              const domains = oj.data?.domains||[];
+              const avg = domains.length? Math.round(domains.reduce((a,d)=>a+d.mastery,0)/domains.length):0;
+              $('avgMastery').textContent = `${avg}%`;
+              if(domains.length){
+                $('masterySpark').innerHTML = domains.map(d=>`<span style="display:inline-block;width:22px;height:18px;margin-right:2px;background:linear-gradient(180deg,#00e9b0 ${(100-d.mastery)}%,#7c5cff ${d.mastery}%);border-radius:4px;text-align:center;font-size:10px;color:#fff;vertical-align:bottom;" title="${d.domain}: ${d.mastery}%">${d.mastery}</span>`).join('');
+              }
+            }
+          }
+          
+          if (ndRes.ok) {
+            const nd = await safeJson(ndRes);
+            if(nd?.ok){ 
+              $('nextDomain').textContent = `Next: ${nd.next.domain} • readiness ${nd.next.readiness}%`;
+            }
+          }
+        }catch(e){
+          console.warn('Training data fetch failed:', e.message);
+          $('avgMastery').textContent = '—';
+        }
+
+        // Auto-coach status
+        try{
+          const ac = await fetch('/api/v1/auto-coach/status', { signal: AbortSignal.timeout(5000) });
+          if (ac.ok) {
+            const aj = await safeJson(ac);
+            if (aj?.status?.thresholds) {
+              const th = aj.status.thresholds;
+              const fl = th.fastLane?.enabled? 'On':'Off';
+              $('fastLane').textContent = `Fast Lane: ${fl} • μ ${th.microBatchesPerTick||1} • B ${th.batchSize||1}`;
+            }
+          }
+        }catch(e){
+          console.warn('Auto-coach status fetch failed:', e.message);
+        }
+      }catch(e){
+        console.error('Load status error:', e);
+      }
     }
 
+    // Priority mode handlers with feedback
     $('chatPriorityBtn').addEventListener('click', async ()=>{
-      try{ await fetch('/api/v1/system/priority/chat', { method:'POST' }); loadStatus(); $('modePill').textContent='Mode: Chat'; }catch{}
-    });
-    $('bgPriorityBtn').addEventListener('click', async ()=>{
-      try{ await fetch('/api/v1/system/priority/background', { method:'POST' }); loadStatus(); $('modePill').textContent='Mode: Background'; }catch{}
+      try{ 
+        const res = await fetch('/api/v1/system/priority/chat', { method:'POST', signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          loadStatus(); 
+          $('modePill').textContent='Mode: Chat';
+        } else {
+          showError($('modePill'), 'Failed to set chat priority');
+        }
+      }catch(e){
+        showError($('modePill'), 'Error setting priority');
+        console.error(e);
+      }
     });
 
-    // Orchestrator controls
+    $('bgPriorityBtn').addEventListener('click', async ()=>{
+      try{
+        const res = await fetch('/api/v1/system/priority/background', { method:'POST', signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          loadStatus(); 
+          $('modePill').textContent='Mode: Background';
+        } else {
+          showError($('modePill'), 'Failed to set background priority');
+        }
+      }catch(e){
+        showError($('modePill'), 'Error setting priority');
+        console.error(e);
+      }
+    });
+
+    // Orchestrator controls with feedback
     $('orchStartBtn').addEventListener('click', async ()=>{
       try{
-        await fetch('/system/start', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({autoOpen:false}) });
-        setTimeout(loadStatus, 1200);
-      }catch{}
+        const res = await fetch('/system/start', { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body:JSON.stringify({autoOpen:false}),
+          signal: AbortSignal.timeout(10000)
+        });
+        if (res.ok) {
+          setTimeout(loadStatus, 1200);
+        } else {
+          showError($('orchStatus'), 'Failed to start orchestrator');
+        }
+      }catch(e){
+        showError($('orchStatus'), 'Start failed - check connection');
+        console.error(e);
+      }
     });
+
     $('orchStopBtn').addEventListener('click', async ()=>{
       try{
-        await fetch('/system/stop', { method:'POST' });
-        setTimeout(loadStatus, 1200);
-      }catch{}
+        const res = await fetch('/system/stop', { method:'POST', signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          setTimeout(loadStatus, 1200);
+        } else {
+          showError($('orchStatus'), 'Failed to stop orchestrator');
+        }
+      }catch(e){
+        showError($('orchStatus'), 'Stop failed - check connection');
+        console.error(e);
+      }
     });
+
+    // Initial load and periodic refresh
     loadStatus();
     setInterval(loadStatus, 4000);
   </script>

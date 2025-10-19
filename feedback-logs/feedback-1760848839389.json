@@ -1,0 +1,8 @@
+{
+  "type": "bug",
+  "subject": "Test bug",
+  "description": "Testing feedback system",
+  "email": "test@example.com",
+  "submitted_at": "2025-10-19T04:40:39.387Z",
+  "ip": "127.0.0.1"
+}

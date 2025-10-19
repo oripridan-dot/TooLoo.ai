@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Feedback - TooLoo.ai</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f1420, #121827);
+            color: #e8eef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 40px;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            color: #00e9b0;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #9fb0c6;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e8eef6;
+        }
+        .required {
+            color: #ff5c7c;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(0,0,0,0.3);
+            color: #e8eef6;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #00e9b0;
+            box-shadow: 0 0 0 3px rgba(0, 233, 176, 0.1);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #00e9b0;
+            color: #0f1420;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        button:hover:not(:disabled) {
+            background: #00d89f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 233, 176, 0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+        }
+        .status-success {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: block;
+        }
+        .status-error {
+            background: rgba(255, 92, 124, 0.1);
+            color: #ff5c7c;
+            border: 1px solid rgba(255, 92, 124, 0.3);
+            display: block;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #00e9b0;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .info-box {
+            background: rgba(0, 233, 176, 0.1);
+            border: 1px solid rgba(0, 233, 176, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #9fb0c6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Send Us Feedback</h1>
+        <p class="subtitle">Help us improve TooLoo.ai by reporting bugs, suggesting features, or sharing your experience.</p>
+
+        <div class="info-box">
+            <strong>✨ Tip:</strong> The more details you provide, the better we can help you. Include what you were trying to do when the issue occurred.
+        </div>
+
+        <form id="feedbackForm">
+            <div class="form-group">
+                <label>Type <span class="required">*</span></label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="radio" name="type" value="bug" required> 🐛 Bug Report
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="radio" name="type" value="feature"> 💡 Feature Request
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="radio" name="type" value="other"> 💬 Other
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Subject <span class="required">*</span></label>
+                <input type="text" id="subject" name="subject" placeholder="Brief title of your feedback" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description <span class="required">*</span></label>
+                <textarea id="description" name="description" placeholder="Please describe in detail. What happened? What did you expect? Any error messages?" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email (optional)</label>
+                <input type="email" id="email" name="email" placeholder="We'll contact you at this email if needed">
+            </div>
+
+            <div class="form-group">
+                <label>Information to Include <span class="required">*</span></label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="include_browser" checked> Browser/Device Info
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="include_timestamp" checked> Timestamp
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="include_url" checked> Current URL
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">Send Feedback</button>
+            <div id="statusMessage" class="status-message"></div>
+        </form>
+
+        <a href="/" class="back-link">← Back to Control Room</a>
+    </div>
+
+    <script>
+        const form = document.getElementById('feedbackForm');
+        const statusMessage = document.getElementById('statusMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = new FormData(form);
+            const feedback = {
+                type: formData.get('type'),
+                subject: formData.get('subject'),
+                description: formData.get('description'),
+                email: formData.get('email'),
+                timestamp: new Date().toISOString(),
+            };
+
+            // Add browser/device info if checked
+            if (formData.get('include_browser')) {
+                feedback.browser = navigator.userAgent;
+            }
+
+            // Add URL if checked
+            if (formData.get('include_url')) {
+                feedback.url = window.location.href;
+            }
+
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            statusMessage.className = 'status-message';
+            statusMessage.textContent = '';
+
+            try {
+                const response = await fetch('/api/v1/feedback/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(feedback)
+                });
+
+                if (response.ok) {
+                    // Success
+                    statusMessage.className = 'status-message status-success';
+                    statusMessage.textContent = '✅ Thank you! Your feedback has been received. We appreciate it!';
+                    form.reset();
+                    submitBtn.textContent = 'Send Feedback';
+                    submitBtn.disabled = false;
+                } else {
+                    throw new Error('Server returned an error');
+                }
+            } catch (error) {
+                // Error
+                statusMessage.className = 'status-message status-error';
+                statusMessage.textContent = '❌ Error sending feedback. Please try again or contact support.';
+                submitBtn.textContent = 'Send Feedback';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
