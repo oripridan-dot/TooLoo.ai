@@ -6,7 +6,11 @@
 
 **✅ URL IS FULLY VALID AND WORKING**
 
-When you visit, you might see a "tunnel password" page. **Just click "Click to Submit"** to proceed (or refresh the page). It's a localtunnel security notice, not a real blocker.
+Users land on an **interactive demo page** where they can:
+- Paste any conversation/email/chat
+- Click "Analyze" to see thinking patterns extracted
+- Try with a pre-loaded example
+- Share or explore more features
 
 ---
 
