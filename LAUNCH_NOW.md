@@ -1,6 +1,6 @@
 # 🚀 LAUNCH INSTRUCTIONS - Oct 19, 2025
 
-**PUBLIC URL:** https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+**PUBLIC URL:** https://tooloo2025.loca.lt
 
 ---
 
@@ -15,7 +15,7 @@ Show HN: TooLoo – Extract thinking patterns from any conversation using AI
 
 **URL:** 
 ```
-https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+https://tooloo2025.loca.lt
 ```
 
 **Text:**
@@ -37,46 +37,38 @@ Use cases:
 
 It's early beta but fully functional. Uses Claude + OpenAI under the hood. Would love feedback from the HN community.
 
-Try it free: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Try it free: https://tooloo2025.loca.lt
 ```
 
 ---
 
-## 🐦 TWITTER/X - POST THREAD NOW
+## 🐦 TWITTER/X - POST THREAD (280 chars max for free account)
 
 **Post 1:**
 ```
-Just shipped TooLoo.ai – a free tool that analyzes conversations to extract how people think.
+Just shipped TooLoo.ai – analyze conversations to understand how people actually think.
 
-Upload any conversation. Get instant insights into reasoning frameworks, decision patterns, problem-solving approaches.
+Paste email, chat, interview → get reasoning patterns & decision frameworks instantly.
 
-Think: "How does this person actually think?" Now you can know.
-
-🔗 https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Free to try: https://tooloo2025.loca.lt
 ```
 
-**Post 2 (Reply to Post 1):**
+**Post 2 (Reply):**
 ```
-Why this matters:
+Why it matters: Understanding *how* someone thinks is harder than what they know.
 
-Understanding thinking patterns is the #1 unmet need in knowledge work. ChatGPT is great but you need the *right* prompts to extract frameworks.
-
-TooLoo is purpose-built for this. Paste a conversation → get thinking patterns.
-
-It's like reverse-engineering someone's mental model.
+TooLoo extracts thinking patterns. It's like reverse-engineering someone's mental model.
 ```
 
-**Post 3 (Reply to Post 2):**
+**Post 3 (Reply):**
 ```
 Use cases:
-- Learn how great mentors think
-- Understand team collaboration patterns
-- Analyze customer needs (beyond what they say)
-- Self-reflect on your own reasoning
+• Learn from mentors
+• Understand team patterns
+• Analyze customer needs
+• Self-reflect
 
-Early beta, fully free. Built with Claude + OpenAI.
-
-Feedback welcome. Come try it: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Free beta. Built with Claude + OpenAI. Try it!
 ```
 
 ---
@@ -116,7 +108,7 @@ Hey r/MachineLearning! I built TooLoo.ai, a free tool that analyzes conversation
 
 The tool is live and fully functional. Would love feedback from this community on model selection, prompt effectiveness, and what insights you'd want to extract.
 
-Try it: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Try it: https://tooloo2025.loca.lt
 ```
 
 ---
@@ -147,7 +139,7 @@ Hey r/learnprogramming! Just launched TooLoo.ai – a free tool that analyzes co
 
 Built with Claude + OpenAI. Early beta but fully functional. Free to try.
 
-Check it out: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Check it out: https://tooloo2025.loca.lt
 
 Feedback welcome!
 ```
@@ -183,7 +175,7 @@ So I built TooLoo – paste a conversation, get instant insights into reasoning 
 
 Would love feedback on model selection, prompt effectiveness, and what patterns matter most to you.
 
-Try it free: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Try it free: https://tooloo2025.loca.lt
 ```
 
 ---
@@ -214,7 +206,7 @@ Built a free tool called TooLoo that analyzes conversations to extract thinking 
 
 Early beta, fully free. Would love your feedback.
 
-Try it: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Try it: https://tooloo2025.loca.lt
 ```
 
 ---
@@ -234,7 +226,7 @@ Try it: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
 
 ## 🎯 LIVE URL STATUS
 
-✅ **PUBLIC URL LIVE:** https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+✅ **PUBLIC URL LIVE:** https://tooloo2025.loca.lt
 
 **Verified endpoints:**
 - Root page ✅
