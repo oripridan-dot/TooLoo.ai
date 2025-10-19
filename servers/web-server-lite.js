@@ -20,8 +20,13 @@ app.use(express.json({ limit: '2mb' }));
 const webDir = path.join(process.cwd(), 'web-app');
 app.use(express.static(webDir));
 
-// Root route - serve Control Room
+// Root route - serve Demo/Landing page
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'demo.html'));
+});
+
+// Control Room access
+app.get('/control-room', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-home.html'));
 });
 
