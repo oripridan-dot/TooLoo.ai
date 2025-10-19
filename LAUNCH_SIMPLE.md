@@ -2,7 +2,7 @@
 
 ## PUBLIC URL (READY)
 
-### https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+### https://tooloo2025.loca.lt
 
 **Note:** When you visit, you'll see a "tunnel password" page. Just **click the "Click to Submit" button** to proceed. It's a Cloudflare security notice, not a real password gate.
 
@@ -18,7 +18,7 @@ Just shipped TooLoo.ai - analyze conversations to understand how people think.
 
 Paste email/chat → get reasoning patterns instantly.
 
-Try: https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+Try: https://tooloo2025.loca.lt
 ```
 
 ### Tweet 2 (Reply to Tweet 1):
@@ -52,7 +52,7 @@ Show HN: TooLoo – Extract thinking patterns from conversations
 
 **URL:**
 ```
-https://frequently-alternatives-tourism-mainstream.trycloudflare.com
+https://tooloo2025.loca.lt
 ```
 
 **Text:**
@@ -78,7 +78,7 @@ See `/workspaces/TooLoo.ai/LAUNCH_NOW.md` for:
 
 ## ✅ TODAY'S CHECKLIST
 
-- [ ] Visit https://frequently-alternatives-tourism-mainstream.trycloudflare.com (click through password page)
+- [ ] Visit https://tooloo2025.loca.lt (click through password page)
 - [ ] Post to Hacker News (copy Title + URL + Text above)
 - [ ] Tweet 3 posts on X/Twitter (use posts above)
 - [ ] Post 4 Reddit submissions (from LAUNCH_NOW.md)
