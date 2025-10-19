@@ -1,10 +1,11 @@
 // Lightweight web server for Render free tier
-// Serves static assets only, no heavy dependencies
+// Serves static assets + referral API
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import ReferralSystem from '../referral-system.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +75,68 @@ app.post('/api/v1/feedback/submit', (req, res) => {
     res.json({ ok: true, message: 'Feedback received', feedbackId: Date.now() });
   } catch (error) {
     console.error('Feedback error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Referral System API
+const referralSystem = new ReferralSystem();
+
+// Create referral code for user
+app.post('/api/v1/referral/create', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const result = await referralSystem.createReferral(userId);
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error('Referral create error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Redeem referral code
+app.post('/api/v1/referral/redeem', async (req, res) => {
+  try {
+    const { code, newUserId } = req.body;
+    const result = await referralSystem.redeemCode(code, newUserId);
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error('Referral redeem error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Get leaderboard
+app.get('/api/v1/referral/leaderboard', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+    const leaderboard = await referralSystem.getLeaderboard(limit);
+    res.json({ ok: true, leaderboard });
+  } catch (error) {
+    console.error('Leaderboard error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Get program stats
+app.get('/api/v1/referral/stats', async (req, res) => {
+  try {
+    const stats = await referralSystem.getStats();
+    res.json({ ok: true, ...stats });
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Get user's referral data
+app.get('/api/v1/referral/me', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const data = await referralSystem.getUserReferralData(userId);
+    res.json({ ok: true, ...data });
+  } catch (error) {
+    console.error('User referral data error:', error);
     res.status(500).json({ ok: false, error: error.message });
   }
 });
