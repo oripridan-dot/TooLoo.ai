@@ -231,10 +231,92 @@ app.get('/api/v1/segmentation/demo', async (req, res) => {
   }
 });
 
+// Phase 2: Cohort Discovery Endpoint
+// POST /api/v1/segmentation/cohorts
+// Input: { userConversationMap: { userId: [conversations] } }
+// Output: Array of cohorts with traits and user assignments
+app.post('/api/v1/segmentation/cohorts', async (req, res) => {
+  try {
+    const { userConversationMap } = req.body;
+    
+    if (!userConversationMap || typeof userConversationMap !== 'object') {
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing or invalid userConversationMap'
+      });
+    }
+
+    // Dynamically import cohort analyzer
+    const cohortAnalyzer = await import('../engine/cohort-analyzer.js');
+    
+    const cohorts = await cohortAnalyzer.discoverCohorts(userConversationMap);
+    
+    res.json({
+      ok: true,
+      cohorts,
+      metadata: {
+        totalCohorts: cohorts.length,
+        totalUsers: Object.keys(userConversationMap).length,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('[segmentation] Cohort discovery error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// GET /api/v1/segmentation/cohorts
+// Retrieve persisted cohorts from Phase 2 infrastructure
+app.get('/api/v1/segmentation/cohorts', async (req, res) => {
+  try {
+    const cohortAnalyzer = await import('../engine/cohort-analyzer.js');
+    const allCohorts = await cohortAnalyzer.getAllCohorts();
+    
+    res.json({
+      ok: true,
+      cohorts: allCohorts,
+      metadata: {
+        totalCohorts: allCohorts.length,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('[segmentation] Cohort retrieval error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// GET /api/v1/segmentation/cohorts/:userId
+// Get the cohort for a specific user
+app.get('/api/v1/segmentation/cohorts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const cohortAnalyzer = await import('../engine/cohort-analyzer.js');
+    const userCohort = await cohortAnalyzer.getUserCohort(userId);
+    
+    if (!userCohort) {
+      return res.status(404).json({
+        ok: false,
+        error: `User ${userId} not assigned to any cohort`
+      });
+    }
+    
+    res.json({
+      ok: true,
+      cohort: userCohort,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[segmentation] User cohort lookup error:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`🧩 Segmentation Server running on http://127.0.0.1:${PORT}`);
-  console.log(`📊 Endpoints: /api/v1/segmentation/{analyze,status,configure,demo}`);
+  console.log(`📊 Endpoints: /api/v1/segmentation/{analyze,status,configure,demo,cohorts}`);
 });
 
 // Graceful shutdown
