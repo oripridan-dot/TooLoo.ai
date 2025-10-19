@@ -1,0 +1,15 @@
+r/MachineLearning:
+Title: TooLoo – Extract thinking patterns from conversations
+Text: Built TooLoo.ai – upload conversations, get thinking patterns & mental models. Understand how people prioritize, problem-solve, and make decisions. Free to try: https://neat-mayfly-54.loca.lt
+
+r/learnprogramming:
+Title: Use conversations to understand reasoning patterns (TooLoo)
+Text: Want to see how mentors or interviewers think? Paste a chat and get structured insights. Free beta: https://neat-mayfly-54.loca.lt
+
+r/OpenAI:
+Title: TooLoo – extract mental models from conversations
+Text: Built TooLoo.ai, uses Claude + OpenAI to summarize thinking styles from chats. Try it: https://neat-mayfly-54.loca.lt
+
+r/productivity:
+Title: Analyze how your team makes decisions using TooLoo
+Text: Paste Slack threads to reveal how your team prioritizes and solves problems. Free beta: https://neat-mayfly-54.loca.lt
