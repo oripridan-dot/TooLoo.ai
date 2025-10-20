@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import BudgetManager from '../engine/budget-manager.js';
+import CostCalculator from '../engine/cost-calculator.js';
 import { getProviderStatus, generateSmartLLM } from '../engine/llm-provider.js';
 import environmentHub from '../engine/environment-hub.js';
 
@@ -10,7 +11,9 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 const budget = new BudgetManager({ limit: Number(process.env.DAILY_BUDGET_LIMIT || 5.0) });
+const costCalc = new CostCalculator(); // Phase 3: Cost-aware optimization
 environmentHub.registerComponent('budgetManager', budget, ['budget-management', 'provider-orchestration']);
+environmentHub.registerComponent('costCalculator', costCalc, ['cost-tracking', 'roi-analysis']);
 
 // Mutable provider policy for quick tuning
 const providerPolicy = {
@@ -122,6 +125,165 @@ app.get('/api/v1/providers/recommend', (req, res) => {
     if (!available.length) return res.json({ ok: false, error: 'No providers available' });
     const sorted = available.sort((a, b) => (budget.getProviderCost(a[0]) - budget.getProviderCost(b[0])));
     res.json({ ok: true, recommended: sorted[0][0], cost: budget.getProviderCost(sorted[0][0]) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ============================================================================
+// PHASE 3: COST-AWARE OPTIMIZATION ENDPOINTS
+// ============================================================================
+
+/**
+ * GET /api/v1/budget/policy/:cohortId
+ * Returns budget policy and cost metrics for a cohort
+ */
+app.get('/api/v1/budget/policy/:cohortId', (req, res) => {
+  try {
+    const cohortId = req.params.cohortId;
+    const metrics = costCalc.getMetrics(cohortId);
+    
+    res.json({
+      ok: true,
+      cohortId,
+      budgetPolicy: {
+        monthlyBudget: 10000,
+        dailyBudget: 350,
+        costPerCapabilityTarget: 100 // Phase 3 target: down from 200+
+      },
+      metrics,
+      providerRecommendations: costCalc.getProviderEfficiency(),
+      efficiencyGain: costCalc.getEfficiencyGain(cohortId),
+      suggestedPolicy: costCalc.suggestBudgetPolicy(cohortId, metrics)
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/budget/can-afford
+ * Check if cohort can afford a workflow
+ */
+app.post('/api/v1/budget/can-afford', (req, res) => {
+  try {
+    const { cohortId, provider, estimatedCost } = req.body || {};
+    
+    if (!cohortId) {
+      return res.status(400).json({ ok: false, error: 'cohortId required' });
+    }
+
+    const metrics = costCalc.getMetrics(cohortId);
+    const cost = estimatedCost || costCalc.getProviderCost(provider || 'ollama');
+    const canAfford = cost <= metrics.budgetRemaining;
+    
+    res.json({
+      ok: true,
+      cohortId,
+      canAfford,
+      cost,
+      budgetRemaining: metrics.budgetRemaining,
+      budgetUtilization: metrics.budgetUtilization,
+      recommendation: canAfford 
+        ? 'Proceed with workflow' 
+        : `Budget insufficient. Consider cheaper provider: ${costCalc.findCheaperAlternative({ provider }, metrics.budgetRemaining)?.provider || 'ollama'}`
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/budget/record-workflow
+ * Record a workflow execution and update cost metrics
+ */
+app.post('/api/v1/budget/record-workflow', (req, res) => {
+  try {
+    const { cohortId, workflowId, provider, cost, capabilityGain } = req.body || {};
+    
+    if (!cohortId || !workflowId) {
+      return res.status(400).json({ ok: false, error: 'cohortId and workflowId required' });
+    }
+
+    const actualCost = cost || costCalc.getProviderCost(provider || 'ollama');
+    costCalc.recordWorkflow(cohortId, workflowId, provider || 'ollama', actualCost, capabilityGain || 1);
+    
+    const metrics = costCalc.getMetrics(cohortId);
+    res.json({
+      ok: true,
+      recorded: true,
+      cohortId,
+      workflowId,
+      metrics
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/budget/metrics/:cohortId
+ * Get detailed cost and efficiency metrics for a cohort
+ */
+app.get('/api/v1/budget/metrics/:cohortId', (req, res) => {
+  try {
+    const cohortId = req.params.cohortId;
+    const metrics = costCalc.getMetrics(cohortId);
+    const efficiencyGain = costCalc.getEfficiencyGain(cohortId);
+    
+    res.json({
+      ok: true,
+      cohortId,
+      metrics,
+      efficiencyGain: `${efficiencyGain}x improvement from baseline`,
+      providerDistribution: metrics.providerDistribution,
+      costPerCapability: metrics.costPerCapability.toFixed(2),
+      budgetUtilization: `${metrics.budgetUtilization}%`
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/budget/rank-by-roi
+ * Rank workflows by ROI (cost-aware)
+ */
+app.post('/api/v1/budget/rank-by-roi', (req, res) => {
+  try {
+    const { workflows = [], cohortId } = req.body || {};
+    
+    const ranked = costCalc.rankByROI(workflows);
+    const metrics = cohortId ? costCalc.getMetrics(cohortId) : null;
+    
+    // Filter by budget if cohortId provided
+    const affordable = metrics 
+      ? costCalc.filterAffordable(ranked, metrics.budgetRemaining)
+      : ranked;
+    
+    res.json({
+      ok: true,
+      total: workflows.length,
+      ranked: ranked.slice(0, 10), // Top 10
+      affordable: affordable.slice(0, 10),
+      budgetRemaining: metrics?.budgetRemaining || 'unknown'
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/budget/export
+ * Export all cost and efficiency data for dashboard
+ */
+app.get('/api/v1/budget/export', (req, res) => {
+  try {
+    const data = costCalc.export();
+    res.json({
+      ok: true,
+      ...data
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
