@@ -55,6 +55,7 @@
     "qa:coach": "node tests/integration/coach-server.integration.test.js",
     "qa:e2e": "node tests/e2e/complete-workflows.test.js",
     "qa:cup": "node tests/integration/cup-server.integration.test.js",
+    "qa:product": "node tests/integration/product-dev-server.integration.test.js",
     "test:segmenter": "node datasets/benchmarks/scripts/segmenter-harness.js",
     "test:patterns": "node datasets/benchmarks/scripts/pattern-extraction-harness.js",
     "test:traits": "node datasets/benchmarks/scripts/trait-synthesis-harness.js",
