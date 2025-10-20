@@ -134,6 +134,22 @@ class ProductDevelopmentServer {
       console.log(`📡 ${req.method} ${req.path} - ${new Date().toISOString()}`);
       next();
     });
+
+    // Object-Level Authorization (OLA) middleware
+    // Prevents BOLA vulnerabilities by checking user ownership
+    this.app.use((req, res, next) => {
+      // Extract user ID from header (for testing and client code)
+      const userId = req.headers['x-user-id'] || req.query.userId || 'default-user';
+      req.userId = userId;
+      
+      // Attach ownership check function to request
+      req.checkOwnership = (resourceOwnerId) => {
+        if (!resourceOwnerId) return true; // No owner set, allow
+        return resourceOwnerId === userId;
+      };
+      
+      next();
+    });
   }
 
   setupRoutes() {

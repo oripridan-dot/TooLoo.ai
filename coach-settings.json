@@ -13,5 +13,8 @@
     "enabled": true,
     "weight": 2
   },
-  "microBatchesPerTick": 4
+  "microBatchesPerTick": 4,
+  "autoBoostEnabled": true,
+  "boostInterval": -100,
+  "targetMastery": 85
 }

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo.ai Workstation - Control Room v2</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid #00d4ff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #00d4ff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 20px;
+      font-size: 12px;
+      color: #00d4ff;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: #00ff88;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    /* Main Container */
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr 1.2fr;
+      gap: 12px;
+      padding: 12px;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* Panel Styles */
+    .panel {
+      background: rgba(30, 30, 50, 0.9);
+      border: 1px solid #00d4ff;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+    }
+
+    .panel-header {
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid #00d4ff;
+      padding: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #00d4ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    /* Scrollbar */
+    .panel-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .panel-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .panel-content::-webkit-scrollbar-thumb {
+      background: #00d4ff;
+      border-radius: 3px;
+    }
+
+    .panel-content::-webkit-scrollbar-thumb:hover {
+      background: #00ff88;
+    }
+
+    /* Task Board Panel */
+    #taskBoard {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .task-item {
+      background: rgba(0, 212, 255, 0.05);
+      border: 1px solid #00d4ff;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .task-item:hover {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: #00ff88;
+    }
+
+    .task-title {
+      font-weight: 600;
+      color: #00ff88;
+      margin-bottom: 4px;
+    }
+
+    .task-type {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      margin-right: 6px;
+    }
+
+    .task-status {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 6px;
+    }
+
+    .task-status.pending {
+      background: #ffa500;
+    }
+
+    .task-status.running {
+      background: #00d4ff;
+      animation: pulse 1s infinite;
+    }
+
+    .task-status.complete {
+      background: #00ff88;
+    }
+
+    .task-status.failed {
+      background: #ff0055;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .task-metrics {
+      font-size: 11px;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    /* Chat Panel */
+    #chatPanel {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .message.user {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 3px solid #00d4ff;
+      margin-left: 10px;
+    }
+
+    .message.system {
+      background: rgba(0, 255, 136, 0.1);
+      border-left: 3px solid #00ff88;
+    }
+
+    .message.status {
+      background: rgba(255, 165, 0, 0.1);
+      border-left: 3px solid #ffa500;
+      font-size: 11px;
+    }
+
+    .message-author {
+      font-weight: 700;
+      color: #00d4ff;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #00d4ff;
+      border-radius: 4px;
+      color: #e0e0e0;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: #00ff88;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+
+    .send-btn {
+      background: #00d4ff;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 12px;
+    }
+
+    .send-btn:hover {
+      background: #00ff88;
+      transform: translateY(-2px);
+    }
+
+    /* Context Panel */
+    #contextPanel {
+      grid-column: 3;
+      grid-row: 1;
+    }
+
+    .context-section {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #00d4ff;
+      padding-bottom: 10px;
+    }
+
+    .context-section:last-child {
+      border-bottom: none;
+    }
+
+    .context-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #00ff88;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .context-value {
+      font-size: 11px;
+      color: #00d4ff;
+      word-break: break-word;
+    }
+
+    .intent-badge {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.2);
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .dag-summary {
+      background: rgba(0, 212, 255, 0.05);
+      border: 1px solid #00d4ff;
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .dag-stat {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+      color: #00d4ff;
+    }
+
+    .dag-stat-label {
+      opacity: 0.7;
+    }
+
+    .dag-stat-value {
+      font-weight: 700;
+      color: #00ff88;
+    }
+
+    /* Artifacts Panel */
+    #artifactsPanel {
+      grid-column: 4;
+      grid-row: 1;
+    }
+
+    .artifact-item {
+      background: rgba(0, 212, 255, 0.05);
+      border: 1px solid #00d4ff;
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      transition: all 0.3s ease;
+    }
+
+    .artifact-item:hover {
+      background: rgba(0, 212, 255, 0.15);
+    }
+
+    .artifact-title {
+      font-weight: 700;
+      color: #00ff88;
+      margin-bottom: 4px;
+    }
+
+    .artifact-type {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.3);
+      color: #00d4ff;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-size: 9px;
+      margin-right: 4px;
+    }
+
+    .artifact-version {
+      color: #888;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .artifact-confidence {
+      display: inline-block;
+      margin-left: 4px;
+      font-weight: 700;
+    }
+
+    .confidence-high {
+      color: #00ff88;
+    }
+
+    .confidence-med {
+      color: #ffa500;
+    }
+
+    .confidence-low {
+      color: #ff0055;
+    }
+
+    /* Status Indicator */
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: rgba(0, 212, 255, 0.2);
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00ff88;
+    }
+
+    /* DAG Visualization */
+    #dagVisualization {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      margin: 8px 0;
+      padding: 8px;
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #888;
+    }
+
+    .dag-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-small {
+      background: rgba(0, 212, 255, 0.3);
+      color: #00d4ff;
+      border: 1px solid #00d4ff;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-small:hover {
+      background: #00d4ff;
+      color: #1a1a2e;
+    }
+
+    /* Responsive */
+    @media (max-width: 1600px) {
+      .main-container {
+        grid-template-columns: 0.8fr 1.5fr 0.8fr 1fr;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+      }
+
+      #taskBoard { grid-column: 1; grid-row: 1; }
+      #chatPanel { grid-column: 1; grid-row: 2; }
+      #contextPanel { grid-column: 1; grid-row: 3; }
+      #artifactsPanel { grid-column: 1; grid-row: 4; }
+    }
+
+    /* Loading animation */
+    .loading {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Confidence bar */
+    .confidence-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff0055, #ffa500, #00ff88);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* Stream animation */
+    .streaming {
+      position: relative;
+    }
+
+    .streaming::after {
+      content: '▌';
+      animation: stream 0.6s infinite;
+      color: #00d4ff;
+    }
+
+    @keyframes stream {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">⚡ TooLoo.ai Workstation</div>
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-label">Intent:</span>
+        <span class="stat-value" id="intentCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Tasks:</span>
+        <span class="stat-value" id="taskCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Confidence:</span>
+        <span class="stat-value" id="avgConfidence">--</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Artifacts:</span>
+        <span class="stat-value" id="artifactCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="status-indicator">
+          <span class="status-dot"></span>
+          <span id="systemStatus">Ready</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Panel 1: Task Board -->
+    <div class="panel" id="taskBoard">
+      <div class="panel-header">
+        📋 Task Board
+        <span id="taskBoardStatus">(0)</span>
+      </div>
+      <div class="panel-content" id="taskBoardContent">
+        <div style="color: #888; font-size: 12px; text-align: center; margin-top: 20px;">
+          No DAG loaded. Start a prompt to see tasks.
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Chat -->
+    <div class="panel" id="chatPanel">
+      <div class="panel-header">💬 Chat & Results</div>
+      <div class="chat-container">
+        <div class="messages" id="messageList">
+          <div class="message system">
+            <div class="message-author">System</div>
+            <div>Workstation ready. Type a prompt or load an intent.</div>
+          </div>
+        </div>
+        <div class="input-area">
+          <input 
+            type="text" 
+            class="chat-input" 
+            id="chatInput" 
+            placeholder="Enter prompt... (e.g., 'Build auth system with tests')"
+            autocomplete="off"
+          >
+          <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Context -->
+    <div class="panel" id="contextPanel">
+      <div class="panel-header">⚙️ Context & Settings</div>
+      <div class="panel-content" id="contextContent">
+        <div class="context-section">
+          <div class="context-title">Current Intent</div>
+          <div id="currentIntentDisplay" class="context-value">None</div>
+        </div>
+
+        <div class="context-section">
+          <div class="context-title">DAG Info</div>
+          <div id="dagInfoDisplay" class="dag-summary">
+            <div class="dag-stat">
+              <span class="dag-stat-label">Nodes:</span>
+              <span class="dag-stat-value">--</span>
+            </div>
+            <div class="dag-stat">
+              <span class="dag-stat-label">Depth:</span>
+              <span class="dag-stat-value">--</span>
+            </div>
+            <div class="dag-stat">
+              <span class="dag-stat-label">Est Time:</span>
+              <span class="dag-stat-value">--</span>
+            </div>
+            <div class="dag-stat">
+              <span class="dag-stat-label">Est Cost:</span>
+              <span class="dag-stat-value">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="context-section">
+          <div class="context-title">Execution Mode</div>
+          <div class="controls">
+            <button class="btn-small" id="fastLaneBtn">⚡ Fast</button>
+            <button class="btn-small" id="focusLaneBtn">🎯 Focus</button>
+            <button class="btn-small" id="auditLaneBtn">🔍 Audit</button>
+          </div>
+        </div>
+
+        <div class="context-section">
+          <div class="context-title">Provider Priority</div>
+          <div class="context-value" style="font-size: 10px;">
+            Ollama → Claude → GPT-4
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 4: Artifacts -->
+    <div class="panel" id="artifactsPanel">
+      <div class="panel-header">
+        📦 Artifacts
+        <span id="artifactPanelCount">(0)</span>
+      </div>
+      <div class="panel-content" id="artifactsList">
+        <div style="color: #888; font-size: 12px; text-align: center; margin-top: 20px;">
+          No artifacts yet.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script src="js/workstation-ui.js"></script>
+</body>
+</html>

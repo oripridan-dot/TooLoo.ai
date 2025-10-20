@@ -13,7 +13,35 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.WEB_PORT || 3000;
-app.use(cors());
+
+// CORS whitelist configuration - restrict to known origins
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allowed origins (localhost + production domains)
+    const allowedOrigins = [
+      'http://127.0.0.1:3000',
+      'http://localhost:3000',
+      'http://127.0.0.1:3001',
+      'http://localhost:3001',
+      'http://localhost',
+      'http://127.0.0.1',
+      'https://tooloo.ai',
+      'https://www.tooloo.ai',
+    ];
+    
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS policy'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 
 // Static web assets

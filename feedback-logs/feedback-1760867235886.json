@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-10-19T09:47:15.886Z",
+  "type": "demo",
+  "subject": "Thinking Pattern Analysis",
+  "description": "Manager: We're getting performance complaints. What's your approach?\n\nEngineer: First, let me understand the scope. Are we talking about latency, throughput, or both? On which operations? I'd pull metrics from production, profile the hot spots, then analyze three angles: can we optimize within current architecture? Can we add caching layers? Or do we need fundamental redesign?\n\nManager: Timeline is tight. How do you prioritize?\n\nEngineer: I separate the work into: quick wins (30% improvement in 1 day), medium-term (60% in a week), and long-term redesign (80%+ in a month). I'd tackle quick wins first - maybe optimize N+1 queries, add Redis caching for hot data, batch certain operations. That buys time while we design the real solution.\n\nManager: How confident are you in these estimates?\n\nEngineer: Based on similar past work, I'm pretty confident about quick wins. The 60% and 80% targets depend on what the profiling shows. That's why the first step - actually measuring - is crucial. I can't optimize blind.\n\nManager: What if we're wrong about what's slow?\n\nEngineer: Exactly why we profile first. I've learned that assumptions about performance are usually wrong. The bottleneck is rarely where people guess. Once we measure, we'll know exactly where to focus.",
+  "email": "demo@tooloo.ai",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+}
