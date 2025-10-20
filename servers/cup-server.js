@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import ConfidenceScorer from '../engine/confidence-scorer.js';
+import CostCalculator from '../engine/cost-calculator.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
@@ -14,6 +15,9 @@ const scorer = new ConfidenceScorer({
   maxRetriesPerNode: Number(process.env.CUP_MAX_RETRIES || 2),
   ensembleMergeThreshold: Number(process.env.CUP_ENSEMBLE_THRESHOLD || 0.65)
 });
+
+// Phase 3: Initialize cost calculator for ROI-based tournament ranking
+const costCalc = new CostCalculator();
 
 // Health
 app.get('/health', (req,res)=> res.json({ ok:true, server:'cup', time:new Date().toISOString() }));
@@ -229,6 +233,107 @@ app.get('/api/v1/cup/stats', (req,res)=>{
     };
     
     res.json({ ok: true, stats });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ============================================================================
+// PHASE 3: COST-AWARE TOURNAMENT RANKING
+// ============================================================================
+
+/**
+ * POST /api/v1/cup/cost-aware-tournament
+ * Rank workflows by ROI (capability value / provider cost) with efficiency bonuses
+ * 
+ * Payload:
+ * {
+ *   workflows: [
+ *     { id, provider, expectedGain, cost },
+ *     ...
+ *   ],
+ *   cohortId: "cohort-001",
+ *   budgetRemaining: 1000
+ * }
+ */
+app.post('/api/v1/cup/cost-aware-tournament', (req, res) => {
+  try {
+    const { workflows = [], cohortId, budgetRemaining } = req.body || {};
+    
+    if (!workflows || workflows.length === 0) {
+      return res.status(400).json({ ok: false, error: 'workflows array required' });
+    }
+    
+    // Rank by ROI
+    const ranked = costCalc.rankByROI(workflows);
+    
+    // Filter by budget if available
+    const affordable = budgetRemaining 
+      ? costCalc.filterAffordable(ranked, budgetRemaining)
+      : ranked;
+    
+    // Get provider efficiency stats
+    const providerStats = costCalc.getProviderEfficiency(ranked);
+    
+    res.json({
+      ok: true,
+      cohortId: cohortId || 'unknown',
+      totalWorkflows: workflows.length,
+      affordableWorkflows: affordable.length,
+      budgetRemaining,
+      ranked: ranked.slice(0, 20), // Top 20
+      affordable: affordable.slice(0, 10), // Top 10 affordable
+      winner: ranked.length > 0 ? ranked[0] : null,
+      winnerROI: ranked.length > 0 ? ranked[0].weightedROI.toFixed(2) : 0,
+      providerStats: providerStats.slice(0, 5),
+      recommendation: affordable.length > 0 
+        ? `Execute ${affordable[0].id || 'top workflow'} using ${affordable[0].provider}`
+        : 'Insufficient budget for any workflow'
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/cup/suggest-provider
+ * Suggest cheapest provider for a workflow given budget constraints
+ * 
+ * Payload:
+ * {
+ *   workflowId: "wf-001",
+ *   expectedGain: 0.8,
+ *   budgetRemaining: 50
+ * }
+ */
+app.post('/api/v1/cup/suggest-provider', (req, res) => {
+  try {
+    const { workflowId, expectedGain = 0.5, budgetRemaining = 1000 } = req.body || {};
+    
+    // Create synthetic workflows for each provider
+    const providerWorkflows = Object.keys(costCalc.providers).map(provider => ({
+      id: `${workflowId}-${provider}`,
+      provider,
+      expectedGain
+    }));
+    
+    // Rank by ROI
+    const ranked = costCalc.rankByROI(providerWorkflows);
+    const affordable = costCalc.filterAffordable(ranked, budgetRemaining);
+    
+    res.json({
+      ok: true,
+      workflowId,
+      budgetRemaining,
+      recommended: affordable.length > 0 ? affordable[0].provider : 'ollama',
+      alternatives: affordable.slice(0, 3).map(wf => ({
+        provider: wf.provider,
+        cost: wf.cost,
+        roi: wf.roi.toFixed(2),
+        efficiency: wf.costTier
+      })),
+      cheapest: ranked.length > 0 ? ranked[0].provider : 'ollama'
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
