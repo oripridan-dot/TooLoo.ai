@@ -18,6 +18,7 @@ import fetch from 'node-fetch';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { generateSmartLLM, getProviderStatus } from '../engine/llm-provider.js';
+import CostCalculator from '../engine/cost-calculator.js';
 
 const app = express();
 const PORT = process.env.REPORTS_PORT || 3008;
@@ -25,6 +26,9 @@ const PORT = process.env.REPORTS_PORT || 3008;
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Phase 3: Cost tracking
+const costCalc = new CostCalculator();
 
 // Service URLs
 const SERVICES = {
@@ -880,10 +884,117 @@ app.get('/api/v1/reports/critiques/analysis', async (req, res) => {
   }
 });
 
+// ============================================================================
+// PHASE 3: BUDGET & COST EFFICIENCY DASHBOARD
+// ============================================================================
+
+/**
+ * GET /api/v1/reports/budget-dashboard/:cohortId
+ * Display cost efficiency metrics, budget utilization, and provider performance
+ */
+app.get('/api/v1/reports/budget-dashboard/:cohortId', async (req, res) => {
+  try {
+    const cohortId = req.params.cohortId || 'default';
+    
+    // Fetch budget metrics from budget-server if available
+    const budgetMetrics = await fetchService('budget', `/api/v1/budget/metrics/${cohortId}`);
+    const metrics = budgetMetrics?.metrics || costCalc.getMetrics(cohortId);
+    
+    // Get policy
+    const policy = await fetchService('budget', `/api/v1/budget/policy/${cohortId}`);
+    
+    res.json({
+      ok: true,
+      cohortId,
+      title: `Budget & Cost Efficiency Dashboard - ${cohortId}`,
+      timestamp: new Date().toISOString(),
+      budgetStatus: {
+        totalBudget: 10000,
+        spent: metrics.totalSpent || 0,
+        remaining: metrics.budgetRemaining || 10000,
+        utilizationPercent: metrics.budgetUtilization || 0,
+        status: (metrics.budgetUtilization || 0) > 90 ? 'at-capacity' : 
+                (metrics.budgetUtilization || 0) > 70 ? 'high-usage' :
+                (metrics.budgetUtilization || 0) > 30 ? 'moderate' : 'low-usage'
+      },
+      costMetrics: {
+        costPerCapability: (metrics.costPerCapability || 0).toFixed(2),
+        baseline: 200,
+        efficiencyGain: metrics.costPerCapability > 0 
+          ? (200 / metrics.costPerCapability).toFixed(2)
+          : '∞',
+        avgCostPerWorkflow: (metrics.avgCostPerWorkflow || 0).toFixed(4),
+        capabilitiesActivated: metrics.capabilitiesActivated || 0,
+        workflowsExecuted: metrics.workflowsExecuted || 0
+      },
+      providerBreakdown: Object.entries(metrics.providerDistribution || {})
+        .map(([provider, data]) => ({
+          provider,
+          count: data.count,
+          spent: data.spent.toFixed(4),
+          percentage: metrics.totalSpent > 0 
+            ? (((data.spent / metrics.totalSpent) * 100).toFixed(1))
+            : 0
+        }))
+        .sort((a, b) => parseFloat(b.spent) - parseFloat(a.spent)),
+      providerRecommendations: policy?.providerRecommendations?.slice(0, 3) || [],
+      suggestedOptimizations: [
+        metrics.budgetUtilization > 80 
+          ? 'Approaching budget limit - switch to cheaper providers or reduce scope'
+          : 'Budget on track',
+        metrics.costPerCapability > 150
+          ? 'Cost per capability is high - consider using free/cheap providers'
+          : metrics.costPerCapability < 100
+          ? 'Excellent cost efficiency - maintain current provider mix'
+          : 'Cost per capability is moderate - slight optimization possible',
+        metrics.providerCount < 2
+          ? 'Limited provider diversity - reduce lock-in by using multiple providers'
+          : 'Good provider diversity'
+      ],
+      nextSteps: [
+        'Review provider efficiency rankings',
+        'Consider workflow reordering by ROI',
+        'Evaluate budget allocation per cohort'
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/reports/cost-efficiency
+ * System-wide cost efficiency overview
+ */
+app.get('/api/v1/reports/cost-efficiency', async (req, res) => {
+  try {
+    const data = costCalc.export();
+    
+    res.json({
+      ok: true,
+      title: 'System-Wide Cost Efficiency Report',
+      timestamp: new Date().toISOString(),
+      providers: data.providers,
+      cohortMetrics: data.cohortMetrics,
+      systemMetrics: {
+        totalCohorts: Object.keys(data.cohortMetrics).length,
+        totalSpent: Object.values(data.cohortMetrics).reduce((sum, m) => sum + m.totalSpent, 0),
+        totalCapabilitiesActivated: Object.values(data.cohortMetrics).reduce((sum, m) => sum + m.capabilitiesActivated, 0),
+        avgCostPerCapability: Object.values(data.cohortMetrics).length > 0
+          ? (Object.values(data.cohortMetrics).reduce((sum, m) => sum + (m.costPerCapability || 0), 0) / Object.values(data.cohortMetrics).length).toFixed(2)
+          : 0
+      },
+      providerStats: data.providerStats
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`📊 Advanced Reporting Server running on http://127.0.0.1:${PORT}`);
-  console.log(`📈 Endpoints: /api/v1/reports/{comprehensive,evolution,capabilities,dashboard}`);
+  console.log(`📈 Endpoints: /api/v1/reports/{comprehensive,evolution,capabilities,dashboard,budget-dashboard}`);
 });
 
 // Graceful shutdown
