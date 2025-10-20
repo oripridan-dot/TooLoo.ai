@@ -57,6 +57,8 @@
     "qa:cup": "node tests/integration/cup-server.integration.test.js",
     "qa:product": "node tests/integration/product-dev-server.integration.test.js",
     "qa:capabilities": "node tests/integration/capabilities-server.integration.test.js",
+    "qa:segmentation": "node tests/integration/segmentation-server.integration.test.js",
+    "qa:reports": "node tests/integration/reports-server.integration.test.js",
     "test:segmenter": "node datasets/benchmarks/scripts/segmenter-harness.js",
     "test:patterns": "node datasets/benchmarks/scripts/pattern-extraction-harness.js",
     "test:traits": "node datasets/benchmarks/scripts/trait-synthesis-harness.js",
