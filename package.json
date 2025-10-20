@@ -59,6 +59,8 @@
     "qa:capabilities": "node tests/integration/capabilities-server.integration.test.js",
     "qa:segmentation": "node tests/integration/segmentation-server.integration.test.js",
     "qa:reports": "node tests/integration/reports-server.integration.test.js",
+    "test:performance": "node tests/performance/baselines.test.js",
+    "test:security": "node tests/security/injection-and-auth.test.js",
     "test:segmenter": "node datasets/benchmarks/scripts/segmenter-harness.js",
     "test:patterns": "node datasets/benchmarks/scripts/pattern-extraction-harness.js",
     "test:traits": "node datasets/benchmarks/scripts/trait-synthesis-harness.js",
