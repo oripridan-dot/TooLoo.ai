@@ -66,6 +66,8 @@
     "test:traits": "node datasets/benchmarks/scripts/trait-synthesis-harness.js",
     "health": "node scripts/tooloo.js health",
     "docs": "node scripts/tooloo.js docs",
+    "qa:gates": "node scripts/validate-quality-gates.js",
+    "qa:gates:strict": "node scripts/validate-quality-gates.js --strict",
     "lint": "eslint .",
     "format": "prettier --write .",
     "local:start": "bash scripts/setup-local-macos.sh",
