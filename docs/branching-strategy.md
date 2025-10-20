@@ -1,7 +1,7 @@
 # TooLoo.ai Branching Strategy
 
 ## 🎯 Purpose
-Standardise how every capability graduates into a sellable product while keeping the network deployable, auditable, and performance-safe.
+Standardize how every capability graduates into a sellable product while keeping the network deployable, auditable, and performance-safe.
 
 ## 🌿 Branch Portfolio
 | Branch | Purpose | Base | Naming | Merge Target |
