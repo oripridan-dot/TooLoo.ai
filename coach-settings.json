@@ -1,19 +1,19 @@
 {
   "minAvgMastery": 75,
   "maxBelow80": 4,
-  "intervalMs": 600,
+  "intervalMs": 800,
   "maxRoundsPerCycle": 8,
   "aggressiveMode": true,
   "aggressiveThreshold": 80,
   "aggressiveMultiplier": 5,
   "hyperMode": true,
   "parallelDomains": 6,
-  "batchSize": 4,
+  "batchSize": 3,
   "fastLane": {
     "enabled": true,
-    "weight": 2
+    "weight": 3
   },
-  "microBatchesPerTick": 4,
+  "microBatchesPerTick": 5,
   "autoBoostEnabled": true,
   "boostInterval": -100,
   "targetMastery": 85
