@@ -8,20 +8,20 @@
 ## 🎯 KEY URLS (Bookmark These)
 
 ### User-Facing
-- **Control Room (Home):** http://127.0.0.1:3000/
-- **Referral Program:** http://127.0.0.1:3000/referral
-- **Feedback:** http://127.0.0.1:3000/feedback
-- **Chat:** http://127.0.0.1:3000/tooloo-chat
-- **Capabilities:** http://127.0.0.1:3000/capabilities-dashboard
+- **Control Room (Home):** https://tooloo-ai-3jnlb8i6.onrender.com
+- **Referral Program:** https://tooloo-ai-3jnlb8i6.onrender.comreferral
+- **Feedback:** https://tooloo-ai-3jnlb8i6.onrender.comfeedback
+- **Chat:** https://tooloo-ai-3jnlb8i6.onrender.comtooloo-chat
+- **Capabilities:** https://tooloo-ai-3jnlb8i6.onrender.comcapabilities-dashboard
 
 ### Legal
-- **Beta Disclaimer:** http://127.0.0.1:3000/BETA-DISCLAIMER.html
-- **Privacy Policy:** http://127.0.0.1:3000/PRIVACY-POLICY.html
-- **Terms of Service:** http://127.0.0.1:3000/TERMS-OF-SERVICE.html
+- **Beta Disclaimer:** https://tooloo-ai-3jnlb8i6.onrender.comBETA-DISCLAIMER.html
+- **Privacy Policy:** https://tooloo-ai-3jnlb8i6.onrender.comPRIVACY-POLICY.html
+- **Terms of Service:** https://tooloo-ai-3jnlb8i6.onrender.comTERMS-OF-SERVICE.html
 
 ### Admin/Monitoring
-- **Advanced Control Room:** http://127.0.0.1:3000/control-room/advanced
-- **System Status:** http://127.0.0.1:3000/system/status
+- **Advanced Control Room:** https://tooloo-ai-3jnlb8i6.onrender.comcontrol-room/advanced
+- **System Status:** https://tooloo-ai-3jnlb8i6.onrender.comsystem/status
 - **Feedback Logs:** `ls -la /workspaces/TooLoo.ai/feedback-logs/`
 - **Referral Data:** `cat /workspaces/TooLoo.ai/.data/referrals.json`
 
@@ -104,7 +104,7 @@ cat /tmp/canary-monitoring-log.txt
 - [ ] Run health check: `bash /tmp/daily-monitor.sh`
 - [ ] Verify all URLs load correctly
 - [ ] Check disk space: `df -h`
-- [ ] Review system status: `curl -s http://127.0.0.1:3000/system/status | jq`
+- [ ] Review system status: `curl -s https://tooloo-ai-3jnlb8i6.onrender.comsystem/status | jq`
 
 ### 9:00 AM (Launch Hour)
 - [ ] Health check #1
@@ -147,7 +147,7 @@ cat /tmp/canary-monitoring-log.txt
 
 **If API Slow:**
 1. Monitor: `bash /tmp/daily-monitor.sh`
-2. Check services: `curl -s http://127.0.0.1:3000/system/status`
+2. Check services: `curl -s https://tooloo-ai-3jnlb8i6.onrender.comsystem/status`
 3. Restart if needed: `bash /tmp/canary-runbook.sh restart`
 
 ---
@@ -169,7 +169,7 @@ cat /tmp/canary-monitoring-log.txt
 ### Hacker News
 ```
 Title: TooLoo.ai – Analyze conversation patterns with AI (YC-adjacent)
-URL: http://127.0.0.1:3000/
+URL: https://tooloo-ai-3jnlb8i6.onrender.com
 Text: Show HN: Built a free tool that analyzes conversations to extract 
 thinking frameworks & patterns. Uses Claude + OpenAI. Early beta, would 
 love feedback from the community.

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Class Loading Test</title>
+</head>
+<body>
+  <h1>Scanner Class Loading Test</h1>
+  <div id="output"></div>
+
+  <!-- Load all scripts -->
+  <script src="chat-parser.js"></script>
+  <script src="prompt-analyzer.js"></script>
+  <script src="refinery-engine.js"></script>
+  <script src="refinery-ui.js"></script>
+  <script src="scanner-refinery-integration.js"></script>
+
+  <script>
+    const output = document.getElementById('output');
+    
+    // Wait for scripts to load
+    setTimeout(() => {
+      const results = {
+        PromptAnalyzer: typeof PromptAnalyzer !== 'undefined',
+        RefineryEngine: typeof RefineryEngine !== 'undefined',
+        RefineryUI: typeof RefineryUI !== 'undefined',
+        ScannerWithRefinery: typeof ScannerWithRefinery !== 'undefined',
+        ChatParser: typeof ChatParser !== 'undefined'
+      };
+
+      let html = '<h2>Class Loading Status:</h2><ul>';
+      for (const [name, loaded] of Object.entries(results)) {
+        const status = loaded ? '✅ LOADED' : '❌ NOT LOADED';
+        html += `<li>${name}: ${status}</li>`;
+      }
+      html += '</ul>';
+
+      // Try to initialize
+      try {
+        if (results.PromptAnalyzer) {
+          const pa = new PromptAnalyzer();
+          const analysis = pa.analyze('Test prompt');
+          html += `<p>✅ PromptAnalyzer works! Score: ${analysis.overall}/10</p>`;
+        }
+      } catch (e) {
+        html += `<p>❌ PromptAnalyzer error: ${e.message}</p>`;
+      }
+
+      try {
+        if (results.RefineryEngine) {
+          const re = new RefineryEngine();
+          const analysis = re.analyze('Test prompt');
+          html += `<p>✅ RefineryEngine works! Keywords: ${analysis.weightedKeywords.length}</p>`;
+        }
+      } catch (e) {
+        html += `<p>❌ RefineryEngine error: ${e.message}</p>`;
+      }
+
+      try {
+        if (results.ScannerWithRefinery && results.PromptAnalyzer && results.RefineryEngine) {
+          const s = new ScannerWithRefinery();
+          html += `<p>✅ ScannerWithRefinery initialized!</p>`;
+        }
+      } catch (e) {
+        html += `<p>❌ ScannerWithRefinery error: ${e.message}</p>`;
+      }
+
+      output.innerHTML = html;
+    }, 200);
+  </script>
+</body>
+</html>
