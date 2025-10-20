@@ -1,0 +1,182 @@
+# TooLoo.ai Quality Gates Configuration
+# ====================================
+# Automated QA checks with pass rate requirements by service tier
+
+quality-gates:
+  # Core Services (TIER 1) - Highest standards
+  core-services:
+    minimum-pass-rate: 100
+    services:
+      - orchestrator (32 endpoints)
+      - web-server (14 endpoints)
+      - training (19 endpoints)
+      - meta-learning (9 endpoints)
+      - budget (9 endpoints)
+      - coach (8 endpoints)
+    enforcement: strict
+    on-failure: block-merge
+
+  # Extended Services (TIER 2) - High standards
+  extended-services:
+    minimum-pass-rate: 75
+    services:
+      - cup (6 endpoints, currently 100%)
+      - product-dev (27 endpoints, currently 77.8%)
+      - capabilities (17 endpoints, currently 70%)
+      - segmentation (8 endpoints, currently 75%)
+    enforcement: moderate
+    on-failure: request-review
+
+  # Advanced Services (TIER 3) - Monitoring required
+  advanced-services:
+    minimum-pass-rate: 60
+    services:
+      - reports (13 endpoints, currently 53%)
+    enforcement: lenient
+    on-failure: flag-warning
+
+  # E2E Workflows
+  e2e-workflows:
+    minimum-pass-rate: 80
+    total-workflows: 5
+    currently-passing: 4
+    enforcement: strict
+    on-failure: block-merge
+
+  # Performance Baselines
+  performance:
+    response-time-max: 50ms
+    response-time-baseline: 3.1ms
+    throughput-min: 1000 req/s
+    throughput-baseline: 1235 req/s
+    p95-latency-max: 20ms
+    p95-latency-baseline: "<11ms"
+    stability-min: 95%
+    stability-baseline: 100%
+    enforcement: moderate
+    on-failure: flag-warning
+
+  # Security Audit
+  security:
+    minimum-pass-rate: 85
+    total-tests: 20
+    currently-passing: 17
+    enforcement: strict
+    on-failure: block-merge
+    critical-failures:
+      - SQL injection prevention (must pass)
+      - XSS prevention (must pass)
+      - CSRF protection (must pass)
+      - Auth validation (must pass)
+
+# Gate Enforcement Rules
+enforcement-rules:
+  block-merge:
+    - Fails any core service test
+    - E2E workflows below 80%
+    - Security critical tests fail
+    - Performance drops >30% from baseline
+
+  request-review:
+    - Extended services below 75%
+    - E2E workflows below 80% but above 60%
+    - Performance drops 15-30% from baseline
+
+  flag-warning:
+    - Advanced services below 60%
+    - New performance baselines differ from previous run
+    - Non-critical security test failures
+    - Documentation gaps
+
+# Auto-Fix Opportunities
+auto-fixes:
+  - Adjust test timeouts if consistently failing
+  - Retry failed tests once before reporting
+  - Auto-seed test data for improved determinism
+  - Collect baseline drift for trending analysis
+
+# Monitoring & Alerting
+monitoring:
+  # Alert if pass rate drops below threshold
+  alert-on-drop: true
+  threshold: 5%  # Alert if drop > 5% from previous run
+
+  # Track metrics over time
+  track-metrics: true
+  retention-days: 90
+
+  # Slack notifications
+  slack-enabled: true
+  slack-channels:
+    - qa-alerts
+    - dev-team
+
+# CI/CD Integration
+ci-integration:
+  # Run QA tests on every push to main/develop
+  run-on: ['push:main', 'push:develop', 'pull_request']
+  
+  # Nightly full test suite
+  nightly-run: true
+  nightly-time: '02:00 UTC'
+
+  # Test in matrix
+  node-versions: ['18.x', '20.x']
+  os: ['ubuntu-latest']
+
+# Baseline Metrics
+baselines:
+  response-time:
+    web-server: 14.67ms
+    training: 2.23ms
+    meta: 2.31ms
+    budget: 2.19ms
+    coach: 1.40ms
+    cup: 1.72ms
+    product-dev: 1.57ms
+    segmentation: 1.33ms
+    reports: 2.09ms
+    capabilities: 1.46ms
+    average: 3.1ms
+
+  throughput:
+    min: 706 req/s (Budget)
+    max: 1687 req/s (Training)
+    average: 1235 req/s
+
+  latency-percentiles:
+    p50: "<6ms"
+    p95: "<11ms"
+    p99: "<11ms"
+
+  stability:
+    burst-test-success: 100%
+    error-rate: 0%
+
+# Exception Handling
+exceptions:
+  # Services with known limitations
+  known-issues:
+    - product-dev: "401 on workflow creation (auth needed)"
+    - capabilities: "Limited data on init (timing)"
+    - segmentation: "Stricter validation on payloads"
+    - reports: "Async critique generation timeouts"
+
+  # These don't block merge
+  non-blocking-failures:
+    - CORS: "Overly permissive (should fix but not blocking)"
+    - Error messages: "Stack trace disclosure (should fix)"
+
+# Documentation & References
+documentation:
+  - README.md (setup instructions)
+  - QA-QUICK-REFERENCE.md (test commands)
+  - QA-INITIATIVE-FINAL-REPORT.md (comprehensive overview)
+  - .github/workflows/qa-pipeline.yml (CI/CD definition)
+
+# Contact & Support
+support:
+  qa-lead: "QA Automation Framework"
+  slack: "#qa-team"
+  docs: "QA-QUICK-REFERENCE.md"
+  issue-tracker: "GitHub Issues"
