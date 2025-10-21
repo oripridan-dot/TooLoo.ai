@@ -322,13 +322,13 @@ app.get('/api/v1/commit/status', (req, res) => {
 
 app.post('/api/v1/commit/auto', async (req, res) => {
   try {
-    const { message, generateContent = true, push = false, bypassRateLimit = false } = req.body || {};
+    const { message, generateContent = true, push = false } = req.body || {};
 
     if (generateContent) {
       await generateAutomatedContent();
     }
 
-    const result = await commitChanges(message, { bypassRateLimit });
+    const result = await commitChanges(message);
 
     if (result.success && push) {
       const pushResult = await pushChanges();
@@ -343,7 +343,7 @@ app.post('/api/v1/commit/auto', async (req, res) => {
 
 app.post('/api/v1/commit/manual', async (req, res) => {
   try {
-    const { message, files, push = false, bypassRateLimit = false } = req.body || {};
+    const { message, files, push = false } = req.body || {};
 
     if (!message) {
       return res.status(400).json({ ok: false, error: 'Commit message required' });
@@ -360,7 +360,7 @@ app.post('/api/v1/commit/manual', async (req, res) => {
       execSync('git add .', { cwd: CONFIG.repoPath });
     }
 
-    const result = await commitChanges(message, { bypassRateLimit });
+    const result = await commitChanges(message);
 
     if (result.success && push) {
       const pushResult = await pushChanges();
