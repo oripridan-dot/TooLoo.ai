@@ -15,6 +15,9 @@ const costCalc = new CostCalculator(); // Phase 3: Cost-aware optimization
 environmentHub.registerComponent('budgetManager', budget, ['budget-management', 'provider-orchestration']);
 environmentHub.registerComponent('costCalculator', costCalc, ['cost-tracking', 'roi-analysis']);
 
+// Real-time subscribers for performance monitoring
+const realtimeSubscribers = new Set();
+
 // Mutable provider policy for quick tuning
 const providerPolicy = {
 	maxConcurrency: Number(process.env.PROVIDER_MAX_CONCURRENCY || 4),
@@ -283,6 +286,104 @@ app.get('/api/v1/budget/export', (req, res) => {
     res.json({
       ok: true,
       ...data
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Real-time performance monitoring endpoints
+
+/**
+ * GET /api/v1/providers/realtime
+ * Server-Sent Events endpoint for real-time provider performance updates
+ */
+app.get('/api/v1/providers/realtime', (req, res) => {
+  // Set headers for SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control'
+  });
+
+  // Send initial data
+  const sendUpdate = () => {
+    try {
+      const status = getProviderStatus();
+      const budgetStatus = budget.getStatus();
+      const costData = costCalc.getSummary();
+
+      const data = {
+        timestamp: Date.now(),
+        providers: status,
+        budget: budgetStatus,
+        costs: costData,
+        policy: providerPolicy
+      };
+
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch (error) {
+      console.error('Error sending realtime update:', error);
+    }
+  };
+
+  // Send initial update
+  sendUpdate();
+
+  // Send updates every 5 seconds
+  const interval = setInterval(sendUpdate, 5000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(interval);
+    res.end();
+  });
+});
+
+/**
+ * POST /api/v1/providers/performance-update
+ * Endpoint to receive performance updates from orchestrator
+ */
+app.post('/api/v1/providers/performance-update', (req, res) => {
+  try {
+    const { type, data } = req.body || {};
+
+    // Broadcast update to all realtime subscribers
+    const updateEvent = {
+      type: type || 'performance-update',
+      data,
+      timestamp: Date.now()
+    };
+
+    // In a real implementation, you'd broadcast to WebSocket clients
+    // For now, we'll just acknowledge receipt
+    console.log('Performance update received:', updateEvent);
+
+    res.json({ ok: true, received: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/providers/performance-stream
+ * Alternative polling endpoint for performance data
+ */
+app.get('/api/v1/providers/performance-stream', (req, res) => {
+  try {
+    const status = getProviderStatus();
+    const budgetStatus = budget.getStatus();
+    const costData = costCalc.getSummary();
+
+    res.json({
+      ok: true,
+      timestamp: Date.now(),
+      providers: status,
+      budget: budgetStatus,
+      costs: costData,
+      policy: providerPolicy
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });

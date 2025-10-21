@@ -1,0 +1,247 @@
+name: Automated Updates & Commits Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run automated updates daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of automated update'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - dependencies
+        - documentation
+        - performance-logs
+        - cleanup
+      commit_message:
+        description: 'Custom commit message (optional)'
+        required: false
+        type: string
+
+jobs:
+  automated-updates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Setup Git
+      run: |
+        git config --global user.name 'TooLoo.ai Automation'
+        git config --global user.email 'automation@tooloo.ai'
+        git config --global pull.rebase false
+
+    - name: Start services for testing
+      run: |
+        npm run start:web &
+        npm run start:training &
+        npm run start:meta &
+        npm run start:budget &
+        sleep 10
+      timeout-minutes: 2
+
+    - name: Run dependency updates
+      if: github.event.inputs.update_type == 'dependencies' || github.event.inputs.update_type == 'full' || github.event_name == 'schedule'
+      run: |
+        echo "🔄 Checking for dependency updates..."
+        npm update
+        npm audit fix --audit-level=moderate
+        npx npm-check-updates -u --target minor
+        npm install
+
+    - name: Run automated cleanup
+      if: github.event.inputs.update_type == 'cleanup' || github.event.inputs.update_type == 'full' || github.event_name == 'schedule'
+      run: |
+        echo "🧹 Running automated cleanup..."
+        npm run hygiene -- --dry-run
+        npm run hygiene
+        find . -name "*.log" -type f -mtime +7 -delete
+        find . -name "*.tmp" -type f -mtime +1 -delete
+        find . -name ".DS_Store" -type f -delete
+
+    - name: Update documentation
+      if: github.event.inputs.update_type == 'documentation' || github.event.inputs.update_type == 'full' || github.event_name == 'schedule'
+      run: |
+        echo "📚 Updating documentation..."
+        # Generate API documentation
+        npx jsdoc servers/*.js engine/*.js -d docs/api/
+        # Update README with latest stats
+        node scripts/update-readme.js
+
+    - name: Performance log rotation
+      if: github.event.inputs.update_type == 'performance-logs' || github.event.inputs.update_type == 'full' || github.event_name == 'schedule'
+      run: |
+        echo "📊 Rotating performance logs..."
+        node scripts/performance-log-rotator.js
+
+    - name: Generate automated commit content
+      run: |
+        echo "🤖 Generating automated updates..."
+        node scripts/automated-updates-generator.js
+
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changes=true" >> $GITHUB_OUTPUT
+          echo "📝 Changes detected, preparing commit..."
+          git add .
+          git status --short
+        else
+          echo "changes=false" >> $GITHUB_OUTPUT
+          echo "✨ No changes detected"
+        fi
+
+    - name: Generate commit message
+      id: commit-message
+      if: steps.verify-changed-files.outputs.changes == 'true'
+      run: |
+        if [ -n "${{ github.event.inputs.commit_message }}" ]; then
+          echo "message=${{ github.event.inputs.commit_message }}" >> $GITHUB_OUTPUT
+        else
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M UTC")
+          UPDATE_TYPE="${{ github.event.inputs.update_type }}"
+          if [ "$UPDATE_TYPE" = "full" ] || [ -z "$UPDATE_TYPE" ]; then
+            UPDATE_TYPE="automated"
+          fi
+          echo "message=🤖 $UPDATE_TYPE: Automated updates - $TIMESTAMP" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit changes
+      if: steps.verify-changed-files.outputs.changes == 'true'
+      run: |
+        git commit -m "${{ steps.commit-message.outputs.message }}"
+        echo "✅ Changes committed successfully"
+
+    - name: Push changes
+      if: steps.verify-changed-files.outputs.changes == 'true' && github.ref == 'refs/heads/main'
+      run: |
+        git push origin main
+        echo "🚀 Changes pushed to main branch"
+
+    - name: Create Pull Request for non-main branches
+      if: steps.verify-changed-files.outputs.changes == 'true' && github.ref != 'refs/heads/main'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: ${{ steps.commit-message.outputs.message }}
+        title: ${{ steps.commit-message.outputs.message }}
+        body: |
+          🤖 **Automated Updates**
+
+          This PR contains automated updates generated by the TooLoo.ai automation pipeline.
+
+          **Changes:**
+          - Automated dependency updates
+          - Code cleanup and optimization
+          - Documentation updates
+          - Performance log rotation
+          - Generated content updates
+
+          **Triggered by:** ${{ github.event_name }}
+          **Update type:** ${{ github.event.inputs.update_type || 'scheduled' }}
+          **Timestamp:** $(date -u +"%Y-%m-%d %H:%M UTC")
+
+          ---
+          *This PR was automatically created by the TooLoo.ai automated updates pipeline.*
+        branch: automated-updates-${{ github.run_id }}
+        delete-branch: true
+        labels: |
+          automated
+          maintenance
+
+  validate-updates:
+    needs: automated-updates
+    runs-on: ubuntu-latest
+    if: needs.automated-updates.result == 'success'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run validation tests
+      run: |
+        npm run lint
+        npm run qa:health
+        echo "✅ Automated updates validated successfully"
+
+    - name: Notify on validation failure
+      if: failure()
+      run: |
+        echo "❌ Automated updates validation failed"
+        # Could add notification logic here (Slack, Discord, etc.)
+
+  performance-monitoring:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate performance report
+      run: |
+        echo "📊 Generating performance report..."
+        node scripts/generate-performance-report.js
+
+    - name: Update performance dashboard
+      run: |
+        echo "📈 Updating performance dashboard..."
+        node scripts/update-performance-dashboard.js
+
+    - name: Commit performance updates
+      run: |
+        git config --global user.name 'TooLoo.ai Performance Monitor'
+        git config --global user.email 'performance@tooloo.ai'
+
+        if [ -n "$(git status --porcelain)" ]; then
+          git add .
+          git commit -m "📊 Performance: Automated performance report update - $(date +"%Y-%m-%d %H:%M UTC")"
+          git push origin main
+          echo "✅ Performance updates committed and pushed"
+        else
+          echo "ℹ️ No performance updates to commit"
+        fi

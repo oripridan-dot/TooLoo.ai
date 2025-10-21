@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo Nexus Pro — Intelligent Goal Routing</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #ffffff;
+      color: #1a202c;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* Left Sidebar - Active Intelligence Engine */
+    .sidebar {
+      width: 300px;
+      background: linear-gradient(180deg, #0f172a 0%, #1a2844 100%);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      color: white;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #3b82f6 0%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-status {
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .sidebar-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+      margin-top: 16px;
+      margin-bottom: 10px;
+      padding: 0 8px;
+    }
+
+    /* Active Goals Section */
+    .goal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .goal-bubble {
+      padding: 12px 14px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .goal-bubble:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .goal-bubble.active {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+    }
+
+    .goal-name {
+      display: block;
+      margin-bottom: 4px;
+      color: white;
+    }
+
+    .goal-meta {
+      font-size: 10px;
+      color: #cbd5e1;
+      font-weight: 400;
+    }
+
+    /* Segmentation Analysis Panel */
+    .analysis-panel {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+
+    .analysis-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #60a5fa;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .analysis-icon {
+      font-size: 14px;
+    }
+
+    .segment-chip {
+      display: inline-block;
+      padding: 6px 10px;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 20px;
+      font-size: 11px;
+      color: #bfdbfe;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .segment-chip:hover {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: rgba(59, 130, 246, 0.6);
+    }
+
+    .segment-chip.detected {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.4);
+      color: #86efac;
+    }
+
+    /* Insights Section */
+    .insights {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+    }
+
+    .insight-item {
+      padding: 8px 0;
+      font-size: 11px;
+      color: #cbd5e1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .insight-item:last-child {
+      border-bottom: none;
+    }
+
+    .insight-label {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .insight-value {
+      color: #60a5fa;
+      font-weight: 700;
+    }
+
+    /* Main Area */
+    .main {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Header */
+    .header {
+      padding: 16px 32px;
+      border-bottom: 1px solid #e2e8f0;
+      background: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .header-info {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* Chat Area */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 24px 32px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 100%);
+      gap: 16px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+      align-items: flex-start;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-bubble {
+      max-width: 65%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .message.assistant .message-bubble {
+      background: #f1f5f9;
+      color: #1a202c;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .message.user .message-bubble {
+      background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+      color: white;
+    }
+
+    .message-context {
+      font-size: 10px;
+      color: #94a3b8;
+      padding-top: 4px;
+      padding-left: 4px;
+    }
+
+    /* Input Area */
+    .input-area {
+      padding: 20px 32px;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 100px;
+      padding: 10px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+      color: #1a202c;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      transition: all 0.2s;
+    }
+
+    .input-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .context-selector-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .context-icon-btn {
+      padding: 8px 12px;
+      background: #f0f9ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+    }
+
+    .context-icon-btn:hover {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+    }
+
+    .context-icon-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .context-dropdown {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      min-width: 200px;
+      display: none;
+      margin-bottom: 8px;
+    }
+
+    .context-dropdown.show {
+      display: block;
+    }
+
+    .context-option {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #1a202c;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .context-option:last-child {
+      border-bottom: none;
+    }
+
+    .context-option:hover {
+      background: #f0f9ff;
+    }
+
+    .context-option.selected {
+      background: #e0f2fe;
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    .send-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      height: 44px;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      opacity: 0.3;
+    }
+
+    .empty-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    @media (max-width: 1200px) {
+      .sidebar { width: 260px; }
+      .chat-area { padding: 16px; }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { width: 0; position: absolute; }
+      .chat-area { padding: 12px; }
+      .input-area { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Left Sidebar - Active Intelligence Engine -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">🧠 TooLoo Pro</div>
+        <div class="sidebar-status">
+          <div class="status-dot"></div>
+          <span>Intelligence Active</span>
+        </div>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="section-label">📌 Active Goals</div>
+        <div class="goal-list">
+          <div class="goal-bubble active">
+            <span class="goal-name">🎯 Build Nexus UI</span>
+            <span class="goal-meta">Last message: 2m ago</span>
+          </div>
+          <div class="goal-bubble">
+            <span class="goal-name">⚡ Optimize API</span>
+            <span class="goal-meta">Completed</span>
+          </div>
+          <div class="goal-bubble">
+            <span class="goal-name">🧠 Smart Segmentation</span>
+            <span class="goal-meta">New • No messages</span>
+          </div>
+        </div>
+
+        <div class="analysis-panel">
+          <div class="analysis-title">
+            <span class="analysis-icon">🔍</span>
+            Message Analysis
+          </div>
+          <div id="detectedSegments" style="margin-bottom: 8px;"></div>
+          <small style="color: #94a3b8; font-size: 10px;">Segments auto-detected from your message</small>
+        </div>
+
+        <div class="insights">
+          <div class="insight-item">
+            <span class="insight-label">Active Provider:</span> <span class="insight-value">Claude Haiku</span>
+          </div>
+          <div class="insight-item">
+            <span class="insight-label">Avg Response:</span> <span class="insight-value">1.9s</span>
+          </div>
+          <div class="insight-item">
+            <span class="insight-label">Today's Messages:</span> <span class="insight-value">24</span>
+          </div>
+          <div class="insight-item">
+            <span class="insight-label">Current Goal:</span> <span class="insight-value">Build Nexus UI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main">
+      <div class="header">
+        <div class="header-title">🎯 Build Nexus UI — TooLoo Nexus Pro</div>
+        <div class="header-info">
+          <span>📊 60% Complete</span>
+          <span>💬 3 Segments</span>
+        </div>
+      </div>
+
+      <div class="chat-area" id="chatArea">
+        <div class="empty-state">
+          <div class="empty-icon">💫</div>
+          <div class="empty-text">Welcome to TooLoo Nexus Pro</div>
+          <div style="font-size: 13px; color: #94a3b8; max-width: 400px;">
+            Goal-driven AI with intelligent segmentation. Pick a context when you send messages, and TooLoo will analyze which goal/segment it belongs to.
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area with Context Selector -->
+      <div class="input-area">
+        <div class="input-field">
+          <div class="input-label">Continue toward your goal...</div>
+          <div class="input-wrapper">
+            <textarea 
+              class="input-textarea" 
+              id="userInput"
+              placeholder="Type your message... Pick a context before sending"
+              rows="1"
+            ></textarea>
+            
+            <div class="context-selector-wrapper">
+              <div style="position: relative;">
+                <button class="context-icon-btn" id="contextBtn" title="Select message context">
+                  📍
+                </button>
+                <div class="context-dropdown" id="contextDropdown">
+                  <div class="context-option selected" data-context="auto">🔍 Auto-Detect</div>
+                  <div class="context-option" data-context="discovery">💡 Discovery</div>
+                  <div class="context-option" data-context="implementation">🛠️ Implementation</div>
+                  <div class="context-option" data-context="polish">✨ Polish</div>
+                  <div class="context-option" data-context="testing">🧪 Testing</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="send-btn" id="sendBtn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/v1/chat/message';
+    let selectedContext = 'auto';
+    const contextSegments = {
+      'discovery': '💡 Discovery',
+      'implementation': '🛠️ Implementation',
+      'polish': '✨ Polish',
+      'testing': '🧪 Testing'
+    };
+
+    // Context selector logic
+    document.getElementById('contextBtn').addEventListener('click', () => {
+      const dropdown = document.getElementById('contextDropdown');
+      dropdown.classList.toggle('show');
+    });
+
+    document.querySelectorAll('.context-option').forEach(option => {
+      option.addEventListener('click', () => {
+        selectedContext = option.dataset.context;
+        document.querySelectorAll('.context-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        
+        const btn = document.getElementById('contextBtn');
+        if (selectedContext === 'auto') {
+          btn.textContent = '📍';
+          btn.classList.remove('active');
+        } else {
+          btn.textContent = option.textContent.split(' ')[0];
+          btn.classList.add('active');
+        }
+        
+        document.getElementById('contextDropdown').classList.remove('show');
+      });
+    });
+
+    // Auto-detect segments from message
+    function detectSegments(message) {
+      const detectors = {
+        'discovery': ['what', 'why', 'how', 'explain', 'understand', 'research', 'explore', 'think about'],
+        'implementation': ['build', 'create', 'implement', 'code', 'develop', 'make', 'add', 'start with'],
+        'polish': ['improve', 'enhance', 'refine', 'optimize', 'smooth', 'clean up', 'better', 'animate'],
+        'testing': ['test', 'check', 'verify', 'validate', 'try', 'debug', 'confirm', 'ensure']
+      };
+
+      const detected = [];
+      const lowerMsg = message.toLowerCase();
+      
+      for (const [segment, keywords] of Object.entries(detectors)) {
+        if (keywords.some(kw => lowerMsg.includes(kw))) {
+          detected.push(segment);
+        }
+      }
+      
+      return detected.length > 0 ? detected : ['auto'];
+    }
+
+    // Update detected segments display
+    function updateSegmentDisplay(message) {
+      const detected = detectSegments(message);
+      const container = document.getElementById('detectedSegments');
+      
+      if (detected.includes('auto')) {
+        container.innerHTML = '<small style="color: #94a3b8;">No specific segment detected</small>';
+      } else {
+        container.innerHTML = detected.map(seg => 
+          `<span class="segment-chip detected">${contextSegments[seg]}</span>`
+        ).join('');
+      }
+    }
+
+    // Extract page context for TooLoo to "see"
+    function getPageContext() {
+      if (window.location.pathname.includes('conference')) {
+        return 'User is viewing: TooLoo Provider Conference presentation (10-slide deck about capabilities and opportunities)';
+      }
+      const sidebar = document.querySelector('.sidebar-logo')?.textContent || '';
+      const goals = Array.from(document.querySelectorAll('.goal-item'))?.map(el => el.textContent?.trim())?.filter(t => t)?.slice(0, 3) || [];
+      const insights = document.querySelector('.insights-section')?.innerText?.split('\n')?.filter(t => t)?.join(' ') || '';
+      return `User is in: TooLoo Nexus Pro chat. Active goals: ${goals.join(', ') || 'none'}. ${insights}`;
+    }
+
+    // Live segment detection as user types
+    document.getElementById('userInput').addEventListener('input', (e) => {
+      if (selectedContext === 'auto') {
+        updateSegmentDisplay(e.target.value);
+      }
+    });
+
+    async function sendMessage() {
+      const text = document.getElementById('userInput').value.trim();
+      if (!text) return;
+
+      const chatArea = document.getElementById('chatArea');
+      
+      // Clear empty state
+      if (chatArea.querySelector('.empty-state')) {
+        chatArea.innerHTML = '';
+      }
+
+      // Detect segments
+      const detected = selectedContext === 'auto' ? detectSegments(text) : [selectedContext];
+      const contextLabel = detected.map(s => contextSegments[s] || s).join(' + ');
+
+      // Add user message with context
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.innerHTML = `
+        <div>
+          <div class="message-bubble">${escapeHtml(text)}</div>
+          <div class="message-context">${contextLabel}</div>
+        </div>
+      `;
+      chatArea.appendChild(userMsg);
+
+      // Clear input and update sidebar
+      document.getElementById('userInput').value = '';
+      updateSegmentDisplay('');
+      
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+
+      try {
+        // Capture page vision - what TooLoo sees
+        const pageVision = {
+          url: window.location.href,
+          title: document.title,
+          pathname: window.location.pathname,
+          isConference: window.location.pathname.includes('conference'),
+          isChatPro: window.location.pathname === '/' || window.location.pathname.includes('chat-nexus-pro'),
+          pageType: window.location.pathname.includes('conference') ? 'conference' : 'chat',
+          readableContent: getPageContext()
+        };
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            context: detected[0],
+            sessionId: 'pro-' + Date.now(),
+            pageVision: pageVision
+          })
+        });
+
+        const data = await response.json();
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message assistant';
+        aiMsg.innerHTML = `
+          <div class="message-bubble">${escapeHtml(data.response || 'No response')}</div>
+          <div class="message-context">via ${data.provider || 'Claude Haiku'}</div>
+        `;
+        chatArea.appendChild(aiMsg);
+
+        chatArea.scrollTop = chatArea.scrollHeight;
+      } catch (error) {
+        console.error('Error:', error);
+      }
+
+      sendBtn.disabled = false;
+    }
+
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    document.getElementById('userInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.context-selector-wrapper')) {
+        document.getElementById('contextDropdown').classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

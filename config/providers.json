@@ -1,0 +1,40 @@
+{
+  "fallbackChains": {
+    "primary": ["deepseek", "claude", "openai", "gemini"],
+    "fast": ["deepseek", "claude"],
+    "cheap": ["deepseek", "gemini", "claude"],
+    "reliable": ["claude", "openai", "deepseek"]
+  },
+  "providers": {
+    "deepseek": {
+      "priority": 1,
+      "costPerToken": 0.0001,
+      "rateLimit": 100,
+      "timeout": 30000
+    },
+    "claude": {
+      "priority": 2,
+      "costPerToken": 0.0008,
+      "rateLimit": 50,
+      "timeout": 45000
+    },
+    "openai": {
+      "priority": 3,
+      "costPerToken": 0.001,
+      "rateLimit": 30,
+      "timeout": 30000
+    },
+    "gemini": {
+      "priority": 4,
+      "costPerToken": 0.0005,
+      "rateLimit": 60,
+      "timeout": 25000
+    }
+  },
+  "defaultChain": "primary",
+  "burstSettings": {
+    "maxConcurrency": 6,
+    "criticality": "normal",
+    "timeoutMultiplier": 1.5
+  }
+}

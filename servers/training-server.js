@@ -7,6 +7,7 @@ import MetaLearningEngine from '../engine/meta-learning-engine.js';
 import HyperSpeedTrainingCamp from '../engine/hyper-speed-training-camp.js';
 import ParallelProviderOrchestrator from '../engine/parallel-provider-orchestrator.js';
 import { createValidationFramework } from '../engine/validated-execution-framework.js';
+import AnalyticsIntegration from '../modules/analytics-integration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,9 @@ const orchestrator = new ParallelProviderOrchestrator({ workspaceRoot: process.c
 
 // Initialize Validated Execution Framework for error-free operations
 const validationFramework = createValidationFramework('training');
+
+// Initialize Analytics Integration
+const analytics = new AnalyticsIntegration();
 
 // Health
 app.get('/health', (req,res)=> res.json({ ok:true, server:'training', time: new Date().toISOString() }));

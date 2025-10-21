@@ -14,6 +14,7 @@ import express from 'express';
 import cors from 'cors';
 import { segment, LABELS } from '../engine/segmenter.js';
 import SegmentationUnifier from '../engine/segmentation-unifier.js';
+import SemanticSegmentation from '../engine/semantic-segmentation.js';
 
 const app = express();
 const PORT = process.env.SEGMENTATION_PORT || 3007;
@@ -21,6 +22,9 @@ const PORT = process.env.SEGMENTATION_PORT || 3007;
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Initialize semantic segmentation engine
+const semanticEngine = new SemanticSegmentation();
 
 // Initialize segmentation unifier with available strategies
 const unifier = new SegmentationUnifier({
@@ -42,6 +46,19 @@ const unifier = new SegmentationUnifier({
         end: messages.length - 1,
         title: seg.label,
         summary: `Advanced ${seg.label} segment`
+      }));
+    },
+    'semantic-llm': async (messages) => {
+      // LLM-powered semantic analysis
+      const analysis = await semanticEngine.analyzeConversation(messages);
+      return analysis.segments.map(seg => ({
+        start: seg.start,
+        end: seg.end,
+        title: seg.title,
+        summary: seg.summary,
+        phase: seg.phase,
+        intent: seg.intent,
+        emotionalState: seg.emotionalState
       }));
     }
   }

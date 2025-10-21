@@ -6,7 +6,9 @@ import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 import ReferralSystem from '../referral-system.js';
+import { handleChatWithAI } from '../services/chat-handler-ai.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +46,39 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 
+// ======= UI Activity Monitoring & Real Data Pipeline =======
+// Middleware to inject heartbeat script into HTML responses for automatic server activation
+app.use((req, res, next) => {
+  const originalSendFile = res.sendFile;
+  res.sendFile = function(filePath, ...args) {
+    // If serving HTML files, inject heartbeat script
+    if (typeof filePath === 'string' && filePath.endsWith('.html')) {
+      const callback = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : null;
+      const options = (args.length > 1 && typeof args[0] === 'object') ? args[0] : {};
+      
+      fs.readFile(filePath, 'utf8', (err, html) => {
+        if (err) {
+          return originalSendFile.call(res, filePath, options, callback);
+        }
+        
+        // Inject heartbeat script if not already present
+        if (!html.includes('tooloo-heartbeat.js')) {
+          const heartbeatScript = '<script src="/js/tooloo-heartbeat.js" async defer></script>';
+          const injected = html.replace('</head>', `${heartbeatScript}\n</head>`);
+          res.type('html').send(injected);
+          return;
+        }
+        
+        res.type('html').send(html);
+      });
+      return;
+    }
+    
+    originalSendFile.call(res, filePath, ...args);
+  };
+  next();
+});
+
 // Static web assets
 const webDir = path.join(process.cwd(), 'web-app');
 app.use(express.static(webDir));
@@ -55,9 +90,22 @@ app.get(['/tooloo-hub','/tooloo-page'], async (req,res)=>{
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('TooLoo Hub page missing'); }
 });
 
-// Root route - serve Control Room (working HTML dashboard)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-home.html'));
+// Root route - prefer Conference presentation, fallback to Nexus Pro, then Control Room
+app.get('/', async (req, res) => {
+  const conference = path.join(webDir, 'providers-conference.html');
+  const pro = path.join(webDir, 'chat-nexus-pro.html');
+  const control = path.join(webDir, 'control-room-home.html');
+  try {
+    await fs.promises.access(conference);
+    return res.sendFile(conference);
+  } catch (e1) {
+    try {
+      await fs.promises.access(pro);
+      return res.sendFile(pro);
+    } catch (e2) {
+      return res.sendFile(control);
+    }
+  }
 });
 
 // Quiet favicon 404s in dev
@@ -119,6 +167,98 @@ app.get(['/design-suite'], async (req,res)=>{
 app.get(['/tooloo-chat'], async (req,res)=>{
   const f = path.join(webDir,'tooloo-chat.html');
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('TooLoo Chat page missing'); }
+});
+
+// New interactive chat interface - prefer Nexus chat if available
+app.get(['/chat', '/coach-chat'], async (req,res)=>{
+  const nexus = path.join(webDir,'chat-nexus.html');
+  const legacy = path.join(webDir,'chat.html');
+  try { await fs.promises.access(nexus); return res.sendFile(nexus); } catch {}
+  try { await fs.promises.access(legacy); return res.sendFile(legacy); } catch { return res.status(404).send('Chat page missing'); }
+});
+
+// Modern chat interface (with multi-provider support)
+app.get(['/chat-modern', '/modern-chat'], async (req,res)=>{
+  const f = path.join(webDir,'chat-modern.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Modern chat page missing'); }
+});
+
+// Premium chat interface (enhanced UI with animations and polish)
+app.get(['/chat-premium', '/premium'], async (req,res)=>{
+  const f = path.join(webDir,'chat-premium.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Premium chat page missing'); }
+});
+
+// Ultra chat interface (bold design, rich features)
+app.get(['/chat-ultra', '/ultra'], async (req,res)=>{
+  const f = path.join(webDir,'chat-ultra.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Ultra chat page missing'); }
+});
+
+// Nexus chat interface (minimalist modern SaaS design)
+app.get(['/chat-nexus', '/nexus'], async (req,res)=>{
+  const f = path.join(webDir,'chat-nexus.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Nexus chat page missing'); }
+});
+
+// Nexus Pro chat interface (goal-driven with segmentation, Slack-like UX)
+app.get(['/chat-nexus-pro', '/pro', '/goals'], async (req,res)=>{
+  const f = path.join(webDir,'chat-nexus-pro.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Nexus Pro chat page missing'); }
+});
+
+// Providers Conference presentation
+app.get(['/conference', '/providers-conference', '/pitch'], async (req,res)=>{
+  const f = path.join(webDir,'providers-conference.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Providers Conference page missing'); }
+});
+
+// Root route - prefer Nexus Pro (goal-driven experience)
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Invalid message' });
+    }
+    
+    const response = await handleChatWithAI(message);
+    res.json({ response });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Chat API proxy - forward to API bridge, fallback to demo response
+app.post('/api/v1/chat/message', async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: 'Message required' });
+    }
+    
+    // Try to reach the API bridge
+    try {
+      const response = await fetch('http://127.0.0.1:3010/api/v1/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, sessionId: sessionId || 'web-' + Date.now() }),
+        timeout: 10000
+      });
+      const data = await response.json();
+      return res.json(data);
+    } catch (bridgeErr) {
+      // API bridge not available, return demo response
+      const demoResponses = [
+        `I understand you're asking about "${message.substring(0, 30)}...". This is a demo response from TooLoo Nexus. Connect API keys to enable real AI responses.`,
+        `That's an interesting question: "${message}". The chat is running in demo mode. Add your API credentials to enable Claude, GPT-4, or other providers.`,
+        `You asked: "${message}" - I'm demonstrating the TooLoo Nexus interface. Configure providers to see real AI responses.`
+      ];
+      const response = demoResponses[Math.floor(Math.random() * demoResponses.length)];
+      return res.json({ response, _demo: true });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 // ASAP Mastery alias - elegant UI
@@ -632,6 +772,62 @@ app.post('/system/start', async (req,res)=>{
     
     return res.json({ ok:true, started:true, pid: orchestratorProc.pid, autoOpen: req.body?.autoOpen !== false });
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+});
+
+// ======= UI Activity Monitor Proxy =======
+// Forward activity monitor requests from UI to the activity monitor service (3050)
+const ACTIVITY_MONITOR_PORT = Number(process.env.ACTIVITY_MONITOR_PORT || 3050);
+
+app.post('/api/v1/activity/heartbeat', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/heartbeat`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(req.body)
+    });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable', _fallback:true }); }
+});
+
+app.get('/api/v1/activity/sessions', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/sessions`);
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.get('/api/v1/activity/servers', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/servers`);
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.post('/api/v1/activity/start-all', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/start-all`, { method:'POST' });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.post('/api/v1/activity/ensure-real-data', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/ensure-real-data`, { method:'POST' });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.post('/api/v1/activity/config', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/config`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(req.body)
+    });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
 });
 
 // Priority modes: favor chat vs background

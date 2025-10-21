@@ -1,21 +1,49 @@
 version: '3.8'
 
 services:
-  tooloo-api:
+  # Core Services
+  web-server:
     build: .
+    command: node servers/web-server.js
     ports:
-      - "3001:3001"
+      - "${WEB_PORT:-3000}:3000"
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=sqlite:./data/tooloo.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - WEB_PORT=3000
+      - TRAINING_PORT=3001
+      - META_PORT=3002
+      - BUDGET_PORT=3003
+      - COACH_PORT=3004
+      - CUP_PORT=3005
+      - PRODUCT_PORT=3006
+      - SEGMENTATION_PORT=3007
+      - REPORTS_PORT=3008
+      - CAPABILITIES_PORT=3009
+    depends_on:
+      - training-server
+      - meta-server
+      - budget-server
+      - coach-server
+      - cup-server
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  training-server:
+    build: .
+    command: node servers/training-server.js
+    ports:
+      - "${TRAINING_PORT:-3001}:3001"
+    environment:
+      - TRAINING_PORT=3001
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - CORS_ORIGIN=http://localhost:3000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - ./data:/app/data
-      - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
@@ -23,27 +51,116 @@ services:
       timeout: 10s
       retries: 3
 
-  tooloo-web:
-    build:
-      context: .
-      dockerfile: packages/web/Dockerfile
+  meta-server:
+    build: .
+    command: node servers/meta-server.js
     ports:
-      - "3000:80"
-    depends_on:
-      - tooloo-api
-    restart: unless-stopped
+      - "${META_PORT:-3002}:3002"
     environment:
-      - VITE_API_URL=http://localhost:3001
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
+      - META_PORT=3002
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
-    depends_on:
-      - tooloo-api
-      - tooloo-web
+      - ./data:/app/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  budget-server:
+    build: .
+    command: node servers/budget-server.js
+    ports:
+      - "${BUDGET_PORT:-3003}:3003"
+    environment:
+      - BUDGET_PORT=3003
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  coach-server:
+    build: .
+    command: node servers/coach-server.js
+    ports:
+      - "${COACH_PORT:-3004}:3004"
+    environment:
+      - COACH_PORT=3004
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  cup-server:
+    build: .
+    command: node servers/cup-server.js
+    ports:
+      - "${CUP_PORT:-3005}:3005"
+    environment:
+      - CUP_PORT=3005
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional Services
+  product-server:
+    build: .
+    command: node servers/product-development-server.js
+    ports:
+      - "${PRODUCT_PORT:-3006}:3006"
+    environment:
+      - PRODUCT_PORT=3006
+    profiles: ["full"]
+    restart: unless-stopped
+
+  segmentation-server:
+    build: .
+    command: node servers/segmentation-server.js
+    ports:
+      - "${SEGMENTATION_PORT:-3007}:3007"
+    environment:
+      - SEGMENTATION_PORT=3007
+    profiles: ["full"]
+    restart: unless-stopped
+
+  reports-server:
+    build: .
+    command: node servers/reports-server.js
+    ports:
+      - "${REPORTS_PORT:-3008}:3008"
+    environment:
+      - REPORTS_PORT=3008
+    profiles: ["full"]
+    restart: unless-stopped
+
+  capabilities-server:
+    build: .
+    command: node servers/capabilities-server.js
+    ports:
+      - "${CAPABILITIES_PORT:-3009}:3009"
+    environment:
+      - CAPABILITIES_PORT=3009
+    profiles: ["full"]
+    restart: unless-stopped
+
+  # Shared volumes
+volumes:
+  tooloo-data:
+    driver: local
