@@ -25,6 +25,7 @@ const repoAutoOrg = new RepoAutoOrg({
 
 const services = [
   { name:'web', cmd:['node','servers/web-server.js'], port: Number(process.env.WEB_PORT||3000), health:'/health' },
+  { name:'ui-monitor', cmd:['node','servers/ui-activity-monitor.js'], port: Number(process.env.ACTIVITY_MONITOR_PORT||3050), health:'/health' },
   { name:'training', cmd:['node','servers/training-server.js'], port: Number(process.env.TRAINING_PORT||3001), health:'/health' },
   { name:'meta', cmd:['node','servers/meta-server.js'], port: Number(process.env.META_PORT||3002), health:'/health' },
   { name:'budget', cmd:['node','servers/budget-server.js'], port: Number(process.env.BUDGET_PORT||3003), health:'/health' },
@@ -34,7 +35,9 @@ const services = [
   { name:'segmentation', cmd:['node','servers/segmentation-server.js'], port: Number(process.env.SEGMENTATION_PORT||3007), health:'/health' },
   { name:'reports', cmd:['node','servers/reports-server.js'], port: Number(process.env.REPORTS_PORT||3008), health:'/health' },
   { name:'capabilities', cmd:['node','servers/capabilities-server.js'], port: Number(process.env.CAPABILITIES_PORT||3009), health:'/health' },
-  { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3010), health:'/health' }
+  { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3010), health:'/health' },
+  { name:'automated-commit', cmd:['node','servers/automated-commit-service.js'], port: Number(process.env.AUTOMATED_COMMIT_PORT||3011), health:'/health' },
+  { name:'analytics', cmd:['node','servers/analytics-server.js'], port: Number(process.env.ANALYTICS_PORT||3012), health:'/health' }
 ];
 
 function waitForHealth(port, path, retries=30, delayMs=300){
@@ -123,7 +126,9 @@ async function main(){
     });
   }catch{}
 
-  console.log('All services up and pre-armed. Web UI: http://127.0.0.1:'+(process.env.WEB_PORT||3000)+'/control-room');
+  // Start self-healing monitoring loop
+  const monitorInterval = setInterval(() => monitorServices(children), 15000); // Check every 15 seconds
+  console.log('[Auto-Heal] Self-healing monitoring started (15s intervals)');
 
   // Apply startup priority mode (default chat-priority) if enabled
   // With retry logic for race condition (web-server may not be fully ready)
@@ -171,6 +176,7 @@ async function main(){
   const keepAlive = setInterval(()=>{}, 60*60*1000);
   const shutdown = ()=>{
     clearInterval(keepAlive);
+    clearInterval(monitorInterval);
     console.log('Shutting down orchestrator, terminating child servers...');
     for (const c of children) {
       try { c.p.kill('SIGTERM'); } catch {}
@@ -833,5 +839,98 @@ async function main(){
 }
 
 function osCoresSafe(){ try{ return Math.max(1, require('os').cpus().length - 1); }catch{ return 2; } }
+
+// Service health monitoring and auto-healing
+const serviceHealthState = new Map(); // service name -> { lastCheck: timestamp, failures: count, lastRestart: timestamp }
+
+async function checkServiceHealth(service) {
+  try {
+    const res = await fetch(`http://127.0.0.1:${service.port}${service.health}`, { timeout: 5000 });
+    return res.status === 200;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function restartService(service, children) {
+  const state = serviceHealthState.get(service.name) || { failures: 0, lastRestart: 0 };
+  
+  // Prevent restart spam - minimum 30 seconds between restarts
+  if (Date.now() - state.lastRestart < 30000) {
+    console.log(`[Auto-Heal] Skipping restart of ${service.name} - too soon since last restart`);
+    return false;
+  }
+  
+  console.log(`[Auto-Heal] Restarting failed service: ${service.name} on port ${service.port}`);
+  
+  try {
+    // Kill existing process if running
+    const existing = children.find(c => c.name === service.name);
+    if (existing) {
+      try { existing.p.kill('SIGTERM'); } catch {}
+      // Remove from children array
+      const idx = children.indexOf(existing);
+      if (idx > -1) children.splice(idx, 1);
+    }
+    
+    // Start new process
+    const p = spawn(service.cmd[0], service.cmd.slice(1), { stdio: 'inherit' });
+    children.push({ name: service.name, p });
+    
+    p.on('exit', (code, signal) => {
+      console.log(`${service.name}-server exited with code ${code} signal ${signal}`);
+    });
+    
+    // Wait for health
+    await waitForHealth(service.port, service.health, 10, 1000);
+    
+    // Update state
+    state.failures = 0;
+    state.lastRestart = Date.now();
+    serviceHealthState.set(service.name, state);
+    
+    console.log(`[Auto-Heal] Successfully restarted ${service.name}`);
+    return true;
+  } catch (e) {
+    console.error(`[Auto-Heal] Failed to restart ${service.name}:`, e.message);
+    state.failures++;
+    serviceHealthState.set(service.name, state);
+    return false;
+  }
+}
+
+async function monitorServices(children) {
+  const now = Date.now();
+  
+  for (const service of services) {
+    const state = serviceHealthState.get(service.name) || { lastCheck: 0, failures: 0, lastRestart: 0 };
+    
+    // Skip check if recently checked (throttle to every 30 seconds)
+    if (now - state.lastCheck < 30000) continue;
+    
+    state.lastCheck = now;
+    serviceHealthState.set(service.name, state);
+    
+    const healthy = await checkServiceHealth(service);
+    
+    if (!healthy) {
+      console.warn(`[Auto-Heal] Service ${service.name} on port ${service.port} failed health check`);
+      state.failures++;
+      serviceHealthState.set(service.name, state);
+      
+      // Restart if failed 2 consecutive checks
+      if (state.failures >= 2) {
+        await restartService(service, children);
+      }
+    } else {
+      // Reset failure count on successful check
+      if (state.failures > 0) {
+        state.failures = 0;
+        serviceHealthState.set(service.name, state);
+        console.log(`[Auto-Heal] Service ${service.name} recovered`);
+      }
+    }
+  }
+}
 
 main().catch(e=>{ console.error('orchestrator error', e); process.exit(1); });

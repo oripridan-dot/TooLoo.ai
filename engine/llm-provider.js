@@ -5,6 +5,9 @@
  * If no keys are available, returns a clear configuration message.
  */
 
+import DomainExpertise from './domain-expertise.js';
+import ContinuousLearning from './continuous-learning.js';
+
 const env = (name, def = undefined) => (process.env[name] ?? def);
 
 const DEEPSEEK_DEFAULT_MODEL = env('DEEPSEEK_MODEL', 'deepseek-chat');
@@ -51,6 +54,12 @@ export default class LLMProvider {
       openinterpreter: env('OI_BASE_URL', 'http://localhost:8000'),
       huggingface: 'https://api-inference.huggingface.co'
     };
+
+    // Initialize domain expertise system
+    this.domainExpertise = new DomainExpertise();
+
+    // Initialize continuous learning system
+    this.learning = new ContinuousLearning();
   }
 
   // Check if Ollama is running locally
@@ -120,7 +129,37 @@ export default class LLMProvider {
       };
     }
 
-    const provider = this.selectProvider(taskType);
+    // Detect domain expertise from the prompt
+    const detectedDomain = this.domainExpertise.detectDomain(prompt, context);
+    
+    // Get domain-specific system prompt if available
+    let enhancedSystem = system;
+    if (detectedDomain !== 'general') {
+      const domainPrompt = this.domainExpertise.getDomainPrompt(detectedDomain);
+      if (domainPrompt) {
+        enhancedSystem = domainPrompt + (system ? '\n\n' + system : '');
+      }
+    }
+
+    // Select provider considering domain expertise and learning data
+    const availableProviders = Object.keys(this.providers).filter(p => this.providers[p]);
+    let provider;
+
+    if (detectedDomain !== 'general') {
+      // First try learning-based recommendation for this domain
+      provider = this.learning.getBestProviderForDomain(detectedDomain, availableProviders);
+
+      // Fallback to domain expertise preferences
+      if (!provider) {
+        provider = this.domainExpertise.selectProviderForDomain(detectedDomain, taskType, availableProviders);
+      }
+    }
+
+    // Fallback to standard task-based selection
+    if (!provider) {
+      provider = this.selectProvider(taskType);
+    }
+
     if (!provider) {
       return {
         content: 'No AI provider configured. Add API keys or enable local providers in .env:\n' +
@@ -132,16 +171,16 @@ export default class LLMProvider {
     }
 
     const fns = {
-      deepseek: () => this.callDeepSeek(prompt, system, taskType, context),
-      anthropic: () => this.callClaude(prompt, system, taskType, context),
-      openai: () => this.callOpenAI(prompt, system, taskType, context),
-      gemini: () => this.callGemini(prompt, system, taskType, context),
+      deepseek: () => this.callDeepSeek(prompt, enhancedSystem, taskType, context),
+      anthropic: () => this.callClaude(prompt, enhancedSystem, taskType, context),
+      openai: () => this.callOpenAI(prompt, enhancedSystem, taskType, context),
+      gemini: () => this.callGemini(prompt, enhancedSystem, taskType, context),
       
       // OSS providers
-      ollama: () => this.callOllama(prompt, system, taskType, context),
-      localai: () => this.callLocalAI(prompt, system, taskType, context),
-      openinterpreter: () => this.callOpenInterpreter(prompt, system, taskType, context),
-      huggingface: () => this.callHuggingFace(prompt, system, taskType, context)
+      ollama: () => this.callOllama(prompt, enhancedSystem, taskType, context),
+      localai: () => this.callLocalAI(prompt, enhancedSystem, taskType, context),
+      openinterpreter: () => this.callOpenInterpreter(prompt, enhancedSystem, taskType, context),
+      huggingface: () => this.callHuggingFace(prompt, enhancedSystem, taskType, context)
     };
 
   // Default chat fallback: Ollama first
@@ -150,11 +189,19 @@ export default class LLMProvider {
   const tryOrder = order.slice(startIdx).concat(order.slice(0, startIdx));
 
     let lastError = null;
+    const startTime = Date.now();
+
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
       try {
         const result = await fns[p]();
-        return { ...result, provider: p };
+        const latency = Date.now() - startTime;
+        const success = result.content && result.content.length > 10 && !result.content.includes('error'); // Basic success detection
+
+        // Record the interaction for learning
+        this.learning.recordInteraction(prompt, detectedDomain, p, success, latency);
+
+        return { ...result, provider: p, domain: detectedDomain, latency };
       } catch (err) {
         lastError = err;
         // Continue to next provider
@@ -248,13 +295,18 @@ export default class LLMProvider {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ model, messages, temperature: 0.7 })
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7
+      })
     });
 
     if (!res.ok) {
       const err = await safeJson(res);
       throw new Error(`OpenAI error ${res.status}: ${JSON.stringify(err)}`);
     }
+
     const data = await res.json();
     const text = data?.choices?.[0]?.message?.content || '';
     return { content: text, confidence: 0.88 };

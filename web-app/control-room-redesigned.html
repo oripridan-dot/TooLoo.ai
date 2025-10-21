@@ -96,7 +96,7 @@
         .log-time { color: #888; font-size: 9px; }
         
         .provider-scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .provider-card { background: rgba(255,255,255,0.06); padding: 8px; border-radius: 8px; text-align: center; }
+        .provider-card { background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; text-align: center; min-height: 80px; }
         .provider-name { font-weight: 700; font-size: 11px; margin-bottom: 4px; }
         .provider-rank { font-size: 18px; font-weight: 700; color: #00d4ff; }
         .provider-stat { font-size: 9px; color: #aaa; margin-top: 2px; }
@@ -240,9 +240,15 @@
         <div class="panel">
             <div class="panel-title">🎯 Provider Cup Standings
                 <div class="panel-controls">
+                    <button id="refreshProvidersBtn" class="btn" title="Refresh provider data">🔄 Refresh</button>
                     <button id="chatPriorityBtn" class="btn" title="Prioritize chat responsiveness">💬 Chat Priority</button>
                     <button id="backgroundPriorityBtn" class="btn" title="Resume background throughput">🌙 Background Priority</button>
                 </div>
+            </div>
+            <div id="providerStatusSummary" style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <span class="pill" id="providersOnline">Online: —</span>
+                <span class="pill" id="providersActive">Active: —</span>
+                <span class="pill" id="providersTotal">Total: —</span>
             </div>
             <div id="providerScores" class="provider-scores"></div>
             <div style="margin-top:10px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -527,10 +533,29 @@
         
         async function fetchProviderScores() {
             try {
-                const res = await fetch('/api/v1/cup/scoreboard');
-                const data = await safeJson(res);
-                if (data && data.ok && data.scoreboard && data.scoreboard.overall) {
-                    renderProviderScores(data.scoreboard.overall);
+                // Fetch both cup scoreboard and provider status
+                const [cupRes, statusRes] = await Promise.all([
+                    fetch('/api/v1/cup/scoreboard'),
+                    fetch('/api/v1/providers/status')
+                ]);
+                
+                const cupData = await safeJson(cupRes);
+                const statusData = await safeJson(statusRes);
+                
+                if (cupData && cupData.ok && cupData.scoreboard && cupData.scoreboard.overall) {
+                    renderProviderScores(cupData.scoreboard.overall, statusData?.status || {});
+                    
+                    // Update provider status summary
+                    if (statusData?.status) {
+                        const providers = Object.values(statusData.status);
+                        const online = providers.filter(p => p.available).length;
+                        const active = providers.filter(p => p.available && p.enabled).length;
+                        const total = providers.length;
+                        
+                        $('providersOnline').textContent = `Online: ${online}`;
+                        $('providersActive').textContent = `Active: ${active}`;
+                        $('providersTotal').textContent = `Total: ${total}`;
+                    }
                 }
             } catch {}
         }
@@ -666,16 +691,28 @@
             </div>`;
         }
         
-        function renderProviderScores(scores) {
+        function renderProviderScores(scores, providerStatus = {}) {
             const sorted = Object.entries(scores).sort((a,b) => (a[1].rank || 999) - (b[1].rank || 999));
-            $('providerScores').innerHTML = sorted.map(([provider, data]) => `
+            $('providerScores').innerHTML = sorted.map(([provider, data]) => {
+                const status = providerStatus[provider] || {};
+                const statusIcon = status.available ? (status.enabled ? '🟢' : '🟡') : '🔴';
+                const statusText = status.available ? (status.enabled ? 'Active' : 'Disabled') : 'Offline';
+                const modelText = status.model ? status.model.split('/').pop().split('-')[0] : '—';
+                
+                return `
                 <div class="provider-card">
                     <div class="provider-name">${provider.toUpperCase()}</div>
                     <div class="provider-rank">#${data.rank || '?'}</div>
                     <div class="provider-stat">${Math.round(data.avgScore || 0)}% accuracy</div>
                     <div class="provider-stat">$${(data.totalCost || 0).toFixed(3)}</div>
+                    <div class="provider-stat" style="font-size:8px;margin-top:2px;opacity:0.8;">
+                        ${statusIcon} ${statusText}
+                    </div>
+                    <div class="provider-stat" style="font-size:8px;margin-top:1px;opacity:0.6;">
+                        ${modelText}
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
         
         async function runTrainingRound() {
@@ -839,6 +876,7 @@
             }catch{}
         }
         $('refreshPolicyBtn').addEventListener('click', refreshProviderPolicy);
+        $('refreshProvidersBtn').addEventListener('click', fetchProviderScores);
 
         $('chatPriorityBtn').addEventListener('click', async ()=>{
             try{
@@ -1330,6 +1368,7 @@
             refreshArtifacts();
             refreshHistory();
             refreshCritique();
+            fetchProviderScores();
         }, 10000);
     </script>
 </body>

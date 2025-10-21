@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-10-21T05:49:31.165Z",
+  "avgLatency": 2522,
+  "totalTokens": 393,
+  "successRate": 100,
+  "estimatedCost": 0.00031440000000000005,
+  "grade": "C (Fair)",
+  "results": [
+    {
+      "task": "reasoning",
+      "latency": 1939,
+      "words": 52,
+      "tokens": 68,
+      "delta": 439,
+      "status": "success"
+    },
+    {
+      "task": "coding",
+      "latency": 3533,
+      "words": 101,
+      "tokens": 212,
+      "delta": 1533,
+      "status": "success"
+    },
+    {
+      "task": "creative",
+      "latency": 2024,
+      "words": 53,
+      "tokens": 77,
+      "delta": 524,
+      "status": "success"
+    },
+    {
+      "task": "summary",
+      "latency": 2591,
+      "words": 30,
+      "tokens": 36,
+      "delta": 1391,
+      "status": "success"
+    }
+  ]
+}

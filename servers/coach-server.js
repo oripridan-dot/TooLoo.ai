@@ -3,6 +3,7 @@ import cors from 'cors';
 // Use HTTP proxy to the training-server so all training state is unified
 import MetaLearningEngine from '../engine/meta-learning-engine.js';
 import AutoCoachEngine from '../engine/auto-coach-engine.js';
+import AnalyticsIntegration from '../modules/analytics-integration.js';
 import fs from 'fs';
 import path from 'path';
 import environmentHub from '../engine/environment-hub.js';
@@ -64,6 +65,7 @@ const trainingCamp = {
 const meta = new MetaLearningEngine({ workspaceRoot: process.cwd() });
 const settings = loadSettings();
 const coach = new AutoCoachEngine({ trainingCamp, metaLearningEngine: meta, logger: console, thresholds: settings });
+const analytics = new AnalyticsIntegration();
 environmentHub.registerComponent('autoCoachEngine', coach, ['auto-coach', 'meta-learning', 'training-camp']);
 
 app.get('/health', (req,res)=> res.json({ ok:true, server:'coach', time:new Date().toISOString() }));

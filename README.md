@@ -1,5 +1,56 @@
 # TooLoo.ai Control Network
+
+[![CI](https://github.com/oripridan-dot/TooLoo.ai/workflows/CI/badge.svg)](https://github.com/oripridan-dot/TooLoo.ai/actions)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue)](https://docker.com/)
+
 TooLoo.ai is a multi-service personal AI development environment that orchestrates training, segmentation, coaching, and provider management from a single Control Room.
+
+## 📁 Repository Structure
+
+```
+TooLoo.ai/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                    # GitHub Actions CI/CD
+├── config/
+│   └── providers.json               # Provider fallback chains & settings
+├── servers/                         # Multi-service architecture
+│   ├── web-server.js                # UI proxy & static assets (port 3000)
+│   ├── orchestrator.js              # Service orchestration & monitoring (port 3123)
+│   ├── training-server.js           # AI training engine (port 3001)
+│   ├── meta-server.js               # Meta-learning & boosts (port 3002)
+│   ├── budget-server.js             # Provider management (port 3003)
+│   ├── coach-server.js              # Auto-coach & Fast Lane (port 3004)
+│   ├── cup-server.js                # Provider tournaments (port 3005)
+│   ├── product-development-server.js # Workflows & artifacts (port 3006)
+│   ├── segmentation-server.js       # Conversation analysis (port 3007)
+│   ├── reports-server.js            # Analytics & reporting (port 3008)
+│   └── capabilities-server.js       # Feature capabilities (port 3009)
+├── engine/                          # Core AI & utility engines
+│   ├── intent-bus.js                # Intent processing
+│   ├── model-chooser.js             # Provider selection logic
+│   ├── confidence-scorer.js         # Response quality scoring
+│   ├── dag-builder.js               # Workflow orchestration
+│   └── llm-provider.js              # Multi-provider orchestration
+├── web-app/                         # Frontend UI assets
+│   ├── control-room-home.html       # Main control interface
+│   ├── control-room-redesigned.html # Advanced control interface
+│   ├── tooloo-hub.html              # Conversational interface
+│   ├── js/                          # Frontend JavaScript
+│   └── css/                         # Stylesheets
+├── scripts/                         # Development & utility scripts
+├── tests/                           # Test suites
+├── data/                            # Persistent data storage
+├── config/                          # Configuration files
+├── .env.example                     # Environment variables template
+├── docker-compose.yml               # Multi-service container orchestration
+├── Dockerfile                       # Container build configuration
+├── package.json                     # Dependencies & scripts
+├── vitest.config.js                 # Test configuration
+├── .eslintrc.json                   # Code linting rules
+└── .prettierrc.json                 # Code formatting rules
+```
 
 ## ⚡️ Quick Start
 - `npm install`
@@ -70,6 +121,23 @@ See the [Branching Strategy guide](docs/branching-strategy.md) for more detailed
 - Apply the sweep with `npm run hygiene` (also runs automatically via `npm run clean`)
 - Generated caches, logs, release bundles, and AI analysis exports are removed while `data/.gitkeep` preserves the directory skeleton
 
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+1. Fork and clone the repository
+2. Copy `.env.example` to `.env` and configure your API keys
+3. Run `npm install` to install dependencies
+4. Use `npm run lint` and `npm run format` to maintain code quality
+5. Run `npm test` to execute the test suite
+6. Use `docker-compose up` for containerized development
+
+### Code Quality
+- **Linting**: `npm run lint` (auto-fix with `npm run lint:fix`)
+- **Formatting**: `npm run format` (check with `npm run format:check`)
+- **Testing**: `npm test` (unit tests) and `npm run test:integration` (API tests)
+- **CI/CD**: Automated checks run on all PRs via GitHub Actions
 
 ## 📚 Further Reading
 

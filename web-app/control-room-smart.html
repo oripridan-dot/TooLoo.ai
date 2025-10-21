@@ -169,8 +169,13 @@
                 <div class="status-label">AI Insights</div>
                 <div class="status-value" id="insightCount">0</div>
             </div>
+            <div class="status-card">
+                <div class="status-label">Provider Status</div>
+                <div class="status-value" id="providerStatus">Checking…</div>
+            </div>
         </div>
         <button class="main-btn" onclick="window.location.href='/web-app/tooloo-showcase.html'">🚀 Launch Showcase Demo</button>
+        <button class="main-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 80%); margin-top: 16px;" onclick="window.location.href='/web-app/provider-performance-dashboard.html'">📊 Provider Performance Dashboard</button>
         <div class="section">
             <div class="section-title">Your Latest Artifacts</div>
             <div class="artifact-list" id="artifactList">Loading…</div>
@@ -186,8 +191,19 @@
                 const res = await fetch('/api/v1/health');
                 const j = await res.json();
                 document.getElementById('sysHealth').textContent = j.status === 'healthy' ? 'Healthy' : 'Check';
+                
+                // Fetch provider status
+                const providerRes = await fetch('http://127.0.0.1:3003/api/v1/providers/status');
+                if (providerRes.ok) {
+                    const providerData = await providerRes.json();
+                    const availableCount = Object.values(providerData.status || {}).filter(p => p.available && p.enabled).length;
+                    document.getElementById('providerStatus').textContent = `${availableCount} Active`;
+                } else {
+                    document.getElementById('providerStatus').textContent = 'Offline';
+                }
             } catch {
                 document.getElementById('sysHealth').textContent = 'Offline';
+                document.getElementById('providerStatus').textContent = 'Offline';
             }
         }
         async function fetchArtifacts() {

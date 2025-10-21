@@ -63,6 +63,17 @@
         <div class="sub">Criticality & maxConcurrency used by bursts</div>
       </div>
       <div class="card">
+        <div class="title">Provider Status</div>
+        <div class="row" id="providerStatus">
+          <span class="pill" id="providersOnline">Online: —</span>
+          <span class="pill" id="providersActive">Active: —</span>
+        </div>
+        <div class="sub" id="topProvider">Top: —</div>
+        <div class="actions">
+          <button class="btn" id="refreshProvidersBtn">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="card">
         <div class="title">Orchestrator</div>
         <div class="value" id="orchStatus">—</div>
         <div class="sub" id="orchPid">PID: —</div>
@@ -147,6 +158,47 @@
           }
         }catch(e){
           console.warn('Provider policy fetch failed:', e.message);
+        }
+
+        // Provider status
+        console.log('Loading provider status...');
+        try{
+          const [cupRes, statusRes] = await Promise.all([
+            fetch('/api/v1/cup/scoreboard', { signal: AbortSignal.timeout(5000) }),
+            fetch('/api/v1/providers/status', { signal: AbortSignal.timeout(5000) })
+          ]);
+          
+          console.log('Provider API responses:', cupRes.ok, statusRes.ok);
+          
+          if (statusRes.ok) {
+            const statusData = await safeJson(statusRes);
+            console.log('Status data:', statusData);
+            if (statusData?.status) {
+              const providers = Object.values(statusData.status);
+              const online = providers.filter(p => p.available).length;
+              const active = providers.filter(p => p.available && p.enabled).length;
+              
+              console.log('Setting provider counts:', online, active);
+              $('providersOnline').textContent = `Online: ${online}`;
+              $('providersActive').textContent = `Active: ${active}`;
+            }
+          }
+          
+          if (cupRes.ok) {
+            const cupData = await safeJson(cupRes);
+            console.log('Cup data:', cupData);
+            if (cupData?.ok && cupData.scoreboard?.overall) {
+              const scores = Object.entries(cupData.scoreboard.overall).sort((a,b) => (a[1].rank || 999) - (b[1].rank || 999));
+              if (scores.length > 0) {
+                const topProvider = scores[0][0].toUpperCase();
+                const topScore = Math.round(scores[0][1].avgScore || 0);
+                console.log('Setting top provider:', topProvider, topScore);
+                $('topProvider').textContent = `Top: ${topProvider} (${topScore}%)`;
+              }
+            }
+          }
+        }catch(e){
+          console.warn('Provider status fetch failed:', e.message);
         }
 
         // Training overview and next domain
@@ -263,9 +315,52 @@
       }
     });
 
+    // Provider refresh button
+    $('refreshProvidersBtn').addEventListener('click', async ()=>{
+      try{
+        const [cupRes, statusRes] = await Promise.all([
+          fetch('/api/v1/cup/scoreboard', { signal: AbortSignal.timeout(5000) }),
+          fetch('/api/v1/providers/status', { signal: AbortSignal.timeout(5000) })
+        ]);
+        
+        if (statusRes.ok) {
+          const statusData = await safeJson(statusRes);
+          if (statusData?.status) {
+            const providers = Object.values(statusData.status);
+            const online = providers.filter(p => p.available).length;
+            const active = providers.filter(p => p.available && p.enabled).length;
+            
+            $('providersOnline').textContent = `Online: ${online}`;
+            $('providersActive').textContent = `Active: ${active}`;
+          }
+        }
+        
+        if (cupRes.ok) {
+          const cupData = await safeJson(cupRes);
+          if (cupData?.ok && cupData.scoreboard?.overall) {
+            const scores = Object.entries(cupData.scoreboard.overall).sort((a,b) => (a[1].rank || 999) - (b[1].rank || 999));
+            if (scores.length > 0) {
+              const topProvider = scores[0][0].toUpperCase();
+              const topScore = Math.round(scores[0][1].avgScore || 0);
+              $('topProvider').textContent = `Top: ${topProvider} (${topScore}%)`;
+            }
+          }
+        }
+      }catch(e){
+        console.warn('Provider refresh failed:', e.message);
+      }
+    });
+
     // Initial load and periodic refresh
-    loadStatus();
-    setInterval(loadStatus, 4000);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        loadStatus();
+        setInterval(loadStatus, 4000);
+      });
+    } else {
+      loadStatus();
+      setInterval(loadStatus, 4000);
+    }
   </script>
 </body>
 </html>

@@ -1,50 +1,37 @@
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create app directory
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json package-lock.json* ./
-COPY packages/core/package.json ./packages/core/
-COPY packages/engine/package.json ./packages/engine/
-COPY packages/api/package.json ./packages/api/
-COPY packages/web/package.json ./packages/web/
+# Copy package files
+COPY package*.json ./
 
-RUN npm ci --only=production
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
-# Build the packages
-RUN npm run build
+# Create data directory
+RUN mkdir -p /app/data && chmod 755 /app/data
 
-# Production image, copy all the files and run the server
-FROM base AS runner
-WORKDIR /app
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S tooloo -u 1001
 
-ENV NODE_ENV production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 tooloo
-
-# Create data directory for SQLite
-RUN mkdir -p /app/data && chown tooloo:nodejs /app/data
-
-COPY --from=builder --chown=tooloo:nodejs /app/packages/api/dist ./packages/api/dist
-COPY --from=builder --chown=tooloo:nodejs /app/packages/core/dist ./packages/core/dist  
-COPY --from=builder --chown=tooloo:nodejs /app/packages/engine/dist ./packages/engine/dist
-COPY --from=builder --chown=tooloo:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=tooloo:nodejs /app/package.json ./package.json
-
+# Change ownership of app directory
+RUN chown -R tooloo:nodejs /app
 USER tooloo
 
-EXPOSE 3001
+# Expose ports for all services
+EXPOSE 3000 3001 3002 3003 3004 3005 3006 3007 3008 3009 3123
 
-ENV PORT 3001
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
-CMD ["node", "packages/api/dist/server.js"]
+# Default command (can be overridden in docker-compose)
+CMD ["node", "servers/web-server.js"]
