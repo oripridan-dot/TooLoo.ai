@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.AUTOMATED_COMMIT_PORT || 3011;
+const PORT = process.env.AUTOMATED_COMMIT_PORT || 3013;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));

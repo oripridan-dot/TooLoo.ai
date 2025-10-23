@@ -127,6 +127,11 @@ app.get('/workflow-control-room', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'web-app', 'workflow-control-room.html'));
 });
 
+// Providers Arena - Multi-AI Collaboration
+app.get('/providers-arena', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'providers-arena.html'));
+});
+
 // Segmentation Demo friendly alias
 app.get(['/segmentation','/segmentation-demo'], async (req,res)=>{
   const f = path.join(webDir,'segmentation-demo.html');
@@ -625,8 +630,8 @@ const serviceConfig = [
   { name: 'reports', prefixes: ['/api/v1/reports'], port: Number(process.env.REPORTS_PORT||3008), remoteEnv: process.env.REMOTE_REPORTS_BASE },
   { name: 'capabilities', prefixes: ['/api/v1/capabilities'], port: Number(process.env.CAPABILITIES_PORT||3009), remoteEnv: process.env.REMOTE_CAPABILITIES_BASE },
   { name: 'system', prefixes: ['/api/v1/system'], port: Number(process.env.ORCH_CTRL_PORT||3123), remoteEnv: process.env.REMOTE_SYSTEM_BASE },
-  // Add sources server for future use
-  { name: 'sources', prefixes: ['/api/v1/sources','/api/v1/sources/github/issues/sync'], port: Number(process.env.SOURCES_PORT||3010), remoteEnv: process.env.REMOTE_SOURCES_BASE }
+  { name: 'sources', prefixes: ['/api/v1/sources','/api/v1/sources/github/issues/sync'], port: Number(process.env.SOURCES_PORT||3010), remoteEnv: process.env.REMOTE_SOURCES_BASE },
+  { name: 'arena', prefixes: ['/api/v1/arena'], port: Number(process.env.ARENA_PORT||3011), remoteEnv: process.env.REMOTE_ARENA_BASE }
 ];
 
 function getRouteForPrefix(url) {
@@ -673,6 +678,24 @@ app.all(['/api/v1/capabilities', '/api/v1/capabilities/*'], async (req, res) => 
 app.all(['/api/v1/workflows', '/api/v1/workflows/*', '/api/v1/learning', '/api/v1/learning/*', '/api/v1/analysis', '/api/v1/analysis/*', '/api/v1/artifacts', '/api/v1/artifacts/*', '/api/v1/showcase', '/api/v1/showcase/*', '/api/v1/product', '/api/v1/product/*', '/api/v1/bookworm', '/api/v1/bookworm/*'], async (req, res) => {
   try {
     const port = Number(process.env.PRODUCT_PORT||3006);
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type')||'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body||{}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type')||'';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch(e){ res.status(500).json({ ok:false, error: e.message }); }
+});
+
+// Explicit proxy for providers arena (multi-provider collaboration)
+app.all(['/api/v1/arena', '/api/v1/arena/*'], async (req, res) => {
+  try {
+    const port = Number(process.env.ARENA_PORT||3011);
     const url = `http://127.0.0.1:${port}${req.originalUrl}`;
     const init = { method: req.method, headers: { 'content-type': req.get('content-type')||'application/json' } };
     if (req.method !== 'GET' && req.method !== 'HEAD') {
