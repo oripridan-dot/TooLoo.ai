@@ -36,7 +36,7 @@ const services = [
   { name:'reports', cmd:['node','servers/reports-server.js'], port: Number(process.env.REPORTS_PORT||3008), health:'/health' },
   { name:'capabilities', cmd:['node','servers/capabilities-server.js'], port: Number(process.env.CAPABILITIES_PORT||3009), health:'/health' },
   { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3010), health:'/health' },
-  { name:'automated-commit', cmd:['node','servers/automated-commit-service.js'], port: Number(process.env.AUTOMATED_COMMIT_PORT||3011), health:'/health' },
+  { name:'arena', cmd:['node','servers/providers-arena-server.js'], port: Number(process.env.ARENA_PORT||3011), health:'/health' },
   { name:'analytics', cmd:['node','servers/analytics-server.js'], port: Number(process.env.ANALYTICS_PORT||3012), health:'/health' }
 ];
 

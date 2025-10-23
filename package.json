@@ -26,6 +26,7 @@
     "start:sources": "node servers/sources-server.js",
     "start:chat-bridge": "node servers/chat-api-bridge.js",
     "start:chat": "npm-run-all --parallel start:web start:chat-bridge",
+    "start:arena": "node servers/providers-arena-server.js",
     "start:simple": "node simple-api-server.js",
     "stop:all": "bash -lc 'pkill -f \"servers/(web|training|meta|budget|coach|cup|product-development|segmentation|reports|capabilities|sources)-server.js\" || true'",
     "clean": "npm-run-all clean:process hygiene:force",
