@@ -259,6 +259,31 @@ app.get('/api/v1/arena/status', (req, res) => {
   }
 });
 
+// Test endpoint - returns mock responses without calling real providers
+app.post('/api/v1/arena/test', (req, res) => {
+  const { query, providers = ['ollama', 'claude'] } = req.body;
+  const validProviders = providers
+    .map(p => providerMap[p.toLowerCase()])
+    .filter(p => p && p !== undefined)
+    .slice(0, 4); // Limit to 4 providers max
+
+  const results = validProviders.map(provider => ({
+    ok: true,
+    provider,
+    text: generateMockResponse(provider),
+    duration: Math.floor(Math.random() * 2000 + 500), // 500-2500ms
+    quality: 75 + Math.random() * 25
+  }));
+
+  res.json({
+    ok: true,
+    query: query || 'Test query',
+    results,
+    count: results.length,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ ok: true, server: 'providers-arena', time: new Date().toISOString() });
