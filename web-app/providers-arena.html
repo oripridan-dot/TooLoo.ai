@@ -91,14 +91,43 @@
 
     .provider-checkbox {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
       border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .provider-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .provider-summary {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.3;
+      margin-left: 26px;
+      display: none;
+    }
+
+    .provider-checkbox.has-response .provider-summary {
+      display: block;
+    }
+
+    .provider-checkbox.selected {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .provider-checkbox.selected-for-expansion {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
     }
 
     .provider-checkbox:hover {
@@ -575,7 +604,7 @@
       margin-bottom: 12px;
     }
 
-    .responses-section {
+    .expanded-view-section {
       flex: 1 1 auto;
       min-height: 0;
       display: flex;
@@ -592,13 +621,58 @@
       gap: 8px;
     }
 
-    .responses-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 8px;
+    .expanded-response-view {
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .layer-expansion {
+      margin-bottom: 16px;
+    }
+
+    .layer-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 12px;
+      font-weight: 600;
+      color: #93c5fd;
+    }
+
+    .layer-toggle:hover {
+      background: rgba(59, 130, 246, 0.2);
+    }
+
+    .layer-toggle.active {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .layer-expansion-content {
+      margin-top: 8px;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 6px;
+      display: none;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #e2e8f0;
+    }
+
+    .layer-expansion-content.visible {
+      display: block;
     }
 
     .cross-provider-label {
@@ -751,19 +825,19 @@
           </div>
         </div>
 
-        <!-- Responses Grid -->
-        <div class="responses-section">
+        <!-- Expanded Response View -->
+        <div class="expanded-view-section">
           <div class="section-title">
-            <span id="responseCount">0</span> Responses
+            <span id="selectedProviderName">Select a provider</span> - Detailed View
             <span id="loadingIndicator" style="display: none;">
               <div class="loading-spinner"></div>
             </span>
           </div>
           
-          <div id="responsesGrid" class="responses-grid">
+          <div id="expandedResponseView" class="expanded-response-view">
             <div class="empty-state">
-              <div class="empty-state-icon">🏟️</div>
-              <div>Submit a query to get responses from all selected providers</div>
+              <div class="empty-state-icon">👆</div>
+              <div>Click on a provider in the sidebar to see detailed layers</div>
             </div>
           </div>
         </div>
@@ -853,14 +927,22 @@
         const statusClass = p.enabled ? (p.available ? 'available' : 'unavailable') : 'disabled';
         const tooltip = !p.enabled ? 'Disabled in config' : (p.available ? 'Ready' : 'Add API key');
         const modelLine = p.model ? `<span class="provider-model">${escapeHtml(p.model)}</span>` : '';
+        const hasResponse = p.response ? 'has-response' : '';
+        const selectedClass = selectedProviders.has(p.id) ? 'selected' : '';
+        
         return `
-          <label class="provider-checkbox">
-            <input type="checkbox" data-provider="${p.id}" ${checked} onchange="toggleProvider('${p.id}')">
-            <div class="provider-name">
-              ${p.name}
-              ${modelLine}
+          <label class="provider-checkbox ${hasResponse} ${selectedClass}" data-provider="${p.id}" onclick="selectProviderForExpansion('${p.id}')">
+            <div class="provider-header">
+              <input type="checkbox" data-provider="${p.id}" ${checked} onchange="toggleProvider('${p.id}')" onclick="event.stopPropagation()">
+              <div class="provider-name">
+                ${p.name}
+                ${modelLine}
+              </div>
+              <div class="provider-status ${statusClass}" title="${tooltip}"></div>
             </div>
-            <div class="provider-status ${statusClass}" title="${tooltip}"></div>
+            <div class="provider-summary" id="summary-${p.id}">
+              ${p.summary || 'No response yet'}
+            </div>
           </label>
         `;
       }).join('');
@@ -872,6 +954,87 @@
         selectedProviders.add(id);
       } else {
         selectedProviders.delete(id);
+      }
+      renderProviderSelector(); // Update the selected styling
+    }
+
+    let selectedProviderForExpansion = null;
+
+    function selectProviderForExpansion(id) {
+      selectedProviderForExpansion = id;
+      const provider = providerState.find(p => p.id === id);
+      if (provider && provider.response) {
+        showExpandedView(provider);
+      } else {
+        showNoResponseView(provider);
+      }
+      
+      // Update visual selection in sidebar
+      document.querySelectorAll('.provider-checkbox').forEach(el => {
+        el.classList.remove('selected-for-expansion');
+      });
+      document.querySelector(`[data-provider="${id}"]`).classList.add('selected-for-expansion');
+    }
+
+    function showExpandedView(provider) {
+      const nameEl = document.getElementById('selectedProviderName');
+      const viewEl = document.getElementById('expandedResponseView');
+      
+      nameEl.textContent = provider.name;
+      
+      const response = provider.response;
+      viewEl.innerHTML = `
+        <div class="layer-expansion">
+          <div class="layer-toggle active" onclick="toggleLayer('layer2-${provider.id}')">
+            <span>📋 Layer 2: Key Themes</span>
+            <span style="margin-left: auto;">▼</span>
+          </div>
+          <div class="layer-expansion-content visible" id="layer2-${provider.id}">
+            ${response.layer2 || 'Loading detailed themes...'}
+          </div>
+        </div>
+        
+        <div class="layer-expansion">
+          <div class="layer-toggle" onclick="toggleLayer('layer3-${provider.id}')">
+            <span>📖 Layer 3: Full Response</span>
+            <span style="margin-left: auto;">▶</span>
+          </div>
+          <div class="layer-expansion-content" id="layer3-${provider.id}">
+            ${response.layer3 || response.text || 'Loading full response...'}
+          </div>
+        </div>
+      `;
+    }
+
+    function showNoResponseView(provider) {
+      const nameEl = document.getElementById('selectedProviderName');
+      const viewEl = document.getElementById('expandedResponseView');
+      
+      nameEl.textContent = provider.name;
+      viewEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🤔</div>
+          <div>No response from ${provider.name} yet</div>
+          <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">
+            Submit a query to see detailed layers
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleLayer(layerId) {
+      const content = document.getElementById(layerId);
+      const toggle = content.previousElementSibling;
+      const arrow = toggle.querySelector('span:last-child');
+      
+      if (content.classList.contains('visible')) {
+        content.classList.remove('visible');
+        toggle.classList.remove('active');
+        arrow.textContent = '▶';
+      } else {
+        content.classList.add('visible');
+        toggle.classList.add('active');
+        arrow.textContent = '▼';
       }
     }
 
@@ -898,7 +1061,7 @@
 
       try {
         const selectedArray = Array.from(selectedProviders);
-        const results = await fetch('/api/v1/arena/query', {
+        const results = await fetch('/api/v1/arena/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -909,13 +1072,28 @@
           })
         }).then(r => r.json());
 
-        if (results.ok && results.responses) {
-          results.responses.forEach(resp => {
+        if (results.ok && results.results) {
+          results.results.forEach(resp => {
             responses.set(resp.provider, resp);
+            
+            // Update provider state with response data
+            const provider = providerState.find(p => p.id === resp.provider);
+            if (provider) {
+              const segments = segmentResponseText(resp.text);
+              provider.response = {
+                text: resp.text,
+                layer1: segments.layer1,
+                layer2: segments.layer2,
+                layer3: segments.layer3,
+                duration: resp.duration,
+                quality: resp.quality
+              };
+              provider.summary = segments.layer1;
+            }
           });
         }
 
-        renderResponses();
+        renderProviderSelector(); // Update sidebar with summaries
 
         refreshProviderStatus().then(renderProviderSelector).catch(() => {});
       } catch (error) {
