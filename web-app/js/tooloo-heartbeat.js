@@ -15,7 +15,7 @@
   
   // Configuration
   const config = {
-    monitorUrl: 'http://127.0.0.1:3050',
+    monitorUrl: window.location.origin.replace(/\/$/, ''),
     heartbeatIntervalMs: 30000, // Every 30 seconds
     ensureServicesOnActivity: true,
     realDataMode: true,
@@ -31,6 +31,8 @@
   
   let lastActivityTime = Date.now();
   let heartbeatCount = 0;
+  let monitorActive = true;
+  let heartbeatFailures = 0;
   
   // Logging
   function log(...args) {
@@ -43,6 +45,10 @@
    * Send heartbeat to activity monitor
    */
   async function sendHeartbeat() {
+    if (!monitorActive) {
+      return;
+    }
+
     try {
       const response = await fetch(`${config.monitorUrl}/api/v1/activity/heartbeat`, {
         method: 'POST',
@@ -56,23 +62,36 @@
         })
       });
       
-      if (response.ok) {
-        heartbeatCount++;
-        const data = await response.json();
-        
-        log(`✅ Heartbeat #${heartbeatCount}`, {
-          activeSessions: data.activeSessions,
-          serversActive: data.serversActive,
-          realDataMode: data.config?.realDataMode
-        });
-        
-        // Update global state if needed
-        if (window.toolooServerHealth) {
-          window.toolooServerHealth = data.serverHealth;
+      if (!response.ok) {
+        heartbeatFailures++;
+        if (heartbeatFailures >= 3) {
+          monitorActive = false;
+          log('⚠️ Heartbeat endpoint unavailable, disabling further heartbeats.');
         }
+        return;
+      }
+
+      heartbeatFailures = 0;
+      heartbeatCount++;
+      const data = await response.json();
+      
+      log(`✅ Heartbeat #${heartbeatCount}`, {
+        activeSessions: data.activeSessions,
+        serversActive: data.serversActive,
+        realDataMode: data.config?.realDataMode
+      });
+      
+      // Update global state if needed
+      if (window.toolooServerHealth) {
+        window.toolooServerHealth = data.serverHealth;
       }
     } catch (e) {
+      heartbeatFailures++;
       log('⚠️ Heartbeat failed:', e.message);
+      if (heartbeatFailures >= 3) {
+        monitorActive = false;
+        log('⏸️  Disabling heartbeat attempts after repeated failures.');
+      }
     }
   }
   
@@ -96,17 +115,23 @@
    * Ensure real data provider is active
    */
   async function ensureRealDataProvider() {
+    if (!monitorActive) {
+      return false;
+    }
+
     try {
       const response = await fetch(`${config.monitorUrl}/api/v1/activity/ensure-real-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        log('🔴 Real data ensured:', data);
-        return data.providersActive;
+      if (!response.ok) {
+        return false;
       }
+
+      const data = await response.json();
+      log('🔴 Real data ensured:', data);
+      return data.providersActive;
     } catch (e) {
       log('⚠️ Real data ensure failed:', e.message);
     }
@@ -122,6 +147,10 @@
     if (!banner) return;
     
     const updateBanner = async () => {
+      if (!monitorActive) {
+        return;
+      }
+
       try {
         const response = await fetch(`${config.monitorUrl}/api/v1/activity/servers`);
         const data = await response.json();
@@ -151,7 +180,7 @@
     const originalFetch = window.fetch;
     
     window.fetch = function(...args) {
-      const [resource, init] = args;
+      const [resource] = args;
       const url = typeof resource === 'string' ? resource : resource.url;
       
       // For provider/burst queries, ensure they go through real pipeline
@@ -170,7 +199,7 @@
    * Initialize heartbeat system
    */
   function init() {
-    log(`Initializing TooLoo Heartbeat System`);
+    log('Initializing TooLoo Heartbeat System');
     log(`Session ID: ${sessionId}`);
     log(`Monitor URL: ${config.monitorUrl}`);
     

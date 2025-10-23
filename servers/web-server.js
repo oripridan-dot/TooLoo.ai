@@ -91,21 +91,8 @@ app.get(['/tooloo-hub','/tooloo-page'], async (req,res)=>{
 });
 
 // Root route - prefer Conference presentation, fallback to Nexus Pro, then Control Room
-app.get('/', async (req, res) => {
-  const conference = path.join(webDir, 'providers-conference.html');
-  const pro = path.join(webDir, 'chat-nexus-pro.html');
-  const control = path.join(webDir, 'control-room-home.html');
-  try {
-    await fs.promises.access(conference);
-    return res.sendFile(conference);
-  } catch (e1) {
-    try {
-      await fs.promises.access(pro);
-      return res.sendFile(pro);
-    } catch (e2) {
-      return res.sendFile(control);
-    }
-  }
+app.get('/', (req, res) => {
+  res.redirect('/providers-arena');
 });
 
 // Quiet favicon 404s in dev
