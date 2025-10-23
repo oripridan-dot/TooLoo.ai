@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import ensureEnvLoaded from '../engine/env-loader.js';
 import { generateLLM, getProviderStatus } from '../engine/llm-provider.js';
 import environmentHub from '../engine/environment-hub.js';
+
+ensureEnvLoaded();
 
 const app = express();
 const PORT = process.env.ARENA_PORT || 3011;
@@ -13,7 +16,7 @@ environmentHub.registerComponent('providersArena', { version: '1.0' }, ['multi-p
 const systemPrompt = 'You are TooLoo, the AI assistant for TooLoo.ai. Never introduce yourself as any other AI or company. Structure ALL responses hierarchically: Start with a clear **heading** or key point. Use **bold** for emphasis. Break into sections with sub-headings if needed. Use bullet points (- or •) for lists. Keep it lean: no filler, direct answers only. Respond in clear, concise English. Be friendly, insightful, and proactive.';
 
 // Generate intelligent mock responses when real providers unavailable
-function generateMockResponse(provider, query) {
+function generateMockResponse(provider) {
   const mockResponses = {
     ollama: 'Based on my local knowledge: This is a thoughtful question. I\'ve analyzed it from multiple angles and here are the key insights:\n\n**Key Points:**\n- Core understanding of the subject\n- Practical implications\n- Related considerations\n\nThe pattern I observe suggests this deserves deeper exploration.',
     anthropic: 'I\'d be happy to help with this. Let me break down the important aspects:\n\n**Analysis:**\n- **Primary insight:** The fundamental nature of this topic\n- **Secondary aspects:** Supporting considerations\n- **Practical application:** Real-world implications\n\nThis represents a comprehensive view of the subject matter.',
@@ -30,8 +33,8 @@ function generateMockResponse(provider, query) {
 // Map user-friendly names to actual provider names
 const providerMap = {
   'ollama': 'ollama',
-  'claude': 'anthropic',
-  'anthropic': 'anthropic',
+  'claude': 'claude',
+  'anthropic': 'claude',
   'gpt': 'openai',
   'openai': 'openai',
   'deepseek': 'deepseek',
@@ -76,7 +79,7 @@ app.post('/api/v1/arena/query', async (req, res) => {
           });
         } catch (e) {
           // Fallback: generate intelligent mock response based on provider personality
-          text = generateMockResponse(provider, query);
+          text = generateMockResponse(provider);
         }
 
         const duration = Date.now() - startTime;
@@ -263,7 +266,7 @@ app.get('/health', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log('[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit');
+  console.log('[env-loader] .env watcher active for providers arena');
   console.log(`🏟️ Providers Arena Server running on http://127.0.0.1:${PORT}`);
   console.log('📊 Endpoints: /api/v1/arena/{query,synthesize,consensus,compare,status}');
 });

@@ -7,53 +7,56 @@
 
 import DomainExpertise from './domain-expertise.js';
 import ContinuousLearning from './continuous-learning.js';
+import fetch from 'node-fetch';
+import ensureEnvLoaded from './env-loader.js';
+
+ensureEnvLoaded();
 
 const env = (name, def = undefined) => (process.env[name] ?? def);
 
-const DEEPSEEK_DEFAULT_MODEL = env('DEEPSEEK_MODEL', 'deepseek-chat');
-const CLAUDE_DEFAULT_MODEL = env('ANTHROPIC_MODEL', 'claude-3-5-haiku-20241022');
-const OPENAI_DEFAULT_MODEL = env('OPENAI_MODEL', 'gpt-4o-mini');
-const GEMINI_DEFAULT_MODEL = env('GEMINI_MODEL', 'gemini-1.5-pro');
-const OLLAMA_DEFAULT_MODEL = env('OLLAMA_MODEL', 'llama3.2:latest');
-const LOCALAI_DEFAULT_MODEL = env('LOCALAI_MODEL', 'gpt-4');
-const OI_DEFAULT_MODEL = env('OI_MODEL', 'ollama/llama3.2');
-const HF_DEFAULT_MODEL = env('HF_MODEL', 'microsoft/DialoGPT-large');
 
 export default class LLMProvider {
-  constructor(options = {}) {
-    this.providers = {
-      // Paid providers
-      deepseek: !!env('DEEPSEEK_API_KEY'),
-      anthropic: !!env('ANTHROPIC_API_KEY'),
-      openai: !!env('OPENAI_API_KEY'),
-      gemini: !!env('GEMINI_API_KEY'),
-      
-      // Open Source / Local providers
-      ollama: this.checkOllamaAvailable(),
-      localai: this.checkLocalAIAvailable(),
-      openinterpreter: this.checkOpenInterpreterAvailable(),
-      huggingface: !!env('HF_API_KEY')  // Free tier option
-    };
+  constructor() {
+    Object.defineProperty(this, 'providers', {
+      get() {
+        return {
+          deepseek: providerAvailable('deepseek'),
+          anthropic: providerAvailable('anthropic'),
+          openai: providerAvailable('openai'),
+          gemini: providerAvailable('gemini'),
+          ollama: providerAvailable('ollama'),
+          localai: providerAvailable('localai'),
+          openinterpreter: providerAvailable('openinterpreter'),
+          huggingface: providerAvailable('huggingface')
+        };
+      }
+    });
 
-    this.defaultModel = {
-      deepseek: DEEPSEEK_DEFAULT_MODEL,
-      anthropic: CLAUDE_DEFAULT_MODEL,
-      openai: OPENAI_DEFAULT_MODEL,
-      gemini: GEMINI_DEFAULT_MODEL,
-      
-      // OSS models
-      ollama: OLLAMA_DEFAULT_MODEL,
-      localai: LOCALAI_DEFAULT_MODEL,
-      openinterpreter: OI_DEFAULT_MODEL,
-      huggingface: HF_DEFAULT_MODEL
-    };
+    Object.defineProperty(this, 'defaultModel', {
+      get() {
+        return {
+          deepseek: env('DEEPSEEK_MODEL', 'deepseek-chat'),
+          anthropic: env('ANTHROPIC_MODEL', 'claude-3-5-haiku-20241022'),
+          openai: env('OPENAI_MODEL', 'gpt-4o-mini'),
+          gemini: env('GEMINI_MODEL', 'gemini-1.5-pro'),
+          ollama: env('OLLAMA_MODEL', 'llama3.2:latest'),
+          localai: env('LOCALAI_MODEL', 'gpt-4'),
+          openinterpreter: env('OI_MODEL', 'ollama/llama3.2'),
+          huggingface: env('HF_MODEL', 'microsoft/DialoGPT-large')
+        };
+      }
+    });
 
-    this.baseUrls = {
-      ollama: env('OLLAMA_BASE_URL', 'http://localhost:11434'),
-      localai: env('LOCALAI_BASE_URL', 'http://localhost:8080'),
-      openinterpreter: env('OI_BASE_URL', 'http://localhost:8000'),
-      huggingface: 'https://api-inference.huggingface.co'
-    };
+    Object.defineProperty(this, 'baseUrls', {
+      get() {
+        return {
+          ollama: env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+          localai: env('LOCALAI_BASE_URL', 'http://localhost:8080'),
+          openinterpreter: env('OI_BASE_URL', 'http://localhost:8000'),
+          huggingface: 'https://api-inference.huggingface.co'
+        };
+      }
+    });
 
     // Initialize domain expertise system
     this.domainExpertise = new DomainExpertise();
@@ -183,10 +186,10 @@ export default class LLMProvider {
       huggingface: () => this.callHuggingFace(prompt, enhancedSystem, taskType, context)
     };
 
-  // Default chat fallback: Ollama first
-  const order = ['ollama', 'anthropic', 'openai', 'gemini', 'localai', 'huggingface', 'openinterpreter', 'deepseek'];
-  const startIdx = order.indexOf(provider);
-  const tryOrder = order.slice(startIdx).concat(order.slice(0, startIdx));
+    // Default chat fallback: Ollama first
+    const order = ['ollama', 'anthropic', 'openai', 'gemini', 'localai', 'huggingface', 'openinterpreter', 'deepseek'];
+    const startIdx = order.indexOf(provider);
+    const tryOrder = order.slice(startIdx).concat(order.slice(0, startIdx));
 
     let lastError = null;
     const startTime = Date.now();
@@ -215,7 +218,7 @@ export default class LLMProvider {
     };
   }
 
-  async callDeepSeek(prompt, system, taskType, context) {
+  async callDeepSeek(prompt, system) {
     const apiKey = env('DEEPSEEK_API_KEY');
     const model = this.defaultModel.deepseek;
     if (!apiKey) throw new Error('DeepSeek not configured');
@@ -246,7 +249,7 @@ export default class LLMProvider {
     return { content: text, confidence: 0.85 };
   }
 
-  async callClaude(prompt, system, taskType, context) {
+  async callClaude(prompt, system) {
     const apiKey = env('ANTHROPIC_API_KEY');
     const model = this.defaultModel.anthropic;
     if (!apiKey) throw new Error('Anthropic not configured');
@@ -280,7 +283,7 @@ export default class LLMProvider {
     return { content: text, confidence: 0.9 };
   }
 
-  async callOpenAI(prompt, system, taskType, context) {
+  async callOpenAI(prompt, system) {
     const apiKey = env('OPENAI_API_KEY');
     const model = this.defaultModel.openai;
     if (!apiKey) throw new Error('OpenAI not configured');
@@ -312,7 +315,7 @@ export default class LLMProvider {
     return { content: text, confidence: 0.88 };
   }
 
-  async callGemini(prompt, system, taskType, context) {
+  async callGemini(prompt, system) {
     const apiKey = env('GEMINI_API_KEY');
     const model = this.defaultModel.gemini;
     if (!apiKey) throw new Error('Gemini not configured');
@@ -337,7 +340,7 @@ export default class LLMProvider {
   }
 
   // OSS Provider implementations
-  async callOllama(prompt, system, taskType, context) {
+  async callOllama(prompt, system) {
     const baseUrl = this.baseUrls.ollama;
     const model = this.defaultModel.ollama;
     
@@ -376,7 +379,7 @@ export default class LLMProvider {
     }
   }
 
-  async callLocalAI(prompt, system, taskType, context) {
+  async callLocalAI(prompt, system) {
     const baseUrl = this.baseUrls.localai;
     const model = this.defaultModel.localai;
     
@@ -415,7 +418,7 @@ export default class LLMProvider {
     }
   }
 
-  async callOpenInterpreter(prompt, system, taskType, context) {
+  async callOpenInterpreter(prompt, system) {
     const baseUrl = this.baseUrls.openinterpreter;
     const model = this.defaultModel.openinterpreter;
     
@@ -456,7 +459,7 @@ export default class LLMProvider {
     }
   }
 
-  async callHuggingFace(prompt, system, taskType, context) {
+  async callHuggingFace(prompt, system) {
     const apiKey = env('HF_API_KEY');
     const model = this.defaultModel.huggingface;
     const baseUrl = this.baseUrls.huggingface;
@@ -506,171 +509,296 @@ export default class LLMProvider {
 async function safeJson(res) {
   try { return await res.json(); } catch { return await res.text(); }
 }
-// Unified LLM provider for TooLoo.ai
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-// Fallback: load env if not already loaded by parent
-try { dotenv.config(); } catch {}
-
-// Normalize certain provider keys (e.g., Gemini keys may be pasted with a leading 'sk-' prefix)
-const GEMINI_KEY = (process.env.GEMINI_API_KEY || '').startsWith('sk-')
-  ? (process.env.GEMINI_API_KEY || '').slice(3)
-  : (process.env.GEMINI_API_KEY || '');
-
-const PROVIDERS = {
-  deepseek: {
-    url: 'https://api.deepseek.com/v1/chat/completions',
-    key: process.env.DEEPSEEK_API_KEY,
-    header: 'Authorization',
-    model: DEEPSEEK_DEFAULT_MODEL,
-    format: (prompt) => ({ messages: [{ role: 'user', content: prompt }], model: DEEPSEEK_DEFAULT_MODEL, max_tokens: 512 })
+const providerBuilders = {
+  deepseek: () => {
+    const key = (process.env.DEEPSEEK_API_KEY || '').trim();
+    const model = env('DEEPSEEK_MODEL', 'deepseek-chat');
+    return {
+      name: 'deepseek',
+      url: 'https://api.deepseek.com/v1/chat/completions',
+      key,
+      header: 'Authorization',
+      model,
+      requiresKey: true,
+      format: (prompt) => ({
+        messages: [{ role: 'user', content: prompt }],
+        model,
+        max_tokens: 512
+      })
+    };
   },
-  gemini: {
-    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-    key: GEMINI_KEY,
-    header: 'x-goog-api-key',
-    model: GEMINI_DEFAULT_MODEL,
-    format: (prompt) => ({ contents: [{ parts: [{ text: prompt }] }] })
+  gemini: () => {
+    const rawKey = (process.env.GEMINI_API_KEY || '').trim();
+    const key = rawKey.startsWith('sk-') ? rawKey.slice(3) : rawKey;
+    const model = env('GEMINI_MODEL', 'gemini-1.5-pro');
+    return {
+      name: 'gemini',
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      key,
+      header: 'x-goog-api-key',
+      model,
+      requiresKey: true,
+      appendKeyAsQuery: true,
+      format: (prompt) => ({ contents: [{ parts: [{ text: prompt }] }] })
+    };
   },
-  claude: {
-    url: 'https://api.anthropic.com/v1/messages',
-    key: process.env.ANTHROPIC_API_KEY,
-    header: 'x-api-key',
-    model: CLAUDE_DEFAULT_MODEL,
-    format: (prompt) => ({
-      model: CLAUDE_DEFAULT_MODEL,
-      max_tokens: 512,
-      messages: [
-        { role: 'user', content: [ { type: 'text', text: prompt } ] }
-      ]
-    })
+  claude: () => {
+    const key = (process.env.ANTHROPIC_API_KEY || '').trim();
+    const model = env('ANTHROPIC_MODEL', 'claude-3-5-haiku-20241022');
+    return {
+      name: 'claude',
+      url: 'https://api.anthropic.com/v1/messages',
+      key,
+      header: 'x-api-key',
+      model,
+      requiresKey: true,
+      format: (prompt) => ({
+        model,
+        max_tokens: 512,
+        messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }]
+      })
+    };
   },
-  openai: {
-    url: 'https://api.openai.com/v1/chat/completions',
-    key: process.env.OPENAI_API_KEY,
-    header: 'Authorization',
-    model: OPENAI_DEFAULT_MODEL,
-    format: (prompt) => ({ model: OPENAI_DEFAULT_MODEL, messages: [{ role: 'user', content: prompt }], max_tokens: 512 })
+  openai: () => {
+    const key = (process.env.OPENAI_API_KEY || '').trim();
+    const model = env('OPENAI_MODEL', 'gpt-4o-mini');
+    return {
+      name: 'openai',
+      url: 'https://api.openai.com/v1/chat/completions',
+      key,
+      header: 'Authorization',
+      model,
+      requiresKey: true,
+      format: (prompt) => ({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 512
+      })
+    };
   },
-  huggingface: {
-    url: 'https://api-inference.huggingface.co/models/gpt2',
-    key: process.env.HF_API_KEY,
-    header: 'Authorization',
-    model: HF_DEFAULT_MODEL,
-    format: (prompt) => ({ inputs: prompt })
+  huggingface: () => {
+    const key = (process.env.HF_API_KEY || '').trim();
+    const model = env('HF_MODEL', 'microsoft/DialoGPT-large');
+    return {
+      name: 'huggingface',
+      url: 'https://api-inference.huggingface.co/models/gpt2',
+      key,
+      header: 'Authorization',
+      model,
+      requiresKey: true,
+      format: (prompt) => ({ inputs: prompt })
+    };
   },
-  // OSS/Local providers
-  ollama: {
-    url: `${process.env.OLLAMA_BASE_URL || 'http://localhost:11434'}/api/chat`,
-    key: 'not-needed', // Ollama typically doesn't require auth
-    header: 'Authorization',
-    model: OLLAMA_DEFAULT_MODEL,
-    format: (prompt) => ({ 
-      model: OLLAMA_DEFAULT_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      stream: false
-    })
+  ollama: () => {
+    const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+    const model = env('OLLAMA_MODEL', 'llama3.2:latest');
+    return {
+      name: 'ollama',
+      url: `${baseUrl}/api/chat`,
+      key: 'not-needed',
+      header: 'Authorization',
+      model,
+      requiresKey: false,
+      format: (prompt) => ({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        stream: false
+      })
+    };
   },
-  localai: {
-    url: `${process.env.LOCALAI_BASE_URL || 'http://localhost:8080'}/v1/chat/completions`,
-    key: 'not-needed', // LocalAI doesn't require real auth
-    header: 'Authorization',
-    model: LOCALAI_DEFAULT_MODEL,
-    format: (prompt) => ({ 
-      model: LOCALAI_DEFAULT_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 512
-    })
+  localai: () => {
+    const baseUrl = process.env.LOCALAI_BASE_URL || 'http://localhost:8080';
+    const model = env('LOCALAI_MODEL', 'gpt-4');
+    return {
+      name: 'localai',
+      url: `${baseUrl}/v1/chat/completions`,
+      key: 'not-needed',
+      header: 'Authorization',
+      model,
+      requiresKey: false,
+      format: (prompt) => ({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 512
+      })
+    };
   },
-  openinterpreter: {
-    url: `${process.env.OI_BASE_URL || 'http://localhost:8000'}/chat`,
-    key: 'not-needed',
-    header: 'Authorization',
-    model: OI_DEFAULT_MODEL,
-    format: (prompt) => ({ 
-      message: prompt,
-      model: OI_DEFAULT_MODEL,
-      auto_run: false,
-      display: false
-    })
+  openinterpreter: () => {
+    const baseUrl = process.env.OI_BASE_URL || 'http://localhost:8000';
+    const model = env('OI_MODEL', 'ollama/llama3.2');
+    return {
+      name: 'openinterpreter',
+      url: `${baseUrl}/chat`,
+      key: 'not-needed',
+      header: 'Authorization',
+      model,
+      requiresKey: false,
+      format: (prompt) => ({
+        message: prompt,
+        model,
+        auto_run: false,
+        display: false
+      })
+    };
   }
 };
 
+providerBuilders.anthropic = () => {
+  const base = providerBuilders.claude();
+  return { ...base, name: 'anthropic' };
+};
+
+function getProviderConfig(name) {
+  const builder = providerBuilders[name];
+  if (!builder) {
+    return null;
+  }
+  const config = builder();
+  if (!config) {
+    return null;
+  }
+  if (typeof config.key === 'string') {
+    config.key = config.key.trim();
+  }
+  if (config.requiresKey === undefined) {
+    config.requiresKey = true;
+  }
+  return config;
+}
+
+function hasProviderCredentials(config) {
+  if (!config) {
+    return false;
+  }
+  if (config.requiresKey === false) {
+    return true;
+  }
+  return !!config.key;
+}
+
 export async function generateLLM({ prompt, provider, system, maxTokens }) {
-  const p = PROVIDERS[provider];
-  if (!p || !p.key) throw new Error('Provider or API key missing');
+  const config = getProviderConfig(provider);
+  if (!config) {
+    throw new Error('Provider not supported');
+  }
+  if (config.requiresKey !== false && !config.key) {
+    throw new Error('Provider or API key missing');
+  }
+
   const headers = { 'Content-Type': 'application/json' };
-  if (p.header === 'Authorization') headers[p.header] = `Bearer ${p.key}`;
-  else headers[p.header] = p.key;
-  if (provider === 'openai'){
+  if (config.header && config.key) {
+    headers[config.header] = config.header === 'Authorization'
+      ? `Bearer ${config.key}`
+      : config.key;
+  }
+
+  if (provider === 'openai') {
     if (process.env.OPENAI_ORG) headers['OpenAI-Organization'] = process.env.OPENAI_ORG;
     if (process.env.OPENAI_PROJECT) headers['OpenAI-Project'] = process.env.OPENAI_PROJECT;
   }
-  if (provider === 'claude') headers['anthropic-version'] = '2023-06-01';
-  
-  // Build body with optional system prompt and maxTokens override
-  let bodyObj = p.format(prompt);
-  
-  // Inject system prompt for providers that support it
+  if (provider === 'claude' || provider === 'anthropic') {
+    headers['anthropic-version'] = '2023-06-01';
+  }
+
+  let requestUrl = config.url;
+  if (config.appendKeyAsQuery && config.key) {
+    const separator = requestUrl.includes('?') ? '&' : '?';
+    requestUrl = `${requestUrl}${separator}key=${encodeURIComponent(config.key)}`;
+  }
+
+  let bodyObj = config.format(prompt);
+
   if (system) {
-    if (provider === 'deepseek' || provider === 'openai') {
-      // For chat completion providers, prepend system message
+    if (['deepseek', 'openai', 'ollama', 'localai'].includes(provider)) {
       if (bodyObj.messages && Array.isArray(bodyObj.messages)) {
         bodyObj.messages.unshift({ role: 'system', content: system });
       }
-    } else if (provider === 'claude') {
-      // Claude uses system parameter at root level
+    } else if (provider === 'claude' || provider === 'anthropic') {
       bodyObj.system = system;
     } else if (provider === 'gemini') {
-      // Gemini uses systemInstruction
       bodyObj.systemInstruction = { parts: [{ text: system }] };
-    } else if (provider === 'ollama' || provider === 'localai') {
-      // Ollama/LocalAI support system message
-      if (bodyObj.messages && Array.isArray(bodyObj.messages)) {
-        bodyObj.messages.unshift({ role: 'system', content: system });
-      }
     }
   }
-  
+
   if (maxTokens && maxTokens > 0) {
-    if (provider === 'claude') {
-      bodyObj.max_tokens = maxTokens;
-    } else {
-      // For other providers (OpenAI, DeepSeek, Gemini, etc.)
-      bodyObj.max_tokens = maxTokens;
-    }
+    bodyObj.max_tokens = maxTokens;
   }
-  const body = JSON.stringify(bodyObj);
-  
-  const res = await fetch(p.url, { method: 'POST', headers, body });
-  if (!res.ok) throw new Error(await res.text());
+
+  const res = await fetch(requestUrl, { method: 'POST', headers, body: JSON.stringify(bodyObj) });
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+
   const data = await res.json();
-  // Extract text from response
   if (provider === 'deepseek') return data.choices?.[0]?.message?.content || '';
   if (provider === 'gemini') return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (provider === 'claude') return data.content?.[0]?.text || '';
+  if (provider === 'claude' || provider === 'anthropic') return data.content?.[0]?.text || '';
   if (provider === 'openai') return data.choices?.[0]?.message?.content || '';
   if (provider === 'huggingface') return data[0]?.generated_text || '';
-  
-  // OSS providers
   if (provider === 'ollama') return data.message?.content || '';
   if (provider === 'localai') return data.choices?.[0]?.message?.content || '';
   if (provider === 'openinterpreter') {
-    // Open Interpreter can return array of chunks or single response
-    return Array.isArray(data) 
-      ? data.map(chunk => chunk.content || chunk.message || '').join('')
+    return Array.isArray(data)
+      ? data.map((chunk) => chunk.content || chunk.message || '').join('')
       : data.content || data.message || '';
   }
-  
+
   return '';
 }
 
-function providerEnabled(name){
-  const envKey = `${name.toUpperCase()}_ENABLED`;
-  if (name === 'gemini') return String(process.env[envKey]||'false').toLowerCase() === 'true';
-  return String(process.env[envKey]||'true').toLowerCase() === 'true';
+function providerEnabled(name) {
+  const upper = name.toUpperCase();
+  const envKey = `${upper}_ENABLED`;
+
+  if (name === 'gemini') {
+    return String(process.env[envKey] ?? process.env.GEMINI_ENABLED ?? 'false').toLowerCase() === 'true';
+  }
+
+  if (name === 'anthropic' || name === 'claude') {
+    const toggle = process.env.ANTHROPIC_ENABLED ?? process.env.CLAUDE_ENABLED;
+    if (toggle !== undefined) {
+      return String(toggle).toLowerCase() === 'true';
+    }
+  }
+
+  if (name === 'ollama') {
+    const toggle = process.env.OLLAMA_ENABLED ?? process.env.ENABLE_OLLAMA;
+    if (toggle !== undefined) {
+      return String(toggle).toLowerCase() === 'true';
+    }
+  }
+
+  if (name === 'localai') {
+    const toggle = process.env.LOCALAI_ENABLED ?? process.env.ENABLE_LOCALAI;
+    if (toggle !== undefined) {
+      return String(toggle).toLowerCase() === 'true';
+    }
+  }
+
+  if (name === 'openinterpreter') {
+    const toggle = process.env.OPENINTERPRETER_ENABLED ?? process.env.ENABLE_OPEN_INTERPRETER;
+    if (toggle !== undefined) {
+      return String(toggle).toLowerCase() === 'true';
+    }
+  }
+
+  const raw = process.env[envKey];
+  if (raw === undefined || raw === null) {
+    return true;
+  }
+  return String(raw).toLowerCase() === 'true';
 }
-function providerAvailable(name){ return !!PROVIDERS[name]?.key && providerEnabled(name); }
+
+function providerAvailable(name) {
+  const config = getProviderConfig(name);
+  if (!config) {
+    return false;
+  }
+  if (!providerEnabled(name)) {
+    return false;
+  }
+  return hasProviderCredentials(config);
+}
 
 function detectTaskType(prompt=''){
   const p = prompt.toLowerCase();
@@ -740,10 +868,16 @@ export async function generateSmartLLM({ prompt, system, taskType, criticality =
   throw err;
 }
 
-export function getProviderStatus(){
-  return Object.fromEntries(Object.keys(PROVIDERS).map(k=>[k, {
-    available: !!PROVIDERS[k]?.key,
-    enabled: providerEnabled(k),
-    model: PROVIDERS[k]?.model || null
-  }]));
+export function getProviderStatus() {
+  return Object.fromEntries(
+    Object.keys(providerBuilders).map((name) => {
+      const config = getProviderConfig(name);
+      const hasCredentials = hasProviderCredentials(config);
+      return [name, {
+        available: hasCredentials,
+        enabled: providerEnabled(name),
+        model: config?.model || null
+      }];
+    })
+  );
 }
