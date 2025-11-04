@@ -8,6 +8,9 @@
 
 import { SemanticSegmentationEngine } from '../../servers/segmentation-server.js';
 
+// Configuration constants
+const MAX_PROFILE_ITEMS = 20; // Maximum items to return in user profiles
+
 export class SegmentationSkill {
   constructor(options = {}) {
     this.engine = new SemanticSegmentationEngine(options);
@@ -204,7 +207,7 @@ export class SegmentationSkill {
         confidence: parseFloat((count / totalConversations).toFixed(2))
       }))
       .sort((a, b) => b.frequency - a.frequency)
-      .slice(0, 20); // Top 20 items
+      .slice(0, MAX_PROFILE_ITEMS);
   }
 
   /**

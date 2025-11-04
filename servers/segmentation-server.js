@@ -20,9 +20,10 @@ class SemanticSegmentationEngine {
     this.maxSegmentSize = options.maxSegmentSize || 5; // messages per segment
     this.cache = new Map(); // Simple in-memory cache for embeddings
     
-    // Confidence calculation weights
+    // Confidence calculation weights and defaults
     this.CONFIDENCE_SIZE_WEIGHT = 0.4;
     this.CONFIDENCE_COHERENCE_WEIGHT = 0.6;
+    this.DEFAULT_COHERENCE_SCORE = 0.8; // Default when not calculated
   }
 
   /**
@@ -281,7 +282,7 @@ class SemanticSegmentationEngine {
     
     // Base confidence on segment size and coherence
     const sizeScore = Math.min(segment.messages.length / this.maxSegmentSize, 1);
-    const coherenceScore = 0.8; // Placeholder - would be calculated from similarity scores
+    const coherenceScore = this.DEFAULT_COHERENCE_SCORE; // Would be calculated from similarity scores in production
     
     return parseFloat((sizeScore * this.CONFIDENCE_SIZE_WEIGHT + coherenceScore * this.CONFIDENCE_COHERENCE_WEIGHT).toFixed(2));
   }

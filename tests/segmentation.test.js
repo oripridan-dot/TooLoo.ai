@@ -6,6 +6,9 @@ import { SemanticSegmentationEngine } from '../servers/segmentation-server.js';
 import { SegmentationSkill } from '../api/skills/segmentation.js';
 import { strict as assert } from 'assert';
 
+// Constants
+const OPENAI_EMBEDDING_DIMENSION = 1536; // OpenAI embedding vector size
+
 // Mock OpenAI client for testing
 class MockOpenAI {
   constructor() {
@@ -16,8 +19,8 @@ class MockOpenAI {
         const hash = this.simpleHash(text);
         const embedding = [];
         
-        // Generate 1536-dimensional vector (OpenAI embedding size)
-        for (let i = 0; i < 1536; i++) {
+        // Generate embedding vector (OpenAI embedding dimension)
+        for (let i = 0; i < OPENAI_EMBEDDING_DIMENSION; i++) {
           embedding.push(Math.sin(hash + i) * 0.1);
         }
         
