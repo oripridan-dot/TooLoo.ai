@@ -9,7 +9,13 @@
     "milestone": "node timeline.js create",
     "milestone:list": "node timeline.js list",
     "milestone:suggest": "node timeline.js suggest",
-    "timeline": "node timeline.js list"
+    "timeline": "node timeline.js list",
+    "test": "node --test servers/orchestrator.test.js",
+    "test:watch": "node --test --watch servers/orchestrator.test.js",
+    "start:orchestrator": "node servers/api-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
   },
   "keywords": [
     "github-copilot",
