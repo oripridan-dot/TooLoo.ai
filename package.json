@@ -9,7 +9,9 @@
     "milestone": "node timeline.js create",
     "milestone:list": "node timeline.js list",
     "milestone:suggest": "node timeline.js suggest",
-    "timeline": "node timeline.js list"
+    "timeline": "node timeline.js list",
+    "capabilities": "node servers/capabilities-server.js",
+    "test:capabilities": "node servers/test-capabilities.js"
   },
   "keywords": [
     "github-copilot",
@@ -18,5 +20,8 @@
     "partnership"
   ],
   "author": "Ori Pridan",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
