@@ -9,14 +9,27 @@
     "milestone": "node timeline.js create",
     "milestone:list": "node timeline.js list",
     "milestone:suggest": "node timeline.js suggest",
-    "timeline": "node timeline.js list"
+    "timeline": "node timeline.js list",
+    "test": "node tests/segmentation.test.js",
+    "test:segmentation": "node tests/segmentation.test.js",
+    "start:segmentation": "node servers/segmentation-server.js"
   },
   "keywords": [
     "github-copilot",
     "ai-collaboration",
     "workflow",
-    "partnership"
+    "partnership",
+    "semantic-segmentation",
+    "nlp"
   ],
   "author": "Ori Pridan",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "openai": "^4.20.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
