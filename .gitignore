@@ -39,3 +39,6 @@ coverage/
 
 # V1 Archive (local only, tracked in separate branch)
 archive/
+
+# Product Development Server data
+data/
