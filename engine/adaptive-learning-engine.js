@@ -369,7 +369,7 @@ class AdaptiveLearningEngine {
     }
     
     const duration = (Date.now() - startTime) / 1000;
-    console.log(`\n✅ Adaptive Learning Complete!`);
+    console.log('\n✅ Adaptive Learning Complete!');
     console.log(`⏱️  Duration: ${duration.toFixed(1)} seconds`);
     console.log(`📈 Total improvement: ${totalImprovement.toFixed(1)}%`);
     
@@ -399,7 +399,7 @@ class AdaptiveLearningEngine {
     const bestStrategy = strategies[0];
     console.log(`\n🎯 OPTIMAL STRATEGY DISCOVERED: ${bestStrategy.name}`);
     console.log(`   Success Rate: ${bestStrategy.successRate}%`);
-    console.log(`   This strategy should be used for future training sessions.`);
+    console.log('   This strategy should be used for future training sessions.');
     
     console.log('\n💡 LEARNING INSIGHTS:');
     if (parseFloat(bestStrategy.successRate) > 70) {
@@ -407,7 +407,7 @@ class AdaptiveLearningEngine {
     } else if (parseFloat(bestStrategy.successRate) > 50) {
       console.log(`   📈 Discovered moderately effective approach (${bestStrategy.successRate}%)`);
     } else {
-      console.log(`   🔍 Need more experimentation to find optimal approach`);
+      console.log('   🔍 Need more experimentation to find optimal approach');
     }
   }
 }

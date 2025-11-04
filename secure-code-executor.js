@@ -5,9 +5,13 @@
  * for personal use. For production, consider isolated-vm or external sandboxes.
  */
 
-const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
-const fs = require('fs');
-const path = require('path');
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class SecureCodeExecutor {
   constructor(options = {}) {
@@ -138,7 +142,7 @@ class SecureCodeExecutor {
   runInWorker(code, options) {
     return new Promise((resolve, reject) => {
       const workerCode = `
-        const { parentPort } = require('worker_threads');
+        import { parentPort } from 'worker_threads';
         
         // Create safe execution environment
         const safeGlobals = {
@@ -294,4 +298,5 @@ class SecureCodeExecutor {
   }
 }
 
+export default SecureCodeExecutor;
 module.exports = SecureCodeExecutor;

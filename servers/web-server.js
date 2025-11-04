@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
 import ReferralSystem from '../referral-system.js';
 import { handleChatWithAI } from '../services/chat-handler-ai.js';
+import { convert as formatConvert } from '../lib/format-handlers/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,11 +48,21 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 
 // ======= UI Activity Monitoring & Real Data Pipeline =======
-// Middleware to inject heartbeat script into HTML responses for automatic server activation
+// CRITICAL: Disable ALL caching in development (prevents stale UI from showing)
+app.use((req, res, next) => {
+  // Force fresh fetch for ALL resources - this is the key to dev updates showing immediately
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
+// Middleware to inject heartbeat script and cache-busting into HTML responses
 app.use((req, res, next) => {
   const originalSendFile = res.sendFile;
   res.sendFile = function(filePath, ...args) {
-    // If serving HTML files, inject heartbeat script
+    // If serving HTML files, inject heartbeat script and cache-busting
     if (typeof filePath === 'string' && filePath.endsWith('.html')) {
       const callback = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : null;
       const options = (args.length > 1 && typeof args[0] === 'object') ? args[0] : {};
@@ -61,15 +72,25 @@ app.use((req, res, next) => {
           return originalSendFile.call(res, filePath, options, callback);
         }
         
+        let updated = html;
+        const timestamp = Date.now();
+        const cbParam = `?v=${timestamp}`; // Cache buster query param
+        
+        // Add cache-busting to all script src attributes (except heartbeat which is external)
+        updated = updated.replace(/src="\/js\/([^"]+)"/g, `src="/js/$1${cbParam}"`);
+        updated = updated.replace(/src="\.\/js\/([^"]+)"/g, `src="./js/$1${cbParam}"`);
+        
+        // Add cache-busting to all link href attributes (CSS)
+        updated = updated.replace(/href="\/css\/([^"]+)"/g, `href="/css/$1${cbParam}"`);
+        updated = updated.replace(/href="\.\/css\/([^"]+)"/g, `href="./css/$1${cbParam}"`);
+        
         // Inject heartbeat script if not already present
-        if (!html.includes('tooloo-heartbeat.js')) {
+        if (!updated.includes('tooloo-heartbeat.js')) {
           const heartbeatScript = '<script src="/js/tooloo-heartbeat.js" async defer></script>';
-          const injected = html.replace('</head>', `${heartbeatScript}\n</head>`);
-          res.type('html').send(injected);
-          return;
+          updated = updated.replace('</head>', `${heartbeatScript}\n</head>`);
         }
         
-        res.type('html').send(html);
+        res.type('html').send(updated);
       });
       return;
     }
@@ -79,10 +100,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Static web assets
+// Phase 3 Control Center - BEFORE static middleware to override file serving
+app.get(['/phase3', '/phase3-control-center'], (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'web-app', 'phase3-control-center.html'));
+});
+
+// Static web assets - CRITICAL: maxAge:0 disables browser caching in development
 const webDir = path.join(process.cwd(), 'web-app');
-app.use(express.static(webDir));
-app.use('/temp', express.static(path.join(webDir, 'temp')));
+app.use(express.static(webDir, { 
+  maxAge: 0,  // Disable all caching for static files
+  etag: false  // Disable etag comparison to always fetch fresh
+}));
+app.use('/temp', express.static(path.join(webDir, 'temp'), { 
+  maxAge: 0, 
+  etag: false 
+}));
 
 // TooLoo Hub page route
 app.get(['/tooloo-hub','/tooloo-page'], async (req,res)=>{
@@ -90,9 +122,9 @@ app.get(['/tooloo-hub','/tooloo-page'], async (req,res)=>{
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('TooLoo Hub page missing'); }
 });
 
-// Root route - prefer Conference presentation, fallback to Nexus Pro, then Control Room
+// Root route - show Phase 3 Control Center (latest feature)
 app.get('/', (req, res) => {
-  res.redirect('/providers-arena');
+  res.redirect('/phase3-control-center.html');
 });
 
 // Quiet favicon 404s in dev
@@ -253,6 +285,19 @@ app.post('/api/v1/chat/message', async (req, res) => {
   }
 });
 
+// Response format conversion endpoint (Phase 3 - Multi-format Support)
+app.post('/api/v1/responses/convert', async (req, res) => {
+  try {
+    const { format, content, opts } = req.body || {};
+    if (!format) return res.status(400).json({ ok:false, error:'format required' });
+    if (content === undefined) return res.status(400).json({ ok:false, error:'content required' });
+    const result = formatConvert(format, content, opts || {});
+    return res.json(result);
+  } catch (e) {
+    return res.status(500).json({ ok:false, error: e.message });
+  }
+});
+
 // ASAP Mastery alias - elegant UI
 app.get(['/asap', '/asap-mastery'], async (req,res)=>{
   const f = path.join(webDir,'asap-mastery.html');
@@ -327,7 +372,7 @@ app.post('/api/v1/design/brandboard', async (req,res)=>{
     doc.fontSize(14).fillColor('#111').text('Color System');
     doc.moveDown(0.5);
     const startX = doc.x, startY = doc.y;
-    const box = (x,y,c,l)=>{ doc.save(); doc.roundedRect(x,y,70,40,6).fillColor(c).fill(); doc.restore(); doc.fillColor('#111').fontSize(9).text(l+"\n"+c, x+78, y+12); };
+    const box = (x,y,c,l)=>{ doc.save(); doc.roundedRect(x,y,70,40,6).fillColor(c).fill(); doc.restore(); doc.fillColor('#111').fontSize(9).text(l+'\n'+c, x+78, y+12); };
     let x = startX, y = startY;
     for (let i=0;i<cols.length;i++){
       box(x,y, cols[i].v, cols[i].label);
@@ -616,9 +661,16 @@ const serviceConfig = [
   { name: 'segmentation', prefixes: ['/api/v1/segmentation'], port: Number(process.env.SEGMENTATION_PORT||3007), remoteEnv: process.env.REMOTE_SEGMENTATION_BASE },
   { name: 'reports', prefixes: ['/api/v1/reports'], port: Number(process.env.REPORTS_PORT||3008), remoteEnv: process.env.REMOTE_REPORTS_BASE },
   { name: 'capabilities', prefixes: ['/api/v1/capabilities'], port: Number(process.env.CAPABILITIES_PORT||3009), remoteEnv: process.env.REMOTE_CAPABILITIES_BASE },
+  { name: 'oauth', prefixes: ['/api/v1/oauth'], port: Number(process.env.OAUTH_PORT||3010), remoteEnv: process.env.REMOTE_OAUTH_BASE },
+  { name: 'events', prefixes: ['/api/v1/events','/webhook'], port: Number(process.env.EVENTS_PORT||3011), remoteEnv: process.env.REMOTE_EVENTS_BASE },
   { name: 'system', prefixes: ['/api/v1/system'], port: Number(process.env.ORCH_CTRL_PORT||3123), remoteEnv: process.env.REMOTE_SYSTEM_BASE },
   { name: 'sources', prefixes: ['/api/v1/sources','/api/v1/sources/github/issues/sync'], port: Number(process.env.SOURCES_PORT||3010), remoteEnv: process.env.REMOTE_SOURCES_BASE },
-  { name: 'arena', prefixes: ['/api/v1/arena'], port: Number(process.env.ARENA_PORT||3011), remoteEnv: process.env.REMOTE_ARENA_BASE }
+  { name: 'arena', prefixes: ['/api/v1/arena'], port: Number(process.env.ARENA_PORT||3011), remoteEnv: process.env.REMOTE_ARENA_BASE },
+  { name: 'integrations', prefixes: ['/api/v1/integrations'], port: Number(process.env.INTEGRATIONS_PORT||3012), remoteEnv: process.env.REMOTE_INTEGRATIONS_BASE },
+  { name: 'self-improve', prefixes: ['/api/v1/self-improve'], port: Number(process.env.SELF_IMPROVE_PORT||3013), remoteEnv: process.env.REMOTE_SELF_IMPROVE_BASE },
+  { name: 'design', prefixes: ['/api/v1/design'], port: Number(process.env.DESIGN_PORT||3014), remoteEnv: process.env.REMOTE_DESIGN_BASE },
+  { name: 'domains', prefixes: ['/api/v1/domains'], port: Number(process.env.DOMAINS_PORT||3016), remoteEnv: process.env.REMOTE_DOMAINS_BASE },
+  { name: 'ide', prefixes: ['/api/v1/ide'], port: Number(process.env.IDE_PORT||3017), remoteEnv: process.env.REMOTE_IDE_BASE }
 ];
 
 function getRouteForPrefix(url) {
@@ -641,6 +693,63 @@ app.get('/api/v1/system/routes', (req, res) => {
   }));
   res.json({ ok:true, routes });
 });
+
+// ======= UI Activity Monitor Proxy (moved before generic API proxy) =======
+// Forward activity monitor requests from UI to the activity monitor service (3050)
+const ACTIVITY_MONITOR_PORT = Number(process.env.ACTIVITY_MONITOR_PORT || 3050);
+
+app.post('/api/v1/activity/heartbeat', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/heartbeat`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(req.body)
+    });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable', _fallback:true }); }
+});
+
+app.get('/api/v1/activity/sessions', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/sessions`);
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.get('/api/v1/activity/servers', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/servers`);
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.post('/api/v1/activity/start-all', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/start-all`, { method:'POST' });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.post('/api/v1/activity/ensure-real-data', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/ensure-real-data`, { method:'POST' });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
+app.post('/api/v1/activity/config', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/config`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(req.body)
+    });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
+});
+
 
 // Explicit proxy for capabilities (ensures correct routing for nested paths)
 // Explicit proxy for capabilities (ensures correct routing for nested paths)
@@ -683,6 +792,24 @@ app.all(['/api/v1/workflows', '/api/v1/workflows/*', '/api/v1/learning', '/api/v
 app.all(['/api/v1/arena', '/api/v1/arena/*'], async (req, res) => {
   try {
     const port = Number(process.env.ARENA_PORT||3011);
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type')||'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body||{}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type')||'';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch(e){ res.status(500).json({ ok:false, error: e.message }); }
+});
+
+// Explicit proxy for GitHub context (providers can access your repo)
+app.all(['/api/v1/github', '/api/v1/github/*'], async (req, res) => {
+  try {
+    const port = Number(process.env.GITHUB_CONTEXT_PORT||3020);
     const url = `http://127.0.0.1:${port}${req.originalUrl}`;
     const init = { method: req.method, headers: { 'content-type': req.get('content-type')||'application/json' } };
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -784,61 +911,7 @@ app.post('/system/start', async (req,res)=>{
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-// ======= UI Activity Monitor Proxy =======
-// Forward activity monitor requests from UI to the activity monitor service (3050)
-const ACTIVITY_MONITOR_PORT = Number(process.env.ACTIVITY_MONITOR_PORT || 3050);
 
-app.post('/api/v1/activity/heartbeat', async (req,res)=>{
-  try{
-    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/heartbeat`, {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(req.body)
-    });
-    const j = await r.json();
-    res.json(j);
-  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable', _fallback:true }); }
-});
-
-app.get('/api/v1/activity/sessions', async (req,res)=>{
-  try{
-    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/sessions`);
-    const j = await r.json();
-    res.json(j);
-  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
-});
-
-app.get('/api/v1/activity/servers', async (req,res)=>{
-  try{
-    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/servers`);
-    const j = await r.json();
-    res.json(j);
-  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
-});
-
-app.post('/api/v1/activity/start-all', async (req,res)=>{
-  try{
-    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/start-all`, { method:'POST' });
-    const j = await r.json();
-    res.json(j);
-  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
-});
-
-app.post('/api/v1/activity/ensure-real-data', async (req,res)=>{
-  try{
-    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/ensure-real-data`, { method:'POST' });
-    const j = await r.json();
-    res.json(j);
-  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
-});
-
-app.post('/api/v1/activity/config', async (req,res)=>{
-  try{
-    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/config`, {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(req.body)
-    });
-    const j = await r.json();
-    res.json(j);
-  }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
-});
 
 // Priority modes: favor chat vs background
 app.post('/api/v1/system/priority/chat', async (req,res)=>{
@@ -891,7 +964,7 @@ app.get('/system/status', async (req,res)=>{
       reports: Number(process.env.REPORTS_PORT||3008),
       capabilities: Number(process.env.CAPABILITIES_PORT||3009)
     };
-      const [trainingOk, metaOk, budgetOk, coachOk, cupOk, productDevOk, segmentationOk, reportsOk, capabilitiesOk] = await Promise.all([
+    const [trainingOk, metaOk, budgetOk, coachOk, cupOk, productDevOk, segmentationOk, reportsOk, capabilitiesOk] = await Promise.all([
       probe(ports.training,'/health'),
       probe(ports.meta,'/health'),
       probe(ports.budget,'/health'),
@@ -1533,4 +1606,125 @@ app.get('/design-system', async (req, res) => {
     res.status(500).send('Failed to load design system: ' + e.message);
   }
 });
+// === PHASE 3 PROXIES (Integrations, Domains, IDE) ===
+// Integrations API proxy
+app.all(['/api/v1/integrations', '/api/v1/integrations/*'], async (req, res) => {
+  try {
+    const port = Number(process.env.INTEGRATIONS_PORT || 3012);
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type') || 'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body || {}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Domains API proxy (Coding, Research, Data, Writing)
+app.all(['/api/v1/domains', '/api/v1/domains/*'], async (req, res) => {
+  try {
+    const port = Number(process.env.DOMAINS_PORT || 3014);
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type') || 'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body || {}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// IDE API proxy (Code execution, analysis)
+app.all(['/api/v1/ide', '/api/v1/ide/*'], async (req, res) => {
+  try {
+    const port = Number(process.env.IDE_PORT || 3015);
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type') || 'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body || {}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Webhooks API proxy (GitHub/Slack events)
+app.all(['/api/v1/webhooks', '/api/v1/webhooks/*', '/webhooks/*'], async (req, res) => {
+  try {
+    const port = 3018;
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type') || 'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body || {}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// OAuth API proxy (Google, GitHub, authentication)
+app.all(['/api/v1/oauth', '/api/v1/oauth/*'], async (req, res) => {
+  try {
+    const port = 3010;
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type') || 'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body || {}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Events API proxy (Real-time subscriptions, streaming)
+app.all(['/api/v1/events', '/api/v1/events/*'], async (req, res) => {
+  try {
+    const port = 3011;
+    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
+    const init = { method: req.method, headers: { 'content-type': req.get('content-type') || 'application/json' } };
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      init.body = req.is('application/json') ? JSON.stringify(req.body || {}) : undefined;
+    }
+    const r = await fetch(url, init);
+    const text = await r.text();
+    res.status(r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    return res.send(text);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', ()=> console.log(`web-server listening on http://127.0.0.1:${PORT} and 0.0.0.0:${PORT}`));

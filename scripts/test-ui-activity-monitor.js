@@ -361,7 +361,7 @@ async function main() {
   
   log(`Base URL: ${BASE_URL}`);
   log(`Monitor URL: ${MONITOR_URL}`);
-  log(`\nRunning tests...`);
+  log('\nRunning tests...');
   
   try {
     // Run all tests
@@ -405,7 +405,7 @@ async function main() {
   console.log(`Success Rate: ${Math.round((passCount / testCount) * 100)}%`);
   
   if (failCount === 0) {
-    console.log(`\n🎉 All tests passed! UI activity monitoring is working correctly.\n`);
+    console.log('\n🎉 All tests passed! UI activity monitoring is working correctly.\n');
     process.exit(0);
   } else {
     console.log(`\n⚠️  ${failCount} test(s) failed. Check the logs above for details.\n`);

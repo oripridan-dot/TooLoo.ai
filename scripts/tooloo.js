@@ -255,19 +255,19 @@ function createBenchmark(name) {
   const template = {
     name: name,
     description: `${name} benchmark suite`,
-    version: "1.0",
+    version: '1.0',
     cases: [
       {
         id: `${name}_001`,
-        description: "Sample test case",
+        description: 'Sample test case',
         input: {
-          text: "Sample input text"
+          text: 'Sample input text'
         },
         expected: {
-          type: "exact",
-          result: "Expected output"
+          type: 'exact',
+          result: 'Expected output'
         },
-        endpoint: "/api/v1/analyze-text"
+        endpoint: '/api/v1/analyze-text'
       }
     ]
   };

@@ -92,7 +92,7 @@ async function collectROIMetrics() {
   await fs.writeFile(`${DATA_DIR}/roi-stats.json`, JSON.stringify(aggregateStats, null, 2));
   console.log('\n\n✅ ROI Metric Collection Complete\n');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📊 Processing Summary:`);
+  console.log('📊 Processing Summary:');
   console.log(`  Learners processed:    ${stats.processed}`);
   console.log(`  Successful ROI:        ${stats.successfulROI} (${aggregateStats.successRate}%)`);
   console.log(`  Errors:                ${stats.errors} (${aggregateStats.errorRate}%)`);

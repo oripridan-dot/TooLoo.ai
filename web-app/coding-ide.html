@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TooLoo - Advanced Code IDE</title>
+  <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: #1e1e1e; color: #e6e9ee; }
+    .container { display: flex; height: 100vh; }
+    .sidebar { width: 250px; background: #252526; border-right: 1px solid #333; overflow-y: auto; padding: 12px; }
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .editor-container { flex: 1; display: flex; }
+    .editor { flex: 1; }
+    .output { flex: 0 0 200px; background: #1e1e1e; border-top: 1px solid #333; padding: 12px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; }
+    .toolbar { background: #333; padding: 12px; border-bottom: 1px solid #444; display: flex; gap: 12px; align-items: center; }
+    .btn { padding: 8px 12px; background: #0077b6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .btn:hover { background: #005f93; }
+    .select { padding: 6px; background: #252526; color: #e6e9ee; border: 1px solid #444; border-radius: 4px; }
+    .label { font-size: 12px; margin-bottom: 8px; font-weight: 600; margin-top: 12px; }
+    .file-item { padding: 6px; margin: 4px 0; background: #2d2d2d; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .file-item:hover { background: #3d3d3d; }
+    .active { background: #0077b6; }
+    .tab { padding: 8px 12px; background: #2d2d2d; border: 1px solid #444; margin-right: 4px; cursor: pointer; }
+    .tab.active { background: #0077b6; border-bottom: 3px solid #00a8e1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="label">Language</div>
+      <select id="languageSelect" class="select">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="typescript">TypeScript</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="go">Go</option>
+      </select>
+
+      <div class="label">Quick Templates</div>
+      <div class="file-item" onclick="loadTemplate('hello')">Hello World</div>
+      <div class="file-item" onclick="loadTemplate('function')">Function Template</div>
+      <div class="file-item" onclick="loadTemplate('class')">Class Template</div>
+      <div class="file-item" onclick="loadTemplate('api')">API Handler</div>
+
+      <div class="label">Actions</div>
+      <button class="btn" onclick="analyzeCode()" style="width: 100%; margin: 8px 0;">Analyze</button>
+      <button class="btn" onclick="runCode()" style="width: 100%; margin: 8px 0;">Run (Safe)</button>
+      <button class="btn" onclick="generateTests()" style="width: 100%; margin: 8px 0;">Generate Tests</button>
+      <button class="btn" onclick="formatCode()" style="width: 100%; margin: 8px 0;">Format</button>
+      <button class="btn" onclick="downloadFile()" style="width: 100%; margin: 8px 0;">Download</button>
+    </div>
+
+    <div class="main">
+      <div class="toolbar">
+        <span id="fileTitle" style="flex: 1;">Untitled.js</span>
+        <div id="tabs" style="display: flex; flex: 1;"></div>
+        <button class="btn" onclick="saveFile()" style="margin-left: auto;">Save</button>
+      </div>
+
+      <div class="editor-container">
+        <div id="editor" class="editor"></div>
+      </div>
+
+      <div class="output" id="output">Output will appear here...</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+  <script>
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+    let editor, currentLanguage = 'javascript';
+    const files = {};
+
+    require(['vs/editor/editor.main'], () => {
+      editor = monaco.editor.create(document.getElementById('editor'), {
+        value: 'console.log("Hello, World!");',
+        language: 'javascript',
+        theme: 'vs-dark',
+        minimap: { enabled: false },
+        fontSize: 14
+      });
+
+      document.getElementById('languageSelect').addEventListener('change', (e) => {
+        currentLanguage = e.target.value;
+        const ext = { javascript: 'js', python: 'py', typescript: 'ts', java: 'java', cpp: 'cpp', go: 'go' }[currentLanguage];
+        document.getElementById('fileTitle').textContent = 'Untitled.' + ext;
+        monaco.editor.setModelLanguage(editor.getModel(), currentLanguage);
+      });
+    });
+
+    function loadTemplate(type) {
+      const templates = {
+        hello: 'console.log("Hello, World!");',
+        function: 'function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet("World"));',
+        class: 'class Person {\n  constructor(name) {\n    this.name = name;\n  }\n  greet() {\n    console.log(`Hello, I am ${this.name}`);\n  }\n}\n\nconst p = new Person("Alice");\np.greet();',
+        api: 'function handleRequest(req, res) {\n  res.json({ ok: true, message: "API response" });\n}\n\nmodule.exports = handleRequest;'
+      };
+      editor.setValue(templates[type] || '');
+    }
+
+    async function analyzeCode() {
+      const code = editor.getValue();
+      const output = document.getElementById('output');
+      output.textContent = 'Analyzing...';
+
+      try {
+        const r = await fetch('/api/v1/domains/coding/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, language: currentLanguage })
+        });
+        const data = await r.json();
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        output.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function runCode() {
+      const code = editor.getValue();
+      const output = document.getElementById('output');
+      output.textContent = 'Running in safe sandbox...';
+
+      try {
+        const r = await fetch('/api/v1/domains/coding/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, runtime: 'nodejs' })
+        });
+        const data = await r.json();
+        output.textContent = data.output || 'No output';
+      } catch (e) {
+        output.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function generateTests() {
+      const code = editor.getValue();
+      const output = document.getElementById('output');
+      output.textContent = 'Generating tests...';
+
+      try {
+        const r = await fetch('/api/v1/domains/coding/tests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, language: currentLanguage })
+        });
+        const data = await r.json();
+        output.textContent = data.tests || 'No tests generated';
+      } catch (e) {
+        output.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    function formatCode() {
+      // Use Monaco's built-in formatting capabilities
+      if (editor && editor.getAction) {
+        editor.getAction('editor.action.formatDocument').run();
+      } else {
+        output.textContent = 'Formatting requires editor initialization';
+      }
+    }
+
+    function saveFile() {
+      const code = editor.getValue();
+      const title = document.getElementById('fileTitle').textContent;
+      files[title] = code;
+      alert('Saved: ' + title);
+    }
+
+    function downloadFile() {
+      const code = editor.getValue();
+      const title = document.getElementById('fileTitle').textContent;
+      const element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(code));
+      element.setAttribute('download', title);
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
+  </script>
+</body>
+</html>

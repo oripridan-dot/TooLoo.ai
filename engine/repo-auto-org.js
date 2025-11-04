@@ -216,11 +216,11 @@ ${scopeStr}
     return {
       pattern: `^(${typePattern})(\\(.+\\))?!?: .{1,50}$`,
       examples: [
-        `feat(ui): add login button component`,
-        `fix(api): handle missing user id`,
-        `perf(db): optimize query performance`,
-        `security: sanitize user input`,
-        `docs: update API documentation`
+        'feat(ui): add login button component',
+        'fix(api): handle missing user id',
+        'perf(db): optimize query performance',
+        'security: sanitize user input',
+        'docs: update API documentation'
       ],
       description: 'Commit messages must follow conventional commits format'
     };
@@ -281,22 +281,22 @@ ${scopeStr}
     return {
       createBranch: `git checkout -b ${branchName}`,
       trackBranch: `git push -u origin ${branchName}`,
-      commitExample: `git commit -m "feat: implement awesome feature"`,
+      commitExample: 'git commit -m "feat: implement awesome feature"',
       createPR: `gh pr create --base main --head ${branchName} --title "Your PR Title" --body "$(cat PR_TEMPLATE.md)"`,
       allSteps: [
-        `# Create and switch to feature branch`,
+        '# Create and switch to feature branch',
         `git checkout -b ${branchName}`,
-        ``,
-        `# Make your changes...`,
-        ``,
-        `# Stage and commit (follows conventional commits)`,
-        `git add .`,
-        `git commit -m "feat: your change description"`,
-        ``,
-        `# Push to remote`,
+        '',
+        '# Make your changes...',
+        '',
+        '# Stage and commit (follows conventional commits)',
+        'git add .',
+        'git commit -m "feat: your change description"',
+        '',
+        '# Push to remote',
         `git push -u origin ${branchName}`,
-        ``,
-        `# Create PR`,
+        '',
+        '# Create PR',
         `gh pr create --base main --head ${branchName}`
       ].join('\n')
     };

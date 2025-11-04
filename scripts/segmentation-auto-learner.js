@@ -107,13 +107,13 @@ export async function analyzeAndLearn(resultsPath) {
   // Save updated learning data
   if (updates.cuePhrases > 0 || updates.roles > 0 || updates.patterns > 0) {
     fs.writeFileSync(learningPath, JSON.stringify(learningData, null, 2));
-    console.log(`\n📊 Learning Summary:`);
+    console.log('\n📊 Learning Summary:');
     console.log(`  • New cue phrases: ${updates.cuePhrases}`);
     console.log(`  • New roles: ${updates.roles}`);
     console.log(`  • Error patterns logged: ${updates.patterns}`);
     console.log(`\n✅ Learning data updated: ${learningPath}`);
   } else {
-    console.log(`\n✅ No new patterns detected.`);
+    console.log('\n✅ No new patterns detected.');
   }
   
   return updates;

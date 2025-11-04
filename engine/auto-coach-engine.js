@@ -72,7 +72,7 @@ export default class AutoCoachEngine {
     if (!this._active) return;
 
     // Read current mastery overview
-  const overview = await this.trainingCamp.getOverviewData();
+    const overview = await this.trainingCamp.getOverviewData();
     const domains = Array.isArray(overview?.domains) ? overview.domains : [];
     const avg = domains.length ? (domains.reduce((s,d)=>s+(d.mastery||0),0)/domains.length) : 0;
     const below80 = domains.filter(d => (d.mastery||0) < 80);
@@ -82,7 +82,7 @@ export default class AutoCoachEngine {
     if (this._metaTriggered) { this._lastAction = 'meta already triggered'; return; }
 
     // Hyper-aggressive mode when enabled
-  let cycleRounds = this.thresholds.maxRoundsPerCycle;
+    let cycleRounds = this.thresholds.maxRoundsPerCycle;
     const isHyperMode = this.thresholds.hyperMode;
     const aggressiveThreshold = this.thresholds.aggressiveThreshold || 50;
     

@@ -29,9 +29,9 @@ const colors = {
 
 function log(level, msg) {
   const prefix = level === 'pass' ? `${colors.green}✓${colors.reset}` :
-                 level === 'fail' ? `${colors.red}✗${colors.reset}` :
-                 level === 'info' ? `${colors.blue}ℹ${colors.reset}` :
-                 level === 'warn' ? `${colors.yellow}⚠${colors.reset}` : '•';
+    level === 'fail' ? `${colors.red}✗${colors.reset}` :
+      level === 'info' ? `${colors.blue}ℹ${colors.reset}` :
+        level === 'warn' ? `${colors.yellow}⚠${colors.reset}` : '•';
   console.log(`${prefix} ${msg}`);
 }
 
@@ -197,7 +197,7 @@ async function testFeedback(trainingId) {
 
     const data = await resp.json();
     if (data.ok && data.loopClosed) {
-      log('pass', `Feedback processed: loop closed with 2 capabilities updated`);
+      log('pass', 'Feedback processed: loop closed with 2 capabilities updated');
       return data;
     } else {
       log('fail', 'Feedback returned ok=false or loop not closed');

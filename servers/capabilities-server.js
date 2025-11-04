@@ -16,6 +16,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import CapabilitiesManager from '../engine/capabilities-manager.js';
 
 const app = express();
 const PORT = process.env.CAPABILITIES_PORT || 3009;
@@ -50,136 +51,136 @@ app.use(express.json({ limit: '10mb' }));
 const DISCOVERED_CAPABILITIES = {
   autonomousEvolutionEngine: {
     methodCount: 62,
-    description: "Self-optimization and evolutionary leap capabilities",
-    impact: "medium",
-    priority: "high",
-    riskLevel: "medium",
+    description: 'Self-optimization and evolutionary leap capabilities',
+    impact: 'medium',
+    priority: 'high',
+    riskLevel: 'medium',
     methods: [
-      "loadEvolutionData", "startAutonomousEvolution", "performEvolutionCycle",
-      "analyzeSelfPerformance", "identifyImprovementOpportunities", "generateOptimizations",
-      "generateAccuracyOptimization", "generateSpeedOptimization", "generateSatisfactionOptimization",
-      "generatePredictionOptimization", "applyOptimizations", "performSelfDebugging",
-      "evolveAlgorithms", "generateNewCapabilities", "measurePerformanceGains",
-      "simulateOptimizationApplication", "simulatePerformanceImprovement", "identifyPotentialIssues",
-      "generateBugFix", "identifyAlgorithmsForEvolution", "evolveAlgorithm",
-      "identifyCapabilityGaps", "developCapability", "calculateResponseAccuracy",
-      "calculateResponseSpeed", "calculateUserSatisfaction", "calculateLearningVelocity",
-      "calculatePredictionAccuracy", "calculateAdaptationSuccess", "saveEvolutionData",
-      "getEvolutionStatus", "getEvolutionHistory", "getPerformanceMetrics",
-      "getCodeModifications", "forceEvolution", "toggleAutonomousMode",
-      "getCapabilities", "analyzeNextEvolutionaryLeap", "getCurrentEvolutionaryState",
-      "identifyLeapOpportunities", "prioritizeEvolutionaryLeaps", "getFeasibilityScore",
-      "developLeapStrategy", "generateImplementationPhases", "estimateImplementationTime",
-      "generateRiskMitigation", "defineSuccessMetrics", "assessOptimizationSaturation",
-      "detectEmergentBehaviors", "generateEvolutionReport",
+      'loadEvolutionData', 'startAutonomousEvolution', 'performEvolutionCycle',
+      'analyzeSelfPerformance', 'identifyImprovementOpportunities', 'generateOptimizations',
+      'generateAccuracyOptimization', 'generateSpeedOptimization', 'generateSatisfactionOptimization',
+      'generatePredictionOptimization', 'applyOptimizations', 'performSelfDebugging',
+      'evolveAlgorithms', 'generateNewCapabilities', 'measurePerformanceGains',
+      'simulateOptimizationApplication', 'simulatePerformanceImprovement', 'identifyPotentialIssues',
+      'generateBugFix', 'identifyAlgorithmsForEvolution', 'evolveAlgorithm',
+      'identifyCapabilityGaps', 'developCapability', 'calculateResponseAccuracy',
+      'calculateResponseSpeed', 'calculateUserSatisfaction', 'calculateLearningVelocity',
+      'calculatePredictionAccuracy', 'calculateAdaptationSuccess', 'saveEvolutionData',
+      'getEvolutionStatus', 'getEvolutionHistory', 'getPerformanceMetrics',
+      'getCodeModifications', 'forceEvolution', 'toggleAutonomousMode',
+      'getCapabilities', 'analyzeNextEvolutionaryLeap', 'getCurrentEvolutionaryState',
+      'identifyLeapOpportunities', 'prioritizeEvolutionaryLeaps', 'getFeasibilityScore',
+      'developLeapStrategy', 'generateImplementationPhases', 'estimateImplementationTime',
+      'generateRiskMitigation', 'defineSuccessMetrics', 'assessOptimizationSaturation',
+      'detectEmergentBehaviors', 'generateEvolutionReport',
       // Added methods to reach 62
-      "assessOptimizationRisk", "scheduleEvolutionWindow", "snapshotPreEvolutionState",
-      "validateOptimizationSafety", "rollbackOptimization", "compareStrategyOutcomes",
-      "rankOptimizationCandidates", "estimateResourceImpact", "deriveGeneralizationImprovements",
-      "gateExperimentalFeatures", "calibrateSelfAssessment", "notifyStakeholders"
+      'assessOptimizationRisk', 'scheduleEvolutionWindow', 'snapshotPreEvolutionState',
+      'validateOptimizationSafety', 'rollbackOptimization', 'compareStrategyOutcomes',
+      'rankOptimizationCandidates', 'estimateResourceImpact', 'deriveGeneralizationImprovements',
+      'gateExperimentalFeatures', 'calibrateSelfAssessment', 'notifyStakeholders'
     ]
   },
   enhancedLearning: {
     methodCount: 43,
-    description: "Advanced learning patterns and session optimization",
-    impact: "medium",
-    priority: "high",
-    riskLevel: "low",
+    description: 'Advanced learning patterns and session optimization',
+    impact: 'medium',
+    priority: 'high',
+    riskLevel: 'low',
     methods: [
-      "initialize", "loadData", "loadCrossSessionMemory", "loadEvolutionLog",
-      "saveData", "saveCrossSessionMemory", "saveEvolutionLog", "startEnhancedSession",
-      "predictSessionDuration", "predictLikelyChallenges", "recommendApproach", "getUserContext",
-      "recordEnhancedSuccess", "recordEnhancedFailure", "updateUserPreferences", "updateSuccessfulMethods",
-      "updateProblemPatterns", "updateConversationPatterns", "logEvolution", "calculateCurrentSuccessRate",
-      "recordSuccess", "recordFailure", "discoverPattern", "isRepeatProblem",
-      "calculateRepeatRate", "getTopPatterns", "getCommonFailures", "getPerformanceReport",
-      "getLearningInsights", "getEvolutionInsights", "calculateLearningVelocity", "analyzeAdaptationPatterns",
-      "calculatePredictionAccuracy", "groupEventsByType", "getEnhancedStatus",
+      'initialize', 'loadData', 'loadCrossSessionMemory', 'loadEvolutionLog',
+      'saveData', 'saveCrossSessionMemory', 'saveEvolutionLog', 'startEnhancedSession',
+      'predictSessionDuration', 'predictLikelyChallenges', 'recommendApproach', 'getUserContext',
+      'recordEnhancedSuccess', 'recordEnhancedFailure', 'updateUserPreferences', 'updateSuccessfulMethods',
+      'updateProblemPatterns', 'updateConversationPatterns', 'logEvolution', 'calculateCurrentSuccessRate',
+      'recordSuccess', 'recordFailure', 'discoverPattern', 'isRepeatProblem',
+      'calculateRepeatRate', 'getTopPatterns', 'getCommonFailures', 'getPerformanceReport',
+      'getLearningInsights', 'getEvolutionInsights', 'calculateLearningVelocity', 'analyzeAdaptationPatterns',
+      'calculatePredictionAccuracy', 'groupEventsByType', 'getEnhancedStatus',
       // Added methods to reach 43
-      "optimizeSessionCadence", "recommendReviewSchedule", "suggestMicroDrills",
-      "detectPlateau", "adjustDifficultyCurve", "evaluatePromptClarity",
-      "deriveTeachingMoments", "surfaceKeyInsights"
+      'optimizeSessionCadence', 'recommendReviewSchedule', 'suggestMicroDrills',
+      'detectPlateau', 'adjustDifficultyCurve', 'evaluatePromptClarity',
+      'deriveTeachingMoments', 'surfaceKeyInsights'
     ]
   },
   predictiveEngine: {
     methodCount: 38,
-    description: "Intent prediction and resource preloading",
-    impact: "medium",
-    priority: "medium",
-    riskLevel: "low",
+    description: 'Intent prediction and resource preloading',
+    impact: 'medium',
+    priority: 'medium',
+    riskLevel: 'low',
     methods: [
-      "initialize", "loadPatterns", "loadContextCache", "seedInitialPatterns",
-      "savePatterns", "saveContextCache", "predictNextUserIntent", "analyzeMessageIntent",
-      "findSequencePatterns", "analyzeConversationContext", "combineIntentSignals", "predictNeededResources",
-      "calculatePredictionConfidence", "generatePredictionReasoning", "preloadResources", "loadResourceType",
-      "cacheErrorPatterns", "cacheCodeExamples", "cacheTemplates", "extractKeywords",
-      "learnFromConversation", "evaluatePredictionAccuracy", "updateConversationPatterns", "updateIntentPatterns",
-      "startConversationSession", "addMessage", "getRecentPredictions", "getConversationInsights",
-      "getTopPredictedIntents", "getStatus",
+      'initialize', 'loadPatterns', 'loadContextCache', 'seedInitialPatterns',
+      'savePatterns', 'saveContextCache', 'predictNextUserIntent', 'analyzeMessageIntent',
+      'findSequencePatterns', 'analyzeConversationContext', 'combineIntentSignals', 'predictNeededResources',
+      'calculatePredictionConfidence', 'generatePredictionReasoning', 'preloadResources', 'loadResourceType',
+      'cacheErrorPatterns', 'cacheCodeExamples', 'cacheTemplates', 'extractKeywords',
+      'learnFromConversation', 'evaluatePredictionAccuracy', 'updateConversationPatterns', 'updateIntentPatterns',
+      'startConversationSession', 'addMessage', 'getRecentPredictions', 'getConversationInsights',
+      'getTopPredictedIntents', 'getStatus',
       // Added methods to reach 38
-      "detectAmbiguity", "disambiguateIntent", "scoreIntentNovelty",
-      "predictClarifyingQuestions", "prewarmModelContexts", "rankCandidatePaths",
-      "estimateLatencyImpact", "optimizeCacheKeys"
+      'detectAmbiguity', 'disambiguateIntent', 'scoreIntentNovelty',
+      'predictClarifyingQuestions', 'prewarmModelContexts', 'rankCandidatePaths',
+      'estimateLatencyImpact', 'optimizeCacheKeys'
     ]
   },
   userModelEngine: {
     methodCount: 37,
-    description: "Personalization and adaptive complexity",
-    impact: "medium",
-    priority: "medium",
-    riskLevel: "low",
+    description: 'Personalization and adaptive complexity',
+    impact: 'medium',
+    priority: 'medium',
+    riskLevel: 'low',
     methods: [
-      "loadUserModels", "analyzeUserBehavior", "createNewUserModel", "analyzeCommunicationStyle",
-      "analyzeLearningPreferences", "analyzeProblemSolvingApproach", "generateProactiveSuggestions", "suggestBasedOnProjects",
-      "suggestBasedOnSkills", "suggestBasedOnChallenges", "getAdaptiveComplexity", "findRelatedConversations",
-      "inferDetailLevel", "inferCodePreference", "inferTechnicalComfort", "getComplementaryTech",
-      "mergeBehaviorData", "isContextRelevant", "isConceptRelevant", "getSkillLevel",
-      "hasTopicOverlap", "calculateTopicSimilarity", "updateUserModel", "getProactiveSuggestions",
-      "getAdaptiveSettings", "getUserInsights", "identifyStrengths", "identifyGrowthAreas",
-      "getPersonalizedRecommendations",
+      'loadUserModels', 'analyzeUserBehavior', 'createNewUserModel', 'analyzeCommunicationStyle',
+      'analyzeLearningPreferences', 'analyzeProblemSolvingApproach', 'generateProactiveSuggestions', 'suggestBasedOnProjects',
+      'suggestBasedOnSkills', 'suggestBasedOnChallenges', 'getAdaptiveComplexity', 'findRelatedConversations',
+      'inferDetailLevel', 'inferCodePreference', 'inferTechnicalComfort', 'getComplementaryTech',
+      'mergeBehaviorData', 'isContextRelevant', 'isConceptRelevant', 'getSkillLevel',
+      'hasTopicOverlap', 'calculateTopicSimilarity', 'updateUserModel', 'getProactiveSuggestions',
+      'getAdaptiveSettings', 'getUserInsights', 'identifyStrengths', 'identifyGrowthAreas',
+      'getPersonalizedRecommendations',
       // Added methods to reach 37
-      "inferPreferredPacing", "inferRiskTolerance", "trackSatisfactionTrend",
-      "detectFrustrationSignals", "adaptTone", "recommendScaffold",
-      "generateLearningPath", "summarizeUserModel"
+      'inferPreferredPacing', 'inferRiskTolerance', 'trackSatisfactionTrend',
+      'detectFrustrationSignals', 'adaptTone', 'recommendScaffold',
+      'generateLearningPath', 'summarizeUserModel'
     ]
   },
   proactiveIntelligenceEngine: {
     methodCount: 32,
-    description: "Workflow prediction and opportunity detection",
-    impact: "medium",
-    priority: "medium",
-    riskLevel: "low",
+    description: 'Workflow prediction and opportunity detection',
+    impact: 'medium',
+    priority: 'medium',
+    riskLevel: 'low',
     methods: [
-      "loadIntelligenceData", "analyzeAdvancedPatterns", "analyzeWorkflowPattern", "analyzeProblemPattern",
-      "analyzeSolutionPattern", "analyzeLearningPattern", "generateAdvancedPredictions", "predictNextAction",
-      "predictLikelyChallenges", "predictResourceNeeds", "predictTimeEstimation", "predictOpportunityMoments",
-      "predictLearningMoments", "generateProactiveSuggestions", "refineIntelligence", "extractInteractionSequence",
-      "categorizeProblems", "calculateLearningVelocity", "getDefaultNextAction", "analyzeUserSession",
-      "getPredictions", "getProactiveSuggestions", "updateIntelligence", "getIntelligenceMetrics",
-      "getUserIntelligence",
+      'loadIntelligenceData', 'analyzeAdvancedPatterns', 'analyzeWorkflowPattern', 'analyzeProblemPattern',
+      'analyzeSolutionPattern', 'analyzeLearningPattern', 'generateAdvancedPredictions', 'predictNextAction',
+      'predictLikelyChallenges', 'predictResourceNeeds', 'predictTimeEstimation', 'predictOpportunityMoments',
+      'predictLearningMoments', 'generateProactiveSuggestions', 'refineIntelligence', 'extractInteractionSequence',
+      'categorizeProblems', 'calculateLearningVelocity', 'getDefaultNextAction', 'analyzeUserSession',
+      'getPredictions', 'getProactiveSuggestions', 'updateIntelligence', 'getIntelligenceMetrics',
+      'getUserIntelligence',
       // Added methods to reach 32
-      "predictBottlenecks", "surfaceOpportunities", "estimatePayoff",
-      "rankActionCandidates", "triageOpportunities", "compileOpportunityReport",
-      "suggestTimeboxing"
+      'predictBottlenecks', 'surfaceOpportunities', 'estimatePayoff',
+      'rankActionCandidates', 'triageOpportunities', 'compileOpportunityReport',
+      'suggestTimeboxing'
     ]
   },
   contextBridgeEngine: {
     methodCount: 30,
-    description: "Context networks and conversation bridging",
-    impact: "medium",
-    priority: "low",
-    riskLevel: "low",
+    description: 'Context networks and conversation bridging',
+    impact: 'medium',
+    priority: 'low',
+    riskLevel: 'low',
     methods: [
-      "loadContextData", "recordConversation", "findRelevantContext", "getProactiveContextSuggestions",
-      "suggestBasedOnFlow", "suggestBasedOnPatterns", "suggestNextSteps", "buildContextNetwork",
-      "createTopicBridges", "calculateRelevance", "calculateOverlap", "identifyBridgeType",
-      "extractSemanticTags", "extractConcepts", "extractSkills", "assessComplexity",
-      "identifyLearningOutcomes", "recordCurrentConversation", "getRelevantContext", "getContextSuggestions",
-      "getContextNetwork", "getTopicBridges", "getConversationHistory",
+      'loadContextData', 'recordConversation', 'findRelevantContext', 'getProactiveContextSuggestions',
+      'suggestBasedOnFlow', 'suggestBasedOnPatterns', 'suggestNextSteps', 'buildContextNetwork',
+      'createTopicBridges', 'calculateRelevance', 'calculateOverlap', 'identifyBridgeType',
+      'extractSemanticTags', 'extractConcepts', 'extractSkills', 'assessComplexity',
+      'identifyLearningOutcomes', 'recordCurrentConversation', 'getRelevantContext', 'getContextSuggestions',
+      'getContextNetwork', 'getTopicBridges', 'getConversationHistory',
       // Added methods to reach 30
-      "mapConceptDependencies", "traceConversationArcs", "mergeContextThreads",
-      "highlightMissingLinks", "rankBridgeCandidates", "explainContextRelevance",
-      "suggestContextCompression"
+      'mapConceptDependencies', 'traceConversationArcs', 'mergeContextThreads',
+      'highlightMissingLinks', 'rankBridgeCandidates', 'explainContextRelevance',
+      'suggestContextCompression'
     ]
   }
 };
@@ -727,47 +728,47 @@ app.get('/api/v1/capabilities/integration-plan', (req, res) => {
   const phases = [
     {
       phase: 1,
-      title: "Enhanced Learning Activation",
-      components: ["enhancedLearning"],
+      title: 'Enhanced Learning Activation',
+      components: ['enhancedLearning'],
       methods: 35,
-      priority: "high",
-      riskLevel: "low",
-      estimatedTime: "1-2 hours",
-      description: "Activate session optimization and pattern discovery methods",
-      benefits: ["Improved learning velocity", "Better session predictions", "Enhanced pattern recognition"]
+      priority: 'high',
+      riskLevel: 'low',
+      estimatedTime: '1-2 hours',
+      description: 'Activate session optimization and pattern discovery methods',
+      benefits: ['Improved learning velocity', 'Better session predictions', 'Enhanced pattern recognition']
     },
     {
       phase: 2,
-      title: "Predictive Intelligence",
-      components: ["predictiveEngine", "userModelEngine"],
+      title: 'Predictive Intelligence',
+      components: ['predictiveEngine', 'userModelEngine'],
       methods: 59,
-      priority: "medium",
-      riskLevel: "low",
-      estimatedTime: "2-3 hours",
-      description: "Enable intent prediction and personalization capabilities",
-      benefits: ["Proactive resource loading", "Adaptive complexity", "Personalized recommendations"]
+      priority: 'medium',
+      riskLevel: 'low',
+      estimatedTime: '2-3 hours',
+      description: 'Enable intent prediction and personalization capabilities',
+      benefits: ['Proactive resource loading', 'Adaptive complexity', 'Personalized recommendations']
     },
     {
       phase: 3,
-      title: "Autonomous Evolution (Cautious)",
-      components: ["autonomousEvolutionEngine"],
+      title: 'Autonomous Evolution (Cautious)',
+      components: ['autonomousEvolutionEngine'],
       methods: 25, // Start with subset
-      priority: "high",
-      riskLevel: "medium",
-      estimatedTime: "3-4 hours",
-      description: "Gradual activation of self-optimization methods with monitoring",
-      benefits: ["Automatic performance improvements", "Self-debugging", "Capability gap identification"]
+      priority: 'high',
+      riskLevel: 'medium',
+      estimatedTime: '3-4 hours',
+      description: 'Gradual activation of self-optimization methods with monitoring',
+      benefits: ['Automatic performance improvements', 'Self-debugging', 'Capability gap identification']
     },
     {
       phase: 4,
-      title: "Advanced Intelligence",
-      components: ["proactiveIntelligenceEngine", "contextBridgeEngine"],
+      title: 'Advanced Intelligence',
+      components: ['proactiveIntelligenceEngine', 'contextBridgeEngine'],
       methods: 48,
-      priority: "medium",
-      riskLevel: "low",
-      estimatedTime: "2-3 hours",
-      description: "Complete intelligence ecosystem activation",
-      benefits: ["Workflow prediction", "Context bridging", "Advanced pattern analysis"]
+      priority: 'medium',
+      riskLevel: 'low',
+      estimatedTime: '2-3 hours',
+      description: 'Complete intelligence ecosystem activation',
+      benefits: ['Workflow prediction', 'Context bridging', 'Advanced pattern analysis']
     }
   ];
 
@@ -776,13 +777,13 @@ app.get('/api/v1/capabilities/integration-plan', (req, res) => {
     integrationPlan: {
       totalPhases: phases.length,
       totalMethods: phases.reduce((sum, p) => sum + p.methods, 0),
-      estimatedDuration: "8-12 hours",
+      estimatedDuration: '8-12 hours',
       phases,
       recommendations: [
-        "Start with low-risk, high-impact components",
-        "Monitor performance metrics after each phase",
-        "Use gradual rollout for autonomous evolution",
-        "Maintain rollback capability for each activation"
+        'Start with low-risk, high-impact components',
+        'Monitor performance metrics after each phase',
+        'Use gradual rollout for autonomous evolution',
+        'Maintain rollback capability for each activation'
       ]
     }
   });
@@ -833,40 +834,40 @@ app.post('/api/v1/capabilities/analyze', async (req, res) => {
 // Batch activation endpoint for high-impact method clusters
 app.post('/api/v1/capabilities/batch-activate', async (req, res) => {
   try {
-    const { cluster, components, sequencing = "standard", mode = "safe" } = req.body;
+    const { cluster, components, sequencing = 'standard', mode = 'safe' } = req.body;
     
     // High-impact method clusters
     const CLUSTERS = {
-      "intelligence-optimization": {
-        autonomousEvolutionEngine: ["measurePerformanceGains", "simulateOptimizationApplication", "evolveAlgorithms"],
-        predictiveEngine: ["analyzePredictionPatterns", "optimizeResponseTime", "predictUserBehavior"],
-        proactiveIntelligenceEngine: ["predictOpportunityMoments", "generateProactiveSuggestions", "analyzeWorkflowPatterns"],
-        enhancedLearning: ["adaptLearningStrategy", "optimizeLearningPath", "predictLearningNeeds"]
+      'intelligence-optimization': {
+        autonomousEvolutionEngine: ['measurePerformanceGains', 'simulateOptimizationApplication', 'evolveAlgorithms'],
+        predictiveEngine: ['analyzePredictionPatterns', 'optimizeResponseTime', 'predictUserBehavior'],
+        proactiveIntelligenceEngine: ['predictOpportunityMoments', 'generateProactiveSuggestions', 'analyzeWorkflowPatterns'],
+        enhancedLearning: ['adaptLearningStrategy', 'optimizeLearningPath', 'predictLearningNeeds']
       },
-      "user-experience": {
-        userModelEngine: ["analyzeUserBehavior", "getAdaptiveComplexity", "personalizeExperience", "trackUserProgress"],
-        contextBridgeEngine: ["buildContextNetwork", "createTopicBridges", "analyzeConversationFlow", "bridgeKnowledgeGaps"],
-        enhancedLearning: ["predictSessionDuration", "discoverPattern", "generatePersonalizedContent"]
+      'user-experience': {
+        userModelEngine: ['analyzeUserBehavior', 'getAdaptiveComplexity', 'personalizeExperience', 'trackUserProgress'],
+        contextBridgeEngine: ['buildContextNetwork', 'createTopicBridges', 'analyzeConversationFlow', 'bridgeKnowledgeGaps'],
+        enhancedLearning: ['predictSessionDuration', 'discoverPattern', 'generatePersonalizedContent']
       },
-      "performance-core": {
-        autonomousEvolutionEngine: ["performEvolutionCycle", "identifyImprovementOpportunities", "generateOptimizations"],
-        predictiveEngine: ["predictNextUserIntent", "preloadResources", "cacheOptimalPaths"],
-        proactiveIntelligenceEngine: ["loadIntelligenceData", "analyzeAdvancedPatterns", "optimizeWorkflow"]
+      'performance-core': {
+        autonomousEvolutionEngine: ['performEvolutionCycle', 'identifyImprovementOpportunities', 'generateOptimizations'],
+        predictiveEngine: ['predictNextUserIntent', 'preloadResources', 'cacheOptimalPaths'],
+        proactiveIntelligenceEngine: ['loadIntelligenceData', 'analyzeAdvancedPatterns', 'optimizeWorkflow']
       }
     };
     
     const targetCluster = CLUSTERS[cluster] || components;
     if (!targetCluster) {
-      return res.status(400).json({ ok: false, error: "Invalid cluster or components specified" });
+      return res.status(400).json({ ok: false, error: 'Invalid cluster or components specified' });
     }
     
     // Intelligent sequencing order
-    const sequenceOrder = sequencing === "intelligent" ? 
-      ["autonomousEvolutionEngine", "predictiveEngine", "proactiveIntelligenceEngine", "enhancedLearning", "userModelEngine", "contextBridgeEngine"] :
+    const sequenceOrder = sequencing === 'intelligent' ? 
+      ['autonomousEvolutionEngine', 'predictiveEngine', 'proactiveIntelligenceEngine', 'enhancedLearning', 'userModelEngine', 'contextBridgeEngine'] :
       Object.keys(targetCluster);
     
     const batchResults = {
-      cluster: cluster || "custom",
+      cluster: cluster || 'custom',
       mode,
       sequencing,
       totalMethods: 0,
@@ -901,7 +902,7 @@ app.post('/api/v1/capabilities/batch-activate', async (req, res) => {
       };
       
       // Calculate performance gains per component
-      const performanceMultiplier = mode === "production" ? 1.5 : mode === "aggressive" ? 1.8 : 1.2;
+      const performanceMultiplier = mode === 'production' ? 1.5 : mode === 'aggressive' ? 1.8 : 1.2;
       batchResults.performanceGains[component] = Math.round(successCount * performanceMultiplier);
       
       batchResults.activationSequence.push({
@@ -912,15 +913,15 @@ app.post('/api/v1/capabilities/batch-activate', async (req, res) => {
       });
       
       // Update activation status
-        if (activationStatus.componentStatus[component]) {
-          activationStatus.componentStatus[component].activated += successCount;
-          activationStatus.componentStatus[component].pending -= successCount;
-          activationStatus.componentStatus[component].failed += (methods.length - successCount);
-          activationStatus.componentStatus[component].lastActivation = new Date().toISOString();
-        }
+      if (activationStatus.componentStatus[component]) {
+        activationStatus.componentStatus[component].activated += successCount;
+        activationStatus.componentStatus[component].pending -= successCount;
+        activationStatus.componentStatus[component].failed += (methods.length - successCount);
+        activationStatus.componentStatus[component].lastActivation = new Date().toISOString();
+      }
       
       // Small delay for sequencing in intelligent mode
-      if (sequencing === "intelligent") {
+      if (sequencing === 'intelligent') {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
@@ -954,7 +955,7 @@ app.post('/api/v1/capabilities/demo-activate', async (req, res) => {
     res.json({
       ok: true,
       demo: {
-        message: "Demo activation completed across all components",
+        message: 'Demo activation completed across all components',
         activated: demoResults.reduce((sum, r) => sum + r.results.filter(res => res.success).length, 0),
         components: demoResults.length,
         impact: calculatePerformanceImpact(),
@@ -967,10 +968,154 @@ app.post('/api/v1/capabilities/demo-activate', async (req, res) => {
   }
 });
 
+// ============================================================================
+// CAPABILITIES MANAGER ENDPOINTS (Issue #20)
+// ============================================================================
+
+// Activate capability with dependency validation
+app.post('/api/v1/capabilities/activate', (req, res) => {
+  try {
+    const { capabilityId } = req.body;
+    
+    if (!capabilityId) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'capabilityId is required' 
+      });
+    }
+
+    const result = CapabilitiesManager.activateCapability(capabilityId);
+    
+    res.json({ 
+      ok: result.success, 
+      data: {
+        capabilityId,
+        activated: result.success,
+        message: result.message,
+        unmetDependencies: result.unmetDependencies || [],
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Deactivate capability with dependent check
+app.post('/api/v1/capabilities/deactivate', (req, res) => {
+  try {
+    const { capabilityId } = req.body;
+    
+    if (!capabilityId) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'capabilityId is required' 
+      });
+    }
+
+    const result = CapabilitiesManager.deactivateCapability(capabilityId);
+    
+    res.json({ 
+      ok: result.success, 
+      data: {
+        capabilityId,
+        deactivated: result.success,
+        message: result.message,
+        dependentCapabilities: result.dependentCapabilities || [],
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Get capability status (single or all)
+app.get('/api/v1/capabilities/status', (req, res) => {
+  try {
+    const { capabilityId } = req.query;
+    
+    const status = CapabilitiesManager.getCapabilityStatus(capabilityId);
+    
+    res.json({ 
+      ok: true, 
+      data: {
+        capabilities: status,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// List all available capabilities
+app.get('/api/v1/capabilities/list', (req, res) => {
+  try {
+    const capabilities = CapabilitiesManager.getCapabilityStatus();
+    
+    res.json({ 
+      ok: true, 
+      data: {
+        totalCapabilities: Object.keys(capabilities).length,
+        capabilities: Object.entries(capabilities).map(([id, status]) => ({
+          id,
+          priority: status.priority,
+          enabled: status.enabled,
+          health: status.health,
+          description: status.description
+        })),
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Get system-wide capability insights
+app.get('/api/v1/capabilities/insights', (req, res) => {
+  try {
+    const insights = CapabilitiesManager.getInsights();
+    const recommendations = CapabilitiesManager.generateRecommendations();
+    
+    const status = CapabilitiesManager.getCapabilityStatus();
+    const totalCapabilities = Object.keys(status).length;
+    const activeCount = Object.values(status).filter(c => c.enabled).length;
+    const healthyCount = Object.values(status).filter(c => c.health === 'active' || c.health === 'healthy').length;
+    
+    res.json({ 
+      ok: true, 
+      data: {
+        summary: {
+          totalCapabilities,
+          activeCapabilities: activeCount,
+          healthyCapabilities: healthyCount,
+          healthScore: insights.healthScore || 0
+        },
+        insights: insights.insights || [],
+        recommendations: recommendations || [],
+        capabilities: Object.entries(status).map(([id, s]) => ({
+          id,
+          enabled: s.enabled,
+          health: s.health,
+          executionCount: s.executionCount || 0,
+          errorCount: s.errorCount || 0,
+          lastActivation: s.lastActivation
+        })),
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`🔧 Capability Integration Server running on http://127.0.0.1:${PORT}`);
-  console.log(`⚡ Ready to activate 242 discovered methods across 6 components`);
+  console.log('⚡ Ready to activate 242 discovered methods across 6 components');
+  console.log('🎯 Capabilities Manager Endpoints: activate, deactivate, status, list, insights');
   console.log(DB_MODE ? '💾 SQLite persistence: ON' : '💾 JSON persistence: ON');
 });
 

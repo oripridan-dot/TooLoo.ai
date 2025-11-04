@@ -373,11 +373,11 @@ async function testIntegration() {
   // Test 2: API endpoints exist
   console.log('\n  → Test 5.2: API endpoints defined');
   
-  assert(bridgeContent.includes("app.get('/api/v1/bridge/gaps-per-cohort"), 'GET /gaps-per-cohort endpoint');
-  assert(bridgeContent.includes("app.get('/api/v1/bridge/workflows-per-cohort"), 'GET /workflows-per-cohort endpoint');
-  assert(bridgeContent.includes("app.post('/api/v1/bridge/roi/track"), 'POST /roi/track endpoint');
-  assert(bridgeContent.includes("app.get('/api/v1/bridge/roi/trajectory"), 'GET /roi/trajectory endpoint');
-  assert(bridgeContent.includes("app.get('/api/v1/bridge/roi/compare"), 'GET /roi/compare endpoint');
+  assert(bridgeContent.includes('app.get(\'/api/v1/bridge/gaps-per-cohort'), 'GET /gaps-per-cohort endpoint');
+  assert(bridgeContent.includes('app.get(\'/api/v1/bridge/workflows-per-cohort'), 'GET /workflows-per-cohort endpoint');
+  assert(bridgeContent.includes('app.post(\'/api/v1/bridge/roi/track'), 'POST /roi/track endpoint');
+  assert(bridgeContent.includes('app.get(\'/api/v1/bridge/roi/trajectory'), 'GET /roi/trajectory endpoint');
+  assert(bridgeContent.includes('app.get(\'/api/v1/bridge/roi/compare'), 'GET /roi/compare endpoint');
   
   // Test 3: Backward compatibility - Phase 1 endpoints intact
   console.log('\n  → Test 5.3: Phase 1 endpoints remain unchanged');

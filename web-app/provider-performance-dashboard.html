@@ -629,8 +629,8 @@
             }
 
             updateSystemMetrics(data) {
-                // This would be populated from the performance report endpoint
-                // For now, using placeholder data structure
+                // Fetch live performance data from the training server endpoint
+                // Data structure populated from /api/v1/training/overview
                 const metrics = data.overview || {};
 
                 document.getElementById('totalRequests').textContent = metrics.totalRequests || '--';
@@ -640,7 +640,9 @@
                 document.getElementById('totalCost24h').textContent = `$${metrics.totalCost24h ? metrics.totalCost24h.toFixed(2) : '--'}`;
                 document.getElementById('avgConcurrency').textContent = metrics.avgConcurrency || '--';
                 document.getElementById('efficiency').textContent = `${metrics.efficiency ? Math.round(metrics.efficiency) : '--'}%`;
-                document.getElementById('costPerRequest').textContent = '$--'; // Calculate from available data
+                // Calculate cost per request from available data
+                const costPerRequest = metrics.totalCost24h && metrics.totalRequests ? (metrics.totalCost24h / metrics.totalRequests).toFixed(4) : '--';
+                document.getElementById('costPerRequest').textContent = '$' + costPerRequest;
             }
 
             updateCharts(data) {

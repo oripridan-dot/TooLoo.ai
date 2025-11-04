@@ -24,7 +24,7 @@ export default class SegmentationGuardian {
     this.unifier = unifier;
     this.healthLogPath = healthLogPath;
     this.statePath = statePath;
-  this.alerts = alertManager;
+    this.alerts = alertManager;
     this.thresholds = thresholds;
     this.monitorIntervalMs = monitorIntervalMs;
     this.lastStatus = null;
@@ -112,8 +112,8 @@ export default class SegmentationGuardian {
       const results = await runner.runBenchmarkSuite(suites);
       const acc = results.summary?.accuracy || 0;
       const passed = acc >= (minAccuracy ?? this.thresholds.minBenchmarkAccuracy);
-  if (!passed && this.alerts) this.alerts.alert('segmentation.guardian.gate_failed', `Benchmark failed at ${acc.toFixed(2)}% (min ${(minAccuracy ?? this.thresholds.minBenchmarkAccuracy)}%)`, { suites, baseUrl });
-  return { passed, accuracy: acc, results };
+      if (!passed && this.alerts) this.alerts.alert('segmentation.guardian.gate_failed', `Benchmark failed at ${acc.toFixed(2)}% (min ${(minAccuracy ?? this.thresholds.minBenchmarkAccuracy)}%)`, { suites, baseUrl });
+      return { passed, accuracy: acc, results };
     } catch (e) {
       return { passed: false, error: e.message };
     }

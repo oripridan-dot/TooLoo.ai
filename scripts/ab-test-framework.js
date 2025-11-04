@@ -74,7 +74,7 @@ class ABTestController extends EventEmitter {
     console.log(`Control Group: ${this.controlSize.toLocaleString()} (original analyzer)`);
     console.log(`Treatment Group: ${this.treatmentSize.toLocaleString()} (ultra-fast analyzer)`);
     console.log(`Duration: ${this.durationDays} days`);
-    console.log(`Target: +5-7% ROI improvement with p<0.05\n`);
+    console.log('Target: +5-7% ROI improvement with p<0.05\n');
 
     this.state = 'setup';
     this.emit('ab_test:initialized', { timestamp: new Date().toISOString() });
@@ -233,8 +233,8 @@ class ABTestController extends EventEmitter {
           percent: `${this.analysis.roiImprovementPercent.toFixed(1)}%`,
           target: '+5-7%',
           achieved: this.analysis.roiImprovementPercent >= 5 && this.analysis.roiImprovementPercent <= 7 ? 'YES ✅' : 
-                   this.analysis.roiImprovementPercent > 7 ? `YES ✅ (${this.analysis.roiImprovementPercent.toFixed(1)}%)` :
-                   'NO ❌'
+            this.analysis.roiImprovementPercent > 7 ? `YES ✅ (${this.analysis.roiImprovementPercent.toFixed(1)}%)` :
+              'NO ❌'
         },
         statistical_significance: {
           p_value: this.analysis.pValue?.toFixed(4) || 'N/A',
@@ -396,8 +396,8 @@ async function simulateABTest() {
 
   const verdict = report.analysis.roi_improvement.achieved === 'YES ✅' && 
                   report.analysis.statistical_significance.achieved === 'YES ✅'
-                  ? '✅ APPROVE FOR FULL ROLLOUT' 
-                  : '⚠️  NEEDS INVESTIGATION';
+    ? '✅ APPROVE FOR FULL ROLLOUT' 
+    : '⚠️  NEEDS INVESTIGATION';
 
   console.log(`Status: ${verdict}\n`);
 

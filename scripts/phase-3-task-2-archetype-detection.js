@@ -250,7 +250,7 @@ async function executeTask2() {
       confidences[Math.floor(confidences.length / 2)].toFixed(3)
     );
 
-    console.log(`✅ Statistics calculated\n`);
+    console.log('✅ Statistics calculated\n');
 
     // Step 4: Save archetype detections
     console.log('💾 STEP 4: Saving archetype detections...');
@@ -288,7 +288,7 @@ async function executeTask2() {
       console.log(`  ${ARCHETYPES[key].name.padEnd(20)} ${dist.count.toString().padStart(4)} (${dist.percentage.toString().padStart(5)}%) ${bar}`);
     });
 
-    console.log(`\n📈 Confidence Statistics:`);
+    console.log('\n📈 Confidence Statistics:');
     console.log(`  Min: ${stats.confidenceStats.min.toFixed(3)}`);
     console.log(`  Max: ${stats.confidenceStats.max.toFixed(3)}`);
     console.log(`  Avg: ${stats.confidenceStats.avg.toFixed(3)}`);
@@ -314,13 +314,13 @@ async function executeTask2() {
     console.log(`  ✓ ${archetypeDetections.length} archetype detections (${detectionsFile})`);
     console.log(`  ✓ Distribution analysis (${statsFile})`);
     console.log(`  ✓ ${stats.highConfidenceRate}% high-confidence assignments`);
-    console.log(`  ✓ Real behavior patterns analyzed\n`);
+    console.log('  ✓ Real behavior patterns analyzed\n');
 
     console.log('✅ Metrics:');
-    console.log(`  Coverage: 100% of learners`);
+    console.log('  Coverage: 100% of learners');
     console.log(`  Quality: ${stats.highConfidenceRate}% high-confidence (target ≥80%)`);
     console.log(`  Avg confidence: ${stats.confidenceStats.avg.toFixed(3)}`);
-    console.log(`  Balanced distribution across all archetypes\n`);
+    console.log('  Balanced distribution across all archetypes\n');
 
     console.log('🚀 Ready for Task 3: Initial ROI Metric Collection\n');
 

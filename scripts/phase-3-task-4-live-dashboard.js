@@ -302,7 +302,7 @@ async function generateDashboard() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('📊 DASHBOARD SUMMARY');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`\nGlobal Metrics:`);
+  console.log('\nGlobal Metrics:');
   console.log(`  Learners Analyzed:     ${dashboard.summary.totalLearners}`);
   console.log(`  Cohorts:               ${dashboard.summary.totalCohorts}`);
   console.log(`  Archetypes:            ${dashboard.summary.archetypeCount}`);
@@ -310,7 +310,7 @@ async function generateDashboard() {
   console.log(`  Median ROI:            ${dashboard.summary.globalROI.median}`);
   console.log(`  ROI Std Dev:           ${dashboard.summary.globalROI.stdev}`);
   
-  console.log(`\n🎯 Archetype Performance (Top Performers):`);
+  console.log('\n🎯 Archetype Performance (Top Performers):');
   archetypeDashboard.slice(0, 3).forEach((arch, i) => {
     console.log(`  ${i+1}. ${arch.archetype}`);
     console.log(`     ROI Range: ${arch.roiRange}`);
@@ -318,7 +318,7 @@ async function generateDashboard() {
     console.log(`     Learners:  ${arch.learnerCount}`);
   });
   
-  console.log(`\n🏘️  Cohort Performance (Ranked):`);
+  console.log('\n🏘️  Cohort Performance (Ranked):');
   cohortDashboard.slice(0, 3).forEach((cohort, i) => {
     console.log(`  ${i+1}. ${cohort.cohortId}`);
     console.log(`     ROI: ${cohort.cohortROI}`);
@@ -326,14 +326,14 @@ async function generateDashboard() {
     console.log(`     Avg Completion: ${cohort.avgCompletion}`);
   });
   
-  console.log(`\n🚨 Anomaly Detection:`);
+  console.log('\n🚨 Anomaly Detection:');
   console.log(`  Total Anomalies:       ${anomalyStats.totalAnomalies}`);
   console.log(`  ROI Outliers:          ${anomalyStats.roiOutliers}`);
   console.log(`  Cost Outliers:         ${anomalyStats.costOutliers}`);
   console.log(`  Critical Alerts:       ${anomalyStats.critical}`);
   
   if (anomalyStats.critical > 0) {
-    console.log(`\n  Top Critical Alerts:`);
+    console.log('\n  Top Critical Alerts:');
     anomalies
       .filter(a => a.severity === 'critical')
       .slice(0, 3)
@@ -342,7 +342,7 @@ async function generateDashboard() {
       });
   }
   
-  console.log(`\n📈 Trend Forecasting:`);
+  console.log('\n📈 Trend Forecasting:');
   Object.entries(trends).forEach(([arch, trend]) => {
     const emoji = trend.forecast === 'positive' ? '📈' : trend.forecast === 'caution' ? '📉' : '➡️ ';
     console.log(`  ${emoji} ${arch}: ${trend.trend} (${trend.trendStrength})`);

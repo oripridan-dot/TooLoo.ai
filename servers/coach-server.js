@@ -78,7 +78,7 @@ app.post('/api/v1/auto-coach/boost', async (req,res)=>{
   try{
     const n = Math.min(Math.max(Number(req.body?.rounds||5), 1), 20); // Increased cap to 20
     const batchSize = Number(req.body?.batchSize || 3);
-  const results = [];
+    const results = [];
     
     // Run in batches for faster parallel processing
     for(let i=0; i<n; i+=batchSize){
@@ -86,7 +86,7 @@ app.post('/api/v1/auto-coach/boost', async (req,res)=>{
       const thisBatch = Math.min(batchSize, n-i);
       
       for(let j=0; j<thisBatch; j++){
-  batchPromises.push(trainingCamp.runRound());
+        batchPromises.push(trainingCamp.runRound());
       }
       
       const batchResults = await Promise.all(batchPromises);
@@ -101,7 +101,7 @@ app.get('/api/v1/auto-coach/boost', async (req,res)=>{
   try{
     const n = Math.min(Math.max(Number(req.query.rounds||5), 1), 20); // Increased cap to 20
     const batchSize = Number(req.query.batchSize || 3);
-  const results = [];
+    const results = [];
     
     // Run in batches for faster parallel processing
     for(let i=0; i<n; i+=batchSize){
@@ -109,7 +109,7 @@ app.get('/api/v1/auto-coach/boost', async (req,res)=>{
       const thisBatch = Math.min(batchSize, n-i);
       
       for(let j=0; j<thisBatch; j++){
-  batchPromises.push(trainingCamp.runRound());
+        batchPromises.push(trainingCamp.runRound());
       }
       
       const batchResults = await Promise.all(batchPromises);
@@ -125,7 +125,7 @@ app.get('/api/v1/auto-coach/hyper-boost', async (req,res)=>{
   try{
     const n = Math.min(Math.max(Number(req.query.rounds||10), 1), 50); // Up to 50 rounds
     const batchSize = 6; // Fixed large batch for maximum parallel processing
-  const results = [];
+    const results = [];
     
     console.log(`🚀 HYPER BOOST: ${n} rounds in batches of ${batchSize}`);
     
@@ -134,7 +134,7 @@ app.get('/api/v1/auto-coach/hyper-boost', async (req,res)=>{
       const thisBatch = Math.min(batchSize, n-i);
       
       for(let j=0; j<thisBatch; j++){
-  batchPromises.push(trainingCamp.runRound());
+        batchPromises.push(trainingCamp.runRound());
       }
       
       const batchResults = await Promise.all(batchPromises);

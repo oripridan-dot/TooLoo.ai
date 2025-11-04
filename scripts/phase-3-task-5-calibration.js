@@ -316,7 +316,7 @@ async function main() {
     
     console.log(`   ✅ ROI records: ${roiRecords.length}`);
     console.log(`   ✅ Archetype records: ${archetypeRecords.length}`);
-    console.log(`   ✅ Dashboard loaded`);
+    console.log('   ✅ Dashboard loaded');
     
     // Build calibration dataset
     console.log('\n🔬 Building calibration dataset...');
@@ -438,7 +438,7 @@ async function main() {
     console.log(`  • Prediction accuracy (global MAE): ${report.summary.global_mae}`);
     console.log(`  • ${validation.improvements.length} archetype improvements identified`);
     console.log(`  • ${validation.concerns.length} areas requiring attention`);
-    console.log(`  • Ready for Task 6: Acceptance Testing with recalibrated multipliers`);
+    console.log('  • Ready for Task 6: Acceptance Testing with recalibrated multipliers');
     
   } catch (error) {
     console.error('❌ Error:', error.message);

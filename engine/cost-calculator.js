@@ -62,10 +62,10 @@ class CostCalculator {
         // Efficiency coefficient: boost cheap wins, penalize expensive
         const costTier = 
           cost === 0 ? 1.8 :
-          cost < 0.01 ? 1.5 :
-          cost < 0.015 ? 1.0 :
-          cost < 0.02 ? 0.8 :
-          0.5;
+            cost < 0.01 ? 1.5 :
+              cost < 0.015 ? 1.0 :
+                cost < 0.02 ? 0.8 :
+                  0.5;
         
         const weightedROI = roi * costTier;
         

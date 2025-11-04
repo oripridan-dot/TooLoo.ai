@@ -107,25 +107,25 @@ console.log('\n⚙️  Checking configuration...\n');
 const webServerContent = fs.readFileSync('servers/web-server.js', 'utf8');
 
 if (webServerContent.includes('ui-activity-monitor')) {
-  console.log(`  ✓ Web server references activity monitor`);
+  console.log('  ✓ Web server references activity monitor');
 } else {
-  console.log(`  ✗ Web server missing activity monitor references`);
+  console.log('  ✗ Web server missing activity monitor references');
   issues.push('Web server not properly integrated');
 }
 
 if (webServerContent.includes('tooloo-heartbeat')) {
-  console.log(`  ✓ Web server references heartbeat script`);
+  console.log('  ✓ Web server references heartbeat script');
 } else {
-  console.log(`  ⚠ Web server may not inject heartbeat`);
+  console.log('  ⚠ Web server may not inject heartbeat');
   warnings.push('Heartbeat injection might not work');
 }
 
 const orchestratorContent = fs.readFileSync('servers/orchestrator.js', 'utf8');
 
 if (orchestratorContent.includes('ui-monitor')) {
-  console.log(`  ✓ Orchestrator includes ui-monitor service`);
+  console.log('  ✓ Orchestrator includes ui-monitor service');
 } else {
-  console.log(`  ✗ Orchestrator missing ui-monitor`);
+  console.log('  ✗ Orchestrator missing ui-monitor');
   warnings.push('Orchestrator not configured for ui-monitor');
 }
 

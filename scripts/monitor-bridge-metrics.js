@@ -89,11 +89,11 @@ async function pollMetrics() {
 async function main() {
   await ensureOutputDir();
 
-  console.log(`🔍 Bridge Metrics Monitor`);
+  console.log('🔍 Bridge Metrics Monitor');
   console.log(`📡 URL: ${BRIDGE_URL}`);
   console.log(`⏱️  Interval: ${POLL_INTERVAL}ms`);
   console.log(`📝 Output: ${OUTPUT_FILE}`);
-  console.log(`\n Starting monitoring... (Ctrl+C to stop)\n`);
+  console.log('\n Starting monitoring... (Ctrl+C to stop)\n');
 
   // Poll immediately
   await pollMetrics();
@@ -103,7 +103,7 @@ async function main() {
 
   // Handle graceful shutdown
   const shutdown = async () => {
-    console.log(`\n\n📊 Monitoring Complete`);
+    console.log('\n\n📊 Monitoring Complete');
     clearInterval(interval);
     
     // Print summary

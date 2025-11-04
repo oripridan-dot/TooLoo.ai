@@ -1428,8 +1428,58 @@ const simplehelloworldManager = require('./simple-hello-world');
         return await this.callDeepSeek(provider, prompt);
       case 'openai':
         return await this.callOpenAI(provider, prompt);
+      case 'claude':
+      case 'anthropic':
+        return await this.callAnthropic(provider, prompt);
+      case 'gemini':
+        return await this.callGemini(provider, prompt);
+      case 'ollama':
+      case 'localai':
+        return await this.callLocalModel(provider, prompt);
       default:
-        throw new Error(`Provider ${providerName} not implemented yet`);
+        // Fallback: attempt generic provider call or use first available provider
+        console.warn(`⚠️  Provider '${providerName}' not in explicit switch. Attempting generic call.`);
+        if (typeof provider.endpoint === 'string' && provider.endpoint.includes('http')) {
+          return await this.callGenericProvider(provider, prompt);
+        }
+      console.warn(`Provider ${providerName} not implemented and no generic endpoint available.`);
+      // Return a standardized error object instead of throwing so callers can handle gracefully.
+      return {
+        ok: false,
+        error: `Provider ${providerName} not implemented`,
+        code: 501,
+        provider: providerName,
+        availableProviders: Array.from(this.providers.keys())
+      };
+    }
+  }
+
+  /**
+   * Generic fallback provider caller for unregistered endpoints
+   */
+  async callGenericProvider(provider, prompt) {
+    try {
+      const response = await fetch(provider.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...provider.headers
+        },
+        body: JSON.stringify({
+          prompt,
+          model: provider.model || 'default',
+          max_tokens: 1000
+        })
+      });
+      
+      if (!response.ok) {
+        return { error: `Provider returned ${response.status}`, ok: false };
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`Generic provider call failed: ${error.message}`);
+      return { error: error.message, ok: false };
     }
   }
 

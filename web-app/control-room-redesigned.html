@@ -1100,15 +1100,15 @@
             }catch(e){ addLog('Rush Mode failed: '+e.message,'error'); }
         });
 
-        // Provider‑aware burst (placeholder demo)
+        // Provider-aware burst with TTL caching and quota management
         $('providerBurstBtn').addEventListener('click', async ()=>{
             try{
-                // Query providers and execute quota-aware burst with TTL caching
+                // Query live provider status and execute quota-aware burst with TTL caching
                 await fetch('/api/v1/providers/status').catch(()=>{});
                 const r = await fetch('/api/v1/providers/burst', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: 'train:focused-burst', ttlSeconds: 3600, criticality: 'high' }) });
                 const j = await safeJson(r);
-                if(j?.ok){ addLog(`Provider‑aware burst ${j.cached? 'cache-hit':'ran'} (concurrency ${j.concurrency||1})`,'success'); refreshAll(); }
-            }catch(e){ addLog('Provider‑aware burst failed: '+e.message,'error'); }
+                if(j?.ok){ addLog(`Provider-aware burst ${j.cached? 'cache-hit':'ran'} (concurrency ${j.concurrency||1}, cost: $${(j.cost || 0).toFixed(4)})`,'success'); refreshAll(); }
+            }catch(e){ addLog('Provider-aware burst failed: '+e.message,'error'); }
         });
 
         // Multi‑Instance Pilot controls (prototype)

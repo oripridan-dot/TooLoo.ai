@@ -32,13 +32,13 @@ async function runAutoTeach() {
   try {
     const analysis = await autoTeach.analyzeBenchmarkResults(latestRun.path);
     
-    console.log(`\n📈 Analysis Results:`);
+    console.log('\n📈 Analysis Results:');
     console.log(`- Current Accuracy: ${analysis.accuracy.toFixed(1)}%`);
     console.log(`- Failures Analyzed: ${analysis.failures}`);
     console.log(`- Rules Generated: ${analysis.rules}`);
     
     if (analysis.recommendations.length > 0) {
-      console.log(`\n🎯 Recommendations:`);
+      console.log('\n🎯 Recommendations:');
       analysis.recommendations.forEach((rec, i) => {
         console.log(`  ${i+1}. [${rec.priority.toUpperCase()}] ${rec.action}`);
         console.log(`     Reasoning: ${rec.reasoning}`);
@@ -46,13 +46,13 @@ async function runAutoTeach() {
       });
       
       // Apply recommendations
-      console.log(`\n🔧 Applying recommendations...`);
+      console.log('\n🔧 Applying recommendations...');
       await autoTeach.applyRecommendations(analysis.recommendations);
       
-      console.log(`\n🚀 Ready for next benchmark run!`);
-      console.log(`   Run: npm run benchmark:basic`);
+      console.log('\n🚀 Ready for next benchmark run!');
+      console.log('   Run: npm run benchmark:basic');
     } else {
-      console.log(`\n✅ No recommendations needed - system performing well!`);
+      console.log('\n✅ No recommendations needed - system performing well!');
     }
     
   } catch (error) {

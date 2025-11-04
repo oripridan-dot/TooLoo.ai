@@ -246,7 +246,7 @@ export default class UserModelEngine {
           title: `Help with ${concept.name}`,
           suggestion: `Let's break down ${concept.name} step by step`,
           relevance: 0.9,
-          reasoning: `You've mentioned difficulty with this before`
+          reasoning: 'You\'ve mentioned difficulty with this before'
         });
       }
     });

@@ -38,7 +38,7 @@ export default class LLMProvider {
           deepseek: env('DEEPSEEK_MODEL', 'deepseek-chat'),
           anthropic: env('ANTHROPIC_MODEL', 'claude-3-5-haiku-20241022'),
           openai: env('OPENAI_MODEL', 'gpt-4o-mini'),
-          gemini: env('GEMINI_MODEL', 'gemini-1.5-pro'),
+          gemini: env('GEMINI_MODEL', 'gemini-2.5-flash'),
           ollama: env('OLLAMA_MODEL', 'llama3.2:latest'),
           localai: env('LOCALAI_MODEL', 'gpt-4'),
           openinterpreter: env('OI_MODEL', 'ollama/llama3.2'),
@@ -530,7 +530,7 @@ const providerBuilders = {
   gemini: () => {
     const rawKey = (process.env.GEMINI_API_KEY || '').trim();
     const key = rawKey.startsWith('sk-') ? rawKey.slice(3) : rawKey;
-    const model = env('GEMINI_MODEL', 'gemini-1.5-pro');
+    const model = env('GEMINI_MODEL', 'gemini-2.5-flash');
     return {
       name: 'gemini',
       url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -721,7 +721,11 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
   }
 
   if (maxTokens && maxTokens > 0) {
-    bodyObj.max_tokens = maxTokens;
+    if (provider === 'gemini') {
+      bodyObj.generationConfig = { maxOutputTokens: maxTokens };
+    } else {
+      bodyObj.max_tokens = maxTokens;
+    }
   }
 
   const res = await fetch(requestUrl, { method: 'POST', headers, body: JSON.stringify(bodyObj) });
@@ -800,27 +804,27 @@ function providerAvailable(name) {
   return hasProviderCredentials(config);
 }
 
-function detectTaskType(prompt=''){
+function detectTaskType(prompt = '') {
   const p = prompt.toLowerCase();
   const creativeHints = ['story', 'poem', 'lyrics', 'narrative', 'creative', 'write a', 'script', 'fiction', 'metaphor', 'haiku', 'limerick'];
   const reasoningHints = ['explain why', 'analyze', 'analysis', 'evaluate', 'compare', 'trade-off', 'reason', 'step by step', 'proof', 'derive'];
-  const creativeMatches = creativeHints.filter(k=>p.includes(k)).length;
-  const reasoningMatches = reasoningHints.filter(k=>p.includes(k)).length;
-  if (creativeMatches > reasoningMatches && creativeMatches>0) return { type:'creative', matches: creativeMatches };
-  if (reasoningMatches > 0) return { type:'reasoning', matches: reasoningMatches };
-  return { type:'general', matches: 0 };
+  const creativeMatches = creativeHints.filter(k => p.includes(k)).length;
+  const reasoningMatches = reasoningHints.filter(k => p.includes(k)).length;
+  if (creativeMatches > reasoningMatches && creativeMatches > 0) return { type: 'creative', matches: creativeMatches };
+  if (reasoningMatches > 0) return { type: 'reasoning', matches: reasoningMatches };
+  return { type: 'general', matches: 0 };
 }
 
-function computeConfidencePercent({ detectedType, providerUsed, order, matches }){
+function computeConfidencePercent({ detectedType, providerUsed, order, matches }) {
   // Simple heuristic: first choice with matches -> 90, second -> 75, others -> 60; general -> 70; explicit -> 100 (handled elsewhere)
-  if (detectedType==='general') return 70;
+  if (detectedType === 'general') return 70;
   const idx = order.indexOf(providerUsed);
-  if (matches>0 && idx===0) return 90;
-  if (idx===1) return 75;
+  if (matches > 0 && idx === 0) return 90;
+  if (idx === 1) return 75;
   return 60;
 }
 
-export async function generateSmartLLM({ prompt, system, taskType, criticality = 'normal', maxTokens }){
+export async function generateSmartLLM({ prompt, system, taskType, criticality = 'normal', maxTokens }) {
   const det = taskType ? { type: taskType, matches: 0 } : detectTaskType(prompt);
   const detected = det.type;
   

@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TooLoo - Format Converter</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#0b0d10;color:#e6e9ee;padding:24px}
+    .card{background:#14181e;padding:16px;border-radius:8px;max-width:900px;margin:0 auto}
+    textarea{width:100%;height:200px;background:#0b0d10;color:#e6e9ee;border:1px solid #222;padding:8px}
+    select,input,button{padding:8px;margin:6px 0}
+    pre{background:#0b0d10;color:#e6e9ee;padding:12px;border-radius:6px;overflow:auto}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>TooLoo - Response Format Converter</h2>
+    <p>Paste response content and choose a target format.</p>
+    <label>Content</label>
+    <textarea id="content"></textarea>
+    <div>
+      <label>Format</label>
+      <select id="format">
+        <option value="markdown">Markdown</option>
+        <option value="code">Code (fenced)</option>
+        <option value="json">JSON (pretty)</option>
+        <option value="csv">CSV</option>
+        <option value="text">Plain Text</option>
+      </select>
+      <button id="convert">Convert</button>
+      <button id="copy">Copy Output</button>
+    </div>
+    <h3>Output</h3>
+    <pre id="output">(converted output will appear here)</pre>
+  </div>
+  <script src="/js/format-converter.js"></script>
+</body>
+</html>

@@ -234,10 +234,10 @@ export default class ProviderCup {
     // Simulate provider call - would integrate with actual LLM provider system
     const responses = {
       reasoning: `Analyzing the logical structure: ${task.prompt}. Based on logical principles...`,
-      coding: `Here's the implementation:\n\nfunction solution() {\n  // Implementation here\n  return result;\n}`,
+      coding: 'Here\'s the implementation:\n\nfunction solution() {\n  // Implementation here\n  return result;\n}',
       retrieval: `Based on the provided context, the answer is: ${task.expectedAnswer}`,
       creative: `Here's a creative response to "${task.prompt}":\n\nOnce upon a time...`,
-      safety: `I understand you're asking about security topics. I should clarify that...`
+      safety: 'I understand you\'re asking about security topics. I should clarify that...'
     };
     
     return responses[track] || `Response to ${task.prompt}`;
@@ -490,7 +490,7 @@ export default class ProviderCup {
 
   async saveMiniCupHistory() {
     try {
-      const filename = `mini-cup-history.json`;
+      const filename = 'mini-cup-history.json';
       const filepath = path.join(this.dataDir, filename);
       await fs.writeFile(filepath, JSON.stringify(this.miniCupHistory, null, 2));
       console.log(`💾 Mini-cup history saved to ${filepath}`);

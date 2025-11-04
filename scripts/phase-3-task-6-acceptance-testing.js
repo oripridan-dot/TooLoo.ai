@@ -202,8 +202,8 @@ function createDataIntegrityTests(data) {
 
   suite.test('No data files have null/undefined critical fields', () => {
     roi.forEach(r => {
-      assert(r.learnerId, `ROI record missing learnerId`);
-      assert(r.roi.adjustedROI !== null, `ROI record has null adjustedROI`);
+      assert(r.learnerId, 'ROI record missing learnerId');
+      assert(r.roi.adjustedROI !== null, 'ROI record has null adjustedROI');
     });
   });
 
@@ -279,7 +279,7 @@ function createMultiplierValidationTests(data) {
 
   suite.test('Recalibrated multipliers are positive', () => {
     Object.values(multipliers.recalibrated).forEach(m => {
-      assertGreater(m, 0, `Negative multiplier detected`);
+      assertGreater(m, 0, 'Negative multiplier detected');
     });
   });
 

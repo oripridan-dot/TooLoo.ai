@@ -19,6 +19,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { generateSmartLLM, getProviderStatus } from '../engine/llm-provider.js';
 import CostCalculator from '../engine/cost-calculator.js';
+import AnalyticsEngine from '../engine/analytics-engine.js';
 
 const app = express();
 const PORT = process.env.REPORTS_PORT || 3008;
@@ -395,8 +396,8 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
 `;
 
     // If no providers configured, return early with guidance
-  const providerStatus = getProviderStatus();
-  const anyAvailable = Object.values(providerStatus).some(s=>s.available && s.enabled);
+    const providerStatus = getProviderStatus();
+    const anyAvailable = Object.values(providerStatus).some(s=>s.available && s.enabled);
     const critiques = [];
     const roundsClamped = Math.max(1, Math.min(5, Number(rounds)||1));
     const timeoutMs = 8000; // 8s per round safety
@@ -449,8 +450,8 @@ app.get('/api/v1/reports/ai-external-critique/run', async (req, res) => {
     const criticalityLevels = Array.isArray(critParam)
       ? critParam
       : (typeof critParam === 'string' && critParam.length
-          ? critParam.split(',').map(s=>s.trim()).filter(Boolean)
-          : ['high','normal']);
+        ? critParam.split(',').map(s=>s.trim()).filter(Boolean)
+        : ['high','normal']);
 
     // Reuse the same logic by delegating to the POST handler's internals
     // Gather concise self-summary
@@ -914,8 +915,8 @@ app.get('/api/v1/reports/budget-dashboard/:cohortId', async (req, res) => {
         remaining: metrics.budgetRemaining || 10000,
         utilizationPercent: metrics.budgetUtilization || 0,
         status: (metrics.budgetUtilization || 0) > 90 ? 'at-capacity' : 
-                (metrics.budgetUtilization || 0) > 70 ? 'high-usage' :
-                (metrics.budgetUtilization || 0) > 30 ? 'moderate' : 'low-usage'
+          (metrics.budgetUtilization || 0) > 70 ? 'high-usage' :
+            (metrics.budgetUtilization || 0) > 30 ? 'moderate' : 'low-usage'
       },
       costMetrics: {
         costPerCapability: (metrics.costPerCapability || 0).toFixed(2),
@@ -945,8 +946,8 @@ app.get('/api/v1/reports/budget-dashboard/:cohortId', async (req, res) => {
         metrics.costPerCapability > 150
           ? 'Cost per capability is high - consider using free/cheap providers'
           : metrics.costPerCapability < 100
-          ? 'Excellent cost efficiency - maintain current provider mix'
-          : 'Cost per capability is moderate - slight optimization possible',
+            ? 'Excellent cost efficiency - maintain current provider mix'
+            : 'Cost per capability is moderate - slight optimization possible',
         metrics.providerCount < 2
           ? 'Limited provider diversity - reduce lock-in by using multiple providers'
           : 'Good provider diversity'
@@ -991,10 +992,94 @@ app.get('/api/v1/reports/cost-efficiency', async (req, res) => {
   }
 });
 
+// NEW Analytics Endpoints (Issue #19)
+app.post('/api/v1/reports/analyze', async (req, res) => {
+  try {
+    const { metrics = [] } = req.body;
+
+    // Record metrics if provided
+    metrics.forEach(m => {
+      AnalyticsEngine.recordMetric(m.name, m.value, { provider: m.provider, timestamp: m.timestamp });
+    });
+
+    // Generate report
+    const report = AnalyticsEngine.generateReport(Object.keys(AnalyticsEngine.metrics));
+
+    res.json({
+      ok: true,
+      report,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/reports/trends', async (req, res) => {
+  try {
+    const { metrics } = req.query;
+    const metricList = metrics ? metrics.split(',') : Array.from(AnalyticsEngine.metrics.keys());
+
+    const trends = {};
+    metricList.forEach(metric => {
+      trends[metric] = AnalyticsEngine.analyzeTrend(metric);
+    });
+
+    res.json({
+      ok: true,
+      trends,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/reports/anomalies', async (req, res) => {
+  try {
+    const { metrics, threshold = 2.0 } = req.body;
+    const metricList = metrics || Array.from(AnalyticsEngine.metrics.keys());
+
+    const anomalies = {};
+    metricList.forEach(metric => {
+      anomalies[metric] = AnalyticsEngine.detectAnomalies(metric, threshold);
+    });
+
+    res.json({
+      ok: true,
+      anomalies,
+      totalAnomalies: Object.values(anomalies).reduce((sum, arr) => sum + arr.length, 0),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/v1/reports/compare', async (req, res) => {
+  try {
+    const { metrics } = req.body;
+
+    if (!Array.isArray(metrics) || metrics.length === 0) {
+      return res.status(400).json({ ok: false, error: 'metrics array required' });
+    }
+
+    const comparison = AnalyticsEngine.compareMetrics(metrics);
+
+    res.json({
+      ok: true,
+      comparison,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`📊 Advanced Reporting Server running on http://127.0.0.1:${PORT}`);
-  console.log(`📈 Endpoints: /api/v1/reports/{comprehensive,evolution,capabilities,dashboard,budget-dashboard}`);
+  console.log('📈 Endpoints: /api/v1/reports/{comprehensive,evolution,capabilities,dashboard,budget-dashboard,analyze,trends,anomalies,compare}');
 });
 
 // Graceful shutdown

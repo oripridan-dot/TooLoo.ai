@@ -53,7 +53,7 @@ class TooLooPhase2Demo {
     // 5. Show integrated capabilities
     await this.showIntegratedCapabilities();
 
-    console.log('\n🎊 Phase 2 Demo Complete! TooLoo now has cross-session mastery.')
+    console.log('\n🎊 Phase 2 Demo Complete! TooLoo now has cross-session mastery.');
   }
 
   async showPhase2Status() {

@@ -59,11 +59,11 @@ class CanaryDeploymentOrchestrator {
   async initialize() {
     console.log('\n🎯 Phase 3 Sprint 2 - Canary Deployment Initialization');
     console.log('='.repeat(80));
-    console.log(`Deployment Date: October 31, 2025 @ 12:00 UTC`);
-    console.log(`Duration: 2 hours`);
-    console.log(`Traffic Allocation: 1% ultra-fast analyzer`);
-    console.log(`Expected Learners: ~5,000`);
-    console.log(`Release Tag: v3.0.0-sprint-2-complete\n`);
+    console.log('Deployment Date: October 31, 2025 @ 12:00 UTC');
+    console.log('Duration: 2 hours');
+    console.log('Traffic Allocation: 1% ultra-fast analyzer');
+    console.log('Expected Learners: ~5,000');
+    console.log('Release Tag: v3.0.0-sprint-2-complete\n');
 
     // Verify release tag exists
     const tagExists = await this._checkReleaseTag();

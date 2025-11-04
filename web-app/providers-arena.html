@@ -219,15 +219,21 @@
     }
 
     .input-section {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      background: rgba(30, 41, 59, 0.3);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     .input-label {
       font-size: 13px;
       font-weight: 700;
+      text-transform: uppercase;
       color: #60a5fa;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: block;
+      letter-spacing: 0.5px;
     }
 
     .input-box {
@@ -238,26 +244,28 @@
 
     textarea {
       flex: 1;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      padding: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      border-radius: 10px;
+      padding: 12px 14px;
       color: #ffffff;
       font-family: inherit;
-      font-size: 13px;
-      resize: none;
-      height: 60px;
-      transition: border-color 0.3s ease;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 70px;
+      max-height: 150px;
+      transition: all 0.3s ease;
     }
 
     textarea:focus {
       outline: none;
       border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      background: rgba(15, 23, 42, 0.8);
     }
 
     textarea::placeholder {
-      color: #7f8ba3;
+      color: #64748b;
     }
 
     .button-group {
@@ -573,11 +581,27 @@
     }
 
     .cross-provider-controls {
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 12px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .cross-provider-controls .cross-provider-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #d8b4fe;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .cross-provider-controls .control-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .responses-section {
@@ -588,86 +612,194 @@
     }
 
     .section-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       color: #60a5fa;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
+      letter-spacing: 0.3px;
     }
 
     .clean-responses-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
-      padding-right: 4px;
+      padding-right: 8px;
+      padding-bottom: 16px;
     }
 
     .clean-response-card {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.3);
       border-radius: 12px;
-      padding: 16px;
+      padding: 20px;
       height: fit-content;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .clean-response-card:hover {
+      border-color: rgba(148, 163, 184, 0.5);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Provider-Specific Themes */
+    .clean-response-card.provider-claude {
+      border-left: 4px solid #1A1A1A;
+      border-color: #1A1A1A;
+    }
+    .clean-response-card.provider-claude .provider-name-card {
+      color: #D1D1D1;
+    }
+    .clean-response-card.provider-claude .provider-header-card {
+      border-bottom-color: #1A1A1A;
+    }
+
+    .clean-response-card.provider-gpt {
+      border-left: 4px solid #10A37F;
+      border-color: #10A37F;
+    }
+    .clean-response-card.provider-gpt .provider-name-card {
+      color: #10A37F;
+    }
+    .clean-response-card.provider-gpt .provider-header-card {
+      border-bottom-color: #10A37F;
+    }
+
+    .clean-response-card.provider-gemini {
+      border-left: 4px solid #4F46E5;
+      border-color: #4F46E5;
+    }
+    .clean-response-card.provider-gemini .provider-name-card {
+      color: #818CF8;
+    }
+    .clean-response-card.provider-gemini .provider-header-card {
+      border-bottom-color: #4F46E5;
+    }
+
+    .clean-response-card.provider-deepseek {
+      border-left: 4px solid #FF7A00;
+      border-color: #FF7A00;
+    }
+    .clean-response-card.provider-deepseek .provider-name-card {
+      color: #FF9F43;
+    }
+    .clean-response-card.provider-deepseek .provider-header-card {
+      border-bottom-color: #FF7A00;
+    }
+
+    .clean-response-card.provider-ollama {
+      border-left: 4px solid #FF7A00;
+      border-color: #FF7A00;
+    }
+    .clean-response-card.provider-ollama .provider-name-card {
+      color: #FF9F43;
+    }
+    .clean-response-card.provider-ollama .provider-header-card {
+      border-bottom-color: #FF7A00;
+    }
+
+    .clean-response-card.provider-localai {
+      border-left: 4px solid #7C3AED;
+      border-color: #7C3AED;
+    }
+    .clean-response-card.provider-localai .provider-name-card {
+      color: #A78BFA;
+    }
+    .clean-response-card.provider-localai .provider-header-card {
+      border-bottom-color: #7C3AED;
+    }
+
+    .clean-response-card.provider-huggingface {
+      border-left: 4px solid #FFB800;
+      border-color: #FFB800;
+    }
+    .clean-response-card.provider-huggingface .provider-name-card {
+      color: #FFC520;
+    }
+    .clean-response-card.provider-huggingface .provider-header-card {
+      border-bottom-color: #FFB800;
     }
 
     .provider-header-card {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+      gap: 12px;
     }
 
     .provider-name-card {
-      font-weight: 700;
-      font-size: 14px;
-      color: #e2e8f0;
+      font-weight: 800;
+      font-size: 18px;
+      color: #60a5fa;
+      letter-spacing: 0.5px;
+      flex: 1;
     }
 
     .provider-stats {
       font-size: 11px;
-      color: #94a3b8;
+      font-weight: 600;
+      color: #93c5fd;
       display: flex;
       gap: 8px;
+      background: rgba(59, 130, 246, 0.1);
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
     }
 
     .layer-section {
-      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .layer-header {
       display: flex;
       align-items: center;
-      justify-content: between;
+      justify-content: space-between;
       cursor: pointer;
-      padding: 6px 8px;
-      background: rgba(59, 130, 246, 0.1);
-      border-radius: 6px;
-      margin-bottom: 6px;
-      font-size: 12px;
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      margin-bottom: 0;
+      font-size: 13px;
       font-weight: 600;
-      color: #93c5fd;
+      color: #94a3b8;
       transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .layer-header:hover {
-      background: rgba(59, 130, 246, 0.15);
+      background: none;
+      color: #cbd5e1;
+    }
+
+    .layer-header.main {
+      padding: 0;
+      color: #94a3b8;
+      font-size: 12px;
     }
 
     .layer-content {
-      font-size: 12px;
-      line-height: 1.4;
-      color: #cbd5e1;
-      padding: 8px;
-      background: rgba(15, 23, 42, 0.3);
-      border-radius: 4px;
-      border: 1px solid rgba(148, 163, 184, 0.15);
+      padding: 0;
+      background: none;
+      border-radius: 0;
+      border: none;
+      color: #e2e8f0;
+      line-height: 1.6;
     }
 
     .layer-content.collapsed {
@@ -675,7 +807,99 @@
     }
 
     .layer-1 {
-      display: block; /* Always visible */
+      display: block;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.8;
+      color: #f1f5f9;
+    }
+
+    .layer-1 p, .layer-1 div {
+      margin: 0;
+      padding: 0;
+    }
+
+    .layer-1 strong, .layer-1 b {
+      color: #60a5fa;
+      font-weight: 700;
+    }
+
+    .layer-1 em, .layer-1 i {
+      color: #cbd5e1;
+      font-style: italic;
+    }
+
+    .layer-1 ul, .layer-1 ol {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+
+    .layer-1 li {
+      margin: 6px 0;
+      padding: 0;
+      color: #e2e8f0;
+    }
+
+    .layer-2 {
+      display: block;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.7;
+      color: #cbd5e1;
+    }
+
+    .layer-2 p, .layer-2 div {
+      margin: 12px 0;
+      padding: 0;
+    }
+
+    .layer-2 strong, .layer-2 b {
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    .layer-2 em, .layer-2 i {
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    .layer-2 ul, .layer-2 ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+
+    .layer-2 li {
+      margin: 8px 0;
+      padding: 0;
+      color: #cbd5e1;
+    }
+
+    .layer-2 h4, .layer-2 h5, .layer-2 h6 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #93c5fd;
+      margin: 12px 0 6px 0;
+    }
+
+    .layer-2 code, .layer-2 pre {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: #60a5fa;
+    }
+
+    .toggle-icon {
+      display: inline-block;
+      transition: transform 0.2s ease;
+      color: #60a5fa;
+      font-size: 12px;
+    }
+
+    .toggle-icon.open {
+      transform: rotate(90deg);
     }
 
     .toggle-icon {
@@ -704,31 +928,104 @@
     }
 
     .btn-micro {
-      padding: 8px 14px;
+      padding: 10px 16px;
       font-size: 12px;
-      background: rgba(139, 92, 246, 0.2);
-      border: 1px solid rgba(139, 92, 246, 0.4);
+      font-weight: 600;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.35);
       color: #d8b4fe;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .btn-micro:hover {
-      background: rgba(139, 92, 246, 0.3);
-      border-color: rgba(139, 92, 246, 0.6);
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-micro:active {
+      background: rgba(139, 92, 246, 0.35);
+      border-color: rgba(139, 92, 246, 0.7);
+      transform: translateY(0);
     }
 
     .btn-micro.active {
-      background: rgba(139, 92, 246, 0.5);
+      background: rgba(139, 92, 246, 0.4);
       border-color: rgba(139, 92, 246, 0.8);
     }
 
     .comparison-view {
       margin-top: 30px;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
       border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .comparison-view h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .insight-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .insight-provider {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #93c5fd;
+    }
+
+    .insight-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #e2e8f0;
+    }
+
+    .insight-text strong {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .insight-text ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .insight-text li {
+      margin: 4px 0;
+      color: #cbd5e1;
+    }
+
+    .insight-highlight {
+      background: rgba(59, 130, 246, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #60a5fa;
     }
 
     @media (max-width: 1200px) {
@@ -826,15 +1123,16 @@
           </div>
         </div>
 
-        <!-- Cross-Provider Controls -->
+        <!-- Useful Response Actions -->
         <div class="cross-provider-controls">
-          <div class="cross-provider-label">Cross-Provider Interactions</div>
+          <div class="cross-provider-label">🚀 USEFUL ACTIONS</div>
           <div class="control-buttons">
-            <button class="btn-micro" onclick="synthesizeResponses()">🔄 Synthesize</button>
-            <button class="btn-micro" onclick="findConsensus()">✓ Find Consensus</button>
-            <button class="btn-micro" onclick="showDifferences()">⚡ Show Differences</button>
-            <button class="btn-micro" onclick="combineInsights()">🧠 Combine Insights</button>
-            <button class="btn-micro" onclick="rankByQuality()">📊 Rank Quality</button>
+            <button class="btn-micro" onclick="generateTLDR()">📄 TL;DR</button>
+            <button class="btn-micro" onclick="generateQuestions()">❓ Questions</button>
+            <button class="btn-micro" onclick="extractActions()">✅ Action Items</button>
+            <button class="btn-micro" onclick="findConflicts()">⚡ Fact Check</button>
+            <button class="btn-micro" onclick="exportResponses()">💾 Export</button>
+            <button class="btn-micro" onclick="copyBest()">� Copy Best</button>
           </div>
         </div>
 
@@ -971,12 +1269,10 @@
       
       if (content.classList.contains('collapsed')) {
         content.classList.remove('collapsed');
-        icon.textContent = '▼';
-        icon.classList.add('expanded');
+        icon.classList.add('open');
       } else {
         content.classList.add('collapsed');
-        icon.textContent = '▶';
-        icon.classList.remove('expanded');
+        icon.classList.remove('open');
       }
     }
 
@@ -1003,7 +1299,7 @@
 
       try {
         const selectedArray = Array.from(selectedProviders);
-        const results = await fetch('/api/v1/arena/test', {
+        const results = await fetch('/api/v1/arena/query', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1014,7 +1310,12 @@
           })
         }).then(r => r.json());
 
-        if (results.ok && results.results) {
+        if (results.ok && results.responses) {
+          results.responses.forEach(resp => {
+            responses.set(resp.provider, resp);
+          });
+        } else if (results.ok && results.results) {
+          // Fallback for test endpoint format
           results.results.forEach(resp => {
             responses.set(resp.provider, resp);
           });
@@ -1030,6 +1331,20 @@
         submitBtn.disabled = false;
         loadingIndicator.style.display = 'none';
       }
+    }
+
+    // Map provider name to CSS theme class
+    function getProviderClass(providerName) {
+      if (!providerName) return 'provider-default';
+      const name = providerName.toLowerCase();
+      if (name.includes('claude')) return 'provider-claude';
+      if (name.includes('gpt') || name.includes('openai')) return 'provider-gpt';
+      if (name.includes('gemini')) return 'provider-gemini';
+      if (name.includes('deepseek')) return 'provider-deepseek';
+      if (name.includes('ollama')) return 'provider-ollama';
+      if (name.includes('localai')) return 'provider-localai';
+      if (name.includes('huggingface')) return 'provider-huggingface';
+      return 'provider-default';
     }
 
     function renderResponses() {
@@ -1057,7 +1372,7 @@
         const segments = segmentResponseText(resp.text);
 
         return `
-          <div class="clean-response-card">
+          <div class="clean-response-card ${getProviderClass(resp.provider)}">
             <div class="provider-header-card">
               <div class="provider-name-card">${providerLabel}</div>
               <div class="provider-stats">
@@ -1067,9 +1382,6 @@
             </div>
             
             <div class="layer-section">
-              <div class="layer-header">
-                📋 Executive Summary
-              </div>
               <div class="layer-content layer-1">
                 ${escapeHtml(segments.layer1)}
               </div>
@@ -1077,21 +1389,11 @@
             
             <div class="layer-section">
               <div class="layer-header" onclick="toggleLayer('layer2-${resp.provider}')">
-                🔍 Key Themes
+                <span>More Details</span>
                 <span class="toggle-icon" id="icon-layer2-${resp.provider}">▶</span>
               </div>
-              <div class="layer-content collapsed" id="layer2-${resp.provider}">
+              <div class="layer-content layer-2 collapsed" id="layer2-${resp.provider}">
                 ${escapeHtml(segments.layer2)}
-              </div>
-            </div>
-            
-            <div class="layer-section">
-              <div class="layer-header" onclick="toggleLayer('layer3-${resp.provider}')">
-                � Full Response  
-                <span class="toggle-icon" id="icon-layer3-${resp.provider}">▶</span>
-              </div>
-              <div class="layer-content collapsed" id="layer3-${resp.provider}">
-                ${escapeHtml(segments.layer3)}
               </div>
             </div>
           </div>
@@ -1147,130 +1449,202 @@
       document.getElementById('comparisonView').style.display = 'block';
     }
 
+    // USEFUL BUTTON: Generate actual TL;DR summary
+    async function generateTLDR() {
+      if (responses.size === 0) {
+        alert('No responses to summarize');
+        return;
+      }
+
+      const result = await fetch('/api/v1/arena/tldr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: lastQuery,
+          responses: Object.fromEntries(responses)
+        })
+      }).then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+
+      if (result.ok) {
+        document.getElementById('comparisonView').innerHTML = `
+          <h3>� TL;DR Summary</h3>
+          <div style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 14px; border-radius: 8px; margin-bottom: 16px;">
+            <p style="font-size: 16px; line-height: 1.6; color: #e2e8f0;">${escapeHtml(result.tldr)}</p>
+          </div>
+          <button class="btn-micro" onclick="navigator.clipboard.writeText('${result.tldr.replace(/'/g, "\\'")}'); alert('Copied!');">📋 Copy Summary</button>
+        `;
+        document.getElementById('comparisonView').style.display = 'block';
+      } else {
+        alert('Error: ' + (result.error || 'Unknown error'));
+      }
+    }
+
+    // USEFUL BUTTON: Generate follow-up questions
+    async function generateQuestions() {
+      if (responses.size === 0) {
+        alert('No responses to analyze');
+        return;
+      }
+
+      const result = await fetch('/api/v1/arena/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: lastQuery,
+          responses: Object.fromEntries(responses)
+        })
+      }).then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+
+      if (result.ok) {
+        const formatted = result.questions.replace(/\n/g, '<br>');
+        document.getElementById('comparisonView').innerHTML = `
+          <h3>❓ Follow-Up Questions</h3>
+          <div style="background: rgba(139, 92, 246, 0.1); border-left: 4px solid #a78bfa; padding: 14px; border-radius: 8px; color: #e2e8f0; line-height: 1.6;">
+            ${formatted}
+          </div>
+          <button class="btn-micro" onclick="navigator.clipboard.writeText(${JSON.stringify(result.questions).replace(/'/g, "\\'")}); alert('Copied!');" style="margin-top: 12px;">📋 Copy Questions</button>
+        `;
+        document.getElementById('comparisonView').style.display = 'block';
+      } else {
+        alert('Error: ' + (result.error || 'Unknown error'));
+      }
+    }
+
+    // USEFUL BUTTON: Extract action items
+    async function extractActions() {
+      if (responses.size === 0) {
+        alert('No responses to analyze');
+        return;
+      }
+
+      const result = await fetch('/api/v1/arena/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          responses: Object.fromEntries(responses)
+        })
+      }).then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+
+      if (result.ok) {
+        const formatted = result.actions.replace(/\n/g, '<br>');
+        document.getElementById('comparisonView').innerHTML = `
+          <h3>✅ Action Items</h3>
+          <div style="background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 14px; border-radius: 8px; color: #e2e8f0; line-height: 1.6;">
+            ${formatted}
+          </div>
+          <button class="btn-micro" onclick="navigator.clipboard.writeText(${JSON.stringify(result.actions).replace(/'/g, "\\'")}); alert('Copied!');" style="margin-top: 12px;">📋 Copy Actions</button>
+        `;
+        document.getElementById('comparisonView').style.display = 'block';
+      } else {
+        alert('Error: ' + (result.error || 'Unknown error'));
+      }
+    }
+
+    // USEFUL BUTTON: Find factual conflicts
+    async function findConflicts() {
+      if (responses.size < 2) {
+        alert('Need at least 2 responses to check for conflicts');
+        return;
+      }
+
+      const result = await fetch('/api/v1/arena/conflicts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: lastQuery,
+          responses: Object.fromEntries(responses)
+        })
+      }).then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+
+      if (result.ok) {
+        const formatted = result.analysis.replace(/\n/g, '<br>');
+        document.getElementById('comparisonView').innerHTML = `
+          <h3>⚡ Fact Check Results</h3>
+          <div style="background: rgba(248, 113, 113, 0.1); border-left: 4px solid #f87171; padding: 14px; border-radius: 8px; color: #e2e8f0; line-height: 1.6;">
+            ${formatted}
+          </div>
+        `;
+        document.getElementById('comparisonView').style.display = 'block';
+      } else {
+        alert('Error: ' + (result.error || 'Unknown error'));
+      }
+    }
+
+    // USEFUL BUTTON: Export responses
+    async function exportResponses() {
+      if (responses.size === 0) {
+        alert('No responses to export');
+        return;
+      }
+
+      const result = await fetch('/api/v1/arena/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: lastQuery,
+          responses: Object.fromEntries(responses),
+          format: 'markdown'
+        })
+      }).then(r => r.json()).catch(e => ({ ok: false, error: e.message }));
+
+      if (result.ok) {
+        const blob = new Blob([result.content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `responses-${new Date().toISOString().split('T')[0]}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert('Error: ' + (result.error || 'Unknown error'));
+      }
+    }
+
+    // USEFUL BUTTON: Copy the best response
+    function copyBest() {
+      if (responses.size === 0) {
+        alert('No responses available');
+        return;
+      }
+
+      const bestResp = Array.from(responses.values())
+        .sort((a, b) => (b.quality || 0) - (a.quality || 0))[0];
+
+      if (bestResp) {
+        navigator.clipboard.writeText(bestResp.text);
+        const label = PROVIDER_LABELS[bestResp.provider] || bestResp.provider;
+        alert(`✅ Copied best response from ${label}`);
+      }
+    }
+
     async function synthesizeResponses() {
       if (responses.size === 0) {
         alert('No responses to synthesize');
         return;
       }
 
-      const result = await fetch('/api/v1/arena/synthesize', {
+      const result = await fetch('/api/v1/arena/tldr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: lastQuery,
-          responses: Object.fromEntries(responses),
-          primaryProvider: 'ollama'
-        })
-      }).then(r => r.json());
-
-      if (result.ok) {
-        document.getElementById('comparisonView').innerHTML = `
-          <h3>🔄 Synthesized Response</h3>
-          <p>${escapeHtml(result.synthesis)}</p>
-        `;
-        document.getElementById('comparisonView').style.display = 'block';
-      }
-    }
-
-    async function findConsensus() {
-      if (responses.size < 2) {
-        alert('Need at least 2 responses for consensus');
-        return;
-      }
-
-      const result = await fetch('/api/v1/arena/consensus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
           responses: Object.fromEntries(responses)
         })
       }).then(r => r.json());
 
       if (result.ok) {
         document.getElementById('comparisonView').innerHTML = `
-          <h3>✓ Consensus Analysis</h3>
-          <p><strong>Agreement Level:</strong> ${result.agreementLevel}%</p>
-          <p><strong>Consensus Points:</strong></p>
-          <ul>${result.consensusPoints.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
-          <p><strong>Divergences:</strong></p>
-          <ul>${result.divergences.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>
+          <h3>🔄 Synthesis</h3>
+          <p>${escapeHtml(result.tldr)}</p>
         `;
         document.getElementById('comparisonView').style.display = 'block';
       }
     }
 
-    function showDifferences() {
-      if (responses.size < 2) {
-        alert('Need at least 2 responses to show differences');
-        return;
-      }
-
-      const resps = Array.from(responses.values());
-      let html = '<h3>⚡ Key Differences</h3><ul>';
-      
-      for (let i = 0; i < resps.length - 1; i++) {
-        for (let j = i + 1; j < resps.length; j++) {
-          const aLabel = PROVIDER_LABELS[resps[i].provider] || resps[i].provider;
-          const bLabel = PROVIDER_LABELS[resps[j].provider] || resps[j].provider;
-          html += `
-            <li>
-              <strong>${aLabel} vs ${bLabel}</strong>
-              <p>Different emphasis and approach detected</p>
-            </li>
-          `;
-        }
-      }
-      
-      html += '</ul>';
-      document.getElementById('comparisonView').innerHTML = html;
-      document.getElementById('comparisonView').style.display = 'block';
-    }
-
-    function combineInsights() {
-      if (responses.size < 2) {
-        alert('Need at least 2 responses to combine insights');
-        return;
-      }
-
-      const insights = Array.from(responses.values()).map(r => {
-        const label = PROVIDER_LABELS[r.provider] || r.provider;
-        const rawText = r.text || '';
-        const preview = rawText.replace(/\s+/g, ' ').trim().slice(0, 140);
-        const ellipsis = rawText.length > 140 ? '…' : '';
-        return `**${label}:** ${preview}${ellipsis}`;
-      }).join('\n\n');
-
-      document.getElementById('comparisonView').innerHTML = `
-        <h3>🧠 Combined Insights</h3>
-        <p>${escapeHtml(insights).replace(/\n/g, '<br>')}</p>
-      `;
-      document.getElementById('comparisonView').style.display = 'block';
-    }
-
-    function rankByQuality() {
-      if (responses.size === 0) {
-        alert('No responses to rank');
-        return;
-      }
-
-      const ranked = Array.from(responses.values())
-        .sort((a, b) => (b.quality || 0) - (a.quality || 0));
-
-      let html = '<h3>📊 Ranked by Quality</h3><ol>';
-      ranked.forEach((r, i) => {
-        const label = PROVIDER_LABELS[r.provider] || r.provider;
-        html += `<li><strong>${label}</strong> (Score: ${(r.quality || 50).toFixed(1)}/100)</li>`;
-      });
-      html += '</ol>';
-
-      document.getElementById('comparisonView').innerHTML = html;
-      document.getElementById('comparisonView').style.display = 'block';
-    }
-
     function segmentResponseText(text = '') {
       const cleaned = (text || '').replace(/\r\n/g, '\n').trim();
       if (!cleaned) {
-        return { layer1: '', layer2: '', layer3: '' };
+        return { layer1: '', layer2: '' };
       }
 
       const lines = cleaned.split('\n').map(line => line.trim()).filter(Boolean);
@@ -1278,21 +1652,16 @@
       const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
       const paragraphs = cleaned.split(/\n\s*\n/).filter(Boolean);
 
-      const layer1Source = bullets.length ? bullets.slice(0, 3) : sentences.slice(0, 2);
-      const layer2Source = bullets.length > 3
-        ? bullets.slice(3, 8)
-        : paragraphs.slice(1, 3).reduce((acc, para) => {
-            para.split('\n').forEach(line => acc.push(line));
-            return acc;
-          }, []);
-
+      // Layer 1: Top 3-4 bullet points or first 2 sentences (MAIN, EASY TO READ)
+      const layer1Source = bullets.length ? bullets.slice(0, 4) : sentences.slice(0, 2);
       const layer1 = layer1Source.join(bullets.length ? '\n' : ' ');
-      const layer2 = layer2Source.join('\n');
+
+      // Layer 2: Rest of the content (DETAILS)
+      const layer2 = cleaned;
 
       return {
-        layer1: layer1 || lines.slice(0, 3).join('\n'),
-        layer2: layer2 || paragraphs.slice(0, 2).join('\n\n'),
-        layer3: cleaned
+        layer1: layer1 || lines.slice(0, 4).join('\n'),
+        layer2: layer2
       };
     }
 
@@ -1301,14 +1670,49 @@
         return '<div class="seg-empty">No details available</div>';
       }
 
-      const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
-      const isBulletList = lines.length > 0 && lines.every(line => /^[-*•]/.test(line));
+      let html = escapeHtml(text);
 
-      if (isBulletList) {
-        return `<ul>${lines.map(line => `<li>${escapeHtml(line.replace(/^[-*•]\s*/, ''))}</li>`).join('')}</ul>`;
+      // Convert **bold** to <strong>
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      
+      // Convert *italic* to <em>
+      html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      
+      // Convert __underline__ to <u>
+      html = html.replace(/__([^_]+)__/g, '<u>$1</u>');
+      
+      // Convert bullet points with proper hierarchy
+      // - Main point
+      // - Sub point
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const hasHeadings = lines.some(l => /^#+\s/.test(l));
+      const hasBullets = lines.some(l => /^[-*•]/.test(l));
+      
+      if (hasHeadings || hasBullets) {
+        html = '<div>';
+        for (const line of lines) {
+          if (/^##\s/.test(line)) {
+            const heading = line.replace(/^##\s/, '');
+            html += `<h4>${escapeHtml(heading)}</h4>`;
+          } else if (/^#\s/.test(line)) {
+            const heading = line.replace(/^#\s/, '');
+            html += `<h5>${escapeHtml(heading)}</h5>`;
+          } else if (/^[-*•]\s/.test(line)) {
+            const item = line.replace(/^[-*•]\s*/, '');
+            html += `<li>${escapeHtml(item).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')}</li>`;
+          }
+        }
+        html += '</div>';
+        
+        // Wrap bullets in <ul>
+        html = html.replace(/<li>/g, '<ul><li>').replace(/<\/li>/g, '</li></ul>');
+        html = html.replace(/<\/ul><ul>/g, ''); // Remove duplicate <ul> tags
       }
+      
+      // Convert line breaks to proper spacing
+      html = html.replace(/\n/g, '<br>');
 
-      return `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
+      return html;
     }
 
     function escapeHtml(text) {

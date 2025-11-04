@@ -164,8 +164,8 @@ class TooLooEvolutionDemo {
     if (insights.ok && insights.insights.length > 0) {
       insights.insights.forEach(insight => {
         const emoji = insight.type === 'success' ? '🎉' : 
-                     insight.type === 'warning' ? '⚠️' : 
-                     insight.type === 'evolution' ? '🧬' : '💡';
+          insight.type === 'warning' ? '⚠️' : 
+            insight.type === 'evolution' ? '🧬' : '💡';
         console.log(`${emoji} ${insight.message}`);
         console.log(`   → ${insight.recommendation}`);
       });

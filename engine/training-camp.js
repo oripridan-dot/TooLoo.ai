@@ -21,10 +21,10 @@ export default class TrainingCamp {
     this.startTime = null;
     this.isActive = false;
     
-  // Parallel training: push toward hardware limit (leave 1 core headroom)
-  this.parallelTraining = true;
-  const cores = Math.max(2, (os.cpus()?.length || 4));
-  this.maxParallel = Math.min(this.topics.length, Math.max(3, cores - 1));
+    // Parallel training: push toward hardware limit (leave 1 core headroom)
+    this.parallelTraining = true;
+    const cores = Math.max(2, (os.cpus()?.length || 4));
+    this.maxParallel = Math.min(this.topics.length, Math.max(3, cores - 1));
     
     // Spaced repetition system
     this.spacedRepetition = {
@@ -35,7 +35,7 @@ export default class TrainingCamp {
     
     this.curriculum = this.initializeCurriculum();
     this.ensureDataDir();
-  this.variations = {};
+    this.variations = {};
 
     // Targeted selection configuration (domain rotation for untouched/weak areas)
     this.selection = {
@@ -47,14 +47,14 @@ export default class TrainingCamp {
       stickyBatch: true,           // Keep the same batch until those cross threshold
       minAttemptsInBatch: 2        // Require at least this many attempts in batch before release
     };
-      this._untouchedCursor = 0;     // Round-robin cursor for untouched topics
-      this._lockedBatch = [];        // For autoFillGaps sticky selection
-      this._batchJoinAttempts = {};  // topic -> attempts at time of entering batch
+    this._untouchedCursor = 0;     // Round-robin cursor for untouched topics
+    this._lockedBatch = [];        // For autoFillGaps sticky selection
+    this._batchJoinAttempts = {};  // topic -> attempts at time of entering batch
 
-      // Background topics (low-weight parallel tracks that shouldn't steal focus)
-      this.backgroundTopics = [];    // e.g., ['systems']
-      this._backgroundCursor = 0;    // rotation for background topics
-      this.backgroundEveryNRounds = 3; // run one background problem every N rounds
+    // Background topics (low-weight parallel tracks that shouldn't steal focus)
+    this.backgroundTopics = [];    // e.g., ['systems']
+    this._backgroundCursor = 0;    // rotation for background topics
+    this.backgroundEveryNRounds = 3; // run one background problem every N rounds
   }
 
   // Helper to check if a topic is marked as background-only
@@ -210,8 +210,8 @@ export default class TrainingCamp {
         // Rebuild/extend batch from current below-threshold sorted
         const belowSorted = this.topics
           .filter(t => !batch.includes(t))
-            .map(t => ({ topic: t, mastery: this.progress[t]?.masteryLevel || 0, confidence: this.progress[t]?.confidence || 50 }))
-            .filter(d => !this.isBackground(d.topic))
+          .map(t => ({ topic: t, mastery: this.progress[t]?.masteryLevel || 0, confidence: this.progress[t]?.confidence || 50 }))
+          .filter(d => !this.isBackground(d.topic))
           .filter(d => d.mastery < threshold)
           .sort((a,b)=> a.mastery !== b.mastery ? a.mastery - b.mastery : a.confidence - b.confidence)
           .map(d => d.topic);
@@ -255,8 +255,8 @@ export default class TrainingCamp {
         const threshold = Number(this.selection.targetThreshold || 80);
         const belowThreshold = this.topics
           .filter(t => !picks.has(t))
-            .filter(t => !this.isBackground(t))
-            .map(topic => ({
+          .filter(t => !this.isBackground(t))
+          .map(topic => ({
             topic,
             mastery: this.progress[topic]?.masteryLevel || 0,
             confidence: this.progress[topic]?.confidence || 50
@@ -328,13 +328,13 @@ export default class TrainingCamp {
       };
     }
 
-  console.log('🏕️  Training Camp Started - Phase 2!');
+    console.log('🏕️  Training Camp Started - Phase 2!');
     console.log(`📚 Training across ${this.topics.length} domains: ${this.topics.map(t => this.curriculum[t].name).join(', ')}`);
-  console.log(`⚡ Parallel training: ${this.maxParallel} domains at once (cpu cores: ${os.cpus()?.length || 'n/a'})`);
+    console.log(`⚡ Parallel training: ${this.maxParallel} domains at once (cpu cores: ${os.cpus()?.length || 'n/a'})`);
     console.log(`🔄 Spaced repetition: ${this.spacedRepetition.enabled ? 'ON' : 'OFF'}`);
 
-  // Pre-generate and cache problem variations to reduce per-round overhead
-  try { await this.preGenerateVariations(); } catch {}
+    // Pre-generate and cache problem variations to reduce per-round overhead
+    try { await this.preGenerateVariations(); } catch {}
 
     return {
       success: true,

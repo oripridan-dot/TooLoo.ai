@@ -20,13 +20,13 @@ app.use(express.json({ limit: '2mb' }));
 // Configure CSP to allow inline styles and scripts for the UI
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', 
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: blob:; " +
-    "font-src 'self'; " +
-    "connect-src 'self'; " +
-    "media-src 'self';"
+    'default-src \'self\'; ' +
+    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'; ' +
+    'style-src \'self\' \'unsafe-inline\'; ' +
+    'img-src \'self\' data: blob:; ' +
+    'font-src \'self\'; ' +
+    'connect-src \'self\'; ' +
+    'media-src \'self\';'
   );
   next();
 });

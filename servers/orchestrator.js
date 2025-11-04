@@ -1,11 +1,13 @@
 import { spawn } from 'child_process';
 import http from 'http';
+import os from 'os';
 import IntentBus from '../engine/intent-bus.js';
 import ModelChooser from '../engine/model-chooser.js';
 import ConfidenceScorer from '../engine/confidence-scorer.js';
 import DAGBuilder from '../engine/dag-builder.js';
 import { ScreenCaptureService } from '../engine/screen-capture-service.js';
 import RepoAutoOrg from '../engine/repo-auto-org.js';
+import MetricsCollector from '../engine/metrics-collector.js';
 
 const intentBus = new IntentBus({ storageDir: process.cwd() + '/data/intent-bus' });
 const modelChooser = new ModelChooser();
@@ -35,9 +37,14 @@ const services = [
   { name:'segmentation', cmd:['node','servers/segmentation-server.js'], port: Number(process.env.SEGMENTATION_PORT||3007), health:'/health' },
   { name:'reports', cmd:['node','servers/reports-server.js'], port: Number(process.env.REPORTS_PORT||3008), health:'/health' },
   { name:'capabilities', cmd:['node','servers/capabilities-server.js'], port: Number(process.env.CAPABILITIES_PORT||3009), health:'/health' },
-  { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3010), health:'/health' },
-  { name:'arena', cmd:['node','servers/providers-arena-server.js'], port: Number(process.env.ARENA_PORT||3011), health:'/health' },
-  { name:'analytics', cmd:['node','servers/analytics-server.js'], port: Number(process.env.ANALYTICS_PORT||3012), health:'/health' }
+  { name:'oauth', cmd:['node','servers/oauth-server.js'], port: Number(process.env.OAUTH_PORT||3010), health:'/status' },
+  { name:'events', cmd:['node','servers/events-server.js'], port: Number(process.env.EVENTS_PORT||3011), health:'/stats' },
+  { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3050), health:'/health' },
+  { name:'arena', cmd:['node','servers/providers-arena-server.js'], port: Number(process.env.ARENA_PORT||3051), health:'/health' },
+  { name:'analytics', cmd:['node','servers/analytics-server.js'], port: Number(process.env.ANALYTICS_PORT||3052), health:'/health' },
+  { name:'self-improve', cmd:['node','servers/self-improvement-server.js'], port: Number(process.env.SELF_IMPROVE_PORT||3053), health:'/health' },
+  { name:'design', cmd:['node','servers/design-integration-server.js'], port: Number(process.env.DESIGN_PORT||3054), health:'/health' },
+  { name:'github-context', cmd:['node','servers/github-context-server.js'], port: Number(process.env.GITHUB_CONTEXT_PORT||3060), health:'/health' }
 ];
 
 function waitForHealth(port, path, retries=30, delayMs=300){
@@ -170,6 +177,39 @@ async function main(){
     }
   }catch(e){
     console.warn('⚠️  Priority initialization error (non-fatal):', e.message);
+  }
+
+  // ===== AUTO-START CONTINUOUS META-LEARNING =====
+  // Start continuous meta-learning if enabled (default: true)
+  try {
+    const autoStartMeta = String(process.env.AUTOSTART_META_LEARNING || 'true').toLowerCase() === 'true';
+    if (autoStartMeta) {
+      const metaPort = process.env.META_PORT || 3002;
+      const metaInterval = Number(process.env.META_LEARNING_INTERVAL_MS || 300000); // Default 5 minutes
+      
+      // Wait a bit for meta-server to fully stabilize
+      await new Promise(r => setTimeout(r, 2000));
+      
+      try {
+        const response = await fetch(`http://127.0.0.1:${metaPort}/api/v4/meta-learning/start-continuous`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ intervalMs: metaInterval, maxCycles: 0 })
+        });
+        
+        if (response.ok) {
+          console.log(`🔄 Continuous meta-learning started (interval: ${metaInterval}ms)`);
+        } else {
+          console.warn(`⚠️  Meta-learning startup returned ${response.status}`);
+        }
+      } catch (e) {
+        console.warn(`⚠️  Failed to start continuous meta-learning: ${e.message}`);
+      }
+    } else {
+      console.log('ℹ️  Continuous meta-learning auto-start disabled (AUTOSTART_META_LEARNING=false)');
+    }
+  } catch (e) {
+    console.warn('⚠️  Meta-learning initialization skipped:', e.message);
   }
 
   // Keep process alive to supervise children; handle graceful shutdown
@@ -824,12 +864,30 @@ async function main(){
     if (url==='/api/v1/system/multi-instance/stop' && method==='POST'){
       try{
         if (!multiInstance.running) return ok({ already:false });
-        for (const pid of multiInstance.pids){ try{ process.kill(pid, 'SIGTERM'); }catch{} }
+        for (const pid of multiInstance.pids){ try{ process.kill(pid, 'SIGTERM'); }catch(e){} }
         const durationMs = Date.now() - (multiInstance.startTime||Date.now());
-        // Simple collector report (placeholder)
-        const stats = { instances: multiInstance.pids.length, shards: multiInstance.shards, durationMs, speedupEstimate: Math.min(multiInstance.pids.length, osCoresSafe()) };
+        // Record multi-instance metrics
+        const speedupEst = Math.min(multiInstance.pids.length, osCoresSafe());
+        MetricsCollector.setInstanceMetrics(multiInstance.pids.length, multiInstance.shards, durationMs, speedupEst);
+        const stats = { instances: multiInstance.pids.length, shards: multiInstance.shards, durationMs, speedupEstimate: speedupEst };
         multiInstance = { running:false, pids:[], startTime:null };
         ok({ stopped:true, stats });
+      }catch(e){ err(e); }
+      return;
+    }
+    // GET /api/v1/system/metrics - Real system metrics
+    if (url==='/api/v1/system/metrics' && method==='GET'){
+      try{
+        const overview = MetricsCollector.getSystemOverview();
+        ok(overview);
+      }catch(e){ err(e); }
+      return;
+    }
+    // GET /api/v1/system/processes - Process report with health checks
+    if (url==='/api/v1/system/processes' && method==='GET'){
+      try{
+        const report = await MetricsCollector.getProcessesReport(services);
+        ok(report);
       }catch(e){ err(e); }
       return;
     }
@@ -838,7 +896,7 @@ async function main(){
   server.listen(Number(process.env.ORCH_CTRL_PORT||3123), '127.0.0.1');
 }
 
-function osCoresSafe(){ try{ return Math.max(1, require('os').cpus().length - 1); }catch{ return 2; } }
+function osCoresSafe(){ try{ return Math.max(1, os.cpus().length - 1); }catch{ return 2; } }
 
 // Service health monitoring and auto-healing
 const serviceHealthState = new Map(); // service name -> { lastCheck: timestamp, failures: count, lastRestart: timestamp }
