@@ -1,0 +1,13 @@
+# render.yaml for segmentation-server (managed deployment)
+services:
+  - type: web
+    name: segmentation-server
+    env: node
+    plan: starter
+    buildCommand: "npm install --omit=dev"
+    startCommand: "node servers/segmentation-server.js"
+    envVars:
+      - key: SEGMENTATION_PORT
+        value: 3007
+    healthCheckPath: /health
+    autoDeploy: true
