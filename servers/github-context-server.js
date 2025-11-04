@@ -61,6 +61,30 @@ function getProviderChain() {
   return chain.filter(name => PROVIDERS[name].enabled);
 }
 
+// Helper: Build OpenAI-compatible chat completions URL
+function buildChatCompletionsURL(baseURL) {
+  return baseURL.includes('/chat/completions') 
+    ? baseURL 
+    : `${baseURL}/v1/chat/completions`;
+}
+
+// Helper: Extract error message from various provider response formats
+function extractErrorMessage(error) {
+  // Try different error response structures
+  if (error.response?.data?.error?.message) {
+    return error.response.data.error.message;
+  }
+  if (error.response?.data?.error) {
+    return typeof error.response.data.error === 'string' 
+      ? error.response.data.error 
+      : JSON.stringify(error.response.data.error);
+  }
+  if (error.response?.data?.message) {
+    return error.response.data.message;
+  }
+  return error.message || 'Unknown error';
+}
+
 // Call Ollama provider
 async function callOllama(systemPrompt, question, config) {
   const response = await axios.post(
@@ -125,9 +149,7 @@ async function callClaude(systemPrompt, question, config) {
 
 // Call OpenAI provider
 async function callOpenAI(systemPrompt, question, config) {
-  const url = config.baseURL.includes('/chat/completions') 
-    ? config.baseURL 
-    : `${config.baseURL}/v1/chat/completions`;
+  const url = buildChatCompletionsURL(config.baseURL);
     
   const response = await axios.post(
     url,
@@ -198,9 +220,7 @@ async function callGemini(systemPrompt, question, config) {
 
 // Call DeepSeek provider
 async function callDeepSeek(systemPrompt, question, config) {
-  const url = config.baseURL.includes('/chat/completions') 
-    ? config.baseURL 
-    : `${config.baseURL}/v1/chat/completions`;
+  const url = buildChatCompletionsURL(config.baseURL);
     
   const response = await axios.post(
     url,
@@ -273,7 +293,7 @@ async function callProviderWithFallback(systemPrompt, question) {
         error: null
       };
     } catch (error) {
-      const errorMsg = error.response?.data?.error?.message || error.message;
+      const errorMsg = extractErrorMessage(error);
       console.error(`[GitHub Context] ${config.name} failed:`, errorMsg);
       errors.push({
         provider: config.name,
