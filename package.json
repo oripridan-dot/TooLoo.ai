@@ -9,7 +9,12 @@
     "milestone": "node timeline.js create",
     "milestone:list": "node timeline.js list",
     "milestone:suggest": "node timeline.js suggest",
-    "timeline": "node timeline.js list"
+    "timeline": "node timeline.js list",
+    "design-server": "node servers/design-integration-server.js",
+    "test": "node tests/figma-adapter.test.js && node tests/design-server.test.js",
+    "test:adapter": "node tests/figma-adapter.test.js",
+    "test:server": "node tests/design-server.test.js",
+    "example": "node examples/figma-import-example.js"
   },
   "keywords": [
     "github-copilot",
