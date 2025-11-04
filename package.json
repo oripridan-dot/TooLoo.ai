@@ -9,7 +9,11 @@
     "milestone": "node timeline.js create",
     "milestone:list": "node timeline.js list",
     "milestone:suggest": "node timeline.js suggest",
-    "timeline": "node timeline.js list"
+    "timeline": "node timeline.js list",
+    "check:placeholders": "node scripts/check-placeholders.js",
+    "lint": "npm run check:placeholders",
+    "build": "echo 'No build required for workspace'",
+    "test": "npm run check:placeholders"
   },
   "keywords": [
     "github-copilot",
