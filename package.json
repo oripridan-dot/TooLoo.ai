@@ -9,7 +9,9 @@
     "milestone": "node timeline.js create",
     "milestone:list": "node timeline.js list",
     "milestone:suggest": "node timeline.js suggest",
-    "timeline": "node timeline.js list"
+    "timeline": "node timeline.js list",
+    "start:github-context": "node servers/github-context-server.js",
+    "test:github-context": "node scripts/test-github-context.js"
   },
   "keywords": [
     "github-copilot",
@@ -18,5 +20,11 @@
     "partnership"
   ],
   "author": "Ori Pridan",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5"
+  }
 }
