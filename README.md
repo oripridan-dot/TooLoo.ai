@@ -17,6 +17,49 @@ Build a **proven, successful, and future-adaptive workflow** where:
 
 Once the partnership workflow is proven, building actual products becomes trivial.
 
+## Setup
+
+### Prerequisites
+
+- Node.js 18.x or 20.x
+- npm (comes with Node.js)
+- Git
+
+### Environment Configuration
+
+1. **Copy the environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure your API keys:**
+   
+   Open `.env` and replace all `REPLACE_ME` values with your actual API keys:
+
+   - **OpenAI API Key**: Get from https://platform.openai.com/api-keys
+   - **Anthropic (Claude) API Key**: Get from https://console.anthropic.com/settings/keys
+   - **DeepSeek API Key**: Get from https://platform.deepseek.com/api_keys
+   - **ProductHunt API Key**: Get from https://api.producthunt.com/v2/docs
+   - **Reddit API Credentials**: Create an app at https://www.reddit.com/prefs/apps
+
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+4. **Verify setup:**
+   ```bash
+   npm run check:placeholders  # Validates no placeholder tokens remain
+   npm run info               # Shows workspace information
+   ```
+
+### Important Security Notes
+
+- **NEVER commit your `.env` file** - it contains sensitive API keys
+- The `.env` file is already in `.gitignore` for protection
+- Always use `REPLACE_ME` in example files, never real tokens
+- CI pipeline automatically checks for placeholder tokens before deployment
+
 ## Core Principles
 
 ### Zero Code Visibility
