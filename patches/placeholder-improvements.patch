@@ -1,0 +1,26 @@
+diff --git a/packages/web/public/mission-control-demo.html b/packages/web/public/mission-control-demo.html
+index 9aa9dae..26efb4e 100644
+--- a/packages/web/public/mission-control-demo.html
++++ b/packages/web/public/mission-control-demo.html
+@@ -114,7 +114,7 @@
+         <input
+           type="text"
+           id="prompt-input"
+-          placeholder="YOUR PROMPT HERE..."
++          placeholder="Type your request... (e.g., 'Analyze system performance' or 'Show recent activity')"
+           class="prompt-input"
+         />
+         <button type="submit" class="send-button">
+diff --git a/packages/web/src/components/MissionControl.tsx b/packages/web/src/components/MissionControl.tsx
+index b6ce800..b9347ef 100644
+--- a/packages/web/src/components/MissionControl.tsx
++++ b/packages/web/src/components/MissionControl.tsx
+@@ -179,7 +179,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
+             type="text"
+             value={promptText}
+             onChange={(e) => setPromptText(e.target.value)}
+-            placeholder="YOUR PROMPT HERE..."
++            placeholder="Type your request... (e.g., 'Analyze system performance' or 'Show recent activity')"
+             className="prompt-input"
+           />
+           <button type="submit" className="send-button">
