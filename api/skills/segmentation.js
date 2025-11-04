@@ -61,8 +61,8 @@ export class SegmentationSkill {
           // Prevent division by zero when both segments have no topics
           const maxTopics = Math.max(seg1.topics.length, seg2.topics.length);
           const relevanceScore = maxTopics > 0 
-            ? (commonTopics.length / maxTopics).toFixed(2)
-            : '0.00';
+            ? parseFloat((commonTopics.length / maxTopics).toFixed(2))
+            : 0;
           
           crossLinks.push({
             conversation1Segment: i,

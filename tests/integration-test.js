@@ -76,6 +76,9 @@ async function runIntegrationTests() {
   console.log('🚀 Segmentation Server Integration Tests\n');
   console.log(`Mode: ${useRealAPI ? 'Real OpenAI API' : 'Mock (no API key required)'}\n`);
 
+  // Track total performance
+  const startTime = Date.now();
+
   // Initialize client
   let openaiClient;
   if (useRealAPI) {
@@ -223,7 +226,14 @@ async function runIntegrationTests() {
   console.log('   - Confidence scoring');
   console.log('   - Multi-turn context preservation\n');
 
-  console.log(`⚡ Performance: All operations completed in < 500ms threshold\n`);
+  const totalTime = Date.now() - startTime;
+  console.log(`⚡ Performance: Total execution time ${totalTime}ms (threshold: 500ms per operation)`);
+  
+  if (totalTime > 2000) {
+    console.log('   ⚠️  Warning: Total time exceeds reasonable threshold for 4 operations\n');
+  } else {
+    console.log('   ✅ All operations well within performance targets\n');
+  }
 
   if (!useRealAPI) {
     console.log('💡 Tip: Run with --with-api flag to test with real OpenAI embeddings');

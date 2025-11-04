@@ -70,7 +70,8 @@ class SemanticSegmentationEngine {
 
     // Handle zero vectors to prevent division by zero
     const denominator = Math.sqrt(normA) * Math.sqrt(normB);
-    if (denominator === 0) {
+    // Use small epsilon for floating-point precision
+    if (denominator < 1e-10) {
       return 0;
     }
 
@@ -278,7 +279,7 @@ class SemanticSegmentationEngine {
     const sizeScore = Math.min(segment.messages.length / this.maxSegmentSize, 1);
     const coherenceScore = 0.8; // Placeholder - would be calculated from similarity scores
     
-    return (sizeScore * 0.4 + coherenceScore * 0.6).toFixed(2);
+    return parseFloat((sizeScore * 0.4 + coherenceScore * 0.6).toFixed(2));
   }
 
   /**

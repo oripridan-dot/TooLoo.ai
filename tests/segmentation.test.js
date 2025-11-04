@@ -146,14 +146,14 @@ async function runTests() {
     const engine = new SemanticSegmentationEngine({ openai: mockOpenAI });
     const result = await engine.segmentMessages(sampleConversation);
     
-    const lowConfidenceSegments = result.segments.filter(seg => parseFloat(seg.confidence) < 0.7);
+    const lowConfidenceSegments = result.segments.filter(seg => seg.confidence < 0.7);
     
     // Note: This is a guideline, not a hard requirement for all segments
     if (lowConfidenceSegments.length > 0) {
       console.log(`⚠️  Test 5: ${lowConfidenceSegments.length} segments below 0.7 confidence (acceptable)`);
     }
     
-    assert.ok(result.segments.every(seg => parseFloat(seg.confidence) >= 0), 'All segments should have non-negative confidence');
+    assert.ok(result.segments.every(seg => seg.confidence >= 0), 'All segments should have non-negative confidence');
     console.log('✅ Test 5: Confidence scoring - PASSED');
     passed++;
   } catch (error) {
