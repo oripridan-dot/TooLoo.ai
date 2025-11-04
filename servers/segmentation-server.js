@@ -19,6 +19,10 @@ class SemanticSegmentationEngine {
     this.similarityThreshold = options.similarityThreshold || 0.7;
     this.maxSegmentSize = options.maxSegmentSize || 5; // messages per segment
     this.cache = new Map(); // Simple in-memory cache for embeddings
+    
+    // Confidence calculation weights
+    this.CONFIDENCE_SIZE_WEIGHT = 0.4;
+    this.CONFIDENCE_COHERENCE_WEIGHT = 0.6;
   }
 
   /**
@@ -279,7 +283,7 @@ class SemanticSegmentationEngine {
     const sizeScore = Math.min(segment.messages.length / this.maxSegmentSize, 1);
     const coherenceScore = 0.8; // Placeholder - would be calculated from similarity scores
     
-    return parseFloat((sizeScore * 0.4 + coherenceScore * 0.6).toFixed(2));
+    return parseFloat((sizeScore * this.CONFIDENCE_SIZE_WEIGHT + coherenceScore * this.CONFIDENCE_COHERENCE_WEIGHT).toFixed(2));
   }
 
   /**

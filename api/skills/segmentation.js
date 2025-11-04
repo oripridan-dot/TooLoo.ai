@@ -109,7 +109,7 @@ export class SegmentationSkill {
       }
     }
 
-    return totalItems > 0 ? (totalOverlap / totalItems).toFixed(2) : 0;
+    return totalItems > 0 ? parseFloat((totalOverlap / totalItems).toFixed(2)) : 0;
   }
 
   /**
@@ -201,7 +201,7 @@ export class SegmentationSkill {
       .map(([item, count]) => ({
         item,
         frequency: count,
-        confidence: (count / totalConversations).toFixed(2)
+        confidence: parseFloat((count / totalConversations).toFixed(2))
       }))
       .sort((a, b) => b.frequency - a.frequency)
       .slice(0, 20); // Top 20 items
@@ -219,7 +219,7 @@ export class SegmentationSkill {
 
     return {
       dominant: dominant.key,
-      confidence: (dominant.val / total).toFixed(2),
+      confidence: parseFloat((dominant.val / total).toFixed(2)),
       distribution
     };
   }
