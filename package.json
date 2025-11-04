@@ -12,6 +12,8 @@
     "timeline": "node timeline.js list",
     "test": "node tests/segmentation.test.js",
     "test:segmentation": "node tests/segmentation.test.js",
+    "test:integration": "node tests/integration-test.js",
+    "test:integration:api": "node tests/integration-test.js --with-api",
     "start:segmentation": "node servers/segmentation-server.js"
   },
   "keywords": [

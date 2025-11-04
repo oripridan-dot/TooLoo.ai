@@ -411,11 +411,13 @@ app.post('/api/v1/segmentation/analyze', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🧠 Semantic Segmentation Server running on port ${PORT}`);
-  console.log(`📊 OpenAI configured: ${!!openaiClient}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/v1/segmentation/health`);
-});
+// Start server only if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, () => {
+    console.log(`🧠 Semantic Segmentation Server running on port ${PORT}`);
+    console.log(`📊 OpenAI configured: ${!!openaiClient}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/api/v1/segmentation/health`);
+  });
+}
 
 export { SemanticSegmentationEngine, app };
