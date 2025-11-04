@@ -167,6 +167,30 @@ If a provider fails, the server automatically tries the next one in the chain.
 
 ## Testing
 
+### With Mock Provider (No API Keys Required)
+
+The repository includes a mock AI provider for testing without real API keys:
+
+```bash
+# Terminal 1: Start mock AI provider
+node scripts/mock-ai-provider.js
+
+# Terminal 2: Start GitHub context server with mock
+OPENAI_API_KEY=mock-key-for-testing \
+OPENAI_API_BASE_URL=http://localhost:11111 \
+node servers/github-context-server.js
+
+# Terminal 3: Test the endpoint
+curl -X POST http://localhost:3010/api/v1/github/ask \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "What are the main concerns in this codebase?",
+    "depth": "full"
+  }'
+```
+
+### With Real Provider
+
 Run the test suite:
 
 ```bash

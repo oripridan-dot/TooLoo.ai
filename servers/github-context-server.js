@@ -32,7 +32,7 @@ const PROVIDERS = {
   openai: {
     name: 'OpenAI',
     enabled: !!process.env.OPENAI_API_KEY,
-    baseURL: 'https://api.openai.com/v1/chat/completions',
+    baseURL: process.env.OPENAI_API_BASE_URL || 'https://api.openai.com',
     apiKey: process.env.OPENAI_API_KEY,
     model: process.env.OPENAI_MODEL || 'gpt-4',
     timeout: 30000
@@ -48,7 +48,7 @@ const PROVIDERS = {
   deepseek: {
     name: 'DeepSeek',
     enabled: !!process.env.DEEPSEEK_API_KEY,
-    baseURL: 'https://api.deepseek.com/v1/chat/completions',
+    baseURL: process.env.DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com',
     apiKey: process.env.DEEPSEEK_API_KEY,
     model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
     timeout: 30000
@@ -125,8 +125,12 @@ async function callClaude(systemPrompt, question, config) {
 
 // Call OpenAI provider
 async function callOpenAI(systemPrompt, question, config) {
+  const url = config.baseURL.includes('/chat/completions') 
+    ? config.baseURL 
+    : `${config.baseURL}/v1/chat/completions`;
+    
   const response = await axios.post(
-    config.baseURL,
+    url,
     {
       model: config.model,
       messages: [
@@ -194,8 +198,12 @@ async function callGemini(systemPrompt, question, config) {
 
 // Call DeepSeek provider
 async function callDeepSeek(systemPrompt, question, config) {
+  const url = config.baseURL.includes('/chat/completions') 
+    ? config.baseURL 
+    : `${config.baseURL}/v1/chat/completions`;
+    
   const response = await axios.post(
-    config.baseURL,
+    url,
     {
       model: config.model,
       messages: [

@@ -11,7 +11,10 @@
     "milestone:suggest": "node timeline.js suggest",
     "timeline": "node timeline.js list",
     "start:github-context": "node servers/github-context-server.js",
-    "test:github-context": "node scripts/test-github-context.js"
+    "start:mock-provider": "node scripts/mock-ai-provider.js",
+    "test:github-context": "node scripts/test-github-context.js",
+    "test:integration": "node scripts/integration-test.js",
+    "verify:acceptance": "node scripts/verify-acceptance-criteria.js"
   },
   "keywords": [
     "github-copilot",
