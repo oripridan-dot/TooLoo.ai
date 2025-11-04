@@ -34,8 +34,7 @@ const FORBIDDEN_PATTERNS = [
 function isPlaceholderAssignment(line) {
   // Check if line looks like an environment variable assignment with placeholder
   const hasPlaceholder = /\bplaceholder\b/i.test(line);
-  const looksLikeEnvVar = /^[A-Z_]+=.+placeholder/i.test(line.trim()) || 
-                          /[A-Z_]+=.*your_/i.test(line.trim());
+  const looksLikeEnvVar = /^[A-Z_]+=.*(placeholder|your_)/i.test(line.trim());
   return hasPlaceholder && looksLikeEnvVar;
 }
 
@@ -43,6 +42,8 @@ function isPlaceholderAssignment(line) {
 const FILE_EXTENSIONS = ['.md', '.env.example', '.env.template'];
 
 // Directories to exclude from scanning
+// .github/agents is excluded because it contains instructions for other agents
+// that may reference placeholder patterns in their documentation
 const EXCLUDED_DIRS = ['node_modules', '.git', '.github/agents', 'dist', 'build'];
 
 /**

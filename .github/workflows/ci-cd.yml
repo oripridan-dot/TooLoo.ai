@@ -10,6 +10,8 @@ jobs:
   validate-placeholders:
     name: Check for placeholder tokens
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
@@ -29,6 +31,8 @@ jobs:
   test:
     needs: validate-placeholders
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     strategy:
       matrix:
@@ -58,6 +62,8 @@ jobs:
   security:
     needs: validate-placeholders
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v4
     
