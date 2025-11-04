@@ -171,10 +171,17 @@ app.get('/api/v1/reports/trends', (req, res) => {
     const { period = '30d', cohortId = 'default' } = req.query;
 
     // Parse period (e.g., "7d", "30d", "90d")
-    const days = parseInt(period);
-    if (isNaN(days) || days < 1) {
+    const periodMatch = period.match(/^(\d+)d$/);
+    if (!periodMatch) {
       return res.status(400).json({
         error: 'Invalid period format. Use format like "7d", "30d", or "90d"'
+      });
+    }
+    
+    const days = parseInt(periodMatch[1]);
+    if (days < 1) {
+      return res.status(400).json({
+        error: 'Period must be at least 1 day'
       });
     }
 
@@ -186,9 +193,13 @@ app.get('/api/v1/reports/trends', (req, res) => {
 
     const trends = analyzeTrends(timeSeries);
 
-    // Add anomaly detection
+    // Add anomaly detection with z-score threshold of 3
     const values = timeSeries.map(t => t.value);
-    const anomalies = detectAnomalies(values, 3);
+    const threshold = 3;
+    const anomalies = detectAnomalies(values, threshold);
+    
+    // Z-score specificity: threshold 3 ≈ 99.73% (based on normal distribution)
+    const specificity = 99.73;
 
     const responseTime = Date.now() - startTime;
     res.json({
@@ -198,7 +209,7 @@ app.get('/api/v1/reports/trends', (req, res) => {
       anomalies: {
         detected: anomalies.length,
         details: anomalies,
-        specificity: anomalies.length > 0 ? 96.5 : 100 // Z-score method has >95% specificity
+        specificity
       },
       metadata: {
         responseTimeMs: responseTime,
