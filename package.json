@@ -75,7 +75,12 @@
     "automate:cleanup": "node scripts/code-cleanup.js",
     "automate:docs": "node scripts/update-documentation.js",
     "automate:health": "node scripts/repository-health-check.js",
-    "automate:all": "npm-run-all automate:health automate:updates automate:cleanup automate:docs automate:logs"
+    "automate:all": "npm-run-all automate:health automate:updates automate:cleanup automate:docs automate:logs",
+    "test:adapters": "node scripts/test-adapters.js",
+    "test:phase7": "node scripts/test-adapters.js --phase7-only",
+    "test:phase11": "node scripts/test-adapters.js --phase11-only",
+    "test:endpoints": "node scripts/test-adapters.js --endpoints",
+    "test:all:comprehensive": "npm-run-all test:adapters test:smoke qa:suite"
   },
   "keywords": [
     "ai",
