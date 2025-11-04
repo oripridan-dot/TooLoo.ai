@@ -94,3 +94,21 @@ Read `UI_PLACEHOLDER_AUDIT_REPORT.md` and apply changes manually.
 **Status:** ✅ Complete  
 **Priority:** Medium  
 **Date:** November 4, 2025
+
+## 📌 Important Notes
+
+### Branch Locations
+- **Main work branch**: `copilot/audit-and-tidy-ui-placeholders` (✅ pushed to remote)
+  - Contains: Documentation, audit report, patches
+  - Location: This workspace branch
+  
+- **Implementation branch**: `copilot/audit-and-tidy-ui-placeholders-v1` (local only)
+  - Contains: Complete v1 codebase with all changes applied
+  - To create remotely: Push this local branch or apply the patch to your v1 branch
+
+### Repository Structure
+- **Current branch** (workspace): Documentation and collaboration patterns
+- **v1-final tag**: Contains actual TooLoo.ai application code
+- The files mentioned in the issue exist in v1-final, not in the workspace branch
+
+This explains why patches are provided - to bridge the workspace branch with v1 codebase.
