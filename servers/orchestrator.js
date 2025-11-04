@@ -27,7 +27,6 @@ const repoAutoOrg = new RepoAutoOrg({
 
 const services = [
   { name:'web', cmd:['node','servers/web-server.js'], port: Number(process.env.WEB_PORT||3000), health:'/health' },
-  { name:'ui-monitor', cmd:['node','servers/ui-activity-monitor.js'], port: Number(process.env.ACTIVITY_MONITOR_PORT||3050), health:'/health' },
   { name:'training', cmd:['node','servers/training-server.js'], port: Number(process.env.TRAINING_PORT||3001), health:'/health' },
   { name:'meta', cmd:['node','servers/meta-server.js'], port: Number(process.env.META_PORT||3002), health:'/health' },
   { name:'budget', cmd:['node','servers/budget-server.js'], port: Number(process.env.BUDGET_PORT||3003), health:'/health' },
@@ -37,14 +36,8 @@ const services = [
   { name:'segmentation', cmd:['node','servers/segmentation-server.js'], port: Number(process.env.SEGMENTATION_PORT||3007), health:'/health' },
   { name:'reports', cmd:['node','servers/reports-server.js'], port: Number(process.env.REPORTS_PORT||3008), health:'/health' },
   { name:'capabilities', cmd:['node','servers/capabilities-server.js'], port: Number(process.env.CAPABILITIES_PORT||3009), health:'/health' },
-  { name:'oauth', cmd:['node','servers/oauth-server.js'], port: Number(process.env.OAUTH_PORT||3010), health:'/status' },
-  { name:'events', cmd:['node','servers/events-server.js'], port: Number(process.env.EVENTS_PORT||3011), health:'/stats' },
-  { name:'bridge', cmd:['node','servers/capability-workflow-bridge.js'], port: Number(process.env.CAPABILITY_BRIDGE_PORT||3050), health:'/health' },
-  { name:'arena', cmd:['node','servers/providers-arena-server.js'], port: Number(process.env.ARENA_PORT||3051), health:'/health' },
-  { name:'analytics', cmd:['node','servers/analytics-server.js'], port: Number(process.env.ANALYTICS_PORT||3052), health:'/health' },
-  { name:'self-improve', cmd:['node','servers/self-improvement-server.js'], port: Number(process.env.SELF_IMPROVE_PORT||3053), health:'/health' },
-  { name:'design', cmd:['node','servers/design-integration-server.js'], port: Number(process.env.DESIGN_PORT||3054), health:'/health' },
-  { name:'github-context', cmd:['node','servers/github-context-server.js'], port: Number(process.env.GITHUB_CONTEXT_PORT||3060), health:'/health' }
+  { name:'design', cmd:['node','servers/design-integration-server.js'], port: Number(process.env.DESIGN_PORT||3014), health:'/health' },
+  { name:'github-context', cmd:['node','servers/github-context-server.js'], port: Number(process.env.GITHUB_CONTEXT_PORT||3020), health:'/health' }
 ];
 
 function waitForHealth(port, path, retries=30, delayMs=300){
