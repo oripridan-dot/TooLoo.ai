@@ -24,9 +24,10 @@ const PORT = process.env.CAPABILITIES_PORT || 3009;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS for development
+// CORS configuration - restrict in production
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = process.env.ALLOWED_ORIGINS || '*';
+  res.header('Access-Control-Allow-Origin', allowedOrigins);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
@@ -250,8 +251,8 @@ class AutonomousMode {
     this.server = capabilitiesServer;
     this.enabled = false;
     this.interval = null;
-    this.checkIntervalMs = 60000; // 1 minute
-    this.improvementThreshold = 50; // Min success rate to consider for optimization
+    this.checkIntervalMs = parseInt(process.env.AUTONOMOUS_CHECK_INTERVAL) || 60000; // 1 minute default
+    this.improvementThreshold = parseInt(process.env.AUTONOMOUS_IMPROVEMENT_THRESHOLD) || 50; // Min success rate
   }
 
   enable() {
@@ -301,7 +302,8 @@ class AutonomousMode {
       console.log(`📊 Found ${improvements.length} methods needing improvement:`, improvements);
       
       for (const improvement of improvements) {
-        // Simulate optimization (in real implementation, this would trigger actual optimization)
+        // TODO: In production, this should trigger actual optimization strategies
+        // Currently simulates optimization for demonstration purposes
         const impact = Math.random() * 30 + 10; // 10-40% improvement
         this.server.evolution.recordEvolution(
           improvement.method,
@@ -454,6 +456,7 @@ class CapabilitiesServer {
     let success = false;
     let result = null;
     let error = null;
+    let duration = 0;
 
     try {
       // Find the method definition
@@ -470,11 +473,11 @@ class CapabilitiesServer {
       error = err;
       result = { error: err.message };
     } finally {
-      const duration = Date.now() - startTime;
+      duration = Date.now() - startTime;
       this.telemetry.recordCall(methodName, duration, success, error);
     }
 
-    return { success, result, duration: Date.now() - startTime };
+    return { success, result, duration };
   }
 
   /**
@@ -565,6 +568,8 @@ class CapabilitiesServer {
 
   async _analyzeSentiment(params) {
     const text = params.text || '';
+    // Note: This is mock sentiment analysis for demonstration
+    // In production, integrate with a real NLP service or library
     return {
       sentiment: ['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)],
       score: Math.random() * 2 - 1, // -1 to 1
