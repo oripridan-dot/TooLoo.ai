@@ -58,11 +58,17 @@ export class SegmentationSkill {
         const commonTopics = seg1.topics.filter(t => seg2.topics.includes(t));
         
         if (commonTopics.length > 0) {
+          // Prevent division by zero when both segments have no topics
+          const maxTopics = Math.max(seg1.topics.length, seg2.topics.length);
+          const relevanceScore = maxTopics > 0 
+            ? (commonTopics.length / maxTopics).toFixed(2)
+            : '0.00';
+          
           crossLinks.push({
             conversation1Segment: i,
             conversation2Segment: j,
             commonTopics,
-            relevanceScore: (commonTopics.length / Math.max(seg1.topics.length, seg2.topics.length)).toFixed(2)
+            relevanceScore
           });
         }
       }

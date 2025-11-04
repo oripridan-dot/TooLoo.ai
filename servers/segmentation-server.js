@@ -68,7 +68,13 @@ class SemanticSegmentationEngine {
       normB += vecB[i] * vecB[i];
     }
 
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    // Handle zero vectors to prevent division by zero
+    const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+    if (denominator === 0) {
+      return 0;
+    }
+
+    return dotProduct / denominator;
   }
 
   /**

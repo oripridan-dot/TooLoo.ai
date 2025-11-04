@@ -86,12 +86,17 @@ async function runTests() {
     const vec1 = [1, 0, 0];
     const vec2 = [1, 0, 0];
     const vec3 = [0, 1, 0];
+    const vec4 = [0, 0, 0]; // Zero vector
     
     const sim1 = engine.cosineSimilarity(vec1, vec2);
     const sim2 = engine.cosineSimilarity(vec1, vec3);
+    const sim3 = engine.cosineSimilarity(vec1, vec4);
+    const sim4 = engine.cosineSimilarity(vec4, vec4);
     
     assert.equal(sim1, 1, 'Identical vectors should have similarity of 1');
     assert.equal(sim2, 0, 'Orthogonal vectors should have similarity of 0');
+    assert.equal(sim3, 0, 'Zero vector should return 0 similarity');
+    assert.equal(sim4, 0, 'Two zero vectors should return 0 similarity');
     console.log('✅ Test 2: Cosine similarity - PASSED');
     passed++;
   } catch (error) {
