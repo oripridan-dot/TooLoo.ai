@@ -122,6 +122,21 @@ export default class LLMProvider {
     return null;
   }
 
+  /**
+   * Unified LLM generation interface
+   * @param {Object} request - Generation request
+   * @param {string} request.prompt - Main query/instruction (required)
+   * @param {string} request.system - System prompt (optional)
+   * @param {string} request.taskType - 'analysis'|'generation'|'critique'|'planning' (optional)
+   * @param {Object} request.context - Domain context (optional)
+   * @param {number} request.maxTokens - Max output length (optional, default 2000)
+   * @param {string} request.criticality - 'low'|'normal'|'high' (optional, default 'normal')
+   * @returns {Promise<Object>} {content, provider, confidence}
+   */
+  async generate(request) {
+    return this.generateSmartLLM(request);
+  }
+
   async generateSmartLLM(request) {
     const { prompt, system, taskType = 'chat', context = {} } = request || {};
     if (!prompt || typeof prompt !== 'string') {
