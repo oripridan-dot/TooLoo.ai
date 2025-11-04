@@ -95,7 +95,19 @@ export function predictLearningVelocity(historicalData, forecastDays = 30) {
   const sumXY = dataPoints.reduce((sum, p) => sum + p.x * p.y, 0);
   const sumX2 = dataPoints.reduce((sum, p) => sum + p.x * p.x, 0);
 
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const denominator = n * sumX2 - sumX * sumX;
+  
+  // Handle edge case: all X values are identical (no variance)
+  if (denominator === 0) {
+    return {
+      prediction: null,
+      confidence: 0,
+      accuracy: 0,
+      message: 'Unable to predict: no variance in time data'
+    };
+  }
+  
+  const slope = (n * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / n;
 
   // Calculate R² (coefficient of determination) for accuracy
@@ -105,7 +117,9 @@ export function predictLearningVelocity(historicalData, forecastDays = 30) {
     const predicted = slope * p.x + intercept;
     return sum + Math.pow(p.y - predicted, 2);
   }, 0);
-  const rSquared = 1 - (ssResidual / ssTotal);
+  
+  // Handle edge case: all Y values are identical (no variance)
+  const rSquared = ssTotal === 0 ? 0 : 1 - (ssResidual / ssTotal);
 
   // Predict future values
   const lastDay = dataPoints[dataPoints.length - 1].x;

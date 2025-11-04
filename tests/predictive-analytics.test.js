@@ -91,6 +91,23 @@ test('predictLearningVelocity - handles insufficient data', () => {
   assert.ok(prediction.message.includes('Insufficient'));
 });
 
+test('predictLearningVelocity - handles identical timestamps (no variance)', () => {
+  const sameTime = Date.now();
+  const historicalData = [
+    { timestamp: sameTime, tasksCompleted: 5, accuracy: 0.8 },
+    { timestamp: sameTime, tasksCompleted: 7, accuracy: 0.82 },
+    { timestamp: sameTime, tasksCompleted: 9, accuracy: 0.85 },
+    { timestamp: sameTime, tasksCompleted: 12, accuracy: 0.87 },
+    { timestamp: sameTime, tasksCompleted: 15, accuracy: 0.88 }
+  ];
+  
+  const prediction = predictLearningVelocity(historicalData, 30);
+  
+  assert.equal(prediction.prediction, null);
+  assert.equal(prediction.confidence, 0);
+  assert.ok(prediction.message.includes('no variance'));
+});
+
 test('predictLearningVelocity - accuracy should be greater than 75%', () => {
   // Generate high-quality historical data
   const historicalData = [];
