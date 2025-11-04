@@ -27,9 +27,6 @@ const PROFILES_FILE = path.join(DATA_DIR, 'peer-profiles.json');
 
 app.use(express.json());
 
-// Ensure data directory exists
-await fs.mkdir(DATA_DIR, { recursive: true });
-
 /**
  * In-memory cache for performance
  */
@@ -561,20 +558,33 @@ app.get('/api/v1/reports/dashboard', (req, res) => {
 /**
  * Start server
  */
-app.listen(PORT, () => {
-  console.log(`🚀 Reports Server running on port ${PORT}`);
-  console.log(`📊 Endpoints available:`);
-  console.log(`   - GET  /health`);
-  console.log(`   - GET  /api/v1/reports/cohort-comparison`);
-  console.log(`   - GET  /api/v1/reports/trends`);
-  console.log(`   - GET  /api/v1/reports/predict-velocity`);
-  console.log(`   - POST /api/v1/reports/cost-benefit`);
-  console.log(`   - GET  /api/v1/reports/cost-benefit/:workflowId`);
-  console.log(`   - GET  /api/v1/reports/peer-profiles`);
-  console.log(`   - POST /api/v1/reports/peer-profiles`);
-  console.log(`   - GET  /api/v1/reports/peer-profiles/:peerId`);
-  console.log(`   - DEL  /api/v1/reports/peer-profiles/:peerId`);
-  console.log(`   - GET  /api/v1/reports/dashboard`);
-});
+async function startServer() {
+  try {
+    // Ensure data directory exists
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Reports Server running on port ${PORT}`);
+      console.log(`📊 Endpoints available:`);
+      console.log(`   - GET  /health`);
+      console.log(`   - GET  /api/v1/reports/cohort-comparison`);
+      console.log(`   - GET  /api/v1/reports/trends`);
+      console.log(`   - GET  /api/v1/reports/predict-velocity`);
+      console.log(`   - POST /api/v1/reports/cost-benefit`);
+      console.log(`   - GET  /api/v1/reports/cost-benefit/:workflowId`);
+      console.log(`   - GET  /api/v1/reports/peer-profiles`);
+      console.log(`   - POST /api/v1/reports/peer-profiles`);
+      console.log(`   - GET  /api/v1/reports/peer-profiles/:peerId`);
+      console.log(`   - DEL  /api/v1/reports/peer-profiles/:peerId`);
+      console.log(`   - GET  /api/v1/reports/dashboard`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Start server when run directly
+startServer();
 
 export default app;
