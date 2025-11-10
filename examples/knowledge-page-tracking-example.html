@@ -1,0 +1,194 @@
+<!-- TooLoo Knowledge - Enhanced with Activity Monitoring -->
+<!-- Add this to your knowledge/books page to start tracking real data -->
+
+<script>
+/**
+ * Example: Knowledge Page Integration
+ * 
+ * This shows how to:
+ * 1. Track specific user interactions
+ * 2. Measure feature adoption
+ * 3. Optimize UX based on real data
+ */
+
+// When page loads, enable activity tracking
+window.addEventListener('load', () => {
+  console.log('📊 Analytics enabled for Knowledge page');
+  
+  // Track when users search
+  document.addEventListener('input', (e) => {
+    if (e.target.matches('[data-feature="search-books"]')) {
+      console.log('🔍 User searching for:', e.target.value);
+      // Search events are tracked automatically
+    }
+  });
+  
+  // Track filter usage
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('[data-feature="filter-dropdown"]')) {
+      console.log('📂 User filtered by:', e.target.value);
+      window.toolooTracker?.trackFeatureUsage('filter-changed', {
+        category: e.target.value,
+        timestamp: Date.now()
+      });
+    }
+  });
+});
+
+// Analytics dashboard
+async function showAnalytics() {
+  console.log('📈 Fetching live analytics...\n');
+  
+  try {
+    // Get feature usage
+    const features = await fetch('/api/v1/analytics/features').then(r => r.json());
+    console.log('📊 Top Features Used:');
+    features.data.topFeatures?.forEach((f, i) => {
+      console.log(`  ${i+1}. ${f.feature}: ${f.usageCount} uses (${f.percentage}%)`);
+    });
+    
+    // Get engagement
+    const engagement = await fetch('/api/v1/analytics/engagement').then(r => r.json());
+    console.log('\n👥 Engagement:');
+    console.log(`  Active Sessions: ${engagement.data.activeSessions}`);
+    console.log(`  Avg Duration: ${Math.round(engagement.data.averageSessionDuration / 1000)}s`);
+    console.log(`  Clicks/Session: ${Math.round(engagement.data.averageEventsPerSession)}`);
+    
+    // Get performance
+    const perf = await fetch('/api/v1/analytics/performance').then(r => r.json());
+    console.log('\n⚡ Performance:');
+    console.log(`  LCP: ${perf.data.largestContentfulPaint.value}ms (target: <2500ms)`);
+    console.log(`  FCP: ${perf.data.firstContentfulPaint.value}ms (target: <1800ms)`);
+    console.log(`  CLS: ${perf.data.cumulativeLayoutShift.value} (target: <0.1)`);
+    
+  } catch (e) {
+    console.error('❌ Analytics not available:', e.message);
+  }
+}
+
+// Show analytics every 30 seconds
+setInterval(showAnalytics, 30000);
+
+// Also log to console when page loads
+showAnalytics();
+</script>
+
+<!-- Mark your UI elements for tracking -->
+<style>
+  /* Visual indicator that tracking is active */
+  [data-feature] {
+    position: relative;
+  }
+  
+  [data-feature]::after {
+    content: '📊';
+    position: absolute;
+    right: -20px;
+    top: 0;
+    font-size: 12px;
+    opacity: 0.3;
+  }
+</style>
+
+<!-- Example HTML elements with tracking -->
+<div id="knowledge-page">
+  <!-- SEARCH ELEMENT - Should be top feature -->
+  <input 
+    type="text" 
+    placeholder="Search by title, author, or summary"
+    data-feature="search-books"
+    id="search-input"
+  />
+  
+  <!-- FILTER ELEMENT - Track dropdown usage -->
+  <select data-feature="filter-dropdown" id="domain-filter">
+    <option value="">All domains</option>
+    <option value="ai">AI & ML</option>
+    <option value="design">Design</option>
+    <option value="engineering">Engineering</option>
+  </select>
+  
+  <!-- EXPORT ELEMENT - Rarely used (maybe?) -->
+  <button data-feature="export-books" id="export-btn">
+    📥 Export Results
+  </button>
+  
+  <!-- CONTROL ROOM LINK -->
+  <a href="/control-room" data-feature="control-room-link">
+    Control Room
+  </a>
+</div>
+
+<script>
+/**
+ * INSIGHTS YOU'LL GET
+ * 
+ * After running for 1 hour with real users:
+ * 
+ * 1. Search Button (data-feature="search-books")
+ *    - If high usage: ✓ Users are searching a lot
+ *      → Improve search algorithm
+ *      → Add filters to search results
+ *    
+ *    - If low usage: Users aren't searching
+ *      → Maybe books aren't discoverable
+ *      → Consider featured books section
+ * 
+ * 2. Filter Dropdown (data-feature="filter-dropdown")
+ *    - If high usage: ✓ Users find filtering helpful
+ *      → Add more filter options
+ *      → Improve filter UI
+ *    
+ *    - If low usage: Filtering not valued
+ *      → Remove to simplify UI
+ *      → Or redesign filter interface
+ * 
+ * 3. Export Button (data-feature="export-books")
+ *    - Probably low usage
+ *      → Is it visible? Move to more prominent location
+ *      → Do users need this? Consider removing
+ * 
+ * 4. Performance Metrics:
+ *    - If LCP > 2.5s:
+ *      → Loading books images too slowly
+ *      → Lazy load book covers
+ *      → Use CDN for images
+ *    
+ *    - If CLS > 0.1:
+ *      → Layout shifting when books load
+ *      → Reserve space for book cards
+ *      → Avoid inserting content above fold
+ */
+
+// ACTION: Implement data-driven optimizations
+async function optimizeBasedOnAnalytics() {
+  const features = await fetch('/api/v1/analytics/features').then(r => r.json());
+  
+  // If export is barely used, maybe hide it or remove
+  const exportFeature = features.data.topFeatures.find(f => f.feature === 'export-books');
+  if (exportFeature && exportFeature.percentage < 1) {
+    console.log('💡 Tip: Export button used <1% of the time');
+    console.log('   Consider: Removing or moving to hidden menu');
+  }
+  
+  // If search is heavily used, make it even better
+  const searchFeature = features.data.topFeatures.find(f => f.feature === 'search-books');
+  if (searchFeature && searchFeature.percentage > 30) {
+    console.log('✅ Great! Users love searching');
+    console.log('   Next step: Add autocomplete, tags, advanced search');
+  }
+}
+
+// Run optimization check every minute
+setInterval(optimizeBasedOnAnalytics, 60000);
+</script>
+
+<!-- DASHBOARD LINK FOR QUICK ACCESS -->
+<link rel="alternate" href="/analytics-dashboard.html" title="View Live Analytics" />
+
+<script>
+// Bonus: Show dashboard link in console
+console.log('%c📊 View Live Analytics Dashboard', 'font-size: 16px; color: #3b82f6; font-weight: bold;');
+console.log('%c👉 http://localhost:3000/analytics-dashboard.html', 'font-size: 14px; color: #60a5fa;');
+console.log('%c\nRunning showAnalytics() every 30 seconds\nType showAnalytics() in console for instant results', 'font-size: 12px; color: #94a3b8;');
+</script>
