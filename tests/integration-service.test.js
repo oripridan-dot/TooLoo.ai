@@ -71,7 +71,7 @@ describe('OAuthManager', () => {
     expect(oauthManager.isTokenExpired(noExpiryToken)).toBe(false);
   });
 
-  it('should revoke token', async () => {
+  it('should revoke token', () => {
     oauthManager.tokens.set('user123:github', {
       id: 'token1',
       userId: 'user123',
@@ -79,7 +79,7 @@ describe('OAuthManager', () => {
       accessToken: 'abc123',
     });
 
-    const success = await oauthManager.revokeToken('user123', 'github');
+    const success = oauthManager.revokeToken('github', 'user123');
     expect(success).toBe(true);
     expect(oauthManager.getStoredToken('user123', 'github')).toBeNull();
   });
