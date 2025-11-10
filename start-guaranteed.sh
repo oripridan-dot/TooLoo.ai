@@ -101,7 +101,7 @@ validate_prerequisites() {
   log SUCCESS "All required files present"
   
   # Check ports are available
-  for port in $WEB_PORT $ORCH_PORT 3001 3002 3003; do
+  for port in $WEB_PORT $ORCH_PORT 3001 3020 3100 3200 3300 3400; do
     if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
       log WARN "Port $port already in use, will kill process"
     fi
@@ -112,7 +112,7 @@ aggressive_cleanup() {
   log STEP "Phase 2/8: Aggressive cleanup"
   
   # Kill by port (more reliable than PID)
-  local ports=(3000 3001 3002 3003 3004 3005 3006 3007 3008 3009 3010 3011 3012 3020 3050 3123)
+  local ports=(3000 3001 3020 3100 3200 3300 3400 3123)
   
   for port in "${ports[@]}"; do
     if lsof -ti:$port >/dev/null 2>&1; then
@@ -284,11 +284,12 @@ verify_services() {
   log STEP "Phase 5/8: Verifying core services"
   
   local services=(
-    "3001:Training"
-    "3002:Meta-Learning"
-    "3003:Budget"
-    "3004:Coach"
-    "3011:Providers Arena"
+    "3001:Learning"
+    "3200:Provider"
+    "3020:Context"
+    "3400:Integration"
+    "3300:Analytics"
+    "3100:Orchestration"
   )
   
   local healthy=0

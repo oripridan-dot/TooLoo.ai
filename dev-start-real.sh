@@ -85,7 +85,7 @@ done
 log_info "📡 Waiting for core services to become available..."
 sleep 3
 
-CORE_PORTS=(3001 3002 3003 3004)
+CORE_PORTS=(3001 3020 3100 3200 3300 3400)
 ALL_READY=true
 for PORT in "${CORE_PORTS[@]}"; do
   ATTEMPTS=0
@@ -113,7 +113,7 @@ log_ok "Web-server:  http://127.0.0.1:$WEB_PORT"
 log_ok "Orchestrator: http://127.0.0.1:$ORCH_PORT"
 echo ""
 echo "📊 Core Services:"
-for PORT in 3000 3001 3002 3003 3004; do
+for PORT in 3000 3001 3020 3100 3200 3300 3400; do
   if curl -s http://127.0.0.1:$PORT/health 2>/dev/null | grep -q '"ok":true'; then
     echo "   ✓ Port $PORT listening"
   else
