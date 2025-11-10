@@ -123,8 +123,8 @@ aggressive_cleanup() {
   
   # Kill by process pattern (backup)
   if pgrep -f "node servers/" >/dev/null 2>&1; then
-    log PROGRESS "Killing lingering node processes"
-    pkill -9 -f "node servers/" 2>/dev/null || true
+    log PROGRESS "Stopping lingering node processes via safe stop script"
+    bash "$SCRIPT_DIR/scripts/stop-all-services.sh" --force 2>/dev/null || true
   fi
   
   sleep 1
@@ -397,7 +397,7 @@ print_final_report() {
   echo ""
   
   echo "🛑 Stop System:"
-  echo "  pkill -f 'node servers/'"
+  echo "  bash scripts/stop-all-services.sh"
   echo ""
   echo "✨ System is ready and monitored!"
   echo ""

@@ -27,9 +27,9 @@ log_warn() { echo -e "${YELLOW}⚠ ${NC}$1"; }
 log_err() { echo -e "${RED}✗${NC} $1"; }
 
 # Phase 1: Clean slate
-log_info "🧹 Cleaning up all existing processes..."
-pkill -9 -f "node servers/" 2>/dev/null || true
-pkill -9 -f "node.*orchestrator" 2>/dev/null || true
+log_info "🧹 Cleaning up all existing processes (safe stop)..."
+bash "$SCRIPT_DIR/scripts/stop-all-services.sh" --force 2>/dev/null || true
+bash "$SCRIPT_DIR/scripts/stop-all-services.sh" --force 2>/dev/null || true
 sleep 1
 log_ok "Processes cleaned"
 
@@ -128,10 +128,10 @@ echo "📝 Live Logs:"
 echo "   tail -f $LOG_DIR/web.log"
 echo ""
 echo "🛑 Stop system:"
-echo "   pkill -f 'node servers/'"
+echo "   bash scripts/stop-all-services.sh"
 echo ""
 
 # Phase 7: Keep alive
 log_ok "System monitoring active (Ctrl+C to stop)"
-trap "echo ''; log_info 'Stopping...'; pkill -f 'node servers/' 2>/dev/null || true; exit 0" SIGINT
+trap "echo ''; log_info 'Stopping...'; bash scripts/stop-all-services.sh 2>/dev/null || true; exit 0" SIGINT
 tail -f "$LOG_DIR/web.log" 2>/dev/null || wait

@@ -37,11 +37,10 @@ wait_for_service() {
     return 1
 }
 
-# Kill any existing processes on our ports
-echo "🧹 Cleaning up existing processes..."
-for port in 3000 3001 3002 3003 3004 3005 3006 3007 3008 3009 3123; do
-    lsof -ti:$port 2>/dev/null | xargs -r kill -9 2>/dev/null || true
-done
+# Kill any existing processes on our ports (use safe stop script)
+echo "🧹 Cleaning up existing processes (safe stop)..."
+bash "$(dirname "$0")/scripts/stop-all-services.sh" --force 2>/dev/null || true
+sleep 1
 sleep 1
 
 # Start web server
@@ -131,12 +130,12 @@ echo "📝 Logs:"
 echo "   Web:        tail -f /tmp/tooloo-web.log"
 echo "   Orchestrator: tail -f /tmp/tooloo-orch.log"
 echo ""
-echo "🛑 To stop: pkill -f 'node servers/'"
+echo "🛑 To stop: bash scripts/stop-all-services.sh"
 echo ""
 
 # Keep the script running if in terminal
 if [ -t 0 ]; then
     echo "Press Ctrl+C to stop all services"
-    trap 'echo ""; echo "🛑 Stopping services..."; pkill -f "node servers/"; echo "✅ Stopped"; exit 0' INT
+    trap 'echo ""; echo "🛑 Stopping services..."; bash "$(dirname "$0")/scripts/stop-all-services.sh"; echo "✅ Stopped"; exit 0' INT
     tail -f /tmp/tooloo-web.log 2>/dev/null
 fi

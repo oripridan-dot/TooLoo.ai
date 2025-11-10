@@ -11,8 +11,8 @@ echo "════════════════════════�
 
 # Step 1: Kill all servers
 echo ""
-echo "1️⃣  🛑 Killing all Node servers..."
-pkill -9 -f "node servers/" 2>/dev/null || true
+echo "1️⃣  🛑 Stopping all Node servers (safe stop)..."
+bash "$(dirname \"$0\")/scripts/stop-all-services.sh" --force 2>/dev/null || true
 sleep 1
 
 # Step 2: Clear browser cache files (if they exist)
@@ -26,7 +26,8 @@ if [ "$STILL_RUNNING" -lt 2 ]; then
     echo "   ✅ All servers terminated"
 else
     echo "   ⚠️  Warning: Some processes still running (trying harder...)"
-    pkill -9 node 2>/dev/null || true
+    # As a last resort, try to stop any nodes recorded in .pids
+    bash "$(dirname \"$0\")/scripts/stop-all-services.sh" --force 2>/dev/null || true
     sleep 1
 fi
 
@@ -99,5 +100,5 @@ echo "   2. Save the file"
 echo "   3. Refresh browser (or just wait - auto-refresh enabled)"
 echo "   4. Changes appear INSTANTLY ⚡"
 echo ""
-echo "🛑 To stop: pkill -f 'node servers/'"
+echo "🛑 To stop: bash scripts/stop-all-services.sh"
 echo ""

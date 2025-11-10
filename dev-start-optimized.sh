@@ -28,10 +28,9 @@ log_warn() { echo -e "${YELLOW}⚠ ${NC}$1"; }
 log_err() { echo -e "${RED}✗${NC} $1"; }
 
 # Phase 1: Fast cleanup (kill existing processes)
-log_info "Cleaning up existing processes..."
-for port in 3000 3001 3002 3003 3004 3005 3006 3007 3008 3009 3010 3011 3012 3050 3123; do
-  lsof -ti:$port 2>/dev/null | xargs -r kill -9 2>/dev/null || true
-done
+log_info "Cleaning up existing processes (safe stop)..."
+bash "$(dirname "$0")/scripts/stop-all-services.sh" --force 2>/dev/null || true
+sleep 0.5
 sleep 0.5
 
 # Phase 2: Start web server
@@ -104,10 +103,10 @@ echo ""
 echo "📝 Logs:"
 echo "   tail -f $LOG_DIR/web.log"
 echo ""
-echo "🛑 Stop: pkill -f 'node servers/'"
+echo "🛑 Stop: bash scripts/stop-all-services.sh"
 echo ""
 
 # Keep alive
 log_ok "System monitoring active"
-trap "echo ''; log_info 'Shutdown'; pkill -f 'node servers/' 2>/dev/null || true; exit 0" SIGINT
+trap "echo ''; log_info 'Shutdown'; bash \"$(dirname \"$0\")/scripts/stop-all-services.sh\" 2>/dev/null || true; exit 0" SIGINT
 tail -f "$LOG_DIR/web.log" 2>/dev/null || wait

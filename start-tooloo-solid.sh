@@ -42,7 +42,7 @@ error() {
 
 cleanup_on_error() {
   error "Startup failed - cleaning up..."
-  pkill -f "node servers/(web|orchestrator)" 2>/dev/null || true
+  bash "$(dirname "$0")/scripts/stop-all-services.sh" --force 2>/dev/null || true
   exit 1
 }
 
@@ -58,8 +58,8 @@ aggressive_cleanup() {
     fi
   done
   
-  # Kill any remaining node servers
-  pkill -9 -f "node servers/" 2>/dev/null || true
+  # Kill any remaining node servers (use safe stop)
+  bash "$(dirname "$0")/scripts/stop-all-services.sh" --force 2>/dev/null || true
   sleep 1
 }
 
@@ -222,7 +222,7 @@ main() {
   echo "  Web:        $WEB_LOG"
   echo "  Orchestrator: $ORCH_LOG"
   echo ""
-  echo "Stop: pkill -f 'node servers/'"
+  echo "Stop: bash scripts/stop-all-services.sh"
   echo "======================================================"
   echo ""
   
