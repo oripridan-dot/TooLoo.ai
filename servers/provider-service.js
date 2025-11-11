@@ -51,6 +51,13 @@ async function initializeServices(bus) {
 }
 
 /**
+ * GET /health - Service health check
+ */
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'provider', uptime: process.uptime() });
+});
+
+/**
  * POST /api/v1/providers/select
  * Select best provider for a query
  */
