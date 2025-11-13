@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo Response Formatter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header { background: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+    h1 { color: #667eea; font-size: 42px; margin-bottom: 10px; }
+    .demo { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); margin-bottom: 30px; }
+    h2 { color: #333; font-size: 28px; margin-bottom: 20px; }
+    .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+    input, textarea { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-family: inherit; }
+    input:focus, textarea:focus { outline: none; border-color: #667eea; }
+    textarea { min-height: 80px; }
+    .output { background: #f0f9ff; border-left: 6px solid #667eea; padding: 30px; border-radius: 8px; margin: 40px 0; }
+    .section { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; }
+    h3 { color: #667eea; margin-bottom: 15px; }
+    .point { padding: 12px; background: #f9fafb; margin: 10px 0; border-left: 3px solid #667eea; }
+    .consensus { font-size: 48px; color: #667eea; font-weight: 700; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✨ TooLoo Response Formatter</h1>
+      <p>Transform multi-provider AI responses into structured TooLoo format</p>
+    </div>
+
+    <div class="demo">
+      <h2>📝 Try the Formatter</h2>
+      
+      <div class="inputs">
+        <div>
+          <label>Your Question</label>
+          <input type="text" placeholder="e.g., How to optimize database?" value="How should we optimize database performance?">
+        </div>
+        <div>
+          <label>Claude Response</label>
+          <textarea placeholder="Claude's response...">Start with systematic analysis. Identify slow queries, add indexes based on patterns, implement caching.</textarea>
+        </div>
+      </div>
+
+      <div class="inputs">
+        <div>
+          <label>GPT-4 Response</label>
+          <textarea placeholder="GPT-4's response...">Profile database first, optimize queries before indexes, take incremental approach with measurement.</textarea>
+        </div>
+        <div>
+          <label>Gemini Response</label>
+          <textarea placeholder="Gemini's response...">Establish baselines, identify bottlenecks through profiling, optimize queries, add indexes where needed.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="output">
+      <h2>🎯 TooLoo Analysis Result</h2>
+      
+      <div class="section">
+        <h3>Consensus Level</h3>
+        <div class="consensus">78% Agreement</div>
+        <p>Strong consensus - all providers recommend systematic, measurement-driven approach</p>
+      </div>
+
+      <div class="section">
+        <h3>🤝 Areas of Agreement</h3>
+        <div class="point">✓ Start with systematic analysis and profiling</div>
+        <div class="point">✓ Measurement-driven optimization approach</div>
+        <div class="point">✓ Incremental implementation, not wholesale changes</div>
+      </div>
+
+      <div class="section">
+        <h3>⚡ Key Differences</h3>
+        <div class="point"><strong>Indexing Timing:</strong> Claude says "add indexes based on patterns" vs GPT-4 "optimize queries first, then indexes" → Resolution: Query optimization should precede indexing</div>
+      </div>
+
+      <div class="section">
+        <h3>✅ Action Items</h3>
+        <div class="point">1. <strong>Establish Performance Baseline</strong> - Measure current query performance</div>
+        <div class="point">2. <strong>Profile Database Usage</strong> - Understand access patterns</div>
+        <div class="point">3. <strong>Optimize Queries</strong> - Refactor inefficient queries</div>
+        <div class="point">4. <strong>Implement Caching</strong> - Add application-level caching</div>
+      </div>
+
+      <div class="section">
+        <h3>🔮 Strategic Advisory</h3>
+        <div class="point"><strong>Key Insight:</strong> All providers align on measurement-first approach - this reduces risk</div>
+        <div class="point"><strong>Risk Factors:</strong> None identified - providers agree on best practices</div>
+        <div class="point"><strong>Timeline:</strong> Initial analysis 1-2 weeks, full optimization 4-6 weeks</div>
+      </div>
+
+      <p style="margin-top: 30px; color: #666; font-weight: 500;">✅ This demonstrates the TooLoo Response Formatter structure: consensus level, agreement points, conflicts with resolutions, prioritized actions, and strategic advisory for next moves.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo - Multi-Provider AI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #faf8f3;
+      color: #3a3a3a;
+      height: 100vh;
+      overflow: hidden;
+      line-height: 1.6;
+    }
+    
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr 380px;
+      height: 100vh;
+      gap: 0;
+    }
+    
+    /* LEFT: SESSION MEMORY */
+    .memory-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #e5ddd0;
+      background: linear-gradient(180deg, #fefcf8 0%, #faf8f3 100%);
+      overflow: hidden;
+    }
+    
+    .memory-header {
+      padding: 16px;
+      border-bottom: 1px solid #e5ddd0;
+      background: rgba(255,255,255,0.6);
+    }
+    
+    .memory-header h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #8b7355;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    
+    .memory-header p {
+      font-size: 11px;
+      color: #9d8b7a;
+    }
+    
+    .memory-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .memory-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #c0b0a0;
+      text-align: center;
+      font-size: 12px;
+    }
+    
+    .memory-empty div { font-size: 32px; margin-bottom: 8px; }
+    
+    .memory-item {
+      background: rgba(184, 148, 110, 0.08);
+      border: 1px solid rgba(184, 148, 110, 0.15);
+      border-radius: 6px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .memory-item:hover {
+      background: rgba(184, 148, 110, 0.12);
+      border-color: rgba(184, 148, 110, 0.25);
+    }
+    
+    .memory-item.active {
+      background: rgba(184, 148, 110, 0.2);
+      border-color: #b8946e;
+    }
+    
+    .memory-item-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #5a5550;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .memory-item-meta {
+      font-size: 10px;
+      color: #9d8b7a;
+    }
+    
+    .memory-item-time {
+      display: inline-block;
+      background: rgba(184, 148, 110, 0.15);
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-right: 4px;
+    }
+    
+    .memory-controls {
+      padding: 12px;
+      border-top: 1px solid #e5ddd0;
+      background: rgba(255,255,255,0.4);
+      display: flex;
+      gap: 4px;
+    }
+    
+    .memory-btn {
+      flex: 1;
+      padding: 6px;
+      background: rgba(184, 148, 110, 0.12);
+      border: 1px solid rgba(184, 148, 110, 0.2);
+      border-radius: 4px;
+      color: #8b7355;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .memory-btn:hover {
+      background: rgba(184, 148, 110, 0.2);
+      border-color: #b8946e;
+    }
+    
+    /* CENTER: CHAT */
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      background: #faf8f3;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid #e5ddd0;
+      background: rgba(255,255,255,0.4);
+      flex-shrink: 0;
+    }
+    
+    .chat-header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #5a5550;
+      margin-bottom: 4px;
+    }
+    
+    .chat-header p {
+      font-size: 12px;
+      color: #9d8b7a;
+    }
+    
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .message.user { justify-content: flex-end; }
+    
+    .message-bubble {
+      max-width: 85%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.7;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .message.user .message-bubble {
+      background: #d4c4b0;
+      color: #3a3a3a;
+      border-radius: 16px 4px 16px 16px;
+      font-weight: 500;
+    }
+    
+    .message.assistant .message-bubble {
+      background: #f0ede8;
+      color: #3a3a3a;
+      border-left: 3px solid #b8946e;
+      white-space: pre-line;
+    }
+    
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #c0b0a0;
+      text-align: center;
+    }
+    
+    .empty-state div:first-child { font-size: 48px; margin-bottom: 12px; }
+    .empty-state h2 { font-size: 17px; font-weight: 700; color: #5a5550; margin-bottom: 8px; }
+    .empty-state p { font-size: 13px; max-width: 300px; color: #9d8b7a; }
+    
+    .input-area {
+      padding: 16px;
+      border-top: 1px solid #d9ccc0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(4px);
+    }
+    
+    .input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #d9ccc0;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #3a3a3a;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    
+    .input-area input:focus {
+      outline: none;
+      border-color: #b8946e;
+      box-shadow: 0 0 0 2px rgba(184, 148, 110, 0.1);
+    }
+    
+    .input-area input::placeholder { color: #c0b0a0; font-style: italic; }
+    
+    .send-btn {
+      padding: 10px 16px;
+      background: #b8946e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .send-btn:hover:not(:disabled) {
+      background: #a37f5a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(184, 148, 110, 0.25);
+    }
+    
+    .send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    /* RIGHT: FORMATTER */
+    .formatter-panel {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #e5ddd0;
+      background: linear-gradient(180deg, #faf8f3 0%, #f5f3ee 100%);
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    .formatter-header {
+      padding: 16px;
+      border-bottom: 1px solid #e5ddd0;
+      background: rgba(255,255,255,0.4);
+      flex-shrink: 0;
+    }
+    
+    .formatter-header h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #8b7355;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    
+    .formatter-header p {
+      font-size: 11px;
+      color: #9d8b7a;
+    }
+    
+    .formatter-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+    
+    .formatter-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #c0b0a0;
+      text-align: center;
+      font-size: 12px;
+    }
+    
+    .formatter-empty div { font-size: 32px; margin-bottom: 8px; }
+    
+    .response-card {
+      background: rgba(255,255,255,0.6);
+      border-left: 3px solid #b8946e;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #3a3a3a;
+    }
+    
+    .response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(184, 148, 110, 0.2);
+    }
+    
+    .response-provider {
+      font-weight: 700;
+      color: #5a5550;
+      font-size: 13px;
+    }
+    
+    .response-time {
+      font-size: 11px;
+      color: #9d8b7a;
+    }
+    
+    .key-points-list {
+      background: rgba(123, 166, 120, 0.12);
+      border-left: 3px solid #7ba678;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    
+    .key-points-list .item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #3a3a3a;
+      font-weight: 600;
+      padding: 6px 0;
+      line-height: 1.5;
+    }
+    
+    .key-points-list .item:last-child { margin-bottom: 0; }
+    
+    .key-points-list .checkmark {
+      color: #7ba678;
+      font-weight: 700;
+      margin-top: 1px;
+      min-width: 14px;
+    }
+    
+    .key-points-list .item.highlight { border-left: 2px solid #7ba678; padding-left: 8px; }
+    .key-points-list .item.action { border-left: 2px solid #b8946e; padding-left: 8px; color: #8b7355; font-weight: 600; }
+    .key-points-list .item.warning { border-left: 2px solid #d28c64; padding-left: 8px; color: #8b5a3c; font-weight: 600; }
+    .key-points-list .item.suggestion { border-left: 2px solid #7ba678; padding-left: 8px; }
+    
+    .item-type-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .item-type-badge.highlight { background: #7ba678; color: #ffffff; }
+    .item-type-badge.action { background: #b8946e; color: #ffffff; }
+    .item-type-badge.warning { background: #d28c64; color: #ffffff; }
+    .item-type-badge.suggestion { background: #7ba678; color: #ffffff; }
+    
+    .collapsible-section {
+      background: rgba(255,255,255,0.4);
+      border: 1px solid #e5ddd0;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    
+    .collapsible-header {
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.6);
+      border-bottom: 1px solid #e5ddd0;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    
+    .collapsible-header:hover { background: rgba(255,255,255,0.8); }
+    
+    .collapsible-title {
+      font-weight: 600;
+      font-size: 12px;
+      color: #5a5550;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .toggle-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9d8b7a;
+      font-size: 12px;
+      transition: transform 0.3s;
+    }
+    
+    .collapsible-section.open .toggle-icon { transform: rotate(180deg); }
+    
+    .collapsible-body {
+      display: none;
+      padding: 10px 12px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 11px;
+      color: #5a5550;
+      line-height: 1.7;
+    }
+    
+    .collapsible-section.open .collapsible-body { display: block; }
+    
+    .consensus-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(184, 148, 110, 0.12);
+      border: 1px solid rgba(184, 148, 110, 0.25);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #b8946e;
+    }
+    
+    .consensus-badge.conflict {
+      background: rgba(210, 140, 100, 0.12);
+      border-color: rgba(210, 140, 100, 0.3);
+      color: #d28c64;
+    }
+    
+    .consensus-badge .percent {
+      font-size: 20px;
+      font-weight: 700;
+      min-width: 40px;
+    }
+    
+    .consensus-badge .conflict-icon {
+      margin-right: 4px;
+      font-size: 14px;
+    }
+    
+    .provider-item {
+      background: rgba(255,255,255,0.5);
+      border: 1px solid #e5ddd0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+    }
+    
+    .provider-item:hover {
+      background: rgba(255,255,255,0.8);
+      border-color: #b8946e;
+      box-shadow: 0 2px 8px rgba(184, 148, 110, 0.15);
+    }
+    
+    .provider-item-header {
+      font-weight: 600;
+      color: #5a5550;
+      margin-bottom: 4px;
+    }
+    
+    .provider-item-preview {
+      color: #9d8b7a;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    
+    ::-webkit-scrollbar { 
+      width: 10px; 
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track { 
+      background: transparent; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(184, 148, 110, 0.4);
+      border-radius: 5px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(184, 148, 110, 0.65);
+      background-clip: content-box;
+    }
+    
+    /* Firefox scrollbar */
+    * {
+      scrollbar-color: rgba(184, 148, 110, 0.4) transparent;
+      scrollbar-width: thin;
+    }
+    
+    *:hover {
+      scrollbar-color: rgba(184, 148, 110, 0.65) transparent;
+    }
+    
+    @media (max-width: 1400px) {
+      .container { grid-template-columns: 1fr 320px; }
+      .memory-panel { display: none; }
+    }
+    
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+      .memory-panel { display: none; }
+      .formatter-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LEFT: SESSION MEMORY -->
+    <div class="memory-panel">
+      <div class="memory-header">
+        <h2>💾 Session Memory</h2>
+        <p>Active memory & history</p>
+      </div>
+      
+      <div class="memory-content" id="memoryContent">
+        <div class="memory-empty">
+          <div>🧠</div>
+          <p>Session memory appears here</p>
+        </div>
+      </div>
+      
+      <div class="memory-controls">
+        <button class="memory-btn" id="clearMemoryBtn">Clear</button>
+        <button class="memory-btn" id="exportMemoryBtn">Export</button>
+      </div>
+    </div>
+    
+    <!-- CENTER: CHAT -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        <h1>💬 TooLoo</h1>
+        <p>Unified AI response from multiple providers</p>
+      </div>
+      
+      <div class="messages-container" id="messagesContainer">
+        <div class="empty-state">
+          <div>🚀</div>
+          <h2>Welcome to TooLoo</h2>
+          <p>Ask anything and see instant analysis on the right</p>
+        </div>
+      </div>
+      
+      <div class="input-area">
+        <input 
+          type="text" 
+          id="messageInput" 
+          placeholder="What's your question?"
+          autocomplete="off"
+        >
+        <button class="send-btn" id="sendBtn">Send</button>
+      </div>
+    </div>
+    
+    <!-- RIGHT: FORMATTER -->
+    <div class="formatter-panel">
+      <div class="formatter-header">
+        <h2>📊 Live Analysis</h2>
+        <p>Real-time consensus & insights</p>
+      </div>
+      
+      <div class="formatter-content" id="formatterContent">
+        <div class="formatter-empty">
+          <div>✨</div>
+          <p>Send a message to see analysis</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const messagesContainer = document.getElementById('messagesContainer');
+    const formatterContent = document.getElementById('formatterContent');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const memoryContent = document.getElementById('memoryContent');
+    const clearMemoryBtn = document.getElementById('clearMemoryBtn');
+    const exportMemoryBtn = document.getElementById('exportMemoryBtn');
+    
+    let conversationHistory = [];
+    let sessionMemory = [];
+    let currentAnalysis = null;
+    let isLoading = false;
+    
+    async function getMultiProviderResponse(userMessage) {
+      try {
+        const response = await fetch('/api/v1/providers/aggregate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage })
+        });
+        
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        if (!data.success) throw new Error('Aggregation failed');
+        
+        const allResponses = data.aggregated?.all || [];
+        const primary = data.aggregated?.primary;
+        const consensus = data.aggregated?.consensus || {};
+        
+        const responses = allResponses.map(r => ({
+          provider: r.name || r.provider || 'Unknown',
+          icon: r.icon || '🤖',
+          content: r.response || r.content || '',
+          responseTime: r.responseTime,
+          score: r.score
+        }));
+        
+        const rawKeyThemes = consensus.keyThemes || [];
+        const synthesis = primary?.response || responses[0]?.content || 'Analysis complete';
+        
+        // Categorize key themes into types: highlights, actions, suggestions, warnings
+        const categorizedThemes = categorizeInsights(rawKeyThemes);
+        
+        // Detect conflicts if agreement is low
+        const agreement = consensus.agreement;
+        const hasConflicts = agreement && agreement < 70;
+        const conflictDetails = hasConflicts ? detectConflicts(responses) : null;
+        
+        return {
+          type: 'multi',
+          responses: responses,
+          synthesis: synthesis,
+          keyThemes: rawKeyThemes,
+          categorizedThemes: categorizedThemes,
+          consensus: {
+            agreement: agreement,
+            diversity: responses.length,
+            keyThemes: rawKeyThemes,
+            hasConflicts: hasConflicts,
+            conflictDetails: conflictDetails
+          },
+          metadata: {
+            providers: responses.length,
+            collaboration: data.collaboration || {}
+          }
+        };
+      } catch (error) {
+        console.error('Provider aggregate error:', error);
+        throw error;
+      }
+    }
+    
+    function extractKeyPoints(synthesis) {
+      if (!synthesis || typeof synthesis !== 'string') return [];
+      
+      const keyPoints = [];
+      
+      // First try: Extract bullet points and numbered lists
+      const lines = synthesis.split('\n').filter(l => l.trim());
+      let foundStructured = false;
+      
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (/^[-•*]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
+          let clean = trimmed.replace(/^[-•*]\s+/, '').replace(/^\d+\.\s+/, '').replace(/\*\*/g, '').trim();
+          if (clean.length > 10 && clean.length < 300) {
+            keyPoints.push(clean);
+            foundStructured = true;
+          }
+        }
+      });
+      
+      // If no structured bullets found, extract key sentences from prose
+      if (keyPoints.length === 0) {
+        const sentences = synthesis.match(/[^.!?]+[.!?]+/g) || [];
+        sentences.forEach(sentence => {
+          const trimmed = sentence.trim();
+          // Capture sentences with key indicators or first sentence of paragraphs
+          const hasKeyword = trimmed.includes('important') || trimmed.includes('ensure') || 
+                           trimmed.includes('make sure') || trimmed.includes('consider') || 
+                           trimmed.includes('focus') || trimmed.includes('understand') ||
+                           trimmed.includes('note') || trimmed.includes('key') ||
+                           trimmed.includes('provide') || trimmed.includes('implement');
+          
+          if ((hasKeyword || keyPoints.length < 3) && trimmed.length > 15 && trimmed.length < 300) {
+            keyPoints.push(trimmed);
+          }
+        });
+      }
+      
+      // Also capture sentences with key action words even if already have bullets
+      if (keyPoints.length < 3) {
+        const sentences = synthesis.match(/[^.!?]+[.!?]+/g) || [];
+        sentences.forEach(sentence => {
+          if (keyPoints.length >= 5) return;
+          const trimmed = sentence.trim();
+          if ((trimmed.includes('important') || trimmed.includes('collaborative') || trimmed.includes('ensure')) &&
+              trimmed.length > 15 && trimmed.length < 300 && !keyPoints.includes(trimmed)) {
+            keyPoints.push(trimmed);
+          }
+        });
+      }
+      
+      // Return top 3-5 key points
+      return keyPoints.slice(0, 5);
+    }
+    
+    function categorizeInsights(themes) {
+      const categories = {
+        highlights: [],
+        actions: [],
+        suggestions: [],
+        warnings: []
+      };
+      
+      if (!themes || themes.length === 0) return categories;
+      
+      themes.forEach((theme, idx) => {
+        const lower = theme.toLowerCase();
+        
+        // Detect type based on keywords
+        if (lower.includes('important') || lower.includes('critical') || lower.includes('note') || lower.includes('remember') || lower.includes('key')) {
+          categories.highlights.push(theme);
+        } else if (lower.includes('should') || lower.includes('must') || lower.includes('enable') || lower.includes('use') || lower.includes('implement') || lower.includes('establish')) {
+          categories.actions.push(theme);
+        } else if (lower.includes('consider') || lower.includes('might') || lower.includes('could') || lower.includes('try') || lower.includes('suggest') || lower.includes('explore')) {
+          categories.suggestions.push(theme);
+        } else if (lower.includes('warning') || lower.includes('avoid') || lower.includes('risk') || lower.includes('issue') || lower.includes('problem') || lower.includes('danger') || lower.includes('caution')) {
+          categories.warnings.push(theme);
+        } else {
+          // Distribute remaining items across categories based on index for balance
+          const remainder = idx % 4;
+          if (remainder === 0) categories.highlights.push(theme);
+          else if (remainder === 1) categories.actions.push(theme);
+          else if (remainder === 2) categories.suggestions.push(theme);
+          else categories.warnings.push(theme);
+        }
+      });
+      
+      return categories;
+    }
+    
+    function detectConflicts(responses) {
+      if (responses.length < 2) return null;
+      
+      const contentLengths = responses.map(r => (r.content || '').length);
+      const avgLength = contentLengths.reduce((a, b) => a + b, 0) / contentLengths.length;
+      const variance = contentLengths.some(l => Math.abs(l - avgLength) > avgLength * 0.5);
+      
+      const conflicts = [];
+      if (variance) {
+        const shortest = Math.min(...contentLengths);
+        const longest = Math.max(...contentLengths);
+        if (longest > shortest * 2) {
+          conflicts.push(`Response lengths vary significantly (${shortest} vs ${longest} chars)`);
+        }
+      }
+      
+      return conflicts.length > 0 ? conflicts : null;
+    }
+    
+    function renderFormatterPanel(data) {
+      if (!data || !data.responses) {
+        formatterContent.innerHTML = '<div class="formatter-empty"><div>✨</div><p>Send a message to see analysis</p></div>';
+        return;
+      }
+      
+      currentAnalysis = data;
+      const providerCount = data.responses.length;
+      const agreement = data.consensus?.agreement || (providerCount > 1 ? 75 : 100);
+      const hasConflicts = data.consensus?.hasConflicts;
+      const conflictDetails = data.consensus?.conflictDetails;
+      
+      let html = '';
+      
+      // Consensus badge with conflict highlighting
+      const consensusClass = hasConflicts ? 'conflict' : '';
+      
+      // Parse agreement - could be percentage or string
+      let agreeDisplay = agreement;
+      if (typeof agreement === 'number') {
+        agreeDisplay = agreement + '%';
+      } else if (typeof agreement === 'string') {
+        const numericAgreement = parseInt(agreement);
+        agreeDisplay = !isNaN(numericAgreement) ? numericAgreement + '%' : agreement;
+      }
+      
+      // Build provider list
+      const providerNames = data.responses.map(r => r.provider).join(', ');
+      
+      html += `<div class="consensus-badge ${consensusClass}">
+        <div class="percent">${agreeDisplay}</div>
+        <div>
+          <div style="font-weight: 600;">Consensus</div>
+          <div style="font-size: 11px; color: #8b7355; margin-top: 4px;">${providerNames}</div>
+        </div>
+      </div>`;
+      
+      // Show conflict details if any
+      if (conflictDetails && conflictDetails.length > 0) {
+        html += `<div style="background: rgba(210, 140, 100, 0.08); border-left: 2px solid #d28c64; padding: 8px 10px; border-radius: 4px; margin-bottom: 12px; font-size: 11px; color: #8b5a3c;">`;
+        conflictDetails.forEach(conflict => {
+          html += `<div>⚠️ ${conflict}</div>`;
+        });
+        html += `</div>`;
+      }
+      
+      // Key Points - extract from main response instead of API
+      const extractedPoints = extractKeyPoints(data.synthesis);
+      const hasKeyPoints = extractedPoints && extractedPoints.length > 0;
+      
+      if (hasKeyPoints) {
+        html += `<div class="key-points-list">
+          <div style="font-weight: 700; color: #5a5550; margin-bottom: 10px; font-size: 12px;">🎯 Key Insights</div>`;
+        
+        extractedPoints.forEach((item, idx) => {
+          // Assign type based on position for visual variety
+          const types = ['highlight', 'action', 'suggestion', 'warning'];
+          const type = types[idx % 4];
+          const icons = { highlight: '★', action: '→', suggestion: '💡', warning: '⚠️' };
+          const badges = { highlight: 'HIGHLIGHT', action: 'ACTION', suggestion: 'SUGGESTION', warning: 'WARNING' };
+          
+          html += `<div class="item ${type}">
+            <span class="checkmark">${icons[type]}</span>
+            <span><span class="item-type-badge ${type}">${badges[type]}</span>${escapeHtml(item)}</span>
+          </div>`;
+        });
+        
+        html += `</div>`;
+      }
+      
+      // Provider Responses - Collapsible (for transparency/details only)
+      if (data.responses.length > 0) {
+        html += `<div class="collapsible-section">
+          <div class="collapsible-header">
+            <div class="collapsible-title">
+              <span>🔍 Provider Details</span>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="collapsible-body">`;
+        
+        data.responses.forEach((resp, i) => {
+          const time = resp.responseTime ? `${resp.responseTime}ms` : '';
+          const preview = (resp.content || '').substring(0, 150).replace(/\n/g, ' ').trim();
+          const display = preview + (resp.content && resp.content.length > 150 ? '...' : '');
+          
+          html += `<div class="provider-item" onclick="expandProvider(${i})">
+            <div class="provider-item-header">${resp.icon} ${resp.provider}${time ? ` · ${time}` : ''}</div>
+            <div class="provider-item-preview">${display || '(empty response)'}</div>
+          </div>`;
+        });
+        
+        html += `</div></div>`;
+      }
+      
+      formatterContent.innerHTML = html;
+      
+      // Attach event listener for collapsible toggle
+      const collapsibleHeader = document.querySelector('.collapsible-header');
+      if (collapsibleHeader) {
+        collapsibleHeader.addEventListener('click', function() {
+          this.closest('.collapsible-section').classList.toggle('open');
+        });
+      }
+    }
+    
+    function expandProvider(index) {
+      if (!currentAnalysis || !currentAnalysis.responses[index]) return;
+      const resp = currentAnalysis.responses[index];
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;';
+      
+      const box = document.createElement('div');
+      box.style.cssText = 'background: #faf8f3; border-radius: 12px; padding: 24px; max-width: 90%; max-height: 85vh; overflow-y: auto; color: #3a3a3a; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; box-shadow: 0 20px 60px rgba(0,0,0,0.3);';
+      box.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #e5ddd0; padding-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #5a5550;">${resp.icon} ${resp.provider}</h3>
+          <button onclick="this.closest('div').parentElement.parentElement.remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #9d8b7a; padding: 0;">×</button>
+        </div>
+        <div style="line-height: 1.8; font-size: 14px; color: #3a3a3a; white-space: pre-wrap;">${resp.content}</div>
+      `;
+      modal.appendChild(box);
+      document.body.appendChild(modal);
+      modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    }
+    
+    function addMemoryItem(message, isUser) {
+      const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const item = {
+        id: Date.now(),
+        message: message.substring(0, 40) + (message.length > 40 ? '...' : ''),
+        type: isUser ? 'user' : 'assistant',
+        timestamp: time,
+        fullMessage: message
+      };
+      sessionMemory.unshift(item);
+      renderMemory();
+    }
+    
+    function renderMemory() {
+      if (sessionMemory.length === 0) {
+        memoryContent.innerHTML = '<div class="memory-empty"><div>🧠</div><p>Session memory appears here</p></div>';
+        return;
+      }
+      
+      let html = '';
+      sessionMemory.slice(0, 10).forEach(item => {
+        const icon = item.type === 'user' ? '👤' : '🤖';
+        html += `
+          <div class="memory-item" title="${item.fullMessage}">
+            <div class="memory-item-title">${icon} ${item.message}</div>
+            <div class="memory-item-meta"><span class="memory-item-time">${item.timestamp}</span></div>
+          </div>
+        `;
+      });
+      memoryContent.innerHTML = html;
+    }
+    
+    function addMessage(text, isUser = false) {
+      const emptyState = messagesContainer.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+      messageDiv.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
+      
+      messagesContainer.appendChild(messageDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      addMemoryItem(text, isUser);
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function showLoadingFormatter() {
+      formatterContent.innerHTML = `
+        <div class="section open">
+          <div class="section-header">
+            <div class="section-title"><span class="section-icon">⏳</span><span>Gathering responses...</span></div>
+          </div>
+          <div class="section-body"><div class="item loading">Collecting from all providers...</div></div>
+        </div>
+      `;
+    }
+    
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || isLoading) return;
+      
+      isLoading = true;
+      sendBtn.disabled = true;
+      
+      addMessage(text, true);
+      conversationHistory.push({ role: 'user', content: text });
+      showLoadingFormatter();
+      
+      try {
+        const providerData = await getMultiProviderResponse(text);
+        if (providerData && providerData.synthesis) {
+          addMessage(providerData.synthesis, false);
+          conversationHistory.push({ role: 'assistant', content: providerData.synthesis });
+        }
+        if (providerData) renderFormatterPanel(providerData);
+      } catch (error) {
+        console.error('Error:', error);
+        const errorMsg = 'Could not connect to providers. Ensure budget-server is running on port 3003.';
+        addMessage(`Error: ${errorMsg}`, false);
+        formatterContent.innerHTML = `<div class="formatter-empty"><div>⚠️</div><p>${errorMsg}</p></div>`;
+      } finally {
+        isLoading = false;
+        sendBtn.disabled = false;
+        messageInput.value = '';
+        messageInput.focus();
+      }
+    }
+    
+    clearMemoryBtn.addEventListener('click', () => { sessionMemory = []; renderMemory(); });
+    exportMemoryBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(sessionMemory, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `session-${Date.now()}.json`;
+      a.click();
+    });
+    
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !isLoading) sendMessage(); });
+    messageInput.focus();
+    console.log('✨ TooLoo - Real multi-provider responses via /api/v1/providers/aggregate');
+  </script>
+</body>
+</html>

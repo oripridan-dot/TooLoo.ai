@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FORMATTER TEST - Should Display This Title</title>
+  <style>
+    body { font-family: Arial; background: #00ff00; color: black; padding: 20px; }
+    h1 { color: red; font-size: 48px; }
+    p { font-size: 24px; background: yellow; padding: 20px; }
+  </style>
+</head>
+<body>
+  <h1>✨ FORMATTER TEST PAGE ✨</h1>
+  <p>If you see this text with GREEN BACKGROUND, YELLOW paragraph, and RED heading - the demo page is working correctly!</p>
+  <p>Time: <span id="time"></span></p>
+  <button onclick="alert('BUTTON WORKS')">Test Button</button>
+  <script>
+    document.getElementById('time').innerText = new Date().toLocaleTimeString();
+    console.log('Test page loaded successfully');
+  </script>
+</body>
+</html>

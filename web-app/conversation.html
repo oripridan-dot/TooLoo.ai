@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo.ai Conversation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Light mode as default (Claude/Gemini style) */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f5;
+      --bg-tertiary: #ececf1;
+      --text-primary: #0d0d0d;
+      --text-secondary: #565869;
+      --border: #d1d5db;
+      --accent: #10a37f;
+      --accent-hover: #0d9668;
+      --danger: #d97706;
+      
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      
+      --transition: 200ms ease-in-out;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* ===== MAIN CHAT AREA ===== */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+
+    /* Chat Header */
+    .chat-header {
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: center;
+    }
+
+    .provider-badge {
+      padding: var(--spacing-xs) var(--spacing-md);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .provider-badge:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: var(--spacing-xs);
+    }
+
+    .header-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Messages Container */
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+
+    .messages-empty {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: var(--spacing-lg);
+      opacity: 0.5;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: var(--spacing-sm);
+      color: var(--text-primary);
+    }
+
+    .empty-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 300px;
+    }
+
+    /* Message Bubble */
+    .message {
+      display: flex;
+      gap: var(--spacing-lg);
+      animation: slideIn 300ms ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: 12px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .message.assistant .message-content {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .message.user .message-content {
+      background: var(--accent);
+      color: white;
+    }
+
+    .message-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* Input Area */
+    .chat-input-area {
+      padding: var(--spacing-xl);
+      border-top: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    .input-field {
+      flex: 1;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      font-family: inherit;
+      font-size: 15px;
+      resize: none;
+      max-height: 120px;
+      transition: all var(--transition);
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+    }
+
+    .send-btn {
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ===== ACTIVE MEMORY SIDEBAR ===== */
+    .memory-sidebar {
+      width: 320px;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .memory-header {
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+
+    .memory-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .memory-tabs {
+      display: flex;
+      gap: var(--spacing-xs);
+    }
+
+    .memory-tab {
+      padding: var(--spacing-xs) var(--spacing-md);
+      font-size: 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all var(--transition);
+    }
+
+    .memory-tab.active {
+      background: var(--bg-primary);
+      border-color: var(--border);
+      color: var(--text-primary);
+    }
+
+    /* Memory Content */
+    .memory-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-lg);
+    }
+
+    .memory-section {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .memory-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .memory-item {
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .memory-label {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .memory-value {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    .stat-card {
+      padding: var(--spacing-md);
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* Learnings */
+    .learning-tag {
+      display: inline-block;
+      padding: var(--spacing-xs) var(--spacing-md);
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 12px;
+      margin-right: var(--spacing-sm);
+      margin-bottom: var(--spacing-sm);
+      color: var(--text-secondary);
+    }
+
+    /* TooLoo Controls Section */
+    .controls-section {
+      padding: var(--spacing-lg);
+      border-top: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+
+    .control-group {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+      display: block;
+    }
+
+    .control-select {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .control-select:hover {
+      border-color: var(--accent);
+    }
+
+    .control-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .control-toggle:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .toggle-switch {
+      width: 40px;
+      height: 24px;
+      background: #ccc;
+      border-radius: 12px;
+      position: relative;
+      transition: all var(--transition);
+    }
+
+    .toggle-switch.active {
+      background: var(--accent);
+    }
+
+    .toggle-dot {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all var(--transition);
+    }
+
+    .message-provider-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+
+    .provider-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: var(--spacing-md);
+      transition: all var(--transition);
+    }
+
+    .provider-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(16, 163, 127, 0.1);
+    }
+
+    .provider-card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .provider-icon {
+      font-size: 18px;
+    }
+
+    .provider-name {
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .provider-score {
+      background: var(--accent);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .provider-score.high {
+      background: #10b981;
+    }
+
+    .provider-score.medium {
+      background: #f59e0b;
+    }
+
+    .provider-score.low {
+      background: #ef4444;
+    }
+
+    .provider-response {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .provider-meta {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .meta-item {
+      flex: 1;
+    }
+
+    .meta-label {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .meta-value {
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .provider-controls {
+      display: flex;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-md);
+    }
+
+    .control-btn {
+      flex: 1;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: 11px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .control-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .consensus-box {
+      background: linear-gradient(135deg, rgba(16, 163, 127, 0.1), rgba(16, 163, 127, 0.05));
+      border: 1px solid rgba(16, 163, 127, 0.3);
+      border-radius: 8px;
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-md);
+      font-size: 13px;
+    }
+
+    .consensus-title {
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .consensus-item {
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xs);
+      padding-left: var(--spacing-md);
+      position: relative;
+    }
+
+    .consensus-item::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .memory-sidebar {
+        width: 280px;
+      }
+
+      .message-content {
+        max-width: 80%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-layout {
+        flex-direction: column;
+      }
+
+      .chat-main {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .memory-sidebar {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        max-height: 30vh;
+      }
+
+      .message-content {
+        max-width: 85%;
+      }
+
+      .messages-container {
+        padding: var(--spacing-lg);
+      }
+
+      .chat-input-area {
+        padding: var(--spacing-md);
+      }
+
+      .memory-header,
+      .controls-section {
+        padding: var(--spacing-md);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Main Chat -->
+    <div class="chat-main">
+      <!-- Header -->
+      <div class="chat-header">
+        <div class="header-top">
+          <div class="header-title">TooLoo.ai</div>
+          <div class="header-controls">
+            <div class="provider-badge" id="providerBadge">
+              <span class="status-dot"></span>
+              <span id="providerName">Claude</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-subtitle">Powered by intelligent multi-model routing</div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-container" id="messagesContainer">
+        <div class="messages-empty">
+          <div class="empty-icon">💬</div>
+          <div class="empty-title">Welcome to TooLoo.ai</div>
+          <div class="empty-subtitle">Ask anything. I'll learn from our conversation and adapt to your needs.</div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input-area">
+        <form class="input-wrapper" id="messageForm">
+          <textarea
+            class="input-field"
+            id="messageInput"
+            placeholder="Type your message... (Shift+Enter for new line)"
+            rows="1"
+          ></textarea>
+          <button class="send-btn" type="submit" id="sendBtn">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Memory Sidebar -->
+    <div class="memory-sidebar">
+      <div class="memory-header">
+        <div class="memory-title">🧠 Active Memory</div>
+        <div class="memory-tabs">
+          <button class="memory-tab active" data-tab="context">Context</button>
+          <button class="memory-tab" data-tab="learning">Learning</button>
+          <button class="memory-tab" data-tab="control">Control</button>
+        </div>
+      </div>
+
+      <div class="memory-content">
+        <!-- Context Tab -->
+        <div id="context-tab" class="memory-section" style="display: block;">
+          <div class="memory-section-title">📊 Conversation Stats</div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-number" id="messageCount">0</div>
+              <div class="stat-label">Messages</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="topicCount">0</div>
+              <div class="stat-label">Topics</div>
+            </div>
+          </div>
+
+          <div class="memory-section-title" style="margin-top: var(--spacing-xl);">🎯 Conversation Focus</div>
+          <div class="memory-item">
+            <div class="memory-label">Current Topic</div>
+            <div class="memory-value" id="currentTopic">—</div>
+          </div>
+
+          <div class="memory-section-title" style="margin-top: var(--spacing-xl);">🔤 Tone & Style</div>
+          <div class="memory-item">
+            <div class="memory-label">Detected Tone</div>
+            <div class="memory-value" id="detectedTone">Balanced</div>
+          </div>
+        </div>
+
+        <!-- Learning Tab -->
+        <div id="learning-tab" class="memory-section" style="display: none;">
+          <div class="memory-section-title">💡 Key Learnings</div>
+          <div id="learningsList">
+            <div class="memory-item" style="color: var(--text-secondary); font-size: 12px;">
+              No learnings yet. Keep chatting to build your memory.
+            </div>
+          </div>
+
+          <div class="memory-section-title" style="margin-top: var(--spacing-xl);">📝 Conversation Topics</div>
+          <div id="topicsList">
+            <div class="learning-tag">—</div>
+          </div>
+        </div>
+
+        <!-- Control Tab -->
+        <div id="control-tab" class="memory-section" style="display: none;">
+          <div class="memory-section-title">🧠 TooLoo System Status</div>
+          <div class="memory-item">
+            <div class="memory-label">Self-Awareness</div>
+            <div class="memory-value" id="selfAwarenessStatus" style="font-size: 11px; color: var(--accent);">Loading...</div>
+          </div>
+          
+          <div class="memory-item">
+            <div class="memory-label">Services Health</div>
+            <div class="memory-value" id="servicesHealth" style="font-size: 11px;">—</div>
+          </div>
+
+          <div class="memory-item">
+            <div class="memory-label">GitHub Status</div>
+            <div class="memory-value" id="githubStatus" style="font-size: 11px;">—</div>
+          </div>
+
+          <div class="memory-section-title" style="margin-top: var(--spacing-xl);">🎛️ TooLoo Controls</div>
+          
+          <div class="control-group">
+            <label class="control-label">AI Provider</label>
+            <select class="control-select" id="providerSelect">
+              <option value="auto">Auto (Best Available)</option>
+              <option value="claude">Claude 3.5 Haiku</option>
+              <option value="gpt4">GPT-4</option>
+              <option value="gemini">Gemini</option>
+              <option value="ollama">Ollama (Local)</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Training Mode</label>
+            <select class="control-select" id="trainingMode">
+              <option value="standard">Standard Chat</option>
+              <option value="learning">Learning Mode</option>
+              <option value="expert">Expert Mode</option>
+              <option value="beast">Beast Mode (Hyper-Speed)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <div class="control-toggle" id="coachToggle">
+              <span>Auto-Coach</span>
+              <div class="toggle-switch" id="coachSwitch">
+                <div class="toggle-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="memory-section-title" style="margin-top: var(--spacing-xl);">📊 Budget Status</div>
+          <div class="memory-item">
+            <div class="memory-label">Available Budget</div>
+            <div class="memory-value" id="budgetStatus">Unlimited</div>
+          </div>
+
+          <div class="memory-item">
+            <div class="memory-label">This Session</div>
+            <div class="memory-value" id="sessionSpend">0 tokens</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls Footer -->
+      <div class="controls-section" style="display: none;" id="controlsFooter">
+        <button style="width: 100%; padding: var(--spacing-md); background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all var(--transition);">
+          Save Conversation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== DOM Elements =====
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const providerSelect = document.getElementById('providerSelect');
+    const trainingMode = document.getElementById('trainingMode');
+    const coachToggle = document.getElementById('coachToggle');
+    const coachSwitch = document.getElementById('coachSwitch');
+    const memoryTabs = document.querySelectorAll('.memory-tab');
+    const messageCountEl = document.getElementById('messageCount');
+    const topicCountEl = document.getElementById('topicCount');
+    const currentTopicEl = document.getElementById('currentTopic');
+
+    // ===== State =====
+    let messages = [];
+    let currentProvider = 'auto';
+    let coachEnabled = false;
+    let conversationStats = {
+      messageCount: 0,
+      uniqueTopics: new Set(),
+    };
+
+    // ===== Memory Tab Navigation =====
+    memoryTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        document.querySelectorAll('.memory-section').forEach(s => s.style.display = 'none');
+        document.getElementById(`${tabName}-tab`).style.display = 'block';
+        
+        memoryTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // ===== Message Display =====
+    function addMessage(content, role, providerData = null) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      
+      if (messagesContainer.querySelector('.messages-empty')) {
+        messagesContainer.innerHTML = '';
+      }
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+
+      if (role === 'assistant' && providerData) {
+        // Display aggregated response as the main TooLoo response
+        const primaryResponse = providerData.primary.response;
+        const hasMultipleProviders = providerData.all.length > 1;
+        
+        contentDiv.innerHTML = `
+          <div class="tooloo-response">
+            <div class="response-text">${primaryResponse}</div>
+            ${hasMultipleProviders ? `
+              <div class="consensus-box">
+                <div class="consensus-title">🔗 Multi-Provider Consensus</div>
+                ${providerData.consensus.agreement ? `<div class="consensus-item">✓${providerData.consensus.agreement}</div>` : ''}
+                ${providerData.consensus.keyThemes.length > 0 ? `<div class="consensus-item">✓Key Themes: ${providerData.consensus.keyThemes.join(', ')}</div>` : ''}
+              </div>
+              <div class="expand-toggle" data-expanded="false" style="margin-top: var(--spacing-lg); cursor: pointer; user-select: none;">
+                <button class="toggle-btn" style="background: var(--bg-secondary); border: 1px solid var(--border); padding: var(--spacing-sm) var(--spacing-md); border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--text-primary); transition: all var(--transition);">
+                  📊 Show Provider Details (${providerData.all.length} sources)
+                </button>
+              </div>
+              <div class="provider-details-container" style="display: none; margin-top: var(--spacing-lg);">
+                <div class="message-provider-cards">
+                  ${providerData.all.map(provider => `
+                    <div class="provider-card">
+                      <div class="provider-card-header">
+                        <span class="provider-icon">${provider.icon}</span>
+                        <span class="provider-name">${provider.name}</span>
+                        <span class="provider-score ${getScoreClass(provider.score)}">${provider.score}%</span>
+                      </div>
+                      <div class="provider-response">${provider.response}</div>
+                      <div class="provider-meta">
+                        <div class="meta-item">
+                          <div class="meta-label">Speed</div>
+                          <div class="meta-value">${provider.responseTime}ms</div>
+                        </div>
+                        <div class="meta-item">
+                          <div class="meta-label">Quality</div>
+                          <div class="meta-value">${getQualityLabel(provider.score)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else {
+        contentDiv.textContent = content;
+      }
+
+      if (role === 'user') {
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(avatar);
+      } else {
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+      }
+
+      messagesContainer.appendChild(messageDiv);
+      
+      // Add toggle functionality for provider details
+      if (role === 'assistant' && providerData && providerData.all.length > 1) {
+        const toggleBtn = messageDiv.querySelector('.toggle-btn');
+        const detailsContainer = messageDiv.querySelector('.provider-details-container');
+        const expandToggle = messageDiv.querySelector('.expand-toggle');
+        
+        toggleBtn.addEventListener('click', () => {
+          const isExpanded = expandToggle.getAttribute('data-expanded') === 'true';
+          expandToggle.setAttribute('data-expanded', String(!isExpanded));
+          detailsContainer.style.display = isExpanded ? 'none' : 'block';
+          toggleBtn.textContent = isExpanded 
+            ? `📊 Show Provider Details (${providerData.all.length} sources)`
+            : `📊 Hide Provider Details (${providerData.all.length} sources)`;
+          toggleBtn.style.background = isExpanded ? 'var(--bg-secondary)' : 'var(--bg-tertiary)';
+        });
+      }
+      
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // Update stats
+      conversationStats.messageCount++;
+      messageCountEl.textContent = conversationStats.messageCount;
+
+      messages.push({ content, role });
+    }
+
+    function getScoreClass(score) {
+      if (score >= 75) return 'high';
+      if (score >= 50) return 'medium';
+      return 'low';
+    }
+
+    function getQualityLabel(score) {
+      if (score >= 80) return 'Excellent';
+      if (score >= 60) return 'Good';
+      if (score >= 40) return 'Fair';
+      return 'Poor';
+    }
+
+    // ===== Form Submission =====
+    messageForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, 'user');
+      messageInput.value = '';
+      messageInput.style.height = '40px';
+      sendBtn.disabled = true;
+
+      try {
+        // Get provider selection from control tab
+        const selectedProviders = [currentProvider];
+        
+        // Call provider aggregation API
+        const response = await fetch('/api/v1/providers/aggregate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            selectedProviders: currentProvider === 'auto' ? [] : selectedProviders
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.aggregated) {
+          // Display aggregated response with provider cards
+          addMessage('', 'assistant', data.aggregated);
+        } else {
+          addMessage('Error: ' + (data.error || 'Failed to get response'), 'assistant');
+        }
+      } catch (error) {
+        console.error('API error:', error);
+        addMessage('Network error: ' + error.message, 'assistant');
+      } finally {
+        sendBtn.disabled = false;
+        messageInput.focus();
+      }
+    });
+
+    // ===== Input Auto-resize =====
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+    });
+
+    // ===== Coach Toggle =====
+    coachToggle.addEventListener('click', () => {
+      coachEnabled = !coachEnabled;
+      coachSwitch.classList.toggle('active');
+    });
+
+    // ===== Provider Selection =====
+    providerSelect.addEventListener('change', (e) => {
+      currentProvider = e.target.value;
+      const providerNames = {
+        'auto': 'Auto',
+        'claude': 'Claude',
+        'gpt4': 'GPT-4',
+        'gemini': 'Gemini',
+        'ollama': 'Ollama',
+        'deepseek': 'DeepSeek'
+      };
+      document.getElementById('providerName').textContent = providerNames[currentProvider];
+    });
+
+    // ===== Fetch TooLoo Self-Awareness Status =====
+    async function loadToolooStatus() {
+      try {
+        // Load self-awareness
+        const awarenessRes = await fetch('/api/v1/tooloo/self-awareness');
+        const awarenessData = await awarenessRes.json();
+        if (awarenessData.selfAwareness) {
+          const readiness = awarenessData.selfAwareness.readiness;
+          const statusText = readiness.selfHealingEnabled ? '✅ Fully Aware' : '⚠️ Limited';
+          document.getElementById('selfAwarenessStatus').textContent = statusText;
+        }
+
+        // Load system health
+        const healthRes = await fetch('/api/v1/tooloo/status');
+        const healthData = await healthRes.json();
+        if (healthData.status) {
+          const health = healthData.status;
+          const healthText = `${health.healthyServices}/${health.totalServices} services`;
+          document.getElementById('servicesHealth').textContent = healthText;
+        }
+
+        // Load GitHub status
+        const githubRes = await fetch('/api/v1/tooloo/github/status');
+        const githubData = await githubRes.json();
+        if (githubData.github && githubData.github.status) {
+          const branch = githubData.github.status.branch;
+          const changes = githubData.github.status.changedFiles;
+          const githubText = `${branch} (${changes} changes)`;
+          document.getElementById('githubStatus').textContent = githubText;
+        }
+      } catch (error) {
+        console.error('Failed to load TooLoo status:', error);
+        document.getElementById('selfAwarenessStatus').textContent = '⚠️ Offline';
+      }
+    }
+
+    // ===== Initialize =====
+    messageInput.focus();
+    loadToolooStatus();
+    // Refresh status every 10 seconds
+    setInterval(loadToolooStatus, 10000);
+  </script>
+</body>
+</html>

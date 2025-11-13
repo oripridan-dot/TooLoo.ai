@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TooLoo.ai – Chat with Enhanced Responses</title>
+<link rel="stylesheet" href="/css/markdown-response.css">
+<style>
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto;background:#0f1420;color:#e8eef6;display:flex;flex-direction:column;height:100vh}
+  header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.12);display:flex;gap:12px;align-items:center}
+  a{color:#9ac6ff;text-decoration:none}
+  .wrap{flex:1;display:flex;gap:12px;padding:12px;overflow:hidden}
+  .pane{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;display:flex;flex-direction:column}
+  .msgs{flex:1;overflow:auto;padding:12px}
+  .msg{padding:12px;margin:8px 0;border-radius:10px;max-width:85%;word-wrap:break-word}
+  .me{background:#1d2736;margin-left:auto;max-width:70%}
+  .ai{background:#1a2332;border:1px solid rgba(255,255,255,0.1);max-width:95%}
+  .sys{background:#0b1220;color:#9fb0c6;font-size:12px}
+  form{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,0.12)}
+  input,button,textarea{font-family:inherit}
+  textarea{flex:1;resize:none;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:#0b1220;color:#e8eef6;padding:10px;height:52px}
+  button{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:#151f2c;color:#e8eef6;cursor:pointer}
+  button:hover{background:#1f2a38}
+  .side{width:300px}
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);font-size:11px;margin-right:6px}
+  .logo{font-weight:800}
+  .note{padding:10px 12px;margin:8px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.18);font-size:12px;color:#9fb0c6}
+  
+  /* Enhanced AI message styling for markdown content */
+  .ai .markdown-content {
+    color: #d0d8e0;
+  }
+  
+  .ai .quality-badge {
+    margin: 0 0 16px 0;
+  }
+  
+  .ai .quality-badge.premium {
+    background: rgba(255, 193, 7, 0.2);
+    border-left-color: #ffc107;
+    color: #ffc107;
+  }
+  
+  .ai .quality-badge.good {
+    background: rgba(33, 150, 243, 0.2);
+    border-left-color: #2196f3;
+    color: #64b5f6;
+  }
+  
+  .ai .quality-badge.okay {
+    background: rgba(156, 39, 176, 0.2);
+    border-left-color: #9c27b0;
+    color: #ce93d8;
+  }
+  
+  .ai .section-header {
+    color: #64b5f6;
+    border-left-color: #2196f3;
+  }
+  
+  .ai .attribution-block {
+    background: rgba(100, 181, 246, 0.1);
+    border-left-color: #64b5f6;
+    color: #90caf9;
+    margin-top: 16px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  
+  .ai .inline-code {
+    background: rgba(255, 255, 255, 0.12);
+    color: #81c784;
+  }
+  
+  .ai .code-block {
+    background: #0d1117;
+    border-left-color: #2196f3;
+  }
+  
+  .quality-score {
+    font-weight: 600;
+  }
+  
+  .loading-spinner {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <strong class="logo">💬 TooLoo Chat</strong>
+    <span class="pill" id="policy">policy: —</span>
+    <span class="pill" id="mode">mode: —</span>
+    <span style="margin-left:auto"><a href="/control-room">← Control Room</a></span>
+  </header>
+  <div class="wrap">
+    <div class="pane">
+      <div class="msgs" id="msgs"></div>
+      <form id="f">
+        <textarea id="t" placeholder="Ask anything…"></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+    <div class="pane side">
+      <div class="msgs" id="side">
+        <div class="note">📝 <strong>Session Memory Enabled</strong><br>All conversations are tracked and accessible via API.</div>
+        <div class="note">✨ <strong>Enhanced Responses</strong><br>All AI responses are automatically formatted with visual hierarchy, quality scores, and provider attribution.</div>
+        <div class="note">🎯 <strong>4 Format Types</strong><br>Technical, Strategic, Creative, or Standard based on response type.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/markdown-renderer.js"></script>
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const msgs = $('msgs');
+    
+    // Initialize markdown renderer
+    const renderer = new MarkdownRenderer();
+    
+    const add = (cls, text, isHtml = false)=>{
+      const d = document.createElement('div');
+      d.className = `msg ${cls}`;
+      if (isHtml) {
+        d.innerHTML = text;
+      } else {
+        d.textContent = text;
+      }
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+      return d;
+    };
+    
+    const safeJson = async (r)=>{ 
+      try { 
+        return await r.json(); 
+      } catch { 
+        return null; 
+      } 
+    };
+    
+    const sid = (()=>{
+      try {
+        const k = 'tooloo.chat.sid';
+        let v = localStorage.getItem(k);
+        if (!v) {
+          v = Math.random().toString(36).slice(2, 10);
+          localStorage.setItem(k, v);
+        }
+        return v;
+      } catch {
+        return 'default';
+      }
+    })();
+    
+    async function refreshPolicy() {
+      try {
+        const r = await fetch('/api/v1/providers/policy');
+        const j = await safeJson(r);
+        if (j?.ok) {
+          $('policy').textContent = `policy: ${j.policy.criticality}/${j.policy.maxConcurrency}`;
+        }
+      } catch {}
+      
+      try {
+        const s = await fetch('/system/status');
+        const j = await safeJson(s);
+        $('mode').textContent = `mode: ${j?.autoCoach?.active ? 'background' : 'chat'}`;
+      } catch {}
+    }
+    
+    refreshPolicy();
+    setInterval(refreshPolicy, 4000);
+
+    $('f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = $('t').value.trim();
+      if (!text) return;
+      
+      $('t').value = '';
+      add('me', text);
+      
+      // Track session ID and show loading
+      const aiMsg = add('ai', '⏳ Processing...');
+      
+      // Persist user message
+      fetch('/api/v1/chat/append', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sid, role: 'user', text })
+      }).catch(() => {});
+      
+      // Try enhanced endpoint first, fall back to stream
+      try {
+        // Call the enhanced chat endpoint that returns formatted responses
+        const response = await fetch('/api/v1/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            sessionId: sid,
+            userId: sid,
+            provider: 'claude' // Can be made dynamic
+          })
+        });
+        
+        const data = await safeJson(response);
+        
+        if (data && data.response) {
+          const formattedResponse = data.response;
+          const quality = data.quality || 0;
+          const provider = data.provider || 'TooLoo.ai';
+          
+          // Render markdown to HTML
+          const html = renderer.render(formattedResponse);
+          
+          // Replace loading message with rendered content
+          aiMsg.innerHTML = html;
+          aiMsg.className = 'msg ai';
+          
+          // Persist assistant message
+          fetch('/api/v1/chat/append', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: sid,
+              role: 'assistant',
+              text: formattedResponse,
+              meta: { quality, provider, enhanced: true }
+            })
+          }).catch(() => {});
+        } else {
+          aiMsg.textContent = 'Error: No response received';
+        }
+      } catch (err) {
+        // Fallback to event stream if enhanced endpoint fails
+        try {
+          const qs = new URLSearchParams({ prompt: text, ttlSeconds: '30' });
+          const es = new EventSource('/api/v1/chat/burst-stream?' + qs.toString());
+          let fullText = '';
+          
+          es.addEventListener('meta', (ev) => {
+            const m = JSON.parse(ev.data);
+            if (m.cached) {
+              const n = document.createElement('div');
+              n.className = 'msg sys';
+              n.textContent = '✓ Cached response';
+              msgs.appendChild(n);
+              msgs.scrollTop = msgs.scrollHeight;
+            }
+          });
+          
+          es.addEventListener('token', (ev) => {
+            const t = JSON.parse(ev.data);
+            fullText += t.token;
+            aiMsg.textContent = fullText;
+            msgs.scrollTop = msgs.scrollHeight;
+          });
+          
+          es.addEventListener('done', (ev) => {
+            const d = JSON.parse(ev.data);
+            fullText = d.fullText;
+            
+            // Try to render as markdown if it looks formatted
+            if (fullText.includes('##') || fullText.includes('**')) {
+              const html = renderer.render(fullText);
+              aiMsg.innerHTML = html;
+            } else {
+              aiMsg.textContent = fullText;
+            }
+            
+            // Persist assistant message
+            fetch('/api/v1/chat/append', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId: sid,
+                role: 'assistant',
+                text: fullText,
+                meta: {}
+              })
+            }).catch(() => {});
+            
+            es.close();
+          });
+          
+          es.onerror = () => {
+            es.close();
+            aiMsg.textContent = 'Stream error';
+          };
+        } catch (streamErr) {
+          aiMsg.textContent = 'Network error: ' + streamErr.message;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
