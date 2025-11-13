@@ -1,0 +1,110 @@
+{
+  "name": "TooLoo.ai Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "forwardPorts": [
+    3000,
+    3001,
+    3002,
+    3003,
+    3004,
+    3005,
+    3006,
+    3007,
+    3008,
+    3009,
+    3020,
+    3100,
+    3123,
+    3200,
+    3300,
+    3400
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Web Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3001": {
+      "label": "Training Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3002": {
+      "label": "Meta Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3003": {
+      "label": "Budget Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3004": {
+      "label": "Coach Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3005": {
+      "label": "Cup Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3006": {
+      "label": "Product Development Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3007": {
+      "label": "Segmentation Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3008": {
+      "label": "Reports Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3009": {
+      "label": "Capabilities Server",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3020": {
+      "label": "Context Service",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3100": {
+      "label": "Orchestration Service",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3123": {
+      "label": "Orchestrator",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3200": {
+      "label": "Provider Service",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3300": {
+      "label": "Analytics Service",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "3400": {
+      "label": "Integration Service",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    }
+  },
+  "postCreateCommand": "npm install",
+  "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  }
+}
