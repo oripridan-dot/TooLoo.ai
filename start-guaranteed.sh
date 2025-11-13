@@ -281,10 +281,20 @@ startup_sequence() {
 # ============================================
 
 verify_services() {
-  log STEP "Phase 5/8: Verifying core services"
+  log STEP "Phase 5/8: Verifying all 16+ services"
   
+  # All original services (3001-3009)
   local services=(
-    "3001:Learning"
+    "3001:Training"
+    "3002:Meta"
+    "3003:Budget"
+    "3004:Coach"
+    "3005:Cup"
+    "3006:Product"
+    "3007:Segmentation"
+    "3008:Reports"
+    "3009:Capabilities"
+    # V3 modern architecture services
     "3200:Provider"
     "3020:Context"
     "3400:Integration"
