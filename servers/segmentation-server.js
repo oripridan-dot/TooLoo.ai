@@ -16,13 +16,21 @@ import { segment, LABELS } from '../engine/segmenter.js';
 import SegmentationUnifier from '../engine/segmentation-unifier.js';
 import SemanticSegmentation from '../engine/semantic-segmentation.js';
 import { default as SemanticTraitsAnalyzer } from '../engine/semantic-traits-analyzer.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
 
-const app = express();
-const PORT = process.env.SEGMENTATION_PORT || 3007;
+// Initialize service with unified middleware (replaces 25 LOC of boilerplate)
+const svc = new ServiceFoundation('segmentation-server', process.env.SEGMENTATION_PORT || 3007);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+const app = svc.app;
+const PORT = svc.port;
+
+// Initialize distributed tracing (Phase 6C)
+const tracer = new DistributedTracer({ serviceName: 'segmentation-server', samplingRate: 0.15 });
+svc.environmentHub.registerComponent('tracer', tracer, ['observability', 'tracing', 'segmentation']);
 
 // Initialize semantic segmentation engine
 const semanticEngine = new SemanticSegmentation();
@@ -122,10 +130,7 @@ function aggregateTraits(patternCandidates) {
 
 // Routes
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'segmentation', port: PORT });
-});
-
+// Health endpoint is provided by ServiceFoundation
 app.get('/api/v1/segmentation/status', (req, res) => {
   try {
     const status = unifier.getStatus();
@@ -337,11 +342,17 @@ app.get('/api/v1/segmentation/cohorts/:userId', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`🧩 Segmentation Server running on http://127.0.0.1:${PORT}`);
-  console.log('📊 Endpoints: /api/v1/segmentation/{analyze,status,configure,demo,cohorts}');
+// Observability endpoint (Phase 6C)
+app.get('/api/v1/system/observability', (req, res) => {
+  res.json({
+    service: 'segmentation-server',
+    tracer: tracer.getMetrics(),
+    circuitBreakers: svc.getCircuitBreakerStatus()
+  });
 });
+
+// Start server with unified initialization
+svc.start();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

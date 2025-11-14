@@ -20,16 +20,46 @@ import { promises as fs } from 'fs';
 import { generateSmartLLM, getProviderStatus } from '../engine/llm-provider.js';
 import CostCalculator from '../engine/cost-calculator.js';
 import AnalyticsEngine from '../engine/analytics-engine.js';
+import ResponsePresentationEngine from '../engines/response-presentation-engine.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { CircuitBreaker } from '../lib/circuit-breaker.js';
+import { retry } from '../lib/retry-policy.js';
+import { PersistentCache } from '../lib/persistent-cache.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
 
-const app = express();
-const PORT = process.env.REPORTS_PORT || 3008;
+// Initialize service with unified middleware (replaces 25 LOC of boilerplate)
+const svc = new ServiceFoundation('reports-server', process.env.REPORTS_PORT || 3008);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+const app = svc.app;
+const PORT = svc.port;
+
+// Phase 6: Performance optimization
+const cache = new PersistentCache({ ttl: 10000 }); // 10 second cache for analytics
+const tracer = new DistributedTracer({ serviceName: 'reports-server', samplingRate: 0.2 }); // 20% sampling
 
 // Phase 3: Cost tracking
 const costCalc = new CostCalculator();
+
+// Response Presentation Engine (consolidated from response-presentation-server)
+const presentationEngine = new ResponsePresentationEngine({
+  minConsensusThreshold: 60,
+  maxActionItems: 5,
+  maxConflicts: 3,
+  summaryLength: 150
+});
+
+// Circuit breakers for service calls - prevent cascading failures
+const serviceBreakers = {
+  training: new CircuitBreaker('training', { failureThreshold: 3, resetTimeoutMs: 20000 }),
+  meta: new CircuitBreaker('meta', { failureThreshold: 3, resetTimeoutMs: 20000 }),
+  budget: new CircuitBreaker('budget', { failureThreshold: 3, resetTimeoutMs: 20000 }),
+  coach: new CircuitBreaker('coach', { failureThreshold: 3, resetTimeoutMs: 20000 }),
+  segmentation: new CircuitBreaker('segmentation', { failureThreshold: 3, resetTimeoutMs: 20000 }),
+  capabilities: new CircuitBreaker('capabilities', { failureThreshold: 3, resetTimeoutMs: 20000 })
+};
 
 // Service URLs
 const SERVICES = {
@@ -41,10 +71,18 @@ const SERVICES = {
   capabilities: `http://127.0.0.1:${process.env.CAPABILITIES_PORT || 3009}`
 };
 
-// Utility functions
+// Utility functions with resilience
 async function fetchService(service, endpoint) {
   try {
-    const response = await fetch(`${SERVICES[service]}${endpoint}`);
+    // Wrap with circuit breaker and retry
+    const breaker = serviceBreakers[service];
+    const response = await breaker.execute(
+      () => retry(
+        () => fetch(`${SERVICES[service]}${endpoint}`),
+        { maxAttempts: 2, backoffMs: 100, timeout: 5000 }
+      ),
+      { fallback: () => new Response(JSON.stringify({ ok: false, error: 'Service unavailable' }), { status: 503 }) }
+    );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -203,11 +241,11 @@ function generateInsights(data) {
 
 // Routes
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'reports', port: PORT });
-});
-
+// Health endpoint is provided by ServiceFoundation
 app.get('/api/v1/reports/comprehensive', async (req, res) => {
+  const { traceId, spanId } = tracer.startTrace();
+  const fetchSpan = tracer.startSpan(traceId, 'fetch-services');
+  
   try {
     const [training, meta, segmentation, budget, coach] = await Promise.all([
       fetchService('training', '/api/v1/training/overview'),
@@ -216,6 +254,9 @@ app.get('/api/v1/reports/comprehensive', async (req, res) => {
       fetchService('budget', '/api/v1/budget'),
       fetchService('coach', '/api/v1/auto-coach/status')
     ]);
+
+    tracer.endSpan(traceId, fetchSpan, 'success');
+    const analyzeSpan = tracer.startSpan(traceId, 'analyze-data');
 
     // Extract capability data from meta-learning if available
     const capabilities = meta?.report?.phases?.[1]?.findings?.[1] || null;
@@ -274,8 +315,16 @@ app.get('/api/v1/reports/comprehensive', async (req, res) => {
       ]
     };
 
+    tracer.endSpan(traceId, analyzeSpan, 'success');
+    tracer.endTrace(traceId, 'success', { 
+      trainingComplete: training?.data ? true : false,
+      servicesQueried: 5 
+    });
+
     res.json(report);
   } catch (error) {
+    tracer.endSpan(traceId, analyzeSpan, 'error', { error: error.message });
+    tracer.endTrace(traceId, 'error', { error: error.message });
     res.status(500).json({ ok: false, error: error.message });
   }
 });
@@ -1076,11 +1125,422 @@ app.post('/api/v1/reports/compare', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`📊 Advanced Reporting Server running on http://127.0.0.1:${PORT}`);
-  console.log('📈 Endpoints: /api/v1/reports/{comprehensive,evolution,capabilities,dashboard,budget-dashboard,analyze,trends,anomalies,compare}');
+// ============= Response Presentation Consolidation (formerly response-presentation-server) =============
+
+/**
+ * POST /api/v1/present
+ * Transform provider responses into TooLoo format
+ */
+app.post('/api/v1/present', async (req, res) => {
+  try {
+    const { query, providerResponses, userContext } = req.body;
+
+    if (!query) {
+      return res.status(400).json({ ok: false, error: 'Query required' });
+    }
+
+    if (!providerResponses || Object.keys(providerResponses).length === 0) {
+      return res.status(400).json({ ok: false, error: 'Provider responses required' });
+    }
+
+    const presentation = await presentationEngine.presentResponse({
+      query,
+      providerResponses,
+      userContext: userContext || {}
+    });
+
+    res.json({
+      ok: true,
+      presentation,
+      processingTime: `${Date.now() - req.startTime}ms` || 'calculated'
+    });
+  } catch (error) {
+    console.error('[Presentation] Error:', error.message);
+    res.status(500).json({ 
+      ok: false, 
+      error: error.message || 'Presentation generation failed' 
+    });
+  }
 });
+
+/**
+ * POST /api/v1/present/batch
+ * Process multiple query/response sets
+ */
+app.post('/api/v1/present/batch', async (req, res) => {
+  try {
+    const { presentations = [] } = req.body;
+
+    if (!Array.isArray(presentations) || presentations.length === 0) {
+      return res.status(400).json({ ok: false, error: 'presentations array required' });
+    }
+
+    const startTime = Date.now();
+    const results = await Promise.all(
+      presentations.map(p => 
+        presentationEngine.presentResponse({
+          query: p.query,
+          providerResponses: p.providerResponses || {},
+          userContext: p.userContext || {}
+        }).catch(err => ({ error: err.message, failed: true }))
+      )
+    );
+
+    const processingTime = Date.now() - startTime;
+
+    res.json({
+      ok: true,
+      results,
+      count: results.length,
+      failedCount: results.filter(r => r.failed).length,
+      processingTime: `${processingTime}ms`,
+      avgTimePerPresentation: `${Math.round(processingTime / results.length)}ms`
+    });
+  } catch (error) {
+    console.error('[Presentation Batch] Error:', error.message);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/present/schema
+ * Get documentation of response schema
+ */
+app.get('/api/v1/present/schema', (req, res) => {
+  res.json({
+    ok: true,
+    schema: {
+      presentation: {
+        metadata: {
+          query: 'string',
+          providers: 'number',
+          timestamp: 'ISO string',
+          consensusLevel: 'number (0-100)'
+        },
+        markdown: 'string (formatted for display)',
+        components: {
+          consensus: 'array',
+          conflicts: 'array',
+          actions: 'array',
+          advisory: 'object'
+        }
+      }
+    }
+  });
+});
+
+// ============================================================================
+// ANALYTICS SERVICE CONSOLIDATION ENDPOINTS (formerly analytics-service.js)
+// ============================================================================
+
+/**
+ * GET /api/v1/metrics/user/:userId - Get user metrics
+ * Consolidated from analytics-service.js - Metrics endpoint
+ */
+app.get('/api/v1/metrics/user/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { timeframe } = req.query;
+
+    const metrics = presentationEngine.metricsCollector?.getUserMetrics(userId, timeframe || 'all');
+
+    if (!metrics) {
+      return res.status(404).json({ error: 'User metrics not found' });
+    }
+
+    res.json(metrics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/metrics/engagement/:userId - Get engagement score
+ * Consolidated from analytics-service.js - Engagement endpoint
+ */
+app.get('/api/v1/metrics/engagement/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const score = presentationEngine.metricsCollector?.getEngagementScore(userId);
+
+    res.json({ userId, engagementScore: score || 0 });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/metrics/progress/:userId - Get progress metrics
+ * Consolidated from analytics-service.js - Progress endpoint
+ */
+app.get('/api/v1/metrics/progress/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const progress = presentationEngine.metricsCollector?.getProgressMetrics(userId);
+
+    res.json({ userId, progress: progress || {} });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/metrics/learning-path/:userId - Get learning path
+ * Consolidated from analytics-service.js - Learning path endpoint
+ */
+app.get('/api/v1/metrics/learning-path/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const path = presentationEngine.metricsCollector?.getLearningPath(userId);
+
+    res.json({ userId, learningPath: path || {} });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/metrics/trend/:userId - Get metrics trend
+ * Consolidated from analytics-service.js - Trend endpoint
+ */
+app.get('/api/v1/metrics/trend/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { metric, days } = req.query;
+
+    const trend = presentationEngine.metricsCollector?.getMetricsTrend(userId, metric || 'sessions', parseInt(days) || 30);
+
+    res.json({ userId, trend: trend || {} });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/metrics/global - Get global metrics
+ * Consolidated from analytics-service.js - Global metrics endpoint
+ */
+app.get('/api/v1/metrics/global', (req, res) => {
+  try {
+    const { timeframe } = req.query;
+    const metrics = presentationEngine.metricsCollector?.getGlobalMetrics(timeframe || 'week');
+
+    res.json({ globalMetrics: metrics || {} });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/metrics/top-performers - Get top performers
+ * Consolidated from analytics-service.js - Top performers endpoint
+ */
+app.get('/api/v1/metrics/top-performers', (req, res) => {
+  try {
+    const { limit } = req.query;
+    const performers = presentationEngine.metricsCollector?.getTopPerformers(parseInt(limit) || 10);
+
+    res.json({ topPerformers: performers || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/badges/user/:userId - Get user badges
+ * Consolidated from analytics-service.js - Badge endpoint
+ */
+app.get('/api/v1/badges/user/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const badges = presentationEngine.badgeSystem?.getUserBadges(userId);
+    const totalPoints = presentationEngine.badgeSystem?.getUserTotalPoints(userId);
+
+    res.json({ userId, badges: badges || [], totalCount: badges?.length || 0, totalPoints: totalPoints || 0 });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/badges/:badgeId - Get badge stats
+ * Consolidated from analytics-service.js - Badge stats endpoint
+ */
+app.get('/api/v1/badges/:badgeId', (req, res) => {
+  try {
+    const { badgeId } = req.params;
+    const stats = presentationEngine.badgeSystem?.getBadgeStats(badgeId);
+
+    if (!stats) {
+      return res.status(404).json({ error: 'Badge not found' });
+    }
+
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/badges/award - Award a badge
+ * Consolidated from analytics-service.js - Badge award endpoint
+ */
+app.post('/api/v1/badges/award', (req, res) => {
+  try {
+    const { userId, badgeId } = req.body;
+
+    if (!userId || !badgeId) {
+      return res.status(400).json({ error: 'userId and badgeId required' });
+    }
+
+    const badge = presentationEngine.badgeSystem?.awardBadge(userId, badgeId);
+
+    if (!badge) {
+      return res.status(400).json({ error: 'Badge already awarded or not found' });
+    }
+
+    res.json(badge);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/badges/check-eligibility/:userId - Check badge eligibility
+ * Consolidated from analytics-service.js - Eligibility endpoint
+ */
+app.get('/api/v1/badges/check-eligibility/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const metrics = presentationEngine.metricsCollector?.getUserMetrics(userId);
+    const engagementScore = presentationEngine.metricsCollector?.getEngagementScore(userId);
+
+    if (!metrics) {
+      return res.status(404).json({ error: 'User metrics not found' });
+    }
+
+    const eligible = presentationEngine.badgeSystem?.checkEligibility(userId, metrics, engagementScore);
+
+    res.json({ userId, eligibleBadges: eligible || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/badges/most-awarded - Get most awarded badges
+ * Consolidated from analytics-service.js - Most awarded endpoint
+ */
+app.get('/api/v1/badges/most-awarded', (req, res) => {
+  try {
+    const { limit } = req.query;
+    const badges = presentationEngine.badgeSystem?.getMostAwardedBadges(parseInt(limit) || 5);
+
+    res.json({ mostAwarded: badges || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/badges/leaderboard - Get badge leaderboard
+ * Consolidated from analytics-service.js - Leaderboard endpoint
+ */
+app.get('/api/v1/badges/leaderboard', (req, res) => {
+  try {
+    const { limit } = req.query;
+    const leaderboard = presentationEngine.badgeSystem?.getGlobalLeaderboard(parseInt(limit) || 10);
+
+    res.json({ leaderboard: leaderboard || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/badges/rarity-distribution - Get badge rarity distribution
+ * Consolidated from analytics-service.js - Rarity distribution endpoint
+ */
+app.get('/api/v1/badges/rarity-distribution', (req, res) => {
+  try {
+    const distribution = presentationEngine.badgeSystem?.getRarityDistribution();
+
+    res.json({ rarityDistribution: distribution || {} });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/summary/:userId - Get user analytics summary
+ * Consolidated from analytics-service.js - Summary endpoint
+ */
+app.get('/api/v1/analytics/summary/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const metrics = presentationEngine.metricsCollector?.getUserMetrics(userId);
+    const badges = presentationEngine.badgeSystem?.getUserBadges(userId);
+    const engagementScore = presentationEngine.metricsCollector?.getEngagementScore(userId);
+
+    if (!metrics) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      userId,
+      metrics,
+      badges,
+      engagementScore,
+      totalPoints: presentationEngine.badgeSystem?.getUserTotalPoints(userId) || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/dashboard - Get analytics dashboard
+ * Consolidated from analytics-service.js - Dashboard endpoint
+ */
+app.get('/api/v1/analytics/dashboard', (req, res) => {
+  try {
+    const globalMetrics = presentationEngine.metricsCollector?.getGlobalMetrics('week');
+    const topPerformers = presentationEngine.metricsCollector?.getTopPerformers(5);
+    const mostAwardedBadges = presentationEngine.badgeSystem?.getMostAwardedBadges(5);
+    const leaderboard = presentationEngine.badgeSystem?.getGlobalLeaderboard(10);
+
+    res.json({
+      globalMetrics: globalMetrics || {},
+      topPerformers: topPerformers || [],
+      mostAwardedBadges: mostAwardedBadges || [],
+      leaderboard: leaderboard || []
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Phase 6 Observability endpoint
+app.get('/api/v1/system/observability', (req, res) => {
+  try {
+    res.json({
+      ok: true,
+      observability: {
+        cache: cache.getStats(),
+        tracer: tracer.getMetrics(),
+        circuitBreakers: Object.fromEntries(
+          Object.entries(serviceBreakers).map(([name, cb]) => [name, cb.getState()])
+        )
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Start server with unified initialization
+svc.start();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

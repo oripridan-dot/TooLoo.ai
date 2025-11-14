@@ -7,11 +7,21 @@ import AnalyticsIntegration from '../modules/analytics-integration.js';
 import fs from 'fs';
 import path from 'path';
 import environmentHub from '../engine/environment-hub.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
 
-const app = express();
-const PORT = process.env.COACH_PORT || 3004;
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+// Initialize service with unified middleware (replaces 25 LOC of boilerplate)
+const svc = new ServiceFoundation('coach-server', process.env.COACH_PORT || 3004);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
+
+const app = svc.app;
+const PORT = svc.port;
+
+// Initialize distributed tracing (Phase 6C)
+const tracer = new DistributedTracer({ serviceName: 'coach-server', samplingRate: 0.1 });
+svc.environmentHub.registerComponent('tracer', tracer, ['observability', 'tracing', 'coaching']);
 
 // Load coach settings with defaults
 function loadSettings() {
@@ -68,7 +78,7 @@ const coach = new AutoCoachEngine({ trainingCamp, metaLearningEngine: meta, logg
 const analytics = new AnalyticsIntegration();
 environmentHub.registerComponent('autoCoachEngine', coach, ['auto-coach', 'meta-learning', 'training-camp']);
 
-app.get('/health', (req,res)=> res.json({ ok:true, server:'coach', time:new Date().toISOString() }));
+// Auto-coach endpoints
 app.post('/api/v1/auto-coach/start', async (req,res)=>{ try{ const s=await coach.start(); res.json({ ok:true, status:s }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
 app.post('/api/v1/auto-coach/stop', async (req,res)=>{ try{ const s=await coach.stop(); res.json({ ok:true, status:s }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
 app.get('/api/v1/auto-coach/status', (req,res)=>{ try{ res.json({ ok:true, status: coach.getStatus() }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
@@ -210,4 +220,14 @@ app.get('/api/v1/auto-coach/fast-lane', async (req,res)=>{
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-app.listen(PORT, ()=> console.log(`coach-server listening on http://localhost:${PORT}`));
+// Observability endpoint (Phase 6C)
+app.get('/api/v1/system/observability', (req, res) => {
+  res.json({
+    service: 'coach-server',
+    tracer: tracer.getMetrics(),
+    circuitBreakers: svc.getCircuitBreakerStatus()
+  });
+});
+
+svc.start();
+

@@ -3,11 +3,18 @@ import cors from 'cors';
 import ConfidenceScorer from '../engine/confidence-scorer.js';
 import CostCalculator from '../engine/cost-calculator.js';
 import { v4 as uuidv4 } from 'uuid';
+import fetch from 'node-fetch';
+import { generateLLM, getProviderStatus } from '../engine/llm-provider.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
 
-const app = express();
-const PORT = process.env.CUP_PORT || 3005;
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+// Initialize service with unified middleware (replaces 25 LOC of boilerplate)
+const svc = new ServiceFoundation('cup-server', process.env.CUP_PORT || 3005);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
+
+const app = svc.app;
+const PORT = svc.port;
 
 // Initialize confidence scorer
 const scorer = new ConfidenceScorer({
@@ -18,9 +25,6 @@ const scorer = new ConfidenceScorer({
 
 // Phase 3: Initialize cost calculator for ROI-based tournament ranking
 const costCalc = new CostCalculator();
-
-// Health
-app.get('/health', (req,res)=> res.json({ ok:true, server:'cup', time:new Date().toISOString() }));
 
 // In-memory tournament state and results
 const tournaments = new Map(); // tournamentId -> { id, nodeId, candidates, results, winner, mergedResult }
@@ -339,4 +343,79 @@ app.post('/api/v1/cup/suggest-provider', (req, res) => {
   }
 });
 
-app.listen(PORT, ()=> console.log(`cup-server listening on http://localhost:${PORT}`));
+// ============= Providers Arena Consolidation (formerly providers-arena-server) =============
+const systemPrompt = 'You are TooLoo, the AI assistant for TooLoo.ai. Never introduce yourself as any other AI or company. Structure ALL responses hierarchically: Start with a clear **heading** or key point. Use **bold** for emphasis. Break into sections with sub-headings if needed. Use bullet points (- or •) for lists. Keep it lean: no filler, direct answers only. Respond in clear, concise English. Be friendly, insightful, and proactive.';
+
+const providerMap = {
+  'ollama': 'ollama', 'claude': 'anthropic', 'anthropic': 'anthropic',
+  'gpt': 'openai', 'gpt-4': 'openai', 'openai': 'openai',
+  'deepseek': 'deepseek', 'gemini': 'gemini', 'localai': 'localai', 'huggingface': 'huggingface'
+};
+
+/**
+ * POST /api/v1/arena/query
+ * Multi-provider comparison (consolidated from providers-arena-server)
+ */
+app.post('/api/v1/arena/query', async (req, res) => {
+  try {
+    const { query, providers: reqProviders = ['ollama', 'deepseek', 'claude'], compareOnly = false } = req.body || {};
+    if (!query) return res.status(400).json({ ok: false, error: 'query required' });
+
+    const providers = reqProviders.filter(p => providerMap[p]);
+    if (providers.length === 0) return res.status(400).json({ ok: false, error: 'no valid providers' });
+
+    const responses = await Promise.allSettled(
+      providers.map(p => generateLLM({ prompt: query, system: systemPrompt, provider: providerMap[p], criticality: 'normal' }))
+    );
+
+    const results = providers.map((p, i) => ({
+      provider: p,
+      response: responses[i].status === 'fulfilled' ? responses[i].value.text : `[${responses[i].reason?.message || 'failed'}]`
+    }));
+
+    if (compareOnly) {
+      return res.json({ ok: true, query, results, timestamp: new Date().toISOString() });
+    }
+
+    // Synthesize a best response
+    const successResults = results.filter(r => !r.response.startsWith('['));
+    const synthesis = successResults.length > 0 
+      ? successResults[0].response 
+      : 'Unable to synthesize - all providers failed';
+
+    res.json({
+      ok: true,
+      query,
+      synthesis,
+      results,
+      bestProvider: results[0].provider,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/arena/status
+ * Multi-provider status (consolidated from providers-arena-server)
+ */
+app.get('/api/v1/arena/status', (req, res) => {
+  try {
+    const status = getProviderStatus();
+    const available = Object.entries(status)
+      .filter(([_, s]) => s.available && s.enabled)
+      .map(([name, s]) => ({ name, latency: s.latency, costs: s.costs }));
+    
+    res.json({
+      ok: true,
+      providers: available,
+      totalAvailable: available.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+svc.start();

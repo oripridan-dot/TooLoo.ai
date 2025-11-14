@@ -4,16 +4,47 @@ import BudgetManager from '../engine/budget-manager.js';
 import CostCalculator from '../engine/cost-calculator.js';
 import { getProviderStatus, generateSmartLLM } from '../engine/llm-provider.js';
 import environmentHub from '../engine/environment-hub.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { CircuitBreaker } from '../lib/circuit-breaker.js';
+import { RequestDeduplicator } from '../lib/request-deduplicator.js';
+import { retry } from '../lib/retry-policy.js';
+import { ProviderQualityLearner } from '../lib/provider-quality-learner.js';
+import { PersistentCache } from '../lib/persistent-cache.js';
+import { RateLimiter } from '../lib/rate-limiter.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
 
-const app = express();
-const PORT = process.env.BUDGET_PORT || 3003;
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+// Initialize service with unified middleware (replaces 30 LOC of boilerplate)
+const svc = new ServiceFoundation('budget-server', process.env.BUDGET_PORT || 3003);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
+
+const app = svc.app;
+const PORT = svc.port;
+
+// Phase 6: Performance optimization layers
+const cache = new PersistentCache({ ttl: 5000 }); // 5 second cache for provider queries
+const rateLimiter = new RateLimiter({ rateLimit: 100, refillRate: 10 }); // 100 tokens, refill at 10/sec
+const tracer = new DistributedTracer({ serviceName: 'budget-server' }); // Request tracing
 
 const budget = new BudgetManager({ limit: Number(process.env.DAILY_BUDGET_LIMIT || 5.0) });
 const costCalc = new CostCalculator(); // Phase 3: Cost-aware optimization
+const qualityLearner = new ProviderQualityLearner(); // Phase 3: ML-driven provider selection
 environmentHub.registerComponent('budgetManager', budget, ['budget-management', 'provider-orchestration']);
 environmentHub.registerComponent('costCalculator', costCalc, ['cost-tracking', 'roi-analysis']);
+environmentHub.registerComponent('qualityLearner', qualityLearner, ['provider-intelligence', 'adaptive-routing']);
+environmentHub.registerComponent('cache', cache, ['performance-caching', 'query-optimization']);
+environmentHub.registerComponent('rateLimiter', rateLimiter, ['api-protection', 'fair-distribution']);
+environmentHub.registerComponent('tracer', tracer, ['observability', 'request-tracking']);
+
+// Resilience layers for provider calls
+const providerCircuitBreaker = new CircuitBreaker('provider-llm', {
+  failureThreshold: 5,      // Open after 5 failures
+  resetTimeoutMs: 30000,    // Try again after 30s
+  monitoringPeriodMs: 10000 // Check every 10s
+});
+
+const burstDeduplicator = new RequestDeduplicator();
 
 // Real-time subscribers for performance monitoring
 const realtimeSubscribers = new Set();
@@ -38,70 +69,240 @@ app.post('/api/v1/providers/policy', (req, res) => {
   } catch (e) { res.status(500).json({ ok:false, error: e.message }); }
 });
 
-app.get('/health', (req,res)=> res.json({ ok:true, server:'budget', time:new Date().toISOString() }));
+// Resilience status endpoint - shows circuit breaker and deduplicator health
+app.get('/api/v1/providers/resilience-status', (req, res) => {
+  try {
+    res.json({
+      ok: true,
+      circuitBreaker: providerCircuitBreaker.getState(),
+      deduplicator: burstDeduplicator.getState(),
+      cache: cache.getStats(),
+      rateLimiter: rateLimiter.getStats(),
+      tracer: tracer.getMetrics(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) { res.status(500).json({ ok:false, error: e.message }); }
+});
+
+// Budget & provider endpoints
 app.get('/api/v1/budget', (req,res)=>{ try{ res.json({ ok:true, budget: budget.getStatus() }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
 app.get('/api/v1/providers/status', (req,res)=>{ try{ res.json({ ok:true, status: getProviderStatus() }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
 
-// Simple in-memory TTL cache for provider burst prompts
-const CACHE = new Map(); // key -> { text, until }
-function cacheGet(key){ const v=CACHE.get(key); if (v && v.until> Date.now()) return v.text; CACHE.delete(key); return null; }
-function cacheSet(key, text, ttlMs=3600000){ CACHE.set(key, { text, until: Date.now()+ttlMs }); }
+// Simple in-memory TTL cache for provider burst prompts - REPLACED with PersistentCache (Phase 6A)
+async function cacheGet(key){ 
+  return await cache.get(key);
+}
+async function cacheSet(key, text, ttlMs=3600000){ 
+  await cache.set(key, text, ttlMs);
+}
 
-// Provider-aware burst: dial concurrency based on status and cache with TTL
+// Core burst logic - wrapped with circuit breaker for resilience
+async function executeBurst(prompt, ttlSeconds, criticality, concurrency, status) {
+  const systemPrompt = 'You are TooLoo, the AI assistant for TooLoo.ai. Never introduce yourself as any other AI or company. Structure ALL responses hierarchically: Start with a clear **heading** or key point. Use **bold** for emphasis. Break into sections with sub-headings if needed. Use bullet points (- or •) for lists. Keep it lean: no filler, direct answers only. Respond in clear, concise English. Be friendly, insightful, and proactive. If a small UI tweak would improve clarity (e.g., switch to lean/detailed mode, show/hide status, start a system check), append a final fenced UI control block using the exact syntax and same-origin paths only: ```ui\n{"action":"setMode","mode":"lean"}\n``` You may also use: toggleSection {id, show}, open {url:"/path"}, priority {mode:"chat"|"background"}, startSystem, systemCheck, scrollTo {id}, setTheme {primaryColor}, setChatStyle {compact}, showHint {text}. Keep the main content clean and do not include UI JSON inside it.';
+  
+  const available = Object.values(status).filter(s=>s.available && s.enabled).length;
+  if (available === 0) {
+    return `[mock] ${prompt} — providers unavailable; enable DeepSeek/OSS to replace this cached mock.`;
+  }
+  
+  // Execute with retry policy for transient errors
+  const startTime = Date.now();
+  try {
+    const text = await retry(async () => {
+      const tasks = [];
+      for (let i=0; i<concurrency; i++) {
+        tasks.push(generateSmartLLM({ prompt, system: systemPrompt, criticality }));
+      }
+      const results = await Promise.allSettled(tasks);
+      const ok = results.find(r=>r.status==='fulfilled' && r.value?.text);
+      return ok ? ok.value.text : (results.find(r=>r.status==='fulfilled')?.value?.text || '');
+    }, {
+      maxAttempts: 2,
+      backoffMs: 100,
+      timeout: 30000
+    });
+
+    // Phase 3: Record outcome for quality learning
+    const latency = Date.now() - startTime;
+    const outcome = {
+      timestamp: new Date().toISOString(),
+      prompt: prompt.substring(0, 100),
+      success: !!text,
+      latency,
+      concurrency,
+      criticality,
+      providers: available,
+      responseLength: text ? text.length : 0
+    };
+    
+    // Record outcome for ML-driven provider selection
+    qualityLearner.recordOutcome('burst', outcome);
+    
+    return text;
+  } catch (error) {
+    // Record failure outcome
+    const latency = Date.now() - startTime;
+    qualityLearner.recordOutcome('burst', {
+      timestamp: new Date().toISOString(),
+      prompt: prompt.substring(0, 100),
+      success: false,
+      latency,
+      concurrency,
+      criticality,
+      providers: available,
+      error: error.message
+    });
+    throw error;
+  }
+}
+
+// Provider-aware burst: dial concurrency based on status, use deduplication & circuit breaker
 app.post('/api/v1/providers/burst', async (req,res)=>{
+  const { traceId, spanId } = tracer.startTrace();
+  const querySpan = tracer.startSpan(traceId, 'post-burst');
+  
   try{
     const { prompt = 'quick check', ttlSeconds = 3600, criticality = providerPolicy.criticality } = req.body || {};
-    const cached = cacheGet(prompt);
-    if (cached) return res.json({ ok:true, cached:true, text: cached });
+    
+    // Phase 6B: Rate limiting
+    const clientId = req.ip || req.user?.id || 'anonymous';
+    const rateResult = await rateLimiter.acquire(clientId, 1);
+    if (!rateResult.acquired) {
+      tracer.endSpan(traceId, querySpan, 'error', { error: 'rate_limited' });
+      tracer.endTrace(traceId, 'error', { reason: 'rate_limit' });
+      return res.status(429).json({ ok:false, error: 'Rate limited', retryAfter: rateResult.waitTime });
+    }
+    
+    // 1. Check cache first (Phase 6A: PersistentCache)
+    const cached = await cacheGet(prompt);
+    if (cached) {
+      tracer.addTag(traceId, 'cache', 'hit');
+      tracer.endSpan(traceId, querySpan, 'success', { cached: true });
+      tracer.endTrace(traceId, 'success', { cached: true });
+      return res.json({ ok:true, cached:true, text: cached });
+    }
+
+    tracer.addTag(traceId, 'cache', 'miss');
+
+    // 2. Use deduplicator to eliminate duplicate concurrent requests
+    const deducpSpan = tracer.startSpan(traceId, 'deduplication');
+    const result = await burstDeduplicator.deduplicate(prompt, async () => {
+      const status = getProviderStatus();
+      const available = Object.values(status).filter(s=>s.available && s.enabled).length;
+      const dynamic = Math.max(1, Math.min(available*2, 6));
+      const concurrency = Math.max(providerPolicy.minConcurrency, Math.min(providerPolicy.maxConcurrency, dynamic));
+      
+      // 3. Execute with circuit breaker for resilience
+      const text = await providerCircuitBreaker.execute(
+        () => executeBurst(prompt, ttlSeconds, criticality, concurrency, status),
+        { fallback: () => `[fallback] ${prompt} — providers temporarily unavailable.` }
+      );
+      
+      await cacheSet(prompt, text, Number(ttlSeconds)*1000);
+      return text;
+    }, { ttlMs: Number(ttlSeconds)*1000 });
+
+    tracer.endSpan(traceId, deducpSpan, 'success');
 
     const status = getProviderStatus();
-    // naive concurrency dial: count available providers
     const available = Object.values(status).filter(s=>s.available && s.enabled).length;
     const dynamic = Math.max(1, Math.min(available*2, 6));
     const concurrency = Math.max(providerPolicy.minConcurrency, Math.min(providerPolicy.maxConcurrency, dynamic));
-    let text = '';
-    if (available>0){
-      const systemPrompt = 'You are TooLoo, the AI assistant for TooLoo.ai. Never introduce yourself as any other AI or company. Structure ALL responses hierarchically: Start with a clear **heading** or key point. Use **bold** for emphasis. Break into sections with sub-headings if needed. Use bullet points (- or •) for lists. Keep it lean: no filler, direct answers only. Respond in clear, concise English. Be friendly, insightful, and proactive. If a small UI tweak would improve clarity (e.g., switch to lean/detailed mode, show/hide status, start a system check), append a final fenced UI control block using the exact syntax and same-origin paths only: ```ui\n{"action":"setMode","mode":"lean"}\n``` You may also use: toggleSection {id, show}, open {url:"/path"}, priority {mode:"chat"|"background"}, startSystem, systemCheck, scrollTo {id}, setTheme {primaryColor}, setChatStyle {compact}, showHint {text}. Keep the main content clean and do not include UI JSON inside it.';
-      const tasks = [];
-      for (let i=0;i<concurrency;i++) tasks.push(generateSmartLLM({ prompt, system: systemPrompt, criticality }));
-      const results = await Promise.allSettled(tasks);
-      const ok = results.find(r=>r.status==='fulfilled' && r.value?.text);
-      text = ok ? ok.value.text : (results.find(r=>r.status==='fulfilled')?.value?.text || '');
-    }else{
-      text = `[mock] ${prompt} — providers unavailable; enable DeepSeek/OSS to replace this cached mock.`;
-    }
-    cacheSet(prompt, text, Number(ttlSeconds)*1000);
-    res.json({ ok:true, cached:false, text, concurrency, providersAvailable: available>0, policy: providerPolicy });
-  }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+    
+    tracer.endSpan(traceId, querySpan, 'success');
+    tracer.endTrace(traceId, 'success', { cached: false, providers: available });
+    
+    res.json({ 
+      ok:true, 
+      cached:false, 
+      text: result, 
+      concurrency, 
+      providersAvailable: available>0, 
+      policy: providerPolicy,
+      dedup: burstDeduplicator.getState(),
+      traceId
+    });
+  }catch(e){ 
+    tracer.endSpan(traceId, querySpan, 'error', { error: e.message });
+    tracer.endTrace(traceId, 'error', { error: e.message });
+    res.status(500).json({ ok:false, error:e.message }); 
+  }
 });
 
-// GET fallback for environments where POST JSON is tricky
+// GET fallback for environments where POST JSON is tricky (reuses same logic)
 app.get('/api/v1/providers/burst', async (req,res)=>{
+  const { traceId, spanId } = tracer.startTrace();
+  const querySpan = tracer.startSpan(traceId, 'get-burst');
+  
   try{
     const q = req.query||{};
     const prompt = String(q.prompt||'quick check');
     const ttlSeconds = Number(q.ttlSeconds||3600);
     const criticality = String(q.criticality||providerPolicy.criticality);
-    const cached = cacheGet(prompt);
-    if (cached) return res.json({ ok:true, cached:true, text: cached });
+    
+    // Phase 6B: Rate limiting
+    const clientId = req.ip || req.user?.id || 'anonymous';
+    const rateResult = await rateLimiter.acquire(clientId, 1);
+    if (!rateResult.acquired) {
+      tracer.endSpan(traceId, querySpan, 'error', { error: 'rate_limited' });
+      tracer.endTrace(traceId, 'error', { reason: 'rate_limit' });
+      return res.status(429).json({ ok:false, error: 'Rate limited', retryAfter: rateResult.waitTime });
+    }
+    
+    // Check cache first (Phase 6A: PersistentCache)
+    const cached = await cacheGet(prompt);
+    if (cached) {
+      tracer.addTag(traceId, 'cache', 'hit');
+      tracer.endSpan(traceId, querySpan, 'success', { cached: true });
+      tracer.endTrace(traceId, 'success', { cached: true });
+      return res.json({ ok:true, cached:true, text: cached });
+    }
+
+    tracer.addTag(traceId, 'cache', 'miss');
+
+    // Use deduplicator to eliminate duplicate concurrent requests
+    const deducpSpan = tracer.startSpan(traceId, 'deduplication');
+    const result = await burstDeduplicator.deduplicate(prompt, async () => {
+      const status = getProviderStatus();
+      const available = Object.values(status).filter(s=>s.available && s.enabled).length;
+      const dynamic = Math.max(1, Math.min(available*2, 6));
+      const concurrency = Math.max(providerPolicy.minConcurrency, Math.min(providerPolicy.maxConcurrency, dynamic));
+      
+      // Execute with circuit breaker for resilience
+      const text = await providerCircuitBreaker.execute(
+        () => executeBurst(prompt, ttlSeconds, criticality, concurrency, status),
+        { fallback: () => `[fallback] ${prompt} — providers temporarily unavailable.` }
+      );
+      
+      await cacheSet(prompt, text, Number(ttlSeconds)*1000);
+      return text;
+    }, { ttlMs: Number(ttlSeconds)*1000 });
+
+    tracer.endSpan(traceId, deducpSpan, 'success');
+
     const status = getProviderStatus();
     const available = Object.values(status).filter(s=>s.available && s.enabled).length;
     const dynamic = Math.max(1, Math.min(available*2, 6));
     const concurrency = Math.max(providerPolicy.minConcurrency, Math.min(providerPolicy.maxConcurrency, dynamic));
-    let text = '';
-    if (available>0){
-      const systemPrompt = 'You are TooLoo, the AI assistant for TooLoo.ai. Never introduce yourself as any other AI or company. Structure ALL responses hierarchically: Start with a clear **heading** or key point. Use **bold** for emphasis. Break into sections with sub-headings if needed. Use bullet points (- or •) for lists. Keep it lean: no filler, direct answers only. Respond in clear, concise English. Be friendly, insightful, and proactive. If a small UI tweak would improve clarity (e.g., switch to lean/detailed mode, show/hide status, start a system check), append a final fenced UI control block using the exact syntax and same-origin paths only: ```ui\n{"action":"setMode","mode":"lean"}\n``` You may also use: toggleSection {id, show}, open {url:"/path"}, priority {mode:"chat"|"background"}, startSystem, systemCheck, scrollTo {id}, setTheme {primaryColor}, setChatStyle {compact}, showHint {text}. Keep the main content clean and do not include UI JSON inside it.';
-      const tasks = [];
-      for (let i=0;i<concurrency;i++) tasks.push(generateSmartLLM({ prompt, system: systemPrompt, criticality }));
-      const results = await Promise.allSettled(tasks);
-      const ok = results.find(r=>r.status==='fulfilled' && r.value?.text);
-      text = ok ? ok.value.text : (results.find(r=>r.status==='fulfilled')?.value?.text || '');
-    }else{
-      text = `[mock] ${prompt} — providers unavailable; enable DeepSeek/OSS to replace this cached mock.`;
-    }
-    cacheSet(prompt, text, ttlSeconds*1000);
-    res.json({ ok:true, cached:false, text, concurrency, providersAvailable: available>0, policy: providerPolicy });
-  }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+    
+    tracer.endSpan(traceId, querySpan, 'success');
+    tracer.endTrace(traceId, 'success', { cached: false, providers: available });
+    
+    res.json({ 
+      ok:true, 
+      cached:false, 
+      text: result, 
+      concurrency, 
+      providersAvailable: available>0, 
+      policy: providerPolicy,
+      dedup: burstDeduplicator.getState(),
+      traceId
+    });
+  }catch(e){ 
+    tracer.endSpan(traceId, querySpan, 'error', { error: e.message });
+    tracer.endTrace(traceId, 'error', { error: e.message });
+    res.status(500).json({ ok:false, error:e.message }); 
+  }
 });
 
 app.get('/api/v1/budget/history', (req, res) => {
@@ -390,4 +591,40 @@ app.get('/api/v1/providers/performance-stream', (req, res) => {
   }
 });
 
-app.listen(PORT, ()=> console.log(`budget-server listening on http://localhost:${PORT}`));
+/**
+ * GET /api/v1/system/learning-stats
+ * Returns ML-driven provider quality learning statistics (Phase 3)
+ */
+app.get('/api/v1/system/learning-stats', (req, res) => {
+  try {
+    const stats = qualityLearner.getState();
+    const status = getProviderStatus();
+    
+    // Combine learning insights with provider status
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      learning: {
+        outcomes: stats.outcomeCount || 0,
+        providers: Object.keys(stats.providerScores || {}),
+        topPerformer: stats.topPerformer || 'not-yet-determined',
+        adaptationLevel: stats.outcomeCount > 100 ? 'high' : stats.outcomeCount > 20 ? 'medium' : 'low',
+        confidenceThreshold: stats.confidenceThreshold || 0.6
+      },
+      providerQuality: stats.providerScores || {},
+      recentOutcomes: stats.recentOutcomes || [],
+      recommendations: qualityLearner.getRecommendations() || {},
+      intelligence: {
+        model: 'ProviderQualityLearner',
+        features: ['latency', 'success-rate', 'cost-efficiency', 'concurrency-adaptation'],
+        phase: 'Phase 3: Intelligence Layer',
+        enabled: true
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+svc.start();
+

@@ -10,43 +10,39 @@ import fetch from 'node-fetch';
 import ReferralSystem from '../referral-system.js';
 import { handleChatWithAI } from '../services/chat-handler-ai.js';
 import { convert as formatConvert } from '../lib/format-handlers/index.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { CircuitBreaker } from '../lib/circuit-breaker.js';
+import { retry } from '../lib/retry-policy.js';
+import { RateLimiter } from '../lib/rate-limiter.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
+import githubProvider from '../engine/github-provider.js';
+import LLMProvider from '../engine/llm-provider.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = process.env.WEB_PORT || 3000;
+// Initialize service with unified middleware (replaces 50 LOC of boilerplate)
+const svc = new ServiceFoundation('web-server', process.env.WEB_PORT || 3000);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
 
-// CORS whitelist configuration - restrict to known origins
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allowed origins (localhost + production domains)
-    const allowedOrigins = [
-      'http://127.0.0.1:3000',
-      'http://localhost:3000',
-      'http://127.0.0.1:3001',
-      'http://localhost:3001',
-      'http://localhost',
-      'http://127.0.0.1',
-      'https://tooloo.ai',
-      'https://www.tooloo.ai',
-    ];
-    
-    // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS policy'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID'],
+const app = svc.app;
+const PORT = svc.port;
+
+// Phase 6: Performance & observability optimization
+const rateLimiter = new RateLimiter({ rateLimit: 1000, refillRate: 100 }); // 1000 tokens, 100/sec refill
+const tracer = new DistributedTracer({ serviceName: 'web-server', samplingRate: 0.1 }); // 10% sampling
+
+// Circuit breakers for inter-service calls - prevent cascading failures
+const serviceCircuitBreakers = {
+  training: new CircuitBreaker('training-service', { failureThreshold: 3, resetTimeoutMs: 30000 }),
+  meta: new CircuitBreaker('meta-service', { failureThreshold: 3, resetTimeoutMs: 30000 }),
+  budget: new CircuitBreaker('budget-service', { failureThreshold: 3, resetTimeoutMs: 30000 }),
+  segmentation: new CircuitBreaker('segmentation-service', { failureThreshold: 3, resetTimeoutMs: 30000 }),
+  reports: new CircuitBreaker('reports-service', { failureThreshold: 3, resetTimeoutMs: 30000 }),
+  capabilities: new CircuitBreaker('capabilities-service', { failureThreshold: 3, resetTimeoutMs: 30000 })
 };
-
-app.use(cors(corsOptions));
-app.use(express.json({ limit: '2mb' }));
-
 // ======= UI Activity Monitoring & Real Data Pipeline =======
 // CRITICAL: Disable ALL caching in development (prevents stale UI from showing)
 app.use((req, res, next) => {
@@ -55,6 +51,50 @@ app.use((req, res, next) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
+// Phase 6B: Rate limiting middleware for API endpoints (protects against abuse)
+app.use('/api', async (req, res, next) => {
+  const clientId = req.ip || req.user?.id || 'anonymous';
+  const result = await rateLimiter.acquire(clientId, 1);
+  
+  if (!result.acquired) {
+    const { traceId } = tracer.startTrace();
+    tracer.endTrace(traceId, 'error', { reason: 'rate_limit', client: clientId });
+    return res.status(429).json({ 
+      ok: false, 
+      error: 'Too many requests', 
+      retryAfter: Math.ceil(result.waitTime / 1000),
+      traceId
+    });
+  }
+  
+  res.setHeader('X-RateLimit-Limit', '1000');
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, Math.floor(result.waitTime / 10)));
+  next();
+});
+
+// Phase 6C: Distributed tracing for API requests
+app.use('/api', (req, res, next) => {
+  const { traceId, spanId } = tracer.startTrace();
+  req.traceId = traceId;
+  req.spanId = spanId;
+  
+  const startTime = Date.now();
+  const originalSend = res.send;
+  res.send = function(data) {
+    const latency = Date.now() - startTime;
+    const status = res.statusCode;
+    tracer.endTrace(req.traceId, status < 400 ? 'success' : 'error', {
+      method: req.method,
+      path: req.path,
+      status,
+      latency
+    });
+    return originalSend.call(this, data);
+  };
+  
   next();
 });
 
@@ -750,6 +790,37 @@ app.post('/api/v1/activity/config', async (req,res)=>{
   }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
 });
 
+// Resilient proxy helper - wraps fetch with circuit breaker and retry
+async function resilientProxy(serviceName, port, originalUrl, method, headers, body) {
+  const breaker = serviceCircuitBreakers[serviceName];
+  
+  return await breaker.execute(async () => {
+    const url = `http://127.0.0.1:${port}${originalUrl}`;
+    const init = { method, headers: { 'content-type': headers['content-type']||'application/json' } };
+    if (method !== 'GET' && method !== 'HEAD') {
+      init.body = body;
+    }
+    
+    // Add retry logic for transient errors
+    return await retry(async () => {
+      const response = await fetch(url, init);
+      if (!response.ok && response.status >= 500) {
+        const error = new Error(`Service ${serviceName} returned ${response.status}`);
+        error.statusCode = response.status;
+        throw error;
+      }
+      return response;
+    }, { maxAttempts: 2, backoffMs: 100 });
+  }, {
+    fallback: async () => {
+      // Return service unavailable response
+      return new Response(JSON.stringify({ 
+        ok: false, 
+        error: `${serviceName} service temporarily unavailable` 
+      }), { status: 503 });
+    }
+  });
+}
 
 // Explicit proxy for capabilities (ensures correct routing for nested paths)
 // Explicit proxy for capabilities (ensures correct routing for nested paths)
@@ -1027,11 +1098,7 @@ app.post('/system/stop', async (req,res)=>{
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-// Health
-app.get('/health', (req,res)=> res.json({ ok:true, server:'web', time: new Date().toISOString() }));
-
 // API-style health alias for UIs expecting /api/v1/health via the web proxy
-app.get('/api/v1/health', (req,res)=> res.json({ ok:true, server:'web', time: new Date().toISOString() }));
 
 // Serve the latest design system artifact as a live, interactive HTML page
 app.get('/design-system', async (req, res) => {
@@ -1727,4 +1794,508 @@ app.all(['/api/v1/events', '/api/v1/events/*'], async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', ()=> console.log(`web-server listening on http://127.0.0.1:${PORT} and 0.0.0.0:${PORT}`));
+// ============= GitHub Context Consolidation (formerly github-context-server) =============
+
+/**
+ * GET /api/v1/github/info - Repository metadata
+ */
+app.get('/api/v1/github/info', async (req, res) => {
+  const info = await githubProvider.getRepoInfo();
+  res.json({ ok: !!info, info: info || { error: 'GitHub not configured' } });
+});
+
+/**
+ * GET /api/v1/github/issues - Recent issues for context
+ */
+app.get('/api/v1/github/issues', async (req, res) => {
+  const limit = parseInt(req.query.limit || '5');
+  const issues = await githubProvider.getRecentIssues(limit);
+  res.json({ ok: true, issues });
+});
+
+/**
+ * GET /api/v1/github/readme - Project README
+ */
+app.get('/api/v1/github/readme', async (req, res) => {
+  const readme = await githubProvider.getReadme();
+  res.json({ ok: !!readme, readme: readme || null });
+});
+
+/**
+ * POST /api/v1/github/file - Get specific file
+ */
+app.post('/api/v1/github/file', async (req, res) => {
+  const { path } = req.body || {};
+  if (!path) return res.status(400).json({ ok: false, error: 'path required' });
+
+  const file = await githubProvider.getFileContent(path);
+  res.json({ ok: !!file, file: file || null });
+});
+
+/**
+ * POST /api/v1/github/files - Get multiple files
+ */
+app.post('/api/v1/github/files', async (req, res) => {
+  const { paths } = req.body || {};
+  if (!paths || !Array.isArray(paths)) {
+    return res.status(400).json({ ok: false, error: 'paths array required' });
+  }
+
+  const files = await githubProvider.getMultipleFiles(paths);
+  res.json({ ok: true, files });
+});
+
+/**
+ * GET /api/v1/github/structure - Repo file tree
+ */
+app.get('/api/v1/github/structure', async (req, res) => {
+  const path = req.query.path || '';
+  const recursive = req.query.recursive === 'true';
+  const structure = await githubProvider.getRepoStructure(path, recursive);
+  res.json({ ok: !!structure, structure: structure || null });
+});
+
+/**
+ * GET /api/v1/github/context - Full context for providers
+ * Returns repo info, recent issues, and README for system prompts
+ */
+app.get('/api/v1/github/context', async (req, res) => {
+  const context = await githubProvider.getContextForProviders();
+  res.json({ ok: !!context, context });
+});
+
+/**
+ * POST /api/v1/github/analyze - Ask providers to analyze the repo
+ * Example: "What are the main architectural patterns used?"
+ */
+app.post('/api/v1/github/analyze', async (req, res) => {
+  const { question, providers = ['claude', 'gpt', 'gemini'], depth = 'medium' } = req.body || {};
+
+  if (!question) {
+    return res.status(400).json({ ok: false, error: 'question required' });
+  }
+
+  // Get repo context
+  const context = await githubProvider.getContextForProviders();
+
+  // Build analysis prompt
+  const systemPrompt = `You are a code analyst for the TooLoo.ai GitHub repository.
+You have access to the project context below and should provide insightful analysis.
+
+${context}
+
+Provide clear, actionable insights.`;
+
+  try {
+    const llm = new LLMProvider();
+
+    // Helper: map friendly provider names to LLMProvider keys
+    const mapProvider = (p) => {
+      if (!p) return null;
+      const key = String(p).toLowerCase();
+      if (key === 'claude') return 'anthropic';
+      if (key === 'gpt' || key === 'openai') return 'openai';
+      if (key === 'gemini') return 'gemini';
+      if (key === 'ollama') return 'ollama';
+      if (key === 'localai') return 'localai';
+      if (key === 'openinterpreter') return 'openinterpreter';
+      if (key === 'deepseek') return 'deepseek';
+      if (key === 'hf' || key === 'huggingface') return 'huggingface';
+      return key;
+    };
+
+    let results = [];
+
+    if (providers && Array.isArray(providers) && providers.length > 0) {
+      // Call each requested provider in parallel (best-effort)
+      const calls = providers.map(async (p) => {
+        const key = mapProvider(p);
+        if (!key || !llm.providers[key]) {
+          return { provider: key || p, ok: false, error: 'provider-unavailable' };
+        }
+
+        try {
+          // Route to explicit provider call if available on the LLMProvider
+          switch (key) {
+          case 'anthropic': {
+            const r = await llm.callClaude(question, systemPrompt);
+            return { provider: 'anthropic', ok: true, ...r };
+          }
+          case 'openai': {
+            const r = await llm.callOpenAI(question, systemPrompt);
+            return { provider: 'openai', ok: true, ...r };
+          }
+          case 'gemini': {
+            const r = await llm.callGemini(question, systemPrompt);
+            return { provider: 'gemini', ok: true, ...r };
+          }
+          case 'ollama': {
+            const r = await llm.callOllama(question, systemPrompt);
+            return { provider: 'ollama', ok: true, ...r };
+          }
+          case 'localai': {
+            const r = await llm.callLocalAI(question, systemPrompt);
+            return { provider: 'localai', ok: true, ...r };
+          }
+          case 'openinterpreter': {
+            const r = await llm.callOpenInterpreter(question, systemPrompt);
+            return { provider: 'openinterpreter', ok: true, ...r };
+          }
+          case 'huggingface': {
+            const r = await llm.callHuggingFace(question, systemPrompt);
+            return { provider: 'huggingface', ok: true, ...r };
+          }
+          case 'deepseek': {
+            const r = await llm.callDeepSeek(question, systemPrompt);
+            return { provider: 'deepseek', ok: true, ...r };
+          }
+          default: {
+            // Fall back to the orchestrator selection
+            const r = await llm.generateSmartLLM({ prompt: question, system: systemPrompt });
+            return { provider: r.provider || 'auto', ok: true, ...r };
+          }
+          }
+        } catch (err) {
+          return { provider: key || p, ok: false, error: String(err?.message || err) };
+        }
+      });
+
+      results = await Promise.all(calls);
+    } else {
+      // No specific providers requested: let the orchestrator pick the best one
+      const r = await llm.generateSmartLLM({ prompt: question, system: systemPrompt });
+      results = [{ provider: r.provider || 'auto', ok: true, ...r }];
+    }
+
+    res.json({ ok: true, question, providers, depth, status: 'done', results });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message || String(e) });
+  }
+});
+
+// ============================================================================
+// UI ACTIVITY MONITOR CONSOLIDATION ENDPOINTS (formerly ui-activity-monitor.js)
+// ============================================================================
+
+// In-memory UI activity tracking
+const uiActivityStore = {
+  sessions: new Map(),
+  metrics: {
+    totalSessions: 0,
+    totalEvents: 0,
+    totalClickEvents: 0,
+    totalScrollEvents: 0
+  }
+};
+
+/**
+ * POST /api/v1/events - Record user activity events
+ * Consolidated from ui-activity-monitor.js
+ */
+app.post('/api/v1/events', (req, res) => {
+  try {
+    const { sessionId, events } = req.body;
+
+    if (!sessionId || !Array.isArray(events)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing sessionId or events array'
+      });
+    }
+
+    // Process each event
+    events.forEach(event => {
+      if (!uiActivityStore.sessions.has(sessionId)) {
+        uiActivityStore.sessions.set(sessionId, { events: [], startTime: Date.now() });
+      }
+      const session = uiActivityStore.sessions.get(sessionId);
+      session.events.push(event);
+      uiActivityStore.metrics.totalEvents++;
+      if (event.type === 'click') uiActivityStore.metrics.totalClickEvents++;
+      if (event.type === 'scroll') uiActivityStore.metrics.totalScrollEvents++;
+    });
+
+    res.json({
+      ok: true,
+      processed: events.length,
+      sessionId
+    });
+  } catch (e) {
+    console.error('Error processing events:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/events/batch - Batch record events
+ * Consolidated from ui-activity-monitor.js
+ */
+app.post('/api/v1/events/batch', (req, res) => {
+  try {
+    const { sessionId, events } = req.body;
+
+    if (!sessionId || !Array.isArray(events)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing sessionId or events array'
+      });
+    }
+
+    events.forEach(event => {
+      if (!uiActivityStore.sessions.has(sessionId)) {
+        uiActivityStore.sessions.set(sessionId, { events: [], startTime: Date.now() });
+      }
+      const session = uiActivityStore.sessions.get(sessionId);
+      session.events.push(event);
+      uiActivityStore.metrics.totalEvents++;
+    });
+
+    res.json({
+      ok: true,
+      processed: events.length,
+      timestamp: Date.now()
+    });
+  } catch (e) {
+    console.error('Error in batch processing:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/heatmap - Get click heatmap data
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/heatmap', (req, res) => {
+  try {
+    const heatmapData = {};
+    for (const session of uiActivityStore.sessions.values()) {
+      session.events.filter(e => e.type === 'click' && e.x && e.y).forEach(e => {
+        const key = `${Math.round(e.x/10)},${Math.round(e.y/10)}`;
+        heatmapData[key] = (heatmapData[key] || 0) + 1;
+      });
+    }
+
+    res.json({
+      ok: true,
+      data: heatmapData
+    });
+  } catch (e) {
+    console.error('Error generating heatmap:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/features - Get feature usage report
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/features', (req, res) => {
+  try {
+    const features = {};
+    for (const session of uiActivityStore.sessions.values()) {
+      session.events.filter(e => e.feature).forEach(e => {
+        features[e.feature] = (features[e.feature] || 0) + 1;
+      });
+    }
+
+    res.json({
+      ok: true,
+      data: features
+    });
+  } catch (e) {
+    console.error('Error generating feature report:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/engagement - Get engagement metrics
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/engagement', (req, res) => {
+  try {
+    const sessions = Array.from(uiActivityStore.sessions.values());
+    const totalDuration = sessions.reduce((sum, s) => sum + ((s.endTime || Date.now()) - s.startTime), 0);
+
+    res.json({
+      ok: true,
+      data: {
+        activeSessions: sessions.length,
+        totalEvents: uiActivityStore.metrics.totalEvents,
+        avgSessionDuration: sessions.length > 0 ? totalDuration / sessions.length : 0
+      }
+    });
+  } catch (e) {
+    console.error('Error generating engagement report:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/performance - Get performance metrics
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/performance', (req, res) => {
+  try {
+    const perfEvents = [];
+    for (const session of uiActivityStore.sessions.values()) {
+      perfEvents.push(...session.events.filter(e => e.type === 'performance'));
+    }
+
+    const avg = (arr, key) => arr.length > 0 ? arr.reduce((sum, e) => sum + (e[key] || 0), 0) / arr.length : 0;
+
+    res.json({
+      ok: true,
+      data: {
+        avgFCP: avg(perfEvents, 'fcp'),
+        avgLCP: avg(perfEvents, 'lcp'),
+        avgCLS: avg(perfEvents, 'cls'),
+        avgFID: avg(perfEvents, 'fid')
+      }
+    });
+  } catch (e) {
+    console.error('Error generating performance report:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/trends - Get engagement trends over time
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/trends', (req, res) => {
+  try {
+    const hours = parseInt(req.query.hours || '24');
+    const trends = [];
+
+    for (const session of uiActivityStore.sessions.values()) {
+      if (session.startTime && Date.now() - session.startTime < hours * 60 * 60 * 1000) {
+        trends.push({
+          sessionId: session.id,
+          eventCount: session.events.length,
+          timestamp: session.startTime
+        });
+      }
+    }
+
+    res.json({
+      ok: true,
+      data: { hours, dataPoints: trends.length, trends }
+    });
+  } catch (e) {
+    console.error('Error retrieving trends:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/sessions - Get active sessions
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/sessions', (req, res) => {
+  try {
+    const activeSessions = Array.from(uiActivityStore.sessions.entries()).map(([id, s]) => ({
+      sessionId: id,
+      startTime: s.startTime,
+      eventCount: s.events.length,
+      duration: (s.endTime || Date.now()) - s.startTime
+    }));
+
+    res.json({
+      ok: true,
+      data: {
+        activeSessions: activeSessions.length,
+        sessions: activeSessions
+      }
+    });
+  } catch (e) {
+    console.error('Error retrieving sessions:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/v1/analytics/summary - Get complete analytics summary
+ * Consolidated from ui-activity-monitor.js
+ */
+app.get('/api/v1/analytics/summary', (req, res) => {
+  try {
+    const sessions = Array.from(uiActivityStore.sessions.values());
+
+    res.json({
+      ok: true,
+      data: {
+        totalSessions: sessions.length,
+        totalEvents: uiActivityStore.metrics.totalEvents,
+        totalClickEvents: uiActivityStore.metrics.totalClickEvents,
+        totalScrollEvents: uiActivityStore.metrics.totalScrollEvents,
+        timestamp: Date.now()
+      }
+    });
+  } catch (e) {
+    console.error('Error generating summary:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/analytics/export - Export analytics data
+ * Consolidated from ui-activity-monitor.js
+ */
+app.post('/api/v1/analytics/export', (req, res) => {
+  try {
+    const { format = 'json', includeData = ['engagement', 'features'] } = req.body;
+
+    const exportData = {};
+
+    if (includeData.includes('engagement')) {
+      const sessions = Array.from(uiActivityStore.sessions.values());
+      exportData.engagement = {
+        activeSessions: sessions.length,
+        totalEvents: uiActivityStore.metrics.totalEvents
+      };
+    }
+
+    if (includeData.includes('features')) {
+      const features = {};
+      for (const session of uiActivityStore.sessions.values()) {
+        session.events.filter(e => e.feature).forEach(e => {
+          features[e.feature] = (features[e.feature] || 0) + 1;
+        });
+      }
+      exportData.features = features;
+    }
+
+    res.json({
+      ok: true,
+      format,
+      data: exportData,
+      exportTime: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Error exporting data:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Phase 6 Observability endpoint
+app.get('/api/v1/system/observability', (req, res) => {
+  try {
+    res.json({
+      ok: true,
+      observability: {
+        rateLimiter: rateLimiter.getStats(),
+        tracer: tracer.getMetrics(),
+        circuitBreakers: Object.fromEntries(
+          Object.entries(serviceCircuitBreakers).map(([name, cb]) => [name, cb.getState()])
+        )
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Start service with unified initialization
+svc.start();

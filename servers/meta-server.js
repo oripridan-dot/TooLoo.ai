@@ -4,17 +4,26 @@ import MetaLearningEngine from '../engine/meta-learning-engine.js';
 import fs from 'fs';
 import path from 'path';
 import environmentHub from '../engine/environment-hub.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
 
-const app = express();
-const PORT = process.env.META_PORT || 3002;
-app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+// Initialize service with unified middleware (replaces 35 LOC of boilerplate)
+const svc = new ServiceFoundation('meta-server', process.env.META_PORT || 3002);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
+
+const app = svc.app;
+const PORT = svc.port;
+
+// Initialize distributed tracing (Phase 6C)
+const tracer = new DistributedTracer({ serviceName: 'meta-server', samplingRate: 0.2 });
+svc.environmentHub.registerComponent('tracer', tracer, ['observability', 'tracing', 'learning']);
 
 const meta = new MetaLearningEngine({ workspaceRoot: process.cwd() });
 environmentHub.registerComponent('metaLearningEngine', meta, ['meta-learning', 'reporting', 'insights']);
 
-app.get('/health', (req,res)=> res.json({ ok:true, server:'meta', time:new Date().toISOString() }));
-app.get('/api/v4/meta-learning/status', async (req,res)=>{ try{ await meta.init(); res.json({ ok:true, status: meta.getStatus() }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
+// API endpoints
 app.post('/api/v4/meta-learning/start', async (req,res)=>{ try{ await meta.init(); const s=await meta.start(); res.json({ ok:true, status:s }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
 app.post('/api/v4/meta-learning/run-all', async (req,res)=>{ try{ await meta.init(); const r=await meta.runAllPhases(); res.json({ ok:true, report:r }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
 app.get('/api/v4/meta-learning/report', async (req,res)=>{ try{ await meta.init(); res.json({ ok:true, report: meta.getReport() }); }catch(e){ res.status(500).json({ ok:false, error:e.message }); }});
@@ -576,4 +585,13 @@ app.get('/api/v4/meta-learning/alerts', async (req, res) => {
   }
 });
 
-app.listen(PORT, ()=> console.log(`meta-server listening on http://localhost:${PORT}`));
+// Observability endpoint (Phase 6C)
+app.get('/api/v1/system/observability', (req, res) => {
+  res.json({
+    service: 'meta-server',
+    tracer: tracer.getMetrics(),
+    circuitBreakers: svc.getCircuitBreakerStatus()
+  });
+});
+
+svc.start();

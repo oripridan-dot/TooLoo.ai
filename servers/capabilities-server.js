@@ -17,9 +17,21 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import CapabilitiesManager from '../engine/capabilities-manager.js';
+import { ServiceFoundation } from '../lib/service-foundation.js';
+import { DistributedTracer } from '../lib/distributed-tracer.js';
 
-const app = express();
-const PORT = process.env.CAPABILITIES_PORT || 3009;
+// Initialize service with unified middleware (replaces 25 LOC of boilerplate)
+const svc = new ServiceFoundation('capabilities-server', process.env.CAPABILITIES_PORT || 3009);
+svc.setupMiddleware();
+svc.registerHealthEndpoint();
+svc.registerStatusEndpoint();
+
+const app = svc.app;
+const PORT = svc.port;
+
+// Initialize distributed tracing (Phase 6C)
+const tracer = new DistributedTracer({ serviceName: 'capabilities-server', samplingRate: 0.1 });
+svc.environmentHub.registerComponent('tracer', tracer, ['observability', 'tracing', 'capabilities']);
 const DATA_DIR = path.join(process.cwd(), 'data');
 const STATE_FILE = path.join(DATA_DIR, 'capabilities-state.json');
 
@@ -43,9 +55,7 @@ async function initDb(){
 function dbGet(key){ if (!DB_MODE||!db) return null; try{ const row = db.prepare('SELECT v FROM kv WHERE k=?').get(key); return row? row.v : null; }catch{ return null; } }
 function dbSet(key, val){ if (!DB_MODE||!db) return; try{ db.prepare('INSERT INTO kv(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v').run(key, val); }catch(e){ /* ignore */ } }
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+// Middleware already set up by ServiceFoundation
 
 // Discovered capabilities from meta-learning analysis
 const DISCOVERED_CAPABILITIES = {
@@ -498,10 +508,7 @@ setInterval(async () => {
 
 // Routes
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'capabilities', port: PORT });
-});
-
+// Health endpoint is provided by ServiceFoundation
 app.get('/api/v1/capabilities/discovered', (req, res) => {
   const summary = Object.entries(DISCOVERED_CAPABILITIES).map(([component, info]) => ({
     component,
@@ -1111,13 +1118,21 @@ app.get('/api/v1/capabilities/insights', (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`🔧 Capability Integration Server running on http://127.0.0.1:${PORT}`);
-  console.log('⚡ Ready to activate 242 discovered methods across 6 components');
-  console.log('🎯 Capabilities Manager Endpoints: activate, deactivate, status, list, insights');
-  console.log(DB_MODE ? '💾 SQLite persistence: ON' : '💾 JSON persistence: ON');
+// Observability endpoint (Phase 6C)
+app.get('/api/v1/system/observability', (req, res) => {
+  res.json({
+    service: 'capabilities-server',
+    tracer: tracer.getMetrics(),
+    circuitBreakers: svc.getCircuitBreakerStatus()
+  });
 });
+
+// Start server with unified initialization
+svc.start();
+console.log('⚡ Ready to activate 242 discovered methods across 6 components');
+console.log('🎯 Capabilities Manager Endpoints: activate, deactivate, status, list, insights');
+console.log(DB_MODE ? '💾 SQLite persistence: ON' : '💾 JSON persistence: ON');
+
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
