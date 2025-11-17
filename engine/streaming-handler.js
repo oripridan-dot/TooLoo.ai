@@ -59,7 +59,9 @@ export class StreamingHandler {
    */
   pushUpdate(streamId, type, data) {
     const stream = this.streams.get(streamId);
-    if (!stream || !stream.active) return null;
+    if (!stream || !stream.active) {
+      return null;
+    }
 
     const payload = JSON.stringify({ type, data, timestamp: Date.now() });
     const sseLine = `data: ${payload}\n\n`;

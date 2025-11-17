@@ -1,0 +1,325 @@
+[
+  {
+    "checkpoint": 4,
+    "timestamp": "2025-11-17T17:42:50.266Z",
+    "results": [
+      {
+        "name": "Knowledge Sources",
+        "url": "/api/v1/knowledge/sources",
+        "status": 200,
+        "duration": 23,
+        "success": true
+      },
+      {
+        "name": "Knowledge Memory",
+        "url": "/api/v1/knowledge/memory",
+        "status": 502,
+        "duration": 7,
+        "success": false
+      },
+      {
+        "name": "Providers Status",
+        "url": "/api/v1/providers/status",
+        "status": 500,
+        "duration": 13,
+        "success": false
+      },
+      {
+        "name": "System Processes",
+        "url": "/api/v1/system/processes",
+        "status": 500,
+        "duration": 3,
+        "success": false
+      },
+      {
+        "name": "GitHub Integration",
+        "url": "/api/v1/github/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "Slack Integration",
+        "url": "/api/v1/slack/health",
+        "status": 502,
+        "duration": 1,
+        "success": false
+      }
+    ],
+    "summary": {
+      "healthy": 2,
+      "total": 6,
+      "passRate": 33,
+      "avgDuration": 8,
+      "passed": false
+    }
+  },
+  {
+    "checkpoint": 4,
+    "timestamp": "2025-11-17T17:43:08.042Z",
+    "results": [
+      {
+        "name": "Knowledge Sources",
+        "url": "/api/v1/knowledge/sources",
+        "status": 200,
+        "duration": 7,
+        "success": true
+      },
+      {
+        "name": "Knowledge Memory Patterns",
+        "url": "/api/v1/knowledge/memory/patterns",
+        "status": 200,
+        "duration": 3,
+        "success": true
+      },
+      {
+        "name": "GitHub Integration",
+        "url": "/api/v1/github/health",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "GitHub Files",
+        "url": "/api/v1/github/files",
+        "status": 502,
+        "duration": 1,
+        "success": false
+      },
+      {
+        "name": "Tier1 Status",
+        "url": "/api/v1/knowledge/status",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "Health Check",
+        "url": "/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      }
+    ],
+    "summary": {
+      "healthy": 5,
+      "total": 6,
+      "passRate": 83,
+      "avgDuration": 3,
+      "passed": false
+    }
+  },
+  {
+    "checkpoint": 4,
+    "timestamp": "2025-11-17T17:43:22.676Z",
+    "results": [
+      {
+        "name": "Knowledge Sources",
+        "url": "/api/v1/knowledge/sources",
+        "status": 200,
+        "duration": 7,
+        "success": true
+      },
+      {
+        "name": "Knowledge Memory Patterns",
+        "url": "/api/v1/knowledge/memory/patterns",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "GitHub Integration",
+        "url": "/api/v1/github/health",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "GitHub Files",
+        "url": "/api/v1/github/files",
+        "status": 400,
+        "duration": 25,
+        "success": false
+      },
+      {
+        "name": "Tier1 Status",
+        "url": "/api/v1/knowledge/status",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "Health Check",
+        "url": "/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      }
+    ],
+    "summary": {
+      "healthy": 5,
+      "total": 6,
+      "passRate": 83,
+      "avgDuration": 6,
+      "passed": false
+    }
+  },
+  {
+    "checkpoint": 4,
+    "timestamp": "2025-11-17T17:43:31.966Z",
+    "results": [
+      {
+        "name": "Knowledge Sources",
+        "url": "/api/v1/knowledge/sources",
+        "status": 200,
+        "duration": 6,
+        "success": true
+      },
+      {
+        "name": "Knowledge Memory Patterns",
+        "url": "/api/v1/knowledge/memory/patterns",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "Tier1 Status",
+        "url": "/api/v1/knowledge/status",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "GitHub Health",
+        "url": "/api/v1/github/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "Server Health",
+        "url": "/health",
+        "status": 200,
+        "duration": 2,
+        "success": true
+      },
+      {
+        "name": "Uptime",
+        "url": "/uptime",
+        "status": 404,
+        "duration": 4,
+        "success": false
+      }
+    ],
+    "summary": {
+      "healthy": 5,
+      "total": 6,
+      "passRate": 83,
+      "avgDuration": 3,
+      "passed": false
+    }
+  },
+  {
+    "checkpoint": 4,
+    "timestamp": "2025-11-17T17:43:40.603Z",
+    "results": [
+      {
+        "name": "Knowledge Sources",
+        "url": "/api/v1/knowledge/sources",
+        "status": 200,
+        "duration": 7,
+        "success": true
+      },
+      {
+        "name": "Knowledge Memory Patterns",
+        "url": "/api/v1/knowledge/memory/patterns",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "Tier1 Status",
+        "url": "/api/v1/knowledge/status",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "GitHub Health",
+        "url": "/api/v1/github/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "Server Health",
+        "url": "/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "System Info",
+        "url": "/system/info",
+        "status": 404,
+        "duration": 4,
+        "success": false
+      }
+    ],
+    "summary": {
+      "healthy": 5,
+      "total": 6,
+      "passRate": 83,
+      "avgDuration": 3,
+      "passed": false
+    }
+  },
+  {
+    "checkpoint": 4,
+    "timestamp": "2025-11-17T17:43:49.433Z",
+    "results": [
+      {
+        "name": "Knowledge Sources",
+        "url": "/api/v1/knowledge/sources",
+        "status": 200,
+        "duration": 6,
+        "success": true
+      },
+      {
+        "name": "Knowledge Memory Patterns",
+        "url": "/api/v1/knowledge/memory/patterns",
+        "status": 200,
+        "duration": 3,
+        "success": true
+      },
+      {
+        "name": "Tier1 Status",
+        "url": "/api/v1/knowledge/status",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "GitHub Health",
+        "url": "/api/v1/github/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      },
+      {
+        "name": "Server Health",
+        "url": "/health",
+        "status": 200,
+        "duration": 1,
+        "success": true
+      }
+    ],
+    "summary": {
+      "healthy": 5,
+      "total": 5,
+      "passRate": 100,
+      "avgDuration": 2,
+      "passed": true
+    }
+  }
+]

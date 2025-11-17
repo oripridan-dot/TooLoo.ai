@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StreamingHandler } from '../engine/streaming-handler.js';
-import { ProgressiveAnalysisEngine } from '../engine/progressive-analysis-engine.js';
-import { StreamMetricsCollector } from '../engine/stream-metrics-collector.js';
-import { StreamingClient } from '../lib/streaming-client.js';
+import { StreamingHandler } from '../../engine/streaming-handler.js';
+import { ProgressiveAnalysisEngine } from '../../engine/progressive-analysis-engine.js';
+import { StreamMetricsCollector } from '../../engine/stream-metrics-collector.js';
+import { StreamingClient } from '../../lib/streaming-client.js';
 
 describe('StreamingHandler', () => {
   let handler;

@@ -18,7 +18,10 @@ export class ProgressiveAnalysisEngine {
    * @returns {object} Analysis results
    */
   async analyzeWithStreaming(data, options = {}) {
-    const streamId = this.streamingHandler.createStream(data.id || `analysis-${Date.now()}`, options);
+    const streamId = this.streamingHandler.createStream(
+      data.id || `analysis-${Date.now()}`,
+      options
+    );
     const analysis = {
       streamId,
       data,
@@ -109,7 +112,12 @@ export class ProgressiveAnalysisEngine {
     ];
 
     for (const finding of findings) {
-      this.emitFinding(streamId, finding.finding, finding.severity, finding.confidence);
+      this.emitFinding(
+        streamId,
+        finding.finding,
+        finding.severity,
+        finding.confidence
+      );
       await new Promise(resolve => setTimeout(resolve, 50));
     }
 

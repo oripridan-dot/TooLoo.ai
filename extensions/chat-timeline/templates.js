@@ -367,33 +367,40 @@ class TemplateEngine {
     featureBar.appendChild(button);
   }
 
-  // Feature implementations (simplified for MVP)
+  // Feature implementations (disabled - coming in v2)
   generateFlashcards() {
-    alert('🎓 Flashcard generation coming soon!\n\nThis will extract key concepts from your conversation and create Anki-compatible flashcards.');
+    console.log('📌 Flashcard generation: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   generateConceptMap() {
-    alert('🗺️ Concept mapping coming soon!\n\nThis will create a visual knowledge graph showing how concepts connect.');
+    console.log('📌 Concept mapping: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   exportToNotion() {
-    alert('📤 Notion export coming soon!\n\nThis will format your learning session as a beautiful Notion study guide.');
+    console.log('📌 Notion export: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   showIdeaBoard() {
-    alert('🎨 Idea board coming soon!\n\nThis will display all your ideas as draggable cards for organization.');
+    console.log('📌 Idea board: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   showVotingInterface() {
-    alert('🗳️ Voting interface coming soon!\n\nThis will let you upvote/downvote ideas to find the best ones.');
+    console.log('📌 Voting interface: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   showTestTracker() {
-    alert('✅ Test tracker coming soon!\n\nThis will track all solutions you\'ve tried with checkboxes.');
+    console.log('📌 Test tracker: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   showSolutionLibrary() {
-    alert('📚 Solution library coming soon!\n\nThis will save successful solutions for future reference.');
+    console.log('📌 Solution library: Coming in v2.2');
+    // TODO: Implement in v2.2
   }
 
   isPremium() {
