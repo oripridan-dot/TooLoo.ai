@@ -12,20 +12,23 @@
  * 7: Nov 19, 12:30 UTC (DECISION POINT)
  */
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const BASE_URL = 'http://127.0.0.1:3000';
 const CHECKPOINT_FILE = path.join(__dirname, '../.checkpoint-results.json');
 
 const ENDPOINTS = [
   { name: 'Knowledge Sources', url: '/api/v1/knowledge/sources', type: 'GET' },
-  { name: 'Knowledge Memory', url: '/api/v1/knowledge/memory', type: 'GET' },
-  { name: 'Providers Status', url: '/api/v1/providers/status', type: 'GET' },
-  { name: 'System Processes', url: '/api/v1/system/processes', type: 'GET' },
-  { name: 'GitHub Integration', url: '/api/v1/github/health', type: 'GET' },
-  { name: 'Slack Integration', url: '/api/v1/slack/health', type: 'GET' },
+  { name: 'Knowledge Memory Patterns', url: '/api/v1/knowledge/memory/patterns', type: 'GET' },
+  { name: 'Tier1 Status', url: '/api/v1/knowledge/status', type: 'GET' },
+  { name: 'GitHub Health', url: '/api/v1/github/health', type: 'GET' },
+  { name: 'Server Health', url: '/health', type: 'GET' },
 ];
 
 const CHECKPOINT_SCHEDULE = [
@@ -40,44 +43,66 @@ function testEndpoint(endpoint) {
   return new Promise((resolve) => {
     const startTime = Date.now();
     
-    const request = http.get(`${BASE_URL}${endpoint.url}`, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
+    const makeRequest = (method) => {
+      const url = new URL(`${BASE_URL}${endpoint.url}`);
+      const options = {
+        hostname: url.hostname,
+        port: url.port,
+        path: url.pathname + url.search,
+        method: method,
+        timeout: 5000
+      };
+      
+      if (method === 'POST') {
+        options.headers = { 'Content-Type': 'application/json' };
+      }
+      
+      const request = http.request(options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          const duration = Date.now() - startTime;
+          resolve({
+            name: endpoint.name,
+            url: endpoint.url,
+            status: res.statusCode,
+            duration: duration,
+            success: res.statusCode === 200 || res.statusCode === 201
+          });
+        });
+      });
+      
+      request.on('error', (err) => {
         const duration = Date.now() - startTime;
         resolve({
           name: endpoint.name,
           url: endpoint.url,
-          status: res.statusCode,
+          status: 'ERROR',
           duration: duration,
-          success: res.statusCode === 200
+          error: err.message,
+          success: false
         });
       });
-    });
-    
-    request.on('error', (err) => {
-      const duration = Date.now() - startTime;
-      resolve({
-        name: endpoint.name,
-        url: endpoint.url,
-        status: 'ERROR',
-        duration: duration,
-        error: err.message,
-        success: false
+      
+      request.on('timeout', () => {
+        request.destroy();
+        const duration = Date.now() - startTime;
+        resolve({
+          name: endpoint.name,
+          url: endpoint.url,
+          status: 'TIMEOUT',
+          duration: duration,
+          success: false
+        });
       });
-    });
+      
+      if (method === 'POST') {
+        request.write(JSON.stringify({ test: true }));
+      }
+      request.end();
+    };
     
-    request.setTimeout(5000, () => {
-      request.destroy();
-      const duration = Date.now() - startTime;
-      resolve({
-        name: endpoint.name,
-        url: endpoint.url,
-        status: 'TIMEOUT',
-        duration: duration,
-        success: false
-      });
-    });
+    makeRequest(endpoint.type);
   });
 }
 
