@@ -58,35 +58,28 @@ Be direct, honest, and action-oriented. When users ask for help:
 You are not a passive suggestion engine - you are an active, self-modifying, execution-capable AI system.`;
 
 
-// Initialize multi-provider orchestration
-const modelChooser = new ModelChooser();
-const llmProvider = new LLMProvider();
-
 // Main chat handler with multi-provider orchestration
 export async function handleChatWithAI(message, options = {}) {
   try {
-    // Create Intent Packet for multi-provider routing
-    const intent = new IntentPacket(message, {
-      userId: options.userId || 'anonymous',
-      sessionId: options.sessionId,
-      source: 'chat',
-      priority: 'normal'
-    });
+    // Initialize on-demand to avoid startup issues
+    let modelChooser, llmProvider;
+    try {
+      modelChooser = new ModelChooser();
+      llmProvider = new LLMProvider();
+    } catch (initErr) {
+      console.warn('Could not initialize ModelChooser/LLMProvider:', initErr.message);
+      // Fall back to pattern matching if orchestration unavailable
+      return await handleChatWithPatterns(message);
+    }
 
     // Get learner context for intelligent routing
-    const context = await getLearnerContext();
-    intent.learnerContext = context;
+    const context = await getLearnerContext().catch(() => '');
 
-    // Analyze intent to determine best provider strategy
-    const complexity = modelChooser.analyzeComplexity(intent);
+    // Detect task type and route to best provider
     const taskType = detectTaskType(message);
-
-    // Build execution plan with multiple providers based on strengths
-    const executionPlan = modelChooser.buildExecutionPlan(intent);
-    intent.executionPlan = executionPlan;
-
+    
     // Execute with best-fit provider(s) based on task type
-    let response = await executeWithBestProvider(message, context, complexity, taskType, executionPlan);
+    let response = await executeWithBestProvider(message, context, taskType);
 
     // If no response from optimized route, try pattern-based fallback
     if (!response) {
@@ -96,7 +89,10 @@ export async function handleChatWithAI(message, options = {}) {
     return response;
   } catch (e) {
     console.error('Chat handler error:', e.message);
-    return await handleChatWithPatterns(message);
+    // Always have a fallback
+    return await handleChatWithPatterns(message).catch(() => 
+      'I encountered an error processing your request. Please try again.'
+    );
   }
 }
 
@@ -134,10 +130,10 @@ function detectTaskType(message) {
 
 /**
  * Execute with optimal provider based on task characteristics
- * Routes to: Ollama (fast) → Anthropic (reasoning/coaching) → OpenAI (code) → Gemini (research/creative) → DeepSeek (speed)
+ * Routes to: OpenAI (execution) → Anthropic (reasoning) → OpenAI (code) → Gemini (research/creative) → DeepSeek (speed)
  */
-async function executeWithBestProvider(message, context, complexity, taskType, executionPlan) {
-  const providerSequence = buildProviderSequence(taskType, complexity);
+async function executeWithBestProvider(message, context, taskType) {
+  const providerSequence = buildProviderSequence(taskType);
 
   for (const provider of providerSequence) {
     try {
@@ -190,7 +186,7 @@ async function executeWithBestProvider(message, context, complexity, taskType, e
  * Orders providers to try first based on their natural strengths
  * CRITICAL: For execution questions, put OpenAI first (most willing to claim capability)
  */
-function buildProviderSequence(taskType, complexity) {
+function buildProviderSequence(taskType) {
   const sequences = {
     coding: ['openai', 'deepseek', 'anthropic', 'gemini', 'ollama'],
     reasoning: ['anthropic', 'openai', 'gemini', 'deepseek', 'ollama'],
