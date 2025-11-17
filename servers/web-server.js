@@ -46,6 +46,8 @@ import ReasoningVerificationEngine from '../engine/reasoning-verification-engine
 import CachingEngine from '../engine/caching-engine.js';
 import MultiLanguageEngine from '../engine/multi-language-engine.js';
 import GitHubIntegrationEngine from '../engine/github-integration-engine.js';
+import SlackNotificationEngine from '../engine/slack-notification-engine.js';
+import slackProvider from '../engine/slack-provider.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -184,6 +186,17 @@ svc.environmentHub.registerComponent('gitHubIntegrationEngine', gitHubIntegratio
   'github',
   'automation',
   'ci-cd'
+]);
+
+// ========== PHASE 4 FEATURE 4: SLACK NOTIFICATION ENGINE INITIALIZATION ==========
+// Initialize Slack notification engine for analysis alerts and findings notifications
+const slackNotificationEngine = new SlackNotificationEngine(slackProvider);
+
+// Register in environment hub for cross-service access
+svc.environmentHub.registerComponent('slackNotificationEngine', slackNotificationEngine, [
+  'slack',
+  'notifications',
+  'collaboration'
 ]);
 
 // ========== RESPONSE FORMATTER INTEGRATION ==========
@@ -3328,6 +3341,324 @@ app.post('/api/v1/github/test-issue', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/slack/status
+ * Check Slack connection status
+ */
+app.get('/api/v1/slack/status', async (req, res) => {
+  try {
+    const isConfigured = slackProvider.isConfigured();
+    const stats = slackNotificationEngine.getStats();
+    
+    res.json({
+      success: true,
+      title: 'Slack Status Check',
+      message: isConfigured ? 'Slack is configured and connected' : 'Slack is not configured',
+      data: {
+        configured: isConfigured,
+        statistics: stats,
+        botToken: isConfigured ? 'present' : 'missing',
+        workspaceId: isConfigured ? 'present' : 'missing'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Slack Status Check Failed'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/slack/send-message
+ * Send plain text message to Slack channel
+ */
+app.post('/api/v1/slack/send-message', async (req, res) => {
+  try {
+    if (!slackProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Slack not configured',
+        title: 'Slack Configuration Missing'
+      });
+    }
+
+    const { channelId, message } = req.body;
+    if (!channelId || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'channelId and message required',
+        title: 'Missing Required Parameters'
+      });
+    }
+
+    const result = await slackProvider.sendMessage(channelId, message);
+
+    res.json({
+      success: result.success,
+      title: 'Slack Message Sent',
+      message: result.success ? 'Message posted successfully' : 'Failed to post message',
+      data: {
+        success: result.success,
+        timestamp: result.ts,
+        channelId: channelId,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Slack Send Message Failed'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/slack/send-analysis
+ * Send formatted analysis notification to Slack
+ */
+app.post('/api/v1/slack/send-analysis', async (req, res) => {
+  try {
+    if (!slackProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Slack not configured',
+        title: 'Slack Configuration Missing'
+      });
+    }
+
+    const { analysis, channelId } = req.body;
+    if (!analysis) {
+      return res.status(400).json({
+        success: false,
+        error: 'analysis object required',
+        title: 'Missing Analysis Data'
+      });
+    }
+
+    const result = await slackNotificationEngine.sendAnalysisNotification(analysis, {
+      channelId: channelId
+    });
+
+    res.json({
+      success: result.success,
+      title: 'Analysis Notification Sent',
+      message: result.success ? 'Analysis posted to Slack' : 'Failed to send analysis',
+      data: {
+        success: result.success,
+        timestamp: result.ts,
+        blocks: result.blocks,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Slack Send Analysis Failed'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/slack/send-alert
+ * Send alert notification with severity indicator
+ */
+app.post('/api/v1/slack/send-alert', async (req, res) => {
+  try {
+    if (!slackProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Slack not configured',
+        title: 'Slack Configuration Missing'
+      });
+    }
+
+    const { finding, severity, channelId } = req.body;
+    if (!finding || !severity) {
+      return res.status(400).json({
+        success: false,
+        error: 'finding and severity required',
+        title: 'Missing Required Parameters'
+      });
+    }
+
+    const result = await slackNotificationEngine.sendFindingAlert(finding, severity, {
+      channelId: channelId
+    });
+
+    res.json({
+      success: result.success,
+      title: 'Alert Notification Sent',
+      message: result.success ? 'Alert posted to Slack' : 'Failed to send alert',
+      data: {
+        success: result.success,
+        timestamp: result.ts,
+        severity: severity,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Slack Send Alert Failed'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/slack/create-thread
+ * Create a threaded discussion in Slack
+ */
+app.post('/api/v1/slack/create-thread', async (req, res) => {
+  try {
+    if (!slackProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Slack not configured',
+        title: 'Slack Configuration Missing'
+      });
+    }
+
+    const { analysis, messages, channelId } = req.body;
+    if (!analysis || !messages || !Array.isArray(messages)) {
+      return res.status(400).json({
+        success: false,
+        error: 'analysis and messages array required',
+        title: 'Missing Required Parameters'
+      });
+    }
+
+    const result = await slackNotificationEngine.createAnalysisThread(analysis, messages, {
+      channelId: channelId
+    });
+
+    res.json({
+      success: result.success,
+      title: 'Analysis Thread Created',
+      message: result.success ? 'Thread created successfully' : 'Failed to create thread',
+      data: {
+        success: result.success,
+        threadTs: result.threadTs,
+        messageCount: messages.length,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Slack Create Thread Failed'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/slack/configure-routing
+ * Configure channel routing rules for notifications
+ */
+app.post('/api/v1/slack/configure-routing', async (req, res) => {
+  try {
+    if (!slackProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Slack not configured',
+        title: 'Slack Configuration Missing'
+      });
+    }
+
+    const { rules } = req.body;
+    if (!rules || typeof rules !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'rules object required',
+        title: 'Invalid Rules Format'
+      });
+    }
+
+    try {
+      slackNotificationEngine.configureChannelRouting(rules);
+      
+      res.json({
+        success: true,
+        title: 'Channel Routing Configured',
+        message: 'Notification routing rules updated successfully',
+        data: {
+          rulesApplied: Object.keys(rules).length,
+          rules: rules
+        }
+      });
+    } catch (configError) {
+      res.status(400).json({
+        success: false,
+        error: configError.message,
+        title: 'Configuration Error'
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Slack Configure Routing Failed'
+    });
+  }
+});
+
+/**
+ * GET /api/v1/slack/notification-stats
+ * Get Slack notification statistics
+ */
+app.get('/api/v1/slack/notification-stats', async (req, res) => {
+  try {
+    const stats = slackNotificationEngine.getStats();
+
+    res.json({
+      success: true,
+      title: 'Slack Notification Statistics',
+      message: 'Current notification metrics',
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Failed to Retrieve Statistics'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/slack/reset-stats
+ * Reset notification statistics counters
+ */
+app.post('/api/v1/slack/reset-stats', async (req, res) => {
+  try {
+    slackNotificationEngine.resetStats();
+
+    res.json({
+      success: true,
+      title: 'Statistics Reset',
+      message: 'Notification statistics have been reset',
+      data: {
+        sent: 0,
+        failed: 0,
+        channels: 0,
+        threads: 0,
+        successRate: 0
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      title: 'Failed to Reset Statistics'
     });
   }
 });
