@@ -11,15 +11,13 @@
  * - Concurrent service management
  */
 
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
-const EventEmitter = require('events');
+import { spawn } from 'child_process';
+import { EventEmitter } from 'events';
 
 class ServerManager extends EventEmitter {
   constructor(options = {}) {
     super();
-    this.mode = options.mode || 'development'; // development | testing | production
+    this.mode = options.mode || 'development';
     this.servers = new Map();
     this.watchers = new Map();
     this.config = {
@@ -32,9 +30,6 @@ class ServerManager extends EventEmitter {
     };
   }
 
-  /**
-   * Define a server to manage
-   */
   defineServer(name, config) {
     if (!name || !config.script) {
       throw new Error(`Invalid server config for "${name}"`);
@@ -59,11 +54,8 @@ class ServerManager extends EventEmitter {
     return this;
   }
 
-  /**
-   * Start all servers
-   */
   async startAll(options = {}) {
-    const { parallel = true, sequential = false } = options;
+    const { parallel = true } = options;
 
     this.log('info', `🚀 Starting all servers (${this.mode} mode)...`);
 
@@ -81,9 +73,6 @@ class ServerManager extends EventEmitter {
     return this;
   }
 
-  /**
-   * Start a specific server
-   */
   async start(name) {
     const config = this.servers.get(name);
     if (!config) throw new Error(`Server "${name}" not defined`);
@@ -117,7 +106,6 @@ class ServerManager extends EventEmitter {
         config.healthy = false;
       });
 
-      // Wait for health check
       setTimeout(() => {
         this.checkHealth(name).then(() => {
           this.log('info', `✅ ${name} is healthy`);
@@ -133,9 +121,6 @@ class ServerManager extends EventEmitter {
     });
   }
 
-  /**
-   * Stop a specific server gracefully
-   */
   async stop(name) {
     const config = this.servers.get(name);
     if (!config || !config.process) {
@@ -170,9 +155,6 @@ class ServerManager extends EventEmitter {
     });
   }
 
-  /**
-   * Stop all servers
-   */
   async stopAll() {
     this.log('info', '🛑 Stopping all servers...');
     await Promise.all(
@@ -181,48 +163,35 @@ class ServerManager extends EventEmitter {
     this.log('info', '✅ All servers stopped');
   }
 
-  /**
-   * Restart a specific server
-   */
   async restart(name) {
     await this.stop(name);
     await new Promise(resolve => setTimeout(resolve, this.config.restartDelay));
     return this.start(name);
   }
 
-  /**
-   * Check server health
-   */
   async checkHealth(name) {
     const config = this.servers.get(name);
     if (!config || !config.healthUrl) return false;
 
     try {
-      const response = await fetch(config.healthUrl, {
-        timeout: 5000,
-      });
+      const response = await fetch(config.healthUrl, { timeout: 5000 });
       config.healthy = response.ok;
       return config.healthy;
-    } catch (err) {
+    } catch {
       config.healthy = false;
       return false;
     }
   }
 
-  /**
-   * Handle automatic restart with backoff
-   */
   async handleRestart(name) {
     const config = this.servers.get(name);
 
-    // Check restart limits
     if (config.restarts >= config.maxRestarts) {
       this.log('error', `❌ Max restarts exceeded for ${name}`);
       this.emit('max-restarts', { name, restarts: config.restarts });
       return;
     }
 
-    // Backoff delay
     const delay = Math.min(1000 * Math.pow(2, config.restarts), 30000);
     this.log('info', `⏳ Restarting ${name} in ${delay}ms...`);
 
@@ -231,35 +200,42 @@ class ServerManager extends EventEmitter {
     await this.restart(name);
   }
 
-  /**
-   * Setup hot reload on file changes
-   */
   setupHotReload(name) {
     const config = this.servers.get(name);
     if (!config.watch.length) return;
 
-    const watchFs = require('fs');
+    import('fs').then(({ watch }) => {
+      // Convert glob patterns to actual directories
+      const dirsToWatch = config.watch
+        .map(pattern => {
+          // Remove globs and get base directory
+          const dir = pattern.split('*')[0].replace(/\/$/, '');
+          return dir || '.';
+        })
+        .filter((dir, _idx, arr) => arr.indexOf(dir) === _idx); // Remove duplicates
 
-    config.watch.forEach(pattern => {
-      const watcher = watchFs.watch(pattern, { recursive: true }, (eventType, filename) => {
-        if (filename && (filename.endsWith('.js') || filename.endsWith('.json'))) {
-          this.log('info', `📝 ${name}: detected change in ${filename}`);
-          this.log('info', `🔄 Hot reloading ${name}...`);
-          this.restart(name).catch(err => {
-            this.log('error', `❌ Hot reload failed: ${err.message}`);
+      dirsToWatch.forEach(dir => {
+        try {
+          const watcher = watch(dir, { recursive: true }, (eventType, filename) => {
+            if (filename && (filename.endsWith('.js') || filename.endsWith('.json'))) {
+              this.log('info', `📝 ${name}: detected change in ${filename}`);
+              this.log('info', `🔄 Hot reloading ${name}...`);
+              this.restart(name).catch(err => {
+                this.log('error', `❌ Hot reload failed: ${err.message}`);
+              });
+            }
           });
+
+          this.watchers.set(`${name}:${dir}`, watcher);
+        } catch (err) {
+          this.log('warn', `⚠️  Could not watch ${dir}: ${err.message}`);
         }
       });
 
-      this.watchers.set(`${name}:${pattern}`, watcher);
+      this.log('info', `👁️  Hot reload enabled for ${name}`);
     });
-
-    this.log('info', `👁️  Hot reload enabled for ${name}`);
   }
 
-  /**
-   * Get server status
-   */
   status(name) {
     const config = this.servers.get(name);
     if (!config) return null;
@@ -275,9 +251,6 @@ class ServerManager extends EventEmitter {
     };
   }
 
-  /**
-   * Get all server statuses
-   */
   statusAll() {
     const statuses = {};
     for (const name of this.servers.keys()) {
@@ -286,9 +259,6 @@ class ServerManager extends EventEmitter {
     return statuses;
   }
 
-  /**
-   * Logging utility
-   */
   log(level, message) {
     const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
     const levels = { error: '❌', warn: '⚠️ ', info: 'ℹ️ ' };
@@ -301,9 +271,6 @@ class ServerManager extends EventEmitter {
     }
   }
 
-  /**
-   * Graceful shutdown handler
-   */
   setupGracefulShutdown() {
     const shutdown = async (signal) => {
       this.log('info', `\n${signal} received. Shutting down gracefully...`);
@@ -316,16 +283,11 @@ class ServerManager extends EventEmitter {
   }
 }
 
-module.exports = ServerManager;
+export default ServerManager;
 
-/**
- * CLI Usage Example
- */
-if (require.main === module) {
+// CLI Usage
+if (import.meta.url === `file://${process.argv[1]}`) {
   const manager = new ServerManager({ mode: process.env.NODE_ENV || 'development' });
-
-  // Define servers from package.json scripts
-  const packageJson = require('../package.json');
 
   const servers = [
     {
@@ -351,52 +313,51 @@ if (require.main === module) {
 
   servers.forEach(config => manager.defineServer(config.name, config));
 
-  // CLI commands
   const command = process.argv[2];
   const serverName = process.argv[3];
 
   (async () => {
     try {
       switch (command) {
-        case 'start':
-          if (serverName) {
-            await manager.start(serverName);
-          } else {
-            await manager.startAll();
-          }
-          manager.setupGracefulShutdown();
-          break;
+      case 'start':
+        if (serverName) {
+          await manager.start(serverName);
+        } else {
+          await manager.startAll();
+        }
+        manager.setupGracefulShutdown();
+        break;
 
-        case 'stop':
-          if (serverName) {
-            await manager.stop(serverName);
-          } else {
-            await manager.stopAll();
-          }
-          process.exit(0);
-          break;
+      case 'stop':
+        if (serverName) {
+          await manager.stop(serverName);
+        } else {
+          await manager.stopAll();
+        }
+        process.exit(0);
+        break;
 
-        case 'restart':
-          if (serverName) {
-            await manager.restart(serverName);
-          } else {
-            await manager.stopAll();
-            await manager.startAll();
-          }
-          manager.setupGracefulShutdown();
-          break;
+      case 'restart':
+        if (serverName) {
+          await manager.restart(serverName);
+        } else {
+          await manager.stopAll();
+          await manager.startAll();
+        }
+        manager.setupGracefulShutdown();
+        break;
 
-        case 'status':
-          if (serverName) {
-            console.log(manager.status(serverName));
-          } else {
-            console.table(manager.statusAll());
-          }
-          process.exit(0);
-          break;
+      case 'status':
+        if (serverName) {
+          console.log(manager.status(serverName));
+        } else {
+          console.table(manager.statusAll());
+        }
+        process.exit(0);
+        break;
 
-        default:
-          console.log(`
+      default:
+        console.log(`
   TooLoo Server Manager
 
   Usage: node scripts/server-manager.js <command> [server]
@@ -407,7 +368,7 @@ if (require.main === module) {
     restart [name]  - Restart server(s)
     status [name]   - Show status
           `);
-          process.exit(0);
+        process.exit(0);
       }
     } catch (err) {
       manager.log('error', err.message);
