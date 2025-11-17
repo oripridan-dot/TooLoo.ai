@@ -109,6 +109,9 @@ export default class ContextBridgeEngine {
     // Create topic bridges
     await this.createTopicBridges(conversation);
     
+    // Persist to disk immediately
+    await this.persistAll();
+    
     return conversation;
   }
 
@@ -531,5 +534,68 @@ export default class ContextBridgeEngine {
     return userConversations
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, limit);
+  }
+
+  /**
+   * PERSISTENCE LAYER - Save context data to disk
+   */
+  async persistConversations() {
+    try {
+      const conversations = Array.from(this.conversationHistory.entries());
+      await fs.writeFile(
+        this.conversationsFile,
+        JSON.stringify({ conversations, lastUpdated: new Date().toISOString() }, null, 2),
+        'utf8'
+      );
+      return { success: true, message: 'Conversations persisted' };
+    } catch (error) {
+      console.error('Failed to persist conversations:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async persistContextNetworks() {
+    try {
+      const networks = Array.from(this.contextNetworks.entries());
+      await fs.writeFile(
+        this.contextsFile,
+        JSON.stringify({ networks, lastUpdated: new Date().toISOString() }, null, 2),
+        'utf8'
+      );
+      return { success: true, message: 'Context networks persisted' };
+    } catch (error) {
+      console.error('Failed to persist context networks:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async persistTopicBridges() {
+    try {
+      const bridges = Array.from(this.topicBridges.entries());
+      await fs.writeFile(
+        this.bridgesFile,
+        JSON.stringify({ bridges, lastUpdated: new Date().toISOString() }, null, 2),
+        'utf8'
+      );
+      return { success: true, message: 'Topic bridges persisted' };
+    } catch (error) {
+      console.error('Failed to persist topic bridges:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Save all context data to disk
+   */
+  async persistAll() {
+    const results = await Promise.all([
+      this.persistConversations(),
+      this.persistContextNetworks(),
+      this.persistTopicBridges()
+    ]);
+    return {
+      success: results.every(r => r.success),
+      results
+    };
   }
 }

@@ -38,6 +38,10 @@ import alertEngineModule from './alert-engine.js';
 import CapabilityActivator from '../engine/capability-activator.js';
 import CapabilityOrchestrator from '../engine/capability-orchestrator.js';
 import * as formatterIntegration from '../services/response-formatter-integration.js';
+// Capability Engines for 100% implementation
+import EmotionDetectionEngine from '../engine/emotion-detection-engine.js';
+import CreativeGenerationEngine from '../engine/creative-generation-engine.js';
+import ReasoningVerificationEngine from '../engine/reasoning-verification-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +122,31 @@ svc.environmentHub.registerComponent('capabilityOrchestrator', capabilityOrchest
   'capabilities',
   'orchestration',
   'discovery'
+]);
+
+// ========== NEW CAPABILITY ENGINES INITIALIZATION ==========
+// Initialize the three new engines for 100% capability implementation
+const emotionDetectionEngine = new EmotionDetectionEngine();
+const creativeGenerationEngine = new CreativeGenerationEngine();
+const reasoningVerificationEngine = new ReasoningVerificationEngine();
+
+// Register in environment hub for cross-service access
+svc.environmentHub.registerComponent('emotionDetectionEngine', emotionDetectionEngine, [
+  'emotions',
+  'sentiment',
+  'nuance-detection'
+]);
+
+svc.environmentHub.registerComponent('creativeGenerationEngine', creativeGenerationEngine, [
+  'creativity',
+  'ideation',
+  'autonomous-evolution'
+]);
+
+svc.environmentHub.registerComponent('reasoningVerificationEngine', reasoningVerificationEngine, [
+  'reasoning',
+  'logic',
+  'verification'
 ]);
 
 // ========== RESPONSE FORMATTER INTEGRATION ==========
@@ -2593,14 +2622,18 @@ app.post('/api/v1/emotions/analyze', async (req, res) => {
       return res.status(400).json({ error: 'Text required for emotion analysis' });
     }
     
-    // Simple emotion detection - would normally use NLP
-    const emotions = {
-      primary: detectPrimaryEmotion(text),
-      secondary: detectSecondaryEmotions(text),
-      sentiment: calculateSentiment(text),
-      intensity: calculateIntensity(text),
-      nuance: identifyNuance(text),
-      recommendations: generateEmotionRecommendations(text)
+    // Use the real EmotionDetectionEngine for comprehensive analysis
+    const analysis = emotionDetectionEngine.analyzeEmotion(text);
+    const sentimentArc = emotionDetectionEngine.analyzeSentimentArc(text);
+    const emotionalState = {
+      primary: analysis.primary,
+      secondary: analysis.secondary,
+      sentiment: analysis.sentiment,
+      intensity: analysis.intensity,
+      nuance: analysis.nuance,
+      confidence: analysis.confidence,
+      sentimentArc: sentimentArc,
+      suggestions: emotionDetectionEngine.suggestResponseTone(analysis.primary)
     };
     
     res.json({
@@ -2608,9 +2641,10 @@ app.post('/api/v1/emotions/analyze', async (req, res) => {
       title: 'Emotional Analysis',
       message: 'Nuanced emotion understanding applied (addresses: emotion limitation)',
       data: {
-        input: text.substring(0, 100) + '...',
-        analysis: emotions,
-        confidence: 0.87
+        input: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+        analysis: emotionalState,
+        confidence: analysis.confidence,
+        emotionHistory: emotionDetectionEngine.getEmotionalState ? emotionDetectionEngine.getEmotionalState() : null
       }
     });
   } catch (error) {
@@ -2627,24 +2661,48 @@ app.post('/api/v1/emotions/analyze', async (req, res) => {
  */
 app.post('/api/v1/creative/generate', async (req, res) => {
   try {
-    const { prompt, style, diversity } = req.body;
+    const { prompt, style, domains, cycles } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt required for creative generation' });
     }
     
-    // Call autonomous evolution engine
+    // Use the real CreativeGenerationEngine for multi-technique generation
+    const result = creativeGenerationEngine.generateCreativeVariations(
+      prompt,
+      {
+        style: style || 'balanced',
+        techniques: ['combination', 'transformation', 'reversal', 'substitution', 'expansion', 'reduction', 'analogy', 'randomization']
+      }
+    );
+    
+    let domainResults = null;
+    if (domains && Array.isArray(domains)) {
+      domainResults = creativeGenerationEngine.brainstormByDomain(prompt, domains);
+    }
+    
     const creative = {
       originalPrompt: prompt,
-      variations: generateCreativeVariations(prompt, style || 'balanced', diversity || 0.7),
-      ideationPath: traceCreativeEvolution(prompt),
-      evolutionSteps: 5,
-      noveltyScore: 0.84
+      variations: result.variations.map((v) => ({
+        variation: v.variation,
+        technique: v.technique,
+        noveltyScore: v.noveltyScore,
+        rationale: v.evolution_path || ''
+      })),
+      diversityScore: result.summary.diversityLevel,
+      domainBrainstorm: domainResults,
+      style: style || 'balanced',
+      generationMetadata: {
+        techniqueCount: 8,
+        variationCount: result.variations.length,
+        avgNoveltyScore: result.summary.avgNoveltyScore,
+        enhancedNovelty: true
+      }
     };
     
     res.json({
       success: true,
       title: 'Creative Content Generation',
-      message: 'Autonomous evolution applied for original content (addresses: creativity limitation)',
+      message: 'Multi-technique creative evolution applied (addresses: creativity limitation)',
       data: creative
     });
   } catch (error) {
@@ -2666,20 +2724,28 @@ app.post('/api/v1/reasoning/verify', async (req, res) => {
       return res.status(400).json({ error: 'Reasoning required for verification' });
     }
     
-    const verification = {
-      reasoning: reasoning,
-      premises: premises || [],
-      logicalSteps: analyzeLogicalChain(reasoning),
-      inconsistencies: findInconsistencies(reasoning, premises),
-      confidence: 0.91,
-      suggestions: generateReasoningSuggestions(reasoning)
-    };
+    // Use the real ReasoningVerificationEngine for comprehensive logical analysis
+    const verification = reasoningVerificationEngine.verifyReasoning(reasoning, premises || []);
     
     res.json({
       success: true,
       title: 'Reasoning Verification',
-      message: 'Logical consistency verified (addresses: reasoning limitation)',
-      data: verification
+      message: 'Comprehensive logical consistency analysis (addresses: reasoning limitation)',
+      data: {
+        reasoning: reasoning.substring(0, 200) + (reasoning.length > 200 ? '...' : ''),
+        logicalChain: verification.logicalChain,
+        premiseValidation: verification.premiseValidation,
+        fallacyDetection: verification.fallacyDetection,
+        circularDependencies: verification.circularDependencies,
+        consistency: verification.consistency,
+        strength: verification.strength,
+        suggestions: verification.suggestions,
+        overallAssessment: {
+          isValid: verification.fallacyDetection.length === 0 && !verification.circularDependencies.hasCycles,
+          confidenceScore: verification.strength.score,
+          assessment: verification.strength.assessment
+        }
+      }
     });
   } catch (error) {
     res.status(500).json({
