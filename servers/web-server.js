@@ -48,6 +48,8 @@ import MultiLanguageEngine from '../engine/multi-language-engine.js';
 import GitHubIntegrationEngine from '../engine/github-integration-engine.js';
 import SlackNotificationEngine from '../engine/slack-notification-engine.js';
 import slackProvider from '../engine/slack-provider.js';
+// Tier 1 Knowledge Enhancement (dynamically imported due to CommonJS)
+let Tier1KnowledgeEnhancement;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -198,6 +200,49 @@ svc.environmentHub.registerComponent('slackNotificationEngine', slackNotificatio
   'notifications',
   'collaboration'
 ]);
+
+// ========== TIER 1: KNOWLEDGE ENHANCEMENT ENGINE INITIALIZATION ==========
+// Initialize Tier 1 knowledge enhancement engines for web sources, conversation learning, and benchmark-driven improvements
+let tier1KnowledgeEnhancementEngine = null;
+
+async function initializeTier1KnowledgeEnhancement() {
+  try {
+    // Dynamically import the CommonJS module
+    const module = await import('../engines/tier1-knowledge-enhancement.cjs');
+    Tier1KnowledgeEnhancement = module.default;
+    
+    // Initialize the engine
+    tier1KnowledgeEnhancementEngine = new Tier1KnowledgeEnhancement();
+    
+    // Activate all three Tier 1 engines
+    const result = await tier1KnowledgeEnhancementEngine.activateAllTier1Engines();
+    
+    // Register in environment hub for cross-service access
+    svc.environmentHub.registerComponent('tier1KnowledgeEnhancement', tier1KnowledgeEnhancementEngine, [
+      'knowledge',
+      'learning',
+      'sources',
+      'improvements'
+    ]);
+    
+    console.log('✅ Tier 1 Knowledge Enhancement: ACTIVE');
+    console.log(`   • Web sources: ${result.summary.engines.webSources.sourcesLoaded} loaded`);
+    console.log(`   • Conversation memory: ${result.summary.engines.conversationMemory.memoriesStored} conversations`);
+    console.log(`   • Benchmark learning: ${result.summary.engines.benchmarkImprovement.weakAreasIdentified} weak areas identified`);
+    
+  } catch (error) {
+    console.warn('⚠ Tier 1 Knowledge Enhancement initialization failed:', error.message);
+    console.log('  → Knowledge enhancement endpoints will not be available');
+    // Continue startup even if this fails - not critical
+  }
+}
+
+// Initialize Tier 1 after service is ready
+if (svc && svc.environmentHub) {
+  initializeTier1KnowledgeEnhancement().catch(err => {
+    console.error('Tier 1 initialization error:', err.message);
+  });
+}
 
 // ========== RESPONSE FORMATTER INTEGRATION ==========
 // Apply enhanced response formatter middleware to API endpoints
@@ -1463,6 +1508,207 @@ app.get('/api/v1/referral/me', async (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
+
+// ========== TIER 1 KNOWLEDGE ENHANCEMENT API ENDPOINTS ==========
+// Get knowledge base status and statistics
+app.get('/api/v1/knowledge/status', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const status = await tier1KnowledgeEnhancementEngine.getKnowledgeBaseStatus();
+    res.json({
+      ok: true,
+      ...status
+    });
+  } catch (e) {
+    console.error('Knowledge status error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get prioritized sources for a topic
+app.get('/api/v1/knowledge/sources', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const topic = req.query.topic || req.query.q || 'general';
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const minAuthority = parseFloat(req.query.minAuthority) || 0.6;
+    
+    const sources = await tier1KnowledgeEnhancementEngine.webSourceEngine.getSourcesForTopic(topic, {
+      limit,
+      minAuthority
+    });
+    
+    res.json({
+      ok: true,
+      topic,
+      sources,
+      count: sources.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Knowledge sources error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Record a conversation and trigger learning
+app.post('/api/v1/knowledge/memory/record', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const result = await tier1KnowledgeEnhancementEngine.recordAndLearn(req.body);
+    
+    res.json({
+      ok: true,
+      ...result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Knowledge record error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get learned patterns for a topic
+app.get('/api/v1/knowledge/memory/patterns', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const topic = req.query.topic || 'general';
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    
+    const patterns = await tier1KnowledgeEnhancementEngine.conversationEngine.getPatternsForTopic(topic);
+    
+    res.json({
+      ok: true,
+      topic,
+      patterns: patterns.slice(0, limit),
+      count: patterns.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Knowledge patterns error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get sources for improving a weak area
+app.get('/api/v1/knowledge/weak-areas/:topic', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const topic = req.params.topic || req.query.topic;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const minAuthority = parseFloat(req.query.minAuthority) || 0.75;
+    
+    const result = await tier1KnowledgeEnhancementEngine.getSourcesForWeakArea(topic, {
+      limit,
+      minAuthority
+    });
+    
+    res.json({
+      ok: true,
+      ...result
+    });
+  } catch (e) {
+    console.error('Weak area sources error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get benchmark improvement statistics
+app.get('/api/v1/knowledge/benchmarks/stats', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const stats = tier1KnowledgeEnhancementEngine.benchmarkEngine.getBenchmarkStats();
+    
+    res.json({
+      ok: true,
+      stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Benchmark stats error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get improvement progress
+app.get('/api/v1/knowledge/benchmarks/progress', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const progress = tier1KnowledgeEnhancementEngine.benchmarkEngine.getImprovementProgress();
+    
+    res.json({
+      ok: true,
+      progress,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Improvement progress error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Apply next improvement rule
+app.post('/api/v1/knowledge/benchmarks/apply-next', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const result = await tier1KnowledgeEnhancementEngine.applyNextImprovementRule();
+    
+    res.json({
+      ok: true,
+      ...result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Apply improvement error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get comprehensive knowledge enhancement report
+app.get('/api/v1/knowledge/report', async (req, res) => {
+  try {
+    if (!tier1KnowledgeEnhancementEngine) {
+      return res.status(503).json({ ok: false, error: 'Knowledge enhancement engine not initialized' });
+    }
+    
+    const report = tier1KnowledgeEnhancementEngine.getComprehensiveReport();
+    
+    res.json({
+      ok: true,
+      report,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Knowledge report error:', e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ========== END TIER 1 KNOWLEDGE ENHANCEMENT ENDPOINTS ==========
 
 // Simple reverse proxy for API routes (keeps UI unchanged)
 const serviceConfig = [
