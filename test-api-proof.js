@@ -1,0 +1,1 @@
+// API test\nconst proof = 'endpoint works';
