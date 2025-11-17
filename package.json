@@ -130,7 +130,19 @@
     "tooloo:awareness": "curl http://127.0.0.1:3000/api/v1/system/awareness | jq '.'",
     "tooloo:github:status": "curl http://127.0.0.1:3000/api/v1/github/health | jq '.'",
     "tooloo:github:info": "curl http://127.0.0.1:3000/api/v1/github/info | jq '.'",
-    "tooloo:github:context": "curl http://127.0.0.1:3000/api/v1/github/context | jq '.context' | head -50"
+    "tooloo:github:context": "curl http://127.0.0.1:3000/api/v1/github/context | jq '.context' | head -50",
+    "servers:start": "node scripts/server-manager.js start",
+    "servers:stop": "node scripts/server-manager.js stop",
+    "servers:restart": "node scripts/server-manager.js restart",
+    "servers:status": "node scripts/server-manager.js status",
+    "servers:start:web": "node scripts/server-manager.js start web-server",
+    "servers:start:training": "node scripts/server-manager.js start training-server",
+    "servers:start:meta": "node scripts/server-manager.js start meta-server",
+    "servers:dev": "NODE_ENV=development npm run servers:start",
+    "servers:test": "NODE_ENV=testing npm run servers:start",
+    "servers:prod": "NODE_ENV=production npm run servers:start",
+    "servers:hot-reload": "NODE_ENV=development node scripts/server-manager.js start --hot-reload",
+    "servers:monitor": "node scripts/server-manager.js status && watch -n 2 'npm run servers:status'"
   },
   "keywords": [
     "ai",
