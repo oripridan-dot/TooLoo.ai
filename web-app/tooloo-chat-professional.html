@@ -1153,18 +1153,22 @@
 
         const data = await safeJson(response);
         
-        if (data?.response) {
+        // Handle both wrapped (by formatter middleware) and unwrapped responses
+        const actualResponse = data?.content?.response || data?.response;
+        const responseData = data?.content || data;
+        
+        if (actualResponse) {
           removeTypingIndicator();
-          addMessage('assistant', data.response, { 
-            provider: data.provider,
-            providerCount: data.providerCount,
-            confidence: data.metadata?.confidence,
-            mode: data.ensembleMode || data.synthesisMode
+          addMessage('assistant', actualResponse, { 
+            provider: responseData?.provider,
+            providerCount: responseData?.providerCount,
+            confidence: responseData?.metadata?.confidence || responseData?.confidence,
+            mode: responseData?.ensembleMode || responseData?.synthesisMode
           });
           
           // Estimate tokens (rough estimate: 4 chars = 1 token)
-          state.totalTokens += Math.ceil(text.length / 4) + Math.ceil(data.response.length / 4);
-          state.currentProvider = data.provider;
+          state.totalTokens += Math.ceil(text.length / 4) + Math.ceil(actualResponse.length / 4);
+          state.currentProvider = responseData?.provider;
 
           // Save to DB
           fetch('/api/v1/chat/append', {
@@ -1173,13 +1177,13 @@
             body: JSON.stringify({
               sessionId: state.sessionId,
               role: 'assistant',
-              text: data.response,
+              text: actualResponse,
               meta: { 
-                provider: data.provider,
-                synthesisMode: data.synthesisMode || data.ensembleMode,
-                providers: data.providers,
-                providerCount: data.providerCount,
-                confidence: data.metadata?.confidence
+                provider: responseData?.provider,
+                synthesisMode: responseData?.synthesisMode || responseData?.ensembleMode,
+                providers: responseData?.providers,
+                providerCount: responseData?.providerCount,
+                confidence: responseData?.metadata?.confidence || responseData?.confidence
               }
             })
           }).catch(() => {});
