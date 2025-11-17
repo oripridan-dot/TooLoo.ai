@@ -45,6 +45,7 @@ import ReasoningVerificationEngine from '../engine/reasoning-verification-engine
 // Phase 4 Engines
 import CachingEngine from '../engine/caching-engine.js';
 import MultiLanguageEngine from '../engine/multi-language-engine.js';
+import GitHubIntegrationEngine from '../engine/github-integration-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -172,6 +173,17 @@ svc.environmentHub.registerComponent('multiLanguageEngine', multiLanguageEngine,
   'languages',
   'internationalization',
   'localization'
+]);
+
+// ========== PHASE 4 FEATURE 3: GITHUB INTEGRATION ENGINE INITIALIZATION ==========
+// Initialize GitHub integration engine for auto-commit, PR creation, and workflow automation
+const gitHubIntegrationEngine = new GitHubIntegrationEngine(githubProvider);
+
+// Register in environment hub for cross-service access
+svc.environmentHub.registerComponent('gitHubIntegrationEngine', gitHubIntegrationEngine, [
+  'github',
+  'automation',
+  'ci-cd'
 ]);
 
 // ========== RESPONSE FORMATTER INTEGRATION ==========
@@ -2847,6 +2859,279 @@ app.post('/api/v1/languages/translate-emotion', async (req, res) => {
           to: toLanguage
         }
       }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * ========== PHASE 4 FEATURE 3: GITHUB INTEGRATION ENDPOINTS ==========
+ */
+
+/**
+ * POST /api/v1/github/commit-analysis
+ * Auto-commit analysis results to GitHub
+ */
+app.post('/api/v1/github/commit-analysis', async (req, res) => {
+  try {
+    const { analysis, branch, message } = req.body;
+    if (!analysis) {
+      return res.status(400).json({ error: 'Analysis object required' });
+    }
+
+    const result = await gitHubIntegrationEngine.commitAnalysisResults(analysis, {
+      branch: branch || `analysis/${Date.now()}`,
+      message: message || `analysis: ${analysis.analysisType || 'general'}`
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Auto-Commit',
+      message: result.success ? 'Analysis committed to GitHub' : 'Commit failed',
+      data: {
+        success: result.success,
+        commit: result.commit,
+        branch: result.branch,
+        filesAdded: result.filesAdded,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/create-pr
+ * Create pull request with analysis findings
+ */
+app.post('/api/v1/github/create-pr', async (req, res) => {
+  try {
+    const { analysis, baseBranch, headBranch, reviewers, assignees } = req.body;
+    if (!analysis) {
+      return res.status(400).json({ error: 'Analysis object required' });
+    }
+
+    const result = await gitHubIntegrationEngine.createAnalysisPR(analysis, {
+      baseBranch: baseBranch || 'main',
+      headBranch: headBranch || `analysis/${Date.now()}`,
+      reviewers: reviewers || [],
+      assignees: assignees || []
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Pull Request Created',
+      message: result.success ? `PR #${result.prNumber} created` : 'PR creation failed',
+      data: {
+        success: result.success,
+        prNumber: result.prNumber,
+        url: result.url,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/create-issue
+ * Create GitHub issue for analysis findings
+ */
+app.post('/api/v1/github/create-issue', async (req, res) => {
+  try {
+    const { analysis, labels, assignees } = req.body;
+    if (!analysis) {
+      return res.status(400).json({ error: 'Analysis object required' });
+    }
+
+    const result = await gitHubIntegrationEngine.createAnalysisIssue(analysis, {
+      labels: labels || [],
+      assignees: assignees || []
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Issue Created',
+      message: result.success ? `Issue #${result.issueNumber} created` : 'Issue creation failed',
+      data: {
+        success: result.success,
+        issueNumber: result.issueNumber,
+        url: result.url,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/create-workflow
+ * Create GitHub Actions workflow for automated analysis
+ */
+app.post('/api/v1/github/create-workflow', async (req, res) => {
+  try {
+    const { workflowName, triggers, schedule } = req.body;
+    if (!workflowName) {
+      return res.status(400).json({ error: 'Workflow name required' });
+    }
+
+    const result = await gitHubIntegrationEngine.createAnalysisWorkflow(workflowName, {
+      triggers: triggers || ['push', 'pull_request'],
+      schedule: schedule || null
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Workflow Created',
+      message: result.success ? `Workflow ${result.name} created` : 'Workflow creation failed',
+      data: {
+        success: result.success,
+        workflow: result.workflow,
+        path: result.path,
+        name: result.name,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/auto-commit-workflow
+ * Combined: Auto-commit analysis and optionally create PR
+ */
+app.post('/api/v1/github/auto-commit-workflow', async (req, res) => {
+  try {
+    const { analysis, branch, message, createPR, prOptions } = req.body;
+    if (!analysis) {
+      return res.status(400).json({ error: 'Analysis object required' });
+    }
+
+    const result = await gitHubIntegrationEngine.autoCommitWithWorkflow(analysis, {
+      branch: branch || `analysis/${Date.now()}`,
+      message: message || `analysis: ${analysis.analysisType || 'general'}`,
+      createPR: createPR !== false, // Default to true
+      ...prOptions
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Automation Workflow',
+      message: result.success ? 'Analysis committed' + (result.pr ? ' and PR created' : '') : 'Workflow failed',
+      data: {
+        success: result.success,
+        commit: result.commit,
+        pr: result.pr,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/github/workflow-stats
+ * Get GitHub integration workflow statistics
+ */
+app.get('/api/v1/github/workflow-stats', (req, res) => {
+  try {
+    const stats = gitHubIntegrationEngine.getStats();
+
+    res.json({
+      success: true,
+      title: 'GitHub Workflow Statistics',
+      message: 'Automation workflow metrics',
+      data: {
+        stats: {
+          totalCommits: stats.commits,
+          totalPRs: stats.prs,
+          totalIssues: stats.issues,
+          totalErrors: stats.errors,
+          successRate: stats.successRate + '%'
+        },
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/comprehensive-report
+ * Create comprehensive analysis report in GitHub
+ */
+app.post('/api/v1/github/comprehensive-report', async (req, res) => {
+  try {
+    const { analyses, branch } = req.body;
+    if (!analyses || !Array.isArray(analyses)) {
+      return res.status(400).json({ error: 'Analyses array required' });
+    }
+
+    const result = await gitHubIntegrationEngine.createComprehensiveReport(analyses, {
+      branch: branch || 'main'
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Comprehensive Report',
+      message: result.success ? `Report created with ${result.analyses} analyses` : 'Report creation failed',
+      data: {
+        success: result.success,
+        path: result.path,
+        analysesCount: result.analyses,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/reset-stats
+ * Reset GitHub integration statistics
+ */
+app.post('/api/v1/github/reset-stats', (req, res) => {
+  try {
+    const result = gitHubIntegrationEngine.resetStats();
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Statistics Reset',
+      message: result.message,
+      data: result
     });
   } catch (error) {
     res.status(500).json({
