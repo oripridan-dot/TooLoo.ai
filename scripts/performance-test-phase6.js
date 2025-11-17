@@ -190,7 +190,7 @@ async function testRateLimiter() {
     const totalTime = performance.now() - startTime;
     metrics.avgLatency = totalLatency / metrics.totalRequests;
     
-    console.log(`  Results:`);
+    console.log('  Results:');
     console.log(`    Successful: ${metrics.successCount}/${metrics.totalRequests}`);
     console.log(`    Rate limited: ${metrics.limitedCount}/${metrics.totalRequests}`);
     console.log(`    Average latency: ${metrics.avgLatency.toFixed(2)}ms`);
@@ -371,7 +371,7 @@ function generateReport() {
   // Save results to file
   const reportPath = path.join(process.cwd(), 'phase6-performance-results.json');
   fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
-  console.log(`📄 Full results saved to: phase6-performance-results.json\n`);
+  console.log('📄 Full results saved to: phase6-performance-results.json\n');
 
   console.log('═══════════════════════════════════════════════════════════════════\n');
 }

@@ -155,26 +155,26 @@ async function testService(service) {
   // Test 1: Health check
   const healthOk = await testEndpoint(service.port, '/health', 200);
   if (healthOk) {
-    log('OK', `  ✓ Health check passed`);
+    log('OK', '  ✓ Health check passed');
     testResults.passed++;
   } else {
-    log('WARN', `  ✗ Health check failed (may not be implemented)`);
+    log('WARN', '  ✗ Health check failed (may not be implemented)');
   }
   
   // Test 2: Root endpoint
   const rootOk = await testEndpoint(service.port, '/', [200, 302]); // 302 for redirects
   if (rootOk) {
-    log('OK', `  ✓ Root endpoint responded`);
+    log('OK', '  ✓ Root endpoint responded');
     testResults.passed++;
   }
   
   // Test 3: Error handling
   const errorOk = await testErrorHandling(service.port);
   if (errorOk) {
-    log('OK', `  ✓ Error handling returns ok=false`);
+    log('OK', '  ✓ Error handling returns ok=false');
     testResults.passed++;
   } else {
-    log('WARN', `  ✗ Error handling may not follow standard format`);
+    log('WARN', '  ✗ Error handling may not follow standard format');
   }
 }
 

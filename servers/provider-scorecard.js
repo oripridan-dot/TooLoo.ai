@@ -152,9 +152,9 @@ export class ProviderScorecard {
       topProvider: h.leaderboard[0] || null,
       averageScore: h.leaderboard.length > 0
         ? Math.round(
-            h.leaderboard.reduce((sum, p) => sum + (p.scores?.overall || 0), 0) /
+          h.leaderboard.reduce((sum, p) => sum + (p.scores?.overall || 0), 0) /
             h.leaderboard.length
-          )
+        )
         : 0
     }));
   }

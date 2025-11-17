@@ -73,24 +73,24 @@ class AlertEngine {
 
       let matches = false;
       switch (rule.operator) {
-        case '>':
-          matches = value > rule.threshold;
-          break;
-        case '<':
-          matches = value < rule.threshold;
-          break;
-        case '>=':
-          matches = value >= rule.threshold;
-          break;
-        case '<=':
-          matches = value <= rule.threshold;
-          break;
-        case '==':
-          matches = value === rule.threshold;
-          break;
-        case '!=':
-          matches = value !== rule.threshold;
-          break;
+      case '>':
+        matches = value > rule.threshold;
+        break;
+      case '<':
+        matches = value < rule.threshold;
+        break;
+      case '>=':
+        matches = value >= rule.threshold;
+        break;
+      case '<=':
+        matches = value <= rule.threshold;
+        break;
+      case '==':
+        matches = value === rule.threshold;
+        break;
+      case '!=':
+        matches = value !== rule.threshold;
+        break;
       }
 
       if (matches) {
@@ -195,7 +195,7 @@ class RemediationEngine {
         });
         return response.ok;
       } catch (error) {
-        console.error(`Failed to switch provider:`, error);
+        console.error('Failed to switch provider:', error);
         return false;
       }
     });

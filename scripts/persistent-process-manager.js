@@ -254,30 +254,30 @@ const command = process.argv[2] || 'start';
 const manager = new ProcessManager();
 
 switch (command) {
-  case 'start':
-    await manager.startAll();
-    break;
+case 'start':
+  await manager.startAll();
+  break;
 
-  case 'stop':
-    manager.stopAll();
-    process.exit(0);
-    break;
+case 'stop':
+  manager.stopAll();
+  process.exit(0);
+  break;
 
-  case 'status':
-    const status = manager.getStatus();
-    console.log(JSON.stringify(status, null, 2));
-    process.exit(0);
-    break;
+case 'status':
+  const status = manager.getStatus();
+  console.log(JSON.stringify(status, null, 2));
+  process.exit(0);
+  break;
 
-  case 'restart':
-    manager.stopAll();
-    await new Promise(r => setTimeout(r, 1000));
-    await manager.startAll();
-    break;
+case 'restart':
+  manager.stopAll();
+  await new Promise(r => setTimeout(r, 1000));
+  await manager.startAll();
+  break;
 
-  default:
-    console.log(`\nUsage: node scripts/persistent-process-manager.js [start|stop|status|restart]\n`);
-    process.exit(1);
+default:
+  console.log('\nUsage: node scripts/persistent-process-manager.js [start|stop|status|restart]\n');
+  process.exit(1);
 }
 
 // Graceful shutdown

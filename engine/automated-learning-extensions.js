@@ -238,8 +238,8 @@ class AutomatedLearningPipelineExtensions {
     for (const conversation of testData) {
       try {
         // Run current pattern extraction
-        const patterns = runPatternExtraction(conversation.messages, conversation.segments);
-        const traits = computeTraitVector(patterns);
+        const patterns = this.runEnhancedPatternExtraction(conversation.messages, conversation.segments || []);
+        const traits = this.computeTraitVector(patterns);
                 
         // Score based on pattern detection and trait accuracy
         const score = this.scoreAnalysisQuality(patterns, traits, conversation);
@@ -267,7 +267,7 @@ class AutomatedLearningPipelineExtensions {
       try {
         // Run enhanced pattern extraction
         const patterns = this.runEnhancedPatternExtraction(conversation.messages, enhancedPatterns);
-        const traits = computeTraitVector(patterns);
+        const traits = this.computeTraitVector(patterns);
                 
         // Score the enhanced analysis
         const score = this.scoreAnalysisQuality(patterns, traits, conversation);
@@ -519,6 +519,20 @@ The automated learning pipeline has improved TooLoo.ai's conversation intelligen
         participantCount: 2
       }
     };
+  }
+
+  /**
+   * Compute trait vector from detected patterns
+   */
+  computeTraitVector(patterns) {
+    // Create a vector of trait scores from patterns
+    const traits = {};
+    for (const pattern of patterns) {
+      if (pattern.id) {
+        traits[pattern.id] = pattern.confidence || 0.8;
+      }
+    }
+    return traits;
   }
 }
 

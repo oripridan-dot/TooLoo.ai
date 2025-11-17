@@ -1731,7 +1731,7 @@ class ProductDevelopmentServer {
 
   start() {
     this.svc.start();
-    console.log(`🏭 Product Development Server capabilities: Workflow Orchestration | Dynamic Learning | Book Worm Analysis | Artifact Generation`);
+    console.log('🏭 Product Development Server capabilities: Workflow Orchestration | Dynamic Learning | Book Worm Analysis | Artifact Generation');
   }
 }
 

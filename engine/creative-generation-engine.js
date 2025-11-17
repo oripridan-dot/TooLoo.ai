@@ -76,49 +76,49 @@ export default class CreativeGenerationEngine {
     let content, path = [];
 
     switch (technique) {
-      case 'combination':
-        content = this.combineIdeas(prompt);
-        path = ['identify_concepts', 'find_connections', 'synthesize'];
-        break;
+    case 'combination':
+      content = this.combineIdeas(prompt);
+      path = ['identify_concepts', 'find_connections', 'synthesize'];
+      break;
 
-      case 'transformation':
-        content = this.transformConcept(prompt, style);
-        path = ['analyze_structure', 'modify_properties', 'reconceptualize'];
-        break;
+    case 'transformation':
+      content = this.transformConcept(prompt, style);
+      path = ['analyze_structure', 'modify_properties', 'reconceptualize'];
+      break;
 
-      case 'reversal':
-        content = this.reverseAssumptions(prompt);
-        path = ['identify_assumptions', 'negate_assumptions', 'explore_inverse'];
-        break;
+    case 'reversal':
+      content = this.reverseAssumptions(prompt);
+      path = ['identify_assumptions', 'negate_assumptions', 'explore_inverse'];
+      break;
 
-      case 'substitution':
-        content = this.substituteElements(prompt);
-        path = ['decompose', 'identify_parts', 'substitute_alternatives'];
-        break;
+    case 'substitution':
+      content = this.substituteElements(prompt);
+      path = ['decompose', 'identify_parts', 'substitute_alternatives'];
+      break;
 
-      case 'expansion':
-        content = this.expandScope(prompt);
-        path = ['identify_boundaries', 'extend_scope', 'explore_implications'];
-        break;
+    case 'expansion':
+      content = this.expandScope(prompt);
+      path = ['identify_boundaries', 'extend_scope', 'explore_implications'];
+      break;
 
-      case 'reduction':
-        content = this.reduceToEssence(prompt);
-        path = ['identify_core', 'remove_nonessentials', 'simplify'];
-        break;
+    case 'reduction':
+      content = this.reduceToEssence(prompt);
+      path = ['identify_core', 'remove_nonessentials', 'simplify'];
+      break;
 
-      case 'analogy':
-        content = this.findAnalogy(prompt);
-        path = ['identify_properties', 'find_similar_domain', 'map_analogy'];
-        break;
+    case 'analogy':
+      content = this.findAnalogy(prompt);
+      path = ['identify_properties', 'find_similar_domain', 'map_analogy'];
+      break;
 
-      case 'randomization':
-        content = this.randomizeElements(prompt);
-        path = ['identify_elements', 'randomly_recombine', 'validate_coherence'];
-        break;
+    case 'randomization':
+      content = this.randomizeElements(prompt);
+      path = ['identify_elements', 'randomly_recombine', 'validate_coherence'];
+      break;
 
-      default:
-        content = prompt;
-        path = [];
+    default:
+      content = prompt;
+      path = [];
     }
 
     return { content, path };

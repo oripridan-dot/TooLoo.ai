@@ -96,7 +96,7 @@ async function main() {
     if (!data.ok) throw new Error('Failed to read engine file');
     console.log(`   Engine: ${data.path}`);
     console.log(`   Total lines: ${data.totalLines}`);
-    console.log(`   Status: accessible to providers ✓`);
+    console.log('   Status: accessible to providers ✓');
   });
 
   // Test 7: Simulate provider analysis
@@ -126,7 +126,7 @@ async function main() {
       throw new Error('Content appears to be metadata, not actual source');
     }
     console.log(`   ✓ Actual source code returned (${data.content.length} chars)`);
-    console.log(`   ✓ Content is readable and parseable`);
+    console.log('   ✓ Content is readable and parseable');
   });
 
   console.log('\n====================================');

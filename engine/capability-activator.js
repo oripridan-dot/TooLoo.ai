@@ -129,7 +129,7 @@ export class CapabilityActivator {
 
       // Stop on critical failures
       if (!result.success && result.isCritical) {
-        console.warn(`Critical failure during batch activation. Stopping.`);
+        console.warn('Critical failure during batch activation. Stopping.');
         break;
       }
     }

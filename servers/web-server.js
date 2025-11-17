@@ -51,6 +51,9 @@ import slackProvider from '../engine/slack-provider.js';
 // Tier 1 Knowledge Enhancement (dynamically imported due to CommonJS)
 let Tier1KnowledgeEnhancement;
 
+// PDF Document library for brand board generation - lazy loaded
+let PDFDocument = null;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -1070,6 +1073,16 @@ app.get(['/product-page', '/product', '/landing'], async (req,res)=>{
 // Design: Brand Board PDF export
 app.post('/api/v1/design/brandboard', async (req,res)=>{
   try{
+    // Lazy load PDFDocument if not already loaded
+    if (!PDFDocument) {
+      try {
+        const pdfkitModule = await import('pdfkit');
+        PDFDocument = pdfkitModule.default;
+      } catch (_e) {
+        return res.status(501).json({ ok: false, error: 'PDF generation not available' });
+      }
+    }
+    
     const { tokens = {}, fonts = {}, name = 'TooLoo Brand' } = req.body || {};
     const outDir = path.join(webDir, 'temp');
     await fs.promises.mkdir(outDir, { recursive: true });

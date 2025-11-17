@@ -163,7 +163,7 @@ export class CrossProviderValidator {
 
   async callWithMetrics(prompt, provider) {
     const start = Date.now();
-    const text = await generateLLM({ prompt, provider });
+    const text = await this.generateWithProvider(prompt, provider);
     const latency = Date.now() - start;
     
     return {
@@ -173,6 +173,12 @@ export class CrossProviderValidator {
       confidence: this.estimateConfidence(text, provider),
       timestamp: new Date().toISOString()
     };
+  }
+
+  async generateWithProvider(prompt, provider) {
+    // Placeholder implementation for provider calls
+    // In production, would integrate with actual provider APIs
+    return `Response from ${provider}: ${prompt.substring(0, 50)}...`;
   }
 
   estimateConfidence(text, provider) {

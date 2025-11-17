@@ -483,7 +483,7 @@ jobs:
    * Generate markdown report
    */
   generateMarkdownReport(analyses, reportDate) {
-    let content = `# Analysis Report\n\n`;
+    let content = '# Analysis Report\n\n';
     content += `Generated: ${reportDate}\n`;
     content += `Total Analyses: ${analyses.length}\n\n`;
 
@@ -496,19 +496,19 @@ jobs:
       languages[a.language] = (languages[a.language] || 0) + 1;
     });
 
-    content += `## Summary\n\n`;
-    content += `### Emotions Detected\n`;
+    content += '## Summary\n\n';
+    content += '### Emotions Detected\n';
     Object.entries(emotions).forEach(([emotion, count]) => {
       content += `- ${emotion}: ${count}\n`;
     });
 
-    content += `\n### Languages Processed\n`;
+    content += '\n### Languages Processed\n';
     Object.entries(languages).forEach(([lang, count]) => {
       content += `- ${lang}: ${count}\n`;
     });
 
     // Detailed findings
-    content += `\n## Detailed Findings\n\n`;
+    content += '\n## Detailed Findings\n\n';
     analyses.forEach((a, idx) => {
       content += `### Analysis ${idx + 1}\n`;
       content += `- Type: ${a.analysisType}\n`;

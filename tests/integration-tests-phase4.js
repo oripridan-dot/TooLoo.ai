@@ -188,7 +188,7 @@ const services = [
 
 for (const svc of services) {
   await test(`Health: ${svc.name} responds to /health`, async () => {
-    const res = await request('GET', `/health`, null);
+    const res = await request('GET', '/health', null);
     assert(res.status === 200, `Expected 200, got ${res.status}`);
   });
 }

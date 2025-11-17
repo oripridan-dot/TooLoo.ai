@@ -25,7 +25,7 @@ async function testAdminEndpoints() {
       const data = await response.json();
       
       if (!data.ok) {
-        console.error(`❌ Error:`, data.error);
+        console.error('❌ Error:', data.error);
         continue;
       }
 
@@ -44,7 +44,7 @@ async function testHotReload() {
   console.log('═'.repeat(60));
 
   try {
-    console.log(`\n🔄 POST /api/v1/admin/hot-reload`);
+    console.log('\n🔄 POST /api/v1/admin/hot-reload');
     const response = await fetch(`${BASE_URL}/api/v1/admin/hot-reload`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
@@ -52,14 +52,14 @@ async function testHotReload() {
     const data = await response.json();
     
     if (!data.ok) {
-      console.error(`❌ Error:`, data.error);
+      console.error('❌ Error:', data.error);
       return;
     }
 
     console.log(`✅ Status: ${response.status}`);
     console.log(JSON.stringify(data, null, 2));
   } catch (error) {
-    console.error(`❌ Failed to trigger hot-reload:`, error.message);
+    console.error('❌ Failed to trigger hot-reload:', error.message);
   }
 }
 
@@ -72,23 +72,23 @@ async function testSystemAwareness() {
     const data = await response.json();
     
     if (!data.ok) {
-      console.error(`❌ Error:`, data.error);
+      console.error('❌ Error:', data.error);
       return;
     }
 
-    console.log(`\n✅ System Capabilities:`);
+    console.log('\n✅ System Capabilities:');
     const capabilities = data.capabilities || {};
     for (const [key, value] of Object.entries(capabilities)) {
       const status = value === true || value.enabled === true ? '✅' : '❌';
       console.log(`  ${status} ${key}`);
     }
 
-    console.log(`\n📊 System Status:`);
+    console.log('\n📊 System Status:');
     console.log(`  Service: ${data.service}`);
     console.log(`  Uptime: ${data.uptime}s`);
     console.log(`  Processes: ${data.processes?.length || 0}`);
   } catch (error) {
-    console.error(`❌ Failed to fetch system awareness:`, error.message);
+    console.error('❌ Failed to fetch system awareness:', error.message);
   }
 }
 

@@ -203,7 +203,7 @@ async function testDesignListFiles() {
     if (res.status === 200 || res.status === 404 || res.status === 403) {
       const data = await res.json();
       if (Array.isArray(data.files) || data.files) {
-        log.pass(`Listed design files`);
+        log.pass('Listed design files');
         return true;
       } else if (res.status === 403) {
         log.skip('Design adapter: Figma token not configured (expected for MVP)');
@@ -269,7 +269,7 @@ async function testIntegrationsExecuteHandler() {
     if (res.status === 200 || res.status === 404) {
       const data = await res.json();
       if (data.success || data.executed) {
-        log.pass(`Handler executed successfully`);
+        log.pass('Handler executed successfully');
         return true;
       } else if (res.status === 404) {
         log.skip('Integrations handler endpoint not yet implemented');
@@ -298,7 +298,7 @@ async function testAdapterInitialization() {
     if (res.status === 200 || res.status === 404) {
       const data = await res.json();
       if (data.initialized || data.success) {
-        log.pass(`Adapter initialized: OAuth`);
+        log.pass('Adapter initialized: OAuth');
         return true;
       } else if (res.status === 404) {
         log.skip('Adapter init endpoint not yet implemented');
@@ -339,13 +339,13 @@ async function testLLMProviderInterface() {
     const hasGenerateSmartLLM = typeof instance.generateSmartLLM === 'function';
 
     if (hasGenerate && hasGenerateSmartLLM) {
-      log.pass(`LLMProvider has both methods: generate() + generateSmartLLM()`);
+      log.pass('LLMProvider has both methods: generate() + generateSmartLLM()');
       return true;
     } else if (hasGenerate) {
-      log.pass(`LLMProvider has new unified generate() method`);
+      log.pass('LLMProvider has new unified generate() method');
       return true;
     } else {
-      log.fail(`LLMProvider missing expected methods`);
+      log.fail('LLMProvider missing expected methods');
       return false;
     }
   } catch (e) {

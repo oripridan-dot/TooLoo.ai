@@ -262,7 +262,7 @@ class MultiProviderCollaborationFramework {
   generateUnifiedPerspective(insights, responses) {
     return `Combining the strengths of ${responses.map(r => this.providers[r.provider]?.name).join(', ')}, ` +
            `the unified perspective emphasizes: ${insights[0]?.insights?.[0] || 'collaborative intelligence'}. ` +
-           `This approach leverages each provider's expertise for comprehensive analysis.`;
+           'This approach leverages each provider\'s expertise for comprehensive analysis.';
   }
 
   /**
@@ -362,7 +362,7 @@ class MultiProviderCollaborationFramework {
     const providers = responses.map(r => this.providers[r.provider]?.name).join(', ');
     return `To optimize outcomes, leverage ${providers}'s combined strengths: ` +
            `${responses[0].provider} for foundational thinking, ` +
-           `cross-validate with alternatives for comprehensive coverage.`;
+           'cross-validate with alternatives for comprehensive coverage.';
   }
 
   /**

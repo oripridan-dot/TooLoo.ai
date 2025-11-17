@@ -134,7 +134,7 @@ async function runCheckpoint(checkpointNum) {
   const avgDuration = Math.round(totalDuration / ENDPOINTS.length);
   const passRate = Math.round((healthyCount / ENDPOINTS.length) * 100);
   
-  console.log(`\n  Summary:`);
+  console.log('\n  Summary:');
   console.log(`    • Healthy: ${healthyCount}/${ENDPOINTS.length}`);
   console.log(`    • Pass Rate: ${passRate}%`);
   console.log(`    • Avg Response: ${avgDuration}ms`);

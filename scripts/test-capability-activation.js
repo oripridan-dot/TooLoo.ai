@@ -114,14 +114,14 @@ async function main() {
   // The responses above should all be formatted with the enhanced formatter
   // Check if responses have the proper structure
   if (status1 && status1.type === 'capability') {
-    console.log(`\n✨ Response Formatter Test Passed!`);
-    console.log(`   Responses are being formatted with enhanced formatter`);
-    console.log(`   Format Types Available:`);
-    console.log(`   - capability (for capability status)`);
-    console.log(`   - progress (for activation phases)`);
-    console.log(`   - status (for health checks)`);
-    console.log(`   - error (for error responses)`);
-    console.log(`   - success (for successful operations)`);
+    console.log('\n✨ Response Formatter Test Passed!');
+    console.log('   Responses are being formatted with enhanced formatter');
+    console.log('   Format Types Available:');
+    console.log('   - capability (for capability status)');
+    console.log('   - progress (for activation phases)');
+    console.log('   - status (for health checks)');
+    console.log('   - error (for error responses)');
+    console.log('   - success (for successful operations)');
   }
 
   // Summary

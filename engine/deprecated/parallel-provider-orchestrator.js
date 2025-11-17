@@ -613,7 +613,7 @@ RESPONSE FORMAT:
         responseTime: response.responseTime,
         cost: response.cost || 0,
         quality: response.confidence || 0.5,
-        context: options.context || {},
+        context: response.context || {},
         timestamp
       });
     });

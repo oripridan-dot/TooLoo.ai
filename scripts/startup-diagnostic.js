@@ -172,7 +172,7 @@ function checkStartupLog() {
     if (lines.length === 0) {
       log('  (No startup log entries yet)', 'yellow');
     } else {
-      log(`  Recent entries (last 5):`, 'blue');
+      log('  Recent entries (last 5):', 'blue');
 
       const recent = lines.slice(-5);
       recent.forEach(line => {

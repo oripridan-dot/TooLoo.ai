@@ -83,7 +83,7 @@ async function runTests() {
     // Expect 400 or 200 based on GitHub config, not 404
     if (res.status === 404) throw new Error('Endpoint not found');
     const data = await res.json();
-    console.log(`   ├─ Endpoint: available`);
+    console.log('   ├─ Endpoint: available');
     console.log(`   ├─ Status: ${res.status}`);
     console.log(`   └─ Response: ${data.ok ? '✓' : 'GitHub not configured'}`);
   });
@@ -99,7 +99,7 @@ async function runTests() {
       })
     });
     if (res.status === 404) throw new Error('Endpoint not found');
-    console.log(`   ├─ Endpoint: available`);
+    console.log('   ├─ Endpoint: available');
     console.log(`   └─ Status: ${res.status}`);
   });
 
@@ -113,7 +113,7 @@ async function runTests() {
       })
     });
     if (res.status === 404) throw new Error('Endpoint not found');
-    console.log(`   ├─ Endpoint: available`);
+    console.log('   ├─ Endpoint: available');
     console.log(`   └─ Status: ${res.status}`);
   });
 
@@ -129,7 +129,7 @@ async function runTests() {
     });
     if (res.status === 404) throw new Error('Endpoint not found');
     const data = await res.json();
-    console.log(`   ├─ Endpoint: available`);
+    console.log('   ├─ Endpoint: available');
     console.log(`   ├─ Status: ${res.status}`);
     console.log(`   └─ Action 'analyze': ${data.ok ? '✓' : '✗'}`);
   });

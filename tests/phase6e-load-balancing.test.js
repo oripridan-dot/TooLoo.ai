@@ -691,7 +691,7 @@ try {
 // SUMMARY
 // ============================================================================
 console.log('\n════════════════════════════════════════════════════════════');
-console.log(`📋 Phase 6E Full Integration Tests Summary:`);
+console.log('📋 Phase 6E Full Integration Tests Summary:');
 console.log(`   ✅ Passed: ${passCount}`);
 console.log(`   ❌ Failed: ${failCount}`);
 console.log(`   📊 Total: ${passCount + failCount}`);

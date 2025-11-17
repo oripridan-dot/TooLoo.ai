@@ -209,8 +209,8 @@ export class SemanticTraitsAnalyzer {
 
 Traits to score:
 ${Object.entries(this.traitDefinitions)
-  .map(([, def]) => `- ${def.name} (${def.category}): ${def.description}`)
-  .join('\n')}
+    .map(([, def]) => `- ${def.name} (${def.category}): ${def.description}`)
+    .join('\n')}
 
 Conversation:
 ${conversationText}

@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Generated files
+*.min.js
+coverage/
+
+# Test fixtures
+tests/fixtures/
+
+# Third-party code
+extensions/
+
+# Dev files
+.next/
+.nuxt/
+out/

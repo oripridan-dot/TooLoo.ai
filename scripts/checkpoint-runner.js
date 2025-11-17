@@ -98,7 +98,7 @@ async function runScheduledCheckpoints() {
     console.log(`  Next run: ${nextRun.toISOString()}`);
     
     if (nextRun <= now) {
-      console.log(`  Status: ⏱️ DUE (running now...)\n`);
+      console.log('  Status: ⏱️ DUE (running now...)\n');
       const result = await runCheckpoint(checkpointNum);
       results.push(result);
     } else {

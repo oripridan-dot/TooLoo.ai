@@ -199,9 +199,9 @@ app.use((error, req, res, next) => {
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`✓ Web Gateway running on port ${PORT}`);
-    console.log(`  Static files: /web-app`);
-    console.log(`  API proxies: /api/v1/*`);
-    console.log(`  Health: /health`);
+    console.log('  Static files: /web-app');
+    console.log('  API proxies: /api/v1/*');
+    console.log('  Health: /health');
   });
 }
 

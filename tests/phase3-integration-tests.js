@@ -149,7 +149,7 @@ await test('IDE: Analyze with IDE', async () => {
   if (!r.ok) throw new Error('ide analysis failed');
 });
 
-console.log(`\n=== TEST SUMMARY ===`);
+console.log('\n=== TEST SUMMARY ===');
 console.log(`Passed: ${passed}`);
 console.log(`Failed: ${failed}`);
 console.log(`Total: ${passed + failed}`);

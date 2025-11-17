@@ -16,13 +16,41 @@
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
-    "no-unused-vars": ["warn"],
-    "no-console": ["off"]
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_|err|error|e|next|req|res|ctx|context|done|callback",
+        "varsIgnorePattern": "^_|__dirname|__filename|beforeAll|afterAll|vi|beforeEach|afterEach|describe|it|test"
+      }
+    ],
+    "no-empty": [
+      "error",
+      {
+        "allowEmptyCatch": true
+      }
+    ],
+    "no-console": ["off"],
+    "no-undef": ["error"],
+    "no-constant-condition": ["warn"],
+    "no-async-promise-executor": ["warn"],
+    "no-useless-escape": ["warn"],
+    "no-prototype-builtins": ["warn"],
+    "no-useless-backreference": ["warn"],
+    "no-case-declarations": ["warn"],
+    "no-inner-declarations": ["warn"]
   },
   "ignorePatterns": [
     "node_modules/",
     "web-app/node_modules/",
     "dist/",
-    "*.min.js"
+    "*.min.js",
+    "extensions/",
+    "**/*.min.js",
+    "coverage/",
+    ".next/",
+    ".nuxt/",
+    "out/",
+    "build/",
+    "public/"
   ]
 }

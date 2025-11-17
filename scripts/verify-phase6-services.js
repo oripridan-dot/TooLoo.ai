@@ -174,7 +174,7 @@ function printResults() {
     for (const service of unhealthy) {
       console.log(`\n  ${service.name} (Port ${service.port})`);
       console.log(`  Endpoint: ${service.endpoint}`);
-      console.log(`  Status: FAILED`);
+      console.log('  Status: FAILED');
       
       if (service.errors.length > 0) {
         console.log('  Errors:');
@@ -193,7 +193,7 @@ function printResults() {
   // Save detailed results
   const reportPath = path.join(process.cwd(), 'phase6-verification-results.json');
   fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
-  console.log(`📄 Detailed results saved to: phase6-verification-results.json\n`);
+  console.log('📄 Detailed results saved to: phase6-verification-results.json\n');
 }
 
 // ============ Main Execution ============

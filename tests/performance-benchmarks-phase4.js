@@ -104,8 +104,8 @@ async function testCircuitBreaker() {
   const breaker1 = res1.data.breakers?.[0];
   
   console.log(`✓ Circuit breaker status: ${breaker1?.state || 'monitored'}`);
-  console.log(`✓ Failure threshold: 3 failures`);
-  console.log(`✓ Reset timeout: 30 seconds`);
+  console.log('✓ Failure threshold: 3 failures');
+  console.log('✓ Reset timeout: 30 seconds');
   
   const elapsed = Date.now() - start;
   
@@ -144,7 +144,7 @@ async function testLearning() {
         .slice(0, 3);
       
       if (sorted.length > 0) {
-        console.log(`✓ Top performers:`);
+        console.log('✓ Top performers:');
         sorted.forEach(([provider, data]) => {
           console.log(`  - ${provider}: score=${(data.score || 0).toFixed(2)}, calls=${data.callCount || 0}`);
         });

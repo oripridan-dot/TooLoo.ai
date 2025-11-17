@@ -132,7 +132,7 @@ async function runTests() {
   });
   
   console.log('\n' + '═'.repeat(60));
-  console.log(`\n📊 Final Results:`);
+  console.log('\n📊 Final Results:');
   console.log(`  ✅ Passed: ${passed}`);
   console.log(`  ❌ Failed: ${failed}`);
   console.log(`  Total: ${passed + failed}\n`);

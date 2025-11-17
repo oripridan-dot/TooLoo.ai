@@ -278,6 +278,7 @@ function generateInsights(data) {
 app.get('/api/v1/reports/comprehensive', async (req, res) => {
   const { traceId, spanId } = tracer.startTrace();
   const fetchSpan = tracer.startSpan(traceId, 'fetch-services');
+  let analyzeSpan = null;
   
   try {
     const [training, meta, segmentation, budget, coach] = await Promise.all([
@@ -289,7 +290,7 @@ app.get('/api/v1/reports/comprehensive', async (req, res) => {
     ]);
 
     tracer.endSpan(traceId, fetchSpan, 'success');
-    const analyzeSpan = tracer.startSpan(traceId, 'analyze-data');
+    analyzeSpan = tracer.startSpan(traceId, 'analyze-data');
 
     // Extract capability data from meta-learning if available
     const capabilities = meta?.report?.phases?.[1]?.findings?.[1] || null;

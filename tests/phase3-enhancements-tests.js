@@ -59,7 +59,7 @@ await test('Cache: Code analysis caching', async () => {
 console.log('\n--- OAuth Flows Tests ---\n');
 
 await test('OAuth: GitHub authorization URL', async () => {
-  const r = await fetch(`http://127.0.0.1:3012/oauth/authorize/github?userId=test-user&redirect_uri=http://localhost:3012/callback`, {
+  const r = await fetch('http://127.0.0.1:3012/oauth/authorize/github?userId=test-user&redirect_uri=http://localhost:3012/callback', {
     timeout: TIMEOUT
   });
   const data = await r.json();
@@ -68,7 +68,7 @@ await test('OAuth: GitHub authorization URL', async () => {
 });
 
 await test('OAuth: Slack authorization URL', async () => {
-  const r = await fetch(`http://127.0.0.1:3012/oauth/authorize/slack?userId=test-user&redirect_uri=http://localhost:3012/callback`, {
+  const r = await fetch('http://127.0.0.1:3012/oauth/authorize/slack?userId=test-user&redirect_uri=http://localhost:3012/callback', {
     timeout: TIMEOUT
   });
   const data = await r.json();
@@ -77,7 +77,7 @@ await test('OAuth: Slack authorization URL', async () => {
 });
 
 await test('OAuth: List providers for user', async () => {
-  const r = await fetch(`http://127.0.0.1:3012/oauth/providers/test-user`, {
+  const r = await fetch('http://127.0.0.1:3012/oauth/providers/test-user', {
     timeout: TIMEOUT
   });
   const data = await r.json();
@@ -88,7 +88,7 @@ await test('OAuth: List providers for user', async () => {
 console.log('\n--- Webhooks Tests ---\n');
 
 await test('Webhooks: Health check', async () => {
-  const r = await fetch(`http://127.0.0.1:3018/health`, {
+  const r = await fetch('http://127.0.0.1:3018/health', {
     timeout: TIMEOUT
   });
   const data = await r.json();
@@ -96,7 +96,7 @@ await test('Webhooks: Health check', async () => {
 });
 
 await test('Webhooks: Get event log', async () => {
-  const r = await fetch(`http://127.0.0.1:3018/webhooks/events`, {
+  const r = await fetch('http://127.0.0.1:3018/webhooks/events', {
     timeout: TIMEOUT
   });
   const data = await r.json();
@@ -104,7 +104,7 @@ await test('Webhooks: Get event log', async () => {
 });
 
 await test('Webhooks: Clear event log', async () => {
-  const r = await fetch(`http://127.0.0.1:3018/webhooks/events/clear`, {
+  const r = await fetch('http://127.0.0.1:3018/webhooks/events/clear', {
     method: 'POST',
     timeout: TIMEOUT
   });

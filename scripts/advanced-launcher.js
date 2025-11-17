@@ -184,9 +184,9 @@ async function runStartup() {
 
   // Help text
   console.log('\n📝 Useful Commands:');
-  log(`  npm run stop:all            Stop all services`, 'reset');
-  log(`  npm run startup:diagnose    Run diagnostics`, 'reset');
-  log(`  tail -f /tmp/tooloo-startup.jsonl   Watch logs`, 'reset');
+  log('  npm run stop:all            Stop all services', 'reset');
+  log('  npm run startup:diagnose    Run diagnostics', 'reset');
+  log('  tail -f /tmp/tooloo-startup.jsonl   Watch logs', 'reset');
 
   // Keep process alive
   console.log('\n✨ Startup complete! Press Ctrl+C to stop all services.\n');

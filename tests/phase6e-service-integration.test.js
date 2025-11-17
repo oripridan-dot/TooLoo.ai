@@ -46,7 +46,7 @@ async function callEndpoint(path, options = {}) {
 // Test 1: Verify web-server is running
 console.log('📋 Test 1: Web Server Startup');
 try {
-  const isReady = await waitForService(`http://127.0.0.1:3000/health`);
+  const isReady = await waitForService('http://127.0.0.1:3000/health');
   assert(isReady, 'Web server should be running on port 3000');
   console.log('  ✅ Web server is running');
   passCount++;
@@ -169,7 +169,7 @@ try {
 // Summary
 setTimeout(() => {
   console.log('\n════════════════════════════════════════════════════════════');
-  console.log(`📋 Phase 6E Service Integration Tests Summary:`);
+  console.log('📋 Phase 6E Service Integration Tests Summary:');
   console.log(`   ✅ Passed: ${passCount}`);
   console.log(`   ❌ Failed: ${failCount}`);
   console.log(`   📊 Total: ${passCount + failCount}`);
