@@ -44,6 +44,7 @@ import CreativeGenerationEngine from '../engine/creative-generation-engine.js';
 import ReasoningVerificationEngine from '../engine/reasoning-verification-engine.js';
 // Phase 4 Engines
 import CachingEngine from '../engine/caching-engine.js';
+import MultiLanguageEngine from '../engine/multi-language-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -160,6 +161,17 @@ svc.environmentHub.registerComponent('cachingEngine', cachingEngine, [
   'performance',
   'caching',
   'optimization'
+]);
+
+// ========== PHASE 4 FEATURE 2: MULTI-LANGUAGE ENGINE INITIALIZATION ==========
+// Initialize multi-language engine for support of 6 languages with auto-detection
+const multiLanguageEngine = new MultiLanguageEngine();
+
+// Register in environment hub for cross-service access
+svc.environmentHub.registerComponent('multiLanguageEngine', multiLanguageEngine, [
+  'languages',
+  'internationalization',
+  'localization'
 ]);
 
 // ========== RESPONSE FORMATTER INTEGRATION ==========
@@ -2678,6 +2690,163 @@ app.post('/api/v1/emotions/analyze', async (req, res) => {
       title: 'Emotional Analysis',
       message: 'Nuanced emotion understanding applied (addresses: emotion limitation)',
       data: responseData
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/emotions/analyze-multilingual
+ * Analyze emotional nuance in multiple languages with auto-detection
+ * Extends emotion analysis with support for 6 languages: English, Spanish, French, German, Mandarin, Portuguese
+ */
+app.post('/api/v1/emotions/analyze-multilingual', async (req, res) => {
+  try {
+    const { text, preferredLanguage, translateTo } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: 'Text required for multilingual emotion analysis' });
+    }
+
+    // Check cache first
+    const cacheKey = cachingEngine.generateKey('emotion-ml', { text, preferredLanguage });
+    let cachedResult = cachingEngine.get(cacheKey);
+    if (cachedResult) {
+      return res.json({
+        success: true,
+        title: 'Multilingual Emotion Analysis (Cached)',
+        message: 'Cached multilingual emotion analysis applied',
+        data: cachedResult,
+        cached: true
+      });
+    }
+
+    // Use the multi-language engine for comprehensive analysis
+    const analysis = multiLanguageEngine.analyzeEmotion(text, preferredLanguage);
+    
+    // Optionally translate the result
+    let translatedAnalysis = analysis;
+    if (translateTo && translateTo !== analysis.language) {
+      translatedAnalysis = multiLanguageEngine.translateAnalysis(analysis, translateTo);
+    }
+
+    const responseData = {
+      input: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+      analysis: translatedAnalysis,
+      detectedLanguage: analysis.language,
+      supportedLanguages: multiLanguageEngine.getSupportedLanguages(),
+      languageInfo: multiLanguageEngine.getLanguageInfo()
+    };
+
+    // Cache the result
+    cachingEngine.set(cacheKey, responseData);
+
+    res.json({
+      success: true,
+      title: 'Multilingual Emotion Analysis',
+      message: `Emotion analysis in ${analysis.language === 'en' ? 'detected' : analysis.language} with support for 6 languages`,
+      data: responseData
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/languages/supported
+ * Get list of supported languages
+ */
+app.get('/api/v1/languages/supported', (req, res) => {
+  try {
+    const languages = multiLanguageEngine.getSupportedLanguages();
+    const languageInfo = multiLanguageEngine.getLanguageInfo();
+
+    res.json({
+      success: true,
+      title: 'Supported Languages',
+      message: 'List of all supported languages for multilingual emotion analysis',
+      data: {
+        count: languages.length,
+        codes: languages,
+        details: languageInfo
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/languages/detect
+ * Detect language from text with confidence score
+ */
+app.post('/api/v1/languages/detect', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: 'Text required for language detection' });
+    }
+
+    const detectedLanguage = multiLanguageEngine.detectLanguage(text);
+    const languageInfo = multiLanguageEngine.getLanguageInfo();
+
+    res.json({
+      success: true,
+      title: 'Language Detection',
+      message: 'Detected language from input text',
+      data: {
+        detectedLanguage,
+        languageName: languageInfo[detectedLanguage]?.name || 'Unknown',
+        nativeName: languageInfo[detectedLanguage]?.native || 'Unknown',
+        allSupported: multiLanguageEngine.getSupportedLanguages()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/languages/translate-emotion
+ * Translate emotion analysis to another language
+ */
+app.post('/api/v1/languages/translate-emotion', async (req, res) => {
+  try {
+    const { text, fromLanguage, toLanguage } = req.body;
+    if (!text || !toLanguage) {
+      return res.status(400).json({ error: 'Text and target language required for translation' });
+    }
+
+    // Analyze in source language
+    const analysis = multiLanguageEngine.analyzeEmotion(text, fromLanguage);
+
+    // Translate to target language
+    const translated = multiLanguageEngine.translateAnalysis(analysis, toLanguage);
+
+    res.json({
+      success: true,
+      title: 'Translated Emotion Analysis',
+      message: `Emotion analysis translated from ${analysis.language} to ${toLanguage}`,
+      data: {
+        original: analysis,
+        translated: translated,
+        translationPair: {
+          from: analysis.language,
+          to: toLanguage
+        }
+      }
     });
   } catch (error) {
     res.status(500).json({
