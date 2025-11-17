@@ -1,0 +1,135 @@
+# Example TooLoo Suggestions File
+
+This file demonstrates the format for TooLoo auto-execution suggestions.
+
+Create `.tooloo-suggestions.json` with this structure:
+
+```json
+[
+  {
+    "id": "example-1",
+    "title": "Add utility function",
+    "action": "create",
+    "file": "lib/utilities.js",
+    "content": "export function greet(name) {\n  return `Hello, ${name}!`;\n}",
+    "message": "feat: Add greeting utility",
+    "branch": "main",
+    "createPr": false
+  },
+  {
+    "id": "example-2",
+    "title": "Update configuration",
+    "action": "update",
+    "file": "config/app.config.json",
+    "content": "{ \"setting\": \"value\" }",
+    "message": "config: Update application settings",
+    "createPr": true
+  }
+]
+```
+
+## Fields Reference
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| `id` | Yes | string | Unique identifier for the suggestion |
+| `title` | Yes | string | Human-readable title |
+| `action` | Yes | string | `"create"` or `"update"` |
+| `file` | Yes | string | Target file path |
+| `content` | Yes | string | File content to create/update |
+| `message` | No | string | Git commit message (auto-generated if omitted) |
+| `branch` | No | string | Target branch (default: `"main"`) |
+| `createPr` | No | boolean | Create PR after commit (default: `true`) |
+| `timeout` | No | number | Execution timeout in milliseconds (default: `30000`) |
+
+## Execution
+
+```bash
+# Execute all suggestions
+npm run tooloo:auto-execute
+
+# Execute specific file
+npm run tooloo:executor .tooloo-suggestions.json
+
+# Sequential mode
+npm run tooloo:auto-execute:seq
+
+# Watch mode
+npm run tooloo:auto-execute:watch
+```
+
+## Examples
+
+### Example: Auto-Fix Linting
+
+```json
+[
+  {
+    "id": "lint-fix-1",
+    "title": "Fix missing semicolon",
+    "action": "update",
+    "file": "servers/web-server.js",
+    "content": "const app = express();",
+    "message": "fix: Add missing semicolon"
+  }
+]
+```
+
+### Example: Add Feature
+
+```json
+[
+  {
+    "id": "feature-health-endpoint",
+    "title": "Add health check endpoint",
+    "action": "create",
+    "file": "routes/health.js",
+    "content": "export default function setupHealthRoute(app) {\n  app.get('/health', (req, res) => res.json({ ok: true }));\n}",
+    "message": "feat: Add health check endpoint"
+  }
+]
+```
+
+### Example: Batch Update
+
+```json
+[
+  {
+    "id": "batch-update-1",
+    "title": "Update README",
+    "action": "update",
+    "file": "README.md",
+    "content": "# Updated Documentation",
+    "createPr": false
+  },
+  {
+    "id": "batch-update-2",
+    "title": "Update package.json version",
+    "action": "update",
+    "file": "package.json",
+    "content": "{ \"version\": \"2.1.0\" }",
+    "createPr": true
+  }
+]
+```
+
+## Tips
+
+1. **Keep suggestions small** — One logical change per suggestion
+2. **Use clear IDs** — Make it easy to track results
+3. **Set realistic timeouts** — Give API time to respond
+4. **Test locally first** — Verify suggestions work before batch execution
+5. **Monitor results** — Check `logs/tooloo-results-*.json` after execution
+
+## Monitoring
+
+```bash
+# View latest results
+cat logs/tooloo-results-latest.json | jq '.'
+
+# Count successes
+cat logs/tooloo-results-*.json | jq '[.[] | select(.success==true)] | length'
+
+# Find failures
+cat logs/tooloo-results-*.json | jq '.[] | select(.success==false)'
+```

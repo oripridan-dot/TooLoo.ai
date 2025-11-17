@@ -119,7 +119,18 @@
     "orchestrator:enable": "curl -X POST http://127.0.0.1:3000/api/v1/orchestrator/enable-autonomous -H 'Content-Type: application/json' -d '{\"enabled\":true,\"mode\":\"safe\",\"maxPerCycle\":2}'",
     "orchestrator:cycle": "curl -X POST http://127.0.0.1:3000/api/v1/orchestrator/activate/cycle -H 'Content-Type: application/json'",
     "orchestrator:test": "bash scripts/test-capability-orchestrator.sh",
-    "formatter:view": "open http://127.0.0.1:3000/web-app/response-formatter-enhanced.html || xdg-open http://127.0.0.1:3000/web-app/response-formatter-enhanced.html"
+    "formatter:view": "open http://127.0.0.1:3000/web-app/response-formatter-enhanced.html || xdg-open http://127.0.0.1:3000/web-app/response-formatter-enhanced.html",
+    "tooloo:executor": "node scripts/tooloo-executor.js",
+    "tooloo:auto-execute": "node scripts/tooloo-executor.js --save-results",
+    "tooloo:auto-execute:seq": "node scripts/tooloo-executor.js --sequential --save-results",
+    "tooloo:auto-execute:file": "node scripts/tooloo-executor.js .tooloo-suggestions.json --save-results",
+    "tooloo:auto-execute:watch": "nodemon --watch .tooloo-suggestions.json --exec 'npm run tooloo:auto-execute'",
+    "tooloo:test-capability": "node scripts/test-self-capabilities.js",
+    "tooloo:introspect": "curl http://127.0.0.1:3000/api/v1/system/introspect | jq '.'",
+    "tooloo:awareness": "curl http://127.0.0.1:3000/api/v1/system/awareness | jq '.'",
+    "tooloo:github:status": "curl http://127.0.0.1:3000/api/v1/github/health | jq '.'",
+    "tooloo:github:info": "curl http://127.0.0.1:3000/api/v1/github/info | jq '.'",
+    "tooloo:github:context": "curl http://127.0.0.1:3000/api/v1/github/context | jq '.context' | head -50"
   },
   "keywords": [
     "ai",

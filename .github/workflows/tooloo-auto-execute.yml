@@ -1,0 +1,188 @@
+name: TooLoo Auto-Execute
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+    paths:
+      - '.tooloo-suggestions.json'
+  workflow_dispatch:
+    inputs:
+      suggestions_file:
+        description: 'Path to suggestions JSON file'
+        required: false
+        default: '.tooloo-suggestions.json'
+      sequential:
+        description: 'Run suggestions sequentially'
+        required: false
+        default: 'false'
+  schedule:
+    # Run auto-execution checks every 2 hours
+    - cron: '0 */2 * * *'
+
+jobs:
+  auto-execute:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start TooLoo services
+        run: |
+          # Start web-server in background
+          npm run dev &
+          
+          # Wait for services to be ready
+          sleep 5
+          
+          # Check health
+          curl -s http://127.0.0.1:3000/api/v1/system/health || exit 1
+
+      - name: Check for suggestions file
+        id: check_suggestions
+        run: |
+          SUGGESTIONS_FILE="${{ github.event.inputs.suggestions_file || '.tooloo-suggestions.json' }}"
+          if [ -f "$SUGGESTIONS_FILE" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "file=$SUGGESTIONS_FILE" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "No suggestions file found"
+          fi
+
+      - name: Execute TooLoo suggestions
+        if: steps.check_suggestions.outputs.found == 'true'
+        run: |
+          SEQUENTIAL="${{ github.event.inputs.sequential || 'false' }}"
+          ARGS=""
+          [ "$SEQUENTIAL" = "true" ] && ARGS="--sequential"
+          
+          node scripts/tooloo-executor.js "${{ steps.check_suggestions.outputs.file }}" $ARGS --save-results
+
+      - name: Upload execution results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tooloo-execution-logs
+          path: logs/
+          retention-days: 30
+
+      - name: Create PR for changes (if any)
+        if: success() && github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Check if there are any staged changes
+            const { execSync } = require('child_process');
+            try {
+              const status = execSync('git status --porcelain', { encoding: 'utf-8' });
+              if (!status.trim()) {
+                console.log('No changes to commit');
+                return;
+              }
+            } catch (e) {
+              console.log('No uncommitted changes');
+              return;
+            }
+            
+            // Get the latest execution results
+            const logsDir = './logs';
+            const files = fs.readdirSync(logsDir)
+              .filter(f => f.startsWith('tooloo-results-') && f.endsWith('.json'))
+              .sort()
+              .reverse();
+            
+            if (files.length === 0) {
+              console.log('No execution results found');
+              return;
+            }
+            
+            const latestResults = JSON.parse(
+              fs.readFileSync(path.join(logsDir, files[0]), 'utf-8')
+            );
+            
+            const successful = latestResults.filter(r => r.success).length;
+            const failed = latestResults.filter(r => !r.success).length;
+            
+            const body = `
+            ## TooLoo Auto-Execution Results
+            
+            **Summary:**
+            - ✅ Successful: ${successful}
+            - ❌ Failed: ${failed}
+            - Total: ${latestResults.length}
+            
+            **Execution Time:** ${new Date().toISOString()}
+            
+            ${failed > 0 ? `
+            **Failed Suggestions:**
+            ${latestResults.filter(r => !r.success).map(r => `- ${r.id}: ${r.error}`).join('\n')}
+            ` : ''}
+            
+            See artifacts for full logs.
+            `;
+            
+            // Create or update PR
+            const { data: pull_requests } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:tooloo-auto-execute-${context.ref.replace('refs/heads/', '')}`
+            });
+            
+            if (pull_requests.length > 0) {
+              // Update existing PR
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pull_requests[0].number,
+                body: body
+              });
+              console.log(`Updated PR #${pull_requests[0].number}`);
+            } else {
+              // Create new PR
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🤖 TooLoo Auto-Execute: ${new Date().toLocaleDateString()}`,
+                head: `tooloo-auto-execute-${context.ref.replace('refs/heads/', '')}`,
+                base: context.ref.replace('refs/heads/', ''),
+                body: body
+              });
+              console.log(`Created PR #${pr.number}`);
+            }
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚨 TooLoo Auto-Execute Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*TooLoo Auto-Execute Failed*\nRepo: ${{ github.repository }}\nRef: ${{ github.ref }}\nSee action: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

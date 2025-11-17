@@ -1,0 +1,11 @@
+[
+  {
+    "id": "test-suggestion-001",
+    "title": "Test executor with sample suggestion",
+    "action": "create",
+    "file": "test-auto-execute.txt",
+    "content": "This is a test file created by TooLoo auto-executor\nTimestamp: 2025-11-17T18:50:00Z",
+    "message": "test: Auto-execute test suggestion",
+    "createPr": false
+  }
+]
