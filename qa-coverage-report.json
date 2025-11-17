@@ -1,15 +1,15 @@
 {
-  "timestamp": "2025-11-10T23:18:23.988Z",
+  "timestamp": "2025-11-17T11:19:24.852Z",
   "summary": {
     "totalEndpoints": 157,
     "testedEndpoints": 32,
     "coveragePercent": 20.4,
     "testSuites": 10,
     "totalTests": 10,
-    "passed": 0,
-    "failed": 5,
-    "assertions": 5,
-    "passRate": "0.0"
+    "passed": 75,
+    "failed": 33,
+    "assertions": 108,
+    "passRate": "69.4"
   },
   "byServer": {
     "web-server": {
@@ -175,32 +175,32 @@
     },
     {
       "file": "integration/web-server.integration.test.js",
-      "passed": 0,
-      "failed": 0,
+      "passed": 14,
+      "failed": 10,
       "success": false
     },
     {
       "file": "integration/training-server.integration.test.js",
-      "passed": 0,
-      "failed": 0,
+      "passed": 20,
+      "failed": 8,
       "success": false
     },
     {
       "file": "integration/budget-server.integration.test.js",
-      "passed": 0,
-      "failed": 0,
+      "passed": 13,
+      "failed": 4,
       "success": false
     },
     {
       "file": "integration/meta-server.integration.test.js",
-      "passed": 0,
-      "failed": 0,
+      "passed": 14,
+      "failed": 3,
       "success": false
     },
     {
       "file": "integration/coach-server.integration.test.js",
-      "passed": 0,
-      "failed": 0,
+      "passed": 14,
+      "failed": 3,
       "success": false
     }
   ]
