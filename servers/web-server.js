@@ -551,6 +551,42 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+/**
+ * Detect which provider likely generated the response based on response characteristics
+ */
+function detectProviderFromResponse(response) {
+  if (!response || typeof response !== 'string') return 'unknown';
+  
+  const lower = response.toLowerCase();
+  
+  // Claude signatures
+  if (lower.includes('i am claude') || lower.includes("i'm claude") || lower.includes('anthropic')) {
+    return 'anthropic';
+  }
+  
+  // OpenAI signatures
+  if (lower.includes('as an ai assistant') || lower.includes('as an ai model') || lower.includes('openai')) {
+    return 'openai';
+  }
+  
+  // Gemini signatures
+  if (lower.includes('as bard') || lower.includes('as gemini') || lower.includes('google gemini')) {
+    return 'gemini';
+  }
+  
+  // DeepSeek signatures
+  if (lower.includes('deepseek') || lower.includes('deep seek')) {
+    return 'deepseek';
+  }
+  
+  // Ollama/local signatures
+  if (lower.includes('llama') || lower.includes('local model')) {
+    return 'ollama';
+  }
+  
+  return 'multi-provider';
+}
+
 // Chat API proxy - forward to API bridge, fallback to demo response
 app.post('/api/v1/chat/message', async (req, res) => {
   try {
@@ -654,37 +690,37 @@ CONVERSATION CONTEXT:
       
       const startTime = Date.now();
       
-      // Call the provider using generate() method with conversation history
-      const result = await llmProvider.generate({
-        prompt: message,
-        system: enhancedSystemPrompt,
-        taskType: 'chat',
-        context: {
-          conversationHistory,
-          sessionContext: sessionManager.getSessionContext(sessionId)
-        }
+      // Use multi-provider orchestration handler for intelligent routing based on task type
+      const responseText = await handleChatWithAI(message, {
+        userId,
+        sessionId,
+        preferredProvider,
+        conversationHistory,
+        sessionContext: sessionManager.getSessionContext(sessionId)
       });
       
       const responseTime = Date.now() - startTime;
-      const responseText = result.content || result.response || result;
+      
+      // Detect which provider was likely used based on response characteristics
+      const detectedProvider = detectProviderFromResponse(responseText);
       
       // Add assistant response to session memory
       await sessionManager.addMessage(sessionId, userId, 'assistant', responseText, {
-        provider: result.provider || selectedProvider,
+        provider: detectedProvider || preferredProvider || 'multi-provider',
         responseTime,
-        model: result.model || (result.provider && `${result.provider}-default`),
-        confidence: result.confidence || 0.8
+        model: `${detectedProvider || 'multi'}-orchestrated`,
+        confidence: 0.85
       });
 
       // Update session metadata
       await sessionManager.updateSessionMetadata(sessionId, {
-        provider: result.provider || selectedProvider,
-        tokens: result.tokens || 0
+        provider: detectedProvider || preferredProvider || 'multi-provider',
+        tokens: Math.floor(responseText.split(/\s+/).length * 1.3) // Rough estimation
       });
       
       return res.json({ 
         response: responseText,
-        provider: result.provider || selectedProvider,
+        provider: detectedProvider || preferredProvider || 'multi-provider-orchestrated',
         sessionId,
         timestamp: new Date().toISOString(),
         responseTime,
