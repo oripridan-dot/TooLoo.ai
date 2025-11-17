@@ -2232,19 +2232,12 @@ app.post('/api/v1/system/self-patch', async (req, res) => {
 
     let result = { ok: false };
 
-    // Update file directly
-    if (action === 'update') {
-      result = await githubProvider.updateFile(
+    // Update or create file via GitHub
+    if (action === 'update' || action === 'create') {
+      result = await githubProvider.createOrUpdateFile(
         file,
         content,
-        message || `Self-patch: ${file}`,
-        branch || 'main'
-      );
-    } else if (action === 'create') {
-      result = await githubProvider.updateFile(
-        file,
-        content,
-        message || `Create: ${file}`,
+        message || `${action}: ${file}`,
         branch || 'main'
       );
     }

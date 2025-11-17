@@ -269,11 +269,20 @@ export default class LLMProvider {
     const model = this.defaultModel.anthropic;
     if (!apiKey) throw new Error('Anthropic not configured');
 
-    const messages = [];
+    // Build messages array with proper system/user roles
+    const messages = [{ role: 'user', content: prompt }];
+
+    // Construct request with system parameter (Claude expects it separately, not in messages)
+    const requestBody = {
+      model,
+      max_tokens: 1024,
+      messages
+    };
+
+    // Add system prompt if provided (Claude API accepts system as top-level parameter)
     if (system) {
-      messages.push({ role: 'user', content: system });
+      requestBody.system = system;
     }
-    messages.push({ role: 'user', content: prompt });
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -282,11 +291,7 @@ export default class LLMProvider {
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json'
       },
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        messages
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!res.ok) {
