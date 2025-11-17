@@ -586,7 +586,7 @@ app.get('/api/v1/arena/history', async (req, res) => {
  * Health check
  */
 app.get('/health', (req, res) => {
-  res.json({ ok: true, server: 'providers-arena', time: new Date().toISOString() });
+  res.json({ ok: true, service: 'providers-arena-server', time: new Date().toISOString() });
 });
 
 // ============ Startup ============

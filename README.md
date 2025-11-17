@@ -53,23 +53,46 @@ TooLoo.ai/
 ```
 
 ## ⚡️ Quick Start
-- `npm install`
-- `npm run dev` → launches the web proxy (3000) and boots every service through the orchestrator
-- Open `http://127.0.0.1:3000/control-room` for the Control Room, or `/tooloo-hub` for the conversational Hub
-- Stop everything with `npm run stop:all`
 
-## 🧭 Service Map
-- `servers/web-server.js` (3000): static UI + proxy router + `/system/*`
-- `servers/training-server.js` (3001): selection engine, rounds, hyper-speed training
-- `servers/meta-server.js` (3002): meta-learning reports & retention boosts
-- `servers/budget-server.js` (3003): provider status, burst cache, policy tuning
-- `servers/coach-server.js` (3004): Auto-Coach + Fast Lane
-- `servers/cup-server.js` (3005): provider tournaments and comparisons
-- `servers/product-development-server.js` (3006): workflow + artifact pipelines
-- `servers/segmentation-server.js` (3007): conversation intelligence + traits
-- `servers/reports-server.js` (3008) and `servers/capabilities-server.js` (3009)
-- `servers/orchestrator.js` (3123): boots/monitors services, exposes `/api/v1/system/processes`
-- Legacy simple backend still available via `npm run start:simple`
+```bash
+npm start
+```
+
+That's it! The unified startup process will:
+- ✅ Clean up old processes
+- ✅ Start the web server (port 3000)
+- ✅ Orchestrate all 12 microservices
+- ✅ Verify each service is responding
+- ✅ Display live system status
+
+Then access:
+- **Control Room**: http://127.0.0.1:3000/control-room
+- **Chat Interface**: http://127.0.0.1:3000/tooloo-chat
+- **Dashboard**: http://127.0.0.1:3000
+
+Stop with `Ctrl+C`
+
+See [QUICKSTART.md](./QUICKSTART.md) for common tasks and [STARTUP.md](./STARTUP.md) for detailed documentation.
+
+## 🧭 Service Map (12 Microservices)
+
+| Port | Service | Purpose |
+|------|---------|---------|
+| 3000 | **Web Server** | API gateway, UI proxy, static assets, control surface |
+| 3001 | **Training** | Selection engine, hyper-speed training, rounds |
+| 3002 | **Meta** | Meta-learning, retention boosts, system introspection |
+| 3003 | **Budget** | Provider management, rate limiting, burst cache |
+| 3004 | **Coach** | Auto-coaching, guidance, Fast Lane |
+| 3005 | **Cup** | Provider tournaments, competitive comparisons |
+| 3006 | **Product** | Workflows, artifact pipelines, design workflows |
+| 3007 | **Segmentation** | Conversation analysis, trait extraction |
+| 3008 | **Reports** | Analytics, dashboards, performance metrics |
+| 3009 | **Capabilities** | Feature discovery, capability registry |
+| 3100 | **Orchestration** | Service coordination, startup/shutdown |
+| 3200 | **Provider** | LLM provider management and routing |
+| 3300 | **Analytics** | Event tracking, system metrics, monitoring |
+
+**All services start automatically** with `npm start` and communicate through the web server (port 3000).
 
 ## 🚀 Platform Capabilities
 

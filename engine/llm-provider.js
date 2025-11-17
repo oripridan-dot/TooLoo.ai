@@ -769,43 +769,55 @@ function providerEnabled(name) {
   const upper = name.toUpperCase();
   const envKey = `${upper}_ENABLED`;
 
-  if (name === 'gemini') {
-    return String(process.env[envKey] ?? process.env.GEMINI_ENABLED ?? 'false').toLowerCase() === 'true';
+  // Check for explicit ENABLED flag first (all providers)
+  const enabledFlag = process.env[envKey];
+  if (enabledFlag !== undefined && enabledFlag !== null) {
+    return String(enabledFlag).toLowerCase() === 'true';
   }
 
+  // Alternative flag names for specific providers
   if (name === 'anthropic' || name === 'claude') {
-    const toggle = process.env.ANTHROPIC_ENABLED ?? process.env.CLAUDE_ENABLED;
-    if (toggle !== undefined) {
-      return String(toggle).toLowerCase() === 'true';
-    }
+    const alt = process.env.CLAUDE_ENABLED;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
+  }
+
+  if (name === 'gemini') {
+    const alt = process.env.GEMINI_ENABLED;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
+  }
+
+  if (name === 'openai' || name === 'gpt') {
+    const alt = process.env.OPENAI_ENABLED;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
+  }
+
+  if (name === 'deepseek') {
+    const alt = process.env.DEEPSEEK_ENABLED;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
   }
 
   if (name === 'ollama') {
-    const toggle = process.env.OLLAMA_ENABLED ?? process.env.ENABLE_OLLAMA;
-    if (toggle !== undefined) {
-      return String(toggle).toLowerCase() === 'true';
-    }
+    const alt = process.env.ENABLE_OLLAMA;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
   }
 
   if (name === 'localai') {
-    const toggle = process.env.LOCALAI_ENABLED ?? process.env.ENABLE_LOCALAI;
-    if (toggle !== undefined) {
-      return String(toggle).toLowerCase() === 'true';
-    }
+    const alt = process.env.ENABLE_LOCALAI;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
   }
 
   if (name === 'openinterpreter') {
-    const toggle = process.env.OPENINTERPRETER_ENABLED ?? process.env.ENABLE_OPEN_INTERPRETER;
-    if (toggle !== undefined) {
-      return String(toggle).toLowerCase() === 'true';
-    }
+    const alt = process.env.ENABLE_OPEN_INTERPRETER;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
   }
 
-  const raw = process.env[envKey];
-  if (raw === undefined || raw === null) {
-    return true;
+  if (name === 'huggingface') {
+    const alt = process.env.ENABLE_HUGGINGFACE;
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
   }
-  return String(raw).toLowerCase() === 'true';
+
+  // Default: enabled if we have credentials
+  return true;
 }
 
 function providerAvailable(name) {

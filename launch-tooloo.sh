@@ -43,8 +43,8 @@ bash "$(dirname "$0")/scripts/stop-all-services.sh" --force 2>/dev/null || true
 sleep 1
 sleep 1
 
-# Start web server
-echo "🌐 Starting web server (port 3000)..."
+# Start web server (primary control surface - replaces orchestrator)
+echo "🌐 Starting web server (port 3000 - primary control surface)..."
 nohup node servers/web-server.js > /tmp/tooloo-web.log 2>&1 &
 WEB_PID=$!
 echo "   PID: $WEB_PID"
@@ -52,22 +52,23 @@ echo "   PID: $WEB_PID"
 # Wait for web server
 wait_for_service "http://127.0.0.1:3000/health" "Web Server"
 
-# Start orchestrator and all services
-echo "🎯 Starting orchestrator and all services..."
+# Trigger service startup (services self-register on boot)
+echo "🎯 Services starting independently..."
+echo "   Core: training(3001), meta(3002), budget(3003), coach(3004), cup(3005)"
+echo "   Extended: product(3006), segmentation(3007), reports(3008), capabilities(3009)"
+echo "   Integration: provider(3200), analytics(3300), orchestration(3100)"
 RESPONSE=$(curl -s -X POST http://127.0.0.1:3000/system/start \
     -H 'Content-Type: application/json' \
     -d '{"autoOpen":false}' || echo '{"ok":false}')
 
 if echo "$RESPONSE" | grep -q '"ok":true'; then
-    echo "✅ Orchestrator started"
+    echo "✅ Services started successfully"
 else
-    echo "⚠️  Orchestrator start failed, trying direct launch..."
-    nohup node servers/orchestrator.js > /tmp/tooloo-orch.log 2>&1 &
-    echo "   Orchestrator PID: $!"
+    echo "⚠️  Service startup signal sent (services self-register on launch)"
 fi
 
 # Wait a moment for services to boot
-sleep 3
+sleep 2
 
 # Check service status
 echo ""
@@ -126,9 +127,23 @@ echo "   🏠 Hub:           $HUB_URL"
 echo "   🎛️  Control Room: ${HUB_URL}control-room"
 echo "   💬 Chat:          ${HUB_URL}tooloo-chat"
 echo ""
+echo "🔧 Core Services (self-managed, no central orchestrator):"
+echo "   Port 3000:  Web Server (API proxy, single control surface)"
+echo "   Port 3001:  Training Server"
+echo "   Port 3002:  Meta Server"
+echo "   Port 3003:  Budget Server"
+echo "   Port 3004:  Coach Server"
+echo "   Port 3005:  Cup Server"
+echo "   Port 3006:  Product Development Server"
+echo "   Port 3007:  Segmentation Server"
+echo "   Port 3008:  Reports Server"
+echo "   Port 3009:  Capabilities Server"
+echo "   Port 3100:  Orchestration Service (optional)"
+echo "   Port 3200:  Provider Service"
+echo "   Port 3300:  Analytics Service"
+echo ""
 echo "📝 Logs:"
-echo "   Web:        tail -f /tmp/tooloo-web.log"
-echo "   Orchestrator: tail -f /tmp/tooloo-orch.log"
+echo "   Web Server: tail -f /tmp/tooloo-web.log"
 echo ""
 echo "🛑 To stop: bash scripts/stop-all-services.sh"
 echo ""

@@ -61,3 +61,48 @@ Port 3123  → servers/orchestrator.js (/api/v1/system/*)
 - Default to ASCII when editing files
 - Insert comments only when clarity is essential; keep them succinct and purposeful
 - Always create backups through `filesystemManager` when self-modification routines are invoked inside the codebase
+
+## 🧠 Self-Awareness & Self-Modification (NEW)
+TooLoo.ai now has full system self-awareness and can modify its own code:
+
+### Self-Awareness Endpoints
+```
+GET  /api/v1/system/awareness   → System capabilities, services, GitHub status
+GET  /api/v1/system/introspect  → Deep introspection (process, memory, capabilities)
+```
+
+### GitHub Integration (Read + Write)
+```
+GET  /api/v1/github/health             → Check GitHub configuration
+GET  /api/v1/github/info               → Repository metadata
+GET  /api/v1/github/issues             → Recent issues for context
+POST /api/v1/github/file               → Get file content
+POST /api/v1/github/files              → Get multiple files
+GET  /api/v1/github/structure          → Repo file tree
+GET  /api/v1/github/context            → Full context for AI providers
+
+POST /api/v1/github/update-file        → Create/update files
+POST /api/v1/github/create-branch      → Create branches
+POST /api/v1/github/create-pr          → Create pull requests
+POST /api/v1/github/create-issue       → Create issues
+PATCH /api/v1/github/pr/:number        → Update PRs
+PUT  /api/v1/github/pr/:number/merge   → Merge PRs
+POST /api/v1/github/comment            → Add comments
+```
+
+### Self-Modification API
+```
+POST /api/v1/system/self-patch
+  action: "analyze" | "create" | "update"
+  file: "path/to/file"           (for create/update)
+  content: "file content"        (for create/update)
+  message: "commit message"      (optional)
+  branch: "branch-name"          (default: main)
+  createPr: true|false          (optional, auto-creates PR)
+```
+
+**Setup**: Set `GITHUB_TOKEN` and `GITHUB_REPO` environment variables to enable writes
+
+**Test**: Run `npm run test:self-capabilities` or `node scripts/test-self-capabilities.js`
+
+**Deprecations**: `github-context-server` (port 3020) no longer needed – GitHub API consolidated into web-server

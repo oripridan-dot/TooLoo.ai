@@ -138,6 +138,9 @@
                 <span><span id="hMeta" class="dot bad"></span> Meta</span>
                 <span><span id="hBudget" class="dot bad"></span> Budget</span>
                 <span><span id="hCoach" class="dot bad"></span> Coach</span>
+                <span><span id="hSources" class="dot bad"></span> Sources</span>
+                <span><span id="hArena" class="dot bad"></span> Arena</span>
+                <span><span id="hPresentation" class="dot bad"></span> Presentation</span>
                 <span class="pill" id="coachState" style="cursor:pointer;" title="Toggle Auto‑Coach">Coach: Off</span>
             </div>
             <div class="pill" id="nextDomainPill">Next: …</div>
@@ -465,6 +468,9 @@
                 $('hMeta').className = `dot ${data.services.meta? 'ok':'bad'}`;
                 $('hBudget').className = `dot ${data.services.budget? 'ok':'bad'}`;
                 $('hCoach').className = `dot ${data.services.coach? 'ok':'bad'}`;
+                $('hSources').className = `dot ${data.services.sources? 'ok':'bad'}`;
+                $('hArena').className = `dot ${data.services.arena? 'ok':'bad'}`;
+                $('hPresentation').className = `dot ${data.services.presentation? 'ok':'bad'}`;
                 $('coachState').textContent = `Coach: ${data.autoCoach?.active? 'On':'Off'}`;
             }catch{}
         }

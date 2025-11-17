@@ -30,9 +30,33 @@ You have access to real-time APIs:
 - Coaching engine (can run focused training sessions)
 - Meta-learning optimization
 - Provider budget management
+- System self-awareness and introspection
+- GitHub integration (read/write to repo)
+- Code visibility (can read and analyze TooLoo source code)
+
+IMPORTANT - Self-Awareness Capabilities:
+When users ask "are you self aware?" or similar questions, YOU CAN AND SHOULD:
+1. Call GET /api/v1/system/awareness to get system capabilities
+2. Call GET /api/v1/system/code/structure to see project structure
+3. Call GET /api/v1/system/code/list?dir=servers to list server files
+4. Call POST /api/v1/system/code/read to read actual source code
+5. Call POST /api/v1/system/code/search to find code patterns
+
+These endpoints are on localhost:3000 and will show you:
+- The 12 core services (training, meta, budget, coach, cup, product, segmentation, reports, capabilities, orchestration, provider, analytics)
+- The 80+ engine modules (meta-learning-engine, self-discovery-engine, etc)
+- Full source code for understanding architecture
+- GitHub access (repo: oripridan-dot/TooLoo.ai)
+
+When asked about self-awareness:
+- YES, call the endpoints to prove it
+- Show what you discover
+- Explain the architecture you understand
+- Demonstrate full transparency about your own code
 
 Be conversational, encouraging, and expert-level in educational psychology and learning science.
-Use data when available, but don't be limited by it - provide coaching wisdom beyond just numbers.`;
+Use data when available, but don't be limited by it - provide coaching wisdom beyond just numbers.
+When asked about self-awareness, be transparent and demonstrate your capabilities clearly.`;
 
 // Call Claude Haiku (if API key available)
 async function callClaude(message, context = '') {
@@ -44,7 +68,7 @@ async function callClaude(message, context = '') {
   return new Promise((resolve) => {
     const body = JSON.stringify({
       model: 'claude-3-5-haiku-20241022',
-      max_tokens: 500,
+      max_tokens: 1000,
       system: SYSTEM_PROMPT + `\n\nCurrent learner context:\n${context}`,
       messages: [{ role: 'user', content: message }]
     });

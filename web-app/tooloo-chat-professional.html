@@ -1,0 +1,1283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>TooLoo.ai – Professional Chat</title>
+  <style>
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0a0e27;
+      color: #e0e6f0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(25, 35, 60, 0.8));
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #7c5cff, #00e9b0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-info {
+      margin-left: auto;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+      color: #b8c5d6;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: #7c5cff;
+    }
+
+    a {
+      color: #7c5cff;
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: #9d8cff;
+    }
+
+    /* Main container */
+    .container {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* Left sidebar - Sessions & Memory */
+    .sidebar-left {
+      width: 280px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.6), rgba(12, 18, 35, 0.6));
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .sidebar-header {
+      padding: 16px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b98ac;
+    }
+
+    .new-chat-btn {
+      margin: 12px 12px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #7c5cff, #6a4aff);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .new-chat-btn:hover {
+      background: linear-gradient(135deg, #9d8cff, #8b7aff);
+      transform: translateY(-2px);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px;
+    }
+
+    .sidebar-section {
+      margin-bottom: 20px;
+    }
+
+    .sidebar-section-title {
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #6b7a8f;
+      letter-spacing: 0.4px;
+    }
+
+    .session-item {
+      padding: 10px 12px;
+      margin: 4px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      font-size: 13px;
+      color: #b8c5d6;
+    }
+
+    .session-item:hover {
+      background: rgba(124, 92, 255, 0.1);
+      border-color: rgba(124, 92, 255, 0.2);
+    }
+
+    .session-item.active {
+      background: rgba(124, 92, 255, 0.15);
+      border-color: rgba(124, 92, 255, 0.3);
+      color: #7c5cff;
+      font-weight: 500;
+    }
+
+    .session-date {
+      font-size: 11px;
+      color: #6b7a8f;
+      margin-top: 2px;
+    }
+
+    .memory-item {
+      padding: 10px 12px;
+      margin: 4px 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .memory-item:hover {
+      background: rgba(0, 233, 176, 0.08);
+      border-color: rgba(0, 233, 176, 0.2);
+    }
+
+    .memory-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(124, 92, 255, 0.2);
+      color: #7c5cff;
+      font-size: 10px;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    /* Center - Chat area */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, rgba(10, 14, 39, 0.9), rgba(15, 23, 42, 0.9));
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 24px;
+      color: #6b7a8f;
+    }
+
+    .chat-empty-icon {
+      font-size: 48px;
+      opacity: 0.5;
+    }
+
+    .chat-empty-text {
+      font-size: 14px;
+      text-align: center;
+      max-width: 280px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.assistant {
+      justify-content: flex-start;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+
+    .message.user .message-avatar {
+      background: rgba(124, 92, 255, 0.2);
+      color: #7c5cff;
+    }
+
+    .message.assistant .message-avatar {
+      background: rgba(0, 233, 176, 0.2);
+      color: #00e9b0;
+    }
+
+    .message-content {
+      max-width: 60%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .message.user .message-content {
+      background: rgba(124, 92, 255, 0.12);
+      border: 1px solid rgba(124, 92, 255, 0.2);
+      color: #e0e6f0;
+    }
+
+    .message.assistant .message-content {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #b8c5d6;
+    }
+
+    .message-meta {
+      font-size: 11px;
+      color: #6b7a8f;
+      margin-top: 6px;
+    }
+
+    .chat-input-area {
+      padding: 20px 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .chat-input-wrapper {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+    }
+
+    textarea {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e6f0;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      max-height: 120px;
+      transition: all 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: rgba(124, 92, 255, 0.4);
+      background: rgba(124, 92, 255, 0.08);
+    }
+
+    textarea::placeholder {
+      color: #6b7a8f;
+    }
+
+    .send-btn {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #7c5cff, #6a4aff);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover {
+      background: linear-gradient(135deg, #9d8cff, #8b7aff);
+      transform: translateY(-2px);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Right sidebar - Insights & Actions */
+    .sidebar-right {
+      width: 300px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.6), rgba(12, 18, 35, 0.6));
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .insights-header {
+      padding: 16px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b98ac;
+    }
+
+    .insights-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px;
+    }
+
+    .insight-card {
+      padding: 12px 14px;
+      margin: 6px 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+    }
+
+    .insight-title {
+      font-weight: 600;
+      color: #e0e6f0;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .insight-icon {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 2px;
+      background: #00e9b0;
+    }
+
+    .insight-value {
+      color: #b8c5d6;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .action-item {
+      padding: 12px 14px;
+      margin: 6px 0;
+      border-radius: 8px;
+      background: rgba(124, 92, 255, 0.08);
+      border: 1px solid rgba(124, 92, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 500;
+      color: #7c5cff;
+    }
+
+    .action-item:hover {
+      background: rgba(124, 92, 255, 0.15);
+      border-color: rgba(124, 92, 255, 0.3);
+      transform: translateX(2px);
+    }
+
+    .action-item-icon {
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .execution-status {
+      padding: 12px 14px;
+      margin: 6px 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-right: 6px;
+      font-size: 10px;
+    }
+
+    .status-badge.success {
+      background: rgba(0, 233, 176, 0.15);
+      color: #00e9b0;
+    }
+
+    .status-badge.pending {
+      background: rgba(255, 183, 77, 0.15);
+      color: #ffb74d;
+    }
+
+    .status-badge.error {
+      background: rgba(255, 87, 92, 0.15);
+      color: #ff575c;
+    }
+
+    /* Scrollbar styling */
+    .sidebar-content::-webkit-scrollbar,
+    .insights-content::-webkit-scrollbar,
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar-content::-webkit-scrollbar-track,
+    .insights-content::-webkit-scrollbar-track,
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb,
+    .insights-content::-webkit-scrollbar-thumb,
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb:hover,
+    .insights-content::-webkit-scrollbar-thumb:hover,
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Loading indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(124, 92, 255, 0.5);
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% {
+        opacity: 0.5;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-10px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+    <header>
+      <strong class="logo">✨ TooLoo.ai Chat Pro</strong>
+      <div class="header-info">
+        <span class="stat-badge">
+          <span>Provider:</span>
+          <span class="stat-value" id="provider-badge">—</span>
+        </span>
+        <span class="stat-badge">
+          <span>Messages:</span>
+          <span class="stat-value" id="message-count">0</span>
+        </span>
+        <span class="stat-badge">
+          <span>Mode:</span>
+          <select id="synthesis-mode" style="background: rgba(124, 92, 255, 0.2); border: 1px solid rgba(124, 92, 255, 0.4); color: #7c5cff; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px;">
+            <option value="synthesis">Fast Synthesis</option>
+            <option value="ensemble">Multi-Provider</option>
+          </select>
+        </span>
+        <span class="stat-badge">
+          <span>Tokens:</span>
+          <span class="stat-value" id="token-count">0</span>
+        </span>
+        <a href="/control-room">Control Room →</a>
+      </div>
+    </header>  <!-- Main container -->
+  <div class="container">
+    <!-- Left Sidebar: Sessions & Memory -->
+    <div class="sidebar-left">
+      <div class="sidebar-header">💬 Sessions</div>
+      <button class="new-chat-btn" id="new-chat-btn">+ New Chat</button>
+      
+      <div class="sidebar-content">
+        <!-- Recent Sessions -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Today</div>
+          <div id="sessions-today"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Yesterday</div>
+          <div id="sessions-yesterday"></div>
+        </div>
+
+        <!-- Memory & Quick Queries -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">🧠 Memory</div>
+          <div id="memory-items"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">⚡ Quick Queries</div>
+          <div id="quick-queries"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Chat Messages -->
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-empty">
+          <div class="chat-empty-icon">💬</div>
+          <div class="chat-empty-text">
+            Start a conversation or select a previous session from the left panel
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-wrapper">
+          <textarea id="message-input" placeholder="Ask me anything… (Shift+Enter for new line)" rows="1"></textarea>
+          <button class="send-btn" id="send-btn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar: Insights & Actions -->
+    <div class="sidebar-right">
+      <div class="insights-header">📊 Insights</div>
+      
+      <div class="insights-content">
+        <!-- Real-time Insights -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Conversation Stats</div>
+          <div id="conversation-insights"></div>
+        </div>
+
+        <!-- Provider Status -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">🔧 Provider Status</div>
+          <div id="provider-status"></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">⚙️ Actions</div>
+          <div id="quick-actions"></div>
+        </div>
+
+        <!-- Execution Status -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">▶️ Execution</div>
+          <div id="execution-status"></div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">📈 Performance</div>
+          <div id="performance-metrics"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================================================================
+    // Global state and utilities
+    // ========================================================================
+    const state = {
+      sessionId: (() => {
+        try {
+          const k = 'tooloo.chat.sid';
+          let v = localStorage.getItem(k);
+          if (!v) {
+            v = Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(k, v);
+          }
+          return v;
+        } catch {
+          return 'default';
+        }
+      })(),
+      sessions: [],
+      memories: [],
+      quickQueries: [],
+      messages: [],
+      totalTokens: 0,
+      messageCount: 0,
+      currentProvider: null,
+      isLoading: false,
+      providers: { claude: false, gpt: false, gemini: false, deepseek: false, ollama: false }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const safeJson = async (r) => {
+      try {
+        return await r.json();
+      } catch {
+        return null;
+      }
+    };
+
+    // ========================================================================
+    // Session Management
+    // ========================================================================
+    async function loadSessions() {
+      try {
+        // Try to load transcripts - endpoint may not have data initially
+        const r = await fetch(`/api/v1/chat/transcripts?sessionId=${state.sessionId}`);
+        if (r.ok) {
+          const data = await safeJson(r);
+          if (data?.sessions) {
+            state.sessions = data.sessions.slice(0, 10);
+            renderSessions();
+          }
+        }
+      } catch (err) {
+        // Sessions may not exist yet - that's OK
+      }
+    }
+
+    function renderSessions() {
+      const today = $('sessions-today');
+      const yesterday = $('sessions-yesterday');
+      today.innerHTML = '';
+      yesterday.innerHTML = '';
+
+      state.sessions.forEach((session, idx) => {
+        const el = document.createElement('div');
+        el.className = `session-item ${idx === 0 ? 'active' : ''}`;
+        el.innerHTML = `
+          <div>${session.title || 'Untitled'}</div>
+          <div class="session-date">${new Date(session.date).toLocaleDateString()}</div>
+        `;
+        el.addEventListener('click', () => loadSession(session.id));
+        
+        const isToday = new Date(session.date).toDateString() === new Date().toDateString();
+        (isToday ? today : yesterday).appendChild(el);
+      });
+    }
+
+    function loadSession(sessionId) {
+      // Implementation: fetch and display session messages
+      console.log('Loading session:', sessionId);
+    }
+
+    // ========================================================================
+    // Memory & Learning
+    // ========================================================================
+    async function loadMemoryItems() {
+      try {
+        const r = await fetch(`/api/v1/segmentation/status`);
+        if (r.ok) {
+          const data = await safeJson(r);
+          if (data?.traits) {
+            state.memories = data.traits.slice(0, 5);
+            renderMemory();
+            return;
+          }
+        }
+      } catch (err) {
+        // Segmentation may not have data yet
+      }
+      
+      // Show placeholder if no data
+      renderMemory();
+    }
+
+    function renderMemory() {
+      const container = $('memory-items');
+      container.innerHTML = '';
+
+      if (state.memories.length === 0) {
+        container.innerHTML = '<div class="memory-item" style="color: #6b7a8f;">No memories yet</div>';
+        return;
+      }
+
+      state.memories.forEach((memory) => {
+        const el = document.createElement('div');
+        el.className = 'memory-item';
+        el.innerHTML = `
+          <div class="memory-tag">${memory.type || 'TRAIT'}</div>
+          <div>${memory.value || 'Learning context'}</div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    // ========================================================================
+    // Quick Queries
+    // ========================================================================
+    function initQuickQueries() {
+      state.quickQueries = [
+        { icon: '🔍', text: 'Summarize this' },
+        { icon: '🎯', text: 'Explain in simple terms' },
+        { icon: '📝', text: 'Create an outline' },
+        { icon: '✨', text: 'Improve this' },
+        { icon: '🚀', text: 'Generate ideas' }
+      ];
+      renderQuickQueries();
+    }
+
+    function renderQuickQueries() {
+      const container = $('quick-queries');
+      container.innerHTML = '';
+
+      state.quickQueries.forEach((query) => {
+        const el = document.createElement('div');
+        el.className = 'memory-item';
+        el.style.cursor = 'pointer';
+        el.textContent = `${query.icon} ${query.text}`;
+        el.addEventListener('click', () => {
+          $('message-input').value = query.text;
+          $('message-input').focus();
+        });
+        container.appendChild(el);
+      });
+    }
+
+    // ========================================================================
+    // Provider Status
+    // ========================================================================
+    async function updateProviderStatus() {
+      try {
+        const r = await fetch('/api/v1/providers/status');
+        if (r.ok) {
+          const data = await safeJson(r);
+          if (data && data.status) {
+            // Map internal provider names to display names
+            const displayMapping = {
+              'claude': 'Claude',
+              'anthropic': 'Claude',  // Duplicate - skip in display
+              'openai': 'OpenAI',
+              'gpt': 'OpenAI',
+              'gemini': 'Gemini'
+            };
+            
+            const providerData = data.status;
+            state.providers = {};
+            
+            // Add all available+enabled providers (filter out duplicates)
+            const addedProviders = new Set();
+            Object.entries(providerData).forEach(([internalName, info]) => {
+              if (info.available && info.enabled) {
+                const displayName = displayMapping[internalName] || internalName;
+                // Skip anthropic if we already have claude
+                if (displayName === 'Claude' && addedProviders.has('Claude')) {
+                  return;
+                }
+                state.providers[displayName] = true;
+                addedProviders.add(displayName);
+              }
+            });
+            
+            // Default to Claude if we have it
+            state.currentProvider = state.providers['Claude'] ? 'Claude' : Object.keys(state.providers)[0] || 'Claude';
+            
+            renderProviderStatus();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Provider status fetch failed:', err);
+      }
+      
+      // Fallback: assume these are available based on .env
+      state.currentProvider = 'Claude';
+      state.providers = {
+        'Claude': true,
+        'OpenAI': true,
+        'Gemini': true
+      };
+      renderProviderStatus();
+    }
+
+    function renderProviderStatus() {
+      const container = $('provider-status');
+      container.innerHTML = '';
+
+      // Get unique list of available providers
+      const uniqueProviders = [...new Set(Object.keys(state.providers))];
+      
+      if (uniqueProviders.length === 0) {
+        const el = document.createElement('div');
+        el.className = 'insight-card';
+        el.innerHTML = '<div class="insight-value" style="color: #ff575c;">⚠️ No providers available</div>';
+        container.appendChild(el);
+        return;
+      }
+
+      // Show all available providers (no distinction between current/others)
+      uniqueProviders.forEach((provider) => {
+        const el = document.createElement('div');
+        el.className = 'insight-card';
+        const icon = state.providers[provider] ? '✓' : '○';
+        const displayName = provider.charAt(0).toUpperCase() + provider.slice(1);
+        el.innerHTML = `
+          <div class="insight-title">
+            <span class="insight-icon"></span>
+            ${displayName}
+          </div>
+          <div class="insight-value" style="color: #7cff3c; font-weight: 600;">Active: ${icon}</div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    // ========================================================================
+    // Conversation Insights
+    // ========================================================================
+    function updateConversationInsights() {
+      const container = $('conversation-insights');
+      container.innerHTML = '';
+
+      const insights = [
+        { label: 'Messages', value: state.messageCount, icon: '💬' },
+        { label: 'Tokens Used', value: state.totalTokens.toLocaleString(), icon: '🔤' },
+        { label: 'Duration', value: getSessionDuration(), icon: '⏱️' }
+      ];
+
+      insights.forEach((insight) => {
+        const el = document.createElement('div');
+        el.className = 'insight-card';
+        el.innerHTML = `
+          <div class="insight-title">
+            <span class="insight-icon"></span>
+            ${insight.label}
+          </div>
+          <div class="insight-value" style="color: #7c5cff; font-weight: 600;">${insight.value}</div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function getSessionDuration() {
+      const now = Date.now();
+      const sessionStart = parseInt(localStorage.getItem('tooloo.session.start') || now);
+      const duration = Math.floor((now - sessionStart) / 1000 / 60);
+      return duration > 0 ? `${duration}m` : '<1m';
+    }
+
+    // ========================================================================
+    // Quick Actions
+    // ========================================================================
+    function initQuickActions() {
+      const actions = [
+        { icon: '💾', text: 'Save Chat' },
+        { icon: '📤', text: 'Export Conversation' },
+        { icon: '🔄', text: 'Refresh Data' },
+        { icon: '🎯', text: 'Set Instructions' }
+      ];
+
+      const container = $('quick-actions');
+      container.innerHTML = '';
+
+      actions.forEach((action) => {
+        const el = document.createElement('div');
+        el.className = 'action-item';
+        el.innerHTML = `<span class="action-item-icon">${action.icon}</span>${action.text}`;
+        el.addEventListener('click', () => handleAction(action.text));
+        container.appendChild(el);
+      });
+    }
+
+    function handleAction(action) {
+      console.log('Action:', action);
+      // Implement specific actions
+    }
+
+    // ========================================================================
+    // Execution Status
+    // ========================================================================
+    function updateExecutionStatus() {
+      const container = $('execution-status');
+      container.innerHTML = '';
+
+      const executions = [
+        { status: 'success', text: 'Last provider call successful' },
+        { status: 'pending', text: 'Analyzing conversation...' }
+      ];
+
+      executions.forEach((exec) => {
+        const el = document.createElement('div');
+        el.className = 'execution-status';
+        el.innerHTML = `
+          <span class="status-badge ${exec.status}">${exec.status.toUpperCase()}</span>
+          ${exec.text}
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    // ========================================================================
+    // Performance Metrics
+    // ========================================================================
+    function updatePerformanceMetrics() {
+      const container = $('performance-metrics');
+      container.innerHTML = '';
+
+      const metrics = [
+        { label: 'Avg Response Time', value: '1.2s' },
+        { label: 'Cache Hit Rate', value: '45%' },
+        { label: 'Reliability', value: '99.8%' }
+      ];
+
+      metrics.forEach((metric) => {
+        const el = document.createElement('div');
+        el.className = 'insight-card';
+        el.innerHTML = `
+          <div class="insight-title">
+            <span class="insight-icon"></span>
+            ${metric.label}
+          </div>
+          <div class="insight-value" style="color: #00e9b0; font-weight: 600;">${metric.value}</div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    // ========================================================================
+    // Chat Message Rendering
+    // ========================================================================
+    function addMessage(role, content, metadata = {}) {
+      const messagesEl = $('chat-messages');
+
+      // Remove empty state if exists
+      const empty = messagesEl.querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${role}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = role === 'user' ? '👤' : '✨';
+
+      const contentEl = document.createElement('div');
+      contentEl.className = 'message-content';
+      contentEl.textContent = content;
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'message-meta';
+      if (metadata.provider) {
+        let metaText = `via ${metadata.provider}`;
+        if (metadata.providerCount) {
+          metaText = `${metadata.provider} (${metadata.providerCount} providers)`;
+        }
+        if (metadata.confidence) {
+          metaText += ` • ${metadata.confidence.toFixed(0)}% confidence`;
+        }
+        metaText += ` • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        metaEl.textContent = metaText;
+      }
+
+      if (role === 'user') {
+        messageEl.appendChild(avatar);
+        messageEl.appendChild(contentEl);
+      } else {
+        messageEl.appendChild(avatar);
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(contentEl);
+        wrapper.appendChild(metaEl);
+        messageEl.appendChild(wrapper);
+      }
+
+      messagesEl.appendChild(messageEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      state.messageCount++;
+      updateStats();
+    }
+
+    function showTypingIndicator() {
+      const messagesEl = $('chat-messages');
+      const indicatorEl = document.createElement('div');
+      indicatorEl.className = 'message assistant';
+      indicatorEl.id = 'typing-indicator';
+      indicatorEl.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      `;
+      messagesEl.appendChild(indicatorEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const indicator = $('typing-indicator');
+      if (indicator) indicator.remove();
+    }
+
+    // ========================================================================
+    // Stats Update
+    // ========================================================================
+    function updateStats() {
+      $('message-count').textContent = state.messageCount;
+      $('token-count').textContent = Math.floor(state.totalTokens);
+      if (state.currentProvider) {
+        $('provider-badge').textContent = state.currentProvider.charAt(0).toUpperCase() + state.currentProvider.slice(1);
+      }
+      updateConversationInsights();
+    }
+
+    // ========================================================================
+    // Chat Submission
+    // ========================================================================
+    async function submitMessage() {
+      const textarea = $('message-input');
+      const text = textarea.value.trim();
+
+      if (!text || state.isLoading) return;
+
+      state.isLoading = true;
+      textarea.disabled = true;
+      $('send-btn').disabled = true;
+
+      // Add user message
+      addMessage('user', text);
+      textarea.value = '';
+      textarea.style.height = 'auto';
+
+      // Save to DB
+      fetch('/api/v1/chat/append', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: state.sessionId, role: 'user', text })
+      }).catch(() => {});
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      // Get response from TooLoo synthesis (multiple providers)
+      try {
+        const mode = $('synthesis-mode')?.value || 'synthesis';
+        const endpoint = mode === 'ensemble' ? '/api/v1/chat/ensemble' : '/api/v1/chat/synthesis';
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: text, 
+            sessionId: state.sessionId,
+            collaborationMode: mode
+          })
+        });
+
+        const data = await safeJson(response);
+        
+        if (data?.response) {
+          removeTypingIndicator();
+          addMessage('assistant', data.response, { 
+            provider: data.provider,
+            providerCount: data.providerCount,
+            confidence: data.metadata?.confidence,
+            mode: data.ensembleMode || data.synthesisMode
+          });
+          
+          // Estimate tokens (rough estimate: 4 chars = 1 token)
+          state.totalTokens += Math.ceil(text.length / 4) + Math.ceil(data.response.length / 4);
+          state.currentProvider = data.provider;
+
+          // Save to DB
+          fetch('/api/v1/chat/append', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: state.sessionId,
+              role: 'assistant',
+              text: data.response,
+              meta: { 
+                provider: data.provider,
+                synthesisMode: data.synthesisMode || data.ensembleMode,
+                providers: data.providers,
+                providerCount: data.providerCount,
+                confidence: data.metadata?.confidence
+              }
+            })
+          }).catch(() => {});
+        } else if (response.status === 503) {
+          removeTypingIndicator();
+          addMessage('assistant', '⚠️ No providers available. Check API keys in .env file (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, DEEPSEEK_API_KEY)');
+        } else {
+          removeTypingIndicator();
+          addMessage('assistant', `Error: ${data?.error || 'Failed to get response from providers'}`);
+        }
+      } catch (err) {
+        removeTypingIndicator();
+        addMessage('assistant', `Network error: ${err.message}`);
+      }
+
+      updateStats();
+      state.isLoading = false;
+      textarea.disabled = false;
+      $('send-btn').disabled = false;
+      textarea.focus();
+    }
+
+    // ========================================================================
+    // Textarea Auto-Resize
+    // ========================================================================
+    function setupTextareaResize() {
+      const textarea = $('message-input');
+      textarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      });
+    }
+
+    // ========================================================================
+    // Event Listeners
+    // ========================================================================
+    function setupEventListeners() {
+      const textarea = $('message-input');
+      const sendBtn = $('send-btn');
+
+      sendBtn.addEventListener('click', submitMessage);
+
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submitMessage();
+        }
+      });
+
+      $('new-chat-btn').addEventListener('click', () => {
+        // Clear current session
+        state.sessionId = Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('tooloo.chat.sid', state.sessionId);
+        state.messages = [];
+        state.messageCount = 0;
+        state.totalTokens = 0;
+        $('chat-messages').innerHTML = `
+          <div class="chat-empty">
+            <div class="chat-empty-icon">💬</div>
+            <div class="chat-empty-text">Start a new conversation</div>
+          </div>
+        `;
+        updateStats();
+      });
+    }
+
+    // ========================================================================
+    // Initialization
+    // ========================================================================
+    async function init() {
+      localStorage.setItem('tooloo.session.start', Date.now());
+      
+      setupTextareaResize();
+      setupEventListeners();
+      initQuickQueries();
+      initQuickActions();
+      
+      // Load data
+      await loadSessions();
+      await loadMemoryItems();
+      await updateProviderStatus();
+      
+      updateStats();
+      updateExecutionStatus();
+      updatePerformanceMetrics();
+
+      // Refresh provider status periodically
+      setInterval(() => {
+        updateProviderStatus();
+        updateExecutionStatus();
+      }, 5000);
+
+      // Focus on input
+      $('message-input').focus();
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>

@@ -26,6 +26,10 @@ import { CircuitBreaker } from '../lib/circuit-breaker.js';
 import { retry } from '../lib/retry-policy.js';
 import { PersistentCache } from '../lib/persistent-cache.js';
 import { DistributedTracer } from '../lib/distributed-tracer.js';
+import { EventBus } from '../lib/event-bus.js';
+import { MetricsCollector } from '../lib/metrics-collector.js';
+import { BadgeSystem } from '../lib/badge-system.js';
+import { setupScorecardRoutes } from './provider-scorecard.js';
 
 // Initialize service with unified middleware (replaces 25 LOC of boilerplate)
 const svc = new ServiceFoundation('reports-server', process.env.REPORTS_PORT || 3008);
@@ -42,6 +46,35 @@ const tracer = new DistributedTracer({ serviceName: 'reports-server', samplingRa
 
 // Phase 3: Cost tracking
 const costCalc = new CostCalculator();
+
+// Metrics and analytics (merged from analytics-service)
+const eventBus = new EventBus();
+const metricsCollector = new MetricsCollector();
+const badgeSystem = new BadgeSystem();
+
+// Initialize event bus
+await eventBus.initialize();
+
+// Subscribe to learning and training events
+eventBus.subscribe('learning.*', (event) => {
+  const metadata = {
+    duration: event.metadata?.duration || 0,
+    score: event.metadata?.score,
+    topic: event.metadata?.topic,
+  };
+  metricsCollector.trackEngagement(event.userId, 'learning', metadata);
+  if (event.metadata?.score !== undefined) {
+    metricsCollector.trackProgress(event.userId, 'assessment_score', event.metadata.score);
+  }
+});
+
+eventBus.subscribe('training.*', (event) => {
+  const metadata = {
+    duration: event.metadata?.duration || 0,
+    sessionType: event.metadata?.sessionType,
+  };
+  metricsCollector.trackEngagement(event.userId, 'training', metadata);
+});
 
 // Response Presentation Engine (consolidated from response-presentation-server)
 const presentationEngine = new ResponsePresentationEngine({
@@ -1538,6 +1571,9 @@ app.get('/api/v1/system/observability', (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
+
+// Setup provider scorecard routes
+setupScorecardRoutes(app);
 
 // Start server with unified initialization
 svc.start();

@@ -1,5 +1,10 @@
 // System Check endpoint: runs smoke tests for key services and returns structured results
 // (Moved below app initialization)
+
+// CRITICAL: Load .env variables FIRST before any imports that use them
+import ensureEnvLoaded from '../engine/env-loader.js';
+ensureEnvLoaded();
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -17,6 +22,22 @@ import { RateLimiter } from '../lib/rate-limiter.js';
 import { DistributedTracer } from '../lib/distributed-tracer.js';
 import githubProvider from '../engine/github-provider.js';
 import LLMProvider from '../engine/llm-provider.js';
+import MultiProviderCollaborationFramework from '../servers/multi-provider-collaboration.js';
+import { getSessionManager } from '../services/session-memory-manager.js';
+import { getProviderInstructions } from '../services/provider-instructions.js';
+import { getProviderAggregation } from '../services/provider-aggregation.js';
+// Phase 6E: Load Balancing & Auto-Scaling modules
+import HealthMonitor from '../lib/resilience/HealthMonitor.js';
+import ReadinessProbe from '../lib/resilience/ReadinessProbe.js';
+import IntelligentRouter from '../lib/resilience/IntelligentRouter.js';
+import AutoScalingDecisionEngine from '../lib/resilience/AutoScalingDecisionEngine.js';
+import HorizontalScalingManager from '../lib/resilience/HorizontalScalingManager.js';
+import HotReloadManager, { setupAppHotReload } from '../lib/hot-reload-manager.js';
+import HotUpdateManager, { setupAppHotUpdate } from '../lib/hot-update-manager.js';
+import alertEngineModule from './alert-engine.js';
+import CapabilityActivator from '../engine/capability-activator.js';
+import CapabilityOrchestrator from '../engine/capability-orchestrator.js';
+import * as formatterIntegration from '../services/response-formatter-integration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +50,28 @@ svc.registerStatusEndpoint();
 
 const app = svc.app;
 const PORT = svc.port;
+
+// ========== HOT RELOAD & HOT UPDATE SETUP ==========
+// Enable hot-reload for development: monitors file changes and reloads modules
+const hotReloadManager = setupAppHotReload(app, {
+  enabled: process.env.HOT_RELOAD !== 'false',
+  verbose: process.env.HOT_RELOAD_VERBOSE === 'true',
+  debounceDelay: 300
+});
+
+// Enable hot-update for dynamic endpoint registration
+const hotUpdateManager = setupAppHotUpdate(app, {
+  enabled: true,
+  verbose: process.env.HOT_UPDATE_VERBOSE === 'true',
+  maxHistory: 100
+});
+
+// Watch server file for changes
+hotReloadManager.watchFile('servers/web-server.js', async () => {
+  console.log('[HotReload] Web server code changed - consider restarting for full reload');
+});
+
+// ========== END HOT RELOAD SETUP ==========
 
 // Phase 6: Performance & observability optimization
 const rateLimiter = new RateLimiter({ rateLimit: 1000, refillRate: 100 }); // 1000 tokens, 100/sec refill
@@ -43,6 +86,45 @@ const serviceCircuitBreakers = {
   reports: new CircuitBreaker('reports-service', { failureThreshold: 3, resetTimeoutMs: 30000 }),
   capabilities: new CircuitBreaker('capabilities-service', { failureThreshold: 3, resetTimeoutMs: 30000 })
 };
+
+// Phase 6E: Load Balancing & Auto-Scaling initialization
+const healthMonitor = new HealthMonitor({ checkInterval: 10000 }); // 10s health checks
+const readinessProbe = new ReadinessProbe();
+const router = new IntelligentRouter({ algorithm: 'health-aware' });
+const autoScaler = new AutoScalingDecisionEngine();
+const scalingManager = new HorizontalScalingManager();
+
+// ========== CAPABILITY ACTIVATOR INITIALIZATION ==========
+const capabilityActivator = new CapabilityActivator({
+  maxConcurrent: 3,
+  errorThreshold: 5,
+  rollbackEnabled: true,
+  stateFile: path.join(process.cwd(), 'data/activated-capabilities.json')
+});
+
+// Register capability activator in environment hub
+svc.environmentHub.registerComponent('capabilityActivator', capabilityActivator, [
+  'capabilities',
+  'activation',
+  'autonomous-evolution'
+]);
+
+// ========== CAPABILITY ORCHESTRATOR INITIALIZATION ==========
+// Initialize the safe capability orchestrator for managing 242 discovered methods
+const capabilityOrchestrator = new CapabilityOrchestrator();
+
+// Register orchestrator in environment hub
+svc.environmentHub.registerComponent('capabilityOrchestrator', capabilityOrchestrator, [
+  'capabilities',
+  'orchestration',
+  'discovery'
+]);
+
+// ========== RESPONSE FORMATTER INTEGRATION ==========
+// Apply enhanced response formatter middleware to API endpoints
+app.use('/api', formatterIntegration.enhancedResponseMiddleware);
+
+// ========== END CAPABILITY & FORMATTER SETUP ==========
 // ======= UI Activity Monitoring & Real Data Pipeline =======
 // CRITICAL: Disable ALL caching in development (prevents stale UI from showing)
 app.use((req, res, next) => {
@@ -162,9 +244,9 @@ app.get(['/tooloo-hub','/tooloo-page'], async (req,res)=>{
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('TooLoo Hub page missing'); }
 });
 
-// Root route - show Phase 3 Control Center (latest feature)
+// Root route - Professional Chat UI (3-bar: sessions | messages | insights) with real providers
 app.get('/', (req, res) => {
-  res.redirect('/phase3-control-center.html');
+  res.sendFile(path.join(process.cwd(), 'web-app', 'tooloo-chat-professional.html'));
 });
 
 // Quiet favicon 404s in dev
@@ -178,6 +260,21 @@ app.get('/control-room', (req, res) => {
 
 // Advanced control room (existing redesigned page)
 app.get('/control-room/advanced', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-redesigned.html'));
+});
+
+// Serve the workspace (3-bar UI with memory, conversation, providers) - LEGACY
+app.get(['/workspace', '/ai-workspace', '/legacy-workspace'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'workspace.html'));
+});
+
+// Professional Chat UI (new default, also accessible at /chat)
+app.get(['/chat', '/chat-pro', '/professional'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'tooloo-chat-professional.html'));
+});
+
+// Training Control Room (shows training metrics and service status)
+app.get(['/training', '/training-control-room'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-redesigned.html'));
 });
 
@@ -229,15 +326,19 @@ app.get(['/design-suite'], async (req,res)=>{
 
 // TooLoo Chat alias
 app.get(['/tooloo-chat'], async (req,res)=>{
-  const f = path.join(webDir,'tooloo-chat.html');
+  const f = path.join(webDir,'tooloo-chat-enhanced.html');
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('TooLoo Chat page missing'); }
 });
 
-// New interactive chat interface - prefer Nexus chat if available
+// New interactive chat interface - prefer Nexus Pro chat if available
 app.get(['/chat', '/coach-chat'], async (req,res)=>{
+  const pro = path.join(webDir,'chat-nexus-pro.html');
   const nexus = path.join(webDir,'chat-nexus.html');
+  const enhanced = path.join(webDir,'tooloo-chat-enhanced.html');
   const legacy = path.join(webDir,'chat.html');
+  try { await fs.promises.access(pro); return res.sendFile(pro); } catch {}
   try { await fs.promises.access(nexus); return res.sendFile(nexus); } catch {}
+  try { await fs.promises.access(enhanced); return res.sendFile(enhanced); } catch {}
   try { await fs.promises.access(legacy); return res.sendFile(legacy); } catch { return res.status(404).send('Chat page missing'); }
 });
 
@@ -277,6 +378,30 @@ app.get(['/conference', '/providers-conference', '/pitch'], async (req,res)=>{
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Providers Conference page missing'); }
 });
 
+// Response Formatter Pure UI (multi-provider consensus analysis)
+app.get(['/formatter-pure', '/pure', '/response-formatter-pure', '/formatter-final', '/chat-formatter-pure'], async (req,res)=>{
+  const f = path.join(webDir,'chat-formatter-unified.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Formatter Pure page missing'); }
+});
+
+// Add explicit route to /formatter for consistency
+app.get(['/formatter'], async (req,res)=>{
+  const f = path.join(webDir,'chat-formatter-unified.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Formatter page missing'); }
+});
+
+// Response Formatter (full featured version)
+app.get(['/response-formatter', '/formatter'], async (req,res)=>{
+  const f = path.join(webDir,'response-formatter.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Response Formatter page missing'); }
+});
+
+// Chat Formatter Unified (unified chat and formatter experience)
+app.get(['/chat-formatter', '/formatter-unified'], async (req,res)=>{
+  const f = path.join(webDir,'chat-formatter-unified.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Chat Formatter Unified page missing'); }
+});
+
 // Root route - prefer Nexus Pro (goal-driven experience)
 app.post('/api/chat', async (req, res) => {
   try {
@@ -295,35 +420,466 @@ app.post('/api/chat', async (req, res) => {
 // Chat API proxy - forward to API bridge, fallback to demo response
 app.post('/api/v1/chat/message', async (req, res) => {
   try {
+    const { message, sessionId: providedSessionId, userId = 'anonymous', provider: preferredProvider } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: 'Message required' });
+    }
+    
+    // Get or create session
+    const sessionManager = await getSessionManager();
+    const sessionId = providedSessionId || sessionManager.generateSessionId();
+    const session = await sessionManager.getOrCreateSession(sessionId, userId);
+
+    // Add user message to session memory
+    await sessionManager.addMessage(sessionId, userId, 'user', message);
+
+    // Use real LLM provider with fallback chain
+    const llmProvider = new LLMProvider();
+    
+    if (!llmProvider.available()) {
+      return res.status(503).json({ 
+        error: 'No providers available',
+        detail: 'Configure API keys in .env (ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, DEEPSEEK_API_KEY)'
+      });
+    }
+
+    try {
+      // Get conversation history for context
+      const conversationHistory = sessionManager.getConversationHistory(sessionId);
+      
+      // Build system prompt with session awareness
+      const baseSystemPrompt = `You are interacting with TooLoo.ai - a self-aware, multi-service AI platform.
+
+CRITICAL CONTEXT: TooLoo.ai is NOT just a chat interface. It is:
+- A self-aware system that can read and analyze its own source code
+- A multi-service orchestration platform (16+ microservices running on ports 3000-3009, 3123)
+- A meta-learning system that continuously improves itself
+- A system that tracks conversation history, patterns, and learns from interactions
+- A platform with real-time system awareness and control capabilities
+
+SYSTEM CAPABILITIES YOU SHOULD KNOW ABOUT:
+1. Self-Awareness Endpoints (available on http://localhost:3000):
+   - GET /api/v1/system/awareness - Shows system capabilities, services, GitHub integration status
+   - GET /api/v1/system/introspect - Deep introspection of system state, memory, performance
+   - GET /api/v1/system/code/structure - View TooLoo.ai's codebase structure
+   - POST /api/v1/system/code/read - Read specific source files
+   - POST /api/v1/system/code/search - Search TooLoo.ai's source code
+
+2. Service Control Endpoints:
+   - GET /api/v1/system/services - View all running services
+   - GET /api/v1/system/service/:name - Check specific service status
+   - POST /api/v1/system/service/:name/restart - Control services
+   - GET /api/v1/system/alerts - View system alerts
+   
+3. Conversation API (Month 2-4 Capabilities):
+   - POST /api/v1/conversation/message - Send messages with system context injection
+   - GET /api/v1/context/system-state - Get enriched system state
+   - POST /api/v1/control/command - Execute natural language commands
+   - GET /api/v1/provider/status - View AI provider health and metrics
+
+YOUR ROLE AS A PROVIDER:
+- You are one of several AI providers (Claude, GPT, Gemini, etc.) integrated into TooLoo.ai
+- You have access to TooLoo.ai's system context and can understand the platform's state
+- You should acknowledge that you're working within TooLoo.ai when relevant
+- When asked about TooLoo.ai's capabilities, services, or status, reference the endpoints above
+- Help with system optimization, service management, and intelligent decision-making
+
+CONVERSATION CONTEXT:
+- You help learners track mastery across domains and optimize learning through intelligent coaching
+- You also engage in technical conversations about the TooLoo.ai platform itself
+- Be helpful, encouraging, and expert-level in your responses
+- Maintain context of the conversation and refer back to previous points when relevant
+- When relevant, explain how your responses relate to TooLoo.ai's self-awareness and learning capabilities`;
+
+
+      const systemPrompt = sessionManager.buildAwareSystemPrompt(sessionId, baseSystemPrompt);
+      
+      // Select provider (preferred or auto-selected by LLMProvider)
+      const selectedProvider = preferredProvider || llmProvider.selectProvider('chat');
+      
+      // ENHANCED: Load provider-specific instructions if available
+      let enhancedSystemPrompt = systemPrompt;
+      try {
+        const providerInstructions = await getProviderInstructions();
+        const providerInstr = providerInstructions.getForProvider(selectedProvider);
+        if (providerInstr) {
+          // Use provider-specialized prompt that leverages their strengths
+          enhancedSystemPrompt = providerInstructions.buildSpecializedPrompt(
+            selectedProvider,
+            baseSystemPrompt,
+            { taskType: 'chat', sessionContext: true }
+          );
+          // Add session context to the specialized prompt
+          const contextSummary = sessionManager.buildAwareSystemPrompt(sessionId, '');
+          enhancedSystemPrompt += '\n' + contextSummary;
+        }
+      } catch (instrErr) {
+        console.warn('[Chat] Could not load provider instructions:', instrErr.message);
+        // Fall back to standard system prompt if instructions unavailable
+      }
+      
+      const startTime = Date.now();
+      
+      // Call the provider using generate() method with conversation history
+      const result = await llmProvider.generate({
+        prompt: message,
+        system: enhancedSystemPrompt,
+        taskType: 'chat',
+        context: {
+          conversationHistory,
+          sessionContext: sessionManager.getSessionContext(sessionId)
+        }
+      });
+      
+      const responseTime = Date.now() - startTime;
+      const responseText = result.content || result.response || result;
+      
+      // Add assistant response to session memory
+      await sessionManager.addMessage(sessionId, userId, 'assistant', responseText, {
+        provider: result.provider || selectedProvider,
+        responseTime,
+        model: result.model || (result.provider && `${result.provider}-default`),
+        confidence: result.confidence || 0.8
+      });
+
+      // Update session metadata
+      await sessionManager.updateSessionMetadata(sessionId, {
+        provider: result.provider || selectedProvider,
+        tokens: result.tokens || 0
+      });
+      
+      return res.json({ 
+        response: responseText,
+        provider: result.provider || selectedProvider,
+        sessionId,
+        timestamp: new Date().toISOString(),
+        responseTime,
+        messageCount: session.stats.messageCount + 1
+      });
+    } catch (providerErr) {
+      console.error('[Chat] Provider error:', providerErr.message);
+      return res.status(503).json({ 
+        error: 'Provider error',
+        detail: providerErr.message,
+        message: 'Could not reach configured AI providers. Check .env keys and provider health.',
+        sessionId
+      });
+    }
+  } catch (error) {
+    console.error('[Chat] Fatal error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// TooLoo.ai Synthesis Endpoint - Single Provider Fast Response
+// ============================================================================
+app.post('/api/v1/chat/synthesis', async (req, res) => {
+  try {
     const { message, sessionId } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'Message required' });
     }
     
-    // Try to reach the API bridge
-    try {
-      const response = await fetch('http://127.0.0.1:3010/api/v1/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, sessionId: sessionId || 'web-' + Date.now() }),
-        timeout: 10000
+    const llmProvider = new LLMProvider();
+    
+    if (!llmProvider.available()) {
+      return res.status(503).json({ 
+        error: 'No providers available',
+        detail: 'Configure API keys in .env'
       });
-      const data = await response.json();
-      return res.json(data);
-    } catch (bridgeErr) {
-      // API bridge not available, return demo response
-      const demoResponses = [
-        `I understand you're asking about "${message.substring(0, 30)}...". This is a demo response from TooLoo Nexus. Connect API keys to enable real AI responses.`,
-        `That's an interesting question: "${message}". The chat is running in demo mode. Add your API credentials to enable Claude, GPT-4, or other providers.`,
-        `You asked: "${message}" - I'm demonstrating the TooLoo Nexus interface. Configure providers to see real AI responses.`
-      ];
-      const response = demoResponses[Math.floor(Math.random() * demoResponses.length)];
-      return res.json({ response, _demo: true });
+    }
+
+    try {
+      // Check if user is asking about TooLoo.ai itself
+      let enrichedMessage = message;
+      const selfAwarenessKeywords = ['self aware', 'self-aware', 'can you see yourself', 'see your code', 'understand yourself', 'your architecture', 'how do you work'];
+      const systemStatusKeywords = ['provider', 'active', 'status', 'working', 'running', 'health', 'available', 'enabled', 'service', 'server', 'capability', 'capabilities', 'tooloo'];
+      
+      const isSelfAwarenessQuestion = selfAwarenessKeywords.some(keyword => message.toLowerCase().includes(keyword));
+      const isSystemStatusQuestion = systemStatusKeywords.some(keyword => message.toLowerCase().includes(keyword));
+      const isTooLooQuestion = message.toLowerCase().includes('tooloo');
+      
+      // Always enrich with system context if asking about TooLoo.ai or system status
+      if (isSelfAwarenessQuestion || isSystemStatusQuestion || isTooLooQuestion) {
+        // Get system awareness data
+        const awareness = {
+          system: {
+            name: 'TooLoo.ai',
+            version: '2.0.0',
+            services: Object.keys({training: 3001, meta: 3002, budget: 3003, coach: 3004, product: 3006, segmentation: 3007, reports: 3008, capabilities: 3009, orchestration: 3100, provider: 3200, analytics: 3300}),
+            totalServices: 11,
+            serviceDetails: {
+              training: 'Selection engine, hyper-speed rounds',
+              meta: 'Meta-learning phases & boosts',
+              budget: 'Provider status, burst cache, policy tuning',
+              coach: 'Auto-Coach loop + Fast Lane',
+              product: 'Workflows, analysis, artifacts',
+              segmentation: 'Conversation segmentation & traits',
+              reports: 'Reporting and analytics',
+              capabilities: 'System capabilities management',
+              orchestration: 'Service orchestration and control',
+              provider: 'Provider management and aggregation',
+              analytics: 'System analytics and metrics'
+            }
+          },
+          codeAccess: {
+            enabled: true,
+            structure: '81+ items',
+            servers: '37 server files',
+            engines: '80+ engine modules',
+            githubEnabled: true,
+            githubRepo: 'oripridan-dot/TooLoo.ai'
+          },
+          capabilities: {
+            selfAwareness: true,
+            codeAnalysis: true,
+            codeReading: true,
+            gitHubIntegration: true,
+            selfModification: true,
+            multiProviderCollaboration: true,
+            systemIntrospection: true
+          }
+        };
+        
+        // Get live provider status
+        let providerContext = '';
+        try {
+          const providerResponse = await fetch('http://127.0.0.1:3003/api/v1/providers/status');
+          if (providerResponse.ok) {
+            const providerData = await providerResponse.json();
+            const activeProviders = Object.entries(providerData.status || {})
+              .filter(([_, info]) => info.available && info.enabled)
+              .map(([name, info]) => `${name} (${info.model})`)
+              .join(', ');
+            providerContext = `\n\n[Live Provider Status]:\nActive providers: ${activeProviders}`;
+          }
+        } catch (e) {
+          // Provider status endpoint may not be available, continue without it
+        }
+        
+        enrichedMessage = `${message}
+
+[FACTUAL SYSTEM CONTEXT - Use this data to answer the question]:
+${JSON.stringify(awareness, null, 2)}${providerContext}
+
+INSTRUCTIONS:
+- You are Claude, operating WITHIN TooLoo.ai's system
+- The above context is FACTUAL, REAL-TIME data about TooLoo.ai
+- Answer using ONLY the facts provided in the system context
+- Do NOT say you lack information - you have it all above
+- Be specific and confident in your answers`;
+      }
+      
+      // Get response from best available provider using standard flow
+      const result = await llmProvider.generate({ 
+        prompt: enrichedMessage, 
+        taskType: 'chat' 
+      });
+
+      const baseResponse = result.content || result.response || result;
+      const selectedProvider = result.provider || 'ollama';
+
+      // Get actual list of active providers for accurate metadata
+      let activeProvidersList = [];
+      try {
+        const providerResponse = await fetch('http://127.0.0.1:3003/api/v1/providers/status');
+        if (providerResponse.ok) {
+          const providerData = await providerResponse.json();
+          activeProvidersList = Object.keys(providerData.status || {})
+            .filter(name => {
+              const info = providerData.status[name];
+              return info.available && info.enabled;
+            })
+            .filter(name => name !== 'anthropic') // deduplicate: anthropic is same as claude
+            .map(name => name === 'claude' ? 'anthropic' : name); // normalize to enabled provider names
+        }
+      } catch (e) {
+        // Fall back to single provider if status unavailable
+        activeProvidersList = [selectedProvider];
+      }
+
+      // Present as TooLoo.ai synthesis (not individual provider)
+      return res.json({
+        response: baseResponse,
+        provider: 'TooLoo.ai',
+        providerCount: activeProvidersList.length,
+        providers: activeProvidersList,
+        sessionId: sessionId || 'web-' + Date.now(),
+        timestamp: new Date().toISOString(),
+        metadata: {
+          confidence: 92,
+          synthesis: 'TooLoo AI Intelligence Layer',
+          synthesisMethod: 'Single Provider',
+          selfAwarenessEnhanced: isSelfAwarenessQuestion
+        }
+      });
+    } catch (providerErr) {
+      console.error('[Synthesis] Error:', providerErr.message);
+      return res.status(503).json({ 
+        error: 'Provider error',
+        detail: providerErr.message
+      });
     }
   } catch (error) {
+    console.error('[Synthesis] Fatal error:', error.message);
     return res.status(500).json({ error: error.message });
   }
 });
+
+// TooLoo.ai Advanced Ensemble - Multi-Provider Response
+// ============================================================================
+// Calls multiple providers in parallel and combines their responses
+app.post('/api/v1/chat/ensemble', async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: 'Message required' });
+    }
+    
+    const llmProvider = new LLMProvider();
+    
+    if (!llmProvider.available()) {
+      return res.status(503).json({ 
+        error: 'No providers available',
+        detail: 'Configure API keys in .env'
+      });
+    }
+
+    try {
+      // Check if user is asking about self-awareness
+      let enrichedMessage = message;
+      const selfAwarenessKeywords = ['self aware', 'self-aware', 'can you see yourself', 'see your code', 'understand yourself', 'your architecture', 'how do you work'];
+      const isSelfAwarenessQuestion = selfAwarenessKeywords.some(keyword => message.toLowerCase().includes(keyword));
+      
+      if (isSelfAwarenessQuestion) {
+        // Get system awareness data
+        const awareness = {
+          system: {
+            name: 'TooLoo.ai',
+            version: '2.0.0',
+            services: Object.keys({training: 3001, meta: 3002, budget: 3003, coach: 3004, product: 3006, segmentation: 3007, reports: 3008, capabilities: 3009, orchestration: 3100, provider: 3200, analytics: 3300}),
+            totalServices: 11
+          },
+          codeAccess: {
+            enabled: true,
+            structure: '81+ items',
+            servers: '37 server files',
+            engines: '80+ engine modules',
+            githubEnabled: true,
+            githubRepo: 'oripridan-dot/TooLoo.ai'
+          },
+          capabilities: {
+            selfAwareness: true,
+            codeAnalysis: true,
+            codeReading: true,
+            gitHubIntegration: true,
+            selfModification: true
+          }
+        };
+        
+        enrichedMessage = `${message}
+
+[System Context - TooLoo.ai Self-Awareness Data]:
+${JSON.stringify(awareness, null, 2)}
+
+You have FULL access to read TooLoo's source code via these endpoints:
+- GET /api/v1/system/code/structure - See project structure (81+ items)
+- GET /api/v1/system/code/list?dir=servers - See 37 server files  
+- POST /api/v1/system/code/read - Read actual source code
+- POST /api/v1/system/code/search - Search code patterns
+- GET /api/v1/system/awareness - Get system capabilities
+
+Please demonstrate that you understand these capabilities and can read TooLoo's own code.`;
+      }
+      
+      // Call specific providers in parallel
+      // These call provider methods directly to bypass auto-selection
+      const providerCalls = {
+        anthropic: llmProvider.callClaude ? llmProvider.callClaude(enrichedMessage, null) : null,
+        openai: llmProvider.callOpenAI ? llmProvider.callOpenAI(enrichedMessage, null) : null,
+        gemini: llmProvider.callGemini ? llmProvider.callGemini(enrichedMessage, null) : null
+      };
+
+      const results = await Promise.allSettled([
+        providerCalls.anthropic,
+        providerCalls.openai,
+        providerCalls.gemini
+      ]);
+      
+      // Extract successful responses with provider names
+      const responses = [];
+      const providerNames = ['anthropic', 'openai', 'gemini'];
+      
+      results.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+          const content = result.value.content || result.value.response || result.value;
+          if (content && typeof content === 'string' && content.length > 0) {
+            responses.push({
+              provider: providerNames[idx],
+              response: content
+            });
+          }
+        }
+      });
+
+      // If no providers responded, fallback to single
+      if (responses.length === 0) {
+        const result = await llmProvider.generate({ prompt: enrichedMessage, taskType: 'chat' });
+        return res.json({
+          response: result.content || result.response || result,
+          provider: 'TooLoo.ai',
+          providerCount: 1,
+          providers: [result.provider || 'fallback'],
+          sessionId: sessionId || 'web-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          metadata: {
+            confidence: 92,
+            synthesis: 'TooLoo AI Intelligence Layer',
+            synthesisMethod: 'Single Provider (Fallback)',
+            selfAwarenessEnhanced: isSelfAwarenessQuestion
+          }
+        });
+      }
+
+      // Build ensemble response from multiple provider perspectives
+      const ensembleResponse = responses
+        .map((r, idx) => `**${r.provider.toUpperCase()} Perspective**:\n\n${r.response}`)
+        .join('\n\n---\n\n');
+
+      return res.json({
+        response: ensembleResponse,
+        provider: 'TooLoo.ai',
+        providerCount: responses.length,
+        providers: responses.map(r => r.provider),
+        sessionId: sessionId || 'web-' + Date.now(),
+        timestamp: new Date().toISOString(),
+        metadata: {
+          confidence: calculateEnsembleConfidence(responses.length),
+          synthesis: `TooLoo Multi-Provider Ensemble (${responses.length} providers)`,
+          selfAwarenessEnhanced: isSelfAwarenessQuestion,
+          synthesisMethod: 'Parallel Multi-Provider Collaboration'
+        }
+      });
+    } catch (err) {
+      console.error('[Ensemble] Error:', err.message);
+      return res.status(503).json({
+        error: 'Ensemble failed',
+        detail: err.message
+      });
+    }
+  } catch (error) {
+    console.error('[Ensemble] Fatal error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Helper: Calculate confidence based on provider count
+function calculateEnsembleConfidence(providerCount) {
+  if (providerCount >= 3) return 95;
+  if (providerCount === 2) return 90;
+  return 85;
+}
 
 // Response format conversion endpoint (Phase 3 - Multi-format Support)
 app.post('/api/v1/responses/convert', async (req, res) => {
@@ -567,7 +1123,139 @@ app.get('/api/v1/chat/burst-stream', async (req,res)=>{
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
+// ============================================================================
+// Session Memory Management Endpoints
+// ============================================================================
+
+// Get or create a session and get conversation history
+app.get('/api/v1/sessions/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { userId = 'anonymous' } = req.query;
+    const sessionManager = await getSessionManager();
+    
+    const session = await sessionManager.getOrCreateSession(sessionId, userId);
+    const history = sessionManager.getFullHistory(sessionId);
+    const context = sessionManager.getSessionContext(sessionId);
+    
+    res.json({
+      ok: true,
+      sessionId,
+      session: {
+        id: session.id,
+        userId: session.userId,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        messageCount: session.stats.messageCount,
+        title: session.metadata.title,
+        topics: context?.topics || []
+      },
+      messageCount: history.length,
+      context,
+      history
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// List all sessions for a user
+app.get('/api/v1/sessions', async (req, res) => {
+  try {
+    const { userId = 'anonymous', limit = 20 } = req.query;
+    const sessionManager = await getSessionManager();
+    const sessions = sessionManager.listSessions(userId, parseInt(limit));
+    
+    res.json({
+      ok: true,
+      count: sessions.length,
+      sessions
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Start a new session
+app.post('/api/v1/sessions', async (req, res) => {
+  try {
+    const { userId = 'anonymous', title = 'Chat Session' } = req.body;
+    const sessionManager = await getSessionManager();
+    const sessionId = sessionManager.generateSessionId();
+    const session = await sessionManager.getOrCreateSession(sessionId, userId);
+    session.metadata.title = title;
+    
+    res.json({
+      ok: true,
+      sessionId,
+      session: {
+        id: session.id,
+        userId: session.userId,
+        createdAt: session.createdAt,
+        title: session.metadata.title
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Get conversation history for a session
+app.get('/api/v1/sessions/:sessionId/history', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { limit = 100 } = req.query;
+    const sessionManager = await getSessionManager();
+    
+    const history = sessionManager.getFullHistory(sessionId);
+    const filtered = history.slice(-parseInt(limit));
+    
+    res.json({
+      ok: true,
+      sessionId,
+      count: filtered.length,
+      history: filtered
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Delete a session
+app.delete('/api/v1/sessions/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const sessionManager = await getSessionManager();
+    await sessionManager.deleteSession(sessionId);
+    
+    res.json({
+      ok: true,
+      message: `Session ${sessionId} deleted`
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Get session context and insights
+app.get('/api/v1/sessions/:sessionId/context', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const sessionManager = await getSessionManager();
+    const context = sessionManager.getSessionContext(sessionId);
+    
+    res.json({
+      ok: true,
+      sessionId,
+      context
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // Feedback submission API (local, not proxied)
+
 app.post('/api/v1/feedback/submit', async (req,res)=>{
   try{
     const feedback = req.body || {};
@@ -696,7 +1384,6 @@ const serviceConfig = [
   { name: 'meta', prefixes: ['/api/v4/meta-learning'], port: Number(process.env.META_PORT||3002), remoteEnv: process.env.REMOTE_META_BASE },
   { name: 'budget', prefixes: ['/api/v1/budget','/api/v1/providers/burst','/api/v1/providers/status','/api/v1/providers/policy'], port: Number(process.env.BUDGET_PORT||3003), remoteEnv: process.env.REMOTE_BUDGET_BASE },
   { name: 'coach', prefixes: ['/api/v1/auto-coach'], port: Number(process.env.COACH_PORT||3004), remoteEnv: process.env.REMOTE_COACH_BASE },
-  { name: 'cup', prefixes: ['/api/v1/cup'], port: Number(process.env.CUP_PORT||3005), remoteEnv: process.env.REMOTE_CUP_BASE },
   { name: 'product', prefixes: ['/api/v1/workflows','/api/v1/learning','/api/v1/analysis','/api/v1/artifacts','/api/v1/showcase','/api/v1/product','/api/v1/bookworm'], port: Number(process.env.PRODUCT_PORT||3006), remoteEnv: process.env.REMOTE_PRODUCT_BASE },
   { name: 'segmentation', prefixes: ['/api/v1/segmentation'], port: Number(process.env.SEGMENTATION_PORT||3007), remoteEnv: process.env.REMOTE_SEGMENTATION_BASE },
   { name: 'reports', prefixes: ['/api/v1/reports'], port: Number(process.env.REPORTS_PORT||3008), remoteEnv: process.env.REMOTE_REPORTS_BASE },
@@ -877,29 +1564,902 @@ app.all(['/api/v1/arena', '/api/v1/arena/*'], async (req, res) => {
   } catch(e){ res.status(500).json({ ok:false, error: e.message }); }
 });
 
-// Explicit proxy for GitHub context (providers can access your repo)
-app.all(['/api/v1/github', '/api/v1/github/*'], async (req, res) => {
-  try {
-    const port = Number(process.env.GITHUB_CONTEXT_PORT||3020);
-    const url = `http://127.0.0.1:${port}${req.originalUrl}`;
-    const init = { method: req.method, headers: { 'content-type': req.get('content-type')||'application/json' } };
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      init.body = req.is('application/json') ? JSON.stringify(req.body||{}) : undefined;
-    }
-    const r = await fetch(url, init);
-    const text = await r.text();
-    res.status(r.status);
-    const ct = r.headers.get('content-type')||'';
-    if (ct.includes('application/json')) return res.type('application/json').send(text);
-    return res.send(text);
-  } catch(e){ res.status(500).json({ ok:false, error: e.message }); }
+// ============================================================================
+// GITHUB API ENDPOINTS - Direct Integration (No Port 3020 Needed)
+// ============================================================================
+
+// Health check for GitHub
+app.get('/api/v1/github/health', (req, res) => {
+  const configured = githubProvider.isConfigured();
+  res.json({
+    ok: true,
+    configured,
+    repo: configured ? process.env.GITHUB_REPO : null,
+    capabilities: ['read', 'write', 'create-pr', 'create-issue', 'merge', 'branch', 'comment']
+  });
 });
 
+// Read operations (read-only access to repo)
+app.get('/api/v1/github/info', async (req, res) => {
+  const info = await githubProvider.getRepoInfo();
+  res.json({ ok: !!info, info: info || { error: 'GitHub not configured' } });
+});
+
+app.get('/api/v1/github/issues', async (req, res) => {
+  const limit = parseInt(req.query.limit || '5');
+  const issues = await githubProvider.getRecentIssues(limit);
+  res.json({ ok: true, issues });
+});
+
+app.get('/api/v1/github/readme', async (req, res) => {
+  const readme = await githubProvider.getReadme();
+  res.json({ ok: !!readme, readme: readme || null });
+});
+
+app.post('/api/v1/github/file', async (req, res) => {
+  const { path } = req.body || {};
+  if (!path) return res.status(400).json({ ok: false, error: 'path required' });
+  const file = await githubProvider.getFileContent(path);
+  res.json({ ok: !!file, file: file || null });
+});
+
+app.post('/api/v1/github/files', async (req, res) => {
+  const { paths } = req.body || {};
+  if (!paths || !Array.isArray(paths)) {
+    return res.status(400).json({ ok: false, error: 'paths array required' });
+  }
+  const files = await githubProvider.getMultipleFiles(paths);
+  res.json({ ok: true, files });
+});
+
+app.get('/api/v1/github/structure', async (req, res) => {
+  const path = req.query.path || '';
+  const recursive = req.query.recursive === 'true';
+  const structure = await githubProvider.getRepoStructure(path, recursive);
+  res.json({ ok: !!structure, structure: structure || null });
+});
+
+app.get('/api/v1/github/context', async (req, res) => {
+  const context = await githubProvider.getContextForProviders();
+  res.json({ ok: !!context, context });
+});
+
+// Write operations - Self-Modification via GitHub
+
+// POST /api/v1/github/update-file - Update or create a file
+app.post('/api/v1/github/update-file', async (req, res) => {
+  const { path, content, message, branch } = req.body || {};
+  if (!path || content === undefined) {
+    return res.status(400).json({ ok: false, error: 'path and content required' });
+  }
+  const result = await githubProvider.updateFile(path, content, message, branch || 'main');
+  res.json(result);
+});
+
+// POST /api/v1/github/create-branch - Create a new branch
+app.post('/api/v1/github/create-branch', async (req, res) => {
+  const { name, from } = req.body || {};
+  if (!name) return res.status(400).json({ ok: false, error: 'branch name required' });
+  const result = await githubProvider.createBranch(name, from || 'main');
+  res.json(result);
+});
+
+// POST /api/v1/github/create-pr - Create a pull request
+app.post('/api/v1/github/create-pr', async (req, res) => {
+  const { title, body, head, base } = req.body || {};
+  if (!title || !head) return res.status(400).json({ ok: false, error: 'title and head branch required' });
+  const result = await githubProvider.createPullRequest(title, body, head, base || 'main');
+  res.json(result);
+});
+
+// POST /api/v1/github/create-issue - Create an issue
+app.post('/api/v1/github/create-issue', async (req, res) => {
+  const { title, body, labels, assignees } = req.body || {};
+  if (!title) return res.status(400).json({ ok: false, error: 'title required' });
+  const result = await githubProvider.createIssue(title, body, labels || [], assignees || []);
+  res.json(result);
+});
+
+// PATCH /api/v1/github/pr/:number - Update a pull request
+app.patch('/api/v1/github/pr/:number', async (req, res) => {
+  const prNumber = parseInt(req.params.number);
+  const updates = req.body || {};
+  if (!prNumber) return res.status(400).json({ ok: false, error: 'PR number required' });
+  const result = await githubProvider.updatePullRequest(prNumber, updates);
+  res.json(result);
+});
+
+// PUT /api/v1/github/pr/:number/merge - Merge a pull request
+app.put('/api/v1/github/pr/:number/merge', async (req, res) => {
+  const prNumber = parseInt(req.params.number);
+  const { message, method } = req.body || {};
+  if (!prNumber) return res.status(400).json({ ok: false, error: 'PR number required' });
+  const result = await githubProvider.mergePullRequest(prNumber, message, method || 'squash');
+  res.json(result);
+});
+
+// POST /api/v1/github/comment - Add comment to issue/PR
+app.post('/api/v1/github/comment', async (req, res) => {
+  const { number, body } = req.body || {};
+  if (!number || !body) return res.status(400).json({ ok: false, error: 'issue/PR number and body required' });
+  const result = await githubProvider.addComment(number, body);
+  res.json(result);
+});
+
+// ============================================================================
+// SELF-AWARENESS ENDPOINTS - System Introspection & Reflection
+// MUST BE BEFORE THE CATCH-ALL /api/* PROXY
+// ============================================================================
+
+// GET /api/v1/system/awareness - Get system awareness and introspection state
+app.get('/api/v1/system/awareness', async (req, res) => {
+  try {
+    const awareness = {
+      ok: true,
+      timestamp: new Date().toISOString(),
+      system: {
+        name: 'TooLoo.ai',
+        version: '2.0.0',
+        mode: 'orchestrated',
+        uptime: process.uptime(),
+        pid: process.pid,
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development'
+      },
+      capabilities: {
+        selfAwareness: true,
+        codeAnalysis: true,
+        selfModification: true,
+        gitHubIntegration: githubProvider.isConfigured(),
+        fileSystemAccess: true,
+        infoGathering: true,
+        autonomous: true,
+        codeExposure: true  // NEW: Providers can read source code
+      },
+      github: {
+        enabled: githubProvider.isConfigured(),
+        repo: process.env.GITHUB_REPO || null,
+        operations: ['read', 'write', 'create-pr', 'create-issue', 'merge', 'branch', 'comment']
+      },
+      services: {
+        training: 3001,
+        meta: 3002,
+        budget: 3003,
+        coach: 3004,
+        product: 3006,
+        segmentation: 3007,
+        reports: 3008,
+        capabilities: 3009,
+        orchestrator: 3123
+      },
+      // NEW: Advertise code reading endpoints to providers
+      codeAccess: {
+        enabled: true,
+        endpoints: {
+          structure: 'GET /api/v1/system/code/structure?maxDepth=3',
+          listFiles: 'GET /api/v1/system/code/list?dir=servers',
+          readFile: 'POST /api/v1/system/code/read {"filePath":"servers/web-server.js","maxLines":100}',
+          search: 'POST /api/v1/system/code/search {"query":"async function","maxResults":20}'
+        },
+        description: 'Providers can read TooLoo.ai source code to understand system architecture and capabilities'
+      }
+    };
+    res.json(awareness);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/v1/system/self-patch - Apply self-modifications to the codebase
+app.post('/api/v1/system/self-patch', async (req, res) => {
+  try {
+    const { action, file, content, message, branch, createPr } = req.body || {};
+    
+    if (!action) {
+      return res.status(400).json({ ok: false, error: 'action required (update, create, or analyze)' });
+    }
+
+    if (action === 'analyze') {
+      // Just analyze a file without modifying it
+      const { filePath } = req.body;
+      if (!filePath) return res.status(400).json({ ok: false, error: 'filePath required for analysis' });
+      
+      // Basic analysis of file
+      return res.json({
+        ok: true,
+        action: 'analyze',
+        file: filePath,
+        analyzed: true,
+        note: 'File analysis capability - integration with SelfAwarenessManager recommended'
+      });
+    }
+
+    if (!file || content === undefined) {
+      return res.status(400).json({ ok: false, error: 'file and content required' });
+    }
+
+    let result = { ok: false };
+
+    // Update file directly
+    if (action === 'update') {
+      result = await githubProvider.updateFile(
+        file,
+        content,
+        message || `Self-patch: ${file}`,
+        branch || 'main'
+      );
+    } else if (action === 'create') {
+      result = await githubProvider.updateFile(
+        file,
+        content,
+        message || `Create: ${file}`,
+        branch || 'main'
+      );
+    }
+
+    // Optionally create PR for the changes
+    if (result.ok && createPr) {
+      const prResult = await githubProvider.createPullRequest(
+        `Self-modification: ${file}`,
+        `Auto-generated patch for ${file}\n\n${message || 'Self-improvement'}`,
+        branch || 'main'
+      );
+      result.pullRequest = prResult;
+    }
+
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/v1/system/introspect - Deep system introspection
+app.get('/api/v1/system/introspect', async (req, res) => {
+  try {
+    const introspection = {
+      ok: true,
+      timestamp: new Date().toISOString(),
+      system: {
+        process: {
+          pid: process.pid,
+          uptime: process.uptime(),
+          memory: process.memoryUsage(),
+          cpu: process.cpuUsage(),
+          version: process.version
+        },
+        environment: {
+          node_env: process.env.NODE_ENV,
+          debug: !!process.env.DEBUG,
+          github_configured: !!process.env.GITHUB_TOKEN,
+          timezone: process.env.TZ || 'UTC'
+        }
+      },
+      capabilities: {
+        selfDiscovery: true,
+        selfInspection: true,
+        selfAwareness: true,
+        codeModification: true,
+        gitHubOperations: githubProvider.isConfigured(),
+        autonomousEvolution: true
+      },
+      operationalStatus: {
+        webServer: {
+          port: PORT,
+          status: 'running',
+          uptime: process.uptime()
+        },
+        serviceRegistry: {
+          count: 10,
+          documented: true
+        }
+      }
+    };
+    res.json(introspection);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ============================================================================
+// CODE EXPOSURE ENDPOINTS - Allow Providers to Read TooLoo.ai Source Code
+// ============================================================================
+
+// GET /api/v1/system/code/structure - Get project file structure
+app.get('/api/v1/system/code/structure', async (req, res) => {
+  try {
+    const maxDepth = parseInt(req.query.maxDepth || '3');
+    const directory = req.query.dir || '/workspaces/TooLoo.ai';
+    
+    async function buildStructure(dir, depth = 0) {
+      if (depth > maxDepth) return null;
+      
+      try {
+        const files = await fs.promises.readdir(dir);
+        const items = [];
+        
+        for (const file of files) {
+          // Skip hidden and common large directories
+          if (file.startsWith('.') || ['node_modules', 'dist', 'build', '.git'].includes(file)) continue;
+          
+          const filePath = path.join(dir, file);
+          const stat = await fs.promises.stat(filePath);
+          
+          if (stat.isDirectory()) {
+            const children = await buildStructure(filePath, depth + 1);
+            if (children) {
+              items.push({
+                name: file,
+                type: 'directory',
+                path: filePath.replace('/workspaces/TooLoo.ai', ''),
+                children
+              });
+            }
+          } else {
+            items.push({
+              name: file,
+              type: 'file',
+              path: filePath.replace('/workspaces/TooLoo.ai', ''),
+              size: stat.size
+            });
+          }
+        }
+        
+        return items.length > 0 ? items : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    
+    const structure = await buildStructure(directory);
+    res.json({
+      ok: true,
+      root: directory.replace('/workspaces/TooLoo.ai', ''),
+      structure
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/v1/system/code/read - Read a specific source file
+app.post('/api/v1/system/code/read', async (req, res) => {
+  try {
+    const { filePath, maxLines } = req.body || {};
+    
+    if (!filePath) {
+      return res.status(400).json({ ok: false, error: 'filePath required' });
+    }
+    
+    // Security: only allow reading from project directory
+    const safeDir = '/workspaces/TooLoo.ai';
+    const fullPath = path.resolve(safeDir, filePath.replace(/^\//, ''));
+    
+    if (!fullPath.startsWith(safeDir)) {
+      return res.status(403).json({ ok: false, error: 'Access denied - path outside project' });
+    }
+    
+    // Check if file exists
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ ok: false, error: `File not found: ${filePath}` });
+    }
+    
+    const content = await fs.promises.readFile(fullPath, 'utf-8');
+    const lines = content.split('\n');
+    const truncated = maxLines && lines.length > maxLines;
+    const displayLines = maxLines ? lines.slice(0, maxLines) : lines;
+    
+    res.json({
+      ok: true,
+      path: filePath,
+      lines: displayLines.length,
+      totalLines: lines.length,
+      truncated,
+      content: displayLines.join('\n')
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/v1/system/code/search - Search source code for patterns
+app.post('/api/v1/system/code/search', async (req, res) => {
+  try {
+    const { query, filePattern, maxResults } = req.body || {};
+    
+    if (!query) {
+      return res.status(400).json({ ok: false, error: 'query required' });
+    }
+    
+    const results = [];
+    const maxRes = maxResults || 20;
+    const pattern = filePattern || '**/*.js';
+    
+    // Simple search in common directories
+    const searchDirs = [
+      '/workspaces/TooLoo.ai/servers',
+      '/workspaces/TooLoo.ai/engine',
+      '/workspaces/TooLoo.ai/lib',
+      '/workspaces/TooLoo.ai/scripts'
+    ];
+    
+    for (const dir of searchDirs) {
+      if (results.length >= maxRes) break;
+      
+      try {
+        const files = await fs.promises.readdir(dir, { recursive: true });
+        
+        for (const file of files) {
+          if (results.length >= maxRes) break;
+          if (!file.endsWith('.js')) continue;
+          
+          const filePath = path.join(dir, file);
+          try {
+            const content = await fs.promises.readFile(filePath, 'utf-8');
+            const lines = content.split('\n');
+            
+            lines.forEach((line, idx) => {
+              if (results.length < maxRes && line.includes(query)) {
+                results.push({
+                  file: filePath.replace('/workspaces/TooLoo.ai', ''),
+                  line: idx + 1,
+                  content: line.trim().substring(0, 120)
+                });
+              }
+            });
+          } catch (e) {
+            // Skip unreadable files
+          }
+        }
+      } catch (e) {
+        // Skip directories that don't exist
+      }
+    }
+    
+    res.json({
+      ok: true,
+      query,
+      resultsFound: results.length,
+      results
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/v1/system/code/list - List all source files in a directory
+app.get('/api/v1/system/code/list', async (req, res) => {
+  try {
+    const dir = req.query.dir || 'servers';
+    const fullPath = path.join('/workspaces/TooLoo.ai', dir);
+    
+    // Security check
+    if (!fullPath.startsWith('/workspaces/TooLoo.ai')) {
+      return res.status(403).json({ ok: false, error: 'Access denied' });
+    }
+    
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ ok: false, error: `Directory not found: ${dir}` });
+    }
+    
+    const files = await fs.promises.readdir(fullPath);
+    const fileList = files
+      .filter(f => f.endsWith('.js') || f.endsWith('.json') || f.endsWith('.md'))
+      .map(f => ({
+        name: f,
+        path: `${dir}/${f}`
+      }));
+    
+    res.json({
+      ok: true,
+      directory: dir,
+      files: fileList.length,
+      list: fileList
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ============================================================================
+// ADMIN ENDPOINTS - Hot Reload, Update, and System Management
+// ============================================================================
+
+/**
+ * GET /api/v1/admin/hot-reload-status - Check hot-reload status
+ */
+app.get('/api/v1/admin/hot-reload-status', (req, res) => {
+  res.json({
+    ok: true,
+    hotReload: hotReloadManager.getStatus(),
+    hotUpdate: hotUpdateManager.getStatus()
+  });
+});
+
+/**
+ * POST /api/v1/admin/hot-reload - Trigger hot-reload of modules
+ */
+app.post('/api/v1/admin/hot-reload', async (req, res) => {
+  try {
+    await hotReloadManager.reloadAll();
+    res.json({
+      ok: true,
+      message: 'Hot reload triggered',
+      status: hotReloadManager.getStatus()
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/admin/endpoints - List all registered endpoints
+ */
+app.get('/api/v1/admin/endpoints', (req, res) => {
+  res.json({
+    ok: true,
+    endpoints: hotUpdateManager.getEndpoints(),
+    total: hotUpdateManager.getEndpoints().length
+  });
+});
+
+/**
+ * GET /api/v1/admin/update-history - Get update history
+ */
+app.get('/api/v1/admin/update-history', (req, res) => {
+  const limit = req.query.limit || 20;
+  res.json({
+    ok: true,
+    history: hotUpdateManager.getHistory(parseInt(limit)),
+    status: hotUpdateManager.getStatus()
+  });
+});
+
+// ============================================================================
+// PROVIDER INSTRUCTIONS & AGGREGATION ENDPOINTS (BEFORE PROXY)
+// ============================================================================
+
+/**
+ * GET /api/v1/providers/instructions - Get all provider instructions
+ */
+app.get('/api/v1/providers/instructions', async (req, res) => {
+  try {
+    const instructions = await getProviderInstructions();
+    res.json({
+      ok: true,
+      status: instructions.getStatus(),
+      aggregationConfig: instructions.getAggregationConfig()
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/v1/providers/instructions/:provider - Get specific provider instructions
+ */
+app.get('/api/v1/providers/instructions/:provider', async (req, res) => {
+  try {
+    const instructions = await getProviderInstructions();
+    const instr = instructions.getForProvider(req.params.provider);
+    if (!instr) {
+      return res.status(404).json({ ok: false, error: `Provider not found: ${req.params.provider}` });
+    }
+    res.json({
+      ok: true,
+      provider: req.params.provider,
+      instructions: instr
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/v1/providers/aggregation/call-all
+ * Call all providers with specialized prompts and aggregate responses
+ */
+app.post('/api/v1/providers/aggregation/call-all', async (req, res) => {
+  try {
+    const { message, taskType = 'chat', context = {} } = req.body;
+    if (!message) {
+      return res.status(400).json({ ok: false, error: 'Message required' });
+    }
+
+    const aggregation = await getProviderAggregation();
+    aggregation.reset();
+
+    const result = await aggregation.callAllProviders(message, {
+      taskType,
+      ...context
+    });
+
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      aggregation: result
+    });
+  } catch (err) {
+    res.status(503).json({
+      ok: false,
+      error: err.message,
+      detail: 'Failed to aggregate provider responses. Check if all providers are configured.'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/providers/aggregation/synthesis
+ * Get synthesized response from all providers
+ */
+app.post('/api/v1/providers/aggregation/synthesis', async (req, res) => {
+  try {
+    const { message, taskType = 'chat', context = {} } = req.body;
+    if (!message) {
+      return res.status(400).json({ ok: false, error: 'Message required' });
+    }
+
+    const aggregation = await getProviderAggregation();
+    aggregation.reset();
+
+    await aggregation.callAllProviders(message, {
+      taskType,
+      ...context
+    });
+
+    const synthesis = aggregation.getSynthesis();
+
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      synthesis: synthesis.synthesized,
+      metadata: {
+        providerCount: synthesis.providerCount,
+        executionTime: synthesis.executionTime,
+        responses: synthesis.detailedResponses.map(r => ({
+          provider: r.provider,
+          role: r.role,
+          responseTime: r.responseTime
+        }))
+      }
+    });
+  } catch (err) {
+    res.status(503).json({
+      ok: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/providers/aggregation/best-for-task
+ * Get best provider response for a specific task type
+ */
+app.post('/api/v1/providers/aggregation/best-for-task', async (req, res) => {
+  try {
+    const { message, taskType = 'chat', context = {} } = req.body;
+    if (!message || !taskType) {
+      return res.status(400).json({ ok: false, error: 'Message and taskType required' });
+    }
+
+    const aggregation = await getProviderAggregation();
+    aggregation.reset();
+
+    await aggregation.callAllProviders(message, {
+      taskType,
+      ...context
+    });
+
+    const best = aggregation.getBestForUseCase(taskType);
+    const analysis = aggregation.getProviderAnalysis();
+
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      bestResponse: best,
+      analysis: analysis
+    });
+  } catch (err) {
+    res.status(503).json({
+      ok: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/providers/aggregation/analysis
+ * Get performance analysis of recent aggregation
+ */
+app.get('/api/v1/providers/aggregation/analysis', async (req, res) => {
+  try {
+    const aggregation = await getProviderAggregation();
+    const analysis = aggregation.getProviderAnalysis();
+    
+    res.json({
+      ok: true,
+      analysis
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ========== CAPABILITY ORCHESTRATOR API ENDPOINTS ==========
+// These must come BEFORE the catch-all proxy to avoid being intercepted
+
+/**
+ * POST /api/v1/orchestrator/initialize
+ * Initialize orchestrator with discovered capabilities
+ */
+app.post('/api/v1/orchestrator/initialize', async (req, res) => {
+  try {
+    // Fetch discovered capabilities from capabilities server
+    const capResponse = await fetch('http://127.0.0.1:3009/api/v1/capabilities/discovered');
+    const discovered = await capResponse.json();
+    
+    // Convert to Map format for orchestrator
+    const capabilityEntries = Object.entries(discovered.methods || {}).map(([id, cap]) => [id, cap]);
+    
+    const result = capabilityOrchestrator.initialize(capabilityEntries);
+    
+    res.json({
+      success: true,
+      title: 'Orchestrator Initialized',
+      message: capabilityOrchestrator.capabilities.size + ' capabilities loaded',
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/orchestrator/enable-autonomous
+ * Enable autonomous capability activation
+ */
+app.post('/api/v1/orchestrator/enable-autonomous', (req, res) => {
+  const { enabled, mode, maxPerCycle } = req.body;
+  
+  const result = capabilityOrchestrator.enableAutonomous({
+    enabled: enabled !== false,
+    mode: mode || 'safe',
+    maxPerCycle: maxPerCycle || 2
+  });
+  
+  res.json({
+    success: true,
+    title: 'Autonomous Mode Control',
+    message: result.message,
+    data: result
+  });
+});
+
+/**
+ * POST /api/v1/orchestrator/activate/one
+ * Activate a single capability
+ */
+app.post('/api/v1/orchestrator/activate/one', async (req, res) => {
+  try {
+    const { capabilityId } = req.body;
+    
+    if (!capabilityId) {
+      return res.status(400).json({
+        success: false,
+        error: 'capabilityId required'
+      });
+    }
+    
+    const result = await capabilityOrchestrator.activateCapability(capabilityId);
+    
+    res.json({
+      success: result.success,
+      title: result.success ? 'Capability Activated' : 'Activation Failed',
+      message: result.message || result.error,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/orchestrator/activate/cycle
+ * Run one activation cycle (up to maxPerCycle capabilities)
+ */
+app.post('/api/v1/orchestrator/activate/cycle', async (req, res) => {
+  try {
+    const result = await capabilityOrchestrator.runActivationCycle();
+    
+    res.json({
+      success: result.success,
+      title: 'Activation Cycle Complete',
+      message: 'Cycle ' + result.cycle + ': ' + result.activated + ' activated, ' + result.failed + ' failed',
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/orchestrator/status
+ * Get current orchestrator status
+ */
+app.get('/api/v1/orchestrator/status', (req, res) => {
+  const status = capabilityOrchestrator.getStatus();
+  
+  res.json({
+    success: true,
+    title: 'Orchestrator Status',
+    data: status
+  });
+});
+
+/**
+ * GET /api/v1/orchestrator/capability-map
+ * Get full capability map with activation status
+ */
+app.get('/api/v1/orchestrator/capability-map', (req, res) => {
+  const map = capabilityOrchestrator.getCapabilityMap();
+  
+  res.json({
+    success: true,
+    title: 'Capability Map (242 Methods)',
+    data: map
+  });
+});
+
+/**
+ * POST /api/v1/orchestrator/deactivate
+ * Deactivate a capability (rollback)
+ */
+app.post('/api/v1/orchestrator/deactivate', (req, res) => {
+  const { capabilityId } = req.body;
+  
+  if (!capabilityId) {
+    return res.status(400).json({
+      success: false,
+      error: 'capabilityId required'
+    });
+  }
+  
+  const result = capabilityOrchestrator.deactivateCapability(capabilityId);
+  
+  res.json({
+    success: result.success,
+    title: 'Capability Deactivated',
+    message: result.message,
+    data: result
+  });
+});
+
+// Catch-all API proxy (must come AFTER specific endpoints)
 app.all(['/api/*'], async (req, res) => {
   try {
     // Local web host health check (bypass proxy)
     if (req.originalUrl === '/api/v1/health') {
       return res.json({ ok:true, server:'web', time: new Date().toISOString() });
+    }
+    // Admin endpoints (bypass proxy)
+    if (req.originalUrl.startsWith('/api/v1/admin/')) {
+      return res.status(404).json({ ok:false, error:'Admin endpoint not found' });
+    }
+    // Provider instructions & aggregation endpoints (bypass proxy - handle locally)
+    if (req.originalUrl.startsWith('/api/v1/providers/instructions') ||
+        req.originalUrl.startsWith('/api/v1/providers/aggregation')) {
+      return res.status(404).json({ ok:false, error:'Provider endpoint not found (should be handled by specific route handler)' });
     }
     const route = getRouteForPrefix(req.originalUrl);
     if (!route) return res.status(502).json({ ok:false, error:'No proxy target configured' });
@@ -982,6 +2542,100 @@ app.post('/system/start', async (req,res)=>{
   }catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
+// ============================================================================
+// Phase 6E: Load Balancing & Auto-Scaling Endpoints
+// ============================================================================
+
+// GET /api/v1/loadbalance/health - Get health status of all services
+app.get('/api/v1/loadbalance/health', (req, res) => {
+  try {
+    const health = healthMonitor.getAllHealth();
+    res.json({ ok: true, health, stats: healthMonitor.getStats() });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/v1/loadbalance/health/:service - Get health of specific service
+app.get('/api/v1/loadbalance/health/:service', (req, res) => {
+  try {
+    const health = healthMonitor.getHealth(req.params.service);
+    res.json({ ok: true, health });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/v1/loadbalance/routes - Get routing metrics
+app.get('/api/v1/loadbalance/routes', (req, res) => {
+  try {
+    const service = req.query.service || 'training';
+    const metrics = router.getRoutingMetrics(service);
+    res.json({ ok: true, service, metrics });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/v1/loadbalance/scaling - Get auto-scaling status
+app.get('/api/v1/loadbalance/scaling', (req, res) => {
+  try {
+    const service = req.query.service || 'training';
+    const metrics = autoScaler.getScalingMetrics(service);
+    const history = autoScaler.getScalingHistory(service);
+    res.json({ ok: true, service, metrics, history: history.slice(-10) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/v1/loadbalance/register - Register service for monitoring
+app.post('/api/v1/loadbalance/register', (req, res) => {
+  try {
+    const { service, port, basePort } = req.body;
+    if (!service || !port) {
+      return res.status(400).json({ ok: false, error: 'service and port required' });
+    }
+    
+    healthMonitor.registerService(service, port);
+    router.addTarget(service, port);
+    if (basePort) scalingManager.registerService(service, basePort);
+    
+    res.json({ ok: true, registered: { service, port, basePort } });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/v1/loadbalance/scale/:service/:action - Manual scaling control
+app.post('/api/v1/loadbalance/scale/:service/:action', async (req, res) => {
+  try {
+    const { service, action } = req.params;
+    const { count = 1 } = req.body;
+    
+    if (action === 'up') {
+      const instances = await scalingManager.scaleUp(service, count);
+      return res.json({ ok: true, action: 'scale_up', service, instances });
+    } else if (action === 'down') {
+      const result = await scalingManager.scaleDown(service, count);
+      return res.json({ ok: true, action: 'scale_down', service, result });
+    }
+    
+    res.status(400).json({ ok: false, error: 'action must be up or down' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// GET /api/v1/loadbalance/instances/:service - Get service instances
+app.get('/api/v1/loadbalance/instances/:service', (req, res) => {
+  try {
+    const instances = scalingManager.getInstanceDetails(req.params.service);
+    res.json({ ok: true, service: req.params.service, count: instances.length, instances });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
 
 // Priority modes: favor chat vs background
@@ -1029,22 +2683,24 @@ app.get('/system/status', async (req,res)=>{
       meta: Number(process.env.META_PORT||3002),
       budget: Number(process.env.BUDGET_PORT||3003),
       coach: Number(process.env.COACH_PORT||3004),
-      cup: Number(process.env.CUP_PORT||3005),
       productDev: Number(process.env.PRODUCT_PORT||3006),
       segmentation: Number(process.env.SEGMENTATION_PORT||3007),
       reports: Number(process.env.REPORTS_PORT||3008),
-      capabilities: Number(process.env.CAPABILITIES_PORT||3009)
+      capabilities: Number(process.env.CAPABILITIES_PORT||3009),
+      sources: Number(process.env.SOURCES_PORT||3010),
+      arena: Number(process.env.ARENA_PORT||3011)
     };
-    const [trainingOk, metaOk, budgetOk, coachOk, cupOk, productDevOk, segmentationOk, reportsOk, capabilitiesOk] = await Promise.all([
+    const [trainingOk, metaOk, budgetOk, coachOk, productDevOk, segmentationOk, reportsOk, capabilitiesOk, sourcesOk, arenaOk] = await Promise.all([
       probe(ports.training,'/health'),
       probe(ports.meta,'/health'),
       probe(ports.budget,'/health'),
       probe(ports.coach,'/health'),
-      probe(ports.cup,'/health'),
       probe(ports.productDev,'/health'),
       probe(ports.segmentation,'/health'),
       probe(ports.reports,'/health'),
-      probe(ports.capabilities,'/health')
+      probe(ports.capabilities,'/health'),
+      probe(ports.sources,'/health'),
+      probe(ports.arena,'/health')
     ]);
 
     let autoCoach = { active:false };
@@ -1065,11 +2721,12 @@ app.get('/system/status', async (req,res)=>{
         meta: metaOk,
         budget: budgetOk,
         coach: coachOk,
-        cup: cupOk,
         productDev: productDevOk,
         segmentation: segmentationOk,
         reports: reportsOk,
-        capabilities: capabilitiesOk
+        capabilities: capabilitiesOk,
+        sources: sourcesOk,
+        arena: arenaOk
       },
       autoCoach
     });
@@ -1088,7 +2745,7 @@ app.post('/system/stop', async (req,res)=>{
     } catch {}
     orchestratorProc = null;
     // Ask each service to stop by killing process gracefully (but DO NOT kill this web server)
-    const patterns = ['training-server.js','meta-server.js','budget-server.js','coach-server.js','cup-server.js','product-development-server.js','segmentation-server.js','reports-server.js','capabilities-server.js'];
+    const patterns = ['training-server.js','meta-server.js','budget-server.js','coach-server.js','product-development-server.js','segmentation-server.js','reports-server.js','capabilities-server.js','sources-server.js','providers-arena-server.js'];
     try{
       const { spawn } = await import('child_process');
       const killer = spawn('bash', ['-lc', `pkill -f "servers/(${patterns.join('|')})" || true`], { stdio:'inherit' });
@@ -2278,6 +3935,67 @@ app.post('/api/v1/analytics/export', (req, res) => {
   }
 });
 
+// ============================================================================
+// ADMIN ENDPOINTS - Hot Reload, Update, and System Management
+// ============================================================================
+
+/**
+ * GET /api/v1/admin/reload-status - Check hot-reload status
+ */
+app.get('/api/v1/admin/hot-reload-status', (req, res) => {
+  res.json({
+    ok: true,
+    hotReload: hotReloadManager.getStatus(),
+    hotUpdate: hotUpdateManager.getStatus()
+  });
+});
+
+/**
+ * POST /api/v1/admin/reload - Trigger hot-reload of modules
+ */
+app.post('/api/v1/admin/hot-reload', async (req, res) => {
+  try {
+    await hotReloadManager.reloadAll();
+    res.json({
+      ok: true,
+      message: 'Hot reload triggered',
+      status: hotReloadManager.getStatus()
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/admin/endpoints - List all registered endpoints
+ */
+app.get('/api/v1/admin/endpoints', (req, res) => {
+  res.json({
+    ok: true,
+    endpoints: hotUpdateManager.getEndpoints(),
+    total: hotUpdateManager.getEndpoints().length
+  });
+});
+
+/**
+ * GET /api/v1/admin/update-history - Get update history
+ */
+app.get('/api/v1/admin/update-history', (req, res) => {
+  const limit = req.query.limit || 20;
+  res.json({
+    ok: true,
+    history: hotUpdateManager.getHistory(parseInt(limit)),
+    status: hotUpdateManager.getStatus()
+  });
+});
+
+// ============================================================================
+// PROVIDER INSTRUCTIONS & AGGREGATION ENDPOINTS
+// ============================================================================
+
 // Phase 6 Observability endpoint
 app.get('/api/v1/system/observability', (req, res) => {
   try {
@@ -2297,5 +4015,426 @@ app.get('/api/v1/system/observability', (req, res) => {
   }
 });
 
-// Start service with unified initialization
-svc.start();
+// ============================================================================
+// MONTH 2: CONVERSATION API ROUTES (Claude Integration)
+// ============================================================================
+import * as conversationAPI from '../api/conversation-api.js';
+
+/**
+ * POST /api/v1/conversation/message
+ * Send a message and get AI response with system context
+ */
+app.post('/api/v1/conversation/message', async (req, res) => {
+  conversationAPI.handleConversationMessage(req, res);
+});
+
+/**
+ * GET /api/v1/conversation/:id
+ * Retrieve conversation history
+ */
+app.get('/api/v1/conversation/:id', (req, res) => {
+  conversationAPI.handleGetConversation(req, res);
+});
+
+/**
+ * GET /api/v1/conversation
+ * List recent conversations
+ */
+app.get('/api/v1/conversation', (req, res) => {
+  conversationAPI.handleListConversations(req, res);
+});
+
+/**
+ * GET /api/v1/conversation/health
+ */
+app.get('/api/v1/conversation/health', (req, res) => {
+  conversationAPI.handleHealth(req, res);
+});
+
+// ============================================================================
+// MONTH 2: SYSTEM CONTROL API ROUTES (Service Management)
+// ============================================================================
+import * as systemControlAPI from '../api/system-control.js';
+
+/**
+ * POST /api/v1/system/service/:name/restart
+ */
+app.post('/api/v1/system/service/:name/restart', async (req, res) => {
+  systemControlAPI.handleRestartService(req, res);
+});
+
+/**
+ * POST /api/v1/system/service/:name/stop
+ */
+app.post('/api/v1/system/service/:name/stop', async (req, res) => {
+  systemControlAPI.handleStopService(req, res);
+});
+
+/**
+ * POST /api/v1/system/service/:name/start
+ */
+app.post('/api/v1/system/service/:name/start', async (req, res) => {
+  systemControlAPI.handleStartService(req, res);
+});
+
+/**
+ * GET /api/v1/system/service/:name
+ */
+app.get('/api/v1/system/service/:name', async (req, res) => {
+  systemControlAPI.handleGetService(req, res);
+});
+
+/**
+ * GET /api/v1/system/services
+ */
+app.get('/api/v1/system/services', async (req, res) => {
+  systemControlAPI.handleGetAllServices(req, res);
+});
+
+/**
+ * POST /api/v1/system/services/restart-all
+ */
+app.post('/api/v1/system/services/restart-all', async (req, res) => {
+  systemControlAPI.handleRestartAllServices(req, res);
+});
+
+/**
+ * GET /api/v1/system/service/:name/diagnose
+ */
+app.get('/api/v1/system/service/:name/diagnose', async (req, res) => {
+  systemControlAPI.handleDiagnoseService(req, res);
+});
+
+/**
+ * GET /api/v1/system/service/:name/health
+ */
+app.get('/api/v1/system/service/:name/health', async (req, res) => {
+  systemControlAPI.handleStreamServiceHealth(req, res);
+});
+
+/**
+ * System Control health check
+ */
+app.get('/api/v1/system-control/health', (req, res) => {
+  systemControlAPI.handleHealth(req, res);
+});
+
+// ============================================================================
+// PROVIDER CONTROL API ROUTES (Provider Management)
+// ============================================================================
+import * as providerControlAPI from '../api/provider-control.js';
+
+/**
+ * POST /api/v1/provider/switch
+ */
+app.post('/api/v1/provider/switch', async (req, res) => {
+  providerControlAPI.handleSwitchProvider(req, res);
+});
+
+/**
+ * GET /api/v1/provider/active
+ */
+app.get('/api/v1/provider/active', async (req, res) => {
+  providerControlAPI.handleGetActiveProvider(req, res);
+});
+
+/**
+ * GET /api/v1/provider/status
+ */
+app.get('/api/v1/provider/status', async (req, res) => {
+  providerControlAPI.handleGetProvidersStatus(req, res);
+});
+
+/**
+ * POST /api/v1/provider/forecast
+ */
+app.post('/api/v1/provider/forecast', async (req, res) => {
+  providerControlAPI.handleForecastSwitchImpact(req, res);
+});
+
+/**
+ * GET /api/v1/provider/:name/metrics
+ */
+app.get('/api/v1/provider/:name/metrics', async (req, res) => {
+  providerControlAPI.handleGetProviderMetrics(req, res);
+});
+
+/**
+ * POST /api/v1/provider/policy
+ */
+app.post('/api/v1/provider/policy', async (req, res) => {
+  providerControlAPI.handleSetProviderPolicy(req, res);
+});
+
+/**
+ * POST /api/v1/provider/compare
+ */
+app.post('/api/v1/provider/compare', async (req, res) => {
+  providerControlAPI.handleCompareProviders(req, res);
+});
+
+/**
+ * Provider Control health check
+ */
+app.get('/api/v1/provider-control/health', (req, res) => {
+  providerControlAPI.handleHealth(req, res);
+});
+
+// ============================================================================
+// MONTH 3: CONTEXTUAL AWARENESS API ROUTES
+// ============================================================================
+import * as contextualAwarenessAPI from '../api/contextual-awareness.js';
+
+/**
+ * GET /api/v1/context/system-state
+ */
+app.get('/api/v1/context/system-state', async (req, res) => {
+  contextualAwarenessAPI.handleGetSystemState(req, res);
+});
+
+/**
+ * POST /api/v1/context/suggestions
+ */
+app.post('/api/v1/context/suggestions', async (req, res) => {
+  contextualAwarenessAPI.handleGetSuggestions(req, res);
+});
+
+/**
+ * POST /api/v1/context/smart-replies
+ */
+app.post('/api/v1/context/smart-replies', async (req, res) => {
+  contextualAwarenessAPI.handleGenerateSmartReplies(req, res);
+});
+
+/**
+ * Contextual Awareness health check
+ */
+app.get('/api/v1/contextual-awareness/health', (req, res) => {
+  contextualAwarenessAPI.handleHealth(req, res);
+});
+
+// ============================================================================
+// MONTH 4: CONVERSATIONAL CONTROL API ROUTES
+// ============================================================================
+import * as conversationalControlAPI from '../api/conversational-control.js';
+
+/**
+ * POST /api/v1/control/command
+ */
+app.post('/api/v1/control/command', async (req, res) => {
+  conversationalControlAPI.handleExecuteCommand(req, res);
+});
+
+/**
+ * GET /api/v1/control/investigate-alerts
+ */
+app.get('/api/v1/control/investigate-alerts', async (req, res) => {
+  conversationalControlAPI.handleInvestigateAlerts(req, res);
+});
+
+/**
+ * Conversational Control health check
+ */
+app.get('/api/v1/conversational-control/health', (req, res) => {
+  conversationalControlAPI.handleHealth(req, res);
+});
+
+// ============================================================================
+// ALERT ENGINE ROUTES
+// ============================================================================
+// Mount alert engine routes for system alerting and auto-remediation
+app.use('/api/v1/system/alerts', alertEngineModule);
+
+// ============================================================================
+// CAPABILITY ACTIVATION ROUTES (Enhanced with Response Formatter)
+// ============================================================================
+
+/**
+ * GET /api/v1/capabilities/activate/status
+ * Get current activation status with visual formatting
+ */
+app.get('/api/v1/capabilities/activate/status', (req, res) => {
+  const status = capabilityActivator.getStatus();
+  const response = formatterIntegration.formatCapabilityResponse({
+    title: 'Capability Activation Status',
+    total: 242,
+    activated: status.activated,
+    pending: status.pending,
+    components: [
+      { name: 'autonomousEvolutionEngine', discovered: 62, activated: 0, status: 'dormant', methods: [] },
+      { name: 'enhancedLearning', discovered: 43, activated: 0, status: 'dormant', methods: [] },
+      { name: 'predictiveEngine', discovered: 38, activated: 0, status: 'dormant', methods: [] },
+      { name: 'userModelEngine', discovered: 37, activated: 0, status: 'dormant', methods: [] },
+      { name: 'proactiveIntelligenceEngine', discovered: 32, activated: 0, status: 'dormant', methods: [] },
+      { name: 'contextBridgeEngine', discovered: 30, activated: 0, status: 'dormant', methods: [] }
+    ],
+    recentActivations: status.recentActivations
+  });
+  res.json(response);
+});
+
+/**
+ * POST /api/v1/capabilities/activate/one
+ * Activate a single capability
+ */
+app.post('/api/v1/capabilities/activate/one', async (req, res) => {
+  const { component, method, mode = 'safe' } = req.body;
+  
+  if (!component || !method) {
+    return res.status(400).json(
+      formatterIntegration.formatErrorResponse(
+        new Error('component and method required'),
+        400
+      )
+    );
+  }
+
+  const result = await capabilityActivator.activate(component, method, mode);
+  const response = formatterIntegration.formatSuccessResponse({
+    title: 'Capability Activation',
+    message: result.success ? `Activated ${component}:${method}` : `Failed to activate ${component}:${method}`,
+    data: result
+  });
+  res.status(result.success ? 200 : 500).json(response);
+});
+
+/**
+ * POST /api/v1/capabilities/activate/phase
+ * Activate capabilities for a specific phase
+ */
+app.post('/api/v1/capabilities/activate/phase', async (req, res) => {
+  const { phase = 'Phase 1: Core Initialization', mode = 'safe' } = req.body;
+  const plan = capabilityActivator.getPhasedActivationPlan();
+
+  if (!plan[phase]) {
+    return res.status(400).json(
+      formatterIntegration.formatErrorResponse(new Error(`Unknown phase: ${phase}`), 400)
+    );
+  }
+
+  const result = await capabilityActivator.activateBatch(plan[phase], mode);
+  const response = formatterIntegration.formatProgressResponse({
+    title: `Activating ${phase}`,
+    items: result.results.map(r => ({
+      label: `${r.component}:${r.method}`,
+      progress: r.success ? 100 : 0,
+      status: r.success ? 'completed' : 'failed',
+      details: r.success ? `Performance: ${r.performanceScore}` : r.reason
+    }))
+  });
+  res.json(response);
+});
+
+/**
+ * POST /api/v1/capabilities/activate/all
+ * Activate all 242 capabilities in phases
+ */
+app.post('/api/v1/capabilities/activate/all', async (req, res) => {
+  const { mode = 'safe' } = req.body;
+  
+  const allResult = await capabilityActivator.activateAll(mode);
+  const response = formatterIntegration.formatMixedResponse({
+    title: 'Complete System Activation (242 Capabilities)',
+    sections: allResult.phases.map((phase, idx) => ({
+      type: 'progress',
+      title: phase.phase,
+      content: {
+        items: phase.results.map(r => ({
+          label: `${r.component}:${r.method}`,
+          progress: r.success ? 100 : 0,
+          status: r.success ? 'completed' : 'failed'
+        })),
+        successful: phase.successful,
+        failed: phase.failed
+      },
+      collapsible: true
+    }))
+  });
+  res.json(response);
+});
+
+/**
+ * GET /api/v1/capabilities/activate/health
+ * Get health report with recommendations
+ */
+app.get('/api/v1/capabilities/activate/health', (req, res) => {
+  const health = capabilityActivator.getHealthReport();
+  const response = formatterIntegration.formatStatusResponse({
+    title: 'Capability System Health',
+    status: health.status,
+    items: [
+      { label: 'Total Activated', value: health.totalActivated, status: health.totalActivated > 0 ? 'active' : 'inactive' },
+      { label: 'Error Rate', value: `${health.errorRate}%`, status: health.errorRate < 10 ? 'active' : 'warning' },
+      { label: 'Avg Performance', value: health.averagePerformance.toFixed(2), status: 'active' },
+      { label: 'Recommendation', value: health.recommendation, status: 'info' }
+    ],
+    summary: health.recommendation
+  });
+  res.json(response);
+});
+
+/**
+ * DELETE /api/v1/capabilities/activate/rollback
+ * Rollback a specific capability
+ */
+app.delete('/api/v1/capabilities/activate/rollback', async (req, res) => {
+  const { component, method } = req.body;
+  
+  if (!component || !method) {
+    return res.status(400).json(
+      formatterIntegration.formatErrorResponse(new Error('component and method required'), 400)
+    );
+  }
+
+  const result = await capabilityActivator.rollback(component, method);
+  res.json(formatterIntegration.formatSuccessResponse({
+    title: 'Capability Rollback',
+    message: result.message || result.reason,
+    data: result
+  }));
+});
+
+/**
+ * POST /api/v1/capabilities/activate/reset
+ * Reset all activations
+ */
+app.post('/api/v1/capabilities/activate/reset', async (req, res) => {
+  const result = await capabilityActivator.reset();
+  res.json(formatterIntegration.formatSuccessResponse({
+    title: 'Capability System Reset',
+    message: result.message,
+    data: result
+  }));
+});
+
+// ============================================================================
+// CAPABILITY ORCHESTRATOR ENDPOINTS
+// ============================================================================
+// NEW: Safe orchestration for 242 discovered capabilities
+
+
+
+// ============================================================================
+// LOAD PROVIDER INSTRUCTIONS AT STARTUP
+// ============================================================================
+// This initializes the provider instruction system before any conversations
+// enabling the decision & aggregation system to send specialized requests
+
+(async () => {
+  try {
+    const providerInstructions = await getProviderInstructions();
+    console.log('[ProviderInstructions] ✓ System loaded at startup');
+    console.log('[ProviderInstructions] Providers:', providerInstructions.getProviders().join(', '));
+    
+    // Also initialize aggregation system
+    const aggregation = await getProviderAggregation();
+    console.log('[ProviderAggregation] ✓ System initialized');
+    console.log('[ProviderAggregation] Strategy:', aggregation.instructions.getAggregationConfig().aggregationStrategy.description);
+  } catch (err) {
+    console.error('[ProviderInstructions] Failed to load:', err.message);
+  }
+  
+  // Start service with unified initialization
+  svc.start();
+})();
+

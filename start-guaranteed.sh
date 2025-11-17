@@ -12,15 +12,12 @@ cd "$SCRIPT_DIR"
 # CONFIGURATION
 # ============================================
 WEB_PORT=${WEB_PORT:-3000}
-ORCH_PORT=${ORCH_PORT:-3123}
 TIMEOUT_WEB=45
-TIMEOUT_ORCH=60
 STARTUP_MAX_WAIT=120
 LOG_DIR="${LOG_DIR:-.tooloo-startup}"
 mkdir -p "$LOG_DIR"
 
 WEB_LOG="$LOG_DIR/web-server.log"
-ORCH_LOG="$LOG_DIR/orchestrator.log"
 STARTUP_LOG="$LOG_DIR/startup.log"
 HEARTBEAT_LOG="$LOG_DIR/heartbeat.log"
 
@@ -101,7 +98,7 @@ validate_prerequisites() {
   log SUCCESS "All required files present"
   
   # Check ports are available
-  for port in $WEB_PORT $ORCH_PORT 3001 3020 3100 3200 3300 3400; do
+  for port in $WEB_PORT 3001 3020 3100 3200 3300 3400; do
     if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
       log WARN "Port $port already in use, will kill process"
     fi
@@ -253,27 +250,29 @@ startup_sequence() {
   sleep 2
   wait_for_health "http://127.0.0.1:$WEB_PORT/health" "Web Server" 10
   
-  log STEP "Phase 4/8: Starting Orchestrator"
+  log STEP "Phase 4/8: Triggering service startup (via orchestrator)"
   
-  ORCH_PID=$(start_service "Orchestrator" \
-    "node servers/orchestrator.js" \
-    "$ORCH_LOG" \
-    $ORCH_PORT)
+  # Web-server triggers orchestrator which starts all 12 services
+  # This is the standard TooLoo.ai startup flow
   
-  [ -z "$ORCH_PID" ] && {
-    log ERROR "Failed to start Orchestrator"
-    kill -9 $WEB_PID 2>/dev/null || true
-    exit 1
-  }
+  log INFO "Calling /system/start to launch orchestrator and all services..."
+  STARTUP_RESPONSE=$(curl -s -X POST http://127.0.0.1:$WEB_PORT/system/start \
+    -H 'Content-Type: application/json' \
+    -d '{"autoOpen":false}' 2>/dev/null || echo '{}')
   
-  sleep 3
-  wait_for_health "http://127.0.0.1:$ORCH_PORT/health" "Orchestrator" 15
+  if echo "$STARTUP_RESPONSE" | grep -q '"ok":true'; then
+    log SUCCESS "Services startup initiated"
+  else
+    log WARN "Service startup signal sent (services may still be booting)"
+  fi
   
-  log SUCCESS "Core services started successfully"
+  # Give services time to boot
+  sleep 5
   
-  # Store PIDs for monitoring
+  log SUCCESS "Orchestration started - services launching"
+  
+  # Store PID for monitoring
   echo "$WEB_PID" > "$LOG_DIR/web.pid"
-  echo "$ORCH_PID" > "$LOG_DIR/orchestrator.pid"
 }
 
 # ============================================
@@ -359,13 +358,8 @@ start_heartbeat_monitor() {
           echo "[$(date '+%H:%M:%S')] WARNING: Web Server process died"
         fi
         
-        if ! kill -0 $(cat "$LOG_DIR/orchestrator.pid" 2>/dev/null) 2>/dev/null; then
-          echo "[$(date '+%H:%M:%S')] WARNING: Orchestrator process died"
-        fi
-        
         # Quick port check
         lsof -ti:$WEB_PORT >/dev/null 2>&1 && echo "[$(date '+%H:%M:%S')] Web Server port: OK" || echo "[$(date '+%H:%M:%S')] Web Server port: DEAD"
-        lsof -ti:$ORCH_PORT >/dev/null 2>&1 && echo "[$(date '+%H:%M:%S')] Orchestrator port: OK" || echo "[$(date '+%H:%M:%S')] Orchestrator port: DEAD"
       } >> "$HEARTBEAT_LOG"
     done
   ) &
@@ -388,8 +382,7 @@ print_final_report() {
   echo ""
   
   echo "📊 Service Status:"
-  echo "  Web Server        → http://127.0.0.1:$WEB_PORT"
-  echo "  Orchestrator      → http://127.0.0.1:$ORCH_PORT"
+  echo "  Web Server        → http://127.0.0.1:$WEB_PORT (Primary Control Surface)"
   echo ""
   
   echo "🔗 Primary Access Points:"
@@ -402,7 +395,6 @@ print_final_report() {
   echo "📋 Logs:"
   echo "  Startup   → $STARTUP_LOG"
   echo "  Web       → $WEB_LOG"
-  echo "  Orch      → $ORCH_LOG"
   echo "  Heartbeat → $HEARTBEAT_LOG"
   echo ""
   

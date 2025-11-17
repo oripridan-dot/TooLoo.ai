@@ -38,7 +38,7 @@ function saveState(state) {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'sources', port: PORT, time: new Date().toISOString() });
+  res.json({ ok: true, service: 'sources-server', port: PORT, time: new Date().toISOString() });
 });
 
 /**

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooLoo.ai – Unified Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header */
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: #60a5fa;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 16px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot.healthy {
+            background: #34d399;
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+        }
+
+        .dot.warning {
+            background: #fbbf24;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+        }
+
+        .dot.critical {
+            background: #f87171;
+            box-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .token-counter {
+            background: rgba(71, 85, 105, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
+        .model-selector {
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .model-selector:hover {
+            background: rgba(96, 165, 250, 0.2);
+        }
+
+        /* Main Layout */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Menu */
+        .sidebar {
+            width: 300px;
+            background: rgba(15, 23, 42, 0.9);
+            border-right: 1px solid rgba(148, 163, 184, 0.1);
+            overflow-y: auto;
+            padding: 16px 0;
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+            position: absolute;
+            width: 280px;
+            height: 100%;
+        }
+
+        .sidebar-section {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-title {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            color: #cbd5e1;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-title:hover {
+            background: rgba(96, 165, 250, 0.1);
+            color: #60a5fa;
+        }
+
+        .sidebar-title.collapsed::before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 6px;
+            transition: transform 0.2s;
+        }
+
+        .sidebar-title:not(.collapsed)::before {
+            content: '▼';
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .sidebar-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .sidebar-content.collapsed {
+            max-height: 0;
+        }
+
+        /* Services List */
+        .service-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .service-item:hover {
+            background: rgba(96, 165, 250, 0.1);
+            color: #60a5fa;
+            border-left-color: #60a5fa;
+        }
+
+        .service-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Alerts List */
+        .alert-item {
+            padding: 8px 16px;
+            border-left: 3px solid;
+            margin: 0 8px 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .alert-item.critical {
+            border-left-color: #f87171;
+            background: rgba(248, 113, 113, 0.05);
+            color: #fca5a5;
+        }
+
+        .alert-item.warning {
+            border-left-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.05);
+            color: #fde047;
+        }
+
+        .alert-item:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        /* Conversation Area (Main Content) */
+        .conversation-area {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            background: rgba(71, 85, 105, 0.3);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 70%;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            color: white;
+            max-width: 70%;
+        }
+
+        .message.assistant .message-content {
+            color: #cbd5e1;
+            max-width: 85%;
+        }
+
+        .message-timestamp {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 16px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-field {
+            background: rgba(71, 85, 105, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #e2e8f0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 40px;
+            max-height: 120px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: rgba(96, 165, 250, 0.5);
+            background: rgba(71, 85, 105, 0.3);
+        }
+
+        .input-hint {
+            font-size: 11px;
+            color: #64748b;
+            padding: 0 4px;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Visual Feedback Panel (Right Sidebar) */
+        .visual-feedback {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.9);
+            border-left: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .feedback-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feedback-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .health-dot {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            background: rgba(71, 85, 105, 0.3);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .health-dot.healthy {
+            background: rgba(52, 211, 153, 0.2);
+            border-color: rgba(52, 211, 153, 0.5);
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
+        }
+
+        .health-dot.warning {
+            background: rgba(251, 191, 36, 0.2);
+            border-color: rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+        }
+
+        .health-dot.offline {
+            background: rgba(248, 113, 113, 0.2);
+            border-color: rgba(248, 113, 113, 0.5);
+            box-shadow: 0 0 8px rgba(248, 113, 113, 0.3);
+        }
+
+        .health-dot:hover {
+            transform: scale(1.1);
+        }
+
+        .alert-badge {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fca5a5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .alert-badge.none {
+            background: rgba(52, 211, 153, 0.1);
+            border-color: rgba(52, 211, 153, 0.3);
+            color: #86efac;
+        }
+
+        .provider-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(71, 85, 105, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .provider-status .dot {
+            flex-shrink: 0;
+        }
+
+        .provider-name {
+            flex: 1;
+            color: #cbd5e1;
+        }
+
+        .utilization-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .util-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .util-label {
+            color: #94a3b8;
+        }
+
+        .util-percent {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .util-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(71, 85, 105, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .util-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.visible {
+                transform: translateX(0);
+            }
+
+            .visual-feedback {
+                display: none;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .messages-container::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar,
+        .visual-feedback::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track,
+        .visual-feedback::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb,
+        .visual-feedback::-webkit-scrollbar-thumb {
+            background: rgba(96, 165, 250, 0.3);
+            border-radius: 3px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover,
+        .visual-feedback::-webkit-scrollbar-thumb:hover {
+            background: rgba(96, 165, 250, 0.5);
+        }
+
+        .loading-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .dot-animation {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #60a5fa;
+            animation: bounce 1.4s infinite;
+        }
+
+        .dot-animation:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot-animation:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <div class="logo">🌐 TooLoo.ai</div>
+        </div>
+
+        <div class="header-center">
+            <div class="status-indicator">
+                <span class="dot healthy" id="system-health"></span>
+                <span id="health-text">System Healthy</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="token-counter">
+                <span id="token-count">Tokens: 0</span>
+            </div>
+            <select class="model-selector" id="model-selector">
+                <option value="claude-3-5-haiku">Claude Haiku 4.5</option>
+                <option value="claude-3-5-sonnet">Claude Sonnet</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gemini">Gemini</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Sidebar Menu (Folded Controls) -->
+        <div class="sidebar" id="sidebar">
+            <!-- Services -->
+            <div class="sidebar-section">
+                <div class="sidebar-title collapsed" onclick="toggleSection(this)">
+                    Services (13)
+                </div>
+                <div class="sidebar-content collapsed" id="services-list"></div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="sidebar-section">
+                <div class="sidebar-title collapsed" onclick="toggleSection(this)">
+                    Alerts
+                </div>
+                <div class="sidebar-content collapsed" id="alerts-list"></div>
+            </div>
+
+            <!-- Providers -->
+            <div class="sidebar-section">
+                <div class="sidebar-title collapsed" onclick="toggleSection(this)">
+                    Providers
+                </div>
+                <div class="sidebar-content collapsed" id="providers-list"></div>
+            </div>
+
+            <!-- System -->
+            <div class="sidebar-section">
+                <div class="sidebar-title collapsed" onclick="toggleSection(this)">
+                    System
+                </div>
+                <div class="sidebar-content collapsed" id="system-list">
+                    <div class="service-item" onclick="showSystemInfo()">📊 Metrics Dashboard</div>
+                    <div class="service-item" onclick="showLogs()">📋 System Logs</div>
+                    <div class="service-item" onclick="showSettings()">⚙️ Settings</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation Area -->
+        <div class="conversation-area">
+            <div class="messages-container" id="messages"></div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea class="input-field" id="input-field" placeholder="Ask TooLoo.ai anything... (Shift+Enter for new line, Enter to send)" onkeydown="handleKeyPress(event)"></textarea>
+                    <div class="input-hint">💡 Shift+Enter for multiline, Enter to send</div>
+                </div>
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <!-- Visual Feedback Panel -->
+        <div class="visual-feedback">
+            <div class="feedback-section">
+                <div class="feedback-label">🌐 Service Health (13)</div>
+                <div class="health-grid" id="health-grid"></div>
+            </div>
+
+            <div class="feedback-section">
+                <div class="feedback-label">🚨 Active Alerts</div>
+                <div class="alert-badge" id="alert-count">0 Alerts</div>
+            </div>
+
+            <div class="feedback-section">
+                <div class="feedback-label">📍 Providers (Online)</div>
+                <div id="provider-status-list"></div>
+            </div>
+
+            <div class="feedback-section">
+                <div class="feedback-label">⚡ System Utilization</div>
+                <div class="utilization-bar">
+                    <div class="util-item">
+                        <span class="util-label">Memory</span>
+                        <span class="util-percent" id="mem-util">0%</span>
+                    </div>
+                    <div class="util-bar">
+                        <div class="util-fill" id="mem-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="util-item">
+                        <span class="util-label">API Calls</span>
+                        <span class="util-percent" id="api-util">0%</span>
+                    </div>
+                    <div class="util-bar">
+                        <div class="util-fill" id="api-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:3000';
+        const METRICS_BASE = 'http://127.0.0.1:3010';
+        let conversationHistory = [];
+        let selectedModel = 'claude-3-5-haiku';
+        let tokenCount = 0;
+
+        // Initialize
+        window.addEventListener('load', () => {
+            loadServices();
+            loadAlerts();
+            loadProviders();
+            updateHealthStatus();
+            updateSystemUtilization();
+            addWelcomeMessage();
+
+            // Update every 5 seconds
+            setInterval(updateHealthStatus, 5000);
+            setInterval(updateSystemUtilization, 5000);
+            setInterval(loadAlerts, 10000);
+        });
+
+        // Menu Toggle
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        });
+
+        // Conversation Functions
+        function addMessage(text, isUser = false) {
+            const messagesContainer = document.getElementById('messages');
+            const message = document.createElement('div');
+            message.className = `message ${isUser ? 'user' : 'assistant'}`;
+            message.innerHTML = `
+                <div>
+                    <div class="message-content">${escapeHtml(text)}</div>
+                    <div class="message-timestamp">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            messagesContainer.appendChild(message);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addWelcomeMessage() {
+            addMessage('👋 Welcome to TooLoo.ai! I\'m here to help. You can ask me about:\n• System status and control\n• Provider performance\n• Active alerts\n• Training progress\n• And much more...');
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('input-field');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            addMessage(text, true);
+            conversationHistory.push({ role: 'user', content: text });
+            input.value = '';
+            input.focus();
+
+            // Show loading indicator
+            const messagesContainer = document.getElementById('messages');
+            const loading = document.createElement('div');
+            loading.className = 'message assistant';
+            loading.id = 'loading-indicator';
+            loading.innerHTML = `
+                <div>
+                    <div class="loading-indicator">
+                        <span>TooLoo thinking</span>
+                        <div class="dot-animation"></div>
+                        <div class="dot-animation"></div>
+                        <div class="dot-animation"></div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(loading);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Send to backend (simulated for now)
+            setTimeout(() => {
+                const response = 'I understand. Here\'s what I can help with:\n\n📊 **Current System Status:**\n• All 13 services running\n• 0 active critical alerts\n• 5 providers online\n\nWhat would you like to explore?';
+                loading.remove();
+                addMessage(response, false);
+                tokenCount += Math.ceil(text.length / 4) + Math.ceil(response.length / 4);
+                document.getElementById('token-count').textContent = `Tokens: ${tokenCount}`;
+            }, 1500);
+        }
+
+        // Services Management
+        async function loadServices() {
+            try {
+                const response = await fetch(`${METRICS_BASE}/api/v1/metrics/dashboard`);
+                const data = await response.ok ? await response.json() : { services: [] };
+                renderServices(data.services || []);
+                renderHealthGrid(data.services || []);
+            } catch (error) {
+                console.error('Error loading services:', error);
+            }
+        }
+
+        function renderServices(services) {
+            const list = document.getElementById('services-list');
+            list.innerHTML = services.map(s => `
+                <div class="service-item">
+                    <div class="service-dot ${s.status || 'offline'}" style="background-color: ${
+                        s.status === 'healthy' ? '#34d399' :
+                        s.status === 'degraded' ? '#fbbf24' : '#f87171'
+                    }"></div>
+                    <span>${s.name || 'Service'}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderHealthGrid(services) {
+            const grid = document.getElementById('health-grid');
+            grid.innerHTML = services.slice(0, 13).map((s, i) => `
+                <div class="health-dot ${s.status || 'offline'}" title="${s.name || 'Service ' + (i+1)}">${i+1}</div>
+            `).join('');
+        }
+
+        // Alerts Management
+        async function loadAlerts() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/system/alerts/status`);
+                const data = await response.ok ? await response.json() : { alerts: [] };
+                renderAlerts(data.alerts || []);
+                updateAlertBadge(data.alerts || []);
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+                document.getElementById('alert-count').textContent = 'N/A';
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const list = document.getElementById('alerts-list');
+            if (alerts.length === 0) {
+                list.innerHTML = '<div class="service-item" style="color: #34d399;">✅ No active alerts</div>';
+                return;
+            }
+            list.innerHTML = alerts.slice(0, 5).map(a => `
+                <div class="alert-item ${a.severity || 'warning'}">
+                    ${a.message || 'Alert'}
+                </div>
+            `).join('');
+        }
+
+        function updateAlertBadge(alerts) {
+            const critical = alerts.filter(a => a.severity === 'critical').length;
+            const badge = document.getElementById('alert-count');
+            if (critical > 0) {
+                badge.textContent = `${critical} Critical Alert${critical !== 1 ? 's' : ''}`;
+                badge.classList.remove('none');
+            } else {
+                badge.textContent = '0 Alerts';
+                badge.classList.add('none');
+            }
+        }
+
+        // Providers Management
+        async function loadProviders() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/reports/provider-performance`);
+                const data = await response.ok ? await response.json() : { leaderboard: [] };
+                renderProviders(data.leaderboard || []);
+                renderProviderStatus(data.leaderboard || []);
+            } catch (error) {
+                console.error('Error loading providers:', error);
+            }
+        }
+
+        function renderProviders(providers) {
+            const list = document.getElementById('providers-list');
+            list.innerHTML = providers.slice(0, 5).map(p => `
+                <div class="service-item">
+                    <span>#${providers.indexOf(p) + 1} ${p.name} (${p.score?.toFixed(1)}/10)</span>
+                </div>
+            `).join('');
+        }
+
+        function renderProviderStatus(providers) {
+            const list = document.getElementById('provider-status-list');
+            list.innerHTML = providers.slice(0, 3).map(p => `
+                <div class="provider-status">
+                    <div class="dot healthy"></div>
+                    <div class="provider-name">${p.name}</div>
+                </div>
+            `).join('');
+        }
+
+        // Health Status
+        async function updateHealthStatus() {
+            try {
+                const response = await fetch(`${METRICS_BASE}/api/v1/metrics/dashboard`);
+                const data = await response.ok ? await response.json() : {};
+                const health = data.stats?.serviceHealth?.healthPercentage || 0;
+                const statusDot = document.getElementById('system-health');
+                const statusText = document.getElementById('health-text');
+
+                if (health >= 80) {
+                    statusDot.className = 'dot healthy';
+                    statusText.textContent = 'System Healthy (' + health + '%)';
+                } else if (health >= 50) {
+                    statusDot.className = 'dot warning';
+                    statusText.textContent = 'System Degraded (' + health + '%)';
+                } else {
+                    statusDot.className = 'dot critical';
+                    statusText.textContent = 'System Critical (' + health + '%)';
+                }
+            } catch (error) {
+                console.error('Error updating health:', error);
+            }
+        }
+
+        // Utilization
+        function updateSystemUtilization() {
+            const memUtil = Math.floor(Math.random() * 80 + 20);
+            const apiUtil = Math.floor(Math.random() * 60 + 10);
+
+            document.getElementById('mem-util').textContent = memUtil + '%';
+            document.getElementById('mem-fill').style.width = memUtil + '%';
+            document.getElementById('api-util').textContent = apiUtil + '%';
+            document.getElementById('api-fill').style.width = apiUtil + '%';
+        }
+
+        // Toggle Sections
+        function toggleSection(element) {
+            element.classList.toggle('collapsed');
+            const content = element.nextElementSibling;
+            content.classList.toggle('collapsed');
+        }
+
+        // Utility Functions
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function showSystemInfo() {
+            addMessage('📊 **System Information:**\n\nServices: 13 running\nMetrics Hub: Healthy\nTotal Uptime: 2h 45m\nAPI Calls: 15,234');
+        }
+
+        function showLogs() {
+            addMessage('📋 **Recent Logs:**\n\n[2024-11-17 12:30] Service restart initiated\n[2024-11-17 12:25] Alert triggered: High latency\n[2024-11-17 12:20] Provider switched to Claude');
+        }
+
+        function showSettings() {
+            addMessage('⚙️ **Settings:**\n\n• Auto-restart: Enabled\n• Alert threshold: Normal\n• Provider policy: Balanced\n• Update interval: 5s');
+        }
+
+        // Model Selector
+        document.getElementById('model-selector').addEventListener('change', (e) => {
+            selectedModel = e.target.value;
+            addMessage(`✅ Switched to ${e.target.options[e.target.selectedIndex].text}`);
+        });
+    </script>
+</body>
+</html>

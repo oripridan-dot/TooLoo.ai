@@ -1,0 +1,291 @@
+/**
+ * Session Memory Manager
+ * Maintains conversation history and context for real conversations with TooLoo
+ * Integrates with LLM providers to enable coherent multi-turn dialogues
+ */
+
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SESSION_DIR = path.join(__dirname, '../data/sessions');
+const SESSION_FILE = path.join(SESSION_DIR, 'sessions.json');
+const MEMORY_WINDOW = 10; // Keep last 10 messages for context
+
+/**
+ * SessionMemoryManager - Maintains conversation memory across turns
+ */
+export class SessionMemoryManager {
+  constructor() {
+    this.sessions = new Map();
+    this.initialized = false;
+  }
+
+  async initialize() {
+    if (this.initialized) return;
+    try {
+      await fs.mkdir(SESSION_DIR, { recursive: true });
+      const data = await fs.readFile(SESSION_FILE, 'utf8');
+      const sessions = JSON.parse(data);
+      sessions.forEach(s => {
+        this.sessions.set(s.id, {
+          ...s,
+          messages: s.messages || []
+        });
+      });
+      console.log(`[SessionMemory] Loaded ${this.sessions.size} sessions`);
+    } catch (err) {
+      console.log('[SessionMemory] Starting with fresh sessions');
+    }
+    this.initialized = true;
+  }
+
+  /**
+   * Create or get session
+   */
+  async getOrCreateSession(sessionId, userId = 'anonymous') {
+    await this.initialize();
+    
+    if (!this.sessions.has(sessionId)) {
+      const session = {
+        id: sessionId,
+        userId,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+        metadata: {
+          title: 'Chat Session',
+          description: '',
+          tags: []
+        },
+        context: {
+          providers: [],
+          topics: [],
+          sentiment: null,
+          complexity: 'low',
+          keyInsights: []
+        },
+        stats: {
+          messageCount: 0,
+          questionCount: 0,
+          responseCount: 0,
+          averageRating: 0,
+          totalTokens: 0
+        }
+      };
+      this.sessions.set(sessionId, session);
+    }
+
+    return this.sessions.get(sessionId);
+  }
+
+  /**
+   * Add message to session and maintain conversation history
+   */
+  async addMessage(sessionId, userId, role, content, metadata = {}) {
+    await this.initialize();
+
+    const session = await this.getOrCreateSession(sessionId, userId);
+    const message = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      role,
+      content,
+      provider: metadata.provider || null,
+      timestamp: Date.now(),
+      metadata: {
+        tokens: metadata.tokens || 0,
+        responseTime: metadata.responseTime || 0,
+        model: metadata.model || null,
+        confidence: metadata.confidence || null,
+        ...metadata
+      },
+      feedback: null
+    };
+
+    session.messages.push(message);
+    session.updatedAt = Date.now();
+    session.stats.messageCount++;
+
+    if (role === 'user') {
+      session.stats.questionCount++;
+    } else if (role === 'assistant') {
+      session.stats.responseCount++;
+    }
+
+    await this.saveSession(session);
+    return message;
+  }
+
+  /**
+   * Get conversation history for a session
+   * Returns last N messages for context window
+   */
+  getConversationHistory(sessionId, limit = MEMORY_WINDOW) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return [];
+
+    return session.messages.slice(-limit).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+  }
+
+  /**
+   * Get full message history (for display)
+   */
+  getFullHistory(sessionId) {
+    const session = this.sessions.get(sessionId);
+    return session?.messages || [];
+  }
+
+  /**
+   * Get session context for AI reasoning
+   */
+  getSessionContext(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return null;
+
+    const recent = session.messages.slice(-5);
+    const topics = [...new Set(recent.map(m => this.extractTopics(m.content)).flat())];
+    const userMessages = session.messages.filter(m => m.role === 'user');
+    const assistantMessages = session.messages.filter(m => m.role === 'assistant');
+
+    return {
+      sessionId,
+      messageCount: session.messages.length,
+      topics,
+      recentExchanges: recent.length,
+      averageResponseTime: assistantMessages.length > 0
+        ? assistantMessages.reduce((sum, m) => sum + (m.metadata?.responseTime || 0), 0) / assistantMessages.length
+        : 0,
+      providers: [...new Set(assistantMessages.map(m => m.provider).filter(Boolean))],
+      sentiment: session.context.sentiment,
+      complexity: session.context.complexity,
+      keyInsights: session.context.keyInsights
+    };
+  }
+
+  /**
+   * Build system prompt with session awareness
+   */
+  buildAwareSystemPrompt(sessionId, basePrompt) {
+    const context = this.getSessionContext(sessionId);
+    if (!context || context.messageCount === 0) {
+      return basePrompt;
+    }
+
+    const topicsInfo = context.topics.length > 0 
+      ? `\n\nCurrent conversation topics: ${context.topics.join(', ')}`
+      : '';
+
+    const historyInfo = `\n\nThis is message #${context.messageCount} in the conversation (${context.recentExchanges} recent exchanges).`;
+    
+    return basePrompt + topicsInfo + historyInfo;
+  }
+
+  /**
+   * Extract topics from message (simple keyword extraction)
+   */
+  extractTopics(content) {
+    const keywords = ['learning', 'training', 'coaching', 'mastery', 'domain', 'algorithm', 'system', 'network', 'database'];
+    return keywords.filter(k => content.toLowerCase().includes(k));
+  }
+
+  /**
+   * Update session metadata after provider call
+   */
+  async updateSessionMetadata(sessionId, metadata = {}) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+
+    if (metadata.sentiment) session.context.sentiment = metadata.sentiment;
+    if (metadata.complexity) session.context.complexity = metadata.complexity;
+    if (metadata.provider && !session.context.providers.includes(metadata.provider)) {
+      session.context.providers.push(metadata.provider);
+    }
+    if (metadata.tokens) session.stats.totalTokens += metadata.tokens;
+
+    session.updatedAt = Date.now();
+    await this.saveSession(session);
+  }
+
+  /**
+   * Save session to disk
+   */
+  async saveSession(session) {
+    try {
+      const allSessions = Array.from(this.sessions.values());
+      await fs.writeFile(SESSION_FILE, JSON.stringify(allSessions, null, 2), 'utf8');
+    } catch (err) {
+      console.error('[SessionMemory] Failed to save session:', err.message);
+    }
+  }
+
+  /**
+   * Generate new session ID
+   */
+  generateSessionId() {
+    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * List all sessions for a user
+   */
+  listSessions(userId = 'anonymous', limit = 20) {
+    const userSessions = Array.from(this.sessions.values())
+      .filter(s => s.userId === userId)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, limit)
+      .map(s => ({
+        id: s.id,
+        title: s.metadata?.title || 'Chat Session',
+        messageCount: s.stats.messageCount,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+        topics: s.context?.topics || []
+      }));
+
+    return userSessions;
+  }
+
+  /**
+   * Delete session
+   */
+  async deleteSession(sessionId) {
+    this.sessions.delete(sessionId);
+    await this.saveSession(null); // Save updated sessions.json
+  }
+
+  /**
+   * Clear old sessions (keep last 50)
+   */
+  async cleanup() {
+    const allSessions = Array.from(this.sessions.values())
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    if (allSessions.length > 50) {
+      const toKeep = allSessions.slice(0, 50);
+      this.sessions.clear();
+      toKeep.forEach(s => this.sessions.set(s.id, s));
+      
+      // Re-save all sessions
+      const sessions = Array.from(this.sessions.values());
+      await fs.writeFile(SESSION_FILE, JSON.stringify(sessions, null, 2), 'utf8');
+      console.log(`[SessionMemory] Cleaned up sessions, keeping last 50`);
+    }
+  }
+}
+
+// Singleton instance
+let sessionManager = null;
+
+export async function getSessionManager() {
+  if (!sessionManager) {
+    sessionManager = new SessionMemoryManager();
+    await sessionManager.initialize();
+  }
+  return sessionManager;
+}
+
+export default SessionMemoryManager;

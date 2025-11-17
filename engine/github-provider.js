@@ -4,12 +4,11 @@
 
 import fetch from 'node-fetch';
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO = process.env.GITHUB_REPO; // format: owner/repo
-
+// NOTE: Read from env dynamically at runtime, not import time
+// This ensures .env is loaded before we check these values
 export class GitHubProvider {
   constructor() {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
       console.warn('⚠️  GitHub integration not configured. Set GITHUB_TOKEN and GITHUB_REPO in .env');
     }
   }
@@ -18,11 +17,11 @@ export class GitHubProvider {
    * Get repo metadata (name, description, stats, etc.)
    */
   async getRepoInfo() {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) return null;
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return null;
 
     try {
-      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}`, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+      const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPO}`, {
+        headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` }
       });
 
       if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
@@ -50,12 +49,12 @@ export class GitHubProvider {
    * Get recent issues for provider context
    */
   async getRecentIssues(limit = 5) {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) return [];
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return [];
 
     try {
       const res = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/issues?state=all&per_page=${limit}&sort=updated`,
-        { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } }
+        `https://api.github.com/repos/${process.env.GITHUB_REPO}/issues?state=all&per_page=${limit}&sort=updated`,
+        { headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` } }
       );
 
       if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
@@ -81,12 +80,12 @@ export class GitHubProvider {
    * Get file content from repo
    */
   async getFileContent(filePath) {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) return null;
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return null;
 
     try {
       const res = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`,
-        { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } }
+        `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/${filePath}`,
+        { headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` } }
       );
 
       if (!res.ok) throw new Error(`File not found or error: ${res.status}`);
@@ -128,12 +127,12 @@ export class GitHubProvider {
    * Get repo structure (tree of files)
    */
   async getRepoStructure(path = '', recursive = false) {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) return null;
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return null;
 
     try {
-      const url = `https://api.github.com/repos/${GITHUB_REPO}/git/trees/main?recursive=${recursive ? 1 : 0}`;
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/git/trees/main?recursive=${recursive ? 1 : 0}`;
       const res = await fetch(url, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` }
       });
 
       if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
@@ -158,7 +157,7 @@ export class GitHubProvider {
    * Get README for context
    */
   async getReadme() {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) return null;
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return null;
 
     const readmePaths = ['README.md', 'readme.md', 'README.txt', 'readme.txt'];
 
@@ -176,7 +175,7 @@ export class GitHubProvider {
    * Format repo context for provider system prompt
    */
   async getContextForProviders() {
-    if (!GITHUB_TOKEN || !GITHUB_REPO) return '';
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return '';
 
     try {
       const [info, issues, readme] = await Promise.all([
@@ -219,7 +218,7 @@ export class GitHubProvider {
    * Check if GitHub access is configured
    */
   isConfigured() {
-    return !!(GITHUB_TOKEN && GITHUB_REPO);
+    return !!(process.env.GITHUB_TOKEN && process.env.GITHUB_REPO);
   }
 }
 
