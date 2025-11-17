@@ -289,12 +289,15 @@ export default ServerManager;
 if (import.meta.url === `file://${process.argv[1]}`) {
   const manager = new ServerManager({ mode: process.env.NODE_ENV || 'development' });
 
+  // CORE REQUIRED SERVERS (from copilot-instructions.md)
+  // Port 3000-3009 are the main service tier
+  // Port 3123 (orchestrator) runs alongside web-server
   const servers = [
     {
       name: 'web-server',
       script: 'servers/web-server.js',
       port: 3000,
-      watch: ['servers/**/*.js', 'web-app/**/*.html'],
+      watch: ['servers/web-server.js', 'web-app/**/*.html'],
       healthUrl: 'http://127.0.0.1:3000/health',
     },
     {
@@ -308,6 +311,42 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       script: 'servers/meta-server.js',
       port: 3002,
       watch: ['servers/meta-server.js', 'engine/**/*.js'],
+    },
+    {
+      name: 'budget-server',
+      script: 'servers/budget-server.js',
+      port: 3003,
+      watch: ['servers/budget-server.js'],
+    },
+    {
+      name: 'coach-server',
+      script: 'servers/coach-server.js',
+      port: 3004,
+      watch: ['servers/coach-server.js'],
+    },
+    {
+      name: 'product-server',
+      script: 'servers/product-development-server.js',
+      port: 3006,
+      watch: ['servers/product-development-server.js'],
+    },
+    {
+      name: 'segmentation-server',
+      script: 'servers/segmentation-server.js',
+      port: 3007,
+      watch: ['servers/segmentation-server.js'],
+    },
+    {
+      name: 'reports-server',
+      script: 'servers/reports-server.js',
+      port: 3008,
+      watch: ['servers/reports-server.js'],
+    },
+    {
+      name: 'capabilities-server',
+      script: 'servers/capabilities-server.js',
+      port: 3009,
+      watch: ['servers/capabilities-server.js'],
     },
   ];
 
