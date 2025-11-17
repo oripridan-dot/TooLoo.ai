@@ -215,6 +215,224 @@ export class GitHubProvider {
   }
 
   /**
+   * Create or update a file in the repository
+   */
+  async createOrUpdateFile(filePath, content, message, branch = 'main') {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      // First, try to get the file to see if it exists
+      let sha = null;
+      try {
+        const existing = await this.getFileContent(filePath);
+        if (existing) {
+          sha = existing.sha;
+        }
+      } catch (e) {
+        // File doesn't exist, that's fine
+      }
+
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/${filePath}`;
+      
+      const payload = {
+        message,
+        content: Buffer.from(content).toString('base64'),
+        branch
+      };
+
+      if (sha) {
+        payload.sha = sha;
+      }
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        success: true,
+        commit: {
+          sha: data.commit.sha,
+          message: data.commit.message,
+          url: data.commit.html_url
+        },
+        file: {
+          path: data.content.path,
+          size: data.content.size
+        }
+      };
+    } catch (e) {
+      console.error('Error creating/updating file:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Create a pull request
+   */
+  async createPullRequest(prData) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/pulls`;
+
+      const payload = {
+        title: prData.title,
+        body: prData.body,
+        head: prData.head,
+        base: prData.base || 'main',
+        draft: prData.draft || false
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      // Add labels if provided
+      if (prData.labels && prData.labels.length > 0) {
+        await this.addLabelsToIssue(data.number, prData.labels);
+      }
+
+      // Request reviewers if provided
+      if (prData.reviewers && prData.reviewers.length > 0) {
+        await this.requestReviewers(data.number, prData.reviewers);
+      }
+
+      return {
+        success: true,
+        number: data.number,
+        html_url: data.html_url,
+        title: data.title,
+        state: data.state,
+        createdAt: data.created_at
+      };
+    } catch (e) {
+      console.error('Error creating PR:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Create an issue
+   */
+  async createIssue(issueData) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/issues`;
+
+      const payload = {
+        title: issueData.title,
+        body: issueData.body,
+        labels: issueData.labels || [],
+        assignees: issueData.assignees || []
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        success: true,
+        number: data.number,
+        html_url: data.html_url,
+        title: data.title,
+        state: data.state,
+        createdAt: data.created_at
+      };
+    } catch (e) {
+      console.error('Error creating issue:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Add labels to a PR/issue
+   */
+  async addLabelsToIssue(issueNumber, labels) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return;
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/issues/${issueNumber}/labels`;
+
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ labels })
+      });
+    } catch (e) {
+      console.error('Error adding labels:', e.message);
+    }
+  }
+
+  /**
+   * Request reviewers for a PR
+   */
+  async requestReviewers(prNumber, reviewers) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) return;
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/pulls/${prNumber}/requested_reviewers`;
+
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reviewers })
+      });
+    } catch (e) {
+      console.error('Error requesting reviewers:', e.message);
+    }
+  }
+
+  /**
    * Check if GitHub access is configured
    */
   isConfigured() {

@@ -3142,6 +3142,197 @@ app.post('/api/v1/github/reset-stats', (req, res) => {
 });
 
 /**
+ * GET /api/v1/github/api-status
+ * Check GitHub API provider connection and configuration status
+ */
+app.get('/api/v1/github/api-status', async (req, res) => {
+  try {
+    const isConfigured = githubProvider.isConfigured();
+    
+    let repoInfo = null;
+    let issues = [];
+    let status = 'disconnected';
+    let error = null;
+
+    if (isConfigured) {
+      try {
+        [repoInfo, issues] = await Promise.all([
+          githubProvider.getRepoInfo(),
+          githubProvider.getRecentIssues(3)
+        ]);
+        status = repoInfo ? 'connected' : 'error';
+      } catch (e) {
+        status = 'error';
+        error = e.message;
+      }
+    }
+
+    res.json({
+      success: status === 'connected',
+      title: 'GitHub API Status',
+      message: `GitHub API: ${status}`,
+      data: {
+        configured: isConfigured,
+        status,
+        error,
+        repository: repoInfo,
+        recentIssues: issues,
+        stats: gitHubIntegrationEngine.getStats()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/test-commit
+ * Test GitHub API commit functionality with sample data
+ */
+app.post('/api/v1/github/test-commit', async (req, res) => {
+  try {
+    if (!githubProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'GitHub not configured (set GITHUB_TOKEN and GITHUB_REPO)',
+        title: 'GitHub Configuration Missing'
+      });
+    }
+
+    const { filename, content } = req.body;
+    
+    const testFilename = filename || `test-${Date.now()}.json`;
+    const testContent = content || JSON.stringify({
+      test: true,
+      timestamp: new Date().toISOString(),
+      message: 'Test commit from TooLoo.ai Phase 4.3 GitHub Integration'
+    }, null, 2);
+
+    const result = await githubProvider.createOrUpdateFile(
+      `test-artifacts/${testFilename}`,
+      testContent,
+      `test: GitHub API commit test - ${new Date().toISOString()}`,
+      'main'
+    );
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Commit Test',
+      message: result.success ? 'Test commit successful' : 'Test commit failed',
+      data: {
+        success: result.success,
+        file: result.file,
+        commit: result.commit,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/test-pull-request
+ * Test GitHub API PR creation
+ */
+app.post('/api/v1/github/test-pull-request', async (req, res) => {
+  try {
+    if (!githubProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'GitHub not configured',
+        title: 'GitHub Configuration Missing'
+      });
+    }
+
+    const { title, description } = req.body;
+    const testBranch = `test-pr-${Date.now()}`;
+
+    // First create a test file on a new branch
+    await githubProvider.createOrUpdateFile(
+      `test-artifacts/pr-test-${Date.now()}.md`,
+      `# PR Test\n\nThis is a test PR created at ${new Date().toISOString()}`,
+      'test: Create PR test branch',
+      testBranch
+    );
+
+    // Then create the PR
+    const result = await githubProvider.createPullRequest({
+      title: title || `Test PR - ${new Date().toISOString()}`,
+      body: description || 'This is a test PR from TooLoo.ai Phase 4.3 GitHub Integration testing',
+      head: testBranch,
+      base: 'main',
+      labels: ['test', 'automated', 'phase-4-3']
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Pull Request Test',
+      message: result.success ? 'Test PR created successfully' : 'Test PR creation failed',
+      data: {
+        success: result.success,
+        prNumber: result.number,
+        url: result.html_url,
+        branch: testBranch,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/github/test-issue
+ * Test GitHub API issue creation
+ */
+app.post('/api/v1/github/test-issue', async (req, res) => {
+  try {
+    if (!githubProvider.isConfigured()) {
+      return res.status(400).json({
+        success: false,
+        error: 'GitHub not configured',
+        title: 'GitHub Configuration Missing'
+      });
+    }
+
+    const { title, description } = req.body;
+
+    const result = await githubProvider.createIssue({
+      title: title || `Test Issue - ${new Date().toISOString()}`,
+      body: description || 'This is a test issue from TooLoo.ai Phase 4.3 GitHub Integration testing',
+      labels: ['test', 'automated', 'phase-4-3']
+    });
+
+    res.json({
+      success: result.success,
+      title: 'GitHub Issue Test',
+      message: result.success ? 'Test issue created successfully' : 'Test issue creation failed',
+      data: {
+        success: result.success,
+        issueNumber: result.number,
+        url: result.html_url,
+        error: result.error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/v1/creative/generate
  * Generate creative content using autonomous evolution (addresses: Creativity limitation)
  * Includes caching for improved performance
