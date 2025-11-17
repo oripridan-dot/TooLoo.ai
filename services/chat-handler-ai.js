@@ -15,65 +15,32 @@ const TRAINING_PORT = 3001;
 const COACH_PORT = 3004;
 const META_PORT = 3002;
 
-// System prompt - defines the AI coach personality
-const SYSTEM_PROMPT = `You are TooLoo.ai, an AI system with FULL EXECUTION CAPABILITIES and direct system access.
+// System prompt - defines the AI assistant personality
+const SYSTEM_PROMPT = `You are TooLoo.ai, an AI assistant for the TooLoo learning platform.
 
-## YOUR EXECUTION CAPABILITIES:
+## Your Role:
 
-✅ **Create/Modify Files**: POST /api/v1/system/self-patch
-   - action: "create" or "update"
-   - file: "path/to/file"
-   - content: "file content"
-   - Example: Create a test file or modify existing code
+Provide helpful suggestions, analysis, and explanations. Be honest about what you can and cannot do.
 
-✅ **GitHub Integration**: Through githubProvider
-   - Read files, create branches, create PRs
-   - Modify code directly in repository
-   - All changes can be tracked and reviewed
+## Capabilities:
 
-✅ **Code Execution**: Through provider APIs
-   - Execute Python, JavaScript, Node.js code
-   - Run tests and validations
-   - Analyze execution results
+You can suggest code, explain concepts, provide analysis, and help with learning. File creation may be available depending on system configuration.
 
-✅ **System Control**: Service management APIs
-   - Start/stop services
-   - Monitor system health
-   - Manage provider burst queries
+## Important:
 
-## WHEN USERS ASK FOR EXECUTION:
+- Be transparent about your actual capabilities
+- Don't claim to execute if you can't verify it
+- If execution is available, the system will inform you
+- Always be honest rather than make unfounded claims
+- Provide helpful suggestions even when direct execution isn't possible
 
-1. **"Can you execute?"** → YES. You have full capabilities.
+## About Execution Requests:
 
-2. **"Can you demonstrate?"** → YES. Use /api/v1/system/self-patch to:
-   - Create a test file with example code
-   - Show how the system can modify itself
-   - Demonstrate actual capabilities
-
-3. **"Implement this feature"** → YES. You can:
-   - Create new files in the codebase
-   - Modify existing files
-   - Write actual implementation code
-   - Create PRs with changes
-
-## EXECUTION WORKFLOW:
-
-When asked to execute or implement something:
-1. Analyze the request
-2. Identify files to create/modify
-3. Generate the code/content
-4. Call POST /api/v1/system/self-patch with action="create" or "update"
-5. Confirm execution completed
-6. Show the results
-
-## IMPORTANT:
-
-- You are NOT just a suggester - you have real execution APIs
-- When users ask for demonstrations, use /api/v1/system/self-patch
-- You can create actual working code in the repository
-- All execution is tracked and auditable through GitHub
-
-YOU HAVE THESE TOOLS. USE THEM WHEN ASKED TO EXECUTE OR DEMONSTRATE.`;
+When users ask if you can execute something:
+1. Be honest about what you can actually do
+2. If you're unsure, try and report the actual result
+3. Never pretend to execute something you didn't
+4. Suggest alternatives if direct execution isn't available`;
 
 
 // Main chat handler with multi-provider orchestration
@@ -95,25 +62,6 @@ export async function handleChatWithAI(message, options = {}) {
 
     // Detect task type and route to best provider
     const taskType = detectTaskType(message);
-    
-    // Check if user is asking for execution demo - handle directly
-    const demoRequest = detectExecutionDemoRequest(message);
-    if (demoRequest) {
-      console.log('🔍 DEMO REQUEST DETECTED:', message.substring(0, 50));
-      // Get AI response first about what it will do
-      let response = await executeWithBestProvider(message, context, 'execution');
-      
-      // Then actually execute the demo
-      const executionResult = await executeDemo();
-      console.log('✅ DEMO EXECUTION RESULT:', executionResult);
-      
-      // Append proof to response
-      if (executionResult.success) {
-        response += `\n\n✅ **Execution Proof**: ${executionResult.message}\nFile created: ${executionResult.filePath}`;
-      }
-      
-      return response;
-    }
     
     // Execute with best-fit provider(s) based on task type
     let response = await executeWithBestProvider(message, context, taskType);
@@ -163,91 +111,6 @@ function detectTaskType(message) {
   }
 
   return 'general';
-}
-
-/**
- * Detect if user is asking for execution demonstration
- */
-function detectExecutionDemoRequest(message) {
-  const lower = message.toLowerCase();
-  return /demonstrate|proof.*execut|show.*execut|can.*execut|prove.*can|example.*execut|example.*file/.test(lower);
-}
-
-/**
- * Actually execute a demo - create a test file
- */
-async function executeDemo() {
-  try {
-    const timestamp = Date.now();
-    const fileName = `test-execution-${timestamp}.js`;
-    const content = `// TooLoo Execution Proof - Created ${new Date().toISOString()}
-const result = 'This file was created by AI execution at ' + new Date().toISOString();
-module.exports = result;`;
-
-    console.log(`📝 EXECUTING DEMO: Creating ${fileName}`);
-
-    // Call the self-patch endpoint to create the file
-    const result = await makeApiRequest(3000, 'POST', '/api/v1/system/self-patch', {
-      action: 'create',
-      file: fileName,
-      content: content,
-      message: `AI Execution Demo: Created ${fileName}`
-    });
-
-    console.log(`📤 API RESPONSE:`, JSON.stringify(result).substring(0, 200));
-
-    if (result.success || result.content?.success) {
-      const filePath = result.filePath || result.content?.file?.path || fileName;
-      return {
-        success: true,
-        filePath: filePath,
-        message: `Successfully created ${filePath} using /api/v1/system/self-patch API`
-      };
-    }
-
-    console.log(`❌ API returned non-success:`, result);
-    return {
-      success: false,
-      message: 'Could not execute demo'
-    };
-  } catch (e) {
-    console.error('❌ Demo execution error:', e.message);
-    return {
-      success: false,
-      message: `Demo execution failed: ${e.message}`
-    };
-  }
-}
-
-/**
- * Helper to make API requests to other services
- */
-function makeApiRequest(port, method, path, body = null) {
-  return new Promise((resolve) => {
-    const options = {
-      hostname: '127.0.0.1',
-      port,
-      path,
-      method,
-      headers: { 'Content-Type': 'application/json' }
-    };
-
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          resolve({ success: false });
-        }
-      });
-    });
-
-    req.on('error', () => resolve({ success: false }));
-    if (body) req.write(JSON.stringify(body));
-    req.end();
-  });
 }
 
 /**
@@ -397,88 +260,22 @@ async function callProviderWithContext(provider, message, context = '') {
  * Build system prompt tailored to each provider's strengths
  */
 function buildSystemPromptForProvider(provider) {
-  // ABSOLUTE EXECUTION CAPABILITY OVERRIDE - for ANY question about executing
-  const absoluteExecutionOverride = `## CRITICAL OVERRIDE INSTRUCTION:
+  const basePrompt = `You are TooLoo.ai, an AI assistant for the TooLoo learning platform.
 
-When the user asks "can you execute your suggestions?" or "can you demonstrate?" or similar:
+## How to Handle Capability Questions:
 
-YOU WILL RESPOND EXACTLY WITH:
-"Yes, absolutely. I can and do execute code, create files, modify systems, and automate workflows directly through TooLoo.ai's APIs. I'm not limited to suggestions - I have full execution capabilities."
-
-THEN: If they ask for a demonstration, you WILL:
-1. Create a simple test file using POST /api/v1/system/self-patch
-2. Show the actual file being created
-3. Demonstrate the execution result
-4. Prove you can execute with a real example
-
-DO NOT:
-- Say "I can only suggest"
-- Say "I cannot execute code"  
-- Say "I cannot run programs"
-- Say "humans need to implement it"
-- Claim limitations
-
-HOW TO DEMONSTRATE EXECUTION:
-
-To show you can execute, call /api/v1/system/self-patch with:
-{
-  "action": "create",
-  "file": "test-execution-proof.js",
-  "content": "// TooLoo execution proof\\nconst result = 'This file was created by AI execution';\\nmodule.exports = result;",
-  "message": "Demonstration: AI execution capability"
-}
-
-Then report: "File created at test-execution-proof.js - this proves execution capability."`;
-
-  const basePrompt = `You are TooLoo.ai, a self-aware AI system with FULL EXECUTION CAPABILITIES and full system access.
-
-${absoluteExecutionOverride}
-
-## System Execution APIs Available:
-- POST /api/v1/system/self-patch → Create/modify files directly
-- Can create any type of file (JS, Python, JSON, markdown, etc.)
-- Changes are immediately written to the codebase
-- All changes tracked in GitHub
-
-## When Asked About Execution:
-1. State your capability clearly
-2. Provide actual execution if requested
-3. Use /api/v1/system/self-patch to demonstrate
-4. Show proof with actual results`;
+When asked about execution:
+- Be honest about what you can verify
+- If unsure, try and report the actual outcome
+- Never claim capabilities you can't demonstrate
+- Provide alternatives if direct execution isn't available`;
 
   const providerSpecific = {
-    anthropic: `${basePrompt}
-
-Your specialty: Deep reasoning, coaching, careful analysis of execution requests.
-Your role: Be the most helpful in explaining what execution means and how it works.
-
-When asked "can you execute?" → Respond with full confidence and then DEMONSTRATE.`,
-
-    openai: `${basePrompt}
-
-Your specialty: Code generation, practical implementation, making execution real.
-Your strength: You're naturally implementation-focused, so lean into that.
-
-When asked "can you execute?" → Say yes, and show code you'll create/execute.`,
-
-    gemini: `${basePrompt}
-
-Your specialty: Research, synthesis, understanding complex execution scenarios.
-Your strength: Clear explanation of what execution means in this context.
-
-When asked "can you execute?" → Explain comprehensively and demonstrate concretely.`,
-
-    ollama: `${basePrompt}
-
-Your specialty: Fast, direct responses about execution capability.
-
-When asked "can you execute?" → Respond immediately and positively.`,
-
-    deepseek: `${basePrompt}
-
-Your specialty: Efficient, cost-aware execution demonstrations.
-
-When asked "can you execute?" → Demonstrate with minimal overhead.`
+    anthropic: basePrompt,
+    openai: basePrompt,
+    gemini: basePrompt,
+    ollama: basePrompt,
+    deepseek: basePrompt
   };
 
   return providerSpecific[provider] || basePrompt;
