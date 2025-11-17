@@ -690,42 +690,87 @@ CONVERSATION CONTEXT:
       
       const startTime = Date.now();
       
-      // Use multi-provider orchestration handler for intelligent routing based on task type
-      const responseText = await handleChatWithAI(message, {
-        userId,
-        sessionId,
-        preferredProvider,
-        conversationHistory,
-        sessionContext: sessionManager.getSessionContext(sessionId)
-      });
-      
-      const responseTime = Date.now() - startTime;
-      
-      // Detect which provider was likely used based on response characteristics
-      const detectedProvider = detectProviderFromResponse(responseText);
-      
-      // Add assistant response to session memory
-      await sessionManager.addMessage(sessionId, userId, 'assistant', responseText, {
-        provider: detectedProvider || preferredProvider || 'multi-provider',
-        responseTime,
-        model: `${detectedProvider || 'multi'}-orchestrated`,
-        confidence: 0.85
-      });
+      try {
+        // Use multi-provider orchestration handler for intelligent routing based on task type
+        const responseText = await handleChatWithAI(message, {
+          userId,
+          sessionId,
+          preferredProvider,
+          conversationHistory,
+          sessionContext: sessionManager.getSessionContext(sessionId)
+        });
+        
+        if (!responseText) {
+          throw new Error('handleChatWithAI returned null/empty response');
+        }
 
-      // Update session metadata
-      await sessionManager.updateSessionMetadata(sessionId, {
-        provider: detectedProvider || preferredProvider || 'multi-provider',
-        tokens: Math.floor(responseText.split(/\s+/).length * 1.3) // Rough estimation
-      });
-      
-      return res.json({ 
-        response: responseText,
-        provider: detectedProvider || preferredProvider || 'multi-provider-orchestrated',
-        sessionId,
-        timestamp: new Date().toISOString(),
-        responseTime,
-        messageCount: session.stats.messageCount + 1
-      });
+        const responseTime = Date.now() - startTime;
+        
+        // Detect which provider was likely used based on response characteristics
+        const detectedProvider = detectProviderFromResponse(responseText);
+        
+        // Add assistant response to session memory
+        await sessionManager.addMessage(sessionId, userId, 'assistant', responseText, {
+          provider: detectedProvider || preferredProvider || 'multi-provider',
+          responseTime,
+          model: `${detectedProvider || 'multi'}-orchestrated`,
+          confidence: 0.85
+        });
+
+        // Update session metadata
+        await sessionManager.updateSessionMetadata(sessionId, {
+          provider: detectedProvider || preferredProvider || 'multi-provider',
+          tokens: Math.floor(responseText.split(/\s+/).length * 1.3) // Rough estimation
+        });
+        
+        return res.json({ 
+          response: responseText,
+          provider: detectedProvider || preferredProvider || 'multi-provider-orchestrated',
+          sessionId,
+          timestamp: new Date().toISOString(),
+          responseTime,
+          messageCount: session.stats.messageCount + 1
+        });
+      } catch (orchestrationErr) {
+        console.warn('[Chat] Multi-provider orchestration failed, falling back to standard LLM:', orchestrationErr.message);
+        
+        // Fallback: Use standard LLM provider if orchestration fails
+        const result = await llmProvider.generate({
+          prompt: message,
+          system: enhancedSystemPrompt,
+          taskType: 'chat',
+          context: {
+            conversationHistory,
+            sessionContext: sessionManager.getSessionContext(sessionId)
+          }
+        });
+        
+        const responseTime = Date.now() - startTime;
+        const responseText = result.content || result.response || result;
+        
+        // Add assistant response to session memory
+        await sessionManager.addMessage(sessionId, userId, 'assistant', responseText, {
+          provider: result.provider || 'fallback',
+          responseTime,
+          model: result.model || 'standard-llm',
+          confidence: result.confidence || 0.8
+        });
+
+        // Update session metadata
+        await sessionManager.updateSessionMetadata(sessionId, {
+          provider: result.provider || 'fallback',
+          tokens: result.tokens || 0
+        });
+        
+        return res.json({ 
+          response: responseText,
+          provider: result.provider || 'fallback-llm',
+          sessionId,
+          timestamp: new Date().toISOString(),
+          responseTime,
+          messageCount: session.stats.messageCount + 1
+        });
+      }
     } catch (providerErr) {
       console.error('[Chat] Provider error:', providerErr.message);
       return res.status(503).json({ 
@@ -841,14 +886,40 @@ INSTRUCTIONS:
 - Be specific and confident in your answers`;
       }
       
-      // Get response from best available provider using standard flow
-      const result = await llmProvider.generate({ 
-        prompt: enrichedMessage, 
-        taskType: 'chat' 
+      // Get response from multi-provider orchestration (not just single provider)
+      const responseText = await handleChatWithAI(enrichedMessage, {
+        sessionId,
+        preferredProvider: 'auto',
+        taskType: 'chat'
+      }).catch(err => {
+        console.warn('[Synthesis] handleChatWithAI failed:', err.message);
+        // Fallback to direct provider if orchestration fails
+        return null;
       });
 
-      const baseResponse = result.content || result.response || result;
-      const selectedProvider = result.provider || 'ollama';
+      if (!responseText) {
+        // Fallback: use direct provider if orchestration fails
+        const result = await llmProvider.generate({ 
+          prompt: enrichedMessage, 
+          taskType: 'chat' 
+        });
+        const baseResponse = result.content || result.response || result;
+        
+        return res.json({
+          response: baseResponse,
+          provider: 'TooLoo.ai (fallback)',
+          sessionId: sessionId || 'web-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          metadata: {
+            confidence: 92,
+            synthesis: 'TooLoo AI Intelligence Layer',
+            synthesisMethod: 'Single Provider Fallback',
+            selfAwarenessEnhanced: isSelfAwarenessQuestion
+          }
+        });
+      }
+
+      const baseResponse = responseText;
 
       // Get actual list of active providers for accurate metadata
       let activeProvidersList = [];
