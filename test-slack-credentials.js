@@ -4,6 +4,10 @@
  */
 
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load .env file explicitly
+dotenv.config();
 
 const BASE_URL = 'http://127.0.0.1:3000/api/v1/slack';
 const colors = {
