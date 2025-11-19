@@ -1556,6 +1556,196 @@ class ProductDevelopmentServer {
     });
 
     /**
+     * POST /api/v1/design/enhance/components - Detect UI component patterns in extracted system
+     * Identifies buttons, cards, forms, navigation, modals, alerts, etc.
+     */
+    this.app.post('/api/v1/design/enhance/components', async (req, res) => {
+      try {
+        const { systemId, html } = req.body;
+
+        if (!html) {
+          return res.status(400).json({ ok: false, error: 'html content required' });
+        }
+
+        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const enhancer = new DesignSystemEnhancer();
+
+        const components = await enhancer.detectComponents(html);
+
+        res.json({
+          ok: true,
+          components,
+          summary: {
+            totalComponentTypes: Object.keys(components).length,
+            totalComponentInstances: Object.values(components).reduce((sum, comp) => {
+              return sum + Object.values(comp).reduce((s, c) => s + (c.count || 0), 0);
+            }, 0)
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/enhance/maturity - Calculate design maturity score
+     * Assesses color consistency, typography hierarchy, spacing scale, components
+     */
+    this.app.post('/api/v1/design/enhance/maturity', async (req, res) => {
+      try {
+        const { systemId } = req.body;
+
+        let system = {};
+        if (systemId) {
+          try {
+            const filePath = path.join(this.designDir, `website-extract-${systemId}.json`);
+            const data = await fs.readFile(filePath, 'utf8');
+            const metadata = JSON.parse(data);
+            system = metadata;
+          } catch {
+            return res.status(404).json({ ok: false, error: 'System not found' });
+          }
+        } else {
+          system = this.designSystem || {};
+        }
+
+        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const enhancer = new DesignSystemEnhancer(system);
+
+        const maturityScore = enhancer.scoreDesignMaturity(system);
+
+        res.json({
+          ok: true,
+          maturityScore,
+          systemId
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/enhance/compare - Compare two design systems with detailed analysis
+     * Analyzes similarities, differences, and recommendations
+     */
+    this.app.post('/api/v1/design/enhance/compare', async (req, res) => {
+      try {
+        const { systemId1, systemId2 } = req.body;
+
+        if (!systemId1 || !systemId2) {
+          return res.status(400).json({ ok: false, error: 'systemId1 and systemId2 required' });
+        }
+
+        const readSystem = async (sysId) => {
+          const filePath = path.join(this.designDir, `website-extract-${sysId}.json`);
+          const data = await fs.readFile(filePath, 'utf8');
+          return JSON.parse(data);
+        };
+
+        const system1 = await readSystem(systemId1);
+        const system2 = await readSystem(systemId2);
+
+        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const enhancer = new DesignSystemEnhancer(system1);
+
+        const comparison = enhancer.compareWithSystem(system2);
+
+        res.json({
+          ok: true,
+          systems: {
+            system1: { id: systemId1, source: system1.sourceUrl },
+            system2: { id: systemId2, source: system2.sourceUrl }
+          },
+          comparison,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/enhance/semantic-names - Generate semantic names for design tokens
+     * AI-powered naming and categorization
+     */
+    this.app.post('/api/v1/design/enhance/semantic-names', async (req, res) => {
+      try {
+        const { systemId, tokens } = req.body;
+
+        let system = tokens || {};
+        if (systemId) {
+          try {
+            const filePath = path.join(this.designDir, `website-extract-${systemId}.json`);
+            const data = await fs.readFile(filePath, 'utf8');
+            const metadata = JSON.parse(data);
+            system = metadata;
+          } catch {
+            return res.status(404).json({ ok: false, error: 'System not found' });
+          }
+        } else {
+          system = tokens || this.designSystem || {};
+        }
+
+        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const enhancer = new DesignSystemEnhancer(system);
+
+        const semanticNames = enhancer.generateSemanticNames(system);
+
+        res.json({
+          ok: true,
+          semanticNames,
+          recommendations: {
+            colors: semanticNames.colors ? Object.keys(semanticNames.colors).length + ' colors named' : 'No colors found',
+            typography: semanticNames.typography ? Object.keys(semanticNames.typography).length + ' typography entries named' : 'No typography found',
+            spacing: semanticNames.spacing ? Object.keys(semanticNames.spacing).length + ' spacing values named' : 'No spacing found',
+            effects: semanticNames.effects ? Object.keys(semanticNames.effects).length + ' effects named' : 'No effects found'
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/design/enhance/analysis/:systemId - Get full enhancement analysis
+     * Combines components, maturity, semantic naming for comprehensive view
+     */
+    this.app.get('/api/v1/design/enhance/analysis/:systemId', async (req, res) => {
+      try {
+        const { systemId } = req.params;
+
+        const filePath = path.join(this.designDir, `website-extract-${systemId}.json`);
+        let system;
+        try {
+          const data = await fs.readFile(filePath, 'utf8');
+          system = JSON.parse(data);
+        } catch {
+          return res.status(404).json({ ok: false, error: 'System not found' });
+        }
+
+        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const enhancer = new DesignSystemEnhancer(system);
+
+        const maturityScore = enhancer.scoreDesignMaturity(system);
+        const semanticNames = enhancer.generateSemanticNames(system);
+
+        res.json({
+          ok: true,
+          systemId,
+          source: system.sourceUrl,
+          analysis: {
+            maturity: maturityScore,
+            semanticNames,
+            components: enhancer.components,
+            timestamp: new Date().toISOString()
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
      * POST /api/v1/design/generate-css - Generate CSS variables from design system
      * Converts design tokens to CSS custom properties
      */
