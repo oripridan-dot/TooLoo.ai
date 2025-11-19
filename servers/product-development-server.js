@@ -12,6 +12,8 @@ import { ServiceFoundation } from '../lib/service-foundation.js';
 import DesignSystemAnalytics from '../lib/design-system-analytics.js';
 import DesignAutoRemediation from '../lib/design-auto-remediation.js';
 import { IndustryRegistry } from '../lib/design-industry-registry.js';
+import DesignMLClustering from '../lib/design-ml-clustering.js';
+import DesignGovernance from '../lib/design-governance.js';
 
 class ProductDevelopmentServer {
   constructor() {
@@ -54,6 +56,10 @@ class ProductDevelopmentServer {
     this.autoRemediation = null; // Will be initialized with system
     this.industryRegistry = new IndustryRegistry();
     this.systemSnapshots = []; // For trend analysis
+    
+    // Phase 6 modules initialization
+    this.mlClustering = new DesignMLClustering();
+    this.governance = new DesignGovernance('default');
     
     this.initializeStorage();
     
@@ -230,6 +236,10 @@ class ProductDevelopmentServer {
     
     // Artifact Generation Routes
     this.setupArtifactRoutes();
+    
+    // Phase 6 Routes - Advanced ML & Governance
+    this.setupMLClusteringRoutes();
+    this.setupGovernanceRoutes();
     
     // Integration Routes
     this.setupIntegrationRoutes();
@@ -2757,6 +2767,361 @@ class ProductDevelopmentServer {
       }
     });
 
+  }
+
+  /**
+   * PHASE 6: ML CLUSTERING ROUTES
+   * Advanced machine learning for token clustering and analysis
+   */
+  setupMLClusteringRoutes() {
+    /**
+     * POST /api/v1/ml/clustering/kmeans - K-Means token clustering
+     */
+    this.app.post('/api/v1/ml/clustering/kmeans', async (req, res) => {
+      try {
+        const { tokens, k } = req.body;
+
+        if (!tokens || tokens.length === 0) {
+          return res.status(400).json({
+            ok: false,
+            error: 'No tokens provided for clustering'
+          });
+        }
+
+        const result = this.mlClustering.kMeansClustering(tokens, k);
+
+        res.json({
+          ok: true,
+          clustering: result,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/ml/clustering/hierarchical - Hierarchical token clustering
+     */
+    this.app.post('/api/v1/ml/clustering/hierarchical', async (req, res) => {
+      try {
+        const { tokens } = req.body;
+
+        if (!tokens || tokens.length < 2) {
+          return res.status(400).json({
+            ok: false,
+            error: 'At least 2 tokens required for hierarchical clustering'
+          });
+        }
+
+        const result = this.mlClustering.hierarchicalClustering(tokens);
+
+        res.json({
+          ok: true,
+          dendrogram: result,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/ml/clustering/pca - PCA visualization projection
+     */
+    this.app.post('/api/v1/ml/clustering/pca', async (req, res) => {
+      try {
+        const { tokens } = req.body;
+
+        if (!tokens || tokens.length === 0) {
+          return res.status(400).json({
+            ok: false,
+            error: 'No tokens provided for PCA'
+          });
+        }
+
+        const result = this.mlClustering.pcaVisualization(tokens);
+
+        res.json({
+          ok: true,
+          visualization: result,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/ml/clustering/archetype - Detect design system archetype
+     */
+    this.app.post('/api/v1/ml/clustering/archetype', async (req, res) => {
+      try {
+        const system = req.body;
+
+        if (!system || Object.keys(system).length === 0) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Design system required'
+          });
+        }
+
+        const result = this.mlClustering.detectArchetype(system);
+
+        res.json({
+          ok: true,
+          archetype: result,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+  }
+
+  /**
+   * PHASE 6: GOVERNANCE ROUTES
+   * Design system governance, versioning, and approval workflows
+   */
+  setupGovernanceRoutes() {
+    /**
+     * POST /api/v1/governance/version/create - Create version checkpoint
+     */
+    this.app.post('/api/v1/governance/version/create', async (req, res) => {
+      try {
+        const { system, metadata } = req.body;
+
+        if (!system) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Design system required'
+          });
+        }
+
+        const version = this.governance.createVersion(system, metadata);
+
+        res.json({
+          ok: true,
+          version: {
+            id: version.id,
+            timestamp: version.timestamp,
+            title: version.metadata.title,
+            changes: version.changes.summary
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/governance/version/history - Get version history
+     */
+    this.app.get('/api/v1/governance/version/history', async (req, res) => {
+      try {
+        const history = this.governance.getVersionHistory();
+
+        res.json({
+          ok: true,
+          history,
+          totalVersions: history.length
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/governance/version/compare - Compare two versions
+     */
+    this.app.post('/api/v1/governance/version/compare', async (req, res) => {
+      try {
+        const { versionA, versionB } = req.body;
+
+        if (!versionA || !versionB) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Two version IDs required'
+          });
+        }
+
+        const comparison = this.governance.compareVersions(versionA, versionB);
+
+        res.json({
+          ok: true,
+          comparison
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/governance/deprecate - Mark token as deprecated
+     */
+    this.app.post('/api/v1/governance/deprecate', async (req, res) => {
+      try {
+        const deprecation = req.body;
+
+        if (!deprecation.token) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Token name required'
+          });
+        }
+
+        const record = this.governance.deprecateToken(deprecation);
+
+        res.json({
+          ok: true,
+          deprecation: {
+            token: record.token,
+            reason: record.reason,
+            replacement: record.replacement,
+            removalDate: record.removalDate
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/governance/deprecations - Get deprecation status
+     */
+    this.app.get('/api/v1/governance/deprecations', async (req, res) => {
+      try {
+        const status = this.governance.getDeprecationStatus();
+
+        res.json({
+          ok: true,
+          deprecationStatus: status
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/governance/approval/create - Create approval workflow
+     */
+    this.app.post('/api/v1/governance/approval/create', async (req, res) => {
+      try {
+        const change = req.body;
+
+        if (!change.type || !change.title) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Change type and title required'
+          });
+        }
+
+        const workflow = this.governance.createApprovalWorkflow(change);
+
+        res.json({
+          ok: true,
+          workflow: {
+            id: workflow.id,
+            status: workflow.status,
+            change: workflow.change.title,
+            requiredApprovals: workflow.requiredApprovals
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/governance/approval/:workflowId/approve - Approve workflow
+     */
+    this.app.post('/api/v1/governance/approval/:workflowId/approve', async (req, res) => {
+      try {
+        const { workflowId } = req.params;
+        const approval = req.body;
+
+        if (!approval.by) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Approver name required'
+          });
+        }
+
+        const result = this.governance.approveWorkflow(workflowId, approval);
+
+        if (result.error) {
+          return res.status(404).json(result);
+        }
+
+        res.json({
+          ok: true,
+          workflow: {
+            id: result.id,
+            status: result.status,
+            approvals: `${result.approvals.length}/${result.requiredApprovals}`
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/governance/approval/status - Get approval status
+     */
+    this.app.get('/api/v1/governance/approval/status', async (req, res) => {
+      try {
+        const status = this.governance.getApprovalStatus();
+
+        res.json({
+          ok: true,
+          approvalStatus: status
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/governance/migration - Generate migration path
+     */
+    this.app.post('/api/v1/governance/migration', async (req, res) => {
+      try {
+        const breaking = req.body;
+
+        if (!breaking.type || !breaking.items) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Breaking change type and items required'
+          });
+        }
+
+        const migration = this.governance.generateMigrationPath(breaking);
+
+        res.json({
+          ok: true,
+          migration
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/governance/report - Generate comprehensive governance report
+     */
+    this.app.get('/api/v1/governance/report', async (req, res) => {
+      try {
+        const report = this.governance.generateGovernanceReport();
+
+        res.json({
+          ok: true,
+          report
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
   }
 
   setupIntegrationRoutes() {
