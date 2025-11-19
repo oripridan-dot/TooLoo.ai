@@ -523,6 +523,12 @@ app.get(['/design-suite'], async (req,res)=>{
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Design Suite missing'); }
 });
 
+// Design Analytics Dashboard - Phase 7
+app.get(['/design-studio/analytics', '/analytics-dashboard', '/design-analytics'], async (req,res)=>{
+  const f = path.join(webDir,'design-analytics-dashboard.html');
+  try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Analytics Dashboard missing'); }
+});
+
 // TooLoo Chat alias - redirect to professional version
 app.get(['/tooloo-chat'], async (req, res) => {
   // Serve tooloo-chat-professional.html for /tooloo-chat route
