@@ -1267,6 +1267,111 @@ class ProductDevelopmentServer {
     });
 
     /**
+     * POST /api/v1/design/extract-from-website - Extract design system from website
+     * Analyzes URL and extracts colors, fonts, spacing patterns
+     * Returns structured tokens ready to use
+     */
+    this.app.post('/api/v1/design/extract-from-website', async (req, res) => {
+      try {
+        const { websiteUrl, includeElements = false, verbose = false } = req.body;
+
+        if (!websiteUrl) {
+          return res.status(400).json({ ok: false, error: 'websiteUrl required' });
+        }
+
+        // Validate URL format
+        try {
+          new URL(websiteUrl);
+        } catch {
+          return res.status(400).json({ ok: false, error: 'Invalid URL format' });
+        }
+
+        // Import and use design extractor
+        const { DesignExtractor } = await import('../lib/design-extractor.js');
+        const extractor = new DesignExtractor({ verbose });
+
+        if (verbose) console.log(`[Design Extract] Starting extraction from ${websiteUrl}`);
+
+        const extraction = await extractor.extractFromUrl(websiteUrl, {
+          includeElements,
+          verbose
+        });
+
+        if (!extraction.ok) {
+          return res.status(400).json({
+            ok: false,
+            error: extraction.error,
+            hint: extraction.hint
+          });
+        }
+
+        const { system, tokens, css } = extraction;
+
+        // Merge extracted design system into local storage
+        this.designSystem = {
+          ...this.designSystem,
+          colors: { ...this.designSystem.colors, ...system.colors },
+          typography: { ...this.designSystem.typography, ...system.typography },
+          spacing: { ...this.designSystem.spacing, ...system.spacing },
+          components: { ...this.designSystem.components, ...system.components }
+        };
+
+        // Persist the updated design system
+        await this.saveDesignSystem();
+
+        // Save extraction metadata for audit trail
+        const extractionMetadata = {
+          timestamp: new Date().toISOString(),
+          source: 'website-extraction',
+          sourceUrl: websiteUrl,
+          extractedAt: new Date().toISOString(),
+          colorsExtracted: Object.keys(system.colors).length,
+          typographyExtracted: Object.keys(tokens.typography || {}).length,
+          spacingExtracted: Object.keys(system.spacing).length,
+          estimatedMaturity: system.metadata.estimatedDesignMaturity,
+          designSystemSize: {
+            colors: Object.keys(this.designSystem.colors).length,
+            typography: Object.keys(this.designSystem.typography).length,
+            components: Object.keys(this.designSystem.components).length
+          }
+        };
+
+        const designFile = path.join(this.designDir, `website-extract-${Date.now()}.json`);
+        await fs.writeFile(designFile, JSON.stringify(extractionMetadata, null, 2));
+
+        res.json({
+          ok: true,
+          message: `Design system extracted from ${new URL(websiteUrl).hostname}`,
+          source: 'website',
+          sourceUrl: websiteUrl,
+          tokens,
+          css,
+          metadata: {
+            colorsFound: Object.keys(system.colors).length,
+            typographyFound: system.metadata.typographyFamiliesFound,
+            spacingValuesFound: Object.keys(system.spacing).length,
+            estimatedDesignMaturity: system.metadata.estimatedDesignMaturity
+          },
+          designSystemUpdated: {
+            colors: Object.keys(this.designSystem.colors).length,
+            typography: Object.keys(this.designSystem.typography).length,
+            components: Object.keys(this.designSystem.components).length,
+            spacing: Object.keys(this.designSystem.spacing).length
+          },
+          extractionFile: designFile,
+          hint: 'Use /api/v1/design/apply-tokens to integrate into UI'
+        });
+      } catch (err) {
+        console.error('Website extraction error:', err.message);
+        res.status(500).json({
+          ok: false,
+          error: err.message,
+          hint: 'Ensure website is accessible and contains HTML content'
+        });
+      }
+    });
+
+    /**
      * POST /api/v1/design/generate-css - Generate CSS variables from design system
      * Converts design tokens to CSS custom properties
      */

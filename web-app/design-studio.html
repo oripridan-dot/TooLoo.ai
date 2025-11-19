@@ -328,6 +328,17 @@
           </div>
           <button type="submit" class="btn-submit" id="generateBtn">▶ Generate from Figma</button>
         </form>
+
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <h3 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.3px;">Or Extract from Website</h3>
+          <form class="input-form" id="extractForm">
+            <div class="form-group">
+              <label>Website URL</label>
+              <input type="url" id="websiteUrl" placeholder="https://example.com" />
+            </div>
+            <button type="submit" class="btn-submit" id="extractBtn" style="background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3);">🌐 Extract Design System</button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -457,6 +468,34 @@
         isStreaming = false;
         streamBtn.textContent = '⚡ Stream Tokens';
         streamOutput.classList.remove('generating');
+        
+        // Fetch and update token statistics and grid
+        fetch('/api/v1/design/tokens')
+          .then(r => r.json())
+          .then(data => {
+            if (data.tokens) {
+              document.getElementById('colorCount').textContent = Object.keys(data.tokens.colors || {}).length;
+              document.getElementById('typographyCount').textContent = Object.keys(data.tokens.typography || {}).length;
+              document.getElementById('componentCount').textContent = Object.keys(data.tokens.components || {}).length;
+              document.getElementById('cssCount').textContent = Object.keys(data.tokens.spacing || {}).length;
+              
+              // Populate token grid with loaded tokens
+              tokenGrid.innerHTML = '';
+              const allTokens = { ...data.tokens.colors, ...data.tokens.typography, ...data.tokens.components };
+              Object.entries(allTokens).slice(0, 12).forEach(([key, value]) => {
+                const box = document.createElement('div');
+                box.className = 'token-box';
+                let color = '#999';
+                if (typeof value === 'string' && value.startsWith('#')) color = value;
+                else if (typeof value === 'object' && value.color) color = value.color;
+                box.innerHTML = `<div class="token-swatch" style="background: ${color}"></div><div style="color: var(--muted);">${key}</div>`;
+                tokenGrid.appendChild(box);
+              });
+              
+              tokenCount.textContent = `${Object.keys(allTokens).length} tokens`;
+            }
+          })
+          .catch(err => console.error('Failed to update stats:', err));
       });
 
       eventSource.addEventListener('error', (event) => {
@@ -527,6 +566,66 @@
     }
 
     form.addEventListener('submit', generateDesign);
+    
+    async function extractDesign(e) {
+      e.preventDefault();
+      if (isGenerating) return;
+      const websiteUrl = document.getElementById('websiteUrl').value.trim();
+      if (!websiteUrl) { alert('Please provide a website URL'); return; }
+      isGenerating = true;
+      const extractBtn = document.getElementById('extractBtn');
+      extractBtn.disabled = true;
+      clearStream();
+      streamOutput.classList.add('generating');
+
+      appendStream('🌐 Extracting design system from website...\n📍 URL: ' + websiteUrl + '\n\n');
+
+      try {
+        appendStream('▶ Step 1: Analyzing website...\n');
+        const extractRes = await fetch(`${API_BASE}/design/extract-from-website`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ websiteUrl, includeElements: false, verbose: true })
+        });
+        const extractData = await extractRes.json();
+        
+        if (!extractData.ok) {
+          appendStream(`✗ Extraction failed: ${extractData.error}\n`);
+          if (extractData.hint) appendStream(`💡 ${extractData.hint}\n`);
+        } else {
+          appendStream(`✓ Found ${extractData.metadata.colorsFound} colors\n`);
+          appendStream(`✓ Found ${extractData.metadata.typographyFound} font families\n`);
+          appendStream(`✓ Found ${extractData.metadata.spacingValuesFound} spacing values\n`);
+          appendStream(`✓ Design maturity score: ${extractData.metadata.estimatedDesignMaturity}/100\n\n`);
+          
+          appendStream('▶ Step 2: Building design system from extracted tokens...\n');
+          updateTokens(extractData.designSystemUpdated || {});
+          appendStream(`✓ Integrated ${extractData.designSystemUpdated.colors} colors\n`);
+          appendStream(`✓ Added ${extractData.designSystemUpdated.typography} typography families\n\n`);
+
+          appendStream('▶ Step 3: Generated CSS variables...\n');
+          appendStream('✓ CSS ready for injection\n\n');
+
+          appendStream('✨ Design extraction complete!\n💾 Design system is now active...\n');
+          
+          // Show sample tokens extracted
+          appendStream('\n📋 Extracted Tokens:\n');
+          if (extractData.tokens && extractData.tokens.colors) {
+            Object.entries(extractData.tokens.colors).slice(0, 5).forEach(([key, val]) => {
+              appendStream(`  • ${key}: ${val}\n`);
+            });
+          }
+        }
+      } catch (error) {
+        appendStream(`✗ Error: ${error.message}\n`);
+      } finally {
+        isGenerating = false;
+        extractBtn.disabled = false;
+        streamOutput.classList.remove('generating');
+      }
+    }
+
+    document.getElementById('extractForm').addEventListener('submit', extractDesign);
     streamBtn.addEventListener('click', startStreaming);
     refreshBtn.addEventListener('click', () => { location.reload(); });
     loadState();
