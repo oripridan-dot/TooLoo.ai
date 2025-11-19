@@ -58,27 +58,17 @@ const SERVICE_REGISTRY = [
     timeout: 30000,
     dependencies: []
   },
+  // Priority 2: Services with dependencies (core AI features)
   {
-    id: 'orchestration',
-    name: 'orchestration-service',
-    file: 'servers/orchestration-service.js',
-    port: 3100,
-    envVar: 'ORCHESTRATION_PORT',
-    priority: 1,
+    id: 'coach',
+    name: 'coach-server',
+    file: 'servers/coach-server.js',
+    port: 3004,
+    envVar: 'COACH_PORT',
+    priority: 2,
     healthEndpoint: '/health',
     timeout: 30000,
-    dependencies: []
-  },
-  {
-    id: 'provider',
-    name: 'provider-service',
-    file: 'servers/provider-service.js',
-    port: 3200,
-    envVar: 'PROVIDER_PORT',
-    priority: 1,
-    healthEndpoint: '/health',
-    timeout: 30000,
-    dependencies: []
+    dependencies: ['training'] // Requires training to be running first
   },
   {
     id: 'product',
@@ -90,19 +80,6 @@ const SERVICE_REGISTRY = [
     healthEndpoint: '/health',
     timeout: 30000,
     dependencies: []
-  },
-
-  // Priority 2: Services with dependencies
-  {
-    id: 'coach',
-    name: 'coach-server',
-    file: 'servers/coach-server.js',
-    port: 3004,
-    envVar: 'COACH_PORT',
-    priority: 2,
-    healthEndpoint: '/health',
-    timeout: 30000,
-    dependencies: ['training'] // Requires training to be running first
   },
   {
     id: 'segmentation',
@@ -136,39 +113,6 @@ const SERVICE_REGISTRY = [
     healthEndpoint: '/health',
     timeout: 30000,
     dependencies: []
-  },
-  {
-    id: 'sources',
-    name: 'sources-server',
-    file: 'servers/sources-server.js',
-    port: 3010,
-    envVar: 'SOURCES_PORT',
-    priority: 3,
-    healthEndpoint: '/health',
-    timeout: 30000,
-    dependencies: []
-  },
-  {
-    id: 'arena',
-    name: 'providers-arena-server',
-    file: 'servers/providers-arena-server.js',
-    port: 3011,
-    envVar: 'ARENA_PORT',
-    priority: 3,
-    healthEndpoint: '/health',
-    timeout: 30000,
-    dependencies: []
-  },
-  {
-    id: 'metrics-hub',
-    name: 'metrics-hub',
-    file: 'servers/metrics-hub.js',
-    port: 3010,
-    envVar: 'METRICS_HUB_PORT',
-    priority: 2,
-    healthEndpoint: '/health',
-    timeout: 30000,
-    dependencies: [] // Can start anytime, aggregates from all services
   }
 ];
 

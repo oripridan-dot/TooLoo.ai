@@ -1,0 +1,123 @@
+# TooLoo.ai Quick Reference Card
+
+## System Ports
+```
+3000  web-server          (reverse proxy + routes)
+3001  training-server     (hyper-speed learning)
+3002  meta-server         (meta-learning phases)
+3003  budget-server       (cost validation)
+3004  coach-server        (boost & coaching)
+3006  product-server      (workflows + DESIGN)
+3007  segmentation-server (cohort analysis)
+3008  reports-server      (analytics)
+3009  capabilities-server (feature management)
+3010+ provider-service    (Claude, GPT, Gemini, etc.)
+3123  orchestrator        (workflow orchestration)
+3050  activity-monitor    (system monitoring)
+```
+
+## Quick Health Checks
+```bash
+# Overall system
+curl http://127.0.0.1:3000/system/status
+
+# All services
+curl http://127.0.0.1:3000/api/v1/loadbalance/health
+
+# Specific service
+curl http://127.0.0.1:3001/health          # training
+curl http://127.0.0.1:3003/health          # budget
+curl http://127.0.0.1:3006/health          # product
+```
+
+## Critical Routes
+```
+POST /api/v1/chat/message         → Chat with synthesis
+POST /api/v1/training/start       → Start training
+POST /api/v1/auto-coach/boost     → Boost session
+POST /api/v1/design/import-figma  → Import Figma tokens (NEW)
+POST /api/v1/design/generate-css  → Generate CSS
+POST /api/v1/orchestrator/activate/one → Activate workflow
+```
+
+## Service Dependencies
+```
+web-server → training (3001)
+          → budget (3003)
+          → coach (3004)
+          → product (3006)
+          → segmentation (3007)
+          → reports (3008)
+          → capabilities (3009)
+          → providers (3010+)
+          → orchestrator (3123)
+```
+
+## Common Issues & Solutions
+```
+❌ Service unavailable (503)
+   → Check if service is running on correct port
+   → Run: npm run dev
+
+❌ Proxy error on /api/v1/design/*
+   → Product server not running
+   → Check port 3006
+
+❌ Budget check failing
+   → Budget server down
+   → Check port 3003
+
+❌ Figma token import fails
+   → Verify Figma token is valid
+   → Check internet connection
+```
+
+## Test Connectivity
+```bash
+bash test-system-connectivity.sh
+# Expected: 20/20 passing
+```
+
+## Documentation
+```
+SYSTEM-CONNECTIVITY-AUDIT.md      (full audit)
+SERVICE-ROUTING-SIGNAL-FLOW.md    (visual maps)
+AUDIT-EXECUTIVE-SUMMARY.md        (recommendations)
+```
+
+## Endpoint Count by Service
+```
+web-server:              120+ endpoints
+training-server:         40+ endpoints
+orchestrator:            25+ endpoints
+product-server:          50+ endpoints
+budget-server:           10+ endpoints
+coach-server:            10+ endpoints
+segmentation-server:     7+ endpoints
+capabilities-server:     5+ endpoints
+reports-server:          3+ endpoints
+provider-service:        10+ endpoints
+meta-server:             5+ endpoints
+---
+TOTAL:                   200+ endpoints
+```
+
+## Signal Flow Status
+```
+Chat synthesis:       ✅ Working
+Training:            ✅ Working
+Auto-coach:          ✅ Working
+Design tokens:       ✅ Working (NEW)
+Orchestration:       ✅ Working
+All paths:           ✅ 0 breaks
+```
+
+## Pro Tips
+```
+1. Use /api/v1/system/routes to see all proxy mappings
+2. Check /api/v1/loadbalance/health for service status
+3. Most endpoints support both GET and POST (except specified)
+4. All POST endpoints require Content-Type: application/json
+5. Figma integration requires valid FIGMA_TOKEN in env
+6. GitHub integration requires valid GITHUB_TOKEN in env
+```

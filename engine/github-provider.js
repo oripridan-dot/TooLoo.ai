@@ -281,6 +281,205 @@ export class GitHubProvider {
   }
 
   /**
+   * Update a file in the repository (alias for createOrUpdateFile for API compatibility)
+   */
+  async updateFile(filePath, content, message, branch = 'main') {
+    return this.createOrUpdateFile(filePath, content, message, branch);
+  }
+
+  /**
+   * Create a new branch from an existing branch
+   */
+  async createBranch(name, from = 'main') {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      // First get the SHA of the source branch
+      const refRes = await fetch(
+        `https://api.github.com/repos/${process.env.GITHUB_REPO}/git/refs/heads/${from}`,
+        {
+          headers: { 'Authorization': `token ${process.env.GITHUB_TOKEN}` }
+        }
+      );
+
+      if (!refRes.ok) {
+        throw new Error(`Source branch "${from}" not found: ${refRes.status}`);
+      }
+
+      const refData = await refRes.json();
+      const sha = refData.object.sha;
+
+      // Create the new branch
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/git/refs`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ref: `refs/heads/${name}`,
+          sha
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        success: true,
+        branch: {
+          name,
+          sha: data.object.sha,
+          url: data.url
+        }
+      };
+    } catch (e) {
+      console.error('Error creating branch:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Update a pull request (state, title, body, etc.)
+   */
+  async updatePullRequest(prNumber, updates) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/pulls/${prNumber}`;
+
+      const payload = {};
+      if (updates.title) payload.title = updates.title;
+      if (updates.body) payload.body = updates.body;
+      if (updates.state) payload.state = updates.state; // 'open' or 'closed'
+
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        success: true,
+        number: data.number,
+        title: data.title,
+        body: data.body,
+        state: data.state,
+        updatedAt: data.updated_at
+      };
+    } catch (e) {
+      console.error('Error updating PR:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Merge a pull request
+   */
+  async mergePullRequest(prNumber, message, method = 'squash') {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/pulls/${prNumber}/merge`;
+
+      const payload = {
+        commit_message: message || `Merge PR #${prNumber}`,
+        merge_method: method // 'merge', 'squash', or 'rebase'
+      };
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        success: true,
+        sha: data.sha,
+        message: data.message,
+        merged: data.merged
+      };
+    } catch (e) {
+      console.error('Error merging PR:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
+   * Add a comment to an issue or pull request
+   */
+  async addComment(number, body) {
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+      return { success: false, error: 'GitHub not configured' };
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/issues/${number}/comments`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ body })
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(`GitHub API error: ${res.status} - ${error}`);
+      }
+
+      const data = await res.json();
+
+      return {
+        success: true,
+        id: data.id,
+        body: data.body,
+        createdAt: data.created_at,
+        url: data.html_url
+      };
+    } catch (e) {
+      console.error('Error adding comment:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  /**
    * Create a pull request
    */
   async createPullRequest(prData) {

@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import environmentHub from '../engine/environment-hub.js';
 import ProductAnalysisEngine from '../engine/product-analysis-engine.js';
-import FigmaAdapter from '../lib/adapters/figma-adapter.js';
+import { FigmaAdapter } from '../lib/adapters/figma-adapter.js';
 import { ServiceFoundation } from '../lib/service-foundation.js';
 
 class ProductDevelopmentServer {
@@ -1098,7 +1098,80 @@ class ProductDevelopmentServer {
     });
 
     /**
+     * POST /api/v1/design/brandboard - Generate brand board PDF
+     */
+    this.app.post('/api/v1/design/brandboard', async (req, res) => {
+      try {
+        const { tokens = {}, theme = 'light' } = req.body || {};
+        
+        // Generate brand board summary (mock for now, can be extended with PDFKit)
+        const brandData = {
+          colors: tokens.colors || this.designSystem.colors,
+          typography: tokens.typography || this.designSystem.typography,
+          spacing: tokens.spacing || this.designSystem.spacing,
+          components: Object.keys(this.designSystem.components || {}).length,
+          timestamp: new Date().toISOString(),
+          theme
+        };
+
+        // Store in temp directory for serving
+        const timestamp = Date.now();
+        const tempDir = path.join(process.cwd(), 'web-app', 'temp');
+        await fs.mkdir(tempDir, { recursive: true });
+        
+        const brandFile = path.join(tempDir, `brand-board-${timestamp}.json`);
+        await fs.writeFile(brandFile, JSON.stringify(brandData, null, 2));
+
+        res.json({
+          ok: true,
+          message: 'Brand board generated',
+          file: `brand-board-${timestamp}.json`,
+          path: `/temp/brand-board-${timestamp}.json`,
+          data: brandData
+        });
+      } catch (err) {
+        console.error('Brand board generation error:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/design/latest - Get latest design artifacts
+     */
+    this.app.get('/api/v1/design/latest', async (req, res) => {
+      try {
+        const tempDir = path.join(process.cwd(), 'web-app', 'temp');
+        await fs.mkdir(tempDir, { recursive: true });
+        
+        const files = await fs.readdir(tempDir);
+        const pages = files.filter(f => /^guiding-star-product-\d+\.html$/.test(f)).sort().reverse();
+        const pdfs = files.filter(f => /^brand-board-\d+\.json$/.test(f)).sort().reverse();
+        
+        const latestPage = pages[0] ? `/temp/${pages[0]}` : null;
+        const latestPdf = pdfs[0] ? `/temp/${pdfs[0]}` : null;
+
+        res.json({
+          ok: true,
+          latest: {
+            pageUrl: latestPage,
+            pdfUrl: latestPdf
+          },
+          counts: {
+            pages: pages.length,
+            pdfs: pdfs.length
+          },
+          pages: pages.slice(0, 10),
+          pdfs: pdfs.slice(0, 10)
+        });
+      } catch (err) {
+        console.error('Latest design artifacts error:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
      * POST /api/v1/design/import-figma - Import design system from Figma
+     * Actual implementation with FigmaAdapter API calls
      */
     this.app.post('/api/v1/design/import-figma', async (req, res) => {
       try {
@@ -1113,22 +1186,556 @@ class ProductDevelopmentServer {
           return res.status(401).json({
             ok: false,
             error: 'Figma API token required',
-            hint: 'Provide apiToken or set FIGMA_API_TOKEN'
+            hint: 'Provide apiToken in request body or set FIGMA_API_TOKEN environment variable'
           });
         }
 
-        // Mock Figma import (adapter pattern preserved for future use)
-        const adapter = new FigmaAdapter(token);
-        const tokensImported = 42;
+        // Initialize FigmaAdapter with provided token
+        const figmaAdapter = new FigmaAdapter(token);
+
+        // Perform full design system import from Figma
+        const importResult = await figmaAdapter.importDesignSystem(figmaUrl, token);
+
+        if (!importResult.ok) {
+          return res.status(400).json({ ok: false, error: 'Figma import failed', details: importResult });
+        }
+
+        // Merge imported tokens into local design system
+        const { metadata, designSystem, tokensCount } = importResult;
+
+        // Deep merge imported design system with existing
+        this.designSystem = {
+          ...this.designSystem,
+          colors: { ...this.designSystem.colors, ...designSystem.colors },
+          typography: { ...this.designSystem.typography, ...designSystem.typography },
+          spacing: { ...this.designSystem.spacing, ...designSystem.spacing },
+          components: { ...this.designSystem.components, ...designSystem.components },
+          patterns: { ...this.designSystem.patterns, ...designSystem.patterns },
+          guidelines: { ...this.designSystem.guidelines, ...designSystem.guidelines }
+        };
+
+        // Persist the updated design system
+        await this.saveDesignSystem();
+
+        // Save import metadata for audit trail
+        const importMetadata = {
+          timestamp: new Date().toISOString(),
+          source: 'figma',
+          figmaFileId: importResult.fileId,
+          figmaFileName: metadata.name,
+          figmaFileVersion: metadata.version,
+          importedTokens: tokensCount,
+          userEmail: metadata.role ? 'imported-system' : undefined,
+          designSystemSize: {
+            colors: Object.keys(this.designSystem.colors).length,
+            typography: Object.keys(this.designSystem.typography).length,
+            components: Object.keys(this.designSystem.components).length
+          }
+        };
+
+        const designFile = path.join(this.designDir, `figma-import-${Date.now()}.json`);
+        await fs.writeFile(designFile, JSON.stringify(importMetadata, null, 2));
 
         res.json({
           ok: true,
-          message: 'Design system imported from Figma',
-          tokensImported,
+          message: 'Design system successfully imported from Figma',
+          fileId: importResult.fileId,
+          metadata: {
+            name: metadata.name,
+            version: metadata.version,
+            lastModified: metadata.lastModified,
+            thumbnailUrl: metadata.thumbnailUrl
+          },
+          tokensImported: tokensCount,
+          designSystemUpdated: {
+            colors: Object.keys(this.designSystem.colors).length,
+            typography: Object.keys(this.designSystem.typography).length,
+            components: Object.keys(this.designSystem.components).length,
+            spacing: Object.keys(this.designSystem.spacing).length
+          },
+          importFile: designFile,
           source: 'figma'
         });
       } catch (err) {
         console.error('Figma import error:', err.message);
+        res.status(500).json({ 
+          ok: false, 
+          error: err.message,
+          hint: 'Check FIGMA_API_TOKEN validity and Figma file URL format'
+        });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/generate-css - Generate CSS variables from design system
+     * Converts design tokens to CSS custom properties
+     */
+    this.app.post('/api/v1/design/generate-css', async (req, res) => {
+      try {
+        const { format = 'file', minify = false, includeComments = true, includeUtilities = true } = req.body;
+
+        if (!this.designSystem || Object.keys(this.designSystem).length === 0) {
+          return res.status(400).json({
+            ok: false,
+            error: 'No design system loaded',
+            hint: 'First import Figma design system using /api/v1/design/import-figma'
+          });
+        }
+
+        // Import DesignTokenConverter
+        const { DesignTokenConverter } = await import('../lib/adapters/design-token-converter.js');
+        const converter = new DesignTokenConverter();
+
+        // Generate CSS content
+        const cssContent = converter.generateCssContent(this.designSystem, {
+          minify,
+          includeComments,
+          rootSelector: ':root'
+        });
+
+        // Get all token metadata for inspection
+        const tokenMetadata = converter.getTokenMetadata();
+        const cssVariables = converter.getCssVariablesObject();
+
+        if (format === 'file') {
+          // Save CSS file
+          const cssFile = path.join(this.designDir, `design-tokens-${Date.now()}.css`);
+          await fs.writeFile(cssFile, cssContent);
+
+          res.json({
+            ok: true,
+            message: 'CSS generated and saved',
+            file: cssFile,
+            cssFileContent: cssContent.substring(0, 500) + '...',
+            tokenStats: {
+              totalVariables: Object.keys(cssVariables).length,
+              colors: Object.keys(this.designSystem.colors || {}).length,
+              typography: Object.keys(this.designSystem.typography || {}).length,
+              spacing: Object.keys(this.designSystem.spacing || {}).length,
+              effects: Object.keys(this.designSystem.effects || {}).length
+            }
+          });
+        } else if (format === 'inline') {
+          // Return CSS content directly for inline injection
+          res.json({
+            ok: true,
+            message: 'CSS variables generated',
+            css: cssContent,
+            variables: cssVariables,
+            metadata: tokenMetadata,
+            tokenStats: {
+              totalVariables: Object.keys(cssVariables).length,
+              colors: Object.keys(this.designSystem.colors || {}).length,
+              typography: Object.keys(this.designSystem.typography || {}).length,
+              spacing: Object.keys(this.designSystem.spacing || {}).length,
+              effects: Object.keys(this.designSystem.effects || {}).length
+            }
+          });
+        } else if (format === 'json') {
+          // Return as structured JSON
+          res.json({
+            ok: true,
+            message: 'CSS variables exported as JSON',
+            variables: cssVariables,
+            metadata: tokenMetadata,
+            tokenStats: {
+              totalVariables: Object.keys(cssVariables).length,
+              colors: Object.keys(this.designSystem.colors || {}).length,
+              typography: Object.keys(this.designSystem.typography || {}).length,
+              spacing: Object.keys(this.designSystem.spacing || {}).length,
+              effects: Object.keys(this.designSystem.effects || {}).length
+            }
+          });
+        } else {
+          return res.status(400).json({
+            ok: false,
+            error: 'Invalid format. Use: file, inline, or json'
+          });
+        }
+      } catch (err) {
+        console.error('CSS generation error:', err.message);
+        res.status(500).json({
+          ok: false,
+          error: err.message,
+          hint: 'Ensure design system tokens are valid'
+        });
+      }
+    });
+
+    /**
+     * GET /api/v1/design/tokens - Get all extracted design tokens
+     */
+    this.app.get('/api/v1/design/tokens', (req, res) => {
+      try {
+        const { category } = req.query;
+
+        const allTokens = {
+          colors: this.designSystem.colors || {},
+          typography: this.designSystem.typography || {},
+          spacing: this.designSystem.spacing || {},
+          components: this.designSystem.components || {},
+          patterns: this.designSystem.patterns || {},
+          effects: this.designSystem.effects || {},
+          guidelines: this.designSystem.guidelines || {}
+        };
+
+        let response = allTokens;
+
+        if (category && allTokens[category]) {
+          response = {
+            [category]: allTokens[category],
+            _meta: {
+              category,
+              count: Object.keys(allTokens[category]).length
+            }
+          };
+        } else {
+          response._meta = {
+            totalCategories: Object.keys(allTokens).length,
+            totalTokens: Object.values(allTokens).reduce((sum, cat) => sum + Object.keys(cat).length, 0)
+          };
+        }
+
+        res.json({
+          ok: true,
+          tokens: response
+        });
+      } catch (err) {
+        console.error('Token retrieval error:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/apply-tokens - Apply tokens to UI surface
+     * Injects CSS variables into specified UI element
+     */
+    this.app.post('/api/v1/design/apply-tokens', async (req, res) => {
+      try {
+        const { surface = 'all', format = 'css', cssFile } = req.body;
+
+        if (!this.designSystem || Object.keys(this.designSystem).length === 0) {
+          return res.status(400).json({
+            ok: false,
+            error: 'No design system loaded'
+          });
+        }
+
+        // Import token converter
+        const { DesignTokenConverter } = await import('../lib/adapters/design-token-converter.js');
+        const converter = new DesignTokenConverter();
+        const cssContent = converter.generateCssContent(this.designSystem);
+
+        // Define UI surfaces
+        const surfaces = {
+          'validation-dashboard': path.join(process.cwd(), 'web-app', 'validation-dashboard.html'),
+          'chat-professional': path.join(process.cwd(), 'web-app', 'chat-professional.html'),
+          'control-room': path.join(process.cwd(), 'web-app', 'control-room-clarity.html'),
+          'design-suite': path.join(process.cwd(), 'web-app', 'design-suite.html')
+        };
+
+        const surfacesToUpdate = surface === 'all' ? Object.keys(surfaces) : [surface];
+        const results = {};
+
+        for (const surfaceKey of surfacesToUpdate) {
+          if (!surfaces[surfaceKey]) continue;
+
+          try {
+            const filePath = surfaces[surfaceKey];
+            const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+
+            if (!fileExists) {
+              results[surfaceKey] = { ok: false, error: 'File not found' };
+              continue;
+            }
+
+            let content = await fs.readFile(filePath, 'utf8');
+
+            // Check if CSS is already injected
+            if (content.includes('/* TooLoo Design Tokens')) {
+              // Update existing style block
+              const styleRegex = /<style[^>]*>[\s\S]*?<!-- TooLoo Design Tokens[\s\S]*?<!-- End TooLoo Design Tokens --><\/style>/;
+              const newStyle = `<style>\n/* TooLoo Design Tokens - Auto-generated */\n${cssContent}\n/* End TooLoo Design Tokens */\n</style>`;
+              content = content.replace(styleRegex, newStyle);
+            } else {
+              // Inject new style block in <head>
+              const headCloseTag = '</head>';
+              const newStyle = `  <style>\n    /* TooLoo Design Tokens - Auto-generated */\n    ${cssContent}\n    /* End TooLoo Design Tokens */\n  </style>\n${headCloseTag}`;
+              content = content.replace(headCloseTag, newStyle);
+            }
+
+            // Save updated file
+            await fs.writeFile(filePath, content);
+            results[surfaceKey] = { ok: true, message: 'Tokens applied', file: filePath };
+          } catch (err) {
+            results[surfaceKey] = { ok: false, error: err.message };
+          }
+        }
+
+        res.json({
+          ok: true,
+          message: 'Design tokens applied to UI surfaces',
+          results,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error('Token application error:', err.message);
+        res.status(500).json({
+          ok: false,
+          error: err.message
+        });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/webhook/figma - Figma webhook for file updates
+     * Receives notifications when Figma file changes and auto-syncs
+     */
+    this.app.post('/api/v1/design/webhook/figma', async (req, res) => {
+      try {
+        const { type, file_id, file_key, timestamp } = req.body;
+
+        // Validate webhook signature (optional but recommended)
+        // In production, validate X-Figma-Signature header against FIGMA_WEBHOOK_SECRET
+
+        console.log(`📝 Figma webhook received: ${type} for file ${file_key}`);
+
+        // Only handle file update events
+        if (type !== 'FILE_UPDATE' && type !== 'FILE_CHANGE') {
+          return res.status(200).json({ ok: true, message: 'Event acknowledged but not processed' });
+        }
+
+        // Create webhook event log
+        const webhookLog = {
+          timestamp: new Date().toISOString(),
+          event: type,
+          fileId: file_id,
+          fileKey: file_key,
+          processed: false
+        };
+
+        const webhookDir = path.join(this.designDir, 'webhooks');
+        await fs.mkdir(webhookDir, { recursive: true });
+        const webhookLogFile = path.join(webhookDir, `webhook-${Date.now()}.json`);
+        await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
+
+        // Respond immediately to Figma (required for webhook)
+        res.status(200).json({
+          ok: true,
+          message: 'Webhook acknowledged',
+          eventId: Date.now()
+        });
+
+        // Process file update asynchronously
+        setImmediate(async () => {
+          try {
+            const token = process.env.FIGMA_API_TOKEN;
+            if (!token) {
+              console.warn('⚠️ Figma webhook: No API token configured for auto-sync');
+              return;
+            }
+
+            // Re-import the file to get latest tokens
+            const { FigmaAdapter } = await import('../lib/adapters/figma-adapter.js');
+            const figmaAdapter = new FigmaAdapter(token);
+
+            // Assuming we have the file URL stored or can reconstruct it
+            const figmaUrl = `https://figma.com/file/${file_key}`;
+
+            const importResult = await figmaAdapter.importDesignSystem(figmaUrl, token);
+
+            if (importResult.ok) {
+              // Update design system
+              const { designSystem } = importResult;
+              this.designSystem = {
+                ...this.designSystem,
+                colors: { ...this.designSystem.colors, ...designSystem.colors },
+                typography: { ...this.designSystem.typography, ...designSystem.typography },
+                spacing: { ...this.designSystem.spacing, ...designSystem.spacing },
+                components: { ...this.designSystem.components, ...designSystem.components }
+              };
+
+              // Save updated design system
+              await this.saveDesignSystem();
+
+              // Regenerate CSS and apply to UI surfaces
+              const { DesignTokenConverter } = await import('../lib/adapters/design-token-converter.js');
+              const converter = new DesignTokenConverter();
+              const cssContent = converter.generateCssContent(this.designSystem);
+
+              // Apply to all surfaces
+              const surfaces = {
+                'validation-dashboard': path.join(process.cwd(), 'web-app', 'validation-dashboard.html'),
+                'chat-professional': path.join(process.cwd(), 'web-app', 'chat-professional.html')
+              };
+
+              for (const [surfaceKey, filePath] of Object.entries(surfaces)) {
+                try {
+                  const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+                  if (!fileExists) continue;
+
+                  let content = await fs.readFile(filePath, 'utf8');
+                  
+                  if (content.includes('/* TooLoo Design Tokens')) {
+                    const styleRegex = /<style[^>]*>[\s\S]*?<!-- TooLoo Design Tokens[\s\S]*?<!-- End TooLoo Design Tokens --><\/style>/;
+                    const newStyle = `<style>\n/* TooLoo Design Tokens - Auto-synced from Figma */\n${cssContent}\n/* End TooLoo Design Tokens */\n</style>`;
+                    content = content.replace(styleRegex, newStyle);
+                  } else {
+                    const headCloseTag = '</head>';
+                    const newStyle = `  <style>\n    /* TooLoo Design Tokens - Auto-synced from Figma */\n    ${cssContent}\n    /* End TooLoo Design Tokens */\n  </style>\n${headCloseTag}`;
+                    content = content.replace(headCloseTag, newStyle);
+                  }
+
+                  await fs.writeFile(filePath, content);
+                } catch (err) {
+                  console.warn(`Failed to update ${surfaceKey}:`, err.message);
+                }
+              }
+
+              // Update webhook log
+              webhookLog.processed = true;
+              webhookLog.processedAt = new Date().toISOString();
+              webhookLog.status = 'success';
+              await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
+
+              console.log('✅ Figma design system auto-synced successfully');
+            }
+          } catch (err) {
+            console.error('❌ Figma webhook processing failed:', err.message);
+            webhookLog.processed = true;
+            webhookLog.processedAt = new Date().toISOString();
+            webhookLog.status = 'error';
+            webhookLog.error = err.message;
+            await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
+          }
+        });
+      } catch (err) {
+        console.error('Webhook error:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/webhook/register - Register Figma webhook
+     * Sets up automatic sync on file changes
+     */
+    this.app.post('/api/v1/design/webhook/register', async (req, res) => {
+      try {
+        const { fileKey, apiToken } = req.body;
+
+        if (!fileKey) {
+          return res.status(400).json({
+            ok: false,
+            error: 'fileKey required',
+            hint: 'Provide the Figma file key (part of file URL after /file/)'
+          });
+        }
+
+        const token = apiToken || process.env.FIGMA_API_TOKEN;
+        if (!token) {
+          return res.status(401).json({
+            ok: false,
+            error: 'Figma API token required'
+          });
+        }
+
+        // Webhook registration via Figma API
+        // Note: Requires webhook API access (Team/Enterprise feature)
+        const webhookEndpoint = `${process.env.WEBHOOK_BASE_URL || 'http://127.0.0.1:3006'}/api/v1/design/webhook/figma`;
+
+        const registrationData = {
+          event_type: 'FILE_UPDATE',
+          team_id: req.body.teamId,
+          webhook_url: webhookEndpoint,
+          description: 'TooLoo auto-sync design tokens'
+        };
+
+        // Attempt to register webhook (may fail if user doesn't have webhook permissions)
+        try {
+          const response = await fetch('https://api.figma.com/v1/webhooks', {
+            method: 'POST',
+            headers: {
+              'X-FIGMA-TOKEN': token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(registrationData)
+          });
+
+          if (response.ok) {
+            const webhookData = await response.json();
+            res.json({
+              ok: true,
+              message: 'Figma webhook registered successfully',
+              webhookId: webhookData.id,
+              webhookUrl: webhookEndpoint,
+              fileKey,
+              eventType: 'FILE_UPDATE'
+            });
+          } else {
+            // Fallback: provide manual registration instructions
+            const error = await response.json();
+            res.json({
+              ok: false,
+              error: 'Webhook registration requires Team/Enterprise permissions',
+              registrationMethod: 'manual',
+              instructions: {
+                step1: 'Go to https://www.figma.com/developers/webhooks',
+                step2: 'Create a new webhook for your team',
+                step3: `Set webhook URL to: ${webhookEndpoint}`,
+                step4: 'Select FILE_UPDATE event type'
+              },
+              fileKey,
+              hint: 'For self-hosted or free accounts, use manual webhook registration or poll the API periodically'
+            });
+          }
+        } catch (err) {
+          // If Figma API call fails, provide fallback instructions
+          res.json({
+            ok: false,
+            error: err.message,
+            registrationMethod: 'manual',
+            instructions: {
+              step1: 'Go to https://www.figma.com/developers/webhooks',
+              step2: 'Create webhook pointing to: ' + webhookEndpoint,
+              fileKey
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Webhook registration error:', err.message);
+        res.status(500).json({
+          ok: false,
+          error: err.message
+        });
+      }
+    });
+
+    /**
+     * GET /api/v1/design/webhook/status - Check webhook status
+     */
+    this.app.get('/api/v1/design/webhook/status', async (req, res) => {
+      try {
+        const webhookDir = path.join(this.designDir, 'webhooks');
+        const files = await fs.readdir(webhookDir).catch(() => []);
+
+        const webhookLogs = [];
+        for (const file of files.slice(-10)) { // Last 10 webhooks
+          try {
+            const content = await fs.readFile(path.join(webhookDir, file), 'utf8');
+            webhookLogs.push(JSON.parse(content));
+          } catch (e) {
+            // Skip invalid files
+          }
+        }
+
+        res.json({
+          ok: true,
+          webhookEndpoint: `${process.env.WEBHOOK_BASE_URL || 'http://127.0.0.1:3006'}/api/v1/design/webhook/figma`,
+          recentWebhooks: webhookLogs,
+          totalProcessed: webhookLogs.filter(w => w.processed).length
+        });
+      } catch (err) {
+        console.error('Webhook status error:', err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });

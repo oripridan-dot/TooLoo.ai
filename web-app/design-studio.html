@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TooLoo Design Studio – Real-Time Design Generation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --bg-soft: #0f1218;
+      --card: #131820;
+      --text: #e6e9ee;
+      --muted: #96a0af;
+      --brand: #7c5cff;
+      --brand-2: #00e9b0;
+      --accent: #ffe770;
+      --danger: #ff5c7c;
+      --success: #00e9b0;
+      --shadow: 0 10px 30px rgba(0,0,0,0.5);
+      --radius: 12px;
+      --grid: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+
+    body {
+      background: linear-gradient(135deg, #0a0c10 0%, #0f1218 50%, #0a0d15 100%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      height: 100vh;
+      padding: 16px;
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: rgba(13, 16, 21, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius);
+      backdrop-filter: blur(10px);
+      margin-bottom: 4px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+
+    .controls { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      padding: 8px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-family: Inter;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(124, 92, 255, 0.4), rgba(0, 233, 176, 0.4));
+      border-color: rgba(124, 92, 255, 0.6);
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      background: rgba(13, 16, 21, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .input-form { display: flex; flex-direction: column; gap: 12px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .form-group input, .form-group textarea {
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text);
+      font-family: Inter;
+      font-size: 13px;
+      transition: all 0.2s;
+      resize: none;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .btn-submit {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(124, 92, 255, 0.4);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .design-token-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .token-box {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .token-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      margin: 0 auto 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .stream-output {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--success);
+      max-height: 180px;
+      overflow-y: auto;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .stream-output.generating {
+      background: rgba(0, 233, 176, 0.05);
+      border-color: rgba(0, 233, 176, 0.2);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--brand);
+      margin: 4px 0;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+    @media (max-width: 1200px) {
+      .container { grid-template-columns: 1fr; }
+      .design-token-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .design-token-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><span class="status-dot"></span>TooLoo Design Studio — Real-Time Generation</h1>
+      <div class="controls">
+        <a class="btn" href="/control-room">Chat</a>
+        <a class="btn" href="/design-demo.html">Showcase</a>
+        <button class="btn primary" id="refreshBtn">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Input Configuration</div>
+      <div class="panel-content">
+        <form class="input-form" id="designForm">
+          <div class="form-group">
+            <label>Figma File URL</label>
+            <input type="text" id="figmaUrl" placeholder="https://www.figma.com/file/ABC123/MyDesignSystem" />
+          </div>
+          <div class="form-group">
+            <label>Design Brief (Optional)</label>
+            <textarea id="designBrief" placeholder="E.g. 'Modern SaaS design system with purple gradient'"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Target Elements</label>
+            <input type="text" id="targetElements" placeholder="[data-design-system], #app, .container" value="[data-design-system]" />
+          </div>
+          <button type="submit" class="btn-submit" id="generateBtn">▶ Generate from Figma</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Design Tokens (Real-Time)<span id="tokenCount">0 tokens</span></div>
+      <div class="panel-content">
+        <div id="tokenGrid" class="design-token-grid"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Token Stream (Live)</div>
+      <div class="panel-content">
+        <div id="streamOutput" class="stream-output">Waiting for input...</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Generation Statistics</div>
+      <div class="panel-content">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Colors</div><div class="stat-value" id="colorCount">0</div></div>
+          <div class="stat-card"><div class="stat-label">Typography</div><div class="stat-value" id="typographyCount">0</div></div>
+          <div class="stat-card"><div class="stat-label">Components</div><div class="stat-value" id="componentCount">0</div></div>
+          <div class="stat-card"><div class="stat-label">CSS Variables</div><div class="stat-value" id="cssCount">0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api/v1';
+    const form = document.getElementById('designForm');
+    const figmaUrlInput = document.getElementById('figmaUrl');
+    const generateBtn = document.getElementById('generateBtn');
+    const streamOutput = document.getElementById('streamOutput');
+    const tokenGrid = document.getElementById('tokenGrid');
+    const tokenCount = document.getElementById('tokenCount');
+    const refreshBtn = document.getElementById('refreshBtn');
+    let designTokens = {};
+    let isGenerating = false;
+
+    function loadState() {
+      const saved = localStorage.getItem('design-studio-state');
+      if (saved) try { const state = JSON.parse(saved); if (state.figmaUrl) figmaUrlInput.value = state.figmaUrl; } catch (e) {}
+    }
+
+    function saveState() {
+      localStorage.setItem('design-studio-state', JSON.stringify({ figmaUrl: figmaUrlInput.value }));
+    }
+
+    function appendStream(text) {
+      streamOutput.textContent += text;
+      streamOutput.scrollTop = streamOutput.scrollHeight;
+    }
+
+    function clearStream() {
+      streamOutput.textContent = '';
+      streamOutput.classList.remove('generating');
+    }
+
+    function updateTokens(data) {
+      const colors = data.colors || {};
+      const typography = data.typography || {};
+      const components = data.components || {};
+      designTokens = { ...colors, ...typography, ...components };
+      tokenCount.textContent = `${Object.keys(designTokens).length} tokens`;
+      document.getElementById('colorCount').textContent = Object.keys(colors).length;
+      document.getElementById('typographyCount').textContent = Object.keys(typography).length;
+      document.getElementById('componentCount').textContent = Object.keys(components).length;
+      tokenGrid.innerHTML = '';
+      Object.entries(designTokens).slice(0, 12).forEach(([key, value]) => {
+        const box = document.createElement('div');
+        box.className = 'token-box';
+        let color = '#999';
+        if (typeof value === 'string' && value.startsWith('#')) color = value;
+        else if (typeof value === 'object' && value.color) color = value.color;
+        box.innerHTML = `<div class="token-swatch" style="background: ${color}"></div><div style="color: var(--muted);">${key}</div>`;
+        tokenGrid.appendChild(box);
+      });
+    }
+
+    async function generateDesign(e) {
+      e.preventDefault();
+      if (isGenerating) return;
+      const figmaUrl = figmaUrlInput.value.trim();
+      if (!figmaUrl) { alert('Please provide a Figma file URL'); return; }
+      isGenerating = true;
+      generateBtn.disabled = true;
+      clearStream();
+      streamOutput.classList.add('generating');
+      saveState();
+
+      appendStream('🎨 Initializing design generation...\n📁 Figma URL: ' + figmaUrl + '\n\n');
+
+      try {
+        appendStream('▶ Step 1: Importing design system from Figma...\n');
+        const importRes = await fetch(`${API_BASE}/design/import-figma`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ figmaUrl, apiToken: localStorage.getItem('figma-api-token') || '' })
+        });
+        const importData = await importRes.json();
+        if (!importData.ok) {
+          appendStream(`✗ Import failed: ${importData.error}\n`);
+        } else {
+          appendStream(`✓ Imported ${importData.tokensImported} tokens\n`);
+          updateTokens(importData.designSystemUpdated || {});
+        }
+
+        appendStream('▶ Step 2: Generating CSS variables...\n');
+        const cssRes = await fetch(`${API_BASE}/design/generate-css`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        const cssData = await cssRes.json();
+        if (cssData.ok) { appendStream(`✓ Generated ${cssData.variablesCount} CSS variables\n\n`); document.getElementById('cssCount').textContent = cssData.variablesCount; }
+
+        appendStream('▶ Step 3: Applying tokens to UI...\n');
+        const applyRes = await fetch(`${API_BASE}/design/apply-tokens`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        const applyData = await applyRes.json();
+        if (applyData.ok) { appendStream(`✓ Applied tokens\n\n`); }
+
+        appendStream('✨ Design generation complete!\n💾 Ready to export...\n');
+      } catch (error) {
+        appendStream(`✗ Error: ${error.message}\n`);
+      } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        streamOutput.classList.remove('generating');
+      }
+    }
+
+    form.addEventListener('submit', generateDesign);
+    refreshBtn.addEventListener('click', () => { location.reload(); });
+    loadState();
+  </script>
+</body>
+</html>

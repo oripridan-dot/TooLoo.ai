@@ -44,6 +44,16 @@ Port 3123  → servers/orchestrator.js (/api/v1/system/*)
 - Use `npm run branch:status` to report branch, cleanliness, and upstream state in updates
 - New features: `feature/<summary>` from `main`; release branches `release/v{major}.{minor}`; hotfix branches `hotfix/{ticket}`
 
+## User Context
+**⚠️ CRITICAL**: This is a **single-user personal project** – TooLoo.ai is built for and maintained by a single developer.
+- No multi-tenant support needed
+- No authentication/authorization required
+- No scaling for multiple concurrent users
+- No user management or role-based features
+- All features are optimized for **personal use only**
+- Consider this context in architecture decisions, documentation, and all suggestions
+- Recommendations should prioritize **simplicity and personal productivity** over enterprise patterns
+
 ## Communication Protocol
 - Always respond with the pattern: **Outcome • Tested • Impact • Next**
 - Keep responses lean, bullet-first, and reference files using inline backticks (`path/to/file`)

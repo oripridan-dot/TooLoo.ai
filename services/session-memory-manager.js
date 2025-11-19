@@ -7,6 +7,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import ConversationMemoryEngine, { getConversationMemoryEngine } from '../engine/conversation-memory-engine.js';
+import { getContextInjectionEngine } from '../engine/context-injection-engine.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SESSION_DIR = path.join(__dirname, '../data/sessions');
@@ -19,6 +21,8 @@ const MEMORY_WINDOW = 10; // Keep last 10 messages for context
 export class SessionMemoryManager {
   constructor() {
     this.sessions = new Map();
+    this.memoryEngines = new Map(); // Per-session memory engines
+    this.contextInjectors = new Map(); // Per-session context injectors
     this.initialized = false;
   }
 
@@ -112,6 +116,10 @@ export class SessionMemoryManager {
     } else if (role === 'assistant') {
       session.stats.responseCount++;
     }
+
+    // Add to advanced memory engine (Phase 7 upgrade)
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+    memoryEngine.addMessage(role, content, metadata);
 
     await this.saveSession(session);
     return message;
@@ -268,12 +276,134 @@ export class SessionMemoryManager {
       const toKeep = allSessions.slice(0, 50);
       this.sessions.clear();
       toKeep.forEach(s => this.sessions.set(s.id, s));
-      
+
       // Re-save all sessions
       const sessions = Array.from(this.sessions.values());
       await fs.writeFile(SESSION_FILE, JSON.stringify(sessions, null, 2), 'utf8');
       console.log(`[SessionMemory] Cleaned up sessions, keeping last 50`);
     }
+  }
+
+  /**
+   * ============ PHASE 7: ADVANCED MEMORY FEATURES ============
+   */
+
+  /**
+   * Get intelligent conversation history with context injection
+   * @param {string} sessionId
+   * @param {string} userId
+   * @param {string} currentMessage - User's current message
+   * @param {object} options - { strategy: 'hybrid' | 'relevance' | 'recency', limit: 50 }
+   * @returns {object} { history, contextInjection, stats }
+   */
+  async getIntelligentHistory(sessionId, userId, currentMessage = '', options = {}) {
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+    const injector = this._getOrCreateInjector(sessionId, userId, options);
+
+    // Get raw conversation history
+    const history = memoryEngine.getConversationHistory({
+      limit: options.limit || 50,
+      includeContext: true
+    });
+
+    // Build intelligent context injection
+    const contextData = injector.buildContextInjection(
+      memoryEngine,
+      currentMessage,
+      { strategy: options.strategy || 'hybrid' }
+    );
+
+    // Get memory statistics
+    const stats = memoryEngine.getMemoryStats();
+
+    return {
+      history,
+      contextInjection: contextData.injection,
+      contextMessages: contextData.contextMessages,
+      stats: {
+        ...contextData.stats,
+        memoryStats: stats
+      }
+    };
+  }
+
+  /**
+   * Record interaction outcome for learning
+   */
+  recordInteractionOutcome(sessionId, userId, message, intent, success, metadata = {}) {
+    const injector = this._getOrCreateInjector(sessionId, userId);
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+
+    const contextMessages = memoryEngine.getConversationHistory({ limit: 10 });
+
+    injector.recordResult(message, intent, contextMessages, success, metadata);
+  }
+
+  /**
+   * Search conversation by keyword or topic
+   */
+  searchConversation(sessionId, userId, query, options = {}) {
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+    return memoryEngine.searchMessages(query, {
+      maxResults: options.maxResults || 10,
+      recentOnly: options.recentOnly || false
+    });
+  }
+
+  /**
+   * Get memory statistics
+   */
+  getMemoryStatistics(sessionId, userId) {
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+    return memoryEngine.getMemoryStats();
+  }
+
+  /**
+   * Export conversation for analysis
+   */
+  exportConversation(sessionId, userId, format = 'json') {
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+    return memoryEngine.exportConversation(format);
+  }
+
+  /**
+   * Truncate old memory (keep last N messages for privacy)
+   */
+  truncateHistory(sessionId, userId, keepMessages = 100) {
+    const memoryEngine = this._getOrCreateMemoryEngine(sessionId, userId);
+    return memoryEngine.truncateHistory(keepMessages);
+  }
+
+  /**
+   * ============ PRIVATE HELPERS ============
+   */
+
+  /**
+   * Get or create memory engine for session
+   */
+  _getOrCreateMemoryEngine(sessionId, userId) {
+    const key = `${userId}:${sessionId}`;
+    if (!this.memoryEngines.has(key)) {
+      const engine = new ConversationMemoryEngine({ sessionId, userId });
+      this.memoryEngines.set(key, engine);
+    }
+    return this.memoryEngines.get(key);
+  }
+
+  /**
+   * Get or create context injector for session
+   */
+  _getOrCreateInjector(sessionId, userId, options = {}) {
+    const key = `${userId}:${sessionId}`;
+    if (!this.contextInjectors.has(key)) {
+      const injector = getContextInjectionEngine({
+        strategy: options.strategy || 'hybrid',
+        maxContextTokens: options.maxContextTokens || 1500,
+        recentLimit: options.recentLimit || 5
+      });
+      this.contextInjectors.set(key, injector);
+    }
+    return this.contextInjectors.get(key);
   }
 }
 

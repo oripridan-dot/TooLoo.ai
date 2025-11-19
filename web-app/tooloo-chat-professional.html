@@ -490,6 +490,237 @@
       color: #ff575c;
     }
 
+    /* Smart Intelligence Widget */
+    .smart-intelligence-widget {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(0, 233, 176, 0.08);
+      border: 1px solid rgba(0, 233, 176, 0.2);
+      font-size: 12px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .si-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(0, 233, 176, 0.1);
+    }
+
+    .si-title {
+      font-weight: 600;
+      color: #00e9b0;
+    }
+
+    .si-confidence {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .si-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .si-metric {
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(0, 233, 176, 0.1);
+    }
+
+    .si-label {
+      font-size: 10px;
+      color: #6b7a8f;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .si-value {
+      font-weight: 600;
+      color: #b8c5d6;
+      font-size: 11px;
+    }
+
+    .si-action-accept {
+      color: #7cff3c;
+    }
+
+    .si-action-caution {
+      color: #ffd91c;
+    }
+
+    .si-action-review {
+      color: #ff9933;
+    }
+
+    .si-action-revise {
+      color: #ff575c;
+    }
+
+    .si-status {
+      color: #00e9b0;
+    }
+
+    .si-count {
+      color: #7c5cff;
+    }
+
+    .si-section {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .si-section-title {
+      font-weight: 600;
+      color: #00e9b0;
+      font-size: 11px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .si-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .si-list li {
+      padding: 4px 0;
+      color: #b8c5d6;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .si-list li:before {
+      content: "→ ";
+      color: #00e9b0;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .si-list.si-gaps li:before {
+      content: "⚠️ ";
+      color: #ff9933;
+    }
+
+    .si-findings {
+      margin-top: 8px;
+      padding: 8px;
+      border-left: 3px solid #00e9b0;
+      background: rgba(0, 233, 176, 0.05);
+      border-radius: 4px;
+    }
+
+    .si-finding {
+      font-size: 11px;
+      color: #b8c5d6;
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    .si-header-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(0, 233, 176, 0.1);
+      border: 1px solid rgba(0, 233, 176, 0.2);
+      font-size: 12px;
+    }
+
+    .si-badge-icon {
+      font-size: 14px;
+    }
+
+    .si-badge-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .si-badge-value {
+      font-weight: 700;
+      color: #00e9b0;
+      font-size: 13px;
+    }
+
+    .si-badge-label {
+      font-size: 10px;
+      color: #6b7a8f;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .si-feedback {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(124, 92, 255, 0.1);
+    }
+
+    .si-feedback-label {
+      font-size: 10px;
+      color: #8b96a8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .si-feedback-btn {
+      background: none;
+      border: 1px solid rgba(124, 92, 255, 0.2);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+    }
+
+    .si-feedback-btn:hover:not(:disabled) {
+      border-color: rgba(124, 92, 255, 0.4);
+      background: rgba(124, 92, 255, 0.1);
+      transform: scale(1.1);
+    }
+
+    .si-feedback-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .si-thumbs-up:hover:not(:disabled) {
+      border-color: #7cff3c;
+      background: rgba(124, 255, 60, 0.1);
+    }
+
+    .si-thumbs-down:hover:not(:disabled) {
+      border-color: #ff575c;
+      background: rgba(255, 87, 92, 0.1);
+    }
+
+    .si-report:hover:not(:disabled) {
+      border-color: #ffd91c;
+      background: rgba(255, 217, 28, 0.1);
+    }
+
     /* Scrollbar styling */
     .sidebar-content::-webkit-scrollbar,
     .insights-content::-webkit-scrollbar,
@@ -568,7 +799,7 @@
           <span>Mode:</span>
           <select id="synthesis-mode" style="background: rgba(124, 92, 255, 0.2); border: 1px solid rgba(124, 92, 255, 0.4); color: #7c5cff; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px;">
             <option value="synthesis">Fast Synthesis</option>
-            <option value="ensemble">Multi-Provider</option>
+            <option value="ensemble" selected>Multi-Provider</option>
           </select>
         </span>
         <span class="stat-badge">
@@ -1138,7 +1369,7 @@
 
       // Get response from TooLoo synthesis (multiple providers)
       try {
-        const mode = $('synthesis-mode')?.value || 'synthesis';
+        const mode = $('synthesis-mode')?.value || 'ensemble';
         const endpoint = mode === 'ensemble' ? '/api/v1/chat/ensemble' : '/api/v1/chat/synthesis';
         
         const response = await fetch(endpoint, {
@@ -1159,12 +1390,23 @@
         
         if (actualResponse) {
           removeTypingIndicator();
+          const messagesEl = $('chat-messages');
+          const lastMessage = messagesEl.lastElementChild;
+          
           addMessage('assistant', actualResponse, { 
             provider: responseData?.provider,
             providerCount: responseData?.providerCount,
             confidence: responseData?.metadata?.confidence || responseData?.confidence,
             mode: responseData?.ensembleMode || responseData?.synthesisMode
           });
+          
+          // Attach Smart Intelligence validation widget to the response
+          const responseMessage = messagesEl.lastElementChild;
+          if (smartIntelligence && responseMessage) {
+            setTimeout(() => {
+              smartIntelligence.attachToMessage(responseMessage, text, actualResponse);
+            }, 100);
+          }
           
           // Estimate tokens (rough estimate: 4 chars = 1 token)
           state.totalTokens += Math.ceil(text.length / 4) + Math.ceil(actualResponse.length / 4);
@@ -1251,6 +1493,169 @@
     }
 
     // ========================================================================
+    // Smart Intelligence Integration
+    // ========================================================================
+    let smartIntelligence = null;
+
+    async function initSmartIntelligence() {
+      // Create inline widget class since we can't load external modules in HTML
+      smartIntelligence = {
+        apiBase: `${window.location.protocol}//${window.location.host}`,
+        validationInProgress: false,
+
+        async validateResponse(question, responseText) {
+          try {
+            this.validationInProgress = true;
+            const response = await fetch(`${this.apiBase}/api/v1/chat/smart-intelligence`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question,
+                responseText,
+                metadata: { source: 'chat-widget' }
+              })
+            });
+
+            if (!response.ok) {
+              console.warn('Smart Intelligence validation failed');
+              return null;
+            }
+
+            const data = await response.json();
+            this.validationInProgress = false;
+            // Response can be wrapped in content.intelligenceReport OR directly at root level
+            return data.content?.intelligenceReport || data.intelligenceReport;
+          } catch (error) {
+            console.error('Smart Intelligence error:', error);
+            this.validationInProgress = false;
+            return null;
+          }
+        },
+
+        createValidationWidget(report) {
+          if (!report) return null;
+
+          const assessment = report.finalAssessment || {};
+          const analysis = report.analysis || {};
+          const confidence = assessment.confidenceScore || 0;
+          const confColor = confidence >= 80 ? '#10b981' : 
+                            confidence >= 60 ? '#f59e0b' : 
+                            confidence >= 40 ? '#f97316' : '#ef4444';
+
+          const widget = document.createElement('div');
+          widget.className = 'smart-intelligence-widget';
+          
+          let html = `
+            <div class="si-header">
+              <span class="si-title">🔍 Validation</span>
+              <span class="si-confidence" style="color: ${confColor}">
+                ${confidence}% confidence
+              </span>
+            </div>
+            
+            <div class="si-grid">
+              <div class="si-metric">
+                <div class="si-label">Recommendation</div>
+                <div class="si-value si-action-${assessment.recommendedAction?.toLowerCase() || 'review'}">
+                  ${this.formatAction(assessment.recommendedAction)}
+                </div>
+              </div>
+              
+              <div class="si-metric">
+                <div class="si-label">Status</div>
+                <div class="si-value si-status">
+                  ${this.formatStatus(assessment.verificationStatus)}
+                </div>
+              </div>
+              
+              <div class="si-metric">
+                <div class="si-label">Insights</div>
+                <div class="si-value si-count">
+                  ${analysis.insights?.length || 0}
+                </div>
+              </div>
+              
+              <div class="si-metric">
+                <div class="si-label">Gaps</div>
+                <div class="si-value si-count">
+                  ${analysis.gaps?.length || 0}
+                </div>
+              </div>
+            </div>
+          `;
+
+          // Add insights section
+          if (analysis.insights && analysis.insights.length > 0) {
+            html += '<div class="si-section"><div class="si-section-title">Key Insights</div><ul class="si-list">';
+            analysis.insights.slice(0, 2).forEach(insight => {
+              const text = typeof insight === 'string' ? insight : insight?.description || insight?.insight || 'Unknown';
+              html += `<li>${this.escapeHtml(text)}</li>`;
+            });
+            html += '</ul></div>';
+          }
+
+          // Add gaps section
+          if (analysis.gaps && analysis.gaps.length > 0) {
+            html += '<div class="si-section"><div class="si-section-title">Areas to Review</div><ul class="si-list si-gaps">';
+            analysis.gaps.slice(0, 2).forEach(gap => {
+              const gapText = typeof gap === 'string' ? gap : gap?.gap || 'Unknown gap';
+              const severity = typeof gap === 'object' ? gap?.severity || 'medium' : 'medium';
+              html += `<li>${this.escapeHtml(gapText)} <span style="font-size: 10px; color: #999;">(${severity})</span></li>`;
+            });
+            html += '</ul></div>';
+          }
+
+          // Add findings
+          if (assessment.keyFindings && assessment.keyFindings.length > 0) {
+            html += `<div class="si-findings"><div class="si-finding">${this.escapeHtml(assessment.keyFindings[0])}</div></div>`;
+          }
+
+          widget.innerHTML = html;
+          return widget;
+        },
+
+        escapeHtml(text) {
+          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#039;' };
+          return String(text).replace(/[&<>"']/g, m => map[m]);
+        },
+
+        formatAction(action) {
+          const actions = {
+            'accept': '✅ Accept',
+            'caution': '⚠️ Use with Caution',
+            'review': '🔍 Review',
+            'revise': '📝 Revise'
+          };
+          return actions[action?.toLowerCase()] || action;
+        },
+
+        formatStatus(status) {
+          const statuses = {
+            'verified': '✓ Verified',
+            'partially-verified': '◐ Partial',
+            'unverified': '○ Unverified'
+          };
+          return statuses[status?.toLowerCase()] || status;
+        },
+
+        async attachToMessage(messageElement, question, responseText) {
+          const report = await this.validateResponse(question, responseText);
+          if (!report) return;
+
+          const widget = this.createValidationWidget(report);
+          if (!widget) return;
+
+          const wrapper = messageElement.querySelector('div:nth-child(2)');
+          if (wrapper) {
+            wrapper.appendChild(widget);
+          } else {
+            messageElement.appendChild(widget);
+          }
+        }
+      };
+    }
+
+    // ========================================================================
     // Initialization
     // ========================================================================
     async function init() {
@@ -1260,6 +1665,7 @@
       setupEventListeners();
       initQuickQueries();
       initQuickActions();
+      await initSmartIntelligence();
       
       // Load data
       await loadSessions();

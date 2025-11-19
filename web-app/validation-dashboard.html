@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Smart Intelligence Validation Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+      color: #e0e6f0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      background: linear-gradient(135deg, #7c5cff, #00e9b0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      color: #8b98ac;
+    }
+
+    .time-range {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .time-range button {
+      padding: 8px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #b8c5d6;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .time-range button.active {
+      background: #7c5cff;
+      border-color: #7c5cff;
+      color: white;
+    }
+
+    .time-range button:hover {
+      background: rgba(124, 92, 255, 0.2);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(25, 35, 60, 0.6));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #6b7a8f;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #7c5cff;
+      margin-bottom: 8px;
+    }
+
+    .stat-meta {
+      font-size: 13px;
+      color: #8b98ac;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 10px;
+    }
+
+    .chart-full {
+      grid-column: 1 / -1;
+    }
+
+    .distribution {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .dist-item {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: center;
+    }
+
+    .dist-label {
+      font-size: 11px;
+      color: #6b7a8f;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .dist-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #b8c5d6;
+    }
+
+    .dist-value.critical { color: #ef4444; }
+    .dist-value.high { color: #f59e0b; }
+    .dist-value.moderate { color: #10b981; }
+    .dist-value.low { color: #3b82f6; }
+    .dist-value.unverified { color: #8b5cf6; }
+
+    .trends {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .trend-card {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 1024px) {
+      .trends {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #6b7a8f;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .confidence-bar {
+      display: inline-block;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #ef4444, #f97316, #f59e0b, #10b981);
+      width: 80px;
+      margin-right: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #8b98ac;
+    }
+
+    .error {
+      padding: 15px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: #fecaca;
+      margin-bottom: 20px;
+    }
+
+    .success {
+      padding: 15px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      color: #a7f3d0;
+      margin-bottom: 20px;
+    }
+
+    .question-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+
+    .question-list li {
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .question-count {
+      background: #7c5cff;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .refresh-btn {
+      padding: 8px 16px;
+      background: #7c5cff;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+
+    .refresh-btn:hover {
+      background: #9d8cff;
+      transform: translateY(-1px);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>📊 Validation Dashboard</h1>
+        <div class="header-meta">
+          <span id="summary-date">Loading...</span>
+          <span id="summary-count">0 validations</span>
+        </div>
+      </div>
+      <button class="refresh-btn" onclick="refreshData()">↻ Refresh</button>
+    </header>
+
+    <div class="time-range">
+      <button class="active" onclick="setTimeRange(7)">7 Days</button>
+      <button onclick="setTimeRange(30)">30 Days</button>
+      <button onclick="setTimeRange(90)">90 Days</button>
+    </div>
+
+    <div id="error-container"></div>
+    <div id="success-container"></div>
+
+    <!-- Key Metrics -->
+    <div class="grid">
+      <div class="card">
+        <div class="stat-label">Average Confidence</div>
+        <div class="stat-value" id="avg-confidence">--</div>
+        <div class="stat-meta">Across all validations</div>
+      </div>
+
+      <div class="card">
+        <div class="stat-label">Total Validations</div>
+        <div class="stat-value" id="total-validations">0</div>
+        <div class="stat-meta" id="validation-date">This period</div>
+      </div>
+
+      <div class="card">
+        <div class="stat-label">Avg Response Length</div>
+        <div class="stat-value" id="avg-response-length">--</div>
+        <div class="stat-meta">Characters</div>
+      </div>
+
+      <div class="card">
+        <div class="stat-label">Processing Speed</div>
+        <div class="stat-value" id="avg-processing">--</div>
+        <div class="stat-meta">Average milliseconds</div>
+      </div>
+    </div>
+
+    <!-- Confidence Distribution -->
+    <div class="grid">
+      <div class="card chart-full">
+        <div class="stat-label">Confidence Score Distribution</div>
+        <div class="distribution" id="confidence-dist">
+          <div class="dist-item">
+            <div class="dist-label">Critical (90+)</div>
+            <div class="dist-value critical" id="dist-critical">0</div>
+          </div>
+          <div class="dist-item">
+            <div class="dist-label">High (80-89)</div>
+            <div class="dist-value high" id="dist-high">0</div>
+          </div>
+          <div class="dist-item">
+            <div class="dist-label">Moderate (70-79)</div>
+            <div class="dist-value moderate" id="dist-moderate">0</div>
+          </div>
+          <div class="dist-item">
+            <div class="dist-label">Low (50-69)</div>
+            <div class="dist-value low" id="dist-low">0</div>
+          </div>
+          <div class="dist-item">
+            <div class="dist-label">Unverified (&lt;50)</div>
+            <div class="dist-value unverified" id="dist-unverified">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="trends">
+      <div class="card trend-card">
+        <div class="stat-label">Confidence Trend</div>
+        <div class="chart-container">
+          <canvas id="confidence-trend-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card trend-card">
+        <div class="stat-label">Recommended Actions</div>
+        <div class="chart-container">
+          <canvas id="actions-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card trend-card">
+        <div class="stat-label">Verification Status</div>
+        <div class="chart-container">
+          <canvas id="verification-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card trend-card">
+        <div class="stat-label">Quality Metrics</div>
+        <div class="chart-container">
+          <canvas id="quality-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Questions -->
+    <div class="card">
+      <div class="stat-label">Most Validated Questions</div>
+      <ul class="question-list" id="top-questions">
+        <li style="padding: 20px; text-align: center; color: #6b7a8f;">No data yet</li>
+      </ul>
+    </div>
+
+    <!-- Recent Validations Table -->
+    <div class="card">
+      <div class="stat-label">Recent Validations</div>
+      <table id="recent-table">
+        <thead>
+          <tr>
+            <th>Confidence</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Insights</th>
+            <th>Gaps</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="recent-tbody">
+          <tr><td colspan="6" style="text-align: center; color: #6b7a8f;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let currentTimeRange = 7;
+    let confidenceTrendChart = null;
+    let actionsChart = null;
+    let verificationChart = null;
+    let qualityChart = null;
+
+    async function fetchAnalytics(days) {
+      try {
+        const response = await fetch(`/api/v1/smart-intelligence/analytics/summary?days=${days}`);
+        if (!response.ok) throw new Error('Failed to fetch analytics');
+        const data = await response.json();
+        // Handle both wrapped (content.summary) and direct (summary) response structures
+        const summary = data.content?.summary || data.summary || data;
+        return summary;
+      } catch (error) {
+        showError(`Failed to load analytics: ${error.message}`);
+        return null;
+      }
+    }
+
+    async function fetchTrend(days) {
+      try {
+        const response = await fetch(`/api/v1/smart-intelligence/analytics/trend?days=${days}`);
+        if (!response.ok) throw new Error('Failed to fetch trend');
+        const data = await response.json();
+        // Handle wrapped response
+        const trend = data.content?.trend || data.trend || data;
+        return Object.keys(trend).length > 0 ? { dates: Object.keys(trend), averages: Object.values(trend) } : null;
+      } catch (error) {
+        console.error('Trend fetch error:', error);
+        return null;
+      }
+    }
+
+    async function fetchActions(days) {
+      try {
+        const response = await fetch(`/api/v1/smart-intelligence/analytics/actions?days=${days}`);
+        if (!response.ok) throw new Error('Failed to fetch actions');
+        const data = await response.json();
+        // Handle wrapped response
+        const actions = data.content?.actions || data.actions || data;
+        return actions;
+      } catch (error) {
+        console.error('Actions fetch error:', error);
+        return null;
+      }
+    }
+
+    function showError(message) {
+      const container = document.getElementById('error-container');
+      container.innerHTML = `<div class="error">⚠️ ${message}</div>`;
+    }
+
+    function showSuccess(message) {
+      const container = document.getElementById('success-container');
+      container.innerHTML = `<div class="success">✓ ${message}</div>`;
+      setTimeout(() => { container.innerHTML = ''; }, 3000);
+    }
+
+    async function refreshData() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '⟳ Refreshing...';
+      await loadDashboard();
+      btn.disabled = false;
+      btn.textContent = '↻ Refresh';
+      showSuccess('Dashboard updated');
+    }
+
+    async function loadDashboard() {
+      const summary = await fetchAnalytics(currentTimeRange);
+      if (!summary) return;
+
+      // Update header
+      document.getElementById('summary-date').textContent = 
+        `Period: ${summary.timeRange?.first?.split('T')[0] || 'Unknown'} to ${summary.timeRange?.last?.split('T')[0] || 'Unknown'}`;
+      document.getElementById('summary-count').textContent = 
+        `${summary.totalValidations || 0} validations`;
+
+      // Update metrics
+      document.getElementById('avg-confidence').textContent = `${summary.averageConfidence || 0}%`;
+      document.getElementById('total-validations').textContent = summary.totalValidations || 0;
+      document.getElementById('avg-response-length').textContent = (summary.averageResponseLength || 0).toLocaleString();
+      document.getElementById('avg-processing').textContent = `${summary.processingTimeStats?.average || 0}ms`;
+
+      // Update distribution
+      const dist = summary.confidenceDistribution || {};
+      document.getElementById('dist-critical').textContent = dist.critical || 0;
+      document.getElementById('dist-high').textContent = dist.high || 0;
+      document.getElementById('dist-moderate').textContent = dist.moderate || 0;
+      document.getElementById('dist-low').textContent = dist.low || 0;
+      document.getElementById('dist-unverified').textContent = dist.unverified || 0;
+
+      // Update questions
+      const questions = summary.topQuestions || [];
+      const qList = document.getElementById('top-questions');
+      if (questions.length === 0) {
+        qList.innerHTML = '<li style="padding: 20px; text-align: center; color: #6b7a8f;">No questions yet</li>';
+      } else {
+        qList.innerHTML = questions.slice(0, 8).map(q => `
+          <li>
+            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              "${q.question.substring(0, 60)}${q.question.length > 60 ? '...' : ''}"
+            </span>
+            <span class="question-count">${q.count}</span>
+          </li>
+        `).join('');
+      }
+
+      // Update charts
+      await updateCharts(summary);
+    }
+
+    async function updateCharts(summary) {
+      const trend = await fetchTrend(currentTimeRange);
+      const actions = await fetchActions(currentTimeRange);
+
+      // Confidence Trend
+      if (trend && trend.dates && trend.averages) {
+        updateConfidenceTrendChart(trend.dates, trend.averages);
+      }
+
+      // Actions distribution
+      if (actions && actions.distribution) {
+        updateActionsChart(actions.distribution);
+      }
+
+      // Verification distribution
+      const verDist = summary.verificationDistribution || {};
+      updateVerificationChart(verDist);
+
+      // Quality metrics
+      updateQualityChart(summary);
+    }
+
+    function updateConfidenceTrendChart(dates, averages) {
+      const ctx = document.getElementById('confidence-trend-chart').getContext('2d');
+      
+      if (confidenceTrendChart) {
+        confidenceTrendChart.data.labels = dates;
+        confidenceTrendChart.data.datasets[0].data = averages;
+        confidenceTrendChart.update();
+      } else {
+        confidenceTrendChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [{
+              label: 'Average Confidence',
+              data: averages,
+              borderColor: '#7c5cff',
+              backgroundColor: 'rgba(124, 92, 255, 0.1)',
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, max: 100, ticks: { color: '#8b98ac' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              x: { ticks: { color: '#8b98ac' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+          }
+        });
+      }
+    }
+
+    function updateActionsChart(distribution) {
+      const ctx = document.getElementById('actions-chart').getContext('2d');
+      const labels = Object.keys(distribution);
+      const data = Object.values(distribution);
+
+      if (actionsChart) {
+        actionsChart.data.labels = labels;
+        actionsChart.data.datasets[0].data = data;
+        actionsChart.update();
+      } else {
+        actionsChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [{
+              data,
+              backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#b8c5d6', padding: 15 } }
+            }
+          }
+        });
+      }
+    }
+
+    function updateVerificationChart(distribution) {
+      const ctx = document.getElementById('verification-chart').getContext('2d');
+      const labels = ['Verified', 'Partially Verified', 'Unverified'];
+      const data = [
+        distribution.verified || 0,
+        distribution['partially-verified'] || 0,
+        distribution.unverified || 0
+      ];
+
+      if (verificationChart) {
+        verificationChart.data.datasets[0].data = data;
+        verificationChart.update();
+      } else {
+        verificationChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [{
+              data,
+              backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#b8c5d6', padding: 15 } }
+            }
+          }
+        });
+      }
+    }
+
+    function updateQualityChart(summary) {
+      const ctx = document.getElementById('quality-chart').getContext('2d');
+      const labels = ['Avg Insights', 'Avg Gaps', 'Avg Issues'];
+      const data = [
+        parseFloat(summary.averageInsights) || 0,
+        parseFloat(summary.averageGaps) || 0,
+        parseFloat(summary.averageIssues) || 0
+      ];
+
+      if (qualityChart) {
+        qualityChart.data.datasets[0].data = data;
+        qualityChart.update();
+      } else {
+        qualityChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Count',
+              data,
+              backgroundColor: ['#7c5cff', '#f59e0b', '#ef4444'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { color: '#8b98ac' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              x: { ticks: { color: '#8b98ac' }, grid: { display: false } }
+            }
+          }
+        });
+      }
+    }
+
+    function setTimeRange(days) {
+      currentTimeRange = days;
+      document.querySelectorAll('.time-range button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      loadDashboard();
+    }
+
+    // Initial load
+    loadDashboard();
+    setInterval(() => loadDashboard(), 60000); // Refresh every minute
+  </script>
+</body>
+</html>

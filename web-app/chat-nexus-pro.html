@@ -302,6 +302,202 @@
       padding-left: 4px;
     }
 
+    /* Smart Intelligence Widget Styles */
+    .smart-intelligence-widget {
+      margin-top: 10px;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(14, 165, 233, 0.05) 100%);
+      border-left: 3px solid #3b82f6;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .si-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .si-title {
+      font-weight: 600;
+      color: #1a202c;
+    }
+
+    .si-confidence {
+      font-weight: 700;
+    }
+
+    .si-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .si-metric {
+      padding: 6px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .si-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+
+    .si-value {
+      margin-top: 4px;
+      font-weight: 600;
+      color: #1a202c;
+    }
+
+    .si-action-accept {
+      color: #10b981;
+    }
+
+    .si-action-caution {
+      color: #f59e0b;
+    }
+
+    .si-action-review {
+      color: #3b82f6;
+    }
+
+    .si-action-revise {
+      color: #ef4444;
+    }
+
+    .si-status {
+      color: #0ea5e9;
+    }
+
+    .si-count {
+      color: #6b7280;
+    }
+
+    .si-section {
+      margin-top: 8px;
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+    }
+
+    .si-section-title {
+      font-weight: 600;
+      color: #1a202c;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .si-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .si-list li {
+      padding: 4px 0 4px 16px;
+      color: #475569;
+      font-size: 11px;
+      position: relative;
+      line-height: 1.4;
+    }
+
+    .si-list li:before {
+      content: '•';
+      position: absolute;
+      left: 6px;
+      color: #3b82f6;
+      font-weight: bold;
+    }
+
+    .si-list.si-gaps li:before {
+      content: '⚠';
+      color: #f59e0b;
+    }
+
+    .si-findings {
+      margin-top: 8px;
+      padding: 8px;
+      background: white;
+      border-left: 3px solid #0ea5e9;
+      border-radius: 4px;
+    }
+
+    .si-finding {
+      font-size: 10px;
+      color: #64748b;
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    .si-feedback {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .si-feedback-label {
+      font-size: 9px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .si-feedback-btn {
+      background: white;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+    }
+
+    .si-feedback-btn:hover:not(:disabled) {
+      border-color: rgba(59, 130, 246, 0.4);
+      background: rgba(59, 130, 246, 0.1);
+      transform: scale(1.1);
+    }
+
+    .si-feedback-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .si-thumbs-up:hover:not(:disabled) {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .si-thumbs-down:hover:not(:disabled) {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .si-report:hover:not(:disabled) {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.1);
+    }
+
     /* Input Area */
     .input-area {
       padding: 20px 32px;
@@ -747,6 +943,12 @@
         `;
         chatArea.appendChild(aiMsg);
 
+        // Run Smart Intelligence validation
+        if (window.SmartIntelligenceWidget) {
+          const widget = new SmartIntelligenceWidget();
+          widget.attachToMessage(aiMsg, text, data.response);
+        }
+
         chatArea.scrollTop = chatArea.scrollHeight;
       } catch (error) {
         console.error('Error:', error);
@@ -775,5 +977,8 @@
       }
     });
   </script>
+
+  <!-- Smart Intelligence Widget for response validation -->
+  <script src="/smart-intelligence-chat-widget.js"></script>
 </body>
 </html>
