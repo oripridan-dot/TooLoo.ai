@@ -8,6 +8,7 @@
     "info": "echo '📋 TooLoo.ai multi-service workspace'",
     "build": "echo '✅ Static HTML app - no build needed. Run: npm run start'",
     "dev": "bash startup.sh",
+    "dev:hot": "bash dev-hot-reload.sh",
     "start": "bash startup.sh",
     "start:guaranteed": "bash startup.sh",
     "start:web": "node servers/web-server.js",
