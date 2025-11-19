@@ -9,6 +9,9 @@ import environmentHub from '../engine/environment-hub.js';
 import ProductAnalysisEngine from '../engine/product-analysis-engine.js';
 import { FigmaAdapter } from '../lib/adapters/figma-adapter.js';
 import { ServiceFoundation } from '../lib/service-foundation.js';
+import DesignSystemAnalytics from '../lib/design-system-analytics.js';
+import DesignAutoRemediation from '../lib/design-auto-remediation.js';
+import { IndustryRegistry } from '../lib/design-industry-registry.js';
 
 class ProductDevelopmentServer {
   constructor() {
@@ -45,6 +48,12 @@ class ProductDevelopmentServer {
       patterns: {},
       guidelines: {}
     };
+    
+    // Phase 5 modules initialization
+    this.designAnalytics = new DesignSystemAnalytics();
+    this.autoRemediation = null; // Will be initialized with system
+    this.industryRegistry = new IndustryRegistry();
+    this.systemSnapshots = []; // For trend analysis
     
     this.initializeStorage();
     
@@ -1739,6 +1748,384 @@ class ProductDevelopmentServer {
             components: enhancer.components,
             timestamp: new Date().toISOString()
           }
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * PHASE 5: ADVANCED ANALYTICS ROUTES
+     * Trend analysis, benchmarking, accessibility audits, ML predictions
+     */
+
+    /**
+     * POST /api/v1/design/analytics/trends - Analyze design system trends over time
+     */
+    this.app.post('/api/v1/design/analytics/trends', async (req, res) => {
+      try {
+        const { systems } = req.body;
+
+        if (!systems || systems.length < 2) {
+          return res.status(400).json({
+            ok: false,
+            error: 'At least 2 systems required for trend analysis'
+          });
+        }
+
+        const trends = this.designAnalytics.analyzeTrends(systems);
+
+        res.json({
+          ok: true,
+          analysis: trends,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/analytics/benchmark - Benchmark against industry standards
+     */
+    this.app.post('/api/v1/design/analytics/benchmark', async (req, res) => {
+      try {
+        const { system, industry = 'saas' } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        const benchmark = this.designAnalytics.benchmarkAgainstIndustry(system, industry);
+
+        res.json({
+          ok: true,
+          benchmark,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/analytics/accessibility - Run WCAG compliance audit
+     */
+    this.app.post('/api/v1/design/analytics/accessibility', async (req, res) => {
+      try {
+        const { system } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        const audit = this.designAnalytics.auditAccessibility(system);
+
+        res.json({
+          ok: true,
+          audit,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/analytics/ml-predict - Predict system characteristics using ML
+     */
+    this.app.post('/api/v1/design/analytics/ml-predict', async (req, res) => {
+      try {
+        const { system, trainingSystems } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        // Train model if provided
+        if (trainingSystems && trainingSystems.length > 0) {
+          this.designAnalytics.trainMLModel(trainingSystems);
+        }
+
+        const prediction = this.designAnalytics.predictSystemCharacteristics(system);
+
+        res.json({
+          ok: true,
+          prediction,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/analytics/anomalies - Detect anomalies in design system
+     */
+    this.app.post('/api/v1/design/analytics/anomalies', async (req, res) => {
+      try {
+        const { system, baseline } = req.body;
+
+        if (!system || !baseline) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Both system and baseline required'
+          });
+        }
+
+        const anomalies = this.designAnalytics.detectAnomalies(system, baseline);
+
+        res.json({
+          ok: true,
+          anomalies,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * PHASE 5: AUTO-REMEDIATION ROUTES
+     * Detect and fix design system issues
+     */
+
+    /**
+     * POST /api/v1/design/remediate/analyze - Analyze system for issues
+     */
+    this.app.post('/api/v1/design/remediate/analyze', async (req, res) => {
+      try {
+        const { system } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        const remediation = new DesignAutoRemediation(system);
+        const analysis = remediation.analyzeForIssues();
+
+        res.json({
+          ok: true,
+          analysis,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/remediate/apply-fixes - Apply automatic fixes
+     */
+    this.app.post('/api/v1/design/remediate/apply-fixes', async (req, res) => {
+      try {
+        const { system } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        const remediation = new DesignAutoRemediation(system);
+        const result = remediation.applyAutoFixes();
+
+        res.json({
+          ok: true,
+          result,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/remediate/resolve-conflicts - Detect and resolve token conflicts
+     */
+    this.app.post('/api/v1/design/remediate/resolve-conflicts', async (req, res) => {
+      try {
+        const { system } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        const remediation = new DesignAutoRemediation(system);
+        const conflicts = remediation.resolveConflicts();
+
+        res.json({
+          ok: true,
+          conflicts,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/remediate/optimize - Generate optimization suggestions
+     */
+    this.app.post('/api/v1/design/remediate/optimize', async (req, res) => {
+      try {
+        const { system } = req.body;
+
+        if (!system) {
+          return res.status(400).json({ ok: false, error: 'System required' });
+        }
+
+        const remediation = new DesignAutoRemediation(system);
+        const optimizations = remediation.generateOptimizations();
+
+        res.json({
+          ok: true,
+          optimizations,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * PHASE 5: INDUSTRY REGISTRY ROUTES
+     * Cross-company benchmarking and standardization
+     */
+
+    /**
+     * POST /api/v1/registry/register - Register a design system to the industry registry
+     */
+    this.app.post('/api/v1/registry/register', async (req, res) => {
+      try {
+        const { system, company, industry, country, teamSize, yearsOld, tags } = req.body;
+
+        if (!system || !company) {
+          return res.status(400).json({
+            ok: false,
+            error: 'System and company name required'
+          });
+        }
+
+        const result = this.industryRegistry.registerSystem(system, {
+          company,
+          industry: industry || 'general',
+          country: country || 'Unknown',
+          teamSize: teamSize || 0,
+          yearsOld: yearsOld || 0,
+          tags: tags || []
+        });
+
+        res.json({
+          ok: true,
+          result,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/registry/search - Search the industry registry
+     */
+    this.app.get('/api/v1/registry/search', async (req, res) => {
+      try {
+        const { company, industry, minMaturity, minColors, sortBy, tags } = req.query;
+
+        const criteria = {};
+        if (company) criteria.company = company;
+        if (industry) criteria.industry = industry;
+        if (minMaturity) criteria.minMaturity = parseInt(minMaturity);
+        if (minColors) criteria.minColors = parseInt(minColors);
+        if (sortBy) criteria.sortBy = sortBy;
+        if (tags) criteria.tags = tags.split(',');
+
+        const results = this.industryRegistry.search(criteria);
+
+        res.json({
+          ok: true,
+          results,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/registry/benchmark/:industry - Get industry benchmarking data
+     */
+    this.app.get('/api/v1/registry/benchmark/:industry', async (req, res) => {
+      try {
+        const { industry } = req.params;
+
+        const benchmark = this.industryRegistry.benchmarkIndustry(industry || 'general');
+
+        res.json({
+          ok: true,
+          benchmark,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/registry/compare - Compare multiple companies
+     */
+    this.app.post('/api/v1/registry/compare', async (req, res) => {
+      try {
+        const { companies } = req.body;
+
+        if (!companies || companies.length < 2) {
+          return res.status(400).json({
+            ok: false,
+            error: 'At least 2 companies required for comparison'
+          });
+        }
+
+        const comparison = this.industryRegistry.compareCompanies(companies);
+
+        res.json({
+          ok: true,
+          comparison,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/registry/standardization/:industry - Get standardization metrics
+     */
+    this.app.get('/api/v1/registry/standardization/:industry', async (req, res) => {
+      try {
+        const { industry } = req.params;
+
+        const metrics = this.industryRegistry.getStandardizationMetrics(industry || 'general');
+
+        res.json({
+          ok: true,
+          metrics,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/registry/statistics - Get registry statistics
+     */
+    this.app.get('/api/v1/registry/statistics', async (req, res) => {
+      try {
+        const stats = this.industryRegistry.getStatistics();
+
+        res.json({
+          ok: true,
+          statistics: stats,
+          timestamp: new Date().toISOString()
         });
       } catch (err) {
         res.status(500).json({ ok: false, error: err.message });
