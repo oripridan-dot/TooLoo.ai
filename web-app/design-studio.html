@@ -128,6 +128,21 @@
       justify-content: space-between;
     }
 
+    .stream-status {
+      font-size: 11px;
+      color: var(--success);
+      padding: 4px 8px;
+      background: rgba(0, 233, 176, 0.1);
+      border-radius: 4px;
+      border: 1px solid rgba(0, 233, 176, 0.2);
+    }
+
+    .stream-status.inactive {
+      color: var(--muted);
+      background: rgba(150, 160, 175, 0.1);
+      border-color: rgba(150, 160, 175, 0.2);
+    }
+
     .panel-content {
       flex: 1;
       overflow-y: auto;
@@ -290,6 +305,7 @@
       <div class="controls">
         <a class="btn" href="/control-room">Chat</a>
         <a class="btn" href="/design-demo.html">Showcase</a>
+        <button class="btn primary" id="streamBtn" title="Stream design tokens in real-time">⚡ Stream Tokens</button>
         <button class="btn primary" id="refreshBtn">↻ Refresh</button>
       </div>
     </div>
@@ -347,12 +363,15 @@
     const form = document.getElementById('designForm');
     const figmaUrlInput = document.getElementById('figmaUrl');
     const generateBtn = document.getElementById('generateBtn');
+    const streamBtn = document.getElementById('streamBtn');
     const streamOutput = document.getElementById('streamOutput');
     const tokenGrid = document.getElementById('tokenGrid');
     const tokenCount = document.getElementById('tokenCount');
     const refreshBtn = document.getElementById('refreshBtn');
     let designTokens = {};
     let isGenerating = false;
+    let isStreaming = false;
+    let eventSource = null;
 
     function loadState() {
       const saved = localStorage.getItem('design-studio-state');
@@ -392,6 +411,59 @@
         box.innerHTML = `<div class="token-swatch" style="background: ${color}"></div><div style="color: var(--muted);">${key}</div>`;
         tokenGrid.appendChild(box);
       });
+    }
+
+    function startStreaming() {
+      if (isStreaming) {
+        stopStreaming();
+        return;
+      }
+
+      isStreaming = true;
+      streamBtn.textContent = '⏹ Stop Stream';
+      clearStream();
+      streamOutput.classList.add('generating');
+      appendStream('🎨 Connecting to design token stream...\n\n');
+
+      eventSource = new EventSource(`${API_BASE}/design/stream`);
+
+      eventSource.addEventListener('meta', (event) => {
+        const data = JSON.parse(event.data);
+        appendStream(`📊 Total Tokens: ${data.totalTokens}\n`);
+        appendStream(`📁 Categories: ${data.categories.join(', ')}\n\n`);
+      });
+
+      eventSource.addEventListener('category', (event) => {
+        const data = JSON.parse(event.data);
+        appendStream(`📂 ${data.name.toUpperCase()} (${data.count} tokens)\n`);
+      });
+
+      eventSource.addEventListener('token', (event) => {
+        const data = JSON.parse(event.data);
+        const valueStr = typeof data.value === 'string' ? data.value : JSON.stringify(data.value).substring(0, 30);
+        appendStream(`  • ${data.key}: ${valueStr}\n`);
+      });
+
+      eventSource.addEventListener('done', (event) => {
+        const data = JSON.parse(event.data);
+        appendStream(`\n✨ Stream complete! Generated ${data.totalTokens} design tokens\n`);
+        stopStreaming();
+      });
+
+      eventSource.addEventListener('error', (event) => {
+        appendStream(`\n✗ Stream error: ${event.message || 'Connection lost'}\n`);
+        stopStreaming();
+      });
+    }
+
+    function stopStreaming() {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      isStreaming = false;
+      streamBtn.textContent = '⚡ Stream Tokens';
+      streamOutput.classList.remove('generating');
     }
 
     async function generateDesign(e) {
@@ -443,6 +515,7 @@
     }
 
     form.addEventListener('submit', generateDesign);
+    streamBtn.addEventListener('click', startStreaming);
     refreshBtn.addEventListener('click', () => { location.reload(); });
     loadState();
   </script>

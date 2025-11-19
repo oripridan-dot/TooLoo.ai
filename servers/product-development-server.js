@@ -1740,6 +1740,68 @@ class ProductDevelopmentServer {
       }
     });
 
+    /**
+     * GET /api/v1/design/stream - Stream design token generation in real-time
+     * Streams design tokens as they are generated from current design system
+     * Enables real-time UI updates and progressive rendering
+     */
+    this.app.get('/api/v1/design/stream', async (req, res) => {
+      try {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        
+        const sendEvent = (type, data) => {
+          res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
+        };
+
+        // Send metadata
+        const tokenCount = Object.keys(this.designSystem).reduce((sum, cat) => 
+          sum + Object.keys(this.designSystem[cat] || {}).length, 0
+        );
+        sendEvent('meta', {
+          totalTokens: tokenCount,
+          categories: Object.keys(this.designSystem),
+          timestamp: new Date().toISOString()
+        });
+
+        // Stream each category and its tokens
+        for (const [category, tokens] of Object.entries(this.designSystem)) {
+          if (!tokens || typeof tokens !== 'object') continue;
+          
+          sendEvent('category', { name: category, count: Object.keys(tokens).length });
+          
+          // Simulate streaming by sending tokens with a small delay
+          const tokenEntries = Object.entries(tokens);
+          for (let i = 0; i < tokenEntries.length; i++) {
+            const [key, value] = tokenEntries[i];
+            
+            // Add small delay to simulate generation (20ms per token)
+            await new Promise(resolve => setTimeout(resolve, 20));
+            
+            sendEvent('token', {
+              category,
+              key,
+              value,
+              index: i,
+              total: tokenEntries.length
+            });
+          }
+        }
+
+        // Send completion
+        sendEvent('done', {
+          totalTokens: tokenCount,
+          generatedAt: new Date().toISOString()
+        });
+        
+        res.end();
+      } catch (err) {
+        console.error('Design stream error:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
   }
 
   setupIntegrationRoutes() {
