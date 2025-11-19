@@ -211,8 +211,11 @@
 
     .design-token-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       gap: 8px;
+      max-height: 450px;
+      overflow-y: auto;
+      padding-right: 8px;
     }
 
     .token-box {
@@ -345,6 +348,13 @@
     <div class="panel">
       <div class="panel-header">Design Tokens (Real-Time)<span id="tokenCount">0 tokens</span></div>
       <div class="panel-content">
+        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+          <button class="btn" id="filterAllBtn" onclick="filterTokens('all')" style="background: rgba(124,92,255,0.2); border-color: rgba(124,92,255,0.3);">All</button>
+          <button class="btn" id="filterColorsBtn" onclick="filterTokens('colors')">Colors</button>
+          <button class="btn" id="filterTypographyBtn" onclick="filterTokens('typography')">Typography</button>
+          <button class="btn" id="filterSpacingBtn" onclick="filterTokens('spacing')">Spacing</button>
+          <button class="btn" id="exportBtn" onclick="exportTokens()" style="margin-left: auto;">⬇ Export JSON</button>
+        </div>
         <div id="tokenGrid" class="design-token-grid"></div>
       </div>
     </div>
@@ -403,25 +413,79 @@
       streamOutput.classList.remove('generating');
     }
 
+    let currentFilter = 'all';
+    let allExtractedTokens = { colors: {}, typography: {}, spacing: {}, components: {} };
+
     function updateTokens(data) {
       const colors = data.colors || {};
       const typography = data.typography || {};
       const components = data.components || {};
       designTokens = { ...colors, ...typography, ...components };
+      allExtractedTokens = { colors, typography, spacing: {}, components };
       tokenCount.textContent = `${Object.keys(designTokens).length} tokens`;
       document.getElementById('colorCount').textContent = Object.keys(colors).length;
       document.getElementById('typographyCount').textContent = Object.keys(typography).length;
       document.getElementById('componentCount').textContent = Object.keys(components).length;
+      renderTokenGrid(designTokens);
+    }
+
+    function renderTokenGrid(tokens) {
       tokenGrid.innerHTML = '';
-      Object.entries(designTokens).slice(0, 12).forEach(([key, value]) => {
+      Object.entries(tokens).forEach(([key, value]) => {
         const box = document.createElement('div');
         box.className = 'token-box';
+        box.title = `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`;
         let color = '#999';
         if (typeof value === 'string' && value.startsWith('#')) color = value;
         else if (typeof value === 'object' && value.color) color = value.color;
-        box.innerHTML = `<div class="token-swatch" style="background: ${color}"></div><div style="color: var(--muted);">${key}</div>`;
+        box.innerHTML = `<div class="token-swatch" style="background: ${color}"></div><div style="color: var(--muted); word-break: break-all;">${key}</div>`;
         tokenGrid.appendChild(box);
       });
+    }
+
+    function filterTokens(type) {
+      currentFilter = type;
+      document.querySelectorAll('#filterAllBtn, #filterColorsBtn, #filterTypographyBtn, #filterSpacingBtn').forEach(b => {
+        b.style.background = '';
+        b.style.borderColor = '';
+      });
+      if (type === 'all') {
+        document.getElementById('filterAllBtn').style.background = 'rgba(124,92,255,0.2)';
+        document.getElementById('filterAllBtn').style.borderColor = 'rgba(124,92,255,0.3)';
+        renderTokenGrid(designTokens);
+      } else if (type === 'colors') {
+        document.getElementById('filterColorsBtn').style.background = 'rgba(124,92,255,0.2)';
+        document.getElementById('filterColorsBtn').style.borderColor = 'rgba(124,92,255,0.3)';
+        renderTokenGrid(allExtractedTokens.colors);
+      } else if (type === 'typography') {
+        document.getElementById('filterTypographyBtn').style.background = 'rgba(124,92,255,0.2)';
+        document.getElementById('filterTypographyBtn').style.borderColor = 'rgba(124,92,255,0.3)';
+        renderTokenGrid(allExtractedTokens.typography);
+      } else if (type === 'spacing') {
+        document.getElementById('filterSpacingBtn').style.background = 'rgba(124,92,255,0.2)';
+        document.getElementById('filterSpacingBtn').style.borderColor = 'rgba(124,92,255,0.3)';
+        renderTokenGrid(allExtractedTokens.spacing || {});
+      }
+    }
+
+    function exportTokens() {
+      const data = {
+        exported: new Date().toISOString(),
+        tokens: designTokens,
+        metadata: {
+          colors: Object.keys(allExtractedTokens.colors).length,
+          typography: Object.keys(allExtractedTokens.typography).length,
+          spacing: Object.keys(allExtractedTokens.spacing || {}).length,
+          components: Object.keys(allExtractedTokens.components).length
+        }
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `design-tokens-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     function startStreaming() {
@@ -599,9 +663,27 @@
           appendStream(`✓ Design maturity score: ${extractData.metadata.estimatedDesignMaturity}/100\n\n`);
           
           appendStream('▶ Step 2: Building design system from extracted tokens...\n');
-          updateTokens(extractData.designSystemUpdated || {});
-          appendStream(`✓ Integrated ${extractData.designSystemUpdated.colors} colors\n`);
-          appendStream(`✓ Added ${extractData.designSystemUpdated.typography} typography families\n\n`);
+          // Use the full tokens response instead of just designSystemUpdated
+          const fullTokens = extractData.tokens || {};
+          allExtractedTokens = {
+            colors: fullTokens.colors || {},
+            typography: fullTokens.typography || {},
+            spacing: fullTokens.spacing || {},
+            components: fullTokens.components || {}
+          };
+          designTokens = {
+            ...allExtractedTokens.colors,
+            ...allExtractedTokens.typography,
+            ...allExtractedTokens.spacing
+          };
+          tokenCount.textContent = `${Object.keys(designTokens).length} tokens`;
+          document.getElementById('colorCount').textContent = Object.keys(allExtractedTokens.colors).length;
+          document.getElementById('typographyCount').textContent = Object.keys(allExtractedTokens.typography).length;
+          document.getElementById('cssCount').textContent = Object.keys(allExtractedTokens.spacing).length;
+          renderTokenGrid(designTokens);
+          appendStream(`✓ Integrated ${Object.keys(allExtractedTokens.colors).length} colors\n`);
+          appendStream(`✓ Added ${Object.keys(allExtractedTokens.typography).length} typography families\n`);
+          appendStream(`✓ Added ${Object.keys(allExtractedTokens.spacing).length} spacing values\n\n`);
 
           appendStream('▶ Step 3: Generated CSS variables...\n');
           appendStream('✓ CSS ready for injection\n\n');
