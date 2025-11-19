@@ -1741,6 +1741,95 @@ class ProductDevelopmentServer {
     });
 
     /**
+     * POST /api/v1/design/load-sample - Load sample design system for demo
+     * Loads a complete sample design system with colors, typography, spacing, components
+     */
+    this.app.post('/api/v1/design/load-sample', async (req, res) => {
+      try {
+        // Load sample design system
+        this.designSystem = {
+          colors: {
+            'primary': '#7c5cff',
+            'primary-light': '#9d8cff',
+            'primary-dark': '#5a3fb8',
+            'secondary': '#00e9b0',
+            'secondary-light': '#33f0c0',
+            'secondary-dark': '#00cc8f',
+            'accent': '#ffe770',
+            'success': '#10b981',
+            'warning': '#f59e0b',
+            'error': '#ef4444',
+            'neutral-50': '#f9fafb',
+            'neutral-100': '#f3f4f6',
+            'neutral-900': '#111827'
+          },
+          typography: {
+            'font-family-sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto',
+            'font-size-xs': '12px',
+            'font-size-sm': '14px',
+            'font-size-base': '16px',
+            'font-size-lg': '18px',
+            'font-size-xl': '20px',
+            'font-weight-regular': '400',
+            'font-weight-medium': '500',
+            'font-weight-semibold': '600',
+            'font-weight-bold': '700',
+            'line-height-tight': '1.25',
+            'line-height-normal': '1.5',
+            'line-height-relaxed': '1.75'
+          },
+          spacing: {
+            'spacing-0': '0',
+            'spacing-1': '4px',
+            'spacing-2': '8px',
+            'spacing-3': '12px',
+            'spacing-4': '16px',
+            'spacing-6': '24px',
+            'spacing-8': '32px',
+            'spacing-12': '48px',
+            'spacing-16': '64px'
+          },
+          components: {
+            'button-base': 'padding: 8px 16px; border-radius: 6px; font-weight: 600;',
+            'input-base': 'padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 6px;',
+            'card-base': 'background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);',
+            'shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
+            'shadow-md': '0 4px 6px rgba(0, 0, 0, 0.1)',
+            'shadow-lg': '0 10px 15px rgba(0, 0, 0, 0.1)'
+          },
+          patterns: {
+            'card-padding': '16px',
+            'section-gap': '24px',
+            'border-radius-sm': '4px',
+            'border-radius-md': '8px',
+            'border-radius-lg': '12px'
+          },
+          guidelines: {
+            'min-touch-target': '44px',
+            'max-content-width': '1200px',
+            'mobile-breakpoint': '768px',
+            'tablet-breakpoint': '1024px'
+          }
+        };
+
+        const totalTokens = Object.keys(this.designSystem).reduce((sum, cat) => 
+          sum + Object.keys(this.designSystem[cat] || {}).length, 0
+        );
+
+        res.json({
+          ok: true,
+          message: 'Sample design system loaded',
+          totalTokens,
+          categories: Object.keys(this.designSystem),
+          design: this.designSystem
+        });
+      } catch (err) {
+        console.error('Load sample error:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
      * GET /api/v1/design/stream - Stream design token generation in real-time
      * Streams design tokens as they are generated from current design system
      * Enables real-time UI updates and progressive rendering
