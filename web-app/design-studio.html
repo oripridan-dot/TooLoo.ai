@@ -342,6 +342,26 @@
             <button type="submit" class="btn-submit" id="extractBtn" style="background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3);">🌐 Extract Design System</button>
           </form>
         </div>
+
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <h3 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.3px;">Extracted Systems Library</h3>
+          <div style="max-height: 250px; overflow-y: auto;">
+            <div id="systemsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+          <button class="btn" id="refreshSystemsBtn" style="margin-top: 12px; width: 100%;">↻ Refresh Library</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">System Analysis</div>
+      <div class="panel-content">
+        <div id="analysisPanel" style="font-size: 12px; color: var(--muted); line-height: 1.6;">
+          <p style="margin: 0; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+            Extract a design system above to see intelligent analysis including color relationships, typography hierarchies, and spacing scales.
+          </p>
+          <div id="analysisContent"></div>
+        </div>
       </div>
     </div>
 
@@ -710,6 +730,159 @@
     document.getElementById('extractForm').addEventListener('submit', extractDesign);
     streamBtn.addEventListener('click', startStreaming);
     refreshBtn.addEventListener('click', () => { location.reload(); });
+
+    // Design Systems Management
+    async function loadSystemsList() {
+      try {
+        const res = await fetch(`${API_BASE}/design/systems`);
+        const data = await res.json();
+        const listEl = document.getElementById('systemsList');
+        
+        if (!data.ok || !data.systems || data.systems.length === 0) {
+          listEl.innerHTML = '<p style="color: var(--muted); font-size: 12px; margin: 0;">No extracted systems yet</p>';
+          return;
+        }
+
+        listEl.innerHTML = data.systems.map((sys, i) => `
+          <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;" 
+               onmouseover="this.style.background='rgba(124,92,255,0.1)'" 
+               onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+            <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">${new URL(sys.sourceUrl).hostname}</div>
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">
+              ${sys.colorsExtracted} colors • ${sys.typographyExtracted} fonts • ${sys.spacingExtracted} spacing
+            </div>
+            <div style="font-size: 11px; color: var(--muted);">
+              Maturity: ${sys.estimatedMaturity}% | Readiness: ${sys.analysis?.readiness || '?'}/100
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 6px; font-size: 11px;">
+              <button class="btn" onclick="viewSystem('${sys.id}')" style="flex: 1; padding: 4px;">View</button>
+              <button class="btn" onclick="compareSystem('${sys.id}')" style="flex: 1; padding: 4px;">Compare</button>
+              <button class="btn" onclick="deleteSystem('${sys.id}')" style="flex: 1; padding: 4px; color: var(--danger);">Delete</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load systems:', err);
+      }
+    }
+
+    async function viewSystem(id) {
+      try {
+        const res = await fetch(`${API_BASE}/design/systems/${id}`);
+        const sys = await res.json();
+        
+        let analysisHtml = '<div style="margin-top: 12px;">';
+        
+        if (sys.analysis) {
+          // Colors Analysis
+          if (sys.analysis.colors.primary) {
+            analysisHtml += `
+              <div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">🎨 Color Palette</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                  <div>
+                    <span style="font-size: 11px; color: var(--muted);">Primary:</span>
+                    <div style="width: 100%; height: 24px; background: ${sys.analysis.colors.primary.hex}; border-radius: 4px; margin-top: 4px;"></div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text);">${sys.analysis.colors.primary.hex}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          // Typography Analysis
+          if (sys.analysis.typography.pairing) {
+            analysisHtml += `
+              <div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">📝 Typography</div>
+                <div style="font-size: 11px; line-height: 1.5;">
+                  <div>Display: <strong>${sys.analysis.typography.pairing.display}</strong></div>
+                  <div>Body: <strong>${sys.analysis.typography.pairing.body}</strong></div>
+                  <div style="color: var(--muted); margin-top: 4px;">Pairing Score: ${Math.round(sys.analysis.typography.pairing.confidence * 100)}%</div>
+                </div>
+              </div>
+            `;
+          }
+
+          // Spacing Analysis
+          if (sys.analysis.spacing.increment) {
+            analysisHtml += `
+              <div style="margin-bottom: 12px;">
+                <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">📏 Spacing Scale</div>
+                <div style="font-size: 11px;">
+                  <div>Base Increment: <strong>${sys.analysis.spacing.increment}px</strong></div>
+                  <div style="color: var(--muted);">Consistency: ${Math.round(sys.analysis.spacing.consistency * 100)}%</div>
+                </div>
+              </div>
+            `;
+          }
+
+          // Overall Quality
+          analysisHtml += `
+            <div style="padding: 8px; background: rgba(124,92,255,0.1); border-radius: 6px; font-size: 11px;">
+              <div>Completeness: <strong>${sys.analysis.completeness}%</strong></div>
+              <div>Design Maturity: <strong>${sys.analysis.maturity}%</strong></div>
+              <div>Readiness Score: <strong>${sys.analysis.readiness}/100</strong></div>
+            </div>
+          `;
+        }
+        analysisHtml += '</div>';
+        
+        document.getElementById('analysisContent').innerHTML = analysisHtml;
+      } catch (err) {
+        console.error('Failed to view system:', err);
+      }
+    }
+
+    async function compareSystem(id) {
+      // Load all systems and show comparison picker
+      const res = await fetch(`${API_BASE}/design/systems`);
+      const data = await res.json();
+      
+      const others = data.systems.filter(s => s.id !== id);
+      if (others.length === 0) {
+        alert('No other systems to compare with');
+        return;
+      }
+
+      const otherId = others[0].id; // Compare with first other system
+      
+      try {
+        const cmpRes = await fetch(`${API_BASE}/design/systems/${id}/compare/${otherId}`, { method: 'POST' });
+        const cmp = await cmpRes.json();
+        
+        let compHtml = '<div style="font-size: 11px; margin-top: 12px;">';
+        compHtml += `<div style="font-weight: 600; margin-bottom: 8px;">Comparing Systems</div>`;
+        compHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">`;
+        compHtml += `<div><strong>System 1</strong><br>${new URL(cmp.comparison.system1.source).hostname}</div>`;
+        compHtml += `<div><strong>System 2</strong><br>${new URL(cmp.comparison.system2.source).hostname}</div>`;
+        compHtml += `</div>`;
+        compHtml += `<div style="background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px;">`;
+        compHtml += `Colors: ${cmp.comparison.colors.system1Count} vs ${cmp.comparison.colors.system2Count} (Δ ${cmp.comparison.colors.difference})<br>`;
+        compHtml += `Typography: ${cmp.comparison.typography.system1Count} vs ${cmp.comparison.typography.system2Count} (Δ ${cmp.comparison.typography.difference})<br>`;
+        compHtml += `Spacing: ${cmp.comparison.spacing.system1Count} vs ${cmp.comparison.spacing.system2Count} (Δ ${cmp.comparison.spacing.difference})<br>`;
+        compHtml += `Maturity Gap: ${cmp.comparison.maturityGap} points`;
+        compHtml += `</div></div>`;
+        
+        document.getElementById('analysisContent').innerHTML = compHtml;
+      } catch (err) {
+        console.error('Comparison failed:', err);
+      }
+    }
+
+    async function deleteSystem(id) {
+      if (!confirm('Delete this extracted system?')) return;
+      
+      try {
+        await fetch(`${API_BASE}/design/systems/${id}`, { method: 'DELETE' });
+        loadSystemsList();
+      } catch (err) {
+        console.error('Failed to delete system:', err);
+      }
+    }
+
+    document.getElementById('refreshSystemsBtn')?.addEventListener('click', loadSystemsList);
+    loadSystemsList(); // Initial load
     loadState();
   </script>
 </body>

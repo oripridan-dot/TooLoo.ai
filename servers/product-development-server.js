@@ -1286,8 +1286,11 @@ class ProductDevelopmentServer {
           return res.status(400).json({ ok: false, error: 'Invalid URL format' });
         }
 
-        // Import and use design extractor
+        // Import extractors
         const { DesignExtractor } = await import('../lib/design-extractor.js');
+        const DesignSystemAnalyzer = await import('../lib/design-system-analyzer.js');
+        const Analyzer = DesignSystemAnalyzer.default;
+
         const extractor = new DesignExtractor({ verbose });
 
         if (verbose) console.log(`[Design Extract] Starting extraction from ${websiteUrl}`);
@@ -1307,19 +1310,24 @@ class ProductDevelopmentServer {
 
         const { system, tokens, css } = extraction;
 
+        // INTELLIGENT ANALYSIS: Apply semantic understanding
+        const analyzer = new Analyzer(system);
+        const analysis = analyzer.analyze();
+
         // Merge extracted design system into local storage
         this.designSystem = {
           ...this.designSystem,
           colors: { ...this.designSystem.colors, ...system.colors },
           typography: { ...this.designSystem.typography, ...system.typography },
           spacing: { ...this.designSystem.spacing, ...system.spacing },
-          components: { ...this.designSystem.components, ...system.components }
+          components: { ...this.designSystem.components, ...system.components },
+          analysis: analysis // Store semantic analysis
         };
 
         // Persist the updated design system
         await this.saveDesignSystem();
 
-        // Save extraction metadata for audit trail
+        // Save extraction metadata for audit trail WITH ANALYSIS
         const extractionMetadata = {
           timestamp: new Date().toISOString(),
           source: 'website-extraction',
@@ -1329,6 +1337,15 @@ class ProductDevelopmentServer {
           typographyExtracted: Object.keys(tokens.typography || {}).length,
           spacingExtracted: Object.keys(system.spacing).length,
           estimatedMaturity: system.metadata.estimatedDesignMaturity,
+          analysis: {
+            colors: analysis.colors,
+            typography: analysis.typography,
+            spacing: analysis.spacing,
+            completeness: analysis.metadata.completeness,
+            maturity: analysis.metadata.designMaturity,
+            readiness: analysis.metadata.readiness,
+            confidence: analysis.metadata.confidence
+          },
           designSystemSize: {
             colors: Object.keys(this.designSystem.colors).length,
             typography: Object.keys(this.designSystem.typography).length,
@@ -1341,11 +1358,12 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          message: `Design system extracted from ${new URL(websiteUrl).hostname}`,
+          message: `Design system extracted and analyzed from ${new URL(websiteUrl).hostname}`,
           source: 'website',
           sourceUrl: websiteUrl,
           tokens,
           css,
+          analysis: analysis,
           metadata: {
             colorsFound: Object.keys(system.colors).length,
             typographyFound: system.metadata.typographyFamiliesFound,
@@ -1368,6 +1386,172 @@ class ProductDevelopmentServer {
           error: err.message,
           hint: 'Ensure website is accessible and contains HTML content'
         });
+      }
+    });
+
+    /**
+     * GET /api/v1/design/systems - List all extracted design systems
+     */
+    this.app.get('/api/v1/design/systems', async (req, res) => {
+      try {
+        const files = await fs.readdir(this.designDir);
+        const systems = [];
+
+        for (const file of files) {
+          if (file.startsWith('website-extract-') && file.endsWith('.json')) {
+            const filePath = path.join(this.designDir, file);
+            const data = await fs.readFile(filePath, 'utf8');
+            const metadata = JSON.parse(data);
+            systems.push({
+              id: file.replace('website-extract-', '').replace('.json', ''),
+              file,
+              ...metadata
+            });
+          }
+        }
+
+        // Sort by timestamp descending
+        systems.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        res.json({
+          ok: true,
+          total: systems.length,
+          systems
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * GET /api/v1/design/systems/:id - Retrieve specific extracted system
+     */
+    this.app.get('/api/v1/design/systems/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const filePath = path.join(this.designDir, `website-extract-${id}.json`);
+        
+        try {
+          const data = await fs.readFile(filePath, 'utf8');
+          const metadata = JSON.parse(data);
+          res.json({
+            ok: true,
+            id,
+            ...metadata
+          });
+        } catch {
+          res.status(404).json({ ok: false, error: 'System not found' });
+        }
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/systems/:id/compare/:otherId - Compare two extracted systems
+     */
+    this.app.post('/api/v1/design/systems/:id/compare/:otherId', async (req, res) => {
+      try {
+        const { id, otherId } = req.params;
+        
+        const readSystem = async (sysId) => {
+          const filePath = path.join(this.designDir, `website-extract-${sysId}.json`);
+          const data = await fs.readFile(filePath, 'utf8');
+          return JSON.parse(data);
+        };
+
+        const sys1 = await readSystem(id);
+        const sys2 = await readSystem(otherId);
+
+        const comparison = {
+          system1: { id, source: sys1.sourceUrl },
+          system2: { id: otherId, source: sys2.sourceUrl },
+          colors: {
+            system1Count: sys1.colorsExtracted,
+            system2Count: sys2.colorsExtracted,
+            difference: Math.abs(sys1.colorsExtracted - sys2.colorsExtracted)
+          },
+          typography: {
+            system1Count: sys1.typographyExtracted,
+            system2Count: sys2.typographyExtracted,
+            difference: Math.abs(sys1.typographyExtracted - sys2.typographyExtracted)
+          },
+          spacing: {
+            system1Count: sys1.spacingExtracted,
+            system2Count: sys2.spacingExtracted,
+            difference: Math.abs(sys1.spacingExtracted - sys2.spacingExtracted)
+          },
+          maturityGap: Math.abs(sys1.estimatedMaturity - sys2.estimatedMaturity),
+          readinessComparison: {
+            system1: sys1.analysis?.readiness || 'N/A',
+            system2: sys2.analysis?.readiness || 'N/A'
+          }
+        };
+
+        res.json({
+          ok: true,
+          comparison
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * DELETE /api/v1/design/systems/:id - Delete extracted system
+     */
+    this.app.delete('/api/v1/design/systems/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const filePath = path.join(this.designDir, `website-extract-${id}.json`);
+        
+        await fs.unlink(filePath);
+        res.json({
+          ok: true,
+          message: `System ${id} deleted`
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
+      }
+    });
+
+    /**
+     * POST /api/v1/design/systems/:id/refine - Refine extracted system with manual adjustments
+     */
+    this.app.post('/api/v1/design/systems/:id/refine', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { colorAdjustments, typographyAdjustments, spacingAdjustments } = req.body;
+
+        const filePath = path.join(this.designDir, `website-extract-${id}.json`);
+        const data = await fs.readFile(filePath, 'utf8');
+        const metadata = JSON.parse(data);
+
+        // Apply refinements
+        if (colorAdjustments) {
+          metadata.analysis.colors = { ...metadata.analysis.colors, ...colorAdjustments };
+        }
+        if (typographyAdjustments) {
+          metadata.analysis.typography = { ...metadata.analysis.typography, ...typographyAdjustments };
+        }
+        if (spacingAdjustments) {
+          metadata.analysis.spacing = { ...metadata.analysis.spacing, ...spacingAdjustments };
+        }
+
+        // Update refinement timestamp
+        metadata.refinedAt = new Date().toISOString();
+
+        // Save refined system
+        await fs.writeFile(filePath, JSON.stringify(metadata, null, 2));
+
+        res.json({
+          ok: true,
+          message: 'System refined and saved',
+          id,
+          refinedAt: metadata.refinedAt
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, error: err.message });
       }
     });
 
