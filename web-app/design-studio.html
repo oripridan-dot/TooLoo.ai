@@ -36,10 +36,37 @@
 
     .container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 2fr 2fr;
       gap: 16px;
       height: 100vh;
       padding: 16px;
+    }
+
+    .collapsed-section {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .collapsed-section.expanded {
+      max-height: 500px;
+    }
+
+    .section-toggle {
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+    }
+
+    .section-toggle::before {
+      content: '▶ ';
+      display: inline-block;
+      transition: transform 0.3s ease;
+      margin-right: 4px;
+    }
+
+    .section-toggle.expanded::before {
+      transform: rotate(90deg);
     }
 
     .header {
@@ -314,8 +341,8 @@
     </div>
 
     <div class="panel">
-      <div class="panel-header">Input Configuration</div>
-      <div class="panel-content">
+      <div class="panel-header"><span class="section-toggle" id="figmaToggle" onclick="toggleFigmaSection()" style="cursor: pointer;">Figma Import (Advanced)</span></div>
+      <div class="panel-content collapsed-section" id="figmaSection">
         <form class="input-form" id="designForm">
           <div class="form-group">
             <label>Figma File URL</label>
@@ -331,69 +358,62 @@
           </div>
           <button type="submit" class="btn-submit" id="generateBtn">▶ Generate from Figma</button>
         </form>
-
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06);">
-          <h3 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.3px;">Or Extract from Website</h3>
-          <form class="input-form" id="extractForm">
-            <div class="form-group">
-              <label>Website URL</label>
-              <input type="url" id="websiteUrl" placeholder="https://example.com" />
-            </div>
-            <button type="submit" class="btn-submit" id="extractBtn" style="background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3);">🌐 Extract Design System</button>
-          </form>
-        </div>
-
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06);">
-          <h3 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.3px;">Extracted Systems Library</h3>
-          <div style="max-height: 250px; overflow-y: auto;">
-            <div id="systemsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
-          </div>
-          <button class="btn" id="refreshSystemsBtn" style="margin-top: 12px; width: 100%;">↻ Refresh Library</button>
-        </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-header">System Analysis</div>
-      <div class="panel-content">
-        <div id="analysisPanel" style="font-size: 12px; color: var(--muted); line-height: 1.6;">
-          <p style="margin: 0; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px;">
-            Extract a design system above to see intelligent analysis including color relationships, typography hierarchies, and spacing scales.
-          </p>
+    <div class="panel" style="flex: 1; overflow: hidden;">
+      <div class="panel-header" style="background: rgba(0,233,176,0.1); border-bottom-color: rgba(0,233,176,0.2);">🌐 Extract from Website</div>
+      <div class="panel-content" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+        <form class="input-form" id="extractForm" style="flex-shrink: 0;">
+          <div class="form-group">
+            <label>Website URL</label>
+            <input type="url" id="websiteUrl" placeholder="https://example.com" />
+          </div>
+          <button type="submit" class="btn-submit" id="extractBtn" style="background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3); width: 100%;">🌐 Extract Design System</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel" style="overflow: hidden;">
+      <div class="panel-header">📚 Extracted Systems</div>
+      <div class="panel-content" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+        <div id="systemsList" style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;"></div>
+        <button class="btn" id="refreshSystemsBtn" style="margin-top: auto; width: 100%; margin-bottom: 0;">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="panel" style="flex: 0.8;">
+      <div class="panel-header">🎨 System Analysis</div>
+      <div class="panel-content" style="overflow-y: auto; font-size: 11px; color: var(--muted); line-height: 1.5;">
+        <div id="analysisPanel">
+          <p style="margin: 0; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 11px;">Select a system above to see analysis</p>
           <div id="analysisContent"></div>
         </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-header">Design Tokens (Real-Time)<span id="tokenCount">0 tokens</span></div>
-      <div class="panel-content">
-        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-          <button class="btn" id="filterAllBtn" onclick="filterTokens('all')" style="background: rgba(124,92,255,0.2); border-color: rgba(124,92,255,0.3);">All</button>
-          <button class="btn" id="filterColorsBtn" onclick="filterTokens('colors')">Colors</button>
-          <button class="btn" id="filterTypographyBtn" onclick="filterTokens('typography')">Typography</button>
-          <button class="btn" id="filterSpacingBtn" onclick="filterTokens('spacing')">Spacing</button>
-          <button class="btn" id="exportBtn" onclick="exportTokens()" style="margin-left: auto;">⬇ Export JSON</button>
+    <div class="panel" style="flex: 1.5;">
+      <div class="panel-header" style="font-size: 12px;">🎨 Design Tokens <span id="tokenCount" style="font-size: 11px; color: var(--brand); margin-left: 8px;">0 tokens</span></div>
+      <div class="panel-content" style="overflow-y: auto; flex: 1;">
+        <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; font-size: 11px;">
+          <button class="btn" id="filterAllBtn" onclick="filterTokens('all')" style="background: rgba(124,92,255,0.2); border-color: rgba(124,92,255,0.3); padding: 6px 10px; font-size: 11px;">All</button>
+          <button class="btn" id="filterColorsBtn" onclick="filterTokens('colors')" style="padding: 6px 10px; font-size: 11px;">Colors</button>
+          <button class="btn" id="filterTypographyBtn" onclick="filterTokens('typography')" style="padding: 6px 10px; font-size: 11px;">Fonts</button>
+          <button class="btn" id="filterSpacingBtn" onclick="filterTokens('spacing')" style="padding: 6px 10px; font-size: 11px;">Spacing</button>
+          <button class="btn" id="exportBtn" onclick="exportTokens()" style="margin-left: auto; padding: 6px 10px; font-size: 11px;">⬇ Export</button>
         </div>
-        <div id="tokenGrid" class="design-token-grid"></div>
+        <div id="tokenGrid" class="design-token-grid" style="grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); max-height: none;"></div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-header">Token Stream (Live)</div>
+    <div class="panel" style="flex: 0.7;">
+      <div class="panel-header">📊 Statistics</div>
       <div class="panel-content">
-        <div id="streamOutput" class="stream-output">Waiting for input...</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">Generation Statistics</div>
-      <div class="panel-content">
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-label">Colors</div><div class="stat-value" id="colorCount">0</div></div>
-          <div class="stat-card"><div class="stat-label">Typography</div><div class="stat-value" id="typographyCount">0</div></div>
-          <div class="stat-card"><div class="stat-label">Components</div><div class="stat-value" id="componentCount">0</div></div>
-          <div class="stat-card"><div class="stat-label">CSS Variables</div><div class="stat-value" id="cssCount">0</div></div>
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); gap: 8px;">
+          <div class="stat-card"><div class="stat-label">Colors</div><div class="stat-value" id="colorCount" style="font-size: 18px;">0</div></div>
+          <div class="stat-card"><div class="stat-label">Fonts</div><div class="stat-value" id="typographyCount" style="font-size: 18px;">0</div></div>
+          <div class="stat-card"><div class="stat-label">Spacing</div><div class="stat-value" id="spacingCount" style="font-size: 18px;">0</div></div>
+          <div class="stat-card"><div class="stat-label">CSS Vars</div><div class="stat-value" id="cssCount" style="font-size: 18px;">0</div></div>
         </div>
       </div>
     </div>
@@ -439,12 +459,14 @@
     function updateTokens(data) {
       const colors = data.colors || {};
       const typography = data.typography || {};
+      const spacing = data.spacing || {};
       const components = data.components || {};
-      designTokens = { ...colors, ...typography, ...components };
-      allExtractedTokens = { colors, typography, spacing: {}, components };
+      designTokens = { ...colors, ...typography, ...spacing, ...components };
+      allExtractedTokens = { colors, typography, spacing, components };
       tokenCount.textContent = `${Object.keys(designTokens).length} tokens`;
       document.getElementById('colorCount').textContent = Object.keys(colors).length;
       document.getElementById('typographyCount').textContent = Object.keys(typography).length;
+      document.getElementById('spacingCount').textContent = Object.keys(spacing).length;
       document.getElementById('componentCount').textContent = Object.keys(components).length;
       renderTokenGrid(designTokens);
     }
@@ -730,6 +752,13 @@
     document.getElementById('extractForm').addEventListener('submit', extractDesign);
     streamBtn.addEventListener('click', startStreaming);
     refreshBtn.addEventListener('click', () => { location.reload(); });
+
+    function toggleFigmaSection() {
+      const section = document.getElementById('figmaSection');
+      const toggle = document.getElementById('figmaToggle');
+      section.classList.toggle('expanded');
+      toggle.classList.toggle('expanded');
+    }
 
     // Design Systems Management
     async function loadSystemsList() {
