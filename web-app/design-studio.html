@@ -425,6 +425,7 @@
       streamOutput.classList.add('generating');
       appendStream('🎨 Connecting to design token stream...\n\n');
 
+      let streamCompleted = false;
       eventSource = new EventSource(`${API_BASE}/design/stream`);
 
       eventSource.addEventListener('meta', (event) => {
@@ -447,12 +448,16 @@
       eventSource.addEventListener('done', (event) => {
         const data = JSON.parse(event.data);
         appendStream(`\n✨ Stream complete! Generated ${data.totalTokens} design tokens\n`);
+        streamCompleted = true;
         stopStreaming();
       });
 
       eventSource.addEventListener('error', (event) => {
-        appendStream(`\n✗ Stream error: ${event.message || 'Connection lost'}\n`);
-        stopStreaming();
+        // Only show error if stream didn't complete normally
+        if (!streamCompleted) {
+          appendStream(`\n✗ Stream error: ${event.message || 'Connection lost'}\n`);
+          stopStreaming();
+        }
       });
     }
 
