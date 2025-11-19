@@ -4912,10 +4912,28 @@ app.all(['/api/*'], async (req, res) => {
       init.body = req.is('application/json') ? JSON.stringify(req.body||{}) : undefined;
     }
     const r = await fetch(url, init);
-    const text = await r.text();
+    
+    // Preserve content-type from upstream response
+    const ct = r.headers.get('content-type') || '';
     res.status(r.status);
-    const ct = r.headers.get('content-type')||'';
-    if (ct.includes('application/json')) return res.type('application/json').send(text);
+    
+    // For streaming responses (text/event-stream), pipe directly
+    if (ct.includes('text/event-stream')) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      return r.body.pipe(res);
+    }
+    
+    // For JSON responses
+    if (ct.includes('application/json')) {
+      const text = await r.text();
+      return res.type('application/json').send(text);
+    }
+    
+    // For other responses, send as-is with proper content-type
+    const text = await r.text();
+    if (ct) res.setHeader('Content-Type', ct);
     return res.send(text);
   } catch(e){ res.status(500).json({ ok:false, error: e.message }); }
 });
