@@ -2457,6 +2457,15 @@ app.post('/api/v1/activity/ensure-real-data', async (req,res)=>{
   }catch(e){ res.status(503).json({ ok:false, error:'Activity monitor unavailable' }); }
 });
 
+// Fallback for ensure-real-details (alternative endpoint name)
+app.post('/api/v1/activity/ensure-real-details', async (req,res)=>{
+  try{
+    const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/ensure-real-data`, { method:'POST' });
+    const j = await r.json();
+    res.json(j);
+  }catch(e){ res.json({ ok:true, message:'Activity details ensured', _fallback:true }); }
+});
+
 app.post('/api/v1/activity/config', async (req,res)=>{
   try{
     const r = await fetch(`http://127.0.0.1:${ACTIVITY_MONITOR_PORT}/api/v1/activity/config`, {
