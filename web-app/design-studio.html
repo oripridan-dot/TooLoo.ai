@@ -449,7 +449,14 @@
         const data = JSON.parse(event.data);
         appendStream(`\n✨ Stream complete! Generated ${data.totalTokens} design tokens\n`);
         streamCompleted = true;
-        stopStreaming();
+        // Close immediately after marking complete to prevent error event
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        isStreaming = false;
+        streamBtn.textContent = '⚡ Stream Tokens';
+        streamOutput.classList.remove('generating');
       });
 
       eventSource.addEventListener('error', (event) => {
