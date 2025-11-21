@@ -928,17 +928,20 @@
           paragraph = paragraph.trim();
           if (!paragraph) return '';
 
-          // Detect section headers (emoji + colon pattern)
+          // Detect section headers (emoji + colon pattern OR bold text ending in colon)
           const sectionHeaderMatch = paragraph.match(/^(📋|🎯|✅|⚠️|🔑|💡|📊|🚀|⭐|🔍|📈|💼|🎨|🌟|📚|⚡|🎁|💎|🏆)\s*(.+?):\s*$/m);
-          const boldHeaderMatch = paragraph.match(/^(\*\*|__)(.+?)(\*\*|__)$/);
+          const boldHeaderMatch = paragraph.match(/^(\*\*|__)(.+?)(\*\*|__):\s*$/);
+          const plainHeaderMatch = paragraph.match(/^([A-Z][A-Za-z\s]+):\s*$/);
           
           // Check if it's a list
           const isListItem = paragraph.match(/^[\d\-\*]\s+/m);
           
-          if (sectionHeaderMatch || boldHeaderMatch) {
+          if (sectionHeaderMatch || boldHeaderMatch || plainHeaderMatch) {
             // Format as section header
             const emoji = sectionHeaderMatch ? sectionHeaderMatch[1] : '';
-            const title = sectionHeaderMatch ? sectionHeaderMatch[2] : paragraph.replace(/(\*\*|__)/g, '');
+            const title = sectionHeaderMatch ? sectionHeaderMatch[2] : 
+                         boldHeaderMatch ? boldHeaderMatch[2] : 
+                         plainHeaderMatch ? plainHeaderMatch[1] : '';
             return `
               <div style="
                 margin: 24px 0 14px 0;
@@ -957,7 +960,7 @@
                   align-items: center;
                   gap: 10px;
                 ">
-                  ${emoji} ${escapeHtml(title)}
+                  ${emoji ? emoji + ' ' : ''}${escapeHtml(title)}
                 </div>
               </div>
             `;
