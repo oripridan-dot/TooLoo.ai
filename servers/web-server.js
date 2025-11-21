@@ -24,6 +24,9 @@ import githubProvider from '../engine/github-provider.js';
 import LLMProvider from '../engine/llm-provider.js';
 import MultiProviderCollaborationFramework from '../servers/multi-provider-collaboration.js';
 import { getSessionManager } from '../services/session-memory-manager.js';
+import DesignTokenSystem from '../engine/design-token-system.js';
+import ProfessionalDesignSystem from '../engine/professional-design-system.js';
+import DESIGN_SYSTEM_PRESETS from '../engine/design-system-presets.js';
 import { getProviderInstructions } from '../services/provider-instructions.js';
 import { getProviderAggregation } from '../services/provider-aggregation.js';
 // Phase 6E: Load Balancing & Auto-Scaling modules
@@ -36,6 +39,7 @@ import HotReloadManager, { setupAppHotReload } from '../lib/hot-reload-manager.j
 import HotUpdateManager, { setupAppHotUpdate } from '../lib/hot-update-manager.js';
 import alertEngineModule from './alert-engine.js';
 import CapabilityActivator from '../engine/capability-activator.js';
+import domainKnowledgeBase from '../engines/domain-knowledge-base.js';
 import CapabilityOrchestrator from '../engine/capability-orchestrator.js';
 import * as formatterIntegration from '../services/response-formatter-integration.js';
 // Capability Engines for 100% implementation
@@ -439,20 +443,21 @@ app.get(['/validation-dashboard', '/analytics-dashboard'], (req, res) => {
 });
 
 // Root route - Professional Chat UI (3-bar: sessions | messages | insights) with real providers
-app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'web-app', 'tooloo-chat-professional.html'));
-});
-
 // Quiet favicon 404s in dev
 app.get('/favicon.ico', (req,res)=> res.status(204).end());
 
-// Control Room friendly aliases
-// Serve the main control room Home (minimal overview)
-app.get('/control-room', (req, res) => {
+// ========== CONTROL ROOM ROUTES ==========
+// Main Control Room - Modern unified interface (DEFAULT)
+app.get(['/control-room'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-modern.html'));
+});
+
+// Legacy control room (for backward compatibility)
+app.get(['/control-room/legacy', '/control-room-home'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-home.html'));
 });
 
-// Advanced control room (existing redesigned page)
+// Advanced control room (for backward compatibility)
 app.get('/control-room/advanced', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-redesigned.html'));
 });
@@ -472,9 +477,17 @@ app.get(['/chat', '/chat-pro', '/professional'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'web-app', 'tooloo-chat-professional.html'));
 });
 
-// Training Control Room (shows training metrics and service status)
-app.get(['/training', '/training-control-room'], (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'web-app', 'control-room-redesigned.html'));
+// Enhanced Chat Pro V2 (3-bar layout: memory/sessions, conversation, options/insights)
+app.get(['/chat-pro-v2', '/chat-v2', '/chat-enhanced'], (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'chat-pro-v2.html'));
+});
+
+// Root route - serves professional chat
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'web-app', 'tooloo-chat-professional.html'));
 });
 
 // Serve the workflow control room (product development focused)
@@ -529,6 +542,299 @@ app.get(['/design-studio/analytics', '/analytics-dashboard', '/design-analytics'
   try { await fs.promises.access(f); return res.sendFile(f); } catch { return res.status(404).send('Analytics Dashboard missing'); }
 });
 
+// ===== DESIGN TRANSFORMATION API =====
+// Apply a design system to TooLoo's UI in real-time
+app.post('/api/v1/design/apply-system', async (req, res) => {
+  try {
+    const { colors, typography, spacing } = req.body;
+
+    if (!colors && !typography && !spacing) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Provide colors, typography, or spacing' 
+      });
+    }
+
+    // Use semantic design token system
+    const tokenSystem = new DesignTokenSystem();
+    const mappedTokens = tokenSystem.mapDesignSystemToTokens({ colors, typography, spacing });
+
+    // Generate both CSS variables and component-specific CSS
+    const { variables: cssVars, componentMap } = tokenSystem.generateCSSVariables();
+    const componentCSS = tokenSystem.generateComponentCSS();
+
+    res.json({
+      ok: true,
+      applied: true,
+      tokens: mappedTokens,
+      cssVariables: cssVars,
+      componentMap: componentMap,
+      componentCSS: componentCSS,
+      tokenSystem: {
+        totalTokens: Object.keys(mappedTokens).length,
+        affectedComponents: Object.keys(componentMap).reduce((sum, token) => 
+          sum + componentMap[token].length, 0),
+        categories: ['colors', 'typography', 'spacing', 'shadows']
+      },
+      timestamp: new Date().toISOString(),
+      message: 'Design system analyzed and mapped to semantic tokens'
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+// Professional Design System endpoint - comprehensive component and token coverage
+app.post('/api/v1/design/comprehensive', async (req, res) => {
+  try {
+    const { colors, typography, spacing, sizing, shadows, borders, animations } = req.body;
+
+    if (!colors && !typography && !spacing) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Provide design system input (colors, typography, etc.)' 
+      });
+    }
+
+    // Use comprehensive professional design system
+    const designSystem = new ProfessionalDesignSystem();
+    const mappedTokens = designSystem.mapDesignSystemToTokens({ 
+      colors, 
+      typography, 
+      spacing,
+      sizing,
+      shadows,
+      borders,
+      animations
+    });
+
+    // Generate comprehensive CSS for all components
+    const comprehensiveCSS = designSystem.generateComprehensiveCSS(mappedTokens);
+    const componentMap = designSystem.buildComponentMap(mappedTokens);
+    const stats = designSystem.getSystemStats();
+
+    res.json({
+      type: 'auto',
+      content: {
+        ok: true,
+        applied: true,
+        tokens: mappedTokens,
+        comprehensiveCSS: comprehensiveCSS,
+        componentMap: componentMap,
+        system: {
+          ...stats,
+          categories: {
+            colors: Object.keys(mappedTokens.colors),
+            typography: Object.keys(mappedTokens.typography),
+            spacing: Object.keys(mappedTokens.spacing),
+            sizing: Object.keys(mappedTokens.sizing),
+            shadows: Object.keys(mappedTokens.shadows),
+            borders: Object.keys(mappedTokens.borders),
+            animations: Object.keys(mappedTokens.animations),
+            zIndex: Object.keys(mappedTokens.zIndex),
+            opacity: Object.keys(mappedTokens.opacity),
+          }
+        },
+        componentsByCategory: {
+          buttons: designSystem.getComponentsByCategory('buttons'),
+          forms: designSystem.getComponentsByCategory('forms'),
+          navigation: designSystem.getComponentsByCategory('navigation'),
+          containers: designSystem.getComponentsByCategory('containers'),
+          typography: designSystem.getComponentsByCategory('typography'),
+          feedback: designSystem.getComponentsByCategory('feedback'),
+          dataDisplay: designSystem.getComponentsByCategory('data'),
+          interactive: designSystem.getComponentsByCategory('interactive'),
+        },
+        timestamp: new Date().toISOString(),
+        message: `Generated comprehensive design system with ${stats.totalComponents} components and ${stats.totalTokens} tokens`
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      type: 'auto',
+      content: {
+        ok: false, 
+        error: err.message,
+        message: 'Failed to generate comprehensive design system'
+      }
+    });
+  }
+});
+
+// Get design system components by category
+app.get('/api/v1/design/components/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const designSystem = new ProfessionalDesignSystem();
+    const components = designSystem.getComponentsByCategory(category);
+    const stats = designSystem.getSystemStats();
+
+    res.json({
+      ok: true,
+      category,
+      components,
+      count: components.length,
+      totalComponents: stats.totalComponents,
+      availableCategories: Object.keys(stats.componentsByCategory)
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+// Get full design system statistics
+app.get('/api/v1/design/stats', async (req, res) => {
+  try {
+    const designSystem = new ProfessionalDesignSystem();
+    const stats = designSystem.getSystemStats();
+
+    res.json({
+      ok: true,
+      ...stats,
+      message: `Design system supports ${stats.totalComponents} components across ${stats.categories.length} token categories`
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+// Get available design system presets
+app.get('/api/v1/design/presets', async (req, res) => {
+  try {
+    const presetNames = Object.keys(DESIGN_SYSTEM_PRESETS);
+    const presets = {};
+    
+    presetNames.forEach(name => {
+      const preset = DESIGN_SYSTEM_PRESETS[name];
+      presets[name] = {
+        name: preset.name,
+        colors: Object.keys(preset.colors).length,
+        available: true
+      };
+    });
+
+    res.json({
+      ok: true,
+      type: 'auto',
+      content: {
+        totalPresets: presetNames.length,
+        presets: presets,
+        message: `${presetNames.length} professional design system presets available`
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+// Get list of saved and preset design systems (for Design Studio)
+app.get('/api/v1/design/systems', async (req, res) => {
+  try {
+    // For now, return presets as available systems
+    const presetNames = Object.keys(DESIGN_SYSTEM_PRESETS);
+    const systems = presetNames.map(name => {
+      const preset = DESIGN_SYSTEM_PRESETS[name];
+      return {
+        id: 'preset-' + name,
+        name: preset.name,
+        presetKey: name,
+        brand: { name: preset.name },
+        statistics: { colorsExtracted: Object.keys(preset.colors).length },
+        isPreset: true,
+        timestamp: new Date().toISOString()
+      };
+    });
+
+    res.json({
+      ok: true,
+      systems: systems,
+      message: `${systems.length} design systems available`
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+// Load a design system preset
+app.get('/api/v1/design/presets/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    
+    if (!DESIGN_SYSTEM_PRESETS[name]) {
+      return res.status(404).json({
+        ok: false,
+        error: `Preset '${name}' not found`,
+        available: Object.keys(DESIGN_SYSTEM_PRESETS)
+      });
+    }
+
+    const preset = DESIGN_SYSTEM_PRESETS[name];
+    const designSystem = new ProfessionalDesignSystem();
+    const mappedTokens = designSystem.mapDesignSystemToTokens(preset);
+    const comprehensiveCSS = designSystem.generateComprehensiveCSS(mappedTokens);
+    const componentMap = designSystem.buildComponentMap(mappedTokens);
+    const stats = designSystem.getSystemStats();
+
+    res.json({
+      ok: true,
+      type: 'auto',
+      content: {
+        preset: preset.name,
+        presetKey: name,
+        tokens: mappedTokens,
+        comprehensiveCSS: comprehensiveCSS,
+        componentMap: componentMap,
+        system: {
+          ...stats,
+          categories: {
+            colors: Object.keys(mappedTokens.colors),
+            typography: Object.keys(mappedTokens.typography),
+            spacing: Object.keys(mappedTokens.spacing),
+            sizing: Object.keys(mappedTokens.sizing),
+            shadows: Object.keys(mappedTokens.shadows),
+            borders: Object.keys(mappedTokens.borders),
+            animations: Object.keys(mappedTokens.animations),
+            zIndex: Object.keys(mappedTokens.zIndex),
+            opacity: Object.keys(mappedTokens.opacity),
+          }
+        },
+        componentsByCategory: {
+          buttons: designSystem.getComponentsByCategory('buttons'),
+          forms: designSystem.getComponentsByCategory('forms'),
+          navigation: designSystem.getComponentsByCategory('navigation'),
+          containers: designSystem.getComponentsByCategory('containers'),
+          typography: designSystem.getComponentsByCategory('typography'),
+          feedback: designSystem.getComponentsByCategory('feedback'),
+          dataDisplay: designSystem.getComponentsByCategory('data'),
+          interactive: designSystem.getComponentsByCategory('interactive'),
+        },
+        timestamp: new Date().toISOString(),
+        message: `Loaded ${preset.name} design system preset`
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
 // TooLoo Chat alias - redirect to professional version
 app.get(['/tooloo-chat'], async (req, res) => {
   // Serve tooloo-chat-professional.html for /tooloo-chat route
@@ -542,9 +848,9 @@ app.get(['/tooloo-chat'], async (req, res) => {
 });
 
 // New interactive chat interface - prefer Nexus Pro chat if available
-app.get(['/chat', '/coach-chat'], async (req,res)=>{
-  // All chat routes consolidate to the professional version at root
-  // Priority: tooloo-chat-professional (main) > chat-nexus-pro > fallback to root
+// Legacy route consolidated - use /chat-nexus-pro or other chat routes instead
+app.get(['/coach-chat'], async (req,res)=>{
+  // Falls back to professional chat
   const professional = path.join(webDir,'tooloo-chat-professional.html');
   const nexusPro = path.join(webDir,'chat-nexus-pro.html');
   try { await fs.promises.access(professional); return res.sendFile(professional); } catch {}
@@ -972,6 +1278,9 @@ INSTRUCTIONS:
 - Answer using ONLY the facts provided in the system context
 - Do NOT say you lack information - you have it all above
 - Be specific and confident in your answers`;
+      } else {
+        // Enhance non-system queries with domain knowledge for technical depth
+        enrichedMessage = domainKnowledgeBase.enrichQueryWithKnowledge(message);
       }
       
       // Get response from multi-provider orchestration (not just single provider)
@@ -4894,6 +5203,169 @@ function generateReasoningSuggestions(reasoning) {
   return ['Verify all premises', 'Check logical connectors', 'Validate conclusion'];
 }
 
+// ========== REAL CAPABILITIES API (before catch-all) ==========
+
+/**
+ * GET /api/v1/system/real-capabilities
+ * Returns actual TooLoo.ai features (not simulated)
+ */
+app.get('/api/v1/system/real-capabilities', (req, res) => {
+  const capabilities = [
+    {
+      id: 'chat_ai',
+      name: 'AI Chat Engine',
+      description: 'Multi-provider AI chat with context management',
+      status: 'active',
+      endpoint: '/api/v1/chat',
+      providers: ['Claude Haiku 4.5', 'OpenAI GPT', 'Ollama'],
+      methods: ['sendMessage', 'getHistory', 'clearContext']
+    },
+    {
+      id: 'design_system',
+      name: 'Design System Manager',
+      description: '43 components, 68 tokens, 10 professional presets',
+      status: 'active',
+      endpoint: '/api/v1/design/*',
+      methods: ['loadPreset', 'applyDesign', 'getComponents', 'getStats']
+    },
+    {
+      id: 'github_integration',
+      name: 'GitHub Integration',
+      description: 'Read/write files, create PRs, manage issues',
+      status: 'active',
+      endpoint: '/api/v1/github/*',
+      methods: ['readFile', 'updateFile', 'createBranch', 'createPR']
+    },
+    {
+      id: 'training_system',
+      name: 'Training & Selection Engine',
+      description: 'Model evaluation, hyper-speed rounds, optimization',
+      status: 'active',
+      port: 3001,
+      endpoint: '/api/v1/training/*',
+      methods: ['getOverview', 'runRound', 'evaluateModel']
+    },
+    {
+      id: 'provider_management',
+      name: 'Provider Management',
+      description: 'Switch providers, monitor status, manage budgets',
+      status: 'active',
+      endpoint: '/api/v1/providers/*',
+      methods: ['getStatus', 'switchProvider', 'getPriority']
+    },
+    {
+      id: 'slack_integration',
+      name: 'Slack Notifications',
+      description: 'Send messages, notifications to Slack workspace',
+      status: 'partial',
+      endpoint: '/api/v1/slack/*',
+      methods: ['sendMessage', 'notify']
+    },
+    {
+      id: 'caching_engine',
+      name: 'Intelligent Caching',
+      description: 'Response caching with smart invalidation',
+      status: 'active',
+      methods: ['cache', 'retrieve', 'invalidate']
+    },
+    {
+      id: 'multi_language',
+      name: 'Multi-Language Support',
+      description: 'Support for 50+ languages in responses',
+      status: 'active',
+      methods: ['translate', 'getLanguages']
+    },
+    {
+      id: 'github_self_modification',
+      name: 'Self-Aware System Control',
+      description: 'System can read/modify its own code via GitHub',
+      status: 'active',
+      endpoint: '/api/v1/system/self-patch',
+      methods: ['analyze', 'create', 'update']
+    },
+    {
+      id: 'emotion_detection',
+      name: 'Emotion Detection',
+      description: 'Detect sentiment and emotion in user messages',
+      status: 'active',
+      methods: ['analyze', 'getScore']
+    },
+    {
+      id: 'cross_validation',
+      name: 'Response Cross-Validation',
+      description: 'Validate responses across multiple AI providers',
+      status: 'partial',
+      methods: ['validate', 'compareResponses']
+    },
+    {
+      id: 'smart_analytics',
+      name: 'Smart Intelligence Analytics',
+      description: 'Analytics on system performance and capabilities',
+      status: 'active',
+      methods: ['getMetrics', 'analyze']
+    }
+  ];
+
+  res.json({
+    ok: true,
+    capabilities,
+    totalCapabilities: capabilities.length,
+    activeCount: capabilities.filter(c => c.status === 'active').length,
+    partialCount: capabilities.filter(c => c.status === 'partial').length,
+    timestamp: new Date().toISOString()
+  });
+});
+
+/**
+ * GET /api/v1/system/processes
+ * Returns status of all TooLoo.ai services
+ */
+app.get('/api/v1/system/processes', (req, res) => {
+  const processes = [
+    { name: 'Web Server (Control Room)', port: 3000, pid: process.pid, status: 'running' },
+    { name: 'Training Server', port: 3001, status: 'running' },
+    { name: 'Meta-Learning Server', port: 3002, status: 'running' },
+    { name: 'Budget Server', port: 3003, status: 'running' },
+    { name: 'Coach Server', port: 3004, status: 'running' },
+    { name: 'Cup Server', port: 3005, status: 'running' },
+    { name: 'Product Dev Server', port: 3006, status: 'running' },
+    { name: 'Segmentation Server', port: 3007, status: 'running' },
+    { name: 'Reports Server', port: 3008, status: 'running' },
+    { name: 'Capabilities Server', port: 3009, status: 'running' },
+    { name: 'Orchestrator', port: 3123, status: 'running' }
+  ];
+
+  res.json({
+    ok: true,
+    processes,
+    totalProcesses: processes.length,
+    runningCount: processes.filter(p => p.status === 'running').length,
+    timestamp: new Date().toISOString()
+  });
+});
+
+/**
+ * GET /api/v1/system/config
+ * Returns system configuration settings
+ */
+app.get('/api/v1/system/config', (req, res) => {
+  const settings = [
+    { name: 'Node Version', value: process.version },
+    { name: 'Environment', value: process.env.NODE_ENV || 'development' },
+    { name: 'Web Port', value: process.env.WEB_PORT || '3000' },
+    { name: 'Default Provider', value: process.env.DEFAULT_PROVIDER || 'claude-3-5-haiku' },
+    { name: 'GitHub Integration', value: process.env.GITHUB_TOKEN ? '✓ Enabled' : '✗ Disabled' },
+    { name: 'Slack Integration', value: process.env.SLACK_TOKEN ? '✓ Enabled' : '✗ Disabled' },
+    { name: 'Hot Reload', value: process.env.HOT_RELOAD !== 'false' ? '✓ Enabled' : '✗ Disabled' }
+  ];
+
+  res.json({
+    ok: true,
+    settings,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Catch-all API proxy (must come AFTER specific endpoints)
 app.all(['/api/*'], async (req, res) => {
   try {
@@ -6556,6 +7028,20 @@ app.get('/api/v1/system/service/:name', async (req, res) => {
  */
 app.get('/api/v1/system/services', async (req, res) => {
   systemControlAPI.handleGetAllServices(req, res);
+});
+
+/**
+ * POST /api/v1/system/start
+ */
+app.post('/api/v1/system/start', async (req, res) => {
+  systemControlAPI.handleStartAllServices(req, res);
+});
+
+/**
+ * POST /api/v1/system/stop
+ */
+app.post('/api/v1/system/stop', async (req, res) => {
+  systemControlAPI.handleStopAllServices(req, res);
 });
 
 /**

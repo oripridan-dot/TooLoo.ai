@@ -1329,6 +1329,15 @@ class ProductDevelopmentServer {
 
         const { system, tokens, css } = extraction;
 
+        // BRAND DETECTION: Extract site metadata (logo, brand name, favicon)
+        const brandDetection = await extractor.extractBrandMetadata(websiteUrl);
+
+        // SITE STRUCTURE: Extract HTML hierarchy
+        const siteStructure = await extractor.extractSiteStructure(websiteUrl);
+
+        // VISUAL ASSETS: Extract icons, images, and visual patterns
+        const visualAssets = await extractor.extractVisualAssets(websiteUrl);
+
         // INTELLIGENT ANALYSIS: Apply semantic understanding
         const analyzer = new Analyzer(system);
         const analysis = analyzer.analyze();
@@ -1346,16 +1355,74 @@ class ProductDevelopmentServer {
         // Persist the updated design system
         await this.saveDesignSystem();
 
-        // Save extraction metadata for audit trail WITH ANALYSIS
+        // Save comprehensive extraction metadata WITH brand, structure, and analysis
         const extractionMetadata = {
+          id: `extract-${Date.now()}`,
           timestamp: new Date().toISOString(),
           source: 'website-extraction',
           sourceUrl: websiteUrl,
           extractedAt: new Date().toISOString(),
-          colorsExtracted: Object.keys(system.colors).length,
-          typographyExtracted: Object.keys(tokens.typography || {}).length,
-          spacingExtracted: Object.keys(system.spacing).length,
-          estimatedMaturity: system.metadata.estimatedDesignMaturity,
+          
+          // BRAND INFORMATION
+          brand: {
+            name: brandDetection.name || new URL(websiteUrl).hostname,
+            favicon: brandDetection.favicon,
+            logo: brandDetection.logo,
+            description: brandDetection.description || '',
+            colors: {
+              primary: brandDetection.primaryColor,
+              accent: brandDetection.accentColor
+            }
+          },
+          
+          // SITE STRUCTURE
+          structure: {
+            totalElements: siteStructure.totalElements,
+            hierarchy: siteStructure.hierarchy,
+            mainSections: siteStructure.mainSections,
+            componentCount: siteStructure.componentCount
+          },
+          
+          // VISUAL ASSETS (Icons, Images, Patterns)
+          visualAssets: {
+            icons: {
+              svgInline: visualAssets.icons.svgInline,
+              iconFonts: visualAssets.icons.iconFonts.length,
+              details: visualAssets.icons.iconFonts,
+              svgDetails: visualAssets.icons.svgDetails || []
+            },
+            images: {
+              total: visualAssets.images.total,
+              sample: visualAssets.images.assets.slice(0, 10),
+              assets: visualAssets.images.assets
+            },
+            patterns: {
+              gradients: visualAssets.patterns.gradients,
+              shadows: visualAssets.patterns.shadows,
+              animations: visualAssets.patterns.animations,
+              borderRadii: visualAssets.patterns.borderRadii,
+              details: visualAssets.patterns.details
+            }
+          },
+          
+          // COMPREHENSIVE TOKEN EXTRACTION
+          tokens: {
+            colors: system.colors,
+            typography: tokens.typography || {},
+            spacing: system.spacing,
+            components: system.components || {}
+          },
+          
+          // EXTRACTION STATISTICS
+          statistics: {
+            colorsExtracted: Object.keys(system.colors).length,
+            typographyExtracted: Object.keys(tokens.typography || {}).length,
+            spacingExtracted: Object.keys(system.spacing).length,
+            componentsExtracted: Object.keys(system.components || {}).length,
+            estimatedMaturity: system.metadata.estimatedDesignMaturity
+          },
+          
+          // ANALYSIS RESULTS
           analysis: {
             colors: analysis.colors,
             typography: analysis.typography,
@@ -1365,6 +1432,7 @@ class ProductDevelopmentServer {
             readiness: analysis.metadata.readiness,
             confidence: analysis.metadata.confidence
           },
+          
           designSystemSize: {
             colors: Object.keys(this.designSystem.colors).length,
             typography: Object.keys(this.designSystem.typography).length,
@@ -1380,6 +1448,9 @@ class ProductDevelopmentServer {
           message: `Design system extracted and analyzed from ${new URL(websiteUrl).hostname}`,
           source: 'website',
           sourceUrl: websiteUrl,
+          brand: extractionMetadata.brand,
+          structure: extractionMetadata.structure,
+          visualAssets: extractionMetadata.visualAssets,
           tokens,
           css,
           analysis: analysis,
@@ -1396,6 +1467,7 @@ class ProductDevelopmentServer {
             spacing: Object.keys(this.designSystem.spacing).length
           },
           extractionFile: designFile,
+          extractionId: extractionMetadata.id,
           hint: 'Use /api/v1/design/apply-tokens to integrate into UI'
         });
       } catch (err) {

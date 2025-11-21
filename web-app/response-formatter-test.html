@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo Response Formatter - Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0D1117;
+      --bg-secondary: #161B22;
+      --bg-tertiary: #21262D;
+      --text-primary: #E6EDF3;
+      --text-secondary: #8B949E;
+      --border: rgba(255, 255, 255, 0.12);
+      --accent: #58A6FF;
+      --accent-dark: #0969DA;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #58A6FF, #79C0FF);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+
+    .demo-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .demo-section h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #79C0FF;
+    }
+
+    .message-group {
+      display: flex;
+      margin-bottom: 16px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-group.assistant {
+      justify-content: flex-start;
+    }
+
+    .message-group.user {
+      justify-content: flex-end;
+    }
+
+    .message-group.user .message-bubble {
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+      color: white;
+      border-radius: 12px 0 12px 12px;
+    }
+
+    .message-group.assistant .message-bubble {
+      background: linear-gradient(135deg, var(--bg-tertiary), rgba(33, 38, 45, 0.6));
+      border: 1px solid var(--border);
+      border-radius: 0 12px 12px 12px;
+      color: var(--text-primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .message-bubble {
+      max-width: 75%;
+      padding: 16px 20px;
+      word-wrap: break-word;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: #F0883E;
+    }
+
+    strong {
+      font-weight: 700;
+    }
+
+    em {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 TooLoo Response Formatter</h1>
+    <p class="subtitle">Rich formatting with separated lines, different fonts, sizes, and boldness</p>
+
+    <div class="demo-section">
+      <h2>📋 Example 1: Structured Response with Headers</h2>
+      <div class="message-group user">
+        <div class="message-bubble">How should I approach learning a new programming language?</div>
+      </div>
+      <div class="message-group assistant" id="demo1"></div>
+    </div>
+
+    <div class="demo-section">
+      <h2>📊 Example 2: List-Based Response</h2>
+      <div class="message-group user">
+        <div class="message-bubble">What are the best practices for code organization?</div>
+      </div>
+      <div class="message-group assistant" id="demo2"></div>
+    </div>
+
+    <div class="demo-section">
+      <h2>💡 Example 3: Mixed Content with Code</h2>
+      <div class="message-group user">
+        <div class="message-bubble">Explain closures in JavaScript</div>
+      </div>
+      <div class="message-group assistant" id="demo3"></div>
+    </div>
+  </div>
+
+  <script>
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Format TooLoo responses with rich styling
+    function formatTooLooResponse(text) {
+      if (!text) return '';
+
+      // Split into paragraphs
+      let html = text
+        .split(/\n\n+/)
+        .map(paragraph => {
+          paragraph = paragraph.trim();
+          if (!paragraph) return '';
+
+          // Detect section headers (lines ending with colon or starting with emoji)
+          const sectionHeaderMatch = paragraph.match(/^(📋|🎯|✅|⚠️|🔑|💡|📊|🚀|⭐|🔍|📈|💼|🎨|🌟|📚|⚡|🎁|💎|🏆)\s*(.+?):\s*$/m);
+          const boldHeaderMatch = paragraph.match(/^(\*\*|__)(.+?)(\*\*|__)$/);
+          
+          // Check if it's a list
+          const isListItem = paragraph.match(/^[\d\-\*]\s+/m);
+          
+          if (sectionHeaderMatch || boldHeaderMatch) {
+            // Format as section header
+            const emoji = sectionHeaderMatch ? sectionHeaderMatch[1] : '';
+            const title = sectionHeaderMatch ? sectionHeaderMatch[2] : paragraph.replace(/(\*\*|__)/g, '');
+            return `
+              <div style="
+                margin: 20px 0 12px 0;
+                padding: 12px 16px;
+                background: linear-gradient(90deg, rgba(88, 166, 255, 0.1), transparent);
+                border-left: 3px solid #58A6FF;
+                border-radius: 4px;
+              ">
+                <div style="
+                  font-size: 15px;
+                  font-weight: 700;
+                  color: #79C0FF;
+                  letter-spacing: 0.3px;
+                  text-transform: uppercase;
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                ">
+                  ${emoji} ${escapeHtml(title)}
+                </div>
+              </div>
+            `;
+          } else if (isListItem) {
+            // Format as list
+            const items = paragraph.split('\n').filter(l => l.trim());
+            const listHtml = items.map((item, idx) => {
+              const content = item.replace(/^[\d\-\*]\s+/, '').trim();
+              const number = idx + 1;
+              return `
+                <div style="
+                  display: flex;
+                  gap: 10px;
+                  margin-bottom: 8px;
+                  align-items: flex-start;
+                ">
+                  <span style="
+                    flex-shrink: 0;
+                    width: 24px;
+                    height: 24px;
+                    background: rgba(88, 166, 255, 0.2);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #79C0FF;
+                  ">${number}</span>
+                  <div style="flex: 1; padding-top: 2px; line-height: 1.5;">
+                    ${escapeHtml(content)}
+                  </div>
+                </div>
+              `;
+            }).join('');
+            return `<div style="margin: 12px 0 16px 0;">${listHtml}</div>`;
+          } else {
+            // Regular paragraph with smart styling
+            let styledText = paragraph
+              // Bold patterns: **text** or __text__
+              .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #79C0FF; font-weight: 700;">$1</strong>')
+              .replace(/__(.+?)__/g, '<strong style="color: #79C0FF; font-weight: 700;">$1</strong>')
+              // Italic patterns: *text* or _text_
+              .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em style="color: #8B949E; font-style: italic;">$1</em>')
+              .replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em style="color: #8B949E; font-style: italic;">$1</em>')
+              // Code patterns: `code`
+              .replace(/`(.+?)`/g, '<code style="background: rgba(0, 0, 0, 0.3); padding: 2px 6px; border-radius: 3px; font-family: Monaco, monospace; font-size: 12px; color: #F0883E;">$1</code>')
+              // Highlight patterns: arrow bullets
+              .replace(/→\s*(.+?)(?=→|\n|$)/g, '<span style="color: #3FB950; font-weight: 500;">→ $1</span>');
+
+            return `
+              <div style="
+                margin: 12px 0;
+                padding: 0;
+                line-height: 1.7;
+                font-size: 14px;
+                color: #E6EDF3;
+              ">
+                ${styledText}
+              </div>
+            `;
+          }
+        })
+        .join('');
+
+      return html;
+    }
+
+    // Demo 1: Structured response
+    const demo1Response = `📋 **Learning Path:**
+
+Understand the fundamentals of the language first. Focus on core concepts like variables, data types, and functions.
+
+🎯 **Key Areas:**
+
+1. Study syntax and basic patterns specific to the language
+2. Practice with small, focused exercises daily
+3. Build mini-projects to apply what you learn
+4. Read existing code to understand idioms and best practices
+5. Join a community or find a mentor for guidance
+
+⚠️ **Common Mistakes to Avoid:**
+
+→ Trying to memorize everything instead of understanding concepts
+→ Skipping fundamentals to jump to advanced topics
+→ Not practicing enough hands-on coding`;
+
+    document.getElementById('demo1').innerHTML = `
+      <div class="message-bubble" style="padding: 16px 20px; word-break: break-word;">
+        ${formatTooLooResponse(demo1Response)}
+      </div>
+    `;
+
+    // Demo 2: List-based response
+    const demo2Response = `🎯 **Code Organization Best Practices:**
+
+1. Keep related functionality together in modules or files
+2. Use clear, descriptive naming conventions
+3. Limit function and method complexity - aim for single responsibility
+4. Group related constants and configurations at the top
+5. Maintain consistent directory structure across projects
+6. Use comments for *why* rather than *what* the code does
+
+💡 **Pro Tip:** The **Single Responsibility Principle** is your friend. Each file or function should have one clear purpose.`;
+
+    document.getElementById('demo2').innerHTML = `
+      <div class="message-bubble" style="padding: 16px 20px; word-break: break-word;">
+        ${formatTooLooResponse(demo2Response)}
+      </div>
+    `;
+
+    // Demo 3: Mixed content
+    const demo3Response = `🔑 **What are Closures?**
+
+A closure is a function that has access to variables from its outer scope, even after that scope has closed. This is one of the most powerful features in JavaScript.
+
+**Example:**
+
+\`\`\`
+function outer() {
+  let count = 0;
+  return function inner() {
+    count++;
+    return count;
+  };
+}
+\`\`\`
+
+📊 **How It Works:**
+
+1. The \`inner\` function has access to \`count\`
+2. Each call to \`outer()` creates a new closure
+3. The \`count\` variable persists between calls to \`inner()\`
+4. This creates data *encapsulation* - private variables!
+
+💡 **Key Concept:** Closures allow you to create functions with **private state**, which is essential for writing maintainable code.`;
+
+    document.getElementById('demo3').innerHTML = `
+      <div class="message-bubble" style="padding: 16px 20px; word-break: break-word;">
+        ${formatTooLooResponse(demo3Response)}
+      </div>
+    `;
+  </script>
+</body>
+</html>

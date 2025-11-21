@@ -213,17 +213,18 @@
     }
 
     .message-group.assistant .message-bubble {
-      background: var(--bg-tertiary);
+      background: linear-gradient(135deg, var(--bg-tertiary), rgba(33, 38, 45, 0.6));
       border: 1px solid var(--border);
       border-radius: 0 12px 12px 12px;
       color: var(--text-primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .message-bubble {
-      max-width: 70%;
-      padding: var(--spacing-3) var(--spacing-4);
+      max-width: 75%;
+      padding: var(--spacing-4) var(--spacing-4);
       word-wrap: break-word;
-      line-height: 1.6;
+      line-height: 1.7;
       font-size: 14px;
     }
 
@@ -670,6 +671,122 @@
       }
     }
 
+    // Utility to escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Format TooLoo responses with rich styling
+    function formatTooLooResponse(text) {
+      if (!text) return '';
+
+      // Split into paragraphs
+      let html = text
+        .split(/\n\n+/)
+        .map(paragraph => {
+          paragraph = paragraph.trim();
+          if (!paragraph) return '';
+
+          // Detect section headers (lines ending with colon or starting with emoji)
+          const sectionHeaderMatch = paragraph.match(/^(📋|🎯|✅|⚠️|🔑|💡|📊|🚀|⭐|🔍|📈|💼|🎨|🌟|📚|⚡|🎁|💎|🏆)\s*(.+?):\s*$/m);
+          const boldHeaderMatch = paragraph.match(/^(\*\*|__)(.+?)(\*\*|__)$/);
+          
+          // Check if it's a list
+          const isListItem = paragraph.match(/^[\d\-\*]\s+/m);
+          
+          if (sectionHeaderMatch || boldHeaderMatch) {
+            // Format as section header
+            const emoji = sectionHeaderMatch ? sectionHeaderMatch[1] : '';
+            const title = sectionHeaderMatch ? sectionHeaderMatch[2] : paragraph.replace(/(\*\*|__)/g, '');
+            return `
+              <div style="
+                margin: 20px 0 12px 0;
+                padding: 12px 16px;
+                background: linear-gradient(90deg, rgba(88, 166, 255, 0.1), transparent);
+                border-left: 3px solid #58A6FF;
+                border-radius: 4px;
+              ">
+                <div style="
+                  font-size: 15px;
+                  font-weight: 700;
+                  color: #79C0FF;
+                  letter-spacing: 0.3px;
+                  text-transform: uppercase;
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                ">
+                  ${emoji} ${escapeHtml(title)}
+                </div>
+              </div>
+            `;
+          } else if (isListItem) {
+            // Format as list
+            const items = paragraph.split('\n').filter(l => l.trim());
+            const listHtml = items.map((item, idx) => {
+              const content = item.replace(/^[\d\-\*]\s+/, '').trim();
+              const number = idx + 1;
+              return `
+                <div style="
+                  display: flex;
+                  gap: 10px;
+                  margin-bottom: 8px;
+                  align-items: flex-start;
+                ">
+                  <span style="
+                    flex-shrink: 0;
+                    width: 24px;
+                    height: 24px;
+                    background: rgba(88, 166, 255, 0.2);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #79C0FF;
+                  ">${number}</span>
+                  <div style="flex: 1; padding-top: 2px; line-height: 1.5;">
+                    ${escapeHtml(content)}
+                  </div>
+                </div>
+              `;
+            }).join('');
+            return `<div style="margin: 12px 0 16px 0;">${listHtml}</div>`;
+          } else {
+            // Regular paragraph with smart styling
+            let styledText = paragraph
+              // Bold patterns: **text** or __text__
+              .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #79C0FF; font-weight: 700;">$1</strong>')
+              .replace(/__(.+?)__/g, '<strong style="color: #79C0FF; font-weight: 700;">$1</strong>')
+              // Italic patterns: *text* or _text_
+              .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em style="color: #8B949E; font-style: italic;">$1</em>')
+              .replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em style="color: #8B949E; font-style: italic;">$1</em>')
+              // Code patterns: `code`
+              .replace(/`(.+?)`/g, '<code style="background: rgba(0, 0, 0, 0.3); padding: 2px 6px; border-radius: 3px; font-family: Monaco, monospace; font-size: 12px; color: #F0883E;">$1</code>')
+              // Highlight patterns: highlighted text (if wrapped in certain markers)
+              .replace(/→\s*(.+?)(?=→|\n|$)/g, '<span style="color: #3FB950; font-weight: 500;">→ $1</span>');
+
+            return `
+              <div style="
+                margin: 12px 0;
+                padding: 0;
+                line-height: 1.7;
+                font-size: 14px;
+                color: #E6EDF3;
+              ">
+                ${styledText}
+              </div>
+            `;
+          }
+        })
+        .join('');
+
+      return html;
+    }
+
     // Render messages
     function renderMessages() {
       if (messages.length === 0) {
@@ -683,11 +800,19 @@
         return;
       }
 
-      const html = messages.map((msg) => `
-        <div class="message-group ${msg.role}">
-          <div class="message-bubble">${escapeHtml(msg.content)}</div>
-        </div>
-      `).join('');
+      const html = messages.map((msg) => {
+        const content = msg.role === 'assistant' 
+          ? formatTooLooResponse(msg.content)
+          : escapeHtml(msg.content);
+        
+        return `
+          <div class="message-group ${msg.role}">
+            <div class="message-bubble" style="${msg.role === 'assistant' ? 'padding: 16px 20px; word-break: break-word;' : ''}">
+              ${content}
+            </div>
+          </div>
+        `;
+      }).join('');
 
       messagesContainer.innerHTML = html;
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -764,13 +889,6 @@
       `).join('');
 
       coachingPanel.innerHTML = html;
-    }
-
-    // Utility to escape HTML
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
     }
 
     init();

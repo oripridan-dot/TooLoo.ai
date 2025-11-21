@@ -334,15 +334,16 @@ async function getLearnerContext() {
   }
 }
 
-// Helper function for API calls
-function apiCall(port, method, path, body = null) {
+// Helper function for API calls with timeout protection
+function apiCall(port, method, path, body = null, timeoutMs = 3000) {
   return new Promise((resolve) => {
     const options = {
       hostname: '127.0.0.1',
       port,
       path,
       method,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      timeout: timeoutMs
     };
 
     const req = http.request(options, (res) => {
@@ -355,6 +356,12 @@ function apiCall(port, method, path, body = null) {
           resolve({ error: 'Invalid response' });
         }
       });
+    });
+
+    // Handle timeout
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ error: 'Request timeout' });
     });
 
     req.on('error', () => resolve({ error: 'Connection failed' }));

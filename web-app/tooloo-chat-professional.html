@@ -1588,7 +1588,7 @@
           // Add insights section
           if (analysis.insights && analysis.insights.length > 0) {
             html += '<div class="si-section"><div class="si-section-title">Key Insights</div><ul class="si-list">';
-            analysis.insights.slice(0, 2).forEach(insight => {
+            analysis.insights.slice(0, 6).forEach(insight => {
               const text = typeof insight === 'string' ? insight : insight?.description || insight?.insight || 'Unknown';
               html += `<li>${this.escapeHtml(text)}</li>`;
             });
@@ -1598,7 +1598,7 @@
           // Add gaps section
           if (analysis.gaps && analysis.gaps.length > 0) {
             html += '<div class="si-section"><div class="si-section-title">Areas to Review</div><ul class="si-list si-gaps">';
-            analysis.gaps.slice(0, 2).forEach(gap => {
+            analysis.gaps.slice(0, 4).forEach(gap => {
               const gapText = typeof gap === 'string' ? gap : gap?.gap || 'Unknown gap';
               const severity = typeof gap === 'object' ? gap?.severity || 'medium' : 'medium';
               html += `<li>${this.escapeHtml(gapText)} <span style="font-size: 10px; color: #999;">(${severity})</span></li>`;

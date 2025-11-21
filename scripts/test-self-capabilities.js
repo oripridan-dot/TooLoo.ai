@@ -30,7 +30,8 @@ async function runTests() {
   await test('System awareness endpoint responds', async () => {
     const res = await fetch(`${BASE_URL}/system/awareness`);
     if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
+    const response = await res.json();
+    const data = response.content || response;
     if (!data.ok) throw new Error('Response not ok');
     if (!data.capabilities.selfAwareness) throw new Error('Self-awareness not enabled');
     console.log(`   ├─ System: ${data.system.name} v${data.system.version}`);
@@ -42,7 +43,8 @@ async function runTests() {
   await test('System introspection endpoint responds', async () => {
     const res = await fetch(`${BASE_URL}/system/introspect`);
     if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
+    const response = await res.json();
+    const data = response.content || response;
     if (!data.ok) throw new Error('Response not ok');
     if (!data.capabilities.selfDiscovery) throw new Error('Self-discovery not enabled');
     console.log(`   ├─ Process PID: ${data.system.process.pid}`);
@@ -54,7 +56,8 @@ async function runTests() {
   await test('GitHub integration health check', async () => {
     const res = await fetch(`${BASE_URL}/github/health`);
     if (!res.ok) throw new Error(`Status ${res.status}`);
-    const data = await res.json();
+    const response = await res.json();
+    const data = response.content || response;
     if (!data.ok) throw new Error('Response not ok');
     console.log(`   ├─ Configured: ${data.configured}`);
     console.log(`   ├─ Repo: ${data.repo || 'not configured'}`);
@@ -151,8 +154,10 @@ async function runTests() {
 
   // Test 10: Full Capability Check
   await test('Full self-awareness and modification capabilities', async () => {
-    const awareness = await fetch(`${BASE_URL}/system/awareness`).then(r => r.json());
-    const introspect = await fetch(`${BASE_URL}/system/introspect`).then(r => r.json());
+    const awarenessRes = await fetch(`${BASE_URL}/system/awareness`).then(r => r.json());
+    const introspectRes = await fetch(`${BASE_URL}/system/introspect`).then(r => r.json());
+    const awareness = awarenessRes.content || awarenessRes;
+    const introspect = introspectRes.content || introspectRes;
     
     const capabilities = {
       selfAwareness: awareness.capabilities.selfAwareness,

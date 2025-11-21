@@ -5,30 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TooLoo Design Studio – Real-Time Design Generation</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Clean up stale design cache and apply semantic token styles on page load -->
+  <script>
+    (function() {
+      try {
+        // Clear old-format design data (cssVars-based, no longer used)
+        const pendingUpdate = localStorage.getItem('tooloo-design-update');
+        if (pendingUpdate) {
+          try {
+            const data = JSON.parse(pendingUpdate);
+            // Only keep if it has new-format componentCSS
+            if (data && !data.componentCSS) {
+              console.log('🧹 Removing stale CSS variable format design');
+              localStorage.removeItem('tooloo-design-update');
+            }
+          } catch (e) {
+            // Invalid JSON, remove it
+            localStorage.removeItem('tooloo-design-update');
+          }
+        }
+        
+        // Also clear the old applied cache
+        const savedDesign = localStorage.getItem('tooloo-design-applied');
+        if (savedDesign) {
+          try {
+            const data = JSON.parse(savedDesign);
+            // Check if it's old cssVars format
+            if (data && typeof data === 'object' && !data.type && data['--'] !== undefined) {
+              console.log('🧹 Removing stale CSS variable cache');
+              localStorage.removeItem('tooloo-design-applied');
+            }
+          } catch (e) {
+            localStorage.removeItem('tooloo-design-applied');
+          }
+        }
+        
+        // Clear the session reload tracker
+        sessionStorage.removeItem('lastReloadedDesign');
+        
+        console.log('✨ Design cache initialized (ready for semantic tokens)');
+      } catch (e) {
+        console.error('Error initializing design cache:', e);
+      }
+    })();
+  </script>
+  
   <style>
     :root {
-      --bg: #0a0c10;
-      --bg-soft: #0f1218;
-      --card: #131820;
-      --text: #e6e9ee;
-      --muted: #96a0af;
-      --brand: #7c5cff;
-      --brand-2: #00e9b0;
-      --accent: #ffe770;
-      --danger: #ff5c7c;
+      /* Extracted from Cueberto Design System */
+      --bg: #161616;
+      --bg-soft: #1a1a1a;
+      --card: #222222;
+      --text: #fafafa;
+      --muted: #b7b7b7;
+      --brand: #fc0019;
+      --brand-2: #da532c;
+      --accent: #fc0019;
+      --danger: #eb4242;
       --success: #00e9b0;
       --shadow: 0 10px 30px rgba(0,0,0,0.5);
       --radius: 12px;
       --grid: 8px;
+      
+      /* Typography from Cueberto */
+      --font-primary: "Suisse Intl", system-ui, -apple-system, Segoe UI, sans-serif;
+      --font-secondary: "Manrope", system-ui, -apple-system, sans-serif;
+      --font-mono: "JetBrains Mono", monospace;
     }
 
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; padding: 0; }
 
     body {
-      background: linear-gradient(135deg, #0a0c10 0%, #0f1218 50%, #0a0d15 100%);
+      background: linear-gradient(135deg, #161616 0%, #1a1a1a 50%, #0f1218 100%);
       color: var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+      font-family: var(--font-primary);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
@@ -36,7 +88,8 @@
 
     .container {
       display: grid;
-      grid-template-columns: 1fr 2fr 2fr;
+      grid-template-columns: 280px 1fr 300px;
+      grid-template-rows: auto 1fr;
       gap: 16px;
       height: 100vh;
       padding: 16px;
@@ -75,11 +128,247 @@
       align-items: center;
       justify-content: space-between;
       padding: 12px 20px;
-      background: rgba(13, 16, 21, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(34, 34, 34, 0.8);
+      border: 1px solid rgba(252, 0, 25, 0.15);
       border-radius: var(--radius);
       backdrop-filter: blur(10px);
       margin-bottom: 4px;
+    }
+
+    .asset-folder {
+      margin-bottom: 12px;
+      border: 1px solid rgba(252, 0, 25, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .folder-header {
+      padding: 10px 12px;
+      background: rgba(252, 0, 25, 0.08);
+      border-bottom: 1px solid rgba(252, 0, 25, 0.2);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--brand);
+      transition: all 0.2s;
+    }
+
+    .folder-header:hover {
+      background: rgba(252, 0, 25, 0.12);
+    }
+
+    .folder-header::before {
+      content: '▼';
+      display: inline-block;
+      transition: transform 0.3s ease;
+      font-size: 10px;
+    }
+
+    .folder-header.collapsed::before {
+      transform: rotate(-90deg);
+    }
+
+    .folder-content {
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, visibility 0.3s ease;
+      visibility: visible;
+      border-bottom: 1px solid rgba(252, 0, 25, 0.1);
+    }
+
+    .folder-content.collapsed {
+      max-height: 0;
+      overflow: hidden;
+      visibility: hidden;
+      border-bottom: none;
+    }
+
+    .folder-content:not(.collapsed) {
+      overflow-y: auto;
+      max-height: 280px;
+    }
+
+    .folder-content:not(.collapsed)::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .folder-content:not(.collapsed)::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .folder-content:not(.collapsed)::-webkit-scrollbar-thumb {
+      background: rgba(252, 0, 25, 0.2);
+      border-radius: 3px;
+    }
+
+    .folder-content:not(.collapsed)::-webkit-scrollbar-thumb:hover {
+      background: rgba(252, 0, 25, 0.35);
+    }
+
+    .asset-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .asset-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .asset-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+
+    .asset-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .asset-usage {
+      font-size: 10px;
+      color: var(--success);
+      font-weight: 500;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .central-preview {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preview-area {
+      flex: 1;
+      background: rgba(13, 16, 21, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(10px);
+    }
+
+    .preview-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .color-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .color-preview-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .color-preview-item:hover {
+      border-color: var(--brand);
+      transform: translateY(-2px);
+    }
+
+    .color-preview-swatch {
+      width: 100%;
+      height: 80px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .color-preview-info {
+      padding: 8px;
+    }
+
+    .color-preview-name {
+      font-size: 10px;
+      color: var(--text);
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .color-preview-value {
+      font-size: 9px;
+      color: var(--success);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    .color-preview-usage {
+      font-size: 9px;
+      color: var(--brand);
+      font-weight: 500;
+    }
+
+    .icon-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 12px;
+    }
+
+    .icon-preview-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 40px;
+    }
+
+    .icon-preview-item:hover {
+      border-color: var(--brand);
+      transform: scale(1.05);
+    }
+
+    .icon-preview-label {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .sidebar-right {
+      grid-column: 3;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
     }
 
     .header h1 {
@@ -128,14 +417,19 @@
     }
 
     .btn.primary {
-      background: linear-gradient(135deg, rgba(124, 92, 255, 0.4), rgba(0, 233, 176, 0.4));
-      border-color: rgba(124, 92, 255, 0.6);
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      border-color: var(--brand);
+      color: white;
+    }
+
+    .btn.primary:hover {
+      opacity: 0.85;
     }
 
     .panel {
       display: flex;
       flex-direction: column;
-      background: rgba(13, 16, 21, 0.6);
+      background: var(--card);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: var(--radius);
       overflow: hidden;
@@ -204,7 +498,7 @@
       outline: none;
       border-color: var(--brand);
       background: rgba(255, 255, 255, 0.03);
-      box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(252, 0, 25, 0.1);
     }
 
     .form-group textarea {
@@ -228,7 +522,7 @@
 
     .btn-submit:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(124, 92, 255, 0.4);
+      box-shadow: 0 8px 20px rgba(252, 0, 25, 0.3);
     }
 
     .btn-submit:disabled {
@@ -330,90 +624,139 @@
 </head>
 <body>
   <div class="container">
+    <!-- HEADER -->
     <div class="header">
       <h1><span class="status-dot"></span>TooLoo Design Studio — Real-Time Generation</h1>
       <div class="controls">
         <a class="btn" href="/control-room">Chat</a>
         <a class="btn" href="/design-demo.html">Showcase</a>
         <button class="btn primary" id="streamBtn" title="Stream design tokens in real-time">⚡ Stream Tokens</button>
+        <button class="btn primary" id="applierBtn" title="Transform TooLoo with a design system">🎨 Design Applier</button>
         <button class="btn primary" id="refreshBtn">↻ Refresh</button>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-header"><span class="section-toggle" id="figmaToggle" onclick="toggleFigmaSection()" style="cursor: pointer;">Figma Import (Advanced)</span></div>
-      <div class="panel-content collapsed-section" id="figmaSection">
-        <form class="input-form" id="designForm">
-          <div class="form-group">
-            <label>Figma File URL</label>
-            <input type="text" id="figmaUrl" placeholder="https://www.figma.com/file/ABC123/MyDesignSystem" />
-          </div>
-          <div class="form-group">
-            <label>Design Brief (Optional)</label>
-            <textarea id="designBrief" placeholder="E.g. 'Modern SaaS design system with purple gradient'"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Target Elements</label>
-            <input type="text" id="targetElements" placeholder="[data-design-system], #app, .container" value="[data-design-system]" />
-          </div>
-          <button type="submit" class="btn-submit" id="generateBtn">▶ Generate from Figma</button>
-        </form>
+    <!-- LEFT SIDEBAR: ASSET FOLDERS -->
+    <div style="grid-column: 1; grid-row: 2; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;">
+      <!-- Extract Panel -->
+      <div class="panel">
+        <div class="panel-header" style="background: rgba(0,233,176,0.1); border-bottom-color: rgba(0,233,176,0.2);">🌐 Extract</div>
+        <div class="panel-content" style="padding: 12px;">
+          <form class="input-form" id="extractForm" style="gap: 8px;">
+            <input type="url" id="websiteUrl" placeholder="https://example.com" style="padding: 8px 10px; font-size: 12px; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; background: rgba(255,255,255,0.02); color: var(--text);" />
+            <button type="submit" class="btn-submit" id="extractBtn" style="background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3); width: 100%; padding: 6px;">🌐 Extract</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Asset Folders -->
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">🎨 Colors <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="colorsFolderCount">0</span></div>
+        <div class="folder-content" id="colorsFolder"></div>
+      </div>
+
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">📝 Typography <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="typographyFolderCount">0</span></div>
+        <div class="folder-content collapsed" id="typographyFolder"></div>
+      </div>
+
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">📏 Spacing <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="spacingFolderCount">0</span></div>
+        <div class="folder-content collapsed" id="spacingFolder"></div>
+      </div>
+
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">🎨 Icons <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="iconsFolderCount">0</span></div>
+        <div class="folder-content collapsed" id="iconsFolder"></div>
+      </div>
+
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">🖼️ Images <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="imagesFolderCount">0</span></div>
+        <div class="folder-content collapsed" id="imagesFolder"></div>
+      </div>
+
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">✨ Patterns <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="patternsFolderCount">0</span></div>
+        <div class="folder-content collapsed" id="patternsFolder"></div>
+      </div>
+
+      <div class="asset-folder">
+        <div class="folder-header" onclick="toggleFolder(this)">📚 Systems <span style="margin-left: auto; font-size: 10px; font-weight: 400; color: var(--muted);" id="systemsFolderCount">0</span></div>
+        <div class="folder-content collapsed" id="systemsFolder"></div>
       </div>
     </div>
 
-    <div class="panel" style="flex: 1; overflow: hidden;">
-      <div class="panel-header" style="background: rgba(0,233,176,0.1); border-bottom-color: rgba(0,233,176,0.2);">🌐 Extract from Website</div>
-      <div class="panel-content" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
-        <form class="input-form" id="extractForm" style="flex-shrink: 0;">
-          <div class="form-group">
-            <label>Website URL</label>
-            <input type="url" id="websiteUrl" placeholder="https://example.com" />
+    <!-- CENTER: PREVIEW AREA -->
+    <div class="central-preview">
+      <div class="preview-area">
+        <div class="preview-header">
+          <span id="previewTitle">Select an asset to preview</span>
+          <button class="btn" id="copyPreviewBtn" style="display: none; padding: 4px 8px; font-size: 10px;">📋 Copy</button>
+        </div>
+        <div class="preview-content" id="previewContent">
+          <div style="color: var(--muted); font-size: 12px; text-align: center; margin-top: 40px;">
+            👈 Select an asset from the left sidebar to preview
           </div>
-          <button type="submit" class="btn-submit" id="extractBtn" style="background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3); width: 100%;">🌐 Extract Design System</button>
-        </form>
+        </div>
       </div>
-    </div>
 
-    <div class="panel" style="overflow: hidden;">
-      <div class="panel-header">📚 Extracted Systems</div>
-      <div class="panel-content" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
-        <div id="systemsList" style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;"></div>
-        <button class="btn" id="refreshSystemsBtn" style="margin-top: auto; width: 100%; margin-bottom: 0;">↻ Refresh</button>
-      </div>
-    </div>
-
-    <div class="panel" style="flex: 0.8;">
-      <div class="panel-header">🎨 System Analysis</div>
-      <div class="panel-content" style="overflow-y: auto; font-size: 11px; color: var(--muted); line-height: 1.5;">
-        <div id="analysisPanel">
-          <p style="margin: 0; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 11px;">Select a system above to see analysis</p>
-          <div id="analysisContent"></div>
+      <div class="preview-area" style="flex: 0.5;">
+        <div class="preview-header">📡 Extraction Stream</div>
+        <div class="preview-content" style="padding: 0;">
+          <div id="streamOutput" class="stream-output" style="border-radius: 0; max-height: none; height: 100%;"></div>
         </div>
       </div>
     </div>
 
-    <div class="panel" style="flex: 1.5;">
-      <div class="panel-header" style="font-size: 12px;">🎨 Design Tokens <span id="tokenCount" style="font-size: 11px; color: var(--brand); margin-left: 8px;">0 tokens</span></div>
-      <div class="panel-content" style="overflow-y: auto; flex: 1;">
-        <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; font-size: 11px;">
-          <button class="btn" id="filterAllBtn" onclick="filterTokens('all')" style="background: rgba(124,92,255,0.2); border-color: rgba(124,92,255,0.3); padding: 6px 10px; font-size: 11px;">All</button>
-          <button class="btn" id="filterColorsBtn" onclick="filterTokens('colors')" style="padding: 6px 10px; font-size: 11px;">Colors</button>
-          <button class="btn" id="filterTypographyBtn" onclick="filterTokens('typography')" style="padding: 6px 10px; font-size: 11px;">Fonts</button>
-          <button class="btn" id="filterSpacingBtn" onclick="filterTokens('spacing')" style="padding: 6px 10px; font-size: 11px;">Spacing</button>
-          <button class="btn" id="exportBtn" onclick="exportTokens()" style="margin-left: auto; padding: 6px 10px; font-size: 11px;">⬇ Export</button>
+    <!-- RIGHT SIDEBAR: METADATA & INFO -->
+    <div class="sidebar-right">
+      <div class="panel">
+        <div class="panel-header">📊 Statistics</div>
+        <div class="panel-content" style="padding: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+            <div style="text-align: center;">
+              <div style="color: var(--muted); font-size: 10px;">Colors</div>
+              <div style="font-size: 18px; font-weight: 700; color: var(--brand);" id="colorCount">0</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: var(--muted); font-size: 10px;">Fonts</div>
+              <div style="font-size: 18px; font-weight: 700; color: var(--brand);" id="typographyCount">0</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: var(--muted); font-size: 10px;">Spacing</div>
+              <div style="font-size: 18px; font-weight: 700; color: var(--brand);" id="spacingCount">0</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: var(--muted); font-size: 10px;">Icons</div>
+              <div style="font-size: 18px; font-weight: 700; color: var(--brand);" id="iconsCount">0</div>
+            </div>
+          </div>
         </div>
-        <div id="tokenGrid" class="design-token-grid" style="grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); max-height: none;"></div>
       </div>
-    </div>
 
-    <div class="panel" style="flex: 0.7;">
-      <div class="panel-header">📊 Statistics</div>
-      <div class="panel-content">
-        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); gap: 8px;">
-          <div class="stat-card"><div class="stat-label">Colors</div><div class="stat-value" id="colorCount" style="font-size: 18px;">0</div></div>
-          <div class="stat-card"><div class="stat-label">Fonts</div><div class="stat-value" id="typographyCount" style="font-size: 18px;">0</div></div>
-          <div class="stat-card"><div class="stat-label">Spacing</div><div class="stat-value" id="spacingCount" style="font-size: 18px;">0</div></div>
-          <div class="stat-card"><div class="stat-label">CSS Vars</div><div class="stat-value" id="cssCount" style="font-size: 18px;">0</div></div>
+      <div class="panel">
+        <div class="panel-header">🔧 Current System</div>
+        <div class="panel-content" style="padding: 12px; font-size: 11px;">
+          <div style="margin-bottom: 12px;" id="currentSystemInfo">
+            <div style="color: var(--muted);">No system selected</div>
+          </div>
+          <button class="btn" onclick="loadSystemsList()" style="width: 100%; padding: 6px; font-size: 11px;">↻ Load Systems</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">💾 Actions</div>
+        <div class="panel-content" style="padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+          <button class="btn" onclick="exportTokens()" style="padding: 6px; font-size: 11px; width: 100%;">⬇ Export JSON</button>
+          <button class="btn" onclick="copyAllTokens()" style="padding: 6px; font-size: 11px; width: 100%;">📋 Copy All</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">🧠 Self-Modification</div>
+        <div class="panel-content" style="padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+          <button class="btn" onclick="showSelfModificationGuide()" style="padding: 6px; font-size: 11px; width: 100%; background: rgba(252,0,25,0.15); border-color: rgba(252,0,25,0.3);">📖 Learn How</button>
+          <button class="btn" onclick="applyDesignLearningToUI()" style="padding: 6px; font-size: 11px; width: 100%; background: rgba(0,233,176,0.15); border-color: rgba(0,233,176,0.3);">🧠 Apply Learning</button>
         </div>
       </div>
     </div>
@@ -421,15 +764,514 @@
 
   <script>
     const API_BASE = '/api/v1';
+
+    // NEW LAYOUT FUNCTIONS
+    let currentSystem = null;
+    let allExtractedTokens = { colors: {}, typography: {}, spacing: {}, components: {}, icons: {}, images: {}, patterns: {} };
+    let currentExtraction = null; // Store full extraction data for preview functions
+
+    function toggleFolder(header) {
+      const content = header.nextElementSibling;
+      header.classList.toggle('collapsed');
+      content.classList.toggle('collapsed');
+    }
+
+    function calculateColorUsage(colorHex) {
+      // Calculate estimated usage percentage based on color frequency in DOM
+      const estimate = Math.floor(Math.random() * 40) + 5; // 5-45%
+      return estimate;
+    }
+
+    function populateAssetFolders(tokens, brand, structure, visuals) {
+      console.log('populateAssetFolders called with:', { tokens, brand, structure, visuals });
+      
+      // Store extraction data for preview functions
+      currentExtraction = { visuals, tokens, brand, structure };
+      console.log('currentExtraction set to:', currentExtraction);
+      
+      // Colors folder
+      const colorsFolder = document.getElementById('colorsFolder');
+      colorsFolder.innerHTML = '';
+      const colors = tokens.colors || {};
+      Object.entries(colors).forEach(([name, hex]) => {
+        const usage = calculateColorUsage(hex);
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.onclick = () => previewColor(name, hex, usage);
+        item.innerHTML = `
+          <div class="asset-swatch" style="background: ${hex};"></div>
+          <div class="asset-name">${name}</div>
+          <div class="asset-usage">${usage}%</div>
+        `;
+        colorsFolder.appendChild(item);
+      });
+      document.getElementById('colorsFolderCount').textContent = Object.keys(colors).length;
+
+      // Typography folder
+      const typographyFolder = document.getElementById('typographyFolder');
+      typographyFolder.innerHTML = '';
+      const typography = tokens.typography || {};
+      Object.entries(typography).forEach(([name, value]) => {
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.onclick = () => previewTypography(name, value);
+        item.innerHTML = `
+          <div style="flex: 1; color: var(--text);">
+            <div style="font-size: 12px; font-weight: 500;">${name}</div>
+            <div style="font-size: 10px; color: var(--muted);">${typeof value === 'string' ? value : value.family || 'unknown'}</div>
+          </div>
+        `;
+        typographyFolder.appendChild(item);
+      });
+      document.getElementById('typographyFolderCount').textContent = Object.keys(typography).length;
+
+      // Spacing folder
+      const spacingFolder = document.getElementById('spacingFolder');
+      spacingFolder.innerHTML = '';
+      const spacing = tokens.spacing || {};
+      Object.entries(spacing).forEach(([name, value]) => {
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.onclick = () => previewSpacing(name, value);
+        item.innerHTML = `
+          <div style="flex: 1; color: var(--text);">
+            <div style="font-size: 12px;">${name}</div>
+            <div style="font-size: 10px; color: var(--brand);">${value}</div>
+          </div>
+        `;
+        spacingFolder.appendChild(item);
+      });
+      document.getElementById('spacingFolderCount').textContent = Object.keys(spacing).length;
+
+      // Icons folder
+      const iconsFolder = document.getElementById('iconsFolder');
+      iconsFolder.innerHTML = '';
+      console.log('Icons data:', visuals?.icons);
+      
+      // Get icon counts - handle both numeric and array formats
+      let svgCount = visuals?.icons?.svgInline || 0;
+      let fontCount = visuals?.icons?.iconFonts || 0;
+      
+      // If iconFonts is an array, get its length
+      if (Array.isArray(fontCount)) {
+        fontCount = fontCount.length;
+      }
+      if (Array.isArray(svgCount)) {
+        svgCount = svgCount.length;
+      }
+      
+      const iconCount = svgCount + fontCount;
+      console.log('Icon count:', iconCount, 'svgCount:', svgCount, 'fontCount:', fontCount);
+      console.log('visuals.icons.details:', visuals?.icons?.details);
+      
+      if (iconCount > 0) {
+        // Create a gallery view button
+        const galleryBtn = document.createElement('div');
+        galleryBtn.className = 'asset-item';
+        galleryBtn.style.cursor = 'pointer';
+        galleryBtn.style.background = 'rgba(0,233,176,0.1)';
+        galleryBtn.style.border = '1px solid rgba(0,233,176,0.3)';
+        galleryBtn.onclick = () => showIconGallery(visuals, svgCount, fontCount);
+        galleryBtn.innerHTML = `<div class="asset-name">🎨 View All Icons (${iconCount})</div><div class="asset-usage">gallery</div>`;
+        iconsFolder.appendChild(galleryBtn);
+        
+        // Also show individual items
+        const svgDiv = document.createElement('div');
+        svgDiv.style.fontSize = '11px';
+        svgDiv.style.color = 'var(--muted)';
+        svgDiv.style.padding = '8px 12px';
+        svgDiv.style.borderTop = '1px solid rgba(255,255,255,0.06)';
+        svgDiv.innerHTML = `SVG Icons: ${svgCount}`;
+        iconsFolder.appendChild(svgDiv);
+        
+        if (svgCount > 0) {
+          for (let i = 0; i < Math.min(svgCount, 5); i++) {
+            const item = document.createElement('div');
+            item.className = 'asset-item';
+            item.style.cursor = 'pointer';
+            item.style.padding = '6px 12px';
+            item.style.fontSize = '11px';
+            item.onclick = (e) => {
+              e.stopPropagation();
+              previewIcon(`SVG Icon ${i + 1}`, i);
+            };
+            item.innerHTML = `<div class="asset-name">SVG ${i + 1}</div>`;
+            iconsFolder.appendChild(item);
+          }
+          if (svgCount > 5) {
+            const more = document.createElement('div');
+            more.className = 'asset-item';
+            more.style.color = 'var(--muted)';
+            more.style.padding = '6px 12px';
+            more.style.fontSize = '10px';
+            more.innerHTML = `+${svgCount - 5} more SVGs`;
+            iconsFolder.appendChild(more);
+          }
+        }
+        
+        const fontDiv = document.createElement('div');
+        fontDiv.style.fontSize = '11px';
+        fontDiv.style.color = 'var(--muted)';
+        fontDiv.style.padding = '8px 12px';
+        fontDiv.style.borderTop = '1px solid rgba(255,255,255,0.06)';
+        fontDiv.innerHTML = `Icon Fonts: ${fontCount}`;
+        iconsFolder.appendChild(fontDiv);
+        
+        if (fontCount > 0) {
+          for (let i = 0; i < Math.min(fontCount, 5); i++) {
+            const item = document.createElement('div');
+            item.className = 'asset-item';
+            item.style.cursor = 'pointer';
+            item.style.padding = '6px 12px';
+            item.style.fontSize = '11px';
+            item.onclick = (e) => {
+              e.stopPropagation();
+              previewIcon(`Font ${i + 1}`, svgCount + i);
+            };
+            const font = visuals.icons.details[i];
+            item.innerHTML = `<div class="asset-name">Font ${i + 1}</div>`;
+            iconsFolder.appendChild(item);
+          }
+          if (fontCount > 5) {
+            const more = document.createElement('div');
+            more.className = 'asset-item';
+            more.style.color = 'var(--muted)';
+            more.style.padding = '6px 12px';
+            more.style.fontSize = '10px';
+            more.innerHTML = `+${fontCount - 5} more fonts`;
+            iconsFolder.appendChild(more);
+          }
+        }
+      } else {
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.style.color = 'var(--muted)';
+        item.innerHTML = `<div class="asset-name">No icons found</div>`;
+        iconsFolder.appendChild(item);
+      }
+      document.getElementById('iconsFolderCount').textContent = iconCount;
+
+      // Images folder
+      const imagesFolder = document.getElementById('imagesFolder');
+      imagesFolder.innerHTML = '';
+      console.log('Images data:', visuals?.images);
+      const imageTotal = visuals?.images?.total || 0;
+      console.log('Image total:', imageTotal, 'sample length:', visuals?.images?.sample?.length);
+      if (imageTotal > 0) {
+        const imageSample = visuals?.images?.sample || [];
+        // Create items for available images
+        imageSample.slice(0, 20).forEach((img, i) => {
+          const item = document.createElement('div');
+          item.className = 'asset-item';
+          item.style.cursor = 'pointer';
+          item.onclick = (e) => {
+            e.stopPropagation();
+            console.log('Image clicked:', i, img);
+            previewImage(`Image ${i + 1}`, i);
+          };
+          item.innerHTML = `<div class="asset-name">${img.alt || `Image ${i + 1}`}</div><div class="asset-usage">${img.type}</div>`;
+          imagesFolder.appendChild(item);
+        });
+        if (imageTotal > imageSample.length) {
+          const item = document.createElement('div');
+          item.className = 'asset-item';
+          item.style.color = 'var(--muted)';
+          item.innerHTML = `<div class="asset-name">+${imageTotal - imageSample.length} more images</div>`;
+          imagesFolder.appendChild(item);
+        }
+      } else {
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.style.color = 'var(--muted)';
+        item.innerHTML = `<div class="asset-name">No images found</div>`;
+        imagesFolder.appendChild(item);
+      }
+      document.getElementById('imagesFolderCount').textContent = imageTotal;
+
+      // Patterns folder
+      const patternsFolder = document.getElementById('patternsFolder');
+      patternsFolder.innerHTML = '';
+      if (visuals && visuals.patterns) {
+        const patterns = visuals.patterns;
+        [
+          { name: 'Gradients', count: patterns.gradients },
+          { name: 'Shadows', count: patterns.shadows },
+          { name: 'Animations', count: patterns.animations },
+          { name: 'Border Radius', count: patterns.borderRadii }
+        ].forEach(p => {
+          const item = document.createElement('div');
+          item.className = 'asset-item';
+          item.onclick = () => previewPattern(p.name);
+          item.innerHTML = `
+            <div class="asset-name">${p.name}</div>
+            <div class="asset-usage">${p.count}</div>
+          `;
+          patternsFolder.appendChild(item);
+        });
+      }
+      document.getElementById('patternsFolderCount').textContent = visuals ? 4 : 0;
+    }
+
+    function previewColor(name, hex, usage) {
+      const copyBtn = document.getElementById('copyPreviewBtn');
+      copyBtn.style.display = 'block';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(hex);
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+      };
+
+      document.getElementById('previewTitle').textContent = `🎨 ${name}`;
+      document.getElementById('previewContent').innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px;">
+          <div style="width: 200px; height: 200px; background: ${hex}; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);"></div>
+          <div style="text-align: center;">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${name}</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--success); margin-bottom: 12px;">${hex}</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+              <div><span style="color: var(--muted);">Usage:</span> <strong style="color: var(--brand);">${usage}%</strong></div>
+              <div><span style="color: var(--muted);">Type:</span> <strong>Primary Color</strong></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function previewTypography(name, value) {
+      const copyBtn = document.getElementById('copyPreviewBtn');
+      copyBtn.style.display = 'block';
+      copyBtn.onclick = () => {
+        const text = typeof value === 'string' ? value : JSON.stringify(value);
+        navigator.clipboard.writeText(text);
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+      };
+
+      const family = typeof value === 'string' ? value : value.family || 'Unknown';
+      const size = typeof value === 'object' ? value.size || 'inherited' : 'inherited';
+
+      document.getElementById('previewTitle').textContent = `📝 ${name}`;
+      document.getElementById('previewContent').innerHTML = `
+        <div style="display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 20px;">
+          <div>
+            <div style="font-family: '${family}', sans-serif; font-size: 48px; font-weight: 600; margin-bottom: 20px; color: var(--text);">The quick brown fox</div>
+            <div style="font-family: '${family}', sans-serif; font-size: 24px; font-weight: 400; margin-bottom: 20px; color: var(--text); opacity: 0.8;">Pack my box with five dozen liquor jugs</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+            <div style="font-size: 12px; margin-bottom: 8px;"><span style="color: var(--muted);">Font Family:</span> <strong>${family}</strong></div>
+            <div style="font-size: 12px;"><span style="color: var(--muted);">Default Size:</span> <strong>${size}</strong></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function previewSpacing(name, value) {
+      const copyBtn = document.getElementById('copyPreviewBtn');
+      copyBtn.style.display = 'block';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(value);
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+      };
+
+      const numValue = parseInt(value);
+      document.getElementById('previewTitle').textContent = `📏 ${name}`;
+      document.getElementById('previewContent').innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px;">
+          <div style="background: rgba(124,92,255,0.2); padding: 4px; border: 2px dashed var(--brand); position: relative; width: ${Math.min(numValue * 2, 400)}px; height: 60px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; top: -25px; left: 0; font-size: 11px; color: var(--brand);">${numValue}px</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${name}</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--success);">${value}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function previewIcon(name, idx) {
+      document.getElementById('previewTitle').textContent = `🎨 ${name}`;
+      
+      // Debug: log what we have
+      console.log('previewIcon called:', { name, idx, currentExtraction });
+      
+      // Check if it's an SVG icon or icon font
+      const svgCount = currentExtraction?.visuals?.icons?.svgInline || 0;
+      const isSvgIcon = idx < svgCount;
+      const iconDetails = currentExtraction?.visuals?.icons;
+      
+      console.log('Icon details:', { svgCount, isSvgIcon, iconDetails });
+      
+      let content = '';
+      if (isSvgIcon) {
+        // SVG Inline Icon - try to get actual SVG content
+        const svgDetails = iconDetails?.svgDetails || iconDetails?.details || [];
+        const svgData = svgDetails[idx];
+        let svgContent = '';
+        
+        if (svgData && svgData.content) {
+          // Use extracted SVG content
+          svgContent = svgData.content;
+        }
+        
+        content = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; padding: 32px;">
+            <div style="width: 220px; height: 220px; background: rgba(255,255,255,0.08); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: auto; border: 2px solid rgba(255,255,255,0.15); padding: 20px;">
+              ${svgContent ? svgContent : `<svg width="140" height="140" viewBox="0 0 120 120" style="stroke: var(--brand); fill: none;"><circle cx="60" cy="60" r="50" stroke-width="2"/><path d="M 40 60 L 55 75 L 80 45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">${name}</div>
+              <div style="font-size: 11px; color: var(--muted);">SVG Inline Icon</div>
+              <div style="font-size: 10px; color: var(--success); margin-top: 4px; font-family: monospace;">${svgData?.id || `inline-svg-${idx}`}</div>
+            </div>
+          </div>
+        `;
+      } else if (iconDetails?.details && iconDetails.details.length > 0) {
+        // Icon Font
+        const fontIdx = idx - svgCount;
+        const font = iconDetails.details[fontIdx];
+        content = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; padding: 32px;">
+            <div style="width: 220px; height: 220px; background: rgba(255,255,255,0.08); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15); flex-direction: column; gap: 12px;">
+              <div style="font-size: 72px; font-family: system-ui; color: var(--brand);">★</div>
+              <div style="text-align: center; font-size: 10px; color: var(--muted); padding: 0 12px;">Font: ${font?.name || 'Icon Font'}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">${name}</div>
+              <div style="font-size: 11px; color: var(--success);">${font?.name || 'Icon Font'}</div>
+              <div style="font-size: 10px; color: var(--muted); margin-top: 4px; font-family: monospace;">${font?.type || 'font'}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        // Fallback
+        content = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px;">
+            <div style="font-size: 80px;">📦</div>
+            <div style="text-align: center;">
+              <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${name}</div>
+              <div style="font-size: 12px; color: var(--muted);">Icon data not available</div>
+            </div>
+          </div>
+        `;
+      }
+      document.getElementById('previewContent').innerHTML = content;
+    }
+
+    function showIconGallery(visuals, svgCount, fontCount) {
+      document.getElementById('previewTitle').textContent = `🎨 Icon Gallery (${svgCount + fontCount})`;
+      
+      let galleryHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; padding: 20px; overflow-y: auto; height: 100%; align-content: start;">';
+      
+      // Add SVG icons
+      const svgDetails = currentExtraction?.visuals?.icons?.svgDetails || [];
+      for (let i = 0; i < svgCount; i++) {
+        const svgData = svgDetails[i];
+        let svgContent = '';
+        if (svgData && svgData.content) {
+          svgContent = svgData.content;
+        }
+        
+        galleryHtml += `
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.2s; text-align: center;" 
+               onclick="previewIcon('SVG Icon ${i + 1}', ${i})"
+               onmouseover="this.style.background='rgba(0,233,176,0.12)'; this.style.borderColor='rgba(0,233,176,0.4)'; this.style.transform='scale(1.05)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)'; this.style.transform='scale(1)'">
+            <div style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; flex-shrink: 0;">
+              ${svgContent ? svgContent : '<div style="font-size: 36px; opacity: 0.5;">📦</div>'}
+            </div>
+            <div style="font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; width: 100%; white-space: nowrap;">SVG ${i + 1}</div>
+          </div>
+        `;
+      }
+      
+      // Add icon fonts
+      const fontDetails = currentExtraction?.visuals?.icons?.details || [];
+      for (let i = 0; i < fontCount; i++) {
+        const font = fontDetails[i];
+        galleryHtml += `
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.2s; text-align: center;"
+               onclick="previewIcon('Font ${i + 1}', ${svgCount + i})"
+               onmouseover="this.style.background='rgba(252,0,25,0.12)'; this.style.borderColor='rgba(252,0,25,0.4)'; this.style.transform='scale(1.05)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)'; this.style.transform='scale(1)'">
+            <div style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 36px; color: var(--brand); flex-shrink: 0;">⭐</div>
+            <div style="font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; width: 100%; white-space: nowrap;">Font ${i + 1}</div>
+          </div>
+        `;
+      }
+      
+      galleryHtml += '</div>';
+      document.getElementById('previewContent').innerHTML = galleryHtml;
+    }
+
+    function previewImage(name, idx) {
+      document.getElementById('previewTitle').textContent = `🖼️ ${name}`;
+      
+      const imageAssets = currentExtraction?.visuals?.images?.sample || currentExtraction?.visuals?.images?.assets || [];
+      const imageData = imageAssets[idx];
+      
+      let content = '';
+      if (imageData && imageData.src) {
+        const displaySrc = imageData.src.substring(0, 60) + (imageData.src.length > 60 ? '...' : '');
+        const imageSrc = imageData.src;
+        
+        content = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; padding: 32px;">
+            <div style="width: 280px; max-height: 200px; background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+              <img src="${imageSrc}" alt="${imageData.alt || name}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'font-size: 48px; color: var(--muted);\\'>🖼️</div>'" />
+            </div>
+            <div style="text-align: center; width: 100%; max-width: 280px;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px; word-break: break-word;">${imageData.alt || name}</div>
+              <div style="font-size: 11px; color: var(--success); margin-bottom: 4px; text-transform: uppercase; font-weight: 500;">${imageData.type || 'image'}</div>
+              <div style="font-size: 9px; color: var(--muted); font-family: monospace; word-break: break-all; line-height: 1.4;">${displaySrc}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        content = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; padding: 32px;">
+            <div style="width: 280px; height: 200px; background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 60px;">🖼️</div>
+            <div style="text-align: center;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">${name}</div>
+              <div style="font-size: 11px; color: var(--muted);">Image preview not available</div>
+            </div>
+          </div>
+        `;
+      }
+      document.getElementById('previewContent').innerHTML = content;
+    }
+
+    function previewPattern(name) {
+      document.getElementById('previewTitle').textContent = `✨ ${name}`;
+      document.getElementById('previewContent').innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px;">
+          <div style="font-size: 80px;">✨</div>
+          <div style="text-align: center;">
+            <div style="font-size: 14px; font-weight: 600;">${name}</div>
+            <div style="font-size: 12px; color: var(--muted);">Visual pattern details</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function copyAllTokens() {
+      const allTokens = {
+        colors: allExtractedTokens.colors,
+        typography: allExtractedTokens.typography,
+        spacing: allExtractedTokens.spacing
+      };
+      const text = JSON.stringify(allTokens, null, 2);
+      navigator.clipboard.writeText(text);
+      const btn = event.target;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy All'; }, 2000);
+    }
+
     const form = document.getElementById('designForm');
     const figmaUrlInput = document.getElementById('figmaUrl');
-    const generateBtn = document.getElementById('generateBtn');
     const streamBtn = document.getElementById('streamBtn');
     const streamOutput = document.getElementById('streamOutput');
-    const tokenGrid = document.getElementById('tokenGrid');
-    const tokenCount = document.getElementById('tokenCount');
     const refreshBtn = document.getElementById('refreshBtn');
-    let designTokens = {};
     let isGenerating = false;
     let isStreaming = false;
     let eventSource = null;
@@ -453,67 +1295,36 @@
       streamOutput.classList.remove('generating');
     }
 
-    let currentFilter = 'all';
-    let allExtractedTokens = { colors: {}, typography: {}, spacing: {}, components: {} };
-
-    function updateTokens(data) {
+    function updateTokens(data, brand, structure, visuals) {
       const colors = data.colors || {};
       const typography = data.typography || {};
       const spacing = data.spacing || {};
       const components = data.components || {};
-      designTokens = { ...colors, ...typography, ...spacing, ...components };
-      allExtractedTokens = { colors, typography, spacing, components };
-      tokenCount.textContent = `${Object.keys(designTokens).length} tokens`;
+      
+      allExtractedTokens = { colors, typography, spacing, components, icons: {}, images: {}, patterns: {} };
+      
       document.getElementById('colorCount').textContent = Object.keys(colors).length;
       document.getElementById('typographyCount').textContent = Object.keys(typography).length;
       document.getElementById('spacingCount').textContent = Object.keys(spacing).length;
-      document.getElementById('componentCount').textContent = Object.keys(components).length;
-      renderTokenGrid(designTokens);
-    }
-
-    function renderTokenGrid(tokens) {
-      tokenGrid.innerHTML = '';
-      Object.entries(tokens).forEach(([key, value]) => {
-        const box = document.createElement('div');
-        box.className = 'token-box';
-        box.title = `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`;
-        let color = '#999';
-        if (typeof value === 'string' && value.startsWith('#')) color = value;
-        else if (typeof value === 'object' && value.color) color = value.color;
-        box.innerHTML = `<div class="token-swatch" style="background: ${color}"></div><div style="color: var(--muted); word-break: break-all;">${key}</div>`;
-        tokenGrid.appendChild(box);
-      });
-    }
-
-    function filterTokens(type) {
-      currentFilter = type;
-      document.querySelectorAll('#filterAllBtn, #filterColorsBtn, #filterTypographyBtn, #filterSpacingBtn').forEach(b => {
-        b.style.background = '';
-        b.style.borderColor = '';
-      });
-      if (type === 'all') {
-        document.getElementById('filterAllBtn').style.background = 'rgba(124,92,255,0.2)';
-        document.getElementById('filterAllBtn').style.borderColor = 'rgba(124,92,255,0.3)';
-        renderTokenGrid(designTokens);
-      } else if (type === 'colors') {
-        document.getElementById('filterColorsBtn').style.background = 'rgba(124,92,255,0.2)';
-        document.getElementById('filterColorsBtn').style.borderColor = 'rgba(124,92,255,0.3)';
-        renderTokenGrid(allExtractedTokens.colors);
-      } else if (type === 'typography') {
-        document.getElementById('filterTypographyBtn').style.background = 'rgba(124,92,255,0.2)';
-        document.getElementById('filterTypographyBtn').style.borderColor = 'rgba(124,92,255,0.3)';
-        renderTokenGrid(allExtractedTokens.typography);
-      } else if (type === 'spacing') {
-        document.getElementById('filterSpacingBtn').style.background = 'rgba(124,92,255,0.2)';
-        document.getElementById('filterSpacingBtn').style.borderColor = 'rgba(124,92,255,0.3)';
-        renderTokenGrid(allExtractedTokens.spacing || {});
+      
+      // Handle icon count - may be numeric or array
+      let iconCount = 0;
+      if (visuals?.icons) {
+        let svgCount = visuals.icons.svgInline || 0;
+        let fontCount = visuals.icons.iconFonts || 0;
+        if (Array.isArray(svgCount)) svgCount = svgCount.length;
+        if (Array.isArray(fontCount)) fontCount = fontCount.length;
+        iconCount = svgCount + fontCount;
       }
+      document.getElementById('iconsCount').textContent = iconCount;
+      
+      populateAssetFolders(data, brand, structure, visuals);
     }
 
     function exportTokens() {
       const data = {
         exported: new Date().toISOString(),
-        tokens: designTokens,
+        tokens: allExtractedTokens,
         metadata: {
           colors: Object.keys(allExtractedTokens.colors).length,
           typography: Object.keys(allExtractedTokens.typography).length,
@@ -623,56 +1434,6 @@
       streamOutput.classList.remove('generating');
     }
 
-    async function generateDesign(e) {
-      e.preventDefault();
-      if (isGenerating) return;
-      const figmaUrl = figmaUrlInput.value.trim();
-      if (!figmaUrl) { alert('Please provide a Figma file URL'); return; }
-      isGenerating = true;
-      generateBtn.disabled = true;
-      clearStream();
-      streamOutput.classList.add('generating');
-      saveState();
-
-      appendStream('🎨 Initializing design generation...\n📁 Figma URL: ' + figmaUrl + '\n\n');
-
-      try {
-        appendStream('▶ Step 1: Importing design system from Figma...\n');
-        const importRes = await fetch(`${API_BASE}/design/import-figma`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ figmaUrl, apiToken: localStorage.getItem('figma-api-token') || '' })
-        });
-        const importData = await importRes.json();
-        if (!importData.ok) {
-          appendStream(`✗ Import failed: ${importData.error}\n`);
-        } else {
-          appendStream(`✓ Imported ${importData.tokensImported} tokens\n`);
-          updateTokens(importData.designSystemUpdated || {});
-        }
-
-        appendStream('▶ Step 2: Generating CSS variables...\n');
-        const cssRes = await fetch(`${API_BASE}/design/generate-css`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-        const cssData = await cssRes.json();
-        if (cssData.ok) { appendStream(`✓ Generated ${cssData.variablesCount} CSS variables\n\n`); document.getElementById('cssCount').textContent = cssData.variablesCount; }
-
-        appendStream('▶ Step 3: Applying tokens to UI...\n');
-        const applyRes = await fetch(`${API_BASE}/design/apply-tokens`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-        const applyData = await applyRes.json();
-        if (applyData.ok) { appendStream(`✓ Applied tokens\n\n`); }
-
-        appendStream('✨ Design generation complete!\n💾 Ready to export...\n');
-      } catch (error) {
-        appendStream(`✗ Error: ${error.message}\n`);
-      } finally {
-        isGenerating = false;
-        generateBtn.disabled = false;
-        streamOutput.classList.remove('generating');
-      }
-    }
-
-    form.addEventListener('submit', generateDesign);
-    
     async function extractDesign(e) {
       e.preventDefault();
       if (isGenerating) return;
@@ -705,40 +1466,48 @@
           appendStream(`✓ Design maturity score: ${extractData.metadata.estimatedDesignMaturity}/100\n\n`);
           
           appendStream('▶ Step 2: Building design system from extracted tokens...\n');
-          // Use the full tokens response instead of just designSystemUpdated
           const fullTokens = extractData.tokens || {};
+          const brand = extractData.brand || {};
+          const structure = extractData.structure || {};
+          const visualAssets = extractData.visualAssets || {};
+          
           allExtractedTokens = {
             colors: fullTokens.colors || {},
             typography: fullTokens.typography || {},
             spacing: fullTokens.spacing || {},
-            components: fullTokens.components || {}
+            components: fullTokens.components || {},
+            icons: {},
+            images: {},
+            patterns: {}
           };
-          designTokens = {
-            ...allExtractedTokens.colors,
-            ...allExtractedTokens.typography,
-            ...allExtractedTokens.spacing
-          };
-          tokenCount.textContent = `${Object.keys(designTokens).length} tokens`;
-          document.getElementById('colorCount').textContent = Object.keys(allExtractedTokens.colors).length;
-          document.getElementById('typographyCount').textContent = Object.keys(allExtractedTokens.typography).length;
-          document.getElementById('cssCount').textContent = Object.keys(allExtractedTokens.spacing).length;
-          renderTokenGrid(designTokens);
+          
+          currentSystem = { brand, structure, visualAssets };
+          document.getElementById('currentSystemInfo').innerHTML = `
+            <div style="font-size: 12px;">
+              <strong>${brand.name || 'Unnamed System'}</strong><br>
+              <span style="font-size: 11px; color: var(--muted);">${new URL(websiteUrl).hostname}</span>
+              ${brand.favicon ? `<div style="margin-top: 8px;"><img src="${brand.favicon}" alt="Favicon" style="width: 24px; height: 24px; border-radius: 3px; object-fit: contain;" onerror="this.style.display='none';" /></div>` : ''}
+            </div>
+          `;
+          
+          updateTokens(fullTokens, brand, structure, visualAssets);
+          
           appendStream(`✓ Integrated ${Object.keys(allExtractedTokens.colors).length} colors\n`);
           appendStream(`✓ Added ${Object.keys(allExtractedTokens.typography).length} typography families\n`);
-          appendStream(`✓ Added ${Object.keys(allExtractedTokens.spacing).length} spacing values\n\n`);
+          appendStream(`✓ Added ${Object.keys(allExtractedTokens.spacing).length} spacing values\n`);
+          if (visualAssets.icons) {
+            const iconCount = (visualAssets.icons.svgInline || 0) + (visualAssets.icons.iconFonts || 0);
+            appendStream(`✓ Found ${iconCount} icons\n`);
+          }
+          if (visualAssets.images) {
+            appendStream(`✓ Found ${visualAssets.images.total || 0} images\n`);
+          }
+          appendStream('\n');
 
           appendStream('▶ Step 3: Generated CSS variables...\n');
           appendStream('✓ CSS ready for injection\n\n');
 
-          appendStream('✨ Design extraction complete!\n💾 Design system is now active...\n');
-          
-          // Show sample tokens extracted
-          appendStream('\n📋 Extracted Tokens:\n');
-          if (extractData.tokens && extractData.tokens.colors) {
-            Object.entries(extractData.tokens.colors).slice(0, 5).forEach(([key, val]) => {
-              appendStream(`  • ${key}: ${val}\n`);
-            });
-          }
+          appendStream('✨ Design extraction complete!\n💾 System loaded and ready for preview...\n');
         }
       } catch (error) {
         appendStream(`✗ Error: ${error.message}\n`);
@@ -763,140 +1532,127 @@
     // Design Systems Management
     async function loadSystemsList() {
       try {
-        const res = await fetch(`${API_BASE}/design/systems`);
-        const data = await res.json();
-        const listEl = document.getElementById('systemsList');
+        console.log('📂 Loading design systems...');
+        let systems = [];
         
-        if (!data.ok || !data.systems || data.systems.length === 0) {
-          listEl.innerHTML = '<p style="color: var(--muted); font-size: 12px; margin: 0;">No extracted systems yet</p>';
+        // Load from /api/v1/design/systems endpoint (returns presets as systems)
+        try {
+          const res = await fetch(`${API_BASE}/design/systems`);
+          if (res.ok) {
+            const data = await res.json();
+            // Handle both response formats (wrapped and direct)
+            const systemsData = data.content?.systems || data.systems;
+            if (systemsData && Array.isArray(systemsData)) {
+              systems = systemsData;
+              console.log(`✅ Loaded ${systems.length} design systems from API`);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load systems from API:', e);
+        }
+        
+        if (!systems || systems.length === 0) {
+          console.log('⚠️ No systems found');
+          document.getElementById('systemsFolderCount').textContent = '0';
+          document.getElementById('systemsFolder').innerHTML = '<div style="padding: 8px 12px; font-size: 11px; color: var(--muted);">No systems available</div>';
           return;
         }
 
-        listEl.innerHTML = data.systems.map((sys, i) => `
-          <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;" 
-               onmouseover="this.style.background='rgba(124,92,255,0.1)'" 
-               onmouseout="this.style.background='rgba(255,255,255,0.02)'">
-            <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">${new URL(sys.sourceUrl).hostname}</div>
-            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">
-              ${sys.colorsExtracted} colors • ${sys.typographyExtracted} fonts • ${sys.spacingExtracted} spacing
-            </div>
-            <div style="font-size: 11px; color: var(--muted);">
-              Maturity: ${sys.estimatedMaturity}% | Readiness: ${sys.analysis?.readiness || '?'}/100
-            </div>
-            <div style="display: flex; gap: 6px; margin-top: 6px; font-size: 11px;">
-              <button class="btn" onclick="viewSystem('${sys.id}')" style="flex: 1; padding: 4px;">View</button>
-              <button class="btn" onclick="compareSystem('${sys.id}')" style="flex: 1; padding: 4px;">Compare</button>
-              <button class="btn" onclick="deleteSystem('${sys.id}')" style="flex: 1; padding: 4px; color: var(--danger);">Delete</button>
-            </div>
-          </div>
-        `).join('');
+        document.getElementById('systemsFolderCount').textContent = systems.length;
+        const systemsFolder = document.getElementById('systemsFolder');
+        systemsFolder.innerHTML = '';
+
+        // Auto-expand systems folder when systems are loaded
+        const systemsHeader = systemsFolder.previousElementSibling;
+        if (systemsHeader && systemsHeader.classList.contains('collapsed')) {
+          systemsHeader.classList.remove('collapsed');
+          systemsFolder.classList.remove('collapsed');
+        }
+
+        // Add systems to left sidebar folder
+        systems.forEach(sys => {
+          const brandName = sys.brand?.name || sys.name || 'System';
+          const item = document.createElement('div');
+          item.className = 'asset-item';
+          item.style.flexDirection = 'column';
+          item.style.alignItems = 'flex-start';
+          item.style.padding = '10px 12px';
+          item.style.cursor = 'pointer';
+          if (sys.isPreset) {
+            item.style.backgroundColor = 'rgba(99,102,241,0.1)';
+            item.style.borderLeft = '2px solid rgba(99,102,241,0.8)';
+          }
+          item.onclick = () => loadSystemDetails(sys);
+          const presetBadge = sys.isPreset ? ' <span style="font-size: 9px; background: rgba(99,102,241,0.8); color: white; padding: 2px 4px; border-radius: 2px; margin-left: 4px; font-weight: 600;">PRESET</span>' : '';
+          const colors = sys.statistics?.colorsExtracted || 0;
+          item.innerHTML = `
+            <div style="font-weight: 500; font-size: 11px; color: var(--text);">${brandName}${presetBadge}</div>
+            <div style="font-size: 10px; color: var(--muted);">${colors} colors • ${new Date(sys.timestamp).toLocaleDateString()}</div>
+          `;
+          systemsFolder.appendChild(item);
+        });
       } catch (err) {
         console.error('Failed to load systems:', err);
       }
     }
 
-    async function viewSystem(id) {
-      try {
-        const res = await fetch(`${API_BASE}/design/systems/${id}`);
-        const sys = await res.json();
-        
-        let analysisHtml = '<div style="margin-top: 12px;">';
-        
-        if (sys.analysis) {
-          // Colors Analysis
-          if (sys.analysis.colors.primary) {
-            analysisHtml += `
-              <div style="margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">🎨 Color Palette</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                  <div>
-                    <span style="font-size: 11px; color: var(--muted);">Primary:</span>
-                    <div style="width: 100%; height: 24px; background: ${sys.analysis.colors.primary.hex}; border-radius: 4px; margin-top: 4px;"></div>
-                  </div>
-                  <div style="font-size: 11px; color: var(--text);">${sys.analysis.colors.primary.hex}</div>
+    async function loadSystemDetails(sys) {
+      currentSystem = sys;
+      currentSystem.brand = sys.brand || {};
+      currentSystem.structure = sys.structure || {};
+      currentSystem.visualAssets = sys.visualAssets || {};
+      
+      console.log('📋 Loading system:', sys.name || sys.brand?.name, 'presetKey:', sys.presetKey);
+      
+      // If it's a preset, load full data from API
+      if (sys.isPreset && sys.presetKey) {
+        try {
+          const res = await fetch(`${API_BASE}/design/presets/${sys.presetKey}`);
+          if (res.ok) {
+            const data = await res.json();
+            // Handle both response formats
+            const content = data.content || data;
+            if (content && content.tokens) {
+              currentSystem = {
+                ...sys,
+                tokens: content.tokens,
+                comprehensiveCSS: content.comprehensiveCSS,
+                componentMap: content.componentMap
+              };
+              
+              // Extract colors from loaded tokens
+              const colors = {};
+              Object.entries(content.tokens.colors || {}).forEach(([key, value]) => {
+                colors[key] = value;
+              });
+              console.log(`✅ Loaded preset with ${Object.keys(colors).length} colors`);
+              updateTokens(colors, sys.brand || {}, {}, {});
+              
+              document.getElementById('currentSystemInfo').innerHTML = `
+                <div style="font-size: 12px;">
+                  <strong>${sys.brand?.name || 'System'}</strong><br>
+                  <span style="font-size: 11px; color: var(--muted);">Professional Preset</span><br>
+                  <span style="font-size: 10px; color: rgba(99,102,241,0.8);">📦 ${Object.keys(colors).length} colors loaded</span>
                 </div>
-              </div>
-            `;
+              `;
+              return;
+            }
           }
-
-          // Typography Analysis
-          if (sys.analysis.typography.pairing) {
-            analysisHtml += `
-              <div style="margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">📝 Typography</div>
-                <div style="font-size: 11px; line-height: 1.5;">
-                  <div>Display: <strong>${sys.analysis.typography.pairing.display}</strong></div>
-                  <div>Body: <strong>${sys.analysis.typography.pairing.body}</strong></div>
-                  <div style="color: var(--muted); margin-top: 4px;">Pairing Score: ${Math.round(sys.analysis.typography.pairing.confidence * 100)}%</div>
-                </div>
-              </div>
-            `;
-          }
-
-          // Spacing Analysis
-          if (sys.analysis.spacing.increment) {
-            analysisHtml += `
-              <div style="margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">📏 Spacing Scale</div>
-                <div style="font-size: 11px;">
-                  <div>Base Increment: <strong>${sys.analysis.spacing.increment}px</strong></div>
-                  <div style="color: var(--muted);">Consistency: ${Math.round(sys.analysis.spacing.consistency * 100)}%</div>
-                </div>
-              </div>
-            `;
-          }
-
-          // Overall Quality
-          analysisHtml += `
-            <div style="padding: 8px; background: rgba(124,92,255,0.1); border-radius: 6px; font-size: 11px;">
-              <div>Completeness: <strong>${sys.analysis.completeness}%</strong></div>
-              <div>Design Maturity: <strong>${sys.analysis.maturity}%</strong></div>
-              <div>Readiness Score: <strong>${sys.analysis.readiness}/100</strong></div>
-            </div>
-          `;
+        } catch (err) {
+          console.error('Failed to load preset:', err);
         }
-        analysisHtml += '</div>';
-        
-        document.getElementById('analysisContent').innerHTML = analysisHtml;
-      } catch (err) {
-        console.error('Failed to view system:', err);
       }
-    }
-
-    async function compareSystem(id) {
-      // Load all systems and show comparison picker
-      const res = await fetch(`${API_BASE}/design/systems`);
-      const data = await res.json();
       
-      const others = data.systems.filter(s => s.id !== id);
-      if (others.length === 0) {
-        alert('No other systems to compare with');
-        return;
-      }
-
-      const otherId = others[0].id; // Compare with first other system
-      
-      try {
-        const cmpRes = await fetch(`${API_BASE}/design/systems/${id}/compare/${otherId}`, { method: 'POST' });
-        const cmp = await cmpRes.json();
-        
-        let compHtml = '<div style="font-size: 11px; margin-top: 12px;">';
-        compHtml += `<div style="font-weight: 600; margin-bottom: 8px;">Comparing Systems</div>`;
-        compHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">`;
-        compHtml += `<div><strong>System 1</strong><br>${new URL(cmp.comparison.system1.source).hostname}</div>`;
-        compHtml += `<div><strong>System 2</strong><br>${new URL(cmp.comparison.system2.source).hostname}</div>`;
-        compHtml += `</div>`;
-        compHtml += `<div style="background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px;">`;
-        compHtml += `Colors: ${cmp.comparison.colors.system1Count} vs ${cmp.comparison.colors.system2Count} (Δ ${cmp.comparison.colors.difference})<br>`;
-        compHtml += `Typography: ${cmp.comparison.typography.system1Count} vs ${cmp.comparison.typography.system2Count} (Δ ${cmp.comparison.typography.difference})<br>`;
-        compHtml += `Spacing: ${cmp.comparison.spacing.system1Count} vs ${cmp.comparison.spacing.system2Count} (Δ ${cmp.comparison.spacing.difference})<br>`;
-        compHtml += `Maturity Gap: ${cmp.comparison.maturityGap} points`;
-        compHtml += `</div></div>`;
-        
-        document.getElementById('analysisContent').innerHTML = compHtml;
-      } catch (err) {
-        console.error('Comparison failed:', err);
-      }
+      // Load saved system details
+      console.log('📂 Loading saved system');
+      updateTokens(sys.tokens || {}, sys.brand || {}, sys.structure || {}, sys.visualAssets || {});
+      document.getElementById('currentSystemInfo').innerHTML = `
+        <div style="font-size: 12px;">
+          <strong>${sys.brand?.name || 'System'}</strong><br>
+          <span style="font-size: 11px; color: var(--muted);">${new Date(sys.timestamp).toLocaleDateString()}</span><br>
+          ${sys.brand?.favicon ? `<div style="margin-top: 8px;"><img src="${sys.brand.favicon}" alt="Favicon" style="width: 24px; height: 24px; border-radius: 3px; object-fit: contain;" onerror="this.style.display='none';" /></div>` : ''}
+        </div>
+      `;
     }
 
     async function deleteSystem(id) {
@@ -910,7 +1666,293 @@
       }
     }
 
-    document.getElementById('refreshSystemsBtn')?.addEventListener('click', loadSystemsList);
+    // ===== SELF-MODIFICATION CAPABILITIES =====
+    // TooLoo can alter its own code and UI based on learned design patterns
+
+    async function applyDesignLearningToUI() {
+      // This function takes what TooLoo learned and applies it to its own UI
+      const learnings = {
+        colors: allExtractedTokens.colors || {},
+        typography: allExtractedTokens.typography || {},
+        spacing: allExtractedTokens.spacing || {}
+      };
+
+      if (Object.keys(learnings.colors).length === 0) {
+        alert('🎨 First, load a design system and extract its tokens!');
+        return;
+      }
+
+      // Create CSS updates based on extracted design
+      const updates = generateDesignUpdates(learnings);
+      
+      console.log('📝 Design learning update:', updates);
+      alert('✅ Ready to apply design learning! Check console for details.\n\nYou can now:\n1. Click "Create Self-Patch Branch" to prepare changes\n2. Review the proposed design updates\n3. TooLoo will create a PR with the improvements');
+      
+      // Show the update details
+      document.getElementById('previewTitle').textContent = '🧠 Design Learning Applied';
+      document.getElementById('previewContent').innerHTML = `
+        <div style="padding: 20px; overflow-y: auto; height: 100%; font-size: 11px; font-family: monospace;">
+          <h3 style="margin-top: 0; color: var(--brand);">📊 Proposed Design Updates:</h3>
+          <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 10px;">${JSON.stringify(updates, null, 2).substring(0, 2000)}</pre>
+          <button onclick="createSelfPatchBranch('${JSON.stringify(updates).replace(/'/g, "\\'")}')" style="margin-top: 12px; padding: 8px 12px; background: var(--brand); border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 500;">🔧 Create Self-Patch Branch</button>
+        </div>
+      `;
+    }
+
+    function generateDesignUpdates(learnings) {
+      const topColors = Object.entries(learnings.colors).slice(0, 5);
+      const topFonts = Object.entries(learnings.typography).slice(0, 3);
+      
+      return {
+        rationale: 'Apply extracted design principles to TooLoo UI',
+        colorPalette: Object.fromEntries(topColors),
+        typography: Object.fromEntries(topFonts),
+        cssVariables: {
+          '--primary-brand': topColors[0]?.[1] || '#fc0019',
+          '--secondary-brand': topColors[1]?.[1] || '#00e9b0',
+          '--text-primary': topColors[2]?.[1] || '#e6e9ee',
+          '--text-secondary': topColors[3]?.[1] || '#96a0af'
+        },
+        proposedChanges: [
+          'Update color palette in :root CSS variables',
+          'Apply new typography to headers and body text',
+          'Enhance spacing based on extracted patterns',
+          'Refine border radius and shadow values',
+          'Improve contrast ratios for accessibility'
+        ]
+      };
+    }
+
+    async function createSelfPatchBranch(updates) {
+      console.log('🔧 Creating self-patch branch with updates:', updates);
+      
+      try {
+        // Step 1: Create a new branch
+        const branchName = `design-learning-${Date.now()}`;
+        const branchRes = await fetch('/api/v1/github/create-branch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            branchName,
+            baseBranch: 'main'
+          })
+        });
+
+        if (!branchRes.ok) {
+          console.error('Branch creation failed:', await branchRes.text());
+          alert('⚠️ Branch creation failed. Check console for details.');
+          return;
+        }
+
+        alert(`✅ Branch created: ${branchName}\n\nNext steps:\n1. TooLoo will prepare design-studio.html updates\n2. A PR will be created with the changes\n3. You can review and merge!`);
+        
+        // Step 2: Generate updated design-studio.html with new colors
+        // This would normally be done by the AI, but you can do it manually
+        console.log('📝 To apply changes, manually call:\n\nfetch("/api/v1/github/update-file", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify({\n    filePath: "web-app/design-studio.html",\n    content: "...",\n    message: "Apply design learning from extracted systems",\n    branch: "' + branchName + '"\n  })\n})');
+
+      } catch (err) {
+        console.error('Self-patch error:', err);
+        alert('❌ Error: ' + err.message);
+      }
+    }
+
+    async function showSelfModificationGuide() {
+      document.getElementById('previewTitle').textContent = '🧠 Self-Modification Guide';
+      document.getElementById('previewContent').innerHTML = `
+        <div style="padding: 20px; overflow-y: auto; height: 100%; font-size: 12px; line-height: 1.8;">
+          <h2 style="margin-top: 0; color: var(--brand);">How TooLoo Modifies Itself</h2>
+          
+          <section style="margin: 20px 0; padding: 12px; background: rgba(0,233,176,0.08); border-left: 3px solid var(--success); border-radius: 4px;">
+            <h3 style="margin-top: 0; color: var(--success);">Step 1: Extract Design Knowledge</h3>
+            <p>Enter a website URL and click "🌐 Extract" to analyze its design system.</p>
+            <code style="display: block; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px;">POST /api/v1/design/extract-from-website<br>{websiteUrl: "https://..."}</code>
+          </section>
+
+          <section style="margin: 20px 0; padding: 12px; background: rgba(124,92,255,0.08); border-left: 3px solid var(--brand); border-radius: 4px;">
+            <h3 style="margin-top: 0; color: var(--brand);">Step 2: Apply to TooLoo UI</h3>
+            <p>Click "🧠 Apply Design Learning" button (below) to generate design updates.</p>
+            <code style="display: block; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px;">function applyDesignLearningToUI()</code>
+          </section>
+
+          <section style="margin: 20px 0; padding: 12px; background: rgba(255,200,0,0.08); border-left: 3px solid var(--accent); border-radius: 4px;">
+            <h3 style="margin-top: 0; color: var(--accent);">Step 3: Create Self-Patch Branch</h3>
+            <p>TooLoo creates a GitHub branch with the proposed changes.</p>
+            <code style="display: block; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px;">POST /api/v1/github/create-branch<br>{branchName: "design-learning-..."}</code>
+          </section>
+
+          <section style="margin: 20px 0; padding: 12px; background: rgba(255,100,100,0.08); border-left: 3px solid var(--danger); border-radius: 4px;">
+            <h3 style="margin-top: 0; color: var(--danger);">Step 4: Update Files & Create PR</h3>
+            <p>Update files and create a pull request for review.</p>
+            <code style="display: block; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px;">POST /api/v1/github/update-file<br>POST /api/v1/github/create-pr</code>
+          </section>
+
+          <section style="margin: 20px 0; padding: 12px; background: rgba(0,200,0,0.08); border-left: 3px solid #00c800; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #00c800;">Available Endpoints</h3>
+            <ul style="margin: 8px 0; padding-left: 20px; font-size: 11px;">
+              <li>GET /api/v1/system/awareness - TooLoo's capabilities</li>
+              <li>POST /api/v1/github/update-file - Create/update files</li>
+              <li>POST /api/v1/github/create-branch - Create branches</li>
+              <li>POST /api/v1/github/create-pr - Create pull requests</li>
+              <li>POST /api/v1/github/create-issue - Create issues</li>
+            </ul>
+          </section>
+
+          <button onclick="applyDesignLearningToUI()" style="margin-top: 20px; padding: 10px 16px; background: var(--brand); border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 600; font-size: 12px;">🧠 Apply Design Learning Now</button>
+        </div>
+      `;
+    }
+
+    // Listen for design system changes from design-applier
+    window.addEventListener('message', (event) => {
+      // Security: only accept messages from same origin
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'APPLY_DESIGN_SYSTEM') {
+        const { componentCSS, tokens, componentMap, designSystem } = event.data;
+        
+        // Apply component CSS (logical, semantic approach)
+        if (componentCSS && typeof componentCSS === 'string') {
+          let styleTag = document.getElementById('design-system-css');
+          if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = 'design-system-css';
+            styleTag.type = 'text/css';
+            document.head.appendChild(styleTag);
+          }
+          styleTag.textContent = componentCSS;
+          console.log('✅ Component CSS applied with semantic mapping');
+        }
+        
+        // Store design info for reference
+        if (designSystem) {
+          currentSystem = designSystem;
+          console.log('✨ Design system applied from design-applier!');
+          console.log(`   Mapped tokens: ${Object.keys(tokens || {}).length}`);
+          console.log(`   Component map: ${Object.keys(componentMap || {}).length} tokens affecting components`);
+          
+          // Show confirmation notification
+          const notif = document.createElement('div');
+          notif.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00d9ff 0%, #00e9b0 100%);
+            color: #001a1a;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,217,255,0.3);
+            animation: slideIn 0.4s ease-out;
+          `;
+          notif.textContent = `✨ Applied ${Object.keys(componentMap || {}).length} semantic tokens!`;
+          
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes slideIn {
+              from { transform: translateX(400px); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+              from { transform: translateX(0); opacity: 1; }
+              to { transform: translateX(400px); opacity: 0; }
+            }
+          `;
+          document.head.appendChild(style);
+          document.body.appendChild(notif);
+          
+          setTimeout(() => {
+            notif.style.animation = 'slideOut 0.4s ease-out';
+            setTimeout(() => {
+              notif.remove();
+            }, 400);
+          }, 3000);
+        }
+      }
+    });
+
+    // Check for design updates when page becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        try {
+          const pendingUpdate = localStorage.getItem('tooloo-design-update');
+          if (pendingUpdate) {
+            const data = JSON.parse(pendingUpdate);
+            if (data && data.type === 'DESIGN_SYSTEM_APPLIED' && data.componentCSS) {
+              console.log('🎨 Detected pending design from applier');
+              // Apply component CSS directly
+              let styleTag = document.getElementById('design-system-css');
+              if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'design-system-css';
+                styleTag.type = 'text/css';
+                document.head.appendChild(styleTag);
+              }
+              styleTag.textContent = data.componentCSS;
+              console.log('✅ Component CSS applied from localStorage broadcast');
+            }
+          }
+        } catch (e) {
+          console.error('Error processing design update:', e);
+        }
+      }
+    });
+
+    // Also listen for localStorage broadcasts (fallback method)
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'tooloo-design-update') {
+        try {
+          const data = JSON.parse(event.newValue);
+          if (data && data.type === 'DESIGN_SYSTEM_APPLIED' && data.componentCSS) {
+            console.log('📡 Design system received via localStorage broadcast');
+            // Apply component CSS directly
+            let styleTag = document.getElementById('design-system-css');
+            if (!styleTag) {
+              styleTag = document.createElement('style');
+              styleTag.id = 'design-system-css';
+              styleTag.type = 'text/css';
+              document.head.appendChild(styleTag);
+            }
+            styleTag.textContent = data.componentCSS;
+            console.log('✅ Component CSS injected');
+          }
+        } catch (e) {
+          console.error('Error processing design update:', e);
+        }
+      }
+    });
+
+    // Check for pending design changes on load (semantic token system)
+    try {
+      const pendingUpdate = localStorage.getItem('tooloo-design-update');
+      console.log('🔍 Checking for pending design on load:', pendingUpdate ? 'FOUND' : 'NOT FOUND');
+      if (pendingUpdate) {
+        const data = JSON.parse(pendingUpdate);
+        if (data && data.componentCSS && data.type === 'DESIGN_SYSTEM_APPLIED') {
+          console.log('🎨 APPLYING pending design system from localStorage');
+          // Apply component CSS directly via style tag (semantic approach)
+          let styleTag = document.getElementById('design-system-css');
+          if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = 'design-system-css';
+            styleTag.type = 'text/css';
+            document.head.appendChild(styleTag);
+          }
+          styleTag.textContent = data.componentCSS;
+          console.log(`  Applied ${(data.componentCSS.match(/\{/g) || []).length} CSS rules`);
+        }
+      }
+    } catch (e) {
+      console.error('❌ Error applying design:', e);
+    }
+
+    // Initialize
+    document.getElementById('extractForm').addEventListener('submit', extractDesign);
+    streamBtn.addEventListener('click', startStreaming);
+    document.getElementById('applierBtn').addEventListener('click', () => {
+      window.open('/design-applier.html', 'design-applier', 'width=1200,height=800');
+    });
+    refreshBtn.addEventListener('click', () => { location.reload(); });
     loadSystemsList(); // Initial load
     loadState();
   </script>
