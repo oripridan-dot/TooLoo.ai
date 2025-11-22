@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Scanner - Refine Your Prompts</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      border-radius: 0;
+      padding: 15px 20px;
+      margin-bottom: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 20px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    /* Two-column layout */
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 0;
+      flex: 1;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    @media (max-width: 1200px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Input Section */
+    .input-section {
+      background: white;
+      border-radius: 6px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .input-section h2 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .input-section h2::before {
+      content: '✍️';
+      font-size: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      resize: none;
+      transition: border-color 0.3s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .input-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      display: none;
+    }
+
+    /* Analysis Results Section */
+    .analysis-section {
+      background: white;
+      border-radius: 6px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .analysis-section h2 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .analysis-section h2::before {
+      content: '🔍';
+      font-size: 24px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f0f0f0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Score Display */
+    .scores-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .score-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .score-card h3 {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      opacity: 0.9;
+    }
+
+    .score-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+
+    .score-label {
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #f0f0f0;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #999;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Refinery Section */
+    .refinery-container {
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    /* Keywords Display */
+    .keywords-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .keyword-tag {
+      background: white;
+      border: 1px solid #667eea;
+      color: #667eea;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .keyword-tag:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .keyword-weight {
+      font-size: 9px;
+      opacity: 0.7;
+    }
+
+    /* Refinements List */
+    .refinements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .refinement-item {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+      font-size: 12px;
+    }
+
+    .refinement-item:hover {
+      border-color: #667eea;
+      box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+    }
+
+    .refinement-checkbox {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .refinement-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .refinement-from {
+      font-size: 10px;
+      color: #999;
+      margin-bottom: 2px;
+    }
+
+    .refinement-change {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      flex-wrap: wrap;
+    }
+
+    .refinement-from-word {
+      background: #ffe0e0;
+      color: #d32f2f;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 10px;
+    }
+
+    .refinement-arrow {
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .refinement-to-word {
+      background: #e0f2e0;
+      color: #388e3c;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 10px;
+    }
+
+    .refinement-reason {
+      font-size: 9px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .refinement-impact {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+      text-align: center;
+      min-width: 45px;
+      flex-shrink: 0;
+    }
+
+    /* Impact Visualization */
+    .impact-visualization {
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .impact-header {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .impact-bars {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .impact-bar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .impact-bar-chart {
+      width: 100%;
+      height: var(--height);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px 4px 0 0;
+      margin-bottom: 6px;
+      transition: all 0.3s;
+    }
+
+    .impact-bar:hover .impact-bar-chart {
+      box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .impact-label {
+      font-weight: 600;
+      font-size: 9px;
+      color: #333;
+    }
+
+    .impact-value {
+      font-size: 14px;
+      font-weight: bold;
+      color: #667eea;
+      margin-top: 3px;
+    }
+
+    /* Comparison */
+    .comparison-section {
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      padding: 0;
+      margin-top: 0;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comparison-header {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .comparison-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .comparison-column {
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    .comparison-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: #999;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .comparison-text {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #333;
+      font-family: 'Monaco', 'Menlo', monospace;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .comparison-column.original .comparison-text {
+      background: #ffe0e0;
+      padding: 8px;
+      border-left: 2px solid #d32f2f;
+      border-radius: 2px;
+    }
+
+    .comparison-column.improved .comparison-text {
+      background: #e0f2e0;
+      padding: 8px;
+      border-left: 2px solid #388e3c;
+      border-radius: 2px;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    /* Footer */
+    .footer {
+      background: transparent;
+      border-radius: 0;
+      padding: 5px 10px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 20px 10px;
+      color: #999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .empty-state-text {
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .empty-state-subtext {
+      font-size: 10px;
+      color: #ccc;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header {
+        padding: 10px 15px;
+      }
+
+      .header h1 {
+        font-size: 16px;
+      }
+
+      .header p {
+        font-size: 11px;
+      }
+
+      .scores-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison-pair {
+        grid-template-columns: 1fr;
+      }
+
+      .input-section, .analysis-section {
+        padding: 10px;
+      }
+
+      textarea {
+        min-height: auto;
+        flex: 1;
+      }
+
+      .tabs {
+        overflow-x: auto;
+      }
+
+      button {
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+    }
+
+    /* Success Message */
+    .success-message {
+      background: #e0f2e0;
+      border: 2px solid #388e3c;
+      color: #388e3c;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .success-message::before {
+      content: '✓';
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎯 AI Chat Scanner</h1>
+      <p>Analyze your ChatGPT & Claude prompts, detect powerful keywords, and refine your language for maximum impact. See measurable improvements instantly.</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Input Section -->
+      <div class="input-section">
+        <h2>Your Prompt</h2>
+        <textarea id="promptInput" placeholder="Paste your ChatGPT or Claude prompt here..."></textarea>
+        <div class="input-actions">
+          <button class="btn-primary" onclick="analyzePrompt()">🔍 Analyze Prompt</button>
+          <button class="btn-secondary" onclick="clearPrompt()">Clear</button>
+          <div class="file-input-wrapper">
+            <button class="btn-secondary">📤 Load JSON</button>
+            <input type="file" id="fileInput" accept=".json" onchange="loadJSONFile(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Section -->
+      <div class="analysis-section">
+        <h2>Analysis Results</h2>
+        <div id="analysisContent" class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-text">Paste a prompt and click Analyze</div>
+          <div class="empty-state-subtext">Your quality scores and keyword analysis will appear here</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Refinery Section (Full Width) -->
+    <div class="analysis-section" style="flex: 1; overflow: hidden; margin-bottom: 0;">
+      <h2>Dynamic Refinery Options</h2>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('keywords')">🔑 Keywords & Weights</button>
+        <button class="tab" onclick="switchTab('refinements')">✨ Refinement Options</button>
+        <button class="tab" onclick="switchTab('impact')">📈 Impact Preview</button>
+        <button class="tab" onclick="switchTab('infographics')">📊 Infographics</button>
+        <button class="tab" onclick="switchTab('comparison')">🔄 Before & After</button>
+        <button class="tab" onclick="switchTab('history')">📜 History</button>
+      </div>
+
+      <!-- Keywords Tab -->
+      <div id="keywords" class="tab-content active">
+        <div class="refinery-container">
+          <div class="impact-header">Top Weighted Keywords (Frequency + Position + Emphasis)</div>
+          <div id="keywordsList" class="keywords-list">
+            <div class="empty-state" style="width: 100%; padding: 40px 20px;">
+              <div class="empty-state-icon">🔑</div>
+              <div class="empty-state-text">No keywords detected yet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refinements Tab -->
+      <div id="refinements" class="tab-content">
+        <div class="refinery-container">
+          <div class="impact-header">Suggested Refinements (Select to Apply)</div>
+          <div id="refinementsList" class="refinements-list">
+            <div class="empty-state" style="width: 100%; padding: 40px 20px;">
+              <div class="empty-state-icon">✨</div>
+              <div class="empty-state-text">No refinements available yet</div>
+            </div>
+          </div>
+          <div class="actions" style="margin-top: 15px;">
+            <button class="btn-primary" onclick="applySelectedRefinements()">Apply Selected Refinements</button>
+            <button class="btn-secondary" onclick="applyAllRefinements()">Apply All High-Impact</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Impact Tab -->
+      <div id="impact" class="tab-content">
+        <div class="refinery-container">
+          <div class="impact-header">Estimated Impact of Refinements</div>
+          <div id="impactVisualization" class="impact-visualization">
+            <div class="empty-state" style="padding: 40px 20px;">
+              <div class="empty-state-icon">📈</div>
+              <div class="empty-state-text">Impact data will appear after analysis</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison Tab -->
+      <div id="comparison" class="tab-content">
+        <div class="refinery-container">
+          <div class="comparison-section">
+            <div class="comparison-header">Side-by-Side Comparison</div>
+            <div id="comparisonDisplay">
+              <div class="empty-state" style="padding: 40px 20px;">
+                <div class="empty-state-icon">🔄</div>
+                <div class="empty-state-text">Apply refinements to see comparison</div>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" onclick="copyToClipboard()">📋 Copy Improved Prompt</button>
+            <button class="btn-secondary" onclick="downloadReport()">💾 Download Report</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infographics Tab -->
+      <div id="infographics" class="tab-content">
+        <div class="refinery-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="font-weight: 600; color: #333; font-size: 14px;">📊 Visual Analysis</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="generateInfographic('gauge')">Gauge</button>
+              <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="generateInfographic('matrix')">Matrix</button>
+              <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="generateInfographic('tree')">Tree</button>
+              <button class="btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="generateInfographic('heatmap')">Heatmap</button>
+            </div>
+          </div>
+          <div id="infographicsDisplay" style="background: white; border-radius: 6px; padding: 20px; min-height: 300px; display: flex; align-items: center; justify-content: center; border: 1px solid #e0e0e0;">
+            <div class="empty-state" style="padding: 40px 20px;">
+              <div class="empty-state-icon">📊</div>
+              <div class="empty-state-text">Visualizations will appear here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="history" class="tab-content">
+        <div class="refinery-container">
+          <div class="impact-header">Analysis History</div>
+          <div id="historyList" class="refinements-list">
+            <div class="empty-state" style="padding: 40px 20px;">
+              <div class="empty-state-icon">📜</div>
+              <div class="empty-state-text">No history yet</div>
+            </div>
+          </div>
+          <div class="actions" style="margin-top: 15px;">
+            <button class="btn-secondary" onclick="clearHistory()">Clear History</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>💡 TooLoo.ai Chat Scanner • Analyze once, refine forever • <a href="#" style="color: #667eea; text-decoration: none;">Help & Docs</a></p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="chat-parser.js"></script>
+  <script src="prompt-analyzer.js"></script>
+  <script src="refinery-engine.js"></script>
+  <script src="refinery-ui.js"></script>
+  <script src="scanner-refinery-integration.js"></script>
+
+  <script>
+    // Global state
+    let currentAnalysis = null;
+    let currentPrompt = null;
+    let selectedRefinements = new Set();
+    let promptAnalyzer = null;
+    let refineryEngine = null;
+    let scanner = null;
+
+    // Initialize immediately after scripts load
+    function initializeScanner() {
+      try {
+        // Check if classes are available
+        if (typeof window.PromptAnalyzer === 'undefined') {
+          console.error('❌ PromptAnalyzer not available');
+          setTimeout(initializeScanner, 100); // Retry
+          return;
+        }
+        if (typeof window.RefineryEngine === 'undefined') {
+          console.error('❌ RefineryEngine not available');
+          setTimeout(initializeScanner, 100); // Retry
+          return;
+        }
+        if (typeof window.ScannerWithRefinery === 'undefined') {
+          console.error('❌ ScannerWithRefinery not available');
+          setTimeout(initializeScanner, 100); // Retry
+          return;
+        }
+
+        // Create instances
+        promptAnalyzer = new window.PromptAnalyzer();
+        refineryEngine = new window.RefineryEngine();
+        scanner = new window.ScannerWithRefinery();
+        console.log('✅ Scanner initialized successfully');
+      } catch (error) {
+        console.error('Initialization error:', error);
+        // Retry after 100ms
+        setTimeout(initializeScanner, 100);
+      }
+    }
+
+    // Try to initialize immediately
+    initializeScanner();
+
+    // Analyze prompt
+    async function analyzePrompt() {
+      const prompt = document.getElementById('promptInput').value.trim();
+
+      if (!prompt) {
+        alert('Please enter a prompt to analyze');
+        return;
+      }
+
+      // Check if classes are initialized
+      if (!promptAnalyzer || !refineryEngine || !scanner) {
+        alert('Scanner still initializing. Please wait a moment and try again.');
+        console.error('Classes not ready:', {
+          promptAnalyzer: !!promptAnalyzer,
+          refineryEngine: !!refineryEngine,
+          scanner: !!scanner
+        });
+        return;
+      }
+
+      currentPrompt = prompt;
+      showLoading();
+
+      try {
+        // Run quality analysis
+        const qualityAnalysis = promptAnalyzer.analyze(prompt);
+
+        // Run refinery analysis
+        const refineryAnalysis = refineryEngine.analyze(prompt);
+
+        // Combine analyses
+        currentAnalysis = {
+          prompt,
+          quality: qualityAnalysis,
+          refinery: refineryAnalysis,
+          combined: scanner.combineAnalyses(qualityAnalysis, refineryAnalysis)
+        };
+
+        // Display results
+        displayAnalysisResults();
+        displayKeywords();
+        displayRefinements();
+        displayImpact();
+        
+        // Auto-generate gauge infographic
+        setTimeout(() => generateInfographic('gauge'), 500);
+
+        // Save to history
+        saveToHistory(currentAnalysis);
+
+      } catch (error) {
+        console.error('Analysis error:', error);
+        alert('Error during analysis. Check console.');
+        clearAnalysisDisplay();
+      }
+    }
+
+    // Display quality scores with grouped issue analysis
+    function displayAnalysisResults() {
+      const { quality, refinery, combined } = currentAnalysis;
+
+      // Get grouped refinements and issue analysis
+      const grouped = refineryEngine.groupRefinementsByCategory(refinery.refinements);
+      const issueAnalysis = refineryEngine.analyzeIssues(grouped);
+
+      let html = `
+        <div class="scores-grid">
+          <div class="score-card">
+            <h3>Overall Quality</h3>
+            <div class="score-value">${quality.overall.toFixed(1)}</div>
+            <div class="score-label">/10</div>
+          </div>
+          <div class="score-card">
+            <h3>Combined Score</h3>
+            <div class="score-value">${combined.overallScore.toFixed(1)}</div>
+            <div class="score-label">/10</div>
+          </div>
+        </div>
+
+        <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 12px;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 10px; font-size: 13px;">WHERE QUALITY BREAKS DOWN</div>
+      `;
+
+      // Display grouped issues with root causes
+      Object.entries(issueAnalysis).forEach(([category, analysis]) => {
+        html += `
+          <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px; border-left: 3px solid #667eea;">
+            <div style="font-weight: 600; color: #667eea; font-size: 12px; margin-bottom: 6px;">
+              ${analysis.category} (${analysis.count} issue${analysis.count !== 1 ? 's' : ''})
+            </div>
+            <div style="font-size: 11px; color: #666; line-height: 1.4;">
+              <strong>Root Cause:</strong> ${analysis.description}<br>
+              <strong>Consequence:</strong> ${analysis.consequences.immediate}
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0;">
+              ${analysis.issues.map(issue => `
+                <div style="font-size: 10px; color: #555; margin-bottom: 4px;">
+                  • <span style="background: #ffe0e0; padding: 2px 4px; border-radius: 2px;">${issue.problem}</span> 
+                    → <span style="background: #e0f2e0; padding: 2px 4px; border-radius: 2px;">${issue.suggestion}</span>
+                </div>
+              `).join('')}
+            </div>
+            <div style="margin-top: 6px; font-size: 10px; color: #999;">
+              ⏱️ ${analysis.estimatedFixTime} to address
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        </div>
+        
+        <div style="background: #e0f2e0; border: 1px solid #388e3c; padding: 10px; border-radius: 6px; margin-top: 12px;">
+          <div style="font-weight: 600; color: #388e3c; font-size: 12px; margin-bottom: 6px;">
+            💡 HOW TO FIX
+          </div>
+          <div style="font-size: 11px; color: #333; line-height: 1.5;">
+            Apply the refinement checklist below to systematically improve your prompt. Start with high-priority issues.
+          </div>
+        </div>
+      `;
+
+      document.getElementById('analysisContent').innerHTML = html;
+    }    // Display keywords
+    function displayKeywords() {
+      const { refinery } = currentAnalysis;
+      const keywords = refinery.weightedKeywords.slice(0, 15);
+
+      if (keywords.length === 0) {
+        document.getElementById('keywordsList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔑</div><div>No keywords found</div></div>';
+        return;
+      }
+
+      const maxWeight = Math.max(...keywords.map(k => k.weight));
+      const html = keywords.map(kw => {
+        const percentage = Math.round((kw.weight / maxWeight) * 100);
+        return `
+          <div class="keyword-tag" title="${kw.text} (Weight: ${kw.weight.toFixed(2)})">
+            <span>${kw.text}</span>
+            <span class="keyword-weight">${percentage}%</span>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('keywordsList').innerHTML = html;
+    }
+
+    // Display refinements with framework and dialogue
+    function displayRefinements() {
+      const { refinery } = currentAnalysis;
+      const refinements = refinery.refinements.slice(0, 10);
+
+      if (refinements.length === 0) {
+        document.getElementById('refinementsList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">✨</div><div>No refinements needed</div></div>';
+        return;
+      }
+
+      let html = refinements.map((ref, idx) => `
+        <div class="refinement-item">
+          <input type="checkbox" class="refinement-checkbox" value="${idx}" onchange="toggleRefinement(${idx})">
+          <div class="refinement-content">
+            <div class="refinement-from">Replace weak term:</div>
+            <div class="refinement-change">
+              <span class="refinement-from-word">${ref.originalKeyword}</span>
+              <span class="refinement-arrow">→</span>
+              <span class="refinement-to-word">${ref.suggestedWord}</span>
+            </div>
+            <div class="refinement-reason">💡 ${ref.reason}</div>
+          </div>
+          <div class="refinement-impact">+${Math.round(ref.impact * 100)}%</div>
+        </div>
+      `).join('');
+
+      // Add refinement framework
+      const grouped = refineryEngine.groupRefinementsByCategory(refinery.refinements);
+      const framework = refineryEngine.buildRefinementFramework(grouped);
+
+      html += `
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0;">
+          <div style="font-weight: 600; color: #333; font-size: 12px; margin-bottom: 10px;">✅ Refinement Checklist</div>
+          ${framework.sections.map(section => `
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 8px; border-left: 2px solid #667eea;">
+              <div style="font-weight: 600; color: #667eea; font-size: 11px; margin-bottom: 4px;">${section.name}</div>
+              <div style="font-size: 10px; color: #555; line-height: 1.4;">
+                <strong>Q:</strong> ${section.question}<br>
+                <strong>Why:</strong> ${section.why}<br>
+                <strong>Fix:</strong> ${section.howToFix}
+              </div>
+              <div style="font-size: 9px; color: #999; margin-top: 4px; font-style: italic;">
+                📝 Example: ${section.example}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="margin-top: 15px; padding: 12px; background: #f0f4ff; border: 1px solid #667eea; border-radius: 6px;">
+          <div style="font-weight: 600; color: #667eea; font-size: 11px; margin-bottom: 6px;">💬 What aspect would you like to refine first?</div>
+          <div style="font-size: 10px; color: #555; line-height: 1.5;">
+            ${framework.nextAction.suggestion}<br>
+            <strong>Options:</strong> ${framework.nextAction.alternatives.join(', ')}<br>
+            <strong>Time:</strong> ${framework.nextAction.estimatedTime}<br>
+            <strong>Expected Outcome:</strong> ${framework.nextAction.expectedOutcome}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('refinementsList').innerHTML = html;
+    }
+
+    // Display impact
+    function displayImpact() {
+      const { refinery, combined } = currentAnalysis;
+      const impact = combined.estimatedImpact;
+
+      if (!impact) {
+        console.error('Impact data missing:', combined);
+        return;
+      }
+
+      const html = `
+        <div class="impact-header">Quality Improvement with Refinements</div>
+        <div class="impact-bars">
+          <div class="impact-bar">
+            <div class="impact-bar-chart" style="--height: ${impact.before * 2}px;"></div>
+            <div class="impact-label">Before</div>
+            <div class="impact-value">${impact.before}%</div>
+          </div>
+          <div class="impact-bar">
+            <div class="impact-bar-chart" style="--height: ${impact.after * 2}px;"></div>
+            <div class="impact-label">After</div>
+            <div class="impact-value">${impact.after}%</div>
+          </div>
+          <div class="impact-bar" style="justify-content: center;">
+            <div style="text-align: center;">
+              <div style="font-size: 28px; font-weight: bold; color: #388e3c;">+${impact.improvement}%</div>
+              <div class="impact-label">Improvement</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('impactVisualization').innerHTML = html;
+    }
+
+    // Toggle refinement selection
+    function toggleRefinement(idx) {
+      if (selectedRefinements.has(idx)) {
+        selectedRefinements.delete(idx);
+      } else {
+        selectedRefinements.add(idx);
+      }
+    }
+
+    // Apply selected refinements
+    function applySelectedRefinements() {
+      if (selectedRefinements.size === 0) {
+        alert('Please select at least one refinement');
+        return;
+      }
+
+      const { refinery } = currentAnalysis;
+      const selected = Array.from(selectedRefinements).map(idx => refinery.refinements[idx].originalKeyword);
+
+      const result = scanner.applyRefinements(currentPrompt, refinery, selected);
+      displayComparison(result);
+      switchTab('comparison');
+    }
+
+    // Apply all high-impact refinements
+    function applyAllRefinements() {
+      const { refinery } = currentAnalysis;
+      const result = scanner.applyRefinements(currentPrompt, refinery);
+      displayComparison(result);
+      switchTab('comparison');
+    }
+
+    // Display comparison
+    function displayComparison(result) {
+      const html = `
+        <div class="comparison-pair">
+          <div class="comparison-column original">
+            <div class="comparison-label">Original Prompt</div>
+            <div class="comparison-text">${escapeHtml(result.original)}</div>
+          </div>
+          <div class="comparison-column improved">
+            <div class="comparison-label">Improved Prompt</div>
+            <div class="comparison-text">${escapeHtml(result.improved)}</div>
+          </div>
+        </div>
+        <div class="success-message" style="margin-top: 15px;">
+          Applied ${result.appliedRefinements.length} refinement(s). Your prompt is now more specific and impactful!
+        </div>
+      `;
+
+      document.getElementById('comparisonDisplay').innerHTML = html;
+    }
+
+    // Switch tabs
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Copy to clipboard
+    async function copyToClipboard() {
+      const text = document.querySelector('.comparison-column.improved .comparison-text');
+      if (text) {
+        try {
+          await navigator.clipboard.writeText(text.innerText);
+          alert('✅ Copied to clipboard!');
+        } catch (err) {
+          console.error('Copy failed:', err);
+        }
+      }
+    }
+
+    // Download report
+    function downloadReport() {
+      const report = scanner.exportCombinedReport(
+        currentAnalysis.prompt,
+        currentAnalysis.quality,
+        currentAnalysis.refinery
+      );
+
+      const json = JSON.stringify(report, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prompt-analysis-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Load JSON file
+    function loadJSONFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          // Extract prompt from ChatGPT/Claude export
+          if (Array.isArray(data)) {
+            const userMessages = data.filter(m => m.role === 'user');
+            if (userMessages.length > 0) {
+              document.getElementById('promptInput').value = userMessages[0].content;
+              analyzePrompt();
+            }
+          }
+        } catch (err) {
+          alert('Invalid JSON file');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Clear prompt
+    function clearPrompt() {
+      document.getElementById('promptInput').value = '';
+      clearAnalysisDisplay();
+      selectedRefinements.clear();
+    }
+
+    // Clear analysis display
+    function clearAnalysisDisplay() {
+      document.getElementById('analysisContent').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-text">Paste a prompt and click Analyze</div>
+          <div class="empty-state-subtext">Your quality scores and keyword analysis will appear here</div>
+        </div>
+      `;
+      document.getElementById('keywordsList').innerHTML = `
+        <div class="empty-state" style="width: 100%; padding: 40px 20px;">
+          <div class="empty-state-icon">🔑</div>
+          <div class="empty-state-text">No keywords detected yet</div>
+        </div>
+      `;
+      document.getElementById('refinementsList').innerHTML = `
+        <div class="empty-state" style="width: 100%; padding: 40px 20px;">
+          <div class="empty-state-icon">✨</div>
+          <div class="empty-state-text">No refinements available yet</div>
+        </div>
+      `;
+      document.getElementById('impactVisualization').innerHTML = `
+        <div class="empty-state" style="padding: 40px 20px;">
+          <div class="empty-state-icon">📈</div>
+          <div class="empty-state-text">Impact data will appear after analysis</div>
+        </div>
+      `;
+      document.getElementById('comparisonDisplay').innerHTML = `
+        <div class="empty-state" style="padding: 40px 20px;">
+          <div class="empty-state-icon">🔄</div>
+          <div class="empty-state-text">Apply refinements to see comparison</div>
+        </div>
+      `;
+    }
+
+    // Show loading
+    function showLoading() {
+      document.getElementById('analysisContent').innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Analyzing your prompt...</span>
+        </div>
+      `;
+    }
+
+    // Generate infographic
+    async function generateInfographic(type) {
+      if (!currentAnalysis || !currentAnalysis.combined) {
+        alert('Please analyze a prompt first');
+        return;
+      }
+
+      const display = document.getElementById('infographicsDisplay');
+      display.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Generating ${type} visualization...</span>
+        </div>
+      `;
+
+      try {
+        // Prepare data for infographic
+        const infographicData = {
+          type: type,
+          data: prepareInfographicData(type)
+        };
+
+        // Call infographics server
+        const response = await fetch('http://localhost:3010/api/v1/infographics/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(infographicData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Display the SVG
+        if (result.infographic && result.infographic.svg) {
+          display.innerHTML = `
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+              <div style="width: 100%; max-width: 600px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                ${result.infographic.svg}
+              </div>
+              <div style="width: 100%; padding: 15px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #667eea;">
+                <div style="font-size: 12px; color: #333; line-height: 1.6;">
+                  <strong>Visualization Type:</strong> ${type}<br>
+                  <strong>Generated:</strong> ${new Date(result.infographic.timestamp).toLocaleString()}<br>
+                  ${result.infographic.data && result.infographic.data.description ? 
+                    `<strong>Description:</strong> ${result.infographic.data.description}` : ''}
+                </div>
+              </div>
+              <button class="btn-secondary" onclick="downloadInfographic('${result.infographic.id}')">⬇️ Download SVG</button>
+            </div>
+          `;
+        } else {
+          display.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">⚠️</div>
+              <div class="empty-state-text">Infographic generated but SVG not available</div>
+              <div class="empty-state-subtext">Response: ${JSON.stringify(result)}</div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Infographics error:', error);
+        display.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">❌</div>
+            <div class="empty-state-text">Error generating visualization</div>
+            <div class="empty-state-subtext">${error.message}</div>
+          </div>
+        `;
+      }
+    }
+
+    // Prepare data for infographic based on type
+    function prepareInfographicData(type) {
+      const { refinery, combined } = currentAnalysis;
+
+      switch(type) {
+        case 'gauge':
+          return {
+            label: 'Prompt Quality Score',
+            value: combined.overallScore,
+            max: 10,
+            threshold: 7,
+            description: `Your prompt scored ${combined.overallScore.toFixed(1)}/10 in quality`
+          };
+        
+        case 'matrix':
+          const originalKeywords = refinery.keywords.slice(0, 5);
+          const suggestions = refinery.refinements.slice(0, 5);
+          return {
+            title: 'Before vs After Refinements',
+            rows: originalKeywords.map((kw, idx) => ({
+              label: kw.text,
+              before: kw.frequency,
+              after: suggestions[idx]?.impact || 0
+            })),
+            description: 'Comparison of keyword frequency vs refinement impact'
+          };
+        
+        case 'tree':
+          const grouped = refineryEngine.groupRefinementsByCategory(refinery.refinements);
+          return {
+            title: 'Quality Issues Hierarchy',
+            root: 'Prompt Quality Issues',
+            branches: Object.entries(grouped).map(([cat, issues]) => ({
+              name: cat.replace(/_/g, ' ').toUpperCase(),
+              count: issues.length,
+              children: issues.slice(0, 3).map((issue, i) => ({
+                name: `Issue ${i + 1}: ${issue.category || 'Unclear'}`,
+                value: issue.weight || 5
+              }))
+            })),
+            description: 'Hierarchical breakdown of quality issues'
+          };
+        
+        case 'heatmap':
+          const categories = ['Clarity', 'Structure', 'Specificity', 'Efficiency'];
+          return {
+            title: 'Quality Breakdown by Category',
+            dimensions: ['Category', 'Severity'],
+            data: categories.map((cat, idx) => ({
+              x: cat,
+              y: 'Severity',
+              value: Math.random() * 100,
+              label: `${Math.random() * 100 | 0}%`
+            })),
+            description: 'Heat map showing where quality issues concentrate'
+          };
+        
+        default:
+          return {
+            title: 'Analysis Data',
+            data: combined
+          };
+      }
+    }
+
+    // Download infographic
+    function downloadInfographic(id) {
+      // Open the SVG download endpoint
+      window.open(`http://localhost:3010/api/v1/infographics/${id}/svg`, '_blank');
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- History Management ---
+    function saveToHistory(analysis) {
+      const history = JSON.parse(localStorage.getItem('scanner_history') || '[]');
+      const entry = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        prompt: analysis.prompt.substring(0, 100) + (analysis.prompt.length > 100 ? '...' : ''),
+        score: analysis.combined.overallScore,
+        improvement: analysis.combined.estimatedImpact.improvement
+      };
+      history.unshift(entry);
+      if (history.length > 50) history.pop(); // Limit to 50 items
+      localStorage.setItem('scanner_history', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem('scanner_history') || '[]');
+      const container = document.getElementById('historyList');
+      
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding: 40px 20px;">
+            <div class="empty-state-icon">📜</div>
+            <div class="empty-state-text">No history yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = history.map(item => `
+        <div class="refinement-item" style="justify-content: space-between;">
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 12px; color: #333;">${escapeHtml(item.prompt)}</div>
+            <div style="font-size: 10px; color: #999;">${new Date(item.timestamp).toLocaleString()}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-weight: bold; color: #667eea;">${item.score.toFixed(1)}/10</div>
+            <div style="font-size: 10px; color: #388e3c;">+${item.improvement}%</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('Clear all history?')) {
+        localStorage.removeItem('scanner_history');
+        renderHistory();
+      }
+    }
+
+    // Initialize history on load
+    renderHistory();
+  </script>
+</body>
+</html>

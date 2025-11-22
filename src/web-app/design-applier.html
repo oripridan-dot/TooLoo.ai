@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TooLoo Design Applier – Automatic Design Transformation</title>
+  <style>
+    :root {
+      --bg-dark: #0a0a0a;
+      --bg-card: #1a1a1a;
+      --bg-light: #2d2d2d;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --accent: #00d9ff;
+      --accent-2: #ff006e;
+      --success: #00ff88;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --radius: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f3460 100%);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 40px;
+      background: rgba(26, 26, 26, 0.4);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 16px;
+      font-weight: 300;
+    }
+
+    .upload-zone {
+      position: relative;
+      border: 2px dashed var(--accent);
+      border-radius: var(--radius);
+      padding: 60px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(0, 217, 255, 0.02);
+    }
+
+    .upload-zone:hover {
+      border-color: var(--accent-2);
+      background: rgba(255, 0, 110, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .upload-zone.active {
+      border-color: var(--success);
+      background: rgba(0, 255, 136, 0.1);
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .upload-text h3 {
+      font-size: 18px;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .upload-text p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .upload-button {
+      display: inline-block;
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: var(--bg-dark);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .upload-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 217, 255, 0.4);
+    }
+
+    .design-preview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 24px 0;
+    }
+
+    .preview-card {
+      background: rgba(45, 45, 45, 0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .preview-card h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 12px;
+    }
+
+    .color-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.08);
+      border-color: var(--accent);
+    }
+
+    .font-sample {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .font-sample:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .font-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .font-preview {
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--text-primary);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: var(--bg-dark);
+      box-shadow: 0 8px 24px rgba(0, 217, 255, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 217, 255, 0.5);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(0, 217, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .progress-container {
+      margin: 32px 0;
+      display: none;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .status-log {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 12px;
+      font-family: "JetBrains Mono", monospace;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 12px;
+      color: var(--text-secondary);
+    }
+
+    .status-log-item {
+      margin: 4px 0;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-log-item.success {
+      color: var(--success);
+    }
+
+    .status-log-item.error {
+      color: #ff4444;
+    }
+
+    .status-icon {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 32px;
+      background: rgba(0, 255, 136, 0.08);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      margin: 24px 0;
+    }
+
+    .success-message.active {
+      display: block;
+      animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .success-message h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--success);
+    }
+
+    .success-message p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .info-box {
+      background: rgba(0, 217, 255, 0.05);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✨ Design Applier</h1>
+      <p>Upload any design system. TooLoo transforms itself instantly.</p>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <span class="upload-icon">🎨</span>
+      <div class="upload-text">
+        <h3>Drop Design System or Click to Upload</h3>
+        <p>JSON, CSS, or design tokens from any extracted system</p>
+      </div>
+      <button class="upload-button" onclick="document.getElementById('fileInput').click()">Select File</button>
+      <input type="file" id="fileInput" class="file-input" accept=".json,.css,.txt" />
+    </div>
+
+    <div class="design-preview" id="designPreview" style="display: none;">
+      <div class="preview-card">
+        <h3>🎨 Color Palette</h3>
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+
+      <div class="preview-card">
+        <h3>📝 Typography</h3>
+        <div id="typographyPreview"></div>
+      </div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-title">Applying Design System...</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="status-log" id="statusLog"></div>
+    </div>
+
+    <div class="success-message" id="successMessage">
+      <h3>✨ Design Applied Successfully!</h3>
+      <p>TooLoo has transformed itself. The new design is now live.</p>
+    </div>
+
+    <div class="info-box">
+      💡 <strong>How it works:</strong> Upload a design system (JSON with colors, fonts, spacing). 
+      TooLoo analyzes it, generates new CSS, updates its components, and applies the changes instantly. 
+      One click to transform the entire UI.
+    </div>
+
+    <div class="action-buttons" id="actionButtons" style="display: none;">
+      <button class="btn btn-primary" onclick="applyDesignSystem()">🚀 Transform TooLoo Now</button>
+      <button class="btn btn-secondary" onclick="resetUI()">↻ Reset</button>
+    </div>
+  </div>
+
+  <script>
+    let uploadedDesignSystem = null;
+    let statusLog = [];
+
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const designPreview = document.getElementById('designPreview');
+    const progressContainer = document.getElementById('progressContainer');
+    const statusLogEl = document.getElementById('statusLog');
+    const progressFill = document.getElementById('progressFill');
+    const successMessage = document.getElementById('successMessage');
+    const actionButtons = document.getElementById('actionButtons');
+
+    // Drag & Drop
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('active');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('active');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('active');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileUpload(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileUpload(e.target.files[0]);
+      }
+    });
+
+    function handleFileUpload(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target.result;
+          uploadedDesignSystem = parseDesignSystem(content);
+          
+          if (uploadedDesignSystem) {
+            uploadZone.style.display = 'none';
+            displayPreview();
+            actionButtons.style.display = 'flex';
+          }
+        } catch (err) {
+          alert('Error parsing file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function parseDesignSystem(content) {
+      try {
+        const json = JSON.parse(content);
+        if (json.colors || json.typography) {
+          return json;
+        }
+      } catch (e) {}
+      
+      // Try to extract from other formats
+      return parseCustomFormat(content);
+    }
+
+    function parseCustomFormat(content) {
+      const colors = {};
+      const typography = {};
+      
+      // Extract colors (hex format)
+      const hexMatches = content.match(/#[0-9a-fA-F]{6}/g) || [];
+      hexMatches.forEach((hex, i) => {
+        colors[`color-${i + 1}`] = hex;
+      });
+
+      // Extract fonts
+      const fontMatches = content.match(/font[-_]?(family|stack)?[":']?\s*[":']([^"']+)/gi) || [];
+      fontMatches.forEach((match, i) => {
+        const fontName = match.split(/[":']/).pop().trim();
+        if (fontName) {
+          typography[`font-${i + 1}`] = fontName;
+        }
+      });
+
+      return (Object.keys(colors).length > 0 || Object.keys(typography).length > 0) 
+        ? { colors, typography } 
+        : null;
+    }
+
+    function displayPreview() {
+      if (!uploadedDesignSystem) return;
+
+      // Show colors
+      const colorGrid = document.getElementById('colorGrid');
+      colorGrid.innerHTML = '';
+      Object.entries(uploadedDesignSystem.colors || {}).forEach(([name, color]) => {
+        if (color && typeof color === 'string' && color.startsWith('#')) {
+          const swatch = document.createElement('div');
+          swatch.className = 'color-swatch';
+          swatch.style.backgroundColor = color;
+          swatch.title = `${name}: ${color}`;
+          const contrast = getContrastColor(color);
+          swatch.style.color = contrast;
+          swatch.innerHTML = `<span style="font-size: 9px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${color.substring(1).toUpperCase()}</span>`;
+          colorGrid.appendChild(swatch);
+        }
+      });
+
+      // Show typography
+      const typographyPreview = document.getElementById('typographyPreview');
+      typographyPreview.innerHTML = '';
+      Object.entries(uploadedDesignSystem.typography || {}).forEach(([name, font]) => {
+        const fontDiv = document.createElement('div');
+        fontDiv.className = 'font-sample';
+        fontDiv.innerHTML = `
+          <div class="font-name">${name}</div>
+          <div class="font-preview" style="font-family: '${font}', system-ui;">
+            The quick brown fox
+          </div>
+        `;
+        typographyPreview.appendChild(fontDiv);
+      });
+
+      designPreview.style.display = 'grid';
+    }
+
+    function getContrastColor(hexColor) {
+      const r = parseInt(hexColor.slice(1, 3), 16);
+      const g = parseInt(hexColor.slice(3, 5), 16);
+      const b = parseInt(hexColor.slice(5, 7), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.5 ? '#000' : '#fff';
+    }
+
+    function addStatusLog(message, type = 'info') {
+      statusLog.push({ message, type });
+      const item = document.createElement('div');
+      item.className = `status-log-item ${type}`;
+      item.innerHTML = `<span class="status-icon"></span> ${message}`;
+      statusLogEl.appendChild(item);
+      statusLogEl.scrollTop = statusLogEl.scrollHeight;
+    }
+
+    function updateProgress(percent) {
+      progressFill.style.width = percent + '%';
+    }
+
+    async function applyDesignSystem() {
+      if (!uploadedDesignSystem) {
+        alert('Please upload a design system first');
+        return;
+      }
+
+      progressContainer.classList.add('active');
+      statusLog = [];
+      statusLogEl.innerHTML = '';
+
+      try {
+        // Step 1: Analyze design
+        addStatusLog('Analyzing design system...', 'info');
+        updateProgress(10);
+        await new Promise(r => setTimeout(r, 800));
+
+        // Step 2: Generate semantic tokens and component CSS
+        addStatusLog('Mapping design tokens to components...', 'info');
+        updateProgress(30);
+        const response = await fetch('/api/v1/design/apply-system', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(uploadedDesignSystem)
+        });
+        const data = await response.json();
+        const { componentCSS, componentMap, tokens, tokenSystem } = data.content;
+        
+        addStatusLog(`✓ Mapped ${tokenSystem.totalTokens} tokens to ${tokenSystem.affectedComponents} components`, 'info');
+        await new Promise(r => setTimeout(r, 800));
+
+        // Step 3: Apply component CSS to current page
+        addStatusLog('Injecting component CSS rules...', 'info');
+        updateProgress(50);
+        applyComponentCSS(componentCSS);
+        await new Promise(r => setTimeout(r, 600));
+
+        // Step 4: Broadcast to other tabs
+        addStatusLog('Broadcasting design changes...', 'info');
+        updateProgress(65);
+        broadcastDesignChange({ componentCSS, componentMap, tokens });
+        await new Promise(r => setTimeout(r, 600));
+
+        // Step 5: Apply to design-studio.html
+        addStatusLog('Transforming Design Studio UI...', 'info');
+        updateProgress(80);
+        await applyToDesignStudio({ componentCSS, componentMap, tokens });
+        await new Promise(r => setTimeout(r, 600));
+
+        // Step 6: Complete
+        addStatusLog('✨ Design system applied to all components!', 'success');
+        updateProgress(100);
+        await new Promise(r => setTimeout(r, 500));
+
+        progressContainer.classList.remove('active');
+        successMessage.classList.add('active');
+
+      } catch (err) {
+        addStatusLog(`Error: ${err.message}`, 'error');
+        console.error('Design application error:', err);
+        progressContainer.classList.remove('active');
+      }
+    }
+
+    function applyComponentCSS(css) {
+      // Create or update a style tag with component CSS
+      let styleTag = document.getElementById('design-system-css');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'design-system-css';
+        styleTag.type = 'text/css';
+        document.head.appendChild(styleTag);
+      }
+      styleTag.textContent = css;
+      console.log('✅ Component CSS applied to current page');
+    }
+
+    function broadcastDesignChange(designData) {
+      // Broadcast design changes to other tabs using localStorage
+      try {
+        const message = {
+          type: 'DESIGN_SYSTEM_APPLIED',
+          ...designData,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('tooloo-design-update', JSON.stringify(message));
+        console.log('✅ Broadcasting design to localStorage with tokens and CSS');
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'tooloo-design-update',
+          newValue: JSON.stringify(message)
+        }));
+      } catch (e) {
+        console.warn('Could not broadcast to other tabs:', e);
+      }
+    }
+
+    async function applyToDesignStudio(designData) {
+      // Open or focus Design Studio and apply changes
+      try {
+        const designStudioWindow = window.open('/design-studio.html', 'design-studio');
+        
+        // Wait for window to load/become accessible
+        let attempts = 0;
+        while (attempts < 10) {
+          try {
+            await new Promise(r => setTimeout(r, 300));
+            
+            if (designStudioWindow && !designStudioWindow.closed) {
+              // Send complete design data to Design Studio window
+              designStudioWindow.postMessage({
+                type: 'APPLY_DESIGN_SYSTEM',
+                ...designData,
+                designSystem: uploadedDesignSystem
+              }, window.location.origin);
+              
+              // Also try direct DOM manipulation if accessible
+              try {
+                if (designStudioWindow.document && designStudioWindow.document.documentElement) {
+                  console.log('✅ Direct access to Design Studio window, injecting component CSS');
+                  
+                  // Inject component CSS
+                  let styleTag = designStudioWindow.document.getElementById('design-system-css');
+                  if (!styleTag) {
+                    styleTag = designStudioWindow.document.createElement('style');
+                    styleTag.id = 'design-system-css';
+                    styleTag.type = 'text/css';
+                    designStudioWindow.document.head.appendChild(styleTag);
+                  }
+                  styleTag.textContent = designData.componentCSS;
+                }
+              } catch (e) {
+                console.log('Cannot access Design Studio window directly (cross-origin), using postMessage');
+              }
+              
+              console.log('✅ Message sent to Design Studio');
+              return;
+            }
+          } catch (e) {
+            attempts++;
+            if (attempts >= 10) throw e;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not apply to Design Studio window:', e);
+      }
+    }
+
+    function generateCSSVariables() {
+      const vars = {};
+      
+      // Map colors to CSS custom properties
+      const colors = uploadedDesignSystem.colors || {};
+      const colorArray = Object.values(colors).filter(c => typeof c === 'string' && c.startsWith('#'));
+      
+      if (colorArray.length > 0) {
+        vars['--bg-dark'] = colorArray[0] || '#0a0a0a';
+        vars['--accent'] = colorArray[Math.floor(colorArray.length / 2)] || '#00d9ff';
+        vars['--accent-2'] = colorArray[colorArray.length - 1] || '#ff006e';
+        vars['--text-primary'] = '#ffffff';
+        vars['--text-secondary'] = '#b0b0b0';
+      }
+
+      // Map fonts
+      const fonts = uploadedDesignSystem.typography || {};
+      const fontArray = Object.values(fonts);
+      if (fontArray.length > 0) {
+        vars['--font-primary'] = fontArray[0];
+        vars['--font-secondary'] = fontArray[1] || fontArray[0];
+      }
+
+      return vars;
+    }
+
+    async function updateDesignStudioHTML(cssVars) {
+      // In real implementation, this would fetch, update, and return the HTML
+      return `/* Updated CSS Variables */\n:root {\n${Object.entries(cssVars).map(([k, v]) => `  ${k}: ${v};`).join('\n')}\n}`;
+    }
+
+    async function createGitHubBranch() {
+      const branchName = `design-applier-${Date.now()}`;
+      try {
+        const res = await fetch('/api/v1/github/create-branch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            branchName,
+            baseBranch: 'main'
+          })
+        });
+        if (!res.ok) throw new Error('Failed to create branch');
+        return branchName;
+      } catch (e) {
+        addStatusLog(`Branch creation: ${e.message}`, 'error');
+        return branchName;
+      }
+    }
+
+    async function commitChanges(branch, content) {
+      try {
+        await fetch('/api/v1/github/update-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filePath: 'web-app/design-studio.html',
+            content,
+            message: 'Apply design system transformation',
+            branch
+          })
+        });
+      } catch (e) {
+        addStatusLog(`File update: ${e.message}`, 'error');
+      }
+    }
+
+    async function createPullRequest(branch) {
+      try {
+        const res = await fetch('/api/v1/github/create-pr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '🎨 Design System Applied - Auto Transformation',
+            body: `TooLoo has analyzed and applied a new design system to itself.\n\nBranch: ${branch}`,
+            head: branch,
+            base: 'main'
+          })
+        });
+        const data = await res.json();
+        return data.html_url || `#${data.number}`;
+      } catch (e) {
+        addStatusLog(`PR creation: ${e.message}`, 'error');
+        return 'pending';
+      }
+    }
+
+    function applyLocalChanges(cssVars) {
+      // Apply CSS variables to current page
+      const root = document.documentElement;
+      Object.entries(cssVars).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+      });
+    }
+
+    function resetUI() {
+      uploadedDesignSystem = null;
+      uploadZone.style.display = 'block';
+      designPreview.style.display = 'none';
+      progressContainer.classList.remove('active');
+      successMessage.classList.remove('active');
+      actionButtons.style.display = 'none';
+      fileInput.value = '';
+      statusLog = [];
+      statusLogEl.innerHTML = '';
+      progressFill.style.width = '0%';
+    }
+  </script>
+</body>
+</html>

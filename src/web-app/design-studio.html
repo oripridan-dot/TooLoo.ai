@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TooLoo Design Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/gemini-ui.css">
+</head>
+<body>
+  <div class="g3-layout" style="grid-template-columns: 300px 1fr 300px;">
+    
+    <!-- Left Sidebar: Tools & Navigation -->
+    <aside class="g3-sidebar">
+      <div class="nav-tabs">
+        <div class="nav-tab active" onclick="switchTab('tools')">Tools</div>
+        <div class="nav-tab" onclick="switchTab('assets')">Assets</div>
+      </div>
+
+      <!-- Tools Tab -->
+      <div id="tab-tools" class="scroll-area">
+        
+        <!-- Presets -->
+        <div class="tool-card">
+          <h3>📚 Presets</h3>
+          <div class="input-group">
+            <select id="presetSelect" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); padding:8px; border-radius:6px; color:var(--text);">
+              <option value="">Select a preset...</option>
+              <option value="loading">Loading...</option>
+            </select>
+            <button class="btn" id="loadPresetBtn" style="width:100%">Load Preset</button>
+          </div>
+        </div>
+
+        <!-- Extract -->
+        <div class="tool-card">
+          <h3>🌐 Extract from URL</h3>
+          <form id="extractForm" class="input-group">
+            <input type="url" id="websiteUrl" placeholder="https://example.com" required>
+            <button type="submit" class="btn primary">Extract Design</button>
+          </form>
+        </div>
+
+        <!-- Figma -->
+        <div class="tool-card">
+          <h3><img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg" width="12" style="vertical-align:middle"> Figma Import</h3>
+          <form id="figmaForm" class="input-group">
+            <input type="url" id="figmaUrl" placeholder="Figma File URL" required>
+            <input type="password" id="figmaToken" placeholder="Access Token (Optional)">
+            <button type="submit" class="btn" style="background:#F24E1E; border-color:#F24E1E; color:white">Import from Figma</button>
+          </form>
+        </div>
+
+        <!-- Blueprint -->
+        <div class="tool-card">
+          <h3>📐 Blueprint</h3>
+          <form id="blueprintForm" class="input-group">
+            <textarea id="blueprintGoal" placeholder="Describe UI goal..." rows="3"></textarea>
+            <button type="submit" class="btn">Scaffold UI</button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Assets Tab -->
+      <div id="tab-assets" class="scroll-area hidden">
+        <div class="sidebar-header" style="padding-left:0">Design Tokens</div>
+        <div id="assetTree">
+          <div class="tree-item" onclick="showCategory('colors')">
+            <span>🎨 Colors</span>
+            <span class="count-badge" id="count-colors">0</span>
+          </div>
+          <div class="tree-item" onclick="showCategory('typography')">
+            <span>📝 Typography</span>
+            <span class="count-badge" id="count-typography">0</span>
+          </div>
+          <div class="tree-item" onclick="showCategory('spacing')">
+            <span>📏 Spacing</span>
+            <span class="count-badge" id="count-spacing">0</span>
+          </div>
+          <div class="tree-item" onclick="showCategory('components')">
+            <span>🧩 Components</span>
+            <span class="count-badge" id="count-components">0</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Canvas -->
+    <main class="g3-main" style="padding: 0; background: #1e1e1e;">
+      <div class="canvas-toolbar">
+        <div class="view-toggle">
+          <div class="view-btn active" onclick="switchView('preview')">Preview</div>
+          <div class="view-btn" onclick="switchView('tokens')">Tokens</div>
+          <div class="view-btn" onclick="switchView('json')">JSON</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="font-size:11px; color:var(--muted)" id="systemStatus">No system loaded</div>
+      </div>
+
+      <!-- Preview View -->
+      <div id="view-preview" class="preview-container">
+        <div class="preview-frame">
+          <iframe id="previewFrame" src="/dashboard.html" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+      </div>
+
+      <!-- Tokens View -->
+      <div id="view-tokens" class="preview-container hidden" style="display:block; padding:0">
+        <div class="token-grid" id="tokenGrid">
+          <!-- Tokens injected here -->
+          <div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:40px">
+            Load a design system to view tokens
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON View -->
+      <div id="view-json" class="preview-container hidden" style="padding:0">
+        <pre id="jsonOutput" style="padding:20px; font-family:var(--font-mono); font-size:12px; color:var(--text); width:100%; overflow:auto"></pre>
+      </div>
+
+      <!-- Console Panel -->
+      <div class="console-panel">
+        <div class="console-header">
+          <span>Output Stream</span>
+          <span style="cursor:pointer" onclick="document.getElementById('consoleOutput').innerHTML=''">Clear</span>
+        </div>
+        <div class="console-output" id="consoleOutput">
+          <div class="log-line log-info">Ready.</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar: Properties -->
+    <aside class="g3-sidebar">
+      <div class="sidebar-header">Properties</div>
+      <div class="scroll-area">
+        <div id="propertiesPanel">
+          <div style="padding:20px; text-align:center; color:var(--muted); font-size:12px">
+            Select an element or token to view properties
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-header">Statistics</div>
+      <div style="padding:16px">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+          <div class="tool-card" style="text-align:center; margin:0">
+            <div style="font-size:18px; font-weight:700; color:var(--brand)" id="stat-colors">0</div>
+            <div style="font-size:10px; color:var(--muted)">COLORS</div>
+          </div>
+          <div class="tool-card" style="text-align:center; margin:0">
+            <div style="font-size:18px; font-weight:700; color:var(--accent)" id="stat-fonts">0</div>
+            <div style="font-size:10px; color:var(--muted)">FONTS</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    const API_BASE = '/api/v1';
+    let currentSystem = {};
+    let eventSource = null;
+
+    // --- UI Logic ---
+
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.scroll-area').forEach(el => {
+        if (el.id.startsWith('tab-')) el.classList.add('hidden');
+      });
+      
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    function switchView(view) {
+      document.querySelectorAll('.view-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
+      
+      event.target.classList.add('active');
+      const viewEl = document.getElementById(`view-${view}`);
+      viewEl.classList.remove('hidden');
+      
+      if (view === 'json') {
+        document.getElementById('jsonOutput').textContent = JSON.stringify(currentSystem, null, 2);
+      }
+    }
+
+    function log(msg, type = 'info') {
+      const consoleEl = document.getElementById('consoleOutput');
+      const line = document.createElement('div');
+      line.className = `log-line log-${type}`;
+      line.textContent = `> ${msg}`;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // --- API Logic ---
+
+    async function loadPresets() {
+      const select = document.getElementById('presetSelect');
+      try {
+        const res = await fetch(`${API_BASE}/design/systems`);
+        const data = await res.json();
+        const systems = data.content?.systems || data.systems || [];
+        
+        select.innerHTML = '<option value="">Select a preset...</option>';
+        systems.forEach(sys => {
+          const opt = document.createElement('option');
+          opt.value = sys.id || sys.presetKey;
+          opt.textContent = sys.name || sys.brand?.name || 'Unnamed System';
+          opt.dataset.system = JSON.stringify(sys);
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        log('Failed to load presets: ' + e.message, 'error');
+      }
+    }
+
+    async function loadSystem(system) {
+      currentSystem = system;
+      
+      // Update Stats
+      const colors = system.tokens?.colors || system.colors || {};
+      const typography = system.tokens?.typography || system.typography || {};
+      
+      document.getElementById('count-colors').textContent = Object.keys(colors).length;
+      document.getElementById('stat-colors').textContent = Object.keys(colors).length;
+      document.getElementById('count-typography').textContent = Object.keys(typography).length;
+      document.getElementById('stat-fonts').textContent = Object.keys(typography).length;
+      
+      document.getElementById('systemStatus').textContent = system.brand?.name || system.name || 'Custom System';
+      
+      // Render Tokens
+      renderTokens(colors);
+      
+      log(`Loaded system: ${system.brand?.name || 'Unknown'}`);
+    }
+
+    function renderTokens(tokens) {
+      const grid = document.getElementById('tokenGrid');
+      grid.innerHTML = '';
+      
+      Object.entries(tokens).forEach(([key, val]) => {
+        const card = document.createElement('div');
+        card.className = 'token-card';
+        
+        let color = typeof val === 'string' ? val : val.value || val.color || '#000';
+        
+        card.innerHTML = `
+          <div class="swatch" style="background:${color}"></div>
+          <div class="token-info">
+            <div class="token-name">${key}</div>
+            <div class="token-value">${color}</div>
+          </div>
+        `;
+        card.onclick = () => showProperties(key, val);
+        grid.appendChild(card);
+      });
+    }
+
+    function showProperties(key, val) {
+      const panel = document.getElementById('propertiesPanel');
+      panel.innerHTML = `
+        <div class="tool-card">
+          <h3>${key}</h3>
+          <pre style="font-size:10px; overflow:auto">${JSON.stringify(val, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // --- Event Listeners ---
+
+    document.getElementById('loadPresetBtn').addEventListener('click', () => {
+      const select = document.getElementById('presetSelect');
+      const opt = select.options[select.selectedIndex];
+      if (opt && opt.dataset.system) {
+        loadSystem(JSON.parse(opt.dataset.system));
+      }
+    });
+
+    document.getElementById('extractForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = document.getElementById('websiteUrl').value;
+      log(`Extracting from ${url}...`);
+      
+      try {
+        const res = await fetch(`${API_BASE}/design/extract-from-website`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ websiteUrl: url })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          loadSystem({
+            brand: data.brand,
+            tokens: data.tokens
+          });
+          log('Extraction complete!', 'success');
+        } else {
+          log('Extraction failed: ' + data.error, 'error');
+        }
+      } catch (e) {
+        log('Error: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('figmaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const figmaUrl = document.getElementById('figmaUrl').value;
+      const apiToken = document.getElementById('figmaToken').value;
+      
+      log(`Importing from Figma...`);
+      
+      try {
+        const res = await fetch(`${API_BASE}/design/import-figma`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ figmaUrl, apiToken })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          loadSystem({
+            brand: { name: data.metadata?.name || 'Figma Import' },
+            tokens: data.designSystem || data.tokens
+          });
+          log('Figma import successful!', 'success');
+        } else {
+          log('Figma import failed: ' + data.error, 'error');
+        }
+      } catch (e) {
+        log('Error: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('blueprintForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const goal = document.getElementById('blueprintGoal').value;
+      if (!goal) return;
+      
+      log(`Scaffolding UI for: ${goal}...`);
+      
+      try {
+        // Use execute-task to generate a design artifact
+        const res = await fetch(`${API_BASE}/workflows/execute-task`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ 
+            task: goal,
+            taskType: 'design',
+            description: 'Generate a UI mockup for the requested goal'
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (data.ok) {
+          log('Scaffold complete! Loading preview...', 'success');
+          
+          // Find the design artifact
+          const artifact = data.artifacts && data.artifacts.find(a => a.type === 'design');
+          
+          if (artifact && artifact.url) {
+            // Update preview frame
+            const iframe = document.getElementById('previewFrame');
+            iframe.src = artifact.url;
+            
+            // Switch to preview view
+            switchView('preview');
+          } else {
+            log('No design artifact generated.', 'error');
+          }
+        } else {
+          log('Scaffold failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (e) {
+        log('Error: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('streamBtn').addEventListener('click', () => {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+        document.getElementById('streamBtn').textContent = '⚡ Stream Tokens';
+        log('Stream stopped.');
+        return;
+      }
+      
+      log('Starting token stream...');
+      document.getElementById('streamBtn').textContent = '⏹ Stop Stream';
+      
+      eventSource = new EventSource(`${API_BASE}/design/stream`);
+      
+      eventSource.onmessage = (e) => {
+        // Generic message handler
+      };
+      
+      eventSource.addEventListener('token', (e) => {
+        const data = JSON.parse(e.data);
+        log(`Token: ${data.key}`, 'info');
+      });
+      
+      eventSource.addEventListener('done', () => {
+        log('Stream complete.', 'success');
+        eventSource.close();
+        eventSource = null;
+        document.getElementById('streamBtn').textContent = '⚡ Stream Tokens';
+      });
+      
+      eventSource.onerror = (e) => {
+        log('Stream connection lost.', 'error');
+        eventSource.close();
+        eventSource = null;
+        document.getElementById('streamBtn').textContent = '⚡ Stream Tokens';
+      };
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
+
+    // Init
+    loadPresets();
+
+  </script>
+</body>
+</html>

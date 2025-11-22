@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooLoo.ai – Training Control Room</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%);
+            color: #ffffff; 
+            min-height: 100vh;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 12px;
+        }
+        .logo { font-size: 18px; font-weight: 700; background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header-stats { display: flex; gap: 12px; align-items: center; }
+        .pill { padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #eee; }
+        .btn { padding: 6px 12px; font-size: 11px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none;
+            background: rgba(0,212,255,0.2); color: #cfefff; border: 1px solid rgba(0,212,255,0.4); transition: all 0.2s; }
+        .btn:hover { background: rgba(0,212,255,0.3); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger { background: rgba(255,99,71,0.2); border-color: rgba(255,99,71,0.4); color: #ffccc7; }
+        .btn-danger:hover { background: rgba(255,99,71,0.3); }
+        .btn-success { background: rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.4); color: #9effc2; }
+        .btn-success:hover { background: rgba(0,255,136,0.3); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        
+        .panel {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .panel-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #00d4ff; 
+            display: flex; justify-content: space-between; align-items: center; }
+        .panel-controls { display: flex; gap: 8px; }
+        
+        .metric-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .metric-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .metric-value { font-size: 24px; font-weight: 700; color: #00d4ff; }
+        .metric-subtext { font-size: 11px; color: #ccc; margin-top: 2px; }
+        
+        .domain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+        .domain-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .domain-card:hover { background: rgba(255,255,255,0.1); border-color: rgba(0,212,255,0.4); }
+        .domain-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .domain-name { font-weight: 700; font-size: 12px; }
+        .status-badge { font-size: 16px; }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00d4ff); transition: width 0.6s ease; position: relative; }
+        .progress-fill::after { content: ''; position: absolute; inset: 0; 
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); 
+            animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0%{transform:translateX(-100%)}100%{transform:translateX(100%)} }
+        .domain-stats { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; margin-top: 6px; }
+        
+        .zoom-controls { display: flex; gap: 6px; background: rgba(0,0,0,0.2); padding: 3px; border-radius: 6px; }
+        .zoom-btn { padding: 4px 8px; font-size: 10px; border-radius: 5px; background: transparent; 
+            color: #ccc; border: none; cursor: pointer; transition: all 0.2s; }
+        .zoom-btn.active { background: rgba(0,212,255,0.3); color: #00d4ff; }
+        .zoom-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        .log-feed { max-height: 150px; overflow-y: auto; display: grid; gap: 4px; }
+        .log-item { font-size: 10px; padding: 6px; background: rgba(255,255,255,0.04); border-radius: 5px; 
+            border-left: 2px solid #00d4ff; display: flex; justify-content: space-between; align-items: center; }
+        .log-time { color: #888; font-size: 9px; }
+        
+        .provider-scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .provider-card { background: rgba(255,255,255,0.06); padding: 10px; border-radius: 8px; text-align: center; min-height: 80px; }
+        .provider-name { font-weight: 700; font-size: 11px; margin-bottom: 4px; }
+        .provider-rank { font-size: 18px; font-weight: 700; color: #00d4ff; }
+        .provider-stat { font-size: 9px; color: #aaa; margin-top: 2px; }
+        .status-banner { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background: rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.15); }
+        .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+        .dot.ok { background:#00ff88; }
+        .dot.bad { background:#ff5c5c; }
+        
+        /* Timeline and History Styles */
+        .timeline-container { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+        .timeline-day { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border-left: 3px solid #00d4ff; }
+        .timeline-date { font-size: 11px; font-weight: 700; color: #00d4ff; margin-bottom: 6px; }
+        .timeline-items { display: flex; flex-wrap: wrap; gap: 6px; }
+        .timeline-item { background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; }
+        .timeline-item:hover { background: rgba(255,255,255,0.15); }
+        
+        /* Chart Styles */
+        .chart-container { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-top: 8px; }
+        .chart-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .chart-label { min-width: 120px; font-size: 10px; color: #ccc; }
+        .chart-track { flex: 1; height: 20px; background: rgba(255,255,255,0.1); border-radius: 4px; position: relative; overflow: hidden; }
+        .chart-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); display: flex; align-items: center; padding: 0 6px; font-size: 9px; color: white; font-weight: 600; }
+        .severity-badge { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+        .severity-high { background: rgba(255,92,92,0.3); color: #ff5c5c; border: 1px solid #ff5c5c; }
+        .severity-medium { background: rgba(255,136,0,0.3); color: #ff8800; border: 1px solid #ff8800; }
+        .severity-low { background: rgba(0,212,255,0.3); color: #00d4ff; border: 1px solid #00d4ff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div class="logo">🧠 TooLoo.ai Training Control Room</div>
+            <div class="pill" id="trainingStatus">⏸️ Idle</div>
+        </div>
+        <div class="header-stats">
+            <div class="status-banner">
+                <span class="pill" id="envPort">Web :3000</span>
+                <span><span id="hTraining" class="dot bad"></span> Training</span>
+                <span><span id="hMeta" class="dot bad"></span> Meta</span>
+                <span><span id="hBudget" class="dot bad"></span> Budget</span>
+                <span><span id="hCoach" class="dot bad"></span> Coach</span>
+                <span><span id="hSources" class="dot bad"></span> Sources</span>
+                <span><span id="hArena" class="dot bad"></span> Arena</span>
+                <span><span id="hPresentation" class="dot bad"></span> Presentation</span>
+                <span class="pill" id="coachState" style="cursor:pointer;" title="Toggle Auto‑Coach">Coach: Off</span>
+            </div>
+            <div class="pill" id="nextDomainPill">Next: …</div>
+            <div class="pill" id="budgetPill">Budget: $0/$5</div>
+            <div class="pill" id="roundCounter">Round 0/100</div>
+            <button id="boostBtn" class="btn" style="background: rgba(255,136,0,0.2); border-color: rgba(255,136,0,0.4); color: #ffcc99;">⚡ Boost x5</button>
+            <button id="hyperBoostBtn" class="btn" style="background: rgba(255,0,136,0.3); border-color: rgba(255,0,136,0.5); color: #ff99dd;">🚀 HYPER x20</button>
+            <button id="focusBottomBtn" class="btn" title="Temporarily lock focus to bottom N domains and run a burst">🎯 Focus bottom N now</button>
+            <button id="startSystemBtn" class="btn">🚀 Start System</button>
+            <button id="runRoundBtn" class="btn btn-success">▶️ Run Training Round</button>
+            <button id="stopAllBtn" class="btn btn-danger">⛔ Stop All</button>
+            <a href="/design-demo" class="btn" title="Open Studio‑Grade Design Demo" style="background: rgba(124,92,255,0.2); border-color: rgba(124,92,255,0.4); color: #d9ccff;">🎨 Design Demo</a>
+            <a href="/design-suite" class="btn" title="Open TooLoo Design Suite" style="background: rgba(0,233,176,0.2); border-color: rgba(0,233,176,0.4); color: #bff7ea;">🧩 Design Suite</a>
+            <a href="/chat-pro-v2" class="btn" title="Open Enhanced Chat UI (3-bar layout)" style="background: rgba(0,212,255,0.2); border-color: rgba(0,212,255,0.4); color: #cfefff;">💬 Chat Pro V2</a>
+            <a href="/chat" class="btn" title="Open Professional Chat UI" style="background: rgba(0,212,255,0.15); border-color: rgba(0,212,255,0.3); color: #b0e7ff;">💭 Chat</a>
+        </div>
+    </div>
+
+    <!-- Top Metrics -->
+    <div class="grid-3">
+        <div class="metric-card">
+            <div class="metric-label">Average Mastery</div>
+            <div class="metric-value" id="avgMastery">0%</div>
+            <div class="metric-subtext" id="masteryTrend">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Weakest Domain</div>
+            <div class="metric-value" id="weakestDomain" style="font-size:20px;">Loading...</div>
+            <div class="metric-subtext" id="weakestScore">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Training Progress</div>
+            <div class="metric-value" id="totalAttempts">0</div>
+            <div class="metric-subtext">Total problem attempts</div>
+        </div>
+    </div>
+
+    <!-- Main Training View -->
+    <div class="panel">
+        <div class="panel-title">
+            📚 Phase 2: CS Fundamentals Mastery
+            <div class="panel-controls">
+                <div class="zoom-controls">
+                    <button class="zoom-btn active" id="zoomOverview">Overview</button>
+                    <button class="zoom-btn" id="zoomActive">Active Training</button>
+                </div>
+                <button id="runMiniCupBtn" class="btn">🏆 Run Mini-Cup</button>
+                <button id="exportDataBtn" class="btn">💾 Export Data</button>
+            </div>
+        </div>
+        <div id="trainingView"></div>
+    </div>
+
+    <!-- Bottom Grid: Meta-Learning + Provider Performance + Activity Log -->
+    <div class="grid-2" style="margin-top:12px;">
+        <div class="panel">
+            <div class="panel-title">🤖 Meta-Learning Mastery
+                <div class="panel-controls">
+                    <button id="metaStartBtn" class="btn btn-success">Start</button>
+                    <button id="metaRunAllBtn" class="btn">Run All Phases</button>
+                    <button id="metaReportBtn" class="btn">Report</button>
+                    <button id="metaInsightsBtn" class="btn">Insights</button>
+                    <button id="autoCoachBtn" class="btn">Auto‑Coach: Off</button>
+                    <button id="settingsBtn" class="btn" style="background: rgba(128,128,128,0.2); border-color: rgba(128,128,128,0.4);">⚙️ Settings</button>
+                    <button id="fastLaneBtn" class="btn" title="Prioritize critical tracks with higher throughput">🏎️ Fast Lane</button>
+                </div>
+            </div>
+            <div id="metaStatus" style="font-size:12px;color:#ccc;display:grid;gap:6px;"></div>
+            <div id="settingsPanel" style="display:none;margin-top:12px;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;">
+                    <div>
+                        <label style="font-size:11px;color:#aaa;">Min Avg Mastery: <span id="avgLabel">75</span>%</label>
+                        <input type="range" id="avgSlider" min="60" max="90" value="75" style="width:100%;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px;color:#aaa;">Max Below 80%: <span id="belowLabel">3</span></label>
+                        <input type="range" id="belowSlider" min="1" max="6" value="3" style="width:100%;">
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <label style="font-size:11px;color:#aaa;">
+                        <input type="checkbox" id="aggressiveCheck" checked> Aggressive mode (2x rounds when &lt;50%)
+                    </label>
+                    <label style="font-size:11px;color:#aaa;">
+                        <input type="checkbox" id="targetedCheck" checked> Target untouched & weak domains first
+                    </label>
+                    <label style="font-size:11px;color:#aaa;">Target threshold: <span id="targetLabel">80</span>%</label>
+                    <input type="range" id="targetSlider" min="50" max="90" value="80" style="width:140px;">
+                    <label style="font-size:11px;color:#aaa;">
+                        <input type="checkbox" id="autoFillCheck"> Auto‑fill gaps (lock bottom N)
+                    </label>
+                    <label style="font-size:11px;color:#aaa;">N: <span id="gapsLabel">3</span></label>
+                    <input type="range" id="gapsSlider" min="1" max="5" value="3" style="width:120px;">
+                    <label style="font-size:11px;color:#aaa;">Min attempts in batch: <span id="minBatchLabel">2</span></label>
+                    <input type="range" id="minBatchSlider" min="0" max="5" value="2" style="width:140px;">
+                    <label style="font-size:11px;color:#aaa;">Auto‑focus on launch if below by: <span id="gapDeltaLabel">20</span>%</label>
+                    <input type="range" id="gapDeltaSlider" min="5" max="40" value="20" style="width:140px;">
+                    <button id="saveSettingsBtn" class="btn btn-success" style="font-size:10px;">Save</button>
+                </div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">🎯 Provider Cup Standings
+                <div class="panel-controls">
+                    <button id="refreshProvidersBtn" class="btn" title="Refresh provider data">🔄 Refresh</button>
+                    <button id="chatPriorityBtn" class="btn" title="Prioritize chat responsiveness">💬 Chat Priority</button>
+                    <button id="backgroundPriorityBtn" class="btn" title="Resume background throughput">🌙 Background Priority</button>
+                </div>
+            </div>
+            <div id="providerStatusSummary" style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <span class="pill" id="providersOnline">Online: —</span>
+                <span class="pill" id="providersActive">Active: —</span>
+                <span class="pill" id="providersTotal">Total: —</span>
+            </div>
+            <div id="providerScores" class="provider-scores"></div>
+            <div style="margin-top:10px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <span style="font-size:11px;color:#aaa;">Provider Policy:</span>
+                <span class="pill" id="policyCriticality">criticality: —</span>
+                <span class="pill" id="policyConcurrency">maxConcurrency: —</span>
+                <button id="refreshPolicyBtn" class="btn" style="font-size:10px;padding:4px 8px;">🔄 Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Path View -->
+    <div class="panel" style="margin-top:12px;">
+        <div class="panel-title">�️ Critical Path
+            <div class="panel-controls">
+                <button id="rushModeBtn" class="btn" title="Prioritize critical tracks (Fast Lane)">🚦 Rush Mode</button>
+                <button id="multiInstanceBtn" class="btn" title="Run two sibling instances for pre-gen tasks">🧩 Multi‑Instance Pilot</button>
+            </div>
+        </div>
+        <div id="criticalView" style="display:grid;gap:10px;">
+            <div class="metric-card">
+                <div class="metric-label">Fast Lane Status</div>
+                <div class="metric-value" id="fastLaneStatus">Off</div>
+                <div class="metric-subtext">Micro-batches: <span id="fastLaneMicro">1</span> • Batch size: <span id="fastLaneBatch">1</span> • Interval: <span id="fastLaneInterval">2000</span>ms</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Meta‑Learning ETA</div>
+                <div class="metric-value" id="metaEta">—</div>
+                <div class="metric-subtext">Based on recent round cadence and remaining phases</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Task Profiles</div>
+                <div class="metric-subtext">Classify running work: Critical • Balanced • Background</div>
+                <div style="display:flex; gap:8px; margin-top:6px;">
+                    <span class="pill" id="profileCritical">Critical: 0</span>
+                    <span class="pill" id="profileBalanced">Balanced: 0</span>
+                    <span class="pill" id="profileBackground">Background: 0</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Provider‑Aware Burst (optional)</div>
+                <div class="metric-subtext">Dial concurrency with live quota feedback; cache with TTL</div>
+                <button id="providerBurstBtn" class="btn" style="margin-top:6px;">Run Provider‑Aware Burst</button>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Multi‑Instance Pilot</div>
+                <div class="metric-subtext">Spin two siblings for pre‑generation; measure aggregate speedup</div>
+                <div style="display:flex; gap:8px; margin-top:6px;">
+                    <button id="miStartBtn" class="btn">Start Pilot</button>
+                    <button id="miStopBtn" class="btn btn-danger">Stop Pilot</button>
+                    <span class="pill" id="miStatus">Idle</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Processes View -->
+    <div class="panel" style="margin-top:12px;">
+        <div class="panel-title">🧩 System Processes
+            <div class="panel-controls">
+                <button id="procRefreshBtn" class="btn">� Refresh</button>
+            </div>
+        </div>
+        <div id="processList" class="domain-grid"></div>
+    </div>
+
+    <!-- Artifact Generation Panel -->
+    <div class="panel" style="margin-top:12px;">
+        <div class="panel-title">📄 Artifact Generator
+            <div class="panel-controls">
+                <button id="refreshArtifactsBtn" class="btn">🔄 Refresh</button>
+                <button id="generateArtifactBtn" class="btn btn-success">✨ Generate</button>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:12px;">
+            <div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <select id="artifactType" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:11px;flex:1;">
+                        <option value="business-plan">Business Plan</option>
+                        <option value="technical-specification">Technical Specification</option>
+                        <option value="marketing-strategy">Marketing Strategy</option>
+                        <option value="design-system">Design System</option>
+                        <option value="pitch-deck">Pitch Deck</option>
+                    </select>
+                    <select id="artifactQuality" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:11px;">
+                        <option value="production">Production</option>
+                        <option value="review">Review</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <input type="text" id="artifactProductName" placeholder="Product/Company Name" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:11px;margin-bottom:4px;">
+                <textarea id="artifactDescription" placeholder="Product description..." style="width:100%;height:60px;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:11px;resize:vertical;"></textarea>
+            </div>
+            <div>
+                <div style="font-size:11px;color:#aaa;margin-bottom:8px;">Recent Artifacts</div>
+                <div id="artifactsList" style="max-height:120px;overflow-y:auto;"></div>
+            </div>
+        </div>
+        <div id="artifactPreview" style="display:none;background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.1);margin-top:8px;">
+            <div style="display:flex;justify-content:between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:12px;font-weight:600;color:#00d4ff;" id="previewTitle">Generated Artifact</span>
+                <div style="display:flex;gap:6px;">
+                    <button id="downloadArtifactBtn" class="btn" style="font-size:10px;padding:4px 8px;">⬇️ Download</button>
+                    <button id="closePreviewBtn" class="btn" style="font-size:10px;padding:4px 8px;">✕</button>
+                </div>
+            </div>
+            <div id="previewContent" style="font-size:10px;color:#ccc;white-space:pre-wrap;max-height:150px;overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <!-- Artifact History Timeline -->
+    <div class="panel" style="margin-top:12px;">
+        <div class="panel-title">📊 Artifact History Timeline
+            <div class="panel-controls">
+                <select id="historyDays" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:10px;">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button id="refreshHistoryBtn" class="btn" style="font-size:10px;padding:4px 8px;">🔄</button>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:12px;">
+            <div class="metric-card">
+                <div class="metric-label">Total Artifacts</div>
+                <div class="metric-value" id="historyTotal">0</div>
+                <div class="metric-subtext" id="historyPeriod">—</div>
+            </div>
+            <div class="chart-container" style="margin:0;">
+                <div style="font-size:10px;color:#aaa;margin-bottom:6px;">By Type</div>
+                <div id="historyByType"></div>
+            </div>
+        </div>
+        <div id="historyTimeline" class="timeline-container"></div>
+    </div>
+
+    <!-- AI Critique Analysis -->
+    <div class="panel" style="margin-top:12px;">
+        <div class="panel-title">🎯 AI Critique Analysis
+            <div class="panel-controls">
+                <button id="refreshCritiqueBtn" class="btn" style="font-size:10px;padding:4px 8px;">🔄 Refresh</button>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:12px;">
+            <div class="metric-card">
+                <div class="metric-label">Total Gaps Identified</div>
+                <div class="metric-value" id="critiqueGaps">0</div>
+                <div class="metric-subtext">From <span id="critiqueSessions">0</span> critique sessions</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Priority Actions</div>
+                <div class="metric-value" id="critiqueActions">0</div>
+                <div class="metric-subtext">High: <span id="critiqueHigh">0</span> • Medium: <span id="critiqueMed">0</span> • Low: <span id="critiqueLow">0</span></div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <div style="font-size:11px;color:#00d4ff;margin-bottom:8px;">Gaps by Area (Severity)</div>
+            <div id="critiqueGapChart"></div>
+        </div>
+        <div class="chart-container" style="margin-top:8px;">
+            <div style="font-size:11px;color:#00d4ff;margin-bottom:8px;">Provider Performance</div>
+            <div id="critiqueProviderChart"></div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:12px;">
+        <div class="panel-title">📋 Training Activity Log</div>
+        <div id="activityLog" class="log-feed"></div>
+    </div>
+
+    <script>
+    const $ = (id) => document.getElementById(id);
+        const safeJson = async (res) => { try { return await res.json(); } catch { return null; } };
+        
+        let currentZoom = 'overview';
+        let trainingActive = false;
+        let activityLogs = [];
+        
+        function addLog(message, type='info') {
+            const now = new Date().toLocaleTimeString();
+            activityLogs.unshift({ message, time: now, type });
+            if (activityLogs.length > 20) activityLogs.pop();
+            renderActivityLog();
+        }
+        
+        function renderActivityLog() {
+            const log = $('activityLog');
+            log.innerHTML = activityLogs.map(l => `
+                <div class="log-item">
+                    <span>${l.message}</span>
+                    <span class="log-time">${l.time}</span>
+                </div>
+            `).join('');
+        }
+        
+        async function fetchBudget() {
+            try {
+                const res = await fetch('/api/v1/budget');
+                const data = await safeJson(res);
+                if (data && data.ok && data.budget) {
+                    const { spent, limit, percent } = data.budget;
+                    $('budgetPill').textContent = `Budget: $${spent.toFixed(2)}/$${limit} (${Math.round(percent)}%)`;
+                }
+            } catch {}
+        }
+
+    async function fetchSystemStatus(){
+            try{
+                const res = await fetch('/system/status');
+                const data = await safeJson(res);
+                if(!data?.ok) return;
+                $('envPort').textContent = `Web :${data.ports.web}`;
+                $('hTraining').className = `dot ${data.services.training? 'ok':'bad'}`;
+                $('hMeta').className = `dot ${data.services.meta? 'ok':'bad'}`;
+                $('hBudget').className = `dot ${data.services.budget? 'ok':'bad'}`;
+                $('hCoach').className = `dot ${data.services.coach? 'ok':'bad'}`;
+                $('hSources').className = `dot ${data.services.sources? 'ok':'bad'}`;
+                $('hArena').className = `dot ${data.services.arena? 'ok':'bad'}`;
+                $('hPresentation').className = `dot ${data.services.presentation? 'ok':'bad'}`;
+                $('coachState').textContent = `Coach: ${data.autoCoach?.active? 'On':'Off'}`;
+            }catch{}
+        }
+
+        async function fetchNextDomain() {
+            try {
+                const res = await fetch('/api/v1/next-domain');
+                const data = await safeJson(res);
+                if (data && data.ok && data.next) {
+                    const nd = data.next;
+                    $('nextDomainPill').textContent = `Next: ${nd.domain} (${nd.readiness}% ready)`;
+                    renderMetaStatus(nd.metaLearning, nd.currentMastery, nd.rationale);
+                }
+            } catch {}
+        }
+        
+        async function fetchTrainingStatus() {
+            try {
+                const res = await fetch('/api/v1/training/status');
+                const data = await safeJson(res);
+                if (data && data.ok && data.status) {
+                    const status = data.status;
+                    trainingActive = status.isActive;
+                    $('trainingStatus').textContent = status.isActive ? '🔴 Training Active' : '⏸️ Idle';
+                    $('roundCounter').textContent = `Round ${status.currentRound}/${status.totalRounds}`;
+                }
+            } catch {}
+        }
+        
+        async function fetchOverview() {
+            try {
+                const res = await fetch('/api/v1/training/overview');
+                const data = await safeJson(res);
+                if (data && data.ok && data.data) {
+                    renderOverview(data.data);
+                    updateMetrics(data.data);
+                    if (data.data.selection) {
+                        $('targetedCheck').checked = !!data.data.selection.targetedMode;
+                        if (typeof data.data.selection.targetThreshold === 'number') {
+                            $('targetSlider').value = data.data.selection.targetThreshold;
+                            $('targetLabel').textContent = data.data.selection.targetThreshold;
+                        }
+                        $('autoFillCheck').checked = !!data.data.selection.autoFillGaps;
+                        if (typeof data.data.selection.gapsCount === 'number') {
+                            $('gapsSlider').value = data.data.selection.gapsCount;
+                            $('gapsLabel').textContent = data.data.selection.gapsCount;
+                        }
+                        if (typeof data.data.selection.minAttemptsInBatch === 'number') {
+                            $('minBatchSlider').value = data.data.selection.minAttemptsInBatch;
+                            $('minBatchLabel').textContent = data.data.selection.minAttemptsInBatch;
+                        }
+                    }
+                }
+            } catch {}
+        }
+        
+        async function fetchActive() {
+            try {
+                const res = await fetch('/api/v1/training/active');
+                const data = await safeJson(res);
+                if (data && data.ok && data.data) {
+                    renderActive(data.data);
+                }
+            } catch {}
+        }
+        
+        async function fetchProviderScores() {
+            try {
+                // Fetch both cup scoreboard and provider status
+                const [cupRes, statusRes] = await Promise.all([
+                    fetch('/api/v1/cup/scoreboard'),
+                    fetch('/api/v1/providers/status')
+                ]);
+                
+                const cupData = await safeJson(cupRes);
+                const statusData = await safeJson(statusRes);
+                
+                if (cupData && cupData.ok && cupData.scoreboard && cupData.scoreboard.overall) {
+                    renderProviderScores(cupData.scoreboard.overall, statusData?.status || {});
+                    
+                    // Update provider status summary
+                    if (statusData?.status) {
+                        const providers = Object.values(statusData.status);
+                        const online = providers.filter(p => p.available).length;
+                        const active = providers.filter(p => p.available && p.enabled).length;
+                        const total = providers.length;
+                        
+                        $('providersOnline').textContent = `Online: ${online}`;
+                        $('providersActive').textContent = `Active: ${active}`;
+                        $('providersTotal').textContent = `Total: ${total}`;
+                    }
+                }
+            } catch {}
+        }
+
+        // Critical Path helpers
+        async function refreshCriticalPath(){
+            // Fast Lane status (from auto-coach status)
+            try{
+                const r = await fetch('/api/v1/auto-coach/status');
+                const j = await safeJson(r);
+                const th = j?.status?.thresholds || {};
+                const fl = th.fastLane?.enabled ? 'On' : 'Off';
+                $('fastLaneStatus').textContent = fl;
+                $('fastLaneMicro').textContent = th.microBatchesPerTick || 1;
+                $('fastLaneBatch').textContent = th.batchSize || 1;
+                $('fastLaneInterval').textContent = th.intervalMs || 2000;
+            }catch{}
+            // ETA estimate for Meta‑Learning based on phase progress and round cadence (heuristic)
+            try{
+                const mr = await fetch('/api/v4/meta-learning/report');
+                const mj = await safeJson(mr);
+                const completed = mj?.report?.completedPhases || 0; // if report shape differs, fallback below
+                const phases = mj?.report?.phases || {};
+                const done = Object.values(phases).filter(p=>p.status==='completed').length || completed;
+                const left = Math.max(0, 4 - done);
+                const cadence = Math.max(1, Number($('roundCounter').textContent.match(/\d+/)?.[0]||1));
+                const etaMin = Math.max(1, left * Math.ceil(10 / Math.max(1, cadence/5))); // rough heuristic
+                $('metaEta').textContent = left === 0 ? 'Completed' : `${etaMin}–${etaMin+3} min`; 
+            }catch{ $('metaEta').textContent = '—'; }
+            // Task profiles (simple heuristic based on Fast Lane + active training)
+            try{
+                const ov = await fetch('/api/v1/training/overview');
+                const j = await safeJson(ov);
+                const weak = (j?.data?.domains||[]).filter(d=>d.mastery<80).length;
+                const flOn = $('fastLaneStatus').textContent==='On';
+                $('profileCritical').textContent = `Critical: ${flOn? Math.min(3, weak): Math.max(0, weak-3)}`;
+                $('profileBalanced').textContent = `Balanced: ${flOn? Math.max(0, weak-3): Math.min(3, weak)}`;
+                $('profileBackground').textContent = `Background: ${Math.max(0, (j?.data?.domains||[]).length - weak)}`;
+            }catch{}
+        }
+
+        function renderMetaStatus(meta, mastery, rationale){
+            const el = $('metaStatus');
+            if (!meta) { el.textContent = 'No meta-learning data yet.'; return; }
+            const phases = meta.phases || {};
+            const rows = Object.keys(phases).map(n=>{
+                const p = phases[n];
+                const st = p.status || 'unknown';
+                const badge = st==='completed'? '🟢' : st==='in_progress'? '🟡' : '⚪';
+                return `<div style="display:flex;justify-content:space-between;">
+                    <span>${badge} Phase ${n}: ${p.name}</span>
+                    <span style="color:#aaa;">${p.completedAt? new Date(p.completedAt).toLocaleString(): ''}</span>
+                </div>`;
+            }).join('');
+            const gaps = (mastery?.domainsBelow80||[]).map(d=>`${d.name} (${d.mastery}%)`).join(', ') || 'None';
+            el.innerHTML = `
+                <div>Rationale: ${rationale}</div>
+                <div style="margin-top:6px;">Fundamentals avg: ${mastery?.average ?? '-'}% | Below 80%: ${gaps}</div>
+                <div style="margin-top:8px;display:grid;gap:4px;">${rows}</div>
+            `;
+        }
+        
+        function updateMetrics(data) {
+            const domains = data.domains || [];
+            if (domains.length === 0) return;
+            
+            const avgMastery = Math.round(domains.reduce((sum, d) => sum + d.mastery, 0) / domains.length);
+            $('avgMastery').textContent = `${avgMastery}%`;
+            
+            const sorted = [...domains].sort((a,b) => a.mastery - b.mastery);
+            const weakest = sorted[0];
+            $('weakestDomain').textContent = weakest.name;
+            $('weakestScore').textContent = `${weakest.mastery}% mastery`;
+            
+            const totalAttempts = domains.reduce((sum, d) => sum + (d.attempts || 0), 0);
+            $('totalAttempts').textContent = totalAttempts;
+            
+            const trend = avgMastery >= 80 ? '🟢 Excellent' : avgMastery >= 60 ? '🟡 Good' : avgMastery >= 40 ? '🟠 Improving' : '🔴 Building';
+            $('masteryTrend').textContent = trend;
+        }
+        
+        function renderOverview(data) {
+            const statusIcon = (status) => status === 'mastered' ? '🟢' : status === 'proficient' ? '🟡' : status === 'learning' ? '🟠' : '🔴';
+            
+            const nextUp = (data.nextUpTargets||[]).map(t => `${t.name.split(' ')[0]} (${t.mastery}%)`).join(', ');
+            $('trainingView').innerHTML = `<div style="font-size:11px;color:#aaa;margin-bottom:8px;">Next up: ${nextUp || '—'}</div>
+            <div class="domain-grid">
+                ${data.domains.map(d => `
+                    <div class="domain-card" onclick="viewDeepDive('${d.topic}')">
+                        <div class="domain-header">
+                            <div class="domain-name">${d.name} ${Array.isArray(data.lockedBatch) && data.lockedBatch.includes(d.topic) ? '<span class="pill" style="margin-left:6px;background:rgba(255,165,0,0.2);border-color:rgba(255,165,0,0.4);color:#ffd699;">🎯 Focused</span>' : ''} ${d.background ? '<span class="pill" style="margin-left:6px;background:rgba(128,128,128,0.2);border-color:rgba(128,128,128,0.4);color:#ddd;" title="Background track">Background</span>' : ''}</div>
+                            <div class="status-badge" title="${data.selection?.targetedMode && d.mastery===0 ? 'Targeted: untouched' : ''}">${statusIcon(d.status)}</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:${d.mastery}%"></div>
+                        </div>
+                        <div class="domain-stats">
+                            <span>Mastery: ${d.mastery}%</span>
+                            <span>±${d.uncertaintyBand}%</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+        
+        function renderActive(data) {
+            $('trainingView').innerHTML = `<div style="display:grid;gap:16px;">
+                ${data.activeDomains.map(d => `
+                    <div class="panel" style="background:rgba(255,255,255,0.06);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <div>
+                                <div style="font-weight:700;font-size:16px;">${d.name}</div>
+                                <div style="font-size:13px;color:#ccc;">Mastery: ${d.mastery}% (±${d.uncertaintyBand}%)</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:13px;color:#aaa;">Attempts: ${d.attempts}</div>
+                                <div style="font-size:13px;color:#00d4ff;">Recent: ${d.recentScores.slice(-3).join(', ')}</div>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+                            ${d.problems.map(p => `
+                                <div style="background:rgba(255,255,255,0.06);padding:10px;border-radius:8px;border:1px solid ${p.attempted ? 'rgba(0,212,255,0.3)' : 'rgba(255,255,255,0.1)'};">
+                                    <div style="font-weight:600;font-size:12px;margin-bottom:4px;">${p.topic}</div>
+                                    <div style="font-size:11px;color:#aaa;">${p.difficulty}</div>
+                                    <div style="font-size:13px;color:${p.attempted ? '#00d4ff' : '#666'};margin-top:6px;">
+                                        ${p.attempted ? `Score: ${p.lastScore}%` : 'Not attempted'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+        
+        function renderProviderScores(scores, providerStatus = {}) {
+            const sorted = Object.entries(scores).sort((a,b) => (a[1].rank || 999) - (b[1].rank || 999));
+            $('providerScores').innerHTML = sorted.map(([provider, data]) => {
+                const status = providerStatus[provider] || {};
+                const statusIcon = status.available ? (status.enabled ? '🟢' : '🟡') : '🔴';
+                const statusText = status.available ? (status.enabled ? 'Active' : 'Disabled') : 'Offline';
+                const modelText = status.model ? status.model.split('/').pop().split('-')[0] : '—';
+                
+                return `
+                <div class="provider-card">
+                    <div class="provider-name">${provider.toUpperCase()}</div>
+                    <div class="provider-rank">#${data.rank || '?'}</div>
+                    <div class="provider-stat">${Math.round(data.avgScore || 0)}% accuracy</div>
+                    <div class="provider-stat">$${(data.totalCost || 0).toFixed(3)}</div>
+                    <div class="provider-stat" style="font-size:8px;margin-top:2px;opacity:0.8;">
+                        ${statusIcon} ${statusText}
+                    </div>
+                    <div class="provider-stat" style="font-size:8px;margin-top:1px;opacity:0.6;">
+                        ${modelText}
+                    </div>
+                </div>
+            `}).join('');
+        }
+        
+        async function runTrainingRound() {
+            const btn = $('runRoundBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Training...';
+            
+            try {
+                const res = await fetch('/api/v1/training/round', { method: 'POST' });
+                const data = await safeJson(res);
+                if (data && data.ok) {
+                    addLog(`Round ${data.result.round} complete - trained ${data.result.trained.join(', ')}`, 'success');
+                    await refreshAll();
+                }
+            } catch (e) {
+                addLog('Training round failed: ' + e.message, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '▶️ Run Training Round';
+        }
+        
+        async function runMiniCup() {
+            const btn = $('runMiniCupBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            
+            try {
+                const res = await fetch('/api/v1/cup/mini', { method: 'POST' });
+                const data = await safeJson(res);
+                if (data && data.ok) {
+                    addLog('Mini-Cup completed successfully', 'success');
+                    await fetchProviderScores();
+                }
+            } catch (e) {
+                addLog('Mini-Cup failed: ' + e.message, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🏆 Run Mini-Cup';
+        }
+        
+        async function exportData() {
+            try {
+                const res = await fetch('/api/v1/training/overview');
+                const data = await safeJson(res);
+                if (data && data.ok) {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `tooloo-training-${new Date().toISOString().slice(0,10)}.json`;
+                    a.click();
+                    addLog('Training data exported', 'success');
+                }
+            } catch (e) {
+                addLog('Export failed: ' + e.message, 'error');
+            }
+        }
+        
+        async function viewDeepDive(topic) {
+            try {
+                const res = await fetch(`/api/v1/training/deep-dive/${topic}`);
+                const data = await safeJson(res);
+                if (data && data.ok && data.data) {
+                    renderDeepDive(data.data);
+                }
+            } catch {}
+        }
+        
+        function renderDeepDive(d) {
+            $('trainingView').innerHTML = `
+                <div style="margin-bottom:16px;">
+                    <button class="btn" onclick="fetchOverview();currentZoom='overview';">← Back to Overview</button>
+                </div>
+                <div class="panel" style="background:rgba(255,255,255,0.06);">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:20px;">
+                        <div>
+                            <div style="font-size:24px;font-weight:700;margin-bottom:8px;">${d.name}</div>
+                            <div style="font-size:14px;color:#ccc;">Mastery: ${d.mastery}% (±${d.uncertaintyBand}%) | Attempts: ${d.attempts}</div>
+                            <div style="font-size:13px;color:#aaa;margin-top:4px;">Trend: ${d.trend}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px;color:#aaa;">Last practiced: ${d.lastPracticed ? new Date(d.lastPracticed).toLocaleString() : 'Never'}</div>
+                            <div style="font-size:12px;color:#aaa;">Next review: ${d.nextReview ? new Date(d.nextReview).toLocaleString() : 'Not scheduled'}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;gap:10px;margin-bottom:20px;">
+                        ${d.problems.map(p => `
+                            <div style="background:rgba(255,255,255,0.06);padding:14px;border-radius:10px;border:1px solid ${p.score !== null && p.score >= 70 ? 'rgba(0,255,136,0.3)' : 'rgba(255,255,255,0.12)'};">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                    <div style="font-weight:700;">${p.topic} <span style="color:#aaa;font-weight:400;font-size:12px;">(${p.difficulty})</span></div>
+                                    <div style="font-size:18px;font-weight:700;color:${p.score !== null && p.score >= 70 ? '#00ff88' : p.score !== null ? '#ff9966' : '#666'};">
+                                        ${p.score !== null ? `${p.score}%` : '—'}
+                                    </div>
+                                </div>
+                                <div style="font-size:13px;color:#ccc;margin-bottom:8px;">${p.problem}</div>
+                                <div style="font-size:11px;color:#888;">Keywords: ${p.keywords.join(', ')}</div>
+                                <div style="font-size:11px;color:#888;">Attempts on this problem: ${p.attemptsOnThis}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div>
+                        <div style="font-weight:700;margin-bottom:10px;">Score History</div>
+                        <div style="display:flex;gap:4px;align-items:flex-end;height:100px;">
+                            ${d.scoreHistory.map(s => `<div style="flex:1;background:linear-gradient(180deg,#00d4ff,#0099cc);border-radius:4px 4px 0 0;height:${s}%;" title="${s}%"></div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function refreshAll() {
+            await Promise.all([
+                fetchBudget(),
+                fetchNextDomain(),
+                fetchTrainingStatus(),
+                currentZoom === 'overview' ? fetchOverview() : fetchActive(),
+                fetchProviderScores(),
+                refreshCriticalPath(),
+                fetchSystemStatus(),
+                refreshProcesses(),
+                refreshProviderPolicy()
+            ]);
+        }
+
+        async function refreshProcesses(){
+            try{
+                const r = await fetch('/api/v1/system/processes');
+                const j = await safeJson(r);
+                if(!j?.ok) return;
+                const items = (j.processes||[]).map(p=>{
+                    const color = p.healthy ? '#00ff88' : '#ff5c5c';
+                    const badge = p.healthy ? '🟢' : '🔴';
+                    return `<div class="domain-card" style="cursor:default;">
+                        <div class="domain-header">
+                            <div class="domain-name">${p.name.toUpperCase()}</div>
+                            <div class="status-badge" title="${p.healthy? 'Healthy':'Down'}">${badge}</div>
+                        </div>
+                        <div class="domain-stats">
+                            <span>Port: ${p.port}</span>
+                            <span>PID: ${p.pid || '—'}</span>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${p.healthy?100:5}%; background:${p.healthy?'linear-gradient(90deg,#00ff88,#00d4ff)':'linear-gradient(90deg,#ff5c5c,#ffa07a)'}"></div></div>
+                    </div>`;
+                }).join('');
+                $('processList').innerHTML = items || '<div style="color:#aaa;font-size:12px;">No processes reported</div>';
+            }catch{}
+        }
+
+        $('procRefreshBtn').addEventListener('click', refreshProcesses);
+
+        async function refreshProviderPolicy(){
+            try{
+                const r = await fetch('/api/v1/providers/policy');
+                const j = await safeJson(r);
+                if(j?.ok){
+                    $('policyCriticality').textContent = `criticality: ${j.policy.criticality}`;
+                    $('policyConcurrency').textContent = `maxConcurrency: ${j.policy.maxConcurrency}`;
+                }
+            }catch{}
+        }
+        $('refreshPolicyBtn').addEventListener('click', refreshProviderPolicy);
+        $('refreshProvidersBtn').addEventListener('click', fetchProviderScores);
+
+        $('chatPriorityBtn').addEventListener('click', async ()=>{
+            try{
+                const r = await fetch('/api/v1/system/priority/chat', { method:'POST' });
+                const j = await safeJson(r); if(j?.ok){ addLog('Switched to Chat Priority','success'); refreshProviderPolicy(); refreshAutoCoach(); }
+            }catch(e){ addLog('Chat Priority failed: '+e.message, 'error'); }
+        });
+        $('backgroundPriorityBtn').addEventListener('click', async ()=>{
+            try{
+                const r = await fetch('/api/v1/system/priority/background', { method:'POST' });
+                const j = await safeJson(r); if(j?.ok){ addLog('Switched to Background Priority','info'); refreshProviderPolicy(); refreshAutoCoach(); }
+            }catch(e){ addLog('Background Priority failed: '+e.message, 'error'); }
+        });
+
+        // Meta-Learning controls
+        async function refreshAutoCoach(){
+            try{
+                const res = await fetch('/api/v1/auto-coach/status');
+                const data = await safeJson(res);
+                if(data?.ok){
+                    const on = !!data.status.active;
+                    $('autoCoachBtn').textContent = `Auto‑Coach: ${on? 'On':'Off'}`;
+                }
+            }catch{}
+        }
+        $('metaStartBtn').addEventListener('click', async ()=>{
+            try{
+                const res = await fetch('/api/v4/meta-learning/start', { method:'POST' });
+                const data = await safeJson(res);
+                if(data?.ok){ addLog('Meta-Learning started','success'); fetchNextDomain(); }
+            }catch(e){ addLog('Meta-Learning start failed: '+e.message,'error'); }
+        });
+        $('metaRunAllBtn').addEventListener('click', async ()=>{
+            try{
+                const res = await fetch('/api/v4/meta-learning/run-all', { method:'POST' });
+                const data = await safeJson(res);
+                if(data?.ok){ addLog('Meta-Learning: all phases completed','success'); fetchNextDomain(); }
+            }catch(e){ addLog('Run-all failed: '+e.message,'error'); }
+        });
+        $('metaReportBtn').addEventListener('click', async ()=>{
+            try{
+                const res = await fetch('/api/v4/meta-learning/report');
+                const data = await safeJson(res);
+                if(data?.ok){ addLog('Report fetched','info'); console.log('Meta Report', data.report); }
+            }catch(e){ addLog('Report failed: '+e.message,'error'); }
+        });
+        $('metaInsightsBtn').addEventListener('click', async ()=>{
+            try{
+                const res = await fetch('/api/v4/meta-learning/insights');
+                const data = await safeJson(res);
+                if(data?.ok){ addLog('Insights fetched','info'); console.log('Meta Insights', data.insights); }
+            }catch(e){ addLog('Insights failed: '+e.message,'error'); }
+        });
+        $('autoCoachBtn').addEventListener('click', async ()=>{
+            try{
+                const get = await fetch('/api/v1/auto-coach/status');
+                const st = await safeJson(get);
+                const on = !!st?.status?.active;
+                const res = await fetch(on? '/api/v1/auto-coach/stop':'/api/v1/auto-coach/start', { method:'POST' });
+                const data = await safeJson(res);
+                if(data?.ok){ addLog(`Auto‑Coach ${on? 'stopped':'started'}`,'info'); refreshAutoCoach(); }
+            }catch(e){ addLog('Auto‑Coach toggle failed: '+e.message,'error'); }
+        });
+        
+        // Settings panel
+        $('settingsBtn').addEventListener('click', ()=>{
+            const panel = $('settingsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel.style.display === 'block') loadSettings();
+        });
+        
+        async function loadSettings(){
+            try{
+                const res = await fetch('/api/v1/auto-coach/settings');
+                const data = await safeJson(res);
+                if(data?.ok && data.settings){
+                    const s = data.settings;
+                    $('avgSlider').value = s.minAvgMastery || 75;
+                    $('avgLabel').textContent = s.minAvgMastery || 75;
+                    $('belowSlider').value = s.maxBelow80 || 3;
+                    $('belowLabel').textContent = s.maxBelow80 || 3;
+                    $('aggressiveCheck').checked = !!s.aggressiveMode;
+                }
+            }catch{}
+        }
+        
+        $('avgSlider').addEventListener('input', (e)=>{ $('avgLabel').textContent = e.target.value; });
+    $('belowSlider').addEventListener('input', (e)=>{ $('belowLabel').textContent = e.target.value; });
+    $('gapsSlider').addEventListener('input', (e)=>{ $('gapsLabel').textContent = e.target.value; });
+    $('gapDeltaSlider').addEventListener('input', (e)=>{ $('gapDeltaLabel').textContent = e.target.value; });
+    $('minBatchSlider').addEventListener('input', (e)=>{ $('minBatchLabel').textContent = e.target.value; });
+        
+        $('saveSettingsBtn').addEventListener('click', async ()=>{
+            try{
+                const settings = {
+                    minAvgMastery: Number($('avgSlider').value),
+                    maxBelow80: Number($('belowSlider').value),
+                    aggressiveMode: $('aggressiveCheck').checked
+                };
+                const res = await fetch('/api/v1/auto-coach/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(settings)
+                });
+                const data = await safeJson(res);
+                // Also push training selection settings
+                const tRes = await fetch('/api/v1/training/settings', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ selection: { targetedMode: $('targetedCheck').checked, targetThreshold: Number($('targetSlider').value), autoFillGaps: $('autoFillCheck').checked, gapsCount: Number($('gapsSlider').value), minAttemptsInBatch: Number($('minBatchSlider').value) } })
+                });
+                const ok2 = (await safeJson(tRes))?.ok;
+                if(data?.ok && ok2){ addLog('Settings saved','success'); } else { addLog('Settings partially saved','warn'); }
+            }catch(e){ addLog('Settings save failed: '+e.message,'error'); }
+        });
+
+        // Fast Lane activation
+        $('fastLaneBtn').addEventListener('click', async ()=>{
+            try{
+                const payload = { enable: true, weight: 2, microBatchesPerTick: 3, batchSize: 3, intervalMs: 800 };
+                const res = await fetch('/api/v1/auto-coach/fast-lane', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+                });
+                const data = await safeJson(res);
+                if(data?.ok){ addLog('Fast Lane engaged','success'); }
+            }catch(e){ addLog('Fast Lane failed: '+e.message,'error'); }
+        });
+
+        // Focus bottom N now: temporarily enable auto-fill gaps, run a burst, then revert
+        $('focusBottomBtn').addEventListener('click', async ()=>{
+            const btn = $('focusBottomBtn');
+            btn.disabled = true; const prevText = btn.textContent; btn.textContent = 'Focusing...';
+            try{
+                // Capture current settings
+                const getS = await fetch('/api/v1/training/settings');
+                const sData = await safeJson(getS);
+                const prev = sData?.settings || {};
+                const prevSel = prev.selection || {};
+                const gapsCount = Number($('gapsSlider').value) || prevSel.gapsCount || 2;
+                const minAttempts = Number($('minBatchSlider').value) || prevSel.minAttemptsInBatch || 2;
+                // Enable auto-fill quickly via GET convenience
+                await fetch(`/api/v1/training/settings/update?autoFillGaps=true&gapsCount=${gapsCount}&minAttemptsInBatch=${minAttempts}`);
+                // Run a short burst (e.g., 6 rounds)
+                const burst = await fetch('/api/v1/auto-coach/boost?rounds=6');
+                const bj = await safeJson(burst);
+                if(bj?.ok){ addLog(`Focused burst complete: ${bj.boosted} rounds`, 'success'); }
+                // Revert auto-fill to prior state
+                const autoOn = prevSel.autoFillGaps === true;
+                const revertUrl = `/api/v1/training/settings/update?autoFillGaps=${autoOn}&gapsCount=${prevSel.gapsCount ?? gapsCount}&minAttemptsInBatch=${prevSel.minAttemptsInBatch ?? minAttempts}`;
+                await fetch(revertUrl);
+                await refreshAll();
+            }catch(e){ addLog('Focus-bottom burst failed: '+e.message,'error'); }
+            btn.disabled = false; btn.textContent = prevText;
+        });
+        
+        // Event listeners
+        $('hyperBoostBtn').addEventListener('click', async ()=>{
+            const btn = $('hyperBoostBtn'); btn.disabled = true; btn.textContent='HYPER BOOSTING...';
+            try{
+                const r = await fetch('/api/v1/auto-coach/hyper-boost?rounds=20');
+                const j = await safeJson(r);
+                if(j?.ok){ addLog(`HYPER BOOST: ${j.hyperBoosted} rounds in ${j.totalBatches} batches`, 'success'); refreshAll(); }
+            }catch(e){ addLog('Hyper boost failed: '+e.message,'error'); }
+            btn.disabled = false; btn.textContent='🚀 HYPER x20';
+        });
+        $('boostBtn').addEventListener('click', async ()=>{
+            const btn = $('boostBtn'); btn.disabled = true; btn.textContent='Boosting...';
+            try{
+                const r = await fetch('/api/v1/auto-coach/boost?rounds=5');
+                const j = await safeJson(r);
+                if(j?.ok){ addLog(`Boosted ${j.boosted} rounds`, 'success'); refreshAll(); }
+            }catch(e){ addLog('Boost failed: '+e.message,'error'); }
+            btn.disabled = false; btn.textContent='⚡ Boost x5';
+        });
+        $('coachState').addEventListener('click', async ()=>{
+            try{
+                const stRes = await fetch('/api/v1/auto-coach/status');
+                const st = await safeJson(stRes);
+                const on = !!st?.status?.active;
+                await fetch(on? '/api/v1/auto-coach/stop':'/api/v1/auto-coach/start', { method:'POST' });
+                addLog(`Auto‑Coach ${on? 'stopped':'started'}`,'info');
+                fetchSystemStatus();
+            }catch(e){ addLog('Coach toggle failed: '+e.message,'error'); }
+        });
+        $('stopAllBtn').addEventListener('click', async ()=>{
+            const btn = $('stopAllBtn'); btn.disabled = true; btn.textContent='Stopping...';
+            try{
+                const r = await fetch('/system/stop', { method:'POST' });
+                const j = await safeJson(r);
+                if(j?.ok){ addLog('All services stopped','info'); }
+            }catch(e){ addLog('Stop failed: '+e.message,'error'); }
+            btn.disabled = false; btn.textContent='⛔ Stop All';
+            setTimeout(refreshAll, 800);
+        });
+        $('startSystemBtn').addEventListener('click', async ()=>{
+            const btn = $('startSystemBtn');
+            btn.disabled = true; btn.textContent = 'Starting...';
+            try{
+                const res = await fetch('/system/start', { 
+                    method:'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ autoOpen: false }) // We're already in the Control Room
+                });
+                const data = await safeJson(res);
+                if(data?.ok){ addLog('System started', 'success'); }
+            }catch(e){ addLog('Start failed: '+e.message,'error'); }
+            btn.disabled = false; btn.textContent = '🚀 Start System';
+            setTimeout(refreshAll, 1200);
+        });
+        $('runRoundBtn').addEventListener('click', runTrainingRound);
+        $('runMiniCupBtn').addEventListener('click', runMiniCup);
+        $('exportDataBtn').addEventListener('click', exportData);
+
+        // Rush Mode toggle
+        $('rushModeBtn').addEventListener('click', async ()=>{
+            try{
+                const payload = { enable:true, weight:2, microBatchesPerTick:4, batchSize:3, intervalMs:700 };
+                const res = await fetch('/api/v1/auto-coach/fast-lane', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                const j = await safeJson(res);
+                if(j?.ok){ addLog('Rush Mode engaged','success'); refreshCriticalPath(); }
+            }catch(e){ addLog('Rush Mode failed: '+e.message,'error'); }
+        });
+
+        // Provider-aware burst with TTL caching and quota management
+        $('providerBurstBtn').addEventListener('click', async ()=>{
+            try{
+                // Query live provider status and execute quota-aware burst with TTL caching
+                await fetch('/api/v1/providers/status').catch(()=>{});
+                const r = await fetch('/api/v1/providers/burst', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: 'train:focused-burst', ttlSeconds: 3600, criticality: 'high' }) });
+                const j = await safeJson(r);
+                if(j?.ok){ addLog(`Provider-aware burst ${j.cached? 'cache-hit':'ran'} (concurrency ${j.concurrency||1}, cost: $${(j.cost || 0).toFixed(4)})`,'success'); refreshAll(); }
+            }catch(e){ addLog('Provider-aware burst failed: '+e.message,'error'); }
+        });
+
+        // Multi‑Instance Pilot controls (prototype)
+        $('miStartBtn').addEventListener('click', async ()=>{
+            try{
+                const res = await fetch('/api/v1/system/multi-instance/start', { method:'POST' });
+                const j = await safeJson(res);
+                if(j?.ok){ $('miStatus').textContent = 'Running'; addLog('Multi‑Instance pilot started','success'); }
+            }catch(e){ addLog('Multi‑Instance start failed: '+e.message,'error'); }
+        });
+        $('miStopBtn').addEventListener('click', async ()=>{
+            try{
+                const res = await fetch('/api/v1/system/multi-instance/stop', { method:'POST' });
+                const j = await safeJson(res);
+                if(j?.ok){ $('miStatus').textContent = 'Idle'; addLog('Multi‑Instance pilot stopped','info'); }
+            }catch(e){ addLog('Multi‑Instance stop failed: '+e.message,'error'); }
+        });
+        
+        $('zoomOverview').addEventListener('click', () => {
+            currentZoom = 'overview';
+            $('zoomOverview').classList.add('active');
+            $('zoomActive').classList.remove('active');
+            fetchOverview();
+        });
+        
+        $('zoomActive').addEventListener('click', () => {
+            currentZoom = 'active';
+            $('zoomActive').classList.add('active');
+            $('zoomOverview').classList.remove('active');
+            fetchActive();
+        });
+
+        // Artifacts Panel
+        let currentArtifactId = null;
+        
+        async function refreshArtifacts() {
+            try {
+                const res = await fetch('/api/v1/artifacts?limit=10');
+                const j = await safeJson(res);
+                if (j?.ok) {
+                    renderArtifactsList(j.artifacts);
+                }
+            } catch (e) {
+                addLog('Failed to load artifacts: ' + e.message, 'error');
+            }
+        }
+        
+        function renderArtifactsList(artifacts) {
+            const list = $('artifactsList');
+            if (!artifacts || artifacts.length === 0) {
+                list.innerHTML = '<div style="font-size:10px;color:#666;padding:8px;">No artifacts generated yet</div>';
+                return;
+            }
+            
+            list.innerHTML = artifacts.map(a => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-radius:4px;background:rgba(0,0,0,0.2);margin-bottom:4px;font-size:10px;cursor:pointer;" onclick="viewArtifact('${a.id}')">
+                    <div>
+                        <div style="color:#00d4ff;font-weight:600;">${a.type}</div>
+                        <div style="color:#aaa;">${a.quality} • ${new Date(a.createdAt).toLocaleDateString()}</div>
+                    </div>
+                    <button onclick="event.stopPropagation();downloadArtifact('${a.id}')" style="background:none;border:none;color:#666;cursor:pointer;font-size:10px;">⬇️</button>
+                </div>
+            `).join('');
+        }
+        
+        async function viewArtifact(id) {
+            try {
+                const res = await fetch(`/api/v1/artifacts/${id}`);
+                const j = await safeJson(res);
+                if (j?.ok) {
+                    currentArtifactId = id;
+                    $('previewTitle').textContent = `${j.artifact.type} (${j.artifact.quality})`;
+                    $('previewContent').textContent = j.artifact.content;
+                    $('artifactPreview').style.display = 'block';
+                }
+            } catch (e) {
+                addLog('Failed to view artifact: ' + e.message, 'error');
+            }
+        }
+        
+        async function downloadArtifact(id) {
+            try {
+                window.open(`/api/v1/artifacts/${id}/download`, '_blank');
+            } catch (e) {
+                addLog('Failed to download artifact: ' + e.message, 'error');
+            }
+        }
+        
+        async function generateArtifact() {
+            const type = $('artifactType').value;
+            const quality = $('artifactQuality').value;
+            const productName = $('artifactProductName').value.trim();
+            const description = $('artifactDescription').value.trim();
+            
+            if (!productName) {
+                addLog('Product name is required for artifact generation', 'error');
+                return;
+            }
+            
+            try {
+                $('generateArtifactBtn').disabled = true;
+                $('generateArtifactBtn').textContent = 'Generating...';
+                
+                const requirements = { productName };
+                if (description) requirements.description = description;
+                
+                const res = await fetch('/api/v1/artifacts/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, quality, requirements })
+                });
+                
+                const j = await safeJson(res);
+                if (j?.ok) {
+                    addLog(`Generated ${type} artifact (${j.artifact.quality})`, 'success');
+                    await refreshArtifacts();
+                    if (j.artifact.id) {
+                        await viewArtifact(j.artifact.id);
+                    }
+                } else {
+                    addLog('Artifact generation failed: ' + (j?.error || 'Unknown error'), 'error');
+                }
+            } catch (e) {
+                addLog('Artifact generation failed: ' + e.message, 'error');
+            } finally {
+                $('generateArtifactBtn').disabled = false;
+                $('generateArtifactBtn').textContent = '✨ Generate';
+            }
+        }
+        
+        $('refreshArtifactsBtn').addEventListener('click', refreshArtifacts);
+        $('generateArtifactBtn').addEventListener('click', generateArtifact);
+        $('closePreviewBtn').addEventListener('click', () => {
+            $('artifactPreview').style.display = 'none';
+            currentArtifactId = null;
+        });
+        $('downloadArtifactBtn').addEventListener('click', () => {
+            if (currentArtifactId) downloadArtifact(currentArtifactId);
+        });
+
+        // Artifact History Timeline
+        async function refreshHistory() {
+            try {
+                const days = $('historyDays').value || 30;
+                const res = await fetch(`/api/v1/artifacts/history/timeline?days=${days}`);
+                const j = await safeJson(res);
+                if (j?.ok) {
+                    renderHistory(j);
+                }
+            } catch (e) {
+                addLog('Failed to load history: ' + e.message, 'error');
+            }
+        }
+        
+        function renderHistory(data) {
+            $('historyTotal').textContent = data.total || 0;
+            $('historyPeriod').textContent = data.period || '';
+            
+            // Render type distribution chart
+            const typeChart = $('historyByType');
+            const maxCount = Math.max(...Object.values(data.byType || {}));
+            typeChart.innerHTML = Object.entries(data.byType || {}).map(([type, count]) => `
+                <div class="chart-bar">
+                    <div class="chart-label">${type}</div>
+                    <div class="chart-track">
+                        <div class="chart-fill" style="width:${(count / maxCount * 100)}%">${count}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Render timeline
+            const timeline = $('historyTimeline');
+            timeline.innerHTML = (data.timeline || []).map(day => `
+                <div class="timeline-day">
+                    <div class="timeline-date">${new Date(day.date).toLocaleDateString()} (${day.count})</div>
+                    <div class="timeline-items">
+                        ${day.artifacts.map(a => `
+                            <div class="timeline-item" onclick="viewArtifact('${a.id}')">
+                                ${a.type} <span style="color:#00d4ff;">•</span> ${a.quality}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        $('refreshHistoryBtn').addEventListener('click', refreshHistory);
+        $('historyDays').addEventListener('change', refreshHistory);
+
+        // AI Critique Analysis
+        async function refreshCritique() {
+            try {
+                const res = await fetch('/api/v1/reports/critiques/analysis');
+                const j = await safeJson(res);
+                if (j?.ok) {
+                    renderCritiqueAnalysis(j.analysis);
+                }
+            } catch (e) {
+                addLog('Failed to load critique analysis: ' + e.message, 'error');
+            }
+        }
+        
+        function renderCritiqueAnalysis(analysis) {
+            const summary = analysis.summary || {};
+            $('critiqueGaps').textContent = summary.totalGaps || 0;
+            $('critiqueSessions').textContent = summary.totalCritiques || 0;
+            $('critiqueActions').textContent = summary.totalActions || 0;
+            
+            const actions = analysis.actionsByPriority || {};
+            $('critiqueHigh').textContent = actions.high?.length || 0;
+            $('critiqueMed').textContent = actions.medium?.length || 0;
+            $('critiqueLow').textContent = actions.low?.length || 0;
+            
+            // Render gaps chart
+            const gapChart = $('critiqueGapChart');
+            const maxSeverity = Math.max(...(analysis.gapsByArea || []).map(g => g.avgSeverity), 5);
+            gapChart.innerHTML = (analysis.gapsByArea || []).slice(0, 5).map(gap => `
+                <div class="chart-bar">
+                    <div class="chart-label">${gap.area} (${gap.count})</div>
+                    <div class="chart-track">
+                        <div class="chart-fill" style="width:${(gap.avgSeverity / maxSeverity * 100)}%">
+                            ${gap.avgSeverity.toFixed(1)}
+                        </div>
+                    </div>
+                    <span class="severity-badge ${gap.avgSeverity >= 4 ? 'severity-high' : gap.avgSeverity >= 3 ? 'severity-medium' : 'severity-low'}">
+                        ${gap.avgSeverity >= 4 ? 'High' : gap.avgSeverity >= 3 ? 'Med' : 'Low'}
+                    </span>
+                </div>
+            `).join('');
+            
+            // Render provider chart
+            const providerChart = $('critiqueProviderChart');
+            const maxUsage = Math.max(...Object.values(analysis.providerStats || {}));
+            providerChart.innerHTML = Object.entries(analysis.providerStats || {}).map(([provider, count]) => `
+                <div class="chart-bar">
+                    <div class="chart-label">${provider}</div>
+                    <div class="chart-track">
+                        <div class="chart-fill" style="width:${(count / maxUsage * 100)}%">${count}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        $('refreshCritiqueBtn').addEventListener('click', refreshCritique);
+        
+        // Initial load
+    refreshAll();
+    refreshAutoCoach();
+        refreshArtifacts();
+        refreshHistory();
+        refreshCritique();
+        addLog('Control Room initialized', 'info');
+        
+        // Auto-refresh every 10 seconds
+        setInterval(() => {
+            refreshAll();
+            refreshArtifacts();
+            refreshHistory();
+            refreshCritique();
+            fetchProviderScores();
+        }, 10000);
+    </script>
+</body>
+</html>

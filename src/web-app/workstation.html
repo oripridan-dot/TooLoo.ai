@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo.ai • Workstation Pro</title>
+  <link rel="stylesheet" href="css/gemini-ui.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Mermaid for Concept Maps -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="g3-workstation-layout">
+    
+    <!-- Panel 1: Task Board (Top Left) -->
+    <div class="ws-panel ws-area-tasks">
+      <div class="ws-panel-header">
+        <div class="ws-panel-title"><span>📋</span> Task Board</div>
+        <button class="g3-btn" style="padding: 4px 8px; font-size: 0.75rem;">+ New</button>
+      </div>
+      <div class="ws-panel-content" id="task-board-container">
+        <!-- Dynamic Tasks -->
+        <div class="task-item" draggable="true">
+          <div style="font-weight: 500; margin-bottom: 0.25rem;">Implement Workstation UI</div>
+          <div style="font-size: 0.75rem; color: var(--g3-text-tertiary);">Phase 1 • In Progress</div>
+          <span class="task-tag">Frontend</span>
+        </div>
+        <div class="task-item" draggable="true">
+          <div style="font-weight: 500; margin-bottom: 0.25rem;">Repo Auto-Org Service</div>
+          <div style="font-size: 0.75rem; color: var(--g3-text-tertiary);">Phase 2 • Pending</div>
+          <span class="task-tag">Backend</span>
+        </div>
+        <div class="task-item" draggable="true">
+          <div style="font-weight: 500; margin-bottom: 0.25rem;">Plugin System</div>
+          <div style="font-size: 0.75rem; color: var(--g3-text-tertiary);">Phase 3 • Planned</div>
+          <span class="task-tag">Architecture</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Context (Bottom Left) -->
+    <div class="ws-panel ws-area-context">
+      <div class="ws-panel-header">
+        <div class="ws-panel-title"><span>🧠</span> Context</div>
+        <div style="font-size: 0.7rem; color: var(--g3-success);">● Live</div>
+      </div>
+      <div class="ws-panel-content" id="context-container">
+        <div class="context-node">
+          <div class="context-icon">📂</div>
+          <div>/workspaces/TooLoo.ai</div>
+        </div>
+        <div class="context-node">
+          <div class="context-icon">📄</div>
+          <div>web-app/workstation.html</div>
+        </div>
+        <div class="context-node">
+          <div class="context-icon">🎨</div>
+          <div>css/gemini-ui.css</div>
+        </div>
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--g3-border-color);">
+          <div class="insight-item">
+            <div class="insight-label">Active Branch</div>
+            <div class="insight-value">feature/TooLoo-Gemini-3-Pro</div>
+          </div>
+          <div class="insight-item">
+            <div class="insight-label">Memory Usage</div>
+            <div class="insight-value">142 MB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Chat (Center) -->
+    <div class="ws-panel ws-area-chat">
+      <div class="ws-panel-header">
+        <div class="ws-panel-title"><span>💬</span> Chat Pro</div>
+        <div class="g3-flex g3-gap-2">
+          <button class="g3-btn" style="padding: 4px 8px; font-size: 0.75rem;">Clear</button>
+          <button class="g3-btn g3-btn-primary" style="padding: 4px 8px; font-size: 0.75rem;">Export</button>
+        </div>
+      </div>
+      <div class="ws-panel-content" style="display: flex; flex-direction: column; padding: 0;">
+        <div class="chat-messages" id="chat-messages">
+          <div class="message-group assistant">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+              <div class="message-header">TooLoo.ai • Just now</div>
+              <div class="message-body">
+                Welcome to the new <strong>Workstation Pro</strong> interface. I'm ready to assist you with your tasks.
+                <div class="message-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; opacity: 0.7;">
+                  <button class="g3-btn" style="padding: 2px 6px; font-size: 0.7rem;" onclick="alert('Thread view coming soon')">↩ Reply</button>
+                  <button class="g3-btn" style="padding: 2px 6px; font-size: 0.7rem;" onclick="this.textContent = this.textContent === '👍' ? '👍 1' : '👍'">👍</button>
+                  <button class="g3-btn" style="padding: 2px 6px; font-size: 0.7rem;">❤️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area" style="background: transparent; border-top: 1px solid var(--g3-border-color);">
+          <div class="g3-flex g3-items-center g3-gap-2" style="margin-bottom: 0.5rem;">
+            <select class="g3-input" style="width: auto; padding: 2px 8px; font-size: 0.75rem;">
+              <option value="markdown">Markdown</option>
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+              <option value="html">HTML</option>
+            </select>
+            <div style="font-size: 0.75rem; color: var(--g3-text-tertiary);">Response Format</div>
+          </div>
+          <div class="input-wrapper">
+            <textarea class="g3-input" placeholder="Type your message..." rows="1" style="resize: none;"></textarea>
+            <button class="g3-btn g3-btn-primary" style="height: 38px; width: 38px; padding: 0;">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 4: Artifacts (Right) -->
+    <div class="ws-panel ws-area-artifacts">
+      <div class="ws-panel-header">
+        <div class="ws-panel-title"><span>📦</span> Artifacts</div>
+        <div class="g3-flex g3-gap-2">
+          <button class="g3-btn" style="padding: 4px 8px; font-size: 0.75rem;">Grid</button>
+          <button class="g3-btn" style="padding: 4px 8px; font-size: 0.75rem;">List</button>
+        </div>
+      </div>
+      <div class="ws-panel-content" id="artifacts-container">
+        <!-- Flashcards Container -->
+        <div id="flashcards-container" style="display: none; margin-bottom: 1rem;">
+          <div class="g3-card" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 0.875rem; color: var(--g3-text-tertiary); margin-bottom: 0.5rem;">FLASHCARD</div>
+            <div style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">What is the 4-Panel Layout?</div>
+            <button class="g3-btn">Flip Card</button>
+          </div>
+        </div>
+
+        <!-- Concept Map Container -->
+        <div id="concept-map-container" style="display: none; height: 300px; border: 1px solid var(--g3-border-color); border-radius: var(--g3-radius-sm); margin-bottom: 1rem;">
+          <div class="mermaid">
+            graph TD
+            A[Workstation] --> B[Task Board]
+            A --> C[Chat]
+            A --> D[Context]
+            A --> E[Artifacts]
+          </div>
+        </div>
+
+        <div class="g3-card">
+          <div class="card-header">Recent Files</div>
+          <div class="g3-flex g3-items-center g3-justify-between" style="margin-bottom: 0.5rem;">
+            <span style="font-size: 0.875rem;">gemini-ui.css</span>
+            <span style="font-size: 0.75rem; color: var(--g3-text-tertiary);">CSS</span>
+          </div>
+          <div class="g3-flex g3-items-center g3-justify-between">
+            <span style="font-size: 0.875rem;">workstation.html</span>
+            <span style="font-size: 0.75rem; color: var(--g3-text-tertiary);">HTML</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+    // Simple Tab Switching for Artifacts (Demo)
+    function showArtifact(type) {
+      document.getElementById('flashcards-container').style.display = type === 'flashcards' ? 'block' : 'none';
+      document.getElementById('concept-map-container').style.display = type === 'map' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

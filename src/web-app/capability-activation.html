@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TooLoo.ai – Capability Activation Center</title>
+  <style>
+    :root { --bg:#0B0D10; --surface:#14181E; --muted:#96A0AF; --text:#E6E9EE; --brand:#7C5CFF; --ok:#1fbf74; --warn:#ffbd2e; --bad:#ff5c7c; --accent:#00E9B0; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); overflow-x: hidden; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #1e242c; background:linear-gradient(180deg,#0e1117, #0b0d10 60%); position:sticky; top:0; z-index:10; }
+    header h1 { font-size:18px; margin:0; letter-spacing:0.2px; }
+    header .stats { display:flex; gap:12px; align-items:center; }
+    main { padding:20px; max-width:1200px; margin:0 auto; }
+    
+    .hero { text-align:center; padding:40px 20px; background:linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%); border-radius:16px; margin-bottom:30px; position:relative; overflow:hidden; }
+    .hero::before { content:'🎁'; position:absolute; top:-20px; right:-20px; font-size:120px; opacity:0.1; animation:float 6s ease-in-out infinite; }
+    .hero h2 { font-size:32px; margin:0 0 12px 0; background:linear-gradient(135deg, var(--brand), var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero .desc { font-size:16px; color:var(--muted); margin-bottom:20px; }
+    .hero .total { font-size:48px; font-weight:700; color:var(--accent); margin:20px 0; }
+    
+    @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    
+    .components { display:grid; gap:20px; margin-bottom:30px; }
+    .component { background:var(--surface); border:1px solid #202733; border-radius:12px; padding:20px; position:relative; overflow:hidden; animation:slideIn 0.6s ease-out forwards; }
+    .component.high-priority { border-left:4px solid var(--ok); }
+    .component.medium-priority { border-left:4px solid var(--warn); }
+    .component.low-priority { border-left:4px solid var(--muted); }
+    
+    .component-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+    .component-title { display:flex; align-items:center; gap:8px; }
+    .component-title .icon { font-size:24px; }
+    .component-title h3 { margin:0; font-size:18px; font-weight:600; }
+    .component-meta { text-align:right; }
+    .method-count { font-size:24px; font-weight:700; color:var(--accent); }
+    .priority { font-size:11px; text-transform:uppercase; padding:3px 8px; border-radius:12px; font-weight:500; }
+    .priority.high { background:#1a3d1a; color:var(--ok); }
+    .priority.medium { background:#3d2a1a; color:var(--warn); }
+    .priority.low { background:#2a3441; color:var(--muted); }
+    
+    .component-desc { color:#c4ccd6; font-size:14px; line-height:1.5; margin-bottom:16px; }
+    .component-methods { font-size:12px; color:var(--muted); margin-bottom:16px; font-family:monospace; }
+    .component-risk { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .risk-level { font-size:11px; padding:3px 8px; border-radius:8px; font-weight:500; }
+    .risk-low { background:#1a3d1a; color:var(--ok); }
+    .risk-medium { background:#3d2a1a; color:var(--warn); }
+    .impact { font-size:12px; color:var(--accent); }
+    
+    .activation-controls { display:flex; gap:12px; align-items:center; }
+    .btn { padding:8px 16px; border:none; border-radius:6px; font-weight:500; cursor:pointer; transition:all 0.2s; font-size:14px; }
+    .btn-primary { background:var(--brand); color:white; }
+    .btn-primary:hover { background:#6a4eff; }
+    .btn-success { background:var(--ok); color:white; }
+    .btn-secondary { background:#2a3441; color:var(--text); }
+    .btn:disabled { background:#1a2230; color:var(--muted); cursor:not-allowed; }
+    
+    .progress { width:100%; height:6px; background:#1a2230; border-radius:4px; overflow:hidden; margin:8px 0; }
+    .progress-bar { height:100%; background:linear-gradient(90deg, var(--brand), var(--accent)); transition:width 0.3s ease; width:0%; }
+    
+    .activation-status { background:#0f1419; border:1px solid #1b2230; border-radius:8px; padding:12px; margin-top:12px; display:none; }
+    .activation-status.show { display:block; animation:slideIn 0.3s ease-out; }
+    .status-item { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:12px; }
+    .status-success { color:var(--ok); }
+    .status-error { color:var(--bad); }
+  .component-charts { display:flex; gap:12px; align-items:center; margin-top:8px; }
+  .spark-label { font-size:11px; color:#9aa6b2; margin-bottom:2px; }
+    
+    .global-stats { background:var(--surface); border:1px solid #202733; border-radius:12px; padding:20px; margin-bottom:20px; }
+    .stats-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; }
+    .stat { text-align:center; }
+    .stat-value { font-size:24px; font-weight:700; color:var(--accent); }
+    .stat-label { font-size:12px; color:var(--muted); }
+  .controls-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .select { background:#0e1420; color:var(--text); border:1px solid #273041; border-radius:6px; padding:6px 10px; font-size:13px; }
+  .legend { color:#9aa6b2; font-size:11px; }
+  .toast { margin-top:8px; font-size:12px; color:#9aa6b2; }
+  .summary { margin-top:6px; font-size:12px; color:#c4ccd6; }
+  .summary .close { margin-left:8px; cursor:pointer; color:#9aa6b2; }
+  .component.highlight { box-shadow: 0 0 0 2px #7C5CFF55 inset; }
+    
+    .demo-actions { display:flex; gap:12px; justify-content:center; margin-top:20px; }
+    .demo-btn { padding:12px 24px; font-size:16px; border-radius:8px; animation:pulse 2s infinite; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎁 Capability Activation Center</h1>
+    <div class="stats">
+      <span id="activated-count">0</span><span style="color:var(--muted);"> / <span id="discovered-count">0</span> activated</span>
+      <div id="activation-status" style="color:var(--ok); margin-left:12px;">Ready</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h2>Unbox Your Intelligence Capabilities</h2>
+  <div class="desc">Undocumented methods discovered across 6 engine components</div>
+      <div class="total" id="hero-total-methods">—</div>
+      <div style="color:var(--muted); font-size:14px;">Ready for activation • Performance impact estimated at 35%+ gain</div>
+    </div>
+
+    <!-- Compact Capabilities Overview -->
+    <div class="global-stats" id="live-caps">
+      <h3 style="margin-top:0;">Live Capabilities Overview</h3>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-value" id="live-total">—</div><div class="stat-label">Total Activated</div></div>
+        <div class="stat"><div class="stat-value" id="live-progress">—</div><div class="stat-label">Progress</div></div>
+        <div class="stat"><div class="stat-value" id="live-perf">—</div><div class="stat-label">Est. Performance Gain</div></div>
+        <div class="stat"><div class="stat-value" id="live-success">—</div><div class="stat-label">Recent Success Rate</div></div>
+      </div>
+      <div class="progress" style="margin-top:16px;"><div class="progress-bar" id="live-bar"></div></div>
+      <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap;" id="live-components"></div>
+      <div class="controls-row">
+        <div style="color:#9aa6b2; font-size:12px;">Timeline (<span id="timeline-window-label">last 50</span>): <span id="live-timeline">—</span></div>
+        <label class="legend">Window:
+          <select id="windowSelect" class="select">
+            <option value="50" selected>Last 50</option>
+            <option value="100">Last 100</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+        <span id="recentSuccess" class="legend">Recent success: —</span>
+        <label class="legend">Component:
+          <select id="componentFilter" class="select">
+            <option value="all" selected>All</option>
+          </select>
+        </label>
+        <button id="btnAutoSprint" class="btn btn-primary" style="margin-left:auto;" title="Temporarily boost auto loop for a few fast cycles">Run Auto Sprint</button>
+        <button id="btnSprint" class="btn btn-secondary" title="One-time aggressive activation across remaining">One-time Sprint</button>
+        <span id="completeHint" class="legend" style="display:none;">✓ All capabilities active</span>
+      </div>
+  <div id="sprintSummary" class="summary"></div>
+      <div id="toast" class="toast"></div>
+      <div class="row" style="margin-top:10px; gap:16px; align-items:center;">
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Progress (sparkline) <span class="legend">0% → 100%</span></div>
+          <svg id="spark-progress" width="220" height="30"></svg>
+        </div>
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Success Rate (sparkline) <span class="legend">0% → 100%</span></div>
+          <svg id="spark-success" width="220" height="30"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="global-stats">
+      <h3 style="margin-top:0;">Activation Progress</h3>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value" id="total-discovered">242</div>
+          <div class="stat-label">Discovered</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="total-activated">0</div>
+          <div class="stat-label">Activated</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="success-rate">0%</div>
+          <div class="stat-label">Success Rate</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="performance-gain">0%</div>
+          <div class="stat-label">Performance Gain</div>
+        </div>
+      </div>
+      <div class="progress" style="margin-top:16px;">
+        <div class="progress-bar" id="global-progress"></div>
+      </div>
+    </div>
+
+    <div class="components">
+      <!-- High Priority Components -->
+      <div class="component high-priority" data-component="autonomousEvolutionEngine">
+        <div class="component-header">
+          <div class="component-title">
+            <span class="icon">🤖</span>
+            <h3>Autonomous Evolution Engine</h3>
+          </div>
+          <div class="component-meta">
+            <div class="method-count">50</div>
+            <div class="priority high">High Priority</div>
+          </div>
+        </div>
+        <div class="component-desc">Self-optimization and evolutionary leap capabilities. Enables automatic performance improvements, self-debugging, and capability gap identification.</div>
+        <div class="component-methods">performEvolutionCycle • generateOptimizations • measurePerformanceGains • identifyCapabilityGaps • analyzeNextEvolutionaryLeap</div>
+        <div class="component-risk">
+          <div class="risk-level risk-medium">Medium Risk</div>
+          <div class="impact">High Impact: Autonomous performance optimization</div>
+        </div>
+        <div class="activation-controls">
+          <button class="btn btn-primary" onclick="activateComponent('autonomousEvolutionEngine', 5)">Activate Batch (5)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('autonomousEvolutionEngine', 25)">Cautious (25)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('autonomousEvolutionEngine', 50)">Full (50)</button>
+        </div>
+        <div class="progress"><div class="progress-bar" data-component="autonomousEvolutionEngine"></div></div>
+        <div class="activation-status" data-component="autonomousEvolutionEngine"></div>
+        <div class="component-charts">
+          <div>
+            <div class="spark-label">Progress</div>
+            <svg id="spark-autonomousEvolutionEngine" width="180" height="28"></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="component high-priority" data-component="enhancedLearning">
+        <div class="component-header">
+          <div class="component-title">
+            <span class="icon">📚</span>
+            <h3>Enhanced Learning</h3>
+          </div>
+          <div class="component-meta">
+            <div class="method-count">35</div>
+            <div class="priority high">High Priority</div>
+          </div>
+        </div>
+        <div class="component-desc">Advanced learning patterns and session optimization. Improves learning velocity, pattern discovery, and cross-session memory.</div>
+        <div class="component-methods">predictSessionDuration • recommendApproach • discoverPattern • calculateLearningVelocity • analyzeAdaptationPatterns</div>
+        <div class="component-risk">
+          <div class="risk-level risk-low">Low Risk</div>
+          <div class="impact">High Impact: Enhanced learning velocity</div>
+        </div>
+        <div class="activation-controls">
+          <button class="btn btn-primary" onclick="activateComponent('enhancedLearning', 10)">Activate Batch (10)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('enhancedLearning', 35)">Full (35)</button>
+        </div>
+        <div class="progress"><div class="progress-bar" data-component="enhancedLearning"></div></div>
+        <div class="activation-status" data-component="enhancedLearning"></div>
+        <div class="component-charts">
+          <div>
+            <div class="spark-label">Progress</div>
+            <svg id="spark-enhancedLearning" width="180" height="28"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medium Priority Components -->
+      <div class="component medium-priority" data-component="predictiveEngine">
+        <div class="component-header">
+          <div class="component-title">
+            <span class="icon">🔮</span>
+            <h3>Predictive Engine</h3>
+          </div>
+          <div class="component-meta">
+            <div class="method-count">30</div>
+            <div class="priority medium">Medium Priority</div>
+          </div>
+        </div>
+        <div class="component-desc">Intent prediction and resource preloading. Enables proactive intelligence and context preparation.</div>
+        <div class="component-methods">predictNextUserIntent • analyzeConversationContext • preloadResources • generatePredictionReasoning</div>
+        <div class="component-risk">
+          <div class="risk-level risk-low">Low Risk</div>
+          <div class="impact">Medium Impact: Proactive intelligence</div>
+        </div>
+        <div class="activation-controls">
+          <button class="btn btn-primary" onclick="activateComponent('predictiveEngine', 10)">Activate Batch (10)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('predictiveEngine', 30)">Full (30)</button>
+        </div>
+        <div class="progress"><div class="progress-bar" data-component="predictiveEngine"></div></div>
+        <div class="activation-status" data-component="predictiveEngine"></div>
+        <div class="component-charts">
+          <div>
+            <div class="spark-label">Progress</div>
+            <svg id="spark-predictiveEngine" width="180" height="28"></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="component medium-priority" data-component="userModelEngine">
+        <div class="component-header">
+          <div class="component-title">
+            <span class="icon">👤</span>
+            <h3>User Model Engine</h3>
+          </div>
+          <div class="component-meta">
+            <div class="method-count">29</div>
+            <div class="priority medium">Medium Priority</div>
+          </div>
+        </div>
+        <div class="component-desc">Personalization and adaptive complexity. Enhances user experience through behavioral analysis.</div>
+        <div class="component-methods">analyzeUserBehavior • getAdaptiveComplexity • getPersonalizedRecommendations • analyzeCommunicationStyle</div>
+        <div class="component-risk">
+          <div class="risk-level risk-low">Low Risk</div>
+          <div class="impact">Medium Impact: User experience enhancement</div>
+        </div>
+        <div class="activation-controls">
+          <button class="btn btn-primary" onclick="activateComponent('userModelEngine', 10)">Activate Batch (10)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('userModelEngine', 29)">Full (29)</button>
+        </div>
+        <div class="progress"><div class="progress-bar" data-component="userModelEngine"></div></div>
+        <div class="activation-status" data-component="userModelEngine"></div>
+        <div class="component-charts">
+          <div>
+            <div class="spark-label">Progress</div>
+            <svg id="spark-userModelEngine" width="180" height="28"></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="component medium-priority" data-component="proactiveIntelligenceEngine">
+        <div class="component-header">
+          <div class="component-title">
+            <span class="icon">⚡</span>
+            <h3>Proactive Intelligence</h3>
+          </div>
+          <div class="component-meta">
+            <div class="method-count">25</div>
+            <div class="priority medium">Medium Priority</div>
+          </div>
+        </div>
+        <div class="component-desc">Workflow prediction and opportunity detection. Provides intelligent assistance and learning moment recognition.</div>
+        <div class="component-methods">predictOpportunityMoments • analyzeLearningPattern • generateProactiveSuggestions • predictTimeEstimation</div>
+        <div class="component-risk">
+          <div class="risk-level risk-low">Low Risk</div>
+          <div class="impact">Medium Impact: Intelligent assistance</div>
+        </div>
+        <div class="activation-controls">
+          <button class="btn btn-primary" onclick="activateComponent('proactiveIntelligenceEngine', 10)">Activate Batch (10)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('proactiveIntelligenceEngine', 25)">Full (25)</button>
+        </div>
+        <div class="progress"><div class="progress-bar" data-component="proactiveIntelligenceEngine"></div></div>
+        <div class="activation-status" data-component="proactiveIntelligenceEngine"></div>
+        <div class="component-charts">
+          <div>
+            <div class="spark-label">Progress</div>
+            <svg id="spark-proactiveIntelligenceEngine" width="180" height="28"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Low Priority Component -->
+      <div class="component low-priority" data-component="contextBridgeEngine">
+        <div class="component-header">
+          <div class="component-title">
+            <span class="icon">🌉</span>
+            <h3>Context Bridge Engine</h3>
+          </div>
+          <div class="component-meta">
+            <div class="method-count">23</div>
+            <div class="priority low">Low Priority</div>
+          </div>
+        </div>
+        <div class="component-desc">Context networks and conversation bridging. Improves context understanding and conversation flow.</div>
+        <div class="component-methods">buildContextNetwork • createTopicBridges • getRelevantContext • extractSemanticTags</div>
+        <div class="component-risk">
+          <div class="risk-level risk-low">Low Risk</div>
+          <div class="impact">Low Impact: Context understanding</div>
+        </div>
+        <div class="activation-controls">
+          <button class="btn btn-primary" onclick="activateComponent('contextBridgeEngine', 10)">Activate Batch (10)</button>
+          <button class="btn btn-secondary" onclick="activateComponent('contextBridgeEngine', 23)">Full (23)</button>
+        </div>
+        <div class="progress"><div class="progress-bar" data-component="contextBridgeEngine"></div></div>
+        <div class="activation-status" data-component="contextBridgeEngine"></div>
+        <div class="component-charts">
+          <div>
+            <div class="spark-label">Progress</div>
+            <svg id="spark-contextBridgeEngine" width="180" height="28"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-actions">
+      <button class="btn btn-success demo-btn" onclick="activateDemo()">🎁 Activate Demo Sample (12 methods)</button>
+      <button class="btn btn-primary demo-btn" onclick="activateHighPriority()">⚡ Activate High Priority (85 methods)</button>
+    </div>
+  </main>
+
+  <script>
+  let totalActivated = 0;
+  let activationHistory = [];
+  let windowSize = 50; // default for timeline and sparklines scope
+  let filterComponent = 'all';
+    
+    function updateGlobalStats() {
+      document.getElementById('total-activated').textContent = totalActivated;
+      document.getElementById('activated-count').textContent = totalActivated;
+      
+      const progressPercent = Math.round((totalActivated / 242) * 100);
+      document.getElementById('global-progress').style.width = progressPercent + '%';
+      document.getElementById('performance-gain').textContent = Math.round(progressPercent * 0.35) + '%';
+      
+      const successRate = activationHistory.length > 0 ? 
+        Math.round((activationHistory.filter(a => a.success).length / activationHistory.length) * 100) : 0;
+      document.getElementById('success-rate').textContent = successRate + '%';
+    }
+    
+    function simulateActivation(component, methodCount) {
+      return new Promise((resolve) => {
+        let activated = 0;
+        const interval = setInterval(() => {
+          if (activated >= methodCount) {
+            clearInterval(interval);
+            resolve();
+            return;
+          }
+          
+          const success = Math.random() > 0.05; // 95% success rate
+          if (success) {
+            activated++;
+            totalActivated++;
+            activationHistory.push({ component, success: true, timestamp: Date.now() });
+            
+            const progress = (activated / methodCount) * 100;
+            const progressBar = document.querySelector(`[data-component="${component}"]`);
+            if (progressBar) progressBar.style.width = progress + '%';
+            
+            updateGlobalStats();
+          }
+        }, 50 + Math.random() * 100); // 50-150ms per method
+      });
+    }
+    
+    async function activateComponent(component, count) {
+      const button = event.target;
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = 'Activating...';
+      
+      const statusDiv = document.querySelector(`[data-component="${component}"].activation-status`);
+      statusDiv.classList.add('show');
+      statusDiv.innerHTML = `<div class="status-item">
+        <span>Activating ${count} methods...</span>
+        <span class="status-success">In Progress</span>
+      </div>`;
+      
+      await simulateActivation(component, count);
+      
+      statusDiv.innerHTML = `<div class="status-item">
+        <span>Successfully activated ${count} methods</span>
+        <span class="status-success">✓ Complete</span>
+      </div>`;
+      
+      button.textContent = '✓ Activated';
+      button.className = 'btn btn-success';
+      button.disabled = false;
+      
+      document.getElementById('activation-status').textContent = `${component} activated`;
+      document.getElementById('activation-status').style.color = 'var(--ok)';
+    }
+    
+    async function activateDemo() {
+      const button = event.target;
+      button.disabled = true;
+      button.textContent = '🎁 Activating Demo...';
+      
+      // Activate 2 methods from each component
+      const components = ['autonomousEvolutionEngine', 'enhancedLearning', 'predictiveEngine', 'userModelEngine', 'proactiveIntelligenceEngine', 'contextBridgeEngine'];
+      
+      for (const component of components) {
+        await simulateActivation(component, 2);
+      }
+      
+      button.textContent = '✓ Demo Activated (12 methods)';
+      button.className = 'btn btn-success';
+      document.getElementById('activation-status').textContent = 'Demo capabilities activated!';
+    }
+    
+    async function activateHighPriority() {
+      const button = event.target;
+      button.disabled = true;
+      button.textContent = '⚡ Activating High Priority...';
+      
+      await simulateActivation('autonomousEvolutionEngine', 50);
+      await simulateActivation('enhancedLearning', 35);
+      
+      button.textContent = '✓ High Priority Activated (85 methods)';
+      button.className = 'btn btn-success';
+      document.getElementById('activation-status').textContent = 'High priority capabilities activated!';
+    }
+    
+    function drawSparkline(id, series){
+      try{
+        const svg = document.getElementById(id); if (!svg) return;
+        const w = svg.getAttribute('width')|0 || 220; const h = svg.getAttribute('height')|0 || 30;
+        const pad = 2; const n = series.length; if (n===0){ svg.innerHTML=''; return; }
+        const xs = (i)=> pad + (i*(w-2*pad))/(Math.max(1,n-1));
+        const ys = (v)=> pad + (h-2*pad) * (1 - Math.max(0, Math.min(100, v))/100);
+        let d='';
+        series.forEach((p,i)=>{ const x=xs(i), y=ys(p.v||0); d += (i===0? 'M':'L')+x+','+y+' '; });
+        const last = series[series.length-1];
+        svg.innerHTML = `<path d="${d.trim()}" fill="none" stroke="#7C5CFF" stroke-width="1.5" />`+
+                        `<circle cx="${xs(n-1)}" cy="${ys(last.v||0)}" r="2" fill="#00E9B0" />`;
+      }catch{}
+    }
+
+    async function fetchLiveCaps(){
+      try{
+        const [status, hist, perf] = await Promise.all([
+          fetch('/api/v1/capabilities/status').then(r=>r.json()),
+          fetch(`/api/v1/capabilities/history?limit=${windowSize==='all'?1000:Math.max(20, Number(windowSize)||50)}`).then(r=>r.json()),
+          fetch('/api/v1/reports/performance').then(r=>r.json()).catch(()=>({}))
+        ]);
+  const a = status.activation || {};
+        // Header and hero totals
+        document.getElementById('discovered-count').textContent = a.totalDiscovered ?? 0;
+        document.getElementById('hero-total-methods').textContent = (a.totalDiscovered ?? 0) + ' Methods';
+        document.getElementById('live-total').textContent = a.totalActivated ?? '—';
+        document.getElementById('live-progress').textContent = (a.progress ?? 0) + '%';
+        document.getElementById('live-perf').textContent = (a.performanceImpact?.estimatedPerformanceGain ?? 0) + '%';
+        document.getElementById('live-success').textContent = (a.metrics?.successRate ?? 0) + '%';
+        document.getElementById('live-bar').style.width = (a.progress || 0) + '%';
+        const lc = document.getElementById('live-components'); lc.innerHTML='';
+        Object.entries(a.components||{}).forEach(([name, c])=>{
+          const pill = document.createElement('span'); pill.className='pill';
+          pill.innerHTML = `${name}: <b>${c.activated}/${c.discovered}</b>`; lc.appendChild(pill);
+        });
+  const items = (hist.items||[]).map(x=>`${x.component}.${x.method} ${x.success?'✓':'×'}`).join(' • ');
+        document.getElementById('live-timeline').textContent = items || '—';
+  document.getElementById('timeline-window-label').textContent = windowSize==='all'? 'all' : `last ${windowSize}`;
+
+        // Update original global stats block if present
+        const td = document.getElementById('total-discovered'); if (td) td.textContent = a.totalDiscovered ?? 0;
+        const ta = document.getElementById('total-activated'); if (ta) ta.textContent = a.totalActivated ?? 0;
+        const sr = document.getElementById('success-rate'); if (sr) sr.textContent = ((a.metrics?.successRate)||0) + '%';
+        const pg = document.getElementById('performance-gain'); if (pg) pg.textContent = (a.performanceImpact?.estimatedPerformanceGain||0) + '%';
+        const gp = document.getElementById('global-progress'); if (gp) gp.style.width = (a.progress||0) + '%';
+
+        // Draw sparklines from reports endpoint (derived series)
+        if (perf?.series){
+          const sliceSeries = (arr)=>{
+            if (!Array.isArray(arr)) return [];
+            if (windowSize==='all') return arr;
+            const n = Math.max(1, Number(windowSize)||50);
+            return arr.slice(-n);
+          };
+          drawSparkline('spark-progress', sliceSeries(perf.series.progress||[]));
+          drawSparkline('spark-success', sliceSeries(perf.series.successRate||[]));
+          const recent = perf.summary?.recentSuccessRate;
+          const rs = document.getElementById('recentSuccess'); if (rs) rs.textContent = `Recent success: ${isFinite(recent)? recent: '—'}%`;
+        }
+
+        // Component-level sparklines derived from history points
+        const byComp = {};
+        (perf.points||[]).forEach(p=>{ (byComp[p.component]||(byComp[p.component]=[])).push(p); });
+        Object.entries(byComp).forEach(([name, pts])=>{
+          const total = (a.components?.[name]?.discovered)||0;
+          let cum=0; const series = pts.map(p=>{ if (p.success) cum++; const v = total>0 ? Math.min(100, Math.round((cum/total)*100)) : 0; return { v }; });
+          const sliced = windowSize==='all'? series : series.slice(-Math.max(1, Number(windowSize)||50));
+          drawSparkline('spark-'+name, sliced);
+        });
+
+        // Populate component filter options dynamically once
+        const cf = document.getElementById('componentFilter');
+        if (cf && cf.options.length <= 1 && a.components){
+          Object.keys(a.components).forEach(name=>{
+            const opt=document.createElement('option'); opt.value=name; opt.textContent=name; cf.appendChild(opt);
+          });
+        }
+
+        // Disable sprint buttons and show hint when complete
+        const complete = (a.progress||0) >= 100;
+        const bs = document.getElementById('btnSprint'); const bas = document.getElementById('btnAutoSprint');
+        const ch = document.getElementById('completeHint');
+        if (bs){ bs.disabled = complete; bs.title = complete? 'All capabilities active' : 'One-time aggressive activation across remaining'; }
+        if (bas){ bas.disabled = complete; bas.title = complete? 'All capabilities active' : 'Temporarily boost auto loop for a few fast cycles'; }
+        if (ch){ ch.style.display = complete? 'inline' : 'none'; }
+
+        // Apply component filter to cards
+        const selected = filterComponent || 'all';
+        document.querySelectorAll('.component').forEach(card=>{
+          const name = card.getAttribute('data-component');
+          const on = (selected==='all' || selected===name);
+          card.style.display = on ? '' : 'none';
+          card.classList.toggle('highlight', selected!=='all' && on);
+        });
+      } catch(e){ /* ignore */ }
+    }
+
+    // Initialize
+    updateGlobalStats();
+    fetchLiveCaps();
+    setInterval(fetchLiveCaps, 3000);
+
+    // Controls wiring
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const ws = document.getElementById('windowSelect');
+      // Restore window preference
+      try{ const saved = localStorage.getItem('caps.windowSize'); if (saved){ windowSize = (saved==='all')? 'all' : Number(saved)||50; if (ws) ws.value = String(saved); } }catch{}
+      if (ws) ws.addEventListener('change', (e)=>{ const v = e.target.value; windowSize = (v==='all')? 'all' : Number(v)||50; try{ localStorage.setItem('caps.windowSize', String(v)); }catch{} fetchLiveCaps(); });
+  const cf = document.getElementById('componentFilter');
+  // Restore component filter
+  try{ const savedC = localStorage.getItem('caps.component'); if (savedC && cf){ filterComponent = savedC; cf.value = savedC; } }catch{}
+  if (cf) cf.addEventListener('change', (e)=>{ filterComponent = e.target.value || 'all'; try{ localStorage.setItem('caps.component', filterComponent); }catch{} fetchLiveCaps(); });
+      const toast = (msg)=>{ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; setTimeout(()=>{ if(t.textContent===msg) t.textContent=''; }, 5000); };
+  const btnSprint = document.getElementById('btnSprint');
+      const btnAutoSprint = document.getElementById('btnAutoSprint');
+      async function runSprint(){
+        try{
+          const st = await fetch('/api/v1/capabilities/status').then(r=>r.json());
+          const progress = st?.activation?.progress || 0;
+          if (progress>=100){ toast('Already at 100% — sprint skipped'); return; }
+          if (!confirm('Run one-time Sprint now? This will aggressively activate remaining methods.')) return;
+          btnSprint.disabled = true; btnSprint.textContent = 'Running Sprint…';
+          const r = await fetch('/api/v1/capabilities/sprint', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ mode:'aggressive', maxConcurrency: 50 }) });
+          const j = await r.json();
+          if (j?.ok){
+            const s = j.sprint||{}; const sum = document.getElementById('sprintSummary');
+            if (s.skipped){ sum.innerHTML = 'Sprint skipped: nothing remaining <span class="close">×</span>'; }
+            else { sum.innerHTML = `Sprint: attempted ${s.attempted||0}, success ${s.successful||0}, failed ${s.failed||0}, avg latency ${s.avgLatency||0}ms <span class="close">×</span>`; }
+            const close = sum.querySelector('.close'); if (close) close.addEventListener('click', ()=>{ sum.textContent=''; });
+            setTimeout(()=>{ if (sum && sum.textContent) sum.textContent=''; }, 6000);
+            toast('Sprint complete');
+          } else toast('Sprint failed');
+        }catch{ toast('Sprint failed'); }
+        finally{ btnSprint.disabled=false; btnSprint.textContent='One-time Sprint'; fetchLiveCaps(); }
+      }
+      async function runAutoSprint(){
+        try{
+          const st = await fetch('/api/v1/capabilities/status').then(r=>r.json());
+          const progress = st?.activation?.progress || 0;
+          if (progress>=100){ toast('Already at 100% — auto sprint skipped'); return; }
+          if (!confirm('Run Auto Sprint for 5 fast cycles?')) return;
+          btnAutoSprint.disabled = true; btnAutoSprint.textContent = 'Auto Sprint…';
+          const r = await fetch('/api/v1/capabilities/auto/sprint', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ cycles: 5, mode:'aggressive', maxPerCycle: 100, maxPerComponent: 30, intervalMs: 500 }) });
+          const j = await r.json();
+          if (j?.ok){ const sum = document.getElementById('sprintSummary'); sum.innerHTML = `Auto Sprint: cycles ${j.autoSprint?.cycles||0}, +${j.autoSprint?.activatedDelta||0} activations <span class="close">×</span>`; const close = sum.querySelector('.close'); if (close) close.addEventListener('click', ()=>{ sum.textContent=''; }); setTimeout(()=>{ if (sum && sum.textContent) sum.textContent=''; }, 6000); toast('Auto Sprint complete'); }
+          else toast('Auto Sprint failed');
+        }catch{ toast('Auto Sprint failed'); }
+        finally{ btnAutoSprint.disabled=false; btnAutoSprint.textContent='Run Auto Sprint'; fetchLiveCaps(); }
+      }
+      if (btnSprint) btnSprint.addEventListener('click', runSprint);
+      if (btnAutoSprint) btnAutoSprint.addEventListener('click', runAutoSprint);
+    });
+  </script>
+</body>
+</html>

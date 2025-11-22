@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TooLoo.ai – Smart Control Room</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 50%, #2d1b69 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 32px 16px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .header h1 {
+            font-size: 40px;
+            background: linear-gradient(45deg, #00d4ff, #ff00ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        .status {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .status-card {
+            background: rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 18px 24px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .status-label {
+            font-size: 13px;
+            color: #00d4ff;
+            margin-bottom: 6px;
+        }
+        .status-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .main-btn {
+            display: block;
+            margin: 0 auto 32px auto;
+            padding: 18px 60px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        }
+        .main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6);
+        }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 18px;
+        }
+        .artifact-list {
+            display: grid;
+            gap: 12px;
+        }
+        .artifact-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .artifact-info {
+            flex: 1;
+        }
+        .artifact-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        .artifact-meta {
+            font-size: 12px;
+            color: #ccc;
+        }
+        .artifact-btn {
+            padding: 8px 16px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 8px;
+            color: #cfefff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .artifact-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .insights-list {
+            display: grid;
+            gap: 10px;
+        }
+        .insight-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+        .insight-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        .insight-meta {
+            font-size: 12px;
+            color: #ccc;
+        }
+        .insight-content {
+            font-size: 13px;
+            color: #eee;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TooLoo.ai Control Room</h1>
+            <p>Welcome! Everything you need is here. Launch the showcase demo or review your latest AI-generated artifacts and insights.</p>
+        </div>
+        <div class="status" id="statusBar">
+            <div class="status-card">
+                <div class="status-label">System Health</div>
+                <div class="status-value" id="sysHealth">Checking…</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">Artifacts</div>
+                <div class="status-value" id="artifactCount">0</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">AI Insights</div>
+                <div class="status-value" id="insightCount">0</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">Provider Status</div>
+                <div class="status-value" id="providerStatus">Checking…</div>
+            </div>
+        </div>
+        <button class="main-btn" onclick="window.location.href='/web-app/tooloo-showcase.html'">🚀 Launch Showcase Demo</button>
+        <button class="main-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 80%); margin-top: 16px;" onclick="window.location.href='/web-app/provider-performance-dashboard.html'">📊 Provider Performance Dashboard</button>
+        <div class="section">
+            <div class="section-title">Your Latest Artifacts</div>
+            <div class="artifact-list" id="artifactList">Loading…</div>
+        </div>
+        <div class="section">
+            <div class="section-title">Recent AI Insights</div>
+            <div class="insights-list" id="insightList">Loading…</div>
+        </div>
+    </div>
+    <script>
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/v1/health');
+                const j = await res.json();
+                document.getElementById('sysHealth').textContent = j.status === 'healthy' ? 'Healthy' : 'Check';
+                
+                // Fetch provider status
+                const providerRes = await fetch('http://127.0.0.1:3003/api/v1/providers/status');
+                if (providerRes.ok) {
+                    const providerData = await providerRes.json();
+                    const availableCount = Object.values(providerData.status || {}).filter(p => p.available && p.enabled).length;
+                    document.getElementById('providerStatus').textContent = `${availableCount} Active`;
+                } else {
+                    document.getElementById('providerStatus').textContent = 'Offline';
+                }
+            } catch {
+                document.getElementById('sysHealth').textContent = 'Offline';
+                document.getElementById('providerStatus').textContent = 'Offline';
+            }
+        }
+        async function fetchArtifacts() {
+            try {
+                const res = await fetch('/api/v1/artifacts?limit=5');
+                const j = await res.json();
+                document.getElementById('artifactCount').textContent = j.total || 0;
+                const list = document.getElementById('artifactList');
+                if (!j.artifacts?.length) { list.textContent = 'No artifacts yet.'; return; }
+                list.innerHTML = j.artifacts.map(a => `
+                    <div class='artifact-card'>
+                        <div class='artifact-info'>
+                            <div class='artifact-title'>${a.type.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ')}</div>
+                            <div class='artifact-meta'>${a.quality} • ${new Date(a.createdAt).toLocaleDateString()}</div>
+                        </div>
+                        <button class='artifact-btn' onclick="window.open('/api/v1/artifacts/${a.id}/download?format=html','_blank')">⬇️ Download</button>
+                    </div>
+                `).join('');
+            } catch {
+                document.getElementById('artifactList').textContent = 'Error loading artifacts.';
+            }
+        }
+        async function fetchInsights() {
+            try {
+                const res = await fetch('/api/v1/reports/critiques/analysis');
+                const j = await res.json();
+                document.getElementById('insightCount').textContent = j.analysis?.summary?.totalGaps || 0;
+                const list = document.getElementById('insightList');
+                if (!j.analysis?.actionsByPriority) { list.textContent = 'No insights yet.'; return; }
+                const actions = j.analysis.actionsByPriority;
+                list.innerHTML = ['high','medium','low'].map(prio => actions[prio]?.map(act => `
+                    <div class='insight-card'>
+                        <div class='insight-title'>${act.area} (${prio})</div>
+                        <div class='insight-meta'>${act.description}</div>
+                        <div class='insight-content'>${act.priority === 'high' ? '⚡' : act.priority === 'medium' ? '⭐' : '💡'} ${act.priority.charAt(0).toUpperCase()+act.priority.slice(1)} priority</div>
+                    </div>
+                `).join('')).join('');
+            } catch {
+                document.getElementById('insightList').textContent = 'Error loading insights.';
+            }
+        }
+        fetchStatus();
+        fetchArtifacts();
+        fetchInsights();
+        setInterval(()=>{fetchStatus();fetchArtifacts();fetchInsights();},10000);
+    </script>
+</body>
+</html>

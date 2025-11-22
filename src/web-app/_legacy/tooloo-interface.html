@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>TooLoo.ai — Unified Interface</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #7C5CFF;
+      --brandAlt: #00E9B0;
+      --accent: #FFE770;
+      --danger: #FF5C7C;
+      --text: #E6E9EE;
+      --muted: #96A0AF;
+      --surface: #14181E;
+      --bg: #0B0D10;
+      --card-bg: #12161c;
+      --border: rgba(150,160,175,0.2);
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero {
+      padding: 48px 24px;
+      background: linear-gradient(120deg, rgba(124,92,255,0.15), rgba(0,233,176,0.1));
+      border-bottom: 1px solid var(--border);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border: 1px solid rgba(150,160,175,0.3);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 16px;
+      background: rgba(20, 24, 30, 0.5);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--brandAlt);
+      margin-right: 8px;
+      box-shadow: 0 0 8px var(--brandAlt);
+    }
+
+    .dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+    .dot.loading { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 42px;
+      margin: 0 0 12px 0;
+      background: linear-gradient(to right, #fff, #ccc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.sub {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      padding: 48px 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.2s, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--brand);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: var(--brand);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .card p {
+      margin: 0 0 24px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    .status-pill {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(124,92,255,0.1);
+      color: var(--brand);
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Specific Card Accents */
+    .card.chat:hover { border-color: var(--brand); }
+    .card.chat:hover::before { background: var(--brand); }
+
+    .card.control:hover { border-color: var(--danger); }
+    .card.control:hover::before { background: var(--danger); }
+
+    .card.design:hover { border-color: var(--accent); }
+    .card.design:hover::before { background: var(--accent); }
+
+    .card.code:hover { border-color: var(--brandAlt); }
+    .card.code:hover::before { background: var(--brandAlt); }
+
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="badge">
+        <span class="dot" id="systemStatus"></span>
+        <span id="systemText">System Active</span>
+      </div>
+      <h1>TooLoo.ai Interface</h1>
+      <p class="sub">
+        Unified command center for your autonomous development platform. 
+        Orchestrate agents, monitor services, and generate artifacts from a single point of control.
+      </p>
+    </div>
+  </section>
+
+  <main class="wrap grid">
+    
+    <!-- Chat Pro -->
+    <a href="/chat-pro-v2" class="card chat">
+      <h3>Chat Pro</h3>
+      <p>The primary interface for interacting with TooLoo. Engage with the Orchestrator, Brain, and Hands services in a unified chat environment.</p>
+      <div class="card-footer">
+        <span>Launch Chat &rarr;</span>
+        <span class="status-pill">Core</span>
+      </div>
+    </a>
+
+    <!-- Control Room -->
+    <a href="/control-room" class="card control">
+      <h3>Control Room</h3>
+      <p>Monitor system health, service status, and resource usage. Manage the Orchestrator and view real-time metrics.</p>
+      <div class="card-footer">
+        <span>Open Dashboard &rarr;</span>
+        <span class="status-pill">System</span>
+      </div>
+    </a>
+
+    <!-- Design Studio -->
+    <a href="/design-studio.html" class="card design" target="_blank">
+      <h3>Design Studio</h3>
+      <p>View generated design artifacts, brand boards, and product pages. Powered by the "Guiding Star" design system.</p>
+      <div class="card-footer">
+        <span>View Artifacts &rarr;</span>
+        <span class="status-pill">Creative</span>
+      </div>
+    </a>
+
+    <!-- Execution Sandbox -->
+    <a href="#" onclick="testExecution(event)" class="card code">
+      <h3>Execution Sandbox</h3>
+      <p>Secure Node.js runtime environment for executing generated code. Currently active on port 3017.</p>
+      <div class="card-footer">
+        <span id="execStatus">Test Sandbox &rarr;</span>
+        <span class="status-pill">Dev</span>
+      </div>
+    </a>
+
+    <!-- Workbench -->
+    <a href="/workbench" class="card">
+      <h3>Workbench</h3>
+      <p>Unified productivity system for managing tasks, workflows, and complex multi-step operations.</p>
+      <div class="card-footer">
+        <span>Open Workbench &rarr;</span>
+        <span class="status-pill">Productivity</span>
+      </div>
+    </a>
+
+  </main>
+
+  <footer>
+    © 2025 TooLoo.ai — Autonomous Development Platform
+  </footer>
+
+  <script>
+    // Simple system status check
+    async function checkSystem() {
+      const dot = document.getElementById('systemStatus');
+      const text = document.getElementById('systemText');
+      
+      try {
+        const r = await fetch('/api/v1/system/services');
+        const data = await r.json();
+        
+        if (data.summary && data.summary.online > 0) {
+          dot.className = 'dot';
+          text.textContent = `System Active (${data.summary.online} Services)`;
+        } else {
+          dot.className = 'dot offline';
+          text.textContent = 'System Offline';
+        }
+      } catch (e) {
+        dot.className = 'dot offline';
+        text.textContent = 'Connection Lost';
+      }
+    }
+
+    // Test execution sandbox
+    async function testExecution(e) {
+      e.preventDefault();
+      const btn = document.getElementById('execStatus');
+      btn.textContent = 'Running...';
+      
+      try {
+        const r = await fetch('/api/v1/ide/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: 'console.log("Sandbox Verified: " + new Date().toISOString())' })
+        });
+        const data = await r.json();
+        
+        if (data.ok) {
+          alert('Sandbox Execution Successful:\n' + data.stdout);
+          btn.textContent = 'Verified ✓';
+        } else {
+          alert('Execution Failed:\n' + (data.error || data.stderr));
+          btn.textContent = 'Failed ✗';
+        }
+      } catch (e) {
+        alert('Error connecting to sandbox: ' + e.message);
+        btn.textContent = 'Error ✗';
+      }
+    }
+
+    // Initial check
+    checkSystem();
+    // Poll every 10s
+    setInterval(checkSystem, 10000);
+  </script>
+
+</body>
+</html>

@@ -102,9 +102,16 @@ export const SYSTEM = {
   // ========================================================================
   
   providers: {
-    default: 'anthropic',
+    default: 'gemini',
     
     available: [
+      {
+        id: 'gemini',
+        name: 'Gemini (Google)',
+        model: 'gemini-2.0-pro-exp-02-05',
+        timeout: 30000,
+        retries: 2
+      },
       {
         id: 'anthropic',
         name: 'Claude (Anthropic)',
@@ -127,13 +134,6 @@ export const SYSTEM = {
         retries: 1
       },
       {
-        id: 'gemini',
-        name: 'Gemini (Google)',
-        model: 'gemini-2.5-flash',
-        timeout: 30000,
-        retries: 2
-      },
-      {
         id: 'deepseek',
         name: 'DeepSeek',
         model: 'deepseek-chat',
@@ -142,7 +142,7 @@ export const SYSTEM = {
       }
     ],
     
-    fallback_chain: ['anthropic', 'openai', 'ollama', 'gemini', 'deepseek'],
+    fallback_chain: ['gemini', 'anthropic', 'openai', 'ollama', 'deepseek'],
     
     global_timeout: 30000,
     max_concurrent_calls: 6

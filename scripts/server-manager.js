@@ -86,7 +86,16 @@ class ServerManager extends EventEmitter {
       this.log('info', `▶️  Starting ${name} on port ${config.port}...`);
 
       const env = { ...process.env, ...config.env, NODE_ENV: this.mode };
-      const proc = spawn('node', [config.script], { env, stdio: 'inherit' });
+      
+      let cmd = 'node';
+      let args = [config.script];
+
+      if (config.script.endsWith('.ts')) {
+        cmd = 'npx';
+        args = ['tsx', config.script];
+      }
+
+      const proc = spawn(cmd, args, { env, stdio: 'inherit' });
 
       config.process = proc;
       config.restarts = 0;
@@ -295,58 +304,64 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const servers = [
     {
       name: 'web-server',
-      script: 'servers/web-server.js',
+      script: 'src/servers/web-server.ts',
       port: 3000,
-      watch: ['servers/web-server.js', 'web-app/**/*.html'],
+      watch: ['src/servers/web-server.ts', 'src/web-app/**/*.html'],
       healthUrl: 'http://127.0.0.1:3000/health',
     },
     {
-      name: 'training-server',
-      script: 'servers/training-server.js',
+      name: 'optimization-server',
+      script: 'src/servers/optimization-server.ts',
       port: 3001,
-      watch: ['servers/training-server.js', 'engine/**/*.js'],
+      watch: ['src/servers/optimization-server.ts', 'src/engine/**/*.ts'],
     },
     {
-      name: 'meta-server',
-      script: 'servers/meta-server.js',
+      name: 'acquisition-server',
+      script: 'src/servers/acquisition-server.ts',
       port: 3002,
-      watch: ['servers/meta-server.js', 'engine/**/*.js'],
+      watch: ['src/servers/acquisition-server.ts', 'src/engine/**/*.ts'],
     },
     {
       name: 'budget-server',
-      script: 'servers/budget-server.js',
+      script: 'src/servers/budget-server.ts',
       port: 3003,
-      watch: ['servers/budget-server.js'],
+      watch: ['src/servers/budget-server.ts'],
     },
     {
-      name: 'coach-server',
-      script: 'servers/coach-server.js',
+      name: 'guide-server',
+      script: 'src/servers/guide-server.ts',
       port: 3004,
-      watch: ['servers/coach-server.js'],
+      watch: ['src/servers/guide-server.ts'],
     },
     {
       name: 'product-server',
-      script: 'servers/product-development-server.js',
+      script: 'src/servers/product-development-server.ts',
       port: 3006,
-      watch: ['servers/product-development-server.js'],
+      watch: ['src/servers/product-development-server.ts'],
     },
     {
       name: 'segmentation-server',
-      script: 'servers/segmentation-server.js',
+      script: 'src/servers/segmentation-server.ts',
       port: 3007,
-      watch: ['servers/segmentation-server.js'],
+      watch: ['src/servers/segmentation-server.ts'],
     },
     {
       name: 'reports-server',
-      script: 'servers/reports-server.js',
+      script: 'src/servers/reports-server.ts',
       port: 3008,
-      watch: ['servers/reports-server.js'],
+      watch: ['src/servers/reports-server.ts'],
     },
     {
       name: 'capabilities-server',
-      script: 'servers/capabilities-server.js',
+      script: 'src/servers/capabilities-server.ts',
       port: 3009,
-      watch: ['servers/capabilities-server.js'],
+      watch: ['src/servers/capabilities-server.ts'],
+    },
+    {
+      name: 'project-server',
+      script: 'src/servers/project-server.ts',
+      port: 3011,
+      watch: ['src/servers/project-server.ts'],
     },
   ];
 

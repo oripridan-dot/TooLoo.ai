@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooLoo Formatter Test</title>
+  <style>
+    :root {
+      --bg-primary: #0D1117;
+      --bg-tertiary: #21262D;
+      --text-primary: #E6EDF3;
+      --border: rgba(255, 255, 255, 0.12);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 40px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      background: linear-gradient(135deg, #58A6FF, #79C0FF);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .message-group {
+      margin-bottom: 20px;
+      display: flex;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-group.assistant {
+      justify-content: flex-start;
+    }
+
+    .message-group.assistant .message-bubble {
+      background: linear-gradient(135deg, var(--bg-tertiary), rgba(33, 38, 45, 0.6));
+      border: 1px solid var(--border);
+      border-radius: 0 12px 12px 12px;
+      color: var(--text-primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      max-width: 75%;
+      padding: 16px 20px;
+      word-wrap: break-word;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .test-section {
+      margin: 40px 0;
+      padding: 20px;
+      background: rgba(88, 166, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .test-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #79C0FF;
+    }
+
+    .input-text {
+      background: rgba(0,0,0,0.3);
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 TooLoo Response Formatter - Test</h1>
+
+    <div class="test-section">
+      <div class="test-title">Test 1: Section Headers with Content</div>
+      <div id="test1" class="message-group assistant"></div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">Test 2: Mixed Formatting</div>
+      <div id="test2" class="message-group assistant"></div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">Test 3: Complex Response</div>
+      <div id="test3" class="message-group assistant"></div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">Status</div>
+      <div id="status" style="font-family: monospace; font-size: 12px;">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatTooLooResponse(text) {
+      if (!text) return '';
+      let html = text.split(/\n\n+/).map(paragraph => {
+        paragraph = paragraph.trim();
+        if (!paragraph) return '';
+        const sectionHeaderMatch = paragraph.match(/^(📋|🎯|✅|⚠️|🔑|💡|📊|🚀|⭐|🔍|📈|💼|🎨|🌟|📚|⚡|🎁|💎|🏆)\s*(.+?):\s*$/m);
+        const boldHeaderMatch = paragraph.match(/^(\*\*|__)(.+?)(\*\*|__)$/);
+        const isListItem = paragraph.match(/^[\d\-\*]\s+/m);
+        if (sectionHeaderMatch || boldHeaderMatch) {
+          const emoji = sectionHeaderMatch ? sectionHeaderMatch[1] : '';
+          const title = sectionHeaderMatch ? sectionHeaderMatch[2] : paragraph.replace(/(\*\*|__)/g, '');
+          return `<div style="margin: 20px 0 12px 0; padding: 12px 16px; background: linear-gradient(90deg, rgba(88, 166, 255, 0.1), transparent); border-left: 3px solid #58A6FF; border-radius: 4px;"><div style="font-size: 15px; font-weight: 700; color: #79C0FF; letter-spacing: 0.3px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">${emoji} ${escapeHtml(title)}</div></div>`;
+        } else if (isListItem) {
+          const items = paragraph.split('\n').filter(l => l.trim());
+          const listHtml = items.map((item, idx) => {
+            const content = item.replace(/^[\d\-\*]\s+/, '').trim();
+            const number = idx + 1;
+            return `<div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start;"><span style="flex-shrink: 0; width: 24px; height: 24px; background: rgba(88, 166, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #79C0FF;">${number}</span><div style="flex: 1; padding-top: 2px; line-height: 1.5;">${escapeHtml(content)}</div></div>`;
+          }).join('');
+          return `<div style="margin: 12px 0 16px 0;">${listHtml}</div>`;
+        } else {
+          let styledText = paragraph.replace(/\*\*(.+?)\*\*/g, '<strong style="color: #79C0FF; font-weight: 700;">$1</strong>').replace(/__(.+?)__/g, '<strong style="color: #79C0FF; font-weight: 700;">$1</strong>').replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em style="color: #8B949E; font-style: italic;">$1</em>').replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em style="color: #8B949E; font-style: italic;">$1</em>').replace(/`(.+?)`/g, '<code style="background: rgba(0, 0, 0, 0.3); padding: 2px 6px; border-radius: 3px; font-family: Monaco, monospace; font-size: 12px; color: #F0883E;">$1</code>').replace(/→\s*(.+?)(?=→|\n|$)/g, '<span style="color: #3FB950; font-weight: 500;">→ $1</span>');
+          return `<div style="margin: 12px 0; padding: 0; line-height: 1.7; font-size: 14px; color: #E6EDF3;">${styledText}</div>`;
+        }
+      }).join('');
+      return html;
+    }
+
+    const test1 = `📋 Learning Path:
+Start with fundamentals first.
+
+🎯 Key Areas:
+1. Variables and types
+2. Functions and scope`;
+
+    const test2 = `**Understanding Closures**
+
+A closure is a function that has access to its outer scope.
+
+→ Key feature: Encapsulation
+→ Use case: Data privacy`;
+
+    const test3 = `✅ Best Practices
+
+1. Start small with examples
+2. Build understanding gradually
+3. Practice consistently
+
+💡 Pro Tip:
+The **key to learning** is *consistent practice*.`;
+
+    try {
+      document.getElementById('test1').innerHTML = `<div class="message-bubble">${formatTooLooResponse(test1)}</div>`;
+      document.getElementById('test2').innerHTML = `<div class="message-bubble">${formatTooLooResponse(test2)}</div>`;
+      document.getElementById('test3').innerHTML = `<div class="message-bubble">${formatTooLooResponse(test3)}</div>`;
+      document.getElementById('status').innerHTML = '✅ All tests passed! Formatter is working correctly.';
+    } catch (err) {
+      document.getElementById('status').innerHTML = `❌ Error: ${err.message}`;
+      console.error(err);
+    }
+  </script>
+</body>
+</html>

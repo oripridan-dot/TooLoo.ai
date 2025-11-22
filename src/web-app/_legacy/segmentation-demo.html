@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TooLoo.ai – Segmentation Engine Demo</title>
+  <style>
+    :root { --bg:#0B0D10; --surface:#14181E; --muted:#96A0AF; --text:#E6E9EE; --brand:#7C5CFF; --ok:#1fbf74; --warn:#ffbd2e; --bad:#ff5c7c; --accent:#00E9B0; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #1e242c; background:linear-gradient(180deg,#0e1117, #0b0d10 60%); position:sticky; top:0; z-index:10; }
+    header h1 { font-size:18px; margin:0; letter-spacing:0.2px; }
+    header small { color:var(--muted); }
+    main { padding:20px; max-width:1200px; margin:0 auto; }
+    .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap:16px; }
+    .card { background:var(--surface); border:1px solid #202733; border-radius:12px; padding:16px; }
+    .col-12{ grid-column: span 12; } .col-8{ grid-column: span 8; } .col-4{ grid-column: span 4; } .col-6{ grid-column: span 6; } .col-3{ grid-column: span 3; }
+    
+    .input-section { display:flex; gap:12px; align-items:flex-end; margin-bottom:20px; }
+    .input-group { flex:1; }
+    .input-group label { display:block; margin-bottom:6px; font-size:12px; color:var(--muted); }
+    .input-group textarea { width:100%; padding:10px; border:1px solid #2a3441; border-radius:8px; background:#1a2230; color:var(--text); font-family:inherit; font-size:14px; resize:vertical; min-height:120px; }
+    .input-group select { width:100%; padding:8px; border:1px solid #2a3441; border-radius:6px; background:#1a2230; color:var(--text); font-size:14px; }
+    .btn { padding:8px 16px; border:none; border-radius:6px; background:var(--brand); color:white; font-weight:500; cursor:pointer; transition:background 0.2s; }
+    .btn:hover { background:#6a4eff; }
+    .btn:disabled { background:#2a3441; color:var(--muted); cursor:not-allowed; }
+    
+    .results { display:grid; grid-template-columns: 2fr 1fr; gap:16px; }
+    .segments { display:grid; gap:12px; }
+    .segment { background:#10151c; border-left:4px solid var(--brand); padding:12px; border-radius:8px; }
+    .segment.pivot { border-left-color: #ff9500; }
+    .segment.risk { border-left-color: var(--bad); }
+    .segment.mitigation { border-left-color: var(--warn); }
+    .segment.option { border-left-color: #8b7dff; }
+    .segment.decision { border-left-color: var(--ok); }
+    .segment.authorization { border-left-color: var(--accent); }
+    .segment.privacy { border-left-color: #ff6b9d; }
+    .segment.profile { border-left-color: #7c5cff; }
+    .segment.format { border-left-color: #c7a2ff; }
+    .segment.execution { border-left-color: var(--muted); }
+    
+    .segment h4 { margin:0 0 6px 0; font-size:14px; font-weight:600; }
+    .segment .meta { color:var(--muted); font-size:12px; margin-bottom:8px; }
+    .segment .content { font-size:13px; line-height:1.4; color:#c4ccd6; }
+    
+    .traits { display:grid; gap:12px; }
+    .trait { background:#10151c; border:1px solid #1b2230; border-radius:10px; padding:12px; }
+    .trait h4 { margin:0 0 8px 0; font-size:13px; font-weight:600; color:var(--accent); }
+    .trait .score { font-size:18px; font-weight:700; margin-bottom:6px; }
+    .trait .desc { color:var(--muted); font-size:11px; line-height:1.3; }
+    
+    .bar { height:6px; border-radius:4px; background:#1a2230; overflow:hidden; margin:8px 0; }
+    .bar > i { display:block; height:100%; background: linear-gradient(90deg, var(--brand), var(--accent)); transition:width 0.3s ease; }
+    
+    .pill { padding:3px 8px; border-radius:999px; font-size:10px; font-weight:500; background:#1a2230; color:var(--muted); margin-right:6px; }
+    .status { padding:8px 12px; border-radius:8px; background:#0d2818; border:1px solid #1a4d2e; color:var(--ok); font-size:12px; }
+    .ts { color:#7b8794; font-size:11px; }
+    .empty { color:var(--muted); text-align:center; padding:40px; font-style:italic; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TooLoo.ai — Segmentation Engine</h1>
+    <div id="status" class="status">Engine Ready</div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2 style="margin-top:0;">Conversation Analysis Pipeline</h2>
+      
+      <div class="input-section">
+        <div class="input-group">
+          <label for="messages">Raw Conversation (one message per line)</label>
+          <textarea id="messages" placeholder="Enter conversation messages...
+Example:
+Let's analyze the ceiling for this project. What's the right path forward?
+I see three main risks we need to enumerate: technical debt, timeline, and resource constraints.
+For mitigation sequence: 1→ technical audit, 2→ timeline buffer, 3→ resource reallocation."></textarea>
+        </div>
+        <div class="input-group" style="flex:0 0 140px;">
+          <label for="strategy">Strategy</label>
+          <select id="strategy">
+            <option value="auto">Auto (Hybrid)</option>
+            <option value="rule-basic">Rule-based Basic</option>
+            <option value="rule-advanced">Rule-based Advanced</option>
+            <option value="ml-heuristic">ML Heuristic</option>
+          </select>
+          <button class="btn" onclick="analyzeConversation()" style="margin-top:12px; width:100%;">Analyze</button>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <button class="btn" onclick="loadDemo()" style="background:#2a3441;">Load Demo</button>
+        <button class="btn" onclick="clearResults()" style="background:#3d2a2a;">Clear</button>
+      </div>
+    </div>
+
+    <div class="results" id="results" style="display:none;">
+      <div class="card">
+        <h3>Conversation Segments</h3>
+        <div id="segments" class="segments"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Cognitive Traits</h3>
+        <div id="traits" class="traits"></div>
+        
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid #2a3441;">
+          <h4 style="margin:0 0 8px 0; font-size:13px; color:var(--muted);">Analysis Metadata</h4>
+          <div id="metadata" style="font-size:12px; color:var(--muted);"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    
+    function setStatus(text, type = 'ok') {
+      statusEl.textContent = text;
+      statusEl.className = type === 'error' ? 'pill bad' : 'status';
+    }
+
+    function getSegmentClass(title) {
+      const lower = title.toLowerCase();
+      if (lower.includes('pivot')) return 'pivot';
+      if (lower.includes('risk')) return 'risk';
+      if (lower.includes('mitigation')) return 'mitigation';
+      if (lower.includes('option')) return 'option';
+      if (lower.includes('decision')) return 'decision';
+      if (lower.includes('authorization')) return 'authorization';
+      if (lower.includes('privacy')) return 'privacy';
+      if (lower.includes('profile')) return 'profile';
+      if (lower.includes('format')) return 'format';
+      return 'execution';
+    }
+
+    function renderSegments(segments) {
+      const container = document.getElementById('segments');
+      if (!segments || segments.length === 0) {
+        container.innerHTML = '<div class="empty">No segments detected</div>';
+        return;
+      }
+
+      container.innerHTML = segments.map((seg, idx) => `
+        <div class="segment ${getSegmentClass(seg.title)}">
+          <h4>${seg.title}</h4>
+          <div class="meta">
+            <span class="pill">Messages ${seg.start}-${seg.end}</span>
+            <span class="pill">${seg.messageCount} messages</span>
+          </div>
+          <div class="content">${seg.summary}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderTraits(traits) {
+      const container = document.getElementById('traits');
+      const traitInfo = {
+        decisionCompression: { name: 'Decision Compression', desc: 'Efficiency in decision-making processes' },
+        riskDiscipline: { name: 'Risk Discipline', desc: 'Systematic approach to risk identification' },
+        trustPriority: { name: 'Trust Priority', desc: 'Emphasis on privacy and trust considerations' },
+        structureExpectation: { name: 'Structure Expectation', desc: 'Preference for organized outputs' }
+      };
+
+      if (!traits || Object.keys(traits).length === 0) {
+        container.innerHTML = '<div class="empty">No traits computed</div>';
+        return;
+      }
+
+      container.innerHTML = Object.entries(traits).map(([key, value]) => {
+        const info = traitInfo[key] || { name: key, desc: 'Cognitive trait measurement' };
+        const percentage = Math.round(value * 100);
+        return `
+          <div class="trait">
+            <h4>${info.name}</h4>
+            <div class="score">${percentage}%</div>
+            <div class="bar"><i style="width:${percentage}%;"></i></div>
+            <div class="desc">${info.desc}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderMetadata(metadata) {
+      const container = document.getElementById('metadata');
+      if (!metadata) return;
+
+      container.innerHTML = `
+        <div><strong>Messages:</strong> ${metadata.totalMessages}</div>
+        <div><strong>Segments:</strong> ${metadata.totalSegments}</div>
+        <div><strong>Patterns:</strong> ${metadata.totalPatterns}</div>
+        <div><strong>Strategy:</strong> ${metadata.strategy}</div>
+        <div><strong>Timestamp:</strong> ${new Date(metadata.timestamp).toLocaleString()}</div>
+      `;
+    }
+
+    async function analyzeConversation() {
+      const messagesText = document.getElementById('messages').value.trim();
+      const strategy = document.getElementById('strategy').value;
+      
+      if (!messagesText) {
+        setStatus('Please enter some conversation messages', 'error');
+        return;
+      }
+
+      setStatus('Analyzing conversation...');
+      
+      try {
+        const messages = messagesText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .map((content, idx) => ({ 
+            id: `msg_${idx}`, 
+            content, 
+            author: idx % 2 === 0 ? 'user' : 'assistant' 
+          }));
+
+        const options = strategy === 'auto' ? {} : { strategy };
+        
+        const response = await fetch('/api/v1/segmentation/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages, options })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.ok) {
+          throw new Error(result.error || 'Analysis failed');
+        }
+
+        const { segments, patternCandidates, traitVector, metadata } = result.analysis;
+        
+        renderSegments(segments);
+        renderTraits(traitVector);
+        renderMetadata(metadata);
+        
+        document.getElementById('results').style.display = 'grid';
+        setStatus(`Analysis complete - ${segments.length} segments, ${Object.keys(traitVector).length} traits`);
+        
+      } catch (error) {
+        console.error('Analysis error:', error);
+        setStatus(`Analysis failed: ${error.message}`, 'error');
+      }
+    }
+
+    async function loadDemo() {
+      setStatus('Loading demo conversation...');
+      
+      try {
+        const response = await fetch('/api/v1/segmentation/demo');
+        const result = await response.json();
+        
+        if (!result.ok) {
+          throw new Error(result.error || 'Demo load failed');
+        }
+
+        const { segments, patternCandidates, traitVector, metadata } = result.analysis;
+        
+        // Set demo text
+        document.getElementById('messages').value = `Let's analyze the ceiling for this project. What's the right path forward?
+I see three main risks we need to enumerate: technical debt, timeline, and resource constraints.
+For mitigation sequence: 1→ technical audit, 2→ timeline buffer, 3→ resource reallocation.
+Profile: You prefer structured, privacy-first solutions with clear decision points.
+Proceed with the technical audit as the first step.`;
+        
+        renderSegments(segments);
+        renderTraits(traitVector);
+        renderMetadata(metadata);
+        
+        document.getElementById('results').style.display = 'grid';
+        setStatus(`Demo loaded - ${segments.length} segments analyzed`);
+        
+      } catch (error) {
+        console.error('Demo load error:', error);
+        setStatus(`Demo load failed: ${error.message}`, 'error');
+      }
+    }
+
+    function clearResults() {
+      document.getElementById('messages').value = '';
+      document.getElementById('results').style.display = 'none';
+      setStatus('Engine Ready');
+    }
+
+    // Auto-load demo on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(loadDemo, 500);
+    });
+  </script>
+</body>
+</html>
