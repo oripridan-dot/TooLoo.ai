@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.34
 import express from "express";
 import path from "path";
 import { bus } from "../core/event-bus.js";
@@ -7,6 +7,10 @@ import systemRoutes from "./routes/system.js";
 import providersRoutes from "./routes/providers.js";
 import orchestratorRoutes from "./routes/orchestrator.js";
 import capabilitiesRoutes from "./routes/capabilities.js";
+import githubRoutes from "./routes/github.js";
+import projectsRoutes from "./routes/projects.js";
+import chatRoutes from "./routes/chat.js";
+import designRoutes from "./routes/design.js";
 import { trainingRoutes } from "./routes/training.js";
 
 export function startNexus(port?: number) {
@@ -20,6 +24,10 @@ export function startNexus(port?: number) {
   app.use("/api/v1/providers", providersRoutes);
   app.use("/api/v1/orchestrator", orchestratorRoutes);
   app.use("/api/v1/capabilities", capabilitiesRoutes);
+  app.use("/api/v1/github", githubRoutes);
+  app.use("/api/v1/projects", projectsRoutes);
+  app.use("/api/v1/chat", chatRoutes);
+  app.use("/api/v1/design", designRoutes);
 
   // Training & Sources Routes (Precog)
   app.use("/api/v1", trainingRoutes);
