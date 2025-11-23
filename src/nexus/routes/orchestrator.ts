@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.54
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 
@@ -56,6 +56,12 @@ router.post("/enable-autonomous", (req, res) => {
 // Activate Cycle
 router.post("/activate/cycle", (req, res) => {
   request("nexus:orchestrator_cycle", req.body, res);
+});
+
+// Add to Queue
+router.post("/queue/add", (req, res) => {
+  const { goal } = req.body;
+  request("nexus:orchestrator_plan_update", { action: "add", item: goal }, res);
 });
 
 export default router;
