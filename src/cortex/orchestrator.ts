@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.52
 import { bus } from "../core/event-bus.js";
 
 interface OrchestratorState {
@@ -24,6 +24,9 @@ export class Orchestrator {
     planQueue: [],
     currentFocus: "idle",
   };
+
+  private retryMap: Map<string, number> = new Map();
+  private maxRetries: number = 3;
 
   constructor() {
     this.setupListeners();
@@ -132,12 +135,7 @@ export class Orchestrator {
       this.state.currentFocus = "processing_cycle";
       console.log("[Cortex] Cycle activated.");
 
-      // Simulate cycle work
-      setTimeout(() => {
-        this.state.activeCycles--;
-        this.state.currentFocus = this.state.activeCycles > 0 ? "processing_cycle" : "idle";
-        console.log("[Cortex] Cycle completed.");
-      }, 2000);
+      this.processQueue();
 
       bus.publish("cortex", "cortex:response", {
         requestId: event.payload.requestId,
@@ -148,6 +146,74 @@ export class Orchestrator {
         },
       });
     });
+
+    // Listen for Plan Completion
+    bus.on("planning:plan:completed", (event) => {
+      console.log("[Cortex] Plan completed. Checking queue...");
+      this.state.activeCycles = Math.max(0, this.state.activeCycles - 1);
+      this.state.currentFocus = "idle";
+
+      if (this.state.autonomousMode) {
+        this.processQueue();
+      }
+    });
+
+    // Listen for Plan Failure
+    bus.on("planning:plan:failed", (event) => {
+      const { plan, reason } = event.payload;
+      const goal = plan.goal;
+
+      console.log(`[Cortex] Plan failed: ${reason}`);
+
+      let retries = this.retryMap.get(goal) || 0;
+      if (retries < this.maxRetries) {
+        retries++;
+        this.retryMap.set(goal, retries);
+        console.log(
+          `[Cortex] Retrying goal (${retries}/${this.maxRetries}): "${goal}"`
+        );
+
+        // Re-queue at the front
+        this.state.planQueue.unshift(goal);
+
+        // Exponential backoff
+        const delay = Math.pow(2, retries) * 1000;
+        setTimeout(() => {
+          if (this.state.autonomousMode) {
+            this.processQueue();
+          }
+        }, delay);
+
+        return;
+      }
+
+      console.log(`[Cortex] Max retries reached for: "${goal}"`);
+      this.retryMap.delete(goal);
+
+      this.state.activeCycles = Math.max(0, this.state.activeCycles - 1);
+      this.state.currentFocus = "idle";
+
+      if (this.state.autonomousMode) {
+        this.processQueue();
+      }
+    });
+  }
+
+  private processQueue() {
+    if (this.state.planQueue.length === 0) {
+      console.log("[Cortex] Queue empty.");
+      this.state.activeCycles = 0;
+      this.state.currentFocus = "idle";
+      return;
+    }
+
+    const nextGoal = this.state.planQueue.shift();
+    if (nextGoal) {
+      console.log(`[Cortex] Processing next goal: "${nextGoal}"`);
+      this.state.currentFocus = `executing: ${nextGoal}`;
+      this.state.activeCycles++;
+      bus.publish("cortex", "planning:intent", { goal: nextGoal });
+    }
   }
 }
 
