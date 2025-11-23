@@ -1,2 +1,2 @@
-// @version 2.1.82
+// @version 2.1.83
 const x: number = 42;
