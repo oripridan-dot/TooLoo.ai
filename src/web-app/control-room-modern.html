@@ -1,11 +1,32 @@
 <!doctype html>
-<!-- @version 2.1.50 -->
+<!-- @version 2.1.51 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TooLoo.ai Control Room</title>
     <link rel="stylesheet" href="css/gemini-ui.css" />
+    <style>
+      body.sandbox-mode::before {
+        content: "🧪 SANDBOX MODE";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: repeating-linear-gradient(
+          45deg,
+          #f59e0b,
+          #f59e0b 10px,
+          #000 10px,
+          #000 20px
+        );
+        z-index: 9999;
+      }
+      body.sandbox-mode .g3-sidebar {
+        border-right: 1px solid #f59e0b;
+      }
+    </style>
   </head>
   <body>
     <div class="g3-layout">
