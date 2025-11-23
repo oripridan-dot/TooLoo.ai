@@ -1,2 +1,3 @@
-// @version 2.1.72
-const x: number = "string";
+// @version 2.1.73
+// Type error demonstration
+let x: number = "string";
