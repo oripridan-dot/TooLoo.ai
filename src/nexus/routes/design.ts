@@ -1,4 +1,4 @@
-// @version 2.1.44
+// @version 2.1.45
 import { Router } from "express";
 import fs from "fs-extra";
 import path from "path";
@@ -99,23 +99,6 @@ router.post("/extract-from-website", async (req, res) => {
       const colors = new Set<string>();
       const fonts = new Set<string>();
 
-      // Helper to convert rgb to hex (Arrow function to avoid __name injection)
-      const rgbToHex = (rgb: string) => {
-        if (!rgb.startsWith("rgb")) return rgb;
-        const match = rgb.match(/\d+/g);
-        if (!match) return rgb;
-        const [r, g, b] = match.map(Number);
-        return (
-          "#" +
-          [r, g, b]
-            .map((x) => {
-              const hex = x.toString(16);
-              return hex.length === 1 ? "0" + hex : hex;
-            })
-            .join("")
-        );
-      };
-
       // Scan all elements
       const elements = document.querySelectorAll("*");
       for (let i = 0; i < elements.length; i++) {
@@ -127,7 +110,22 @@ router.post("/extract-from-website", async (req, res) => {
       }
 
       const colorArray = Array.from(colors)
-        .map(rgbToHex)
+        .map((rgb) => {
+          // Inline rgbToHex logic to avoid __name injection issues
+          if (!rgb.startsWith("rgb")) return rgb;
+          const match = rgb.match(/\d+/g);
+          if (!match) return rgb;
+          const [r, g, b] = match.map(Number);
+          return (
+            "#" +
+            [r, g, b]
+              .map((x) => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+              })
+              .join("")
+          );
+        })
         .filter((c) => c.startsWith("#") && c !== "#00000000") // Filter transparent
         .slice(0, 20); // Limit to 20
 

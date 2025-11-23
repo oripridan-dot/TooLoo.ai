@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.45
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -38,7 +38,7 @@ export default class LLMProvider {
           deepseek: env("DEEPSEEK_MODEL", "deepseek-chat"),
           anthropic: env("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022"),
           openai: env("OPENAI_MODEL", "gpt-4o-mini"),
-          gemini: env("GEMINI_MODEL", "gemini-3-pro-preview"), // Gemini 3 Pro (Default)
+          gemini: env("GEMINI_MODEL", "gemini-1.5-flash"), // Gemini 1.5 Flash (Default)
           ollama: env("OLLAMA_MODEL", "llama3.2:latest"),
           localai: env("LOCALAI_MODEL", "gpt-4"),
           openinterpreter: env("OI_MODEL", "ollama/llama3.2"),
@@ -389,7 +389,7 @@ export default class LLMProvider {
     if (!apiKey) throw new Error("Gemini not configured");
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    
+
     const body: any = {
       contents: [
         {
