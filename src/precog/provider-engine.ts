@@ -1,4 +1,4 @@
-// @version 2.1.56
+// @version 2.1.60
 import { SynapseBus } from "../core/bus/event-bus.js";
 import {
   ProviderAdapter,
@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load env from parent root
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 export class ProviderEngine {
   private providers: Map<string, ProviderAdapter> = new Map();
@@ -29,6 +29,10 @@ export class ProviderEngine {
     this.bus = SynapseBus.getInstance();
     this.initializeProviders();
     this.setupListeners();
+  }
+
+  public getProvider(name: string): ProviderAdapter | undefined {
+    return this.providers.get(name);
   }
 
   private initializeProviders() {
@@ -114,7 +118,12 @@ export class ProviderEngine {
   }
 
   public async generate(req: GenerationRequest): Promise<GenerationResponse> {
-    // 1. Select Provider
+    // 1. Check for Ensemble Request
+    if (req.mode === "ensemble") {
+      return await this.generateEnsemble(req);
+    }
+
+    // 2. Select Provider
     const providerName = req.provider || this.selectBestProvider(req);
     const provider = this.providers.get(providerName);
 
@@ -122,8 +131,96 @@ export class ProviderEngine {
       throw new Error(`Provider ${providerName} not available`);
     }
 
-    // 2. Execute
+    // 3. Execute
     return await provider.generate(req);
+  }
+
+  public async generateEnsemble(
+    req: GenerationRequest
+  ): Promise<GenerationResponse> {
+    console.log(`[Precog] Starting Ensemble Generation for: ${req.taskType}`);
+
+    // 1. Select Candidates (All available paid providers)
+    const candidates = Array.from(this.providers.values()).filter(
+      (p) => p.isAvailable() && p.type === "paid"
+    );
+
+    if (candidates.length < 2) {
+      console.warn(
+        "[Precog] Not enough providers for ensemble. Falling back to single."
+      );
+      return this.generate({ ...req, mode: "fast" });
+    }
+
+    // 2. Parallel Execution
+    const promises = candidates.map((p) =>
+      p
+        .generate(req)
+        .then((res) => ({
+          provider: p.name,
+          content: res.content,
+          error: undefined,
+        }))
+        .catch((err) => ({
+          provider: p.name,
+          content: undefined,
+          error: err.message,
+        }))
+    );
+
+    const results = await Promise.all(promises);
+    const successful = results.filter(
+      (r): r is { provider: string; content: string; error: undefined } =>
+        !r.error && !!r.content
+    );
+
+    if (successful.length === 0) {
+      throw new Error("Ensemble generation failed: All providers failed.");
+    }
+
+    // 3. Synthesis
+    const synthesisPrompt = `You are the Synthesis Engine. 
+I have queried multiple AI models with the same prompt. Your job is to synthesize the best possible answer from their responses.
+
+ORIGINAL PROMPT:
+${req.prompt}
+
+RESPONSES:
+${successful
+  .map(
+    (r, i) => `--- MODEL ${i + 1} (${r.provider}) ---\n${r.content}\n------\n`
+  )
+  .join("\n")}
+
+INSTRUCTIONS:
+- Combine the strengths of each response.
+- Resolve conflicts by choosing the most logical/accurate information.
+- Eliminate hallucinations or weak reasoning.
+- Return a single, cohesive, high-quality response.
+`;
+
+    // Use the strongest model for synthesis (Gemini or Anthropic)
+    const synthesizerName = this.providers.get("gemini")?.isAvailable()
+      ? "gemini"
+      : "anthropic";
+    const synthesizer = this.providers.get(synthesizerName);
+
+    if (!synthesizer) {
+      // Fallback: just return the first one if synthesizer is somehow missing
+      return {
+        content: successful[0].content,
+        provider: successful[0].provider,
+        model: "ensemble-fallback",
+        latency: 0,
+      };
+    }
+
+    console.log(`[Precog] Synthesizing with ${synthesizerName}...`);
+    return await synthesizer.generate({
+      ...req,
+      prompt: synthesisPrompt,
+      system: "You are an expert synthesizer.",
+    });
   }
 
   private selectBestProvider(req: GenerationRequest): string {
