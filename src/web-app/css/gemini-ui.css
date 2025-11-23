@@ -1,4 +1,4 @@
-/* @version 2.1.28 */
+/* @version 2.1.42 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -797,6 +797,169 @@ input::placeholder {
   font-size: 0.875rem;
 }
 
+/* Design Studio Specifics */
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.token-card {
+  background: var(--g3-bg-tertiary);
+  border: 1px solid var(--g3-border-color);
+  border-radius: var(--g3-radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.token-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--g3-text-secondary);
+  box-shadow: var(--g3-shadow-md);
+}
+
+.swatch {
+  height: 80px;
+  width: 100%;
+  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                    linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                    linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.token-info {
+  padding: 0.75rem;
+}
+
+.token-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--g3-text-primary);
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.token-value {
+  font-size: 0.7rem;
+  color: var(--g3-text-tertiary);
+  font-family: var(--g3-font-mono);
+}
+
+.preview-container {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #fff; /* Preview usually needs white bg */
+  position: relative;
+}
+
+.preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.console-panel {
+  height: 150px;
+  background: #000;
+  border-top: 1px solid var(--g3-border-color);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--g3-font-mono);
+}
+
+.console-header {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--g3-border-color);
+  font-size: 0.7rem;
+  color: var(--g3-text-tertiary);
+  display: flex;
+  justify-content: space-between;
+}
+
+.console-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.log-line {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.log-info { color: var(--g3-text-secondary); }
+.log-success { color: var(--g3-success); }
+.log-error { color: var(--g3-error); }
+.log-warning { color: var(--g3-warning); }
+
+.hidden {
+  display: none !important;
+}
+
+.canvas-toolbar {
+  height: 48px;
+  border-bottom: 1px solid var(--g3-border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: var(--g3-bg-secondary);
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--g3-bg-tertiary);
+  padding: 2px;
+  border-radius: var(--g3-radius-sm);
+  border: 1px solid var(--g3-border-color);
+}
+
+.view-btn {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--g3-text-secondary);
+}
+
+.view-btn.active {
+  background: var(--g3-bg-secondary);
+  color: var(--g3-text-primary);
+  font-weight: 500;
+  box-shadow: var(--g3-shadow-sm);
+}
+
+.count-badge {
+  background: var(--g3-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  color: var(--g3-text-tertiary);
+}
+
+.tree-item {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--g3-text-secondary);
+  font-size: 0.875rem;
+}
+
+.tree-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--g3-text-primary);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 1280px) {
   .chat-layout {
@@ -835,7 +998,7 @@ input::placeholder {
   .g3-sidebar nav {
     flex-direction: row;
   }
-  
+
   .chat-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
