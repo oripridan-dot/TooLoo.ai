@@ -1,16 +1,16 @@
-// @version 2.1.55
-import { SynapseBus } from "../core/bus/event-bus";
+// @version 2.1.56
+import { SynapseBus } from "../core/bus/event-bus.js";
 import {
   ProviderAdapter,
   GenerationRequest,
   GenerationResponse,
-} from "./providers/types";
+} from "./providers/types.js";
 import {
   OpenAIProvider,
   AnthropicProvider,
   GeminiProvider,
   OllamaProvider,
-} from "./providers/adapters";
+} from "./providers/adapters.js";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import { fileURLToPath } from "url";
