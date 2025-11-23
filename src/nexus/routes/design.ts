@@ -1,4 +1,4 @@
-// @version 2.1.39
+// @version 2.1.44
 import { Router } from "express";
 import fs from "fs-extra";
 import path from "path";
@@ -99,8 +99,8 @@ router.post("/extract-from-website", async (req, res) => {
       const colors = new Set<string>();
       const fonts = new Set<string>();
 
-      // Helper to convert rgb to hex
-      function rgbToHex(rgb: string) {
+      // Helper to convert rgb to hex (Arrow function to avoid __name injection)
+      const rgbToHex = (rgb: string) => {
         if (!rgb.startsWith("rgb")) return rgb;
         const match = rgb.match(/\d+/g);
         if (!match) return rgb;
@@ -114,7 +114,7 @@ router.post("/extract-from-website", async (req, res) => {
             })
             .join("")
         );
-      }
+      };
 
       // Scan all elements
       const elements = document.querySelectorAll("*");
