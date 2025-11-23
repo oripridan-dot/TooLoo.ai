@@ -1,4 +1,4 @@
-// @version 2.1.17
+// @version 2.1.18
 import * as fs from "fs";
 import * as path from "path";
 import { exec } from "child_process";
@@ -38,9 +38,17 @@ export class VersionManager {
   private checkGitStatus() {
     this.execGit("rev-parse --abbrev-ref HEAD", (err, branch) => {
       if (!err && branch) {
+        const currentBranch = branch.trim();
         console.log(
-          `[VersionManager] Connected to git branch: ${branch.trim()}`
+          `[VersionManager] Connected to git branch: ${currentBranch}`
         );
+        
+        // Check if branch matches current version
+        const expectedBranch = `feature/tooloo-v${this.formatVersion(this.currentVersion)}-synapsys`;
+        if (currentBranch !== expectedBranch) {
+          console.log(`[VersionManager] Branch mismatch. Expected: ${expectedBranch}. Updating...`);
+          this.updateGitBranch(this.formatVersion(this.currentVersion));
+        }
       } else {
         console.warn(
           "[VersionManager] Warning: Not in a git repository or git not available."
