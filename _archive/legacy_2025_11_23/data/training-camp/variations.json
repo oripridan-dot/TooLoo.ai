@@ -1,0 +1,503 @@
+{
+  "dsa": [
+    {
+      "id": "dsa_001",
+      "topic": "Arrays",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Two Sum: Find two numbers that add up to target (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Two Sum: Find two numbers that add up to target (v2)"
+        }
+      ]
+    },
+    {
+      "id": "dsa_002",
+      "topic": "BST",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Validate Binary Search Tree (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Validate Binary Search Tree (v2)"
+        }
+      ]
+    },
+    {
+      "id": "dsa_003",
+      "topic": "DP",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Longest Increasing Subsequence (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Longest Increasing Subsequence (v2)"
+        }
+      ]
+    }
+  ],
+  "os": [
+    {
+      "id": "os_001",
+      "topic": "Scheduling",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Calculate FCFS waiting time (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Calculate FCFS waiting time (v2)"
+        }
+      ]
+    },
+    {
+      "id": "os_002",
+      "topic": "Sync",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Detect deadlock in resource allocation (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Detect deadlock in resource allocation (v2)"
+        }
+      ]
+    },
+    {
+      "id": "os_003",
+      "topic": "Memory",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Optimal page replacement algorithm (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Optimal page replacement algorithm (v2)"
+        }
+      ]
+    }
+  ],
+  "networks": [
+    {
+      "id": "net_001",
+      "topic": "TCP/IP",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Calculate subnet and broadcast address (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Calculate subnet and broadcast address (v2)"
+        }
+      ]
+    },
+    {
+      "id": "net_002",
+      "topic": "HTTP",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Explain GET vs POST methods (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Explain GET vs POST methods (v2)"
+        }
+      ]
+    },
+    {
+      "id": "net_003",
+      "topic": "DNS",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Trace DNS resolution from root (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Trace DNS resolution from root (v2)"
+        }
+      ]
+    }
+  ],
+  "compilers": [
+    {
+      "id": "comp_001",
+      "topic": "Lexer",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Role of lexer in compiler (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Role of lexer in compiler (v2)"
+        }
+      ]
+    },
+    {
+      "id": "comp_002",
+      "topic": "Parsing",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Top-down vs bottom-up parsing (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Top-down vs bottom-up parsing (v2)"
+        }
+      ]
+    },
+    {
+      "id": "comp_003",
+      "topic": "Optimization",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Loop unrolling benefits (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Loop unrolling benefits (v2)"
+        }
+      ]
+    }
+  ],
+  "databases": [
+    {
+      "id": "db_001",
+      "topic": "SQL",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "SELECT all users from table (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "SELECT all users from table (v2)"
+        }
+      ]
+    },
+    {
+      "id": "db_002",
+      "topic": "Transactions",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Explain ACID properties (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Explain ACID properties (v2)"
+        }
+      ]
+    },
+    {
+      "id": "db_003",
+      "topic": "Indexing",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "How B-tree index works (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "How B-tree index works (v2)"
+        }
+      ]
+    }
+  ],
+  "ml": [
+    {
+      "id": "ml_001",
+      "topic": "Supervised",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Define supervised learning (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Define supervised learning (v2)"
+        }
+      ]
+    },
+    {
+      "id": "ml_002",
+      "topic": "Overfitting",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "What is overfitting, how to prevent (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "What is overfitting, how to prevent (v2)"
+        }
+      ]
+    },
+    {
+      "id": "ml_003",
+      "topic": "Neural Nets",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Role of activation functions (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Role of activation functions (v2)"
+        }
+      ]
+    }
+  ],
+  "security": [
+    {
+      "id": "sec_001",
+      "topic": "Auth",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Authentication vs Authorization (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Authentication vs Authorization (v2)"
+        }
+      ]
+    },
+    {
+      "id": "sec_002",
+      "topic": "OWASP",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "SQL injection prevention (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "SQL injection prevention (v2)"
+        }
+      ]
+    },
+    {
+      "id": "sec_003",
+      "topic": "Crypto",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Symmetric vs asymmetric encryption (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Symmetric vs asymmetric encryption (v2)"
+        }
+      ]
+    }
+  ],
+  "theory": [
+    {
+      "id": "theory_001",
+      "topic": "Complexity",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Define P and NP classes (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Define P and NP classes (v2)"
+        }
+      ]
+    },
+    {
+      "id": "theory_002",
+      "topic": "Automata",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "What is finite automaton (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "What is finite automaton (v2)"
+        }
+      ]
+    },
+    {
+      "id": "theory_003",
+      "topic": "NP-Complete",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "What makes problem NP-complete (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "What makes problem NP-complete (v2)"
+        }
+      ]
+    }
+  ],
+  "distributed": [
+    {
+      "id": "dist_001",
+      "topic": "CAP",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Explain CAP theorem (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Explain CAP theorem (v2)"
+        }
+      ]
+    },
+    {
+      "id": "dist_002",
+      "topic": "Consensus",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Raft consensus algorithm (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Raft consensus algorithm (v2)"
+        }
+      ]
+    },
+    {
+      "id": "dist_003",
+      "topic": "Consistency",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Eventual consistency use cases (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Eventual consistency use cases (v2)"
+        }
+      ]
+    }
+  ],
+  "test-topic": [
+    {
+      "id": "test-topic_001",
+      "topic": "Foundations",
+      "variants": [
+        {
+          "seed": 1,
+          "difficulty": "easy",
+          "promptHint": "Explain scalability vs elasticity (v1)"
+        },
+        {
+          "seed": 2,
+          "difficulty": "easy",
+          "promptHint": "Explain scalability vs elasticity (v2)"
+        }
+      ]
+    },
+    {
+      "id": "test-topic_002",
+      "topic": "Architecture",
+      "variants": [
+        {
+          "seed": 2,
+          "difficulty": "medium",
+          "promptHint": "Design a URL shortener core components (v1)"
+        },
+        {
+          "seed": 3,
+          "difficulty": "medium",
+          "promptHint": "Design a URL shortener core components (v2)"
+        }
+      ]
+    },
+    {
+      "id": "test-topic_003",
+      "topic": "Reliability",
+      "variants": [
+        {
+          "seed": 3,
+          "difficulty": "hard",
+          "promptHint": "Describe strategies for high availability (v1)"
+        },
+        {
+          "seed": 4,
+          "difficulty": "hard",
+          "promptHint": "Describe strategies for high availability (v2)"
+        }
+      ]
+    }
+  ],
+  "systems": []
+}

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Refinery UI Component
  * Interactive display for keyword refinements with before/after comparison

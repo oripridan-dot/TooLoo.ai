@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * TooLoo.ai Book Mastery Engine
  * Deep domain expertise through systematic book learning

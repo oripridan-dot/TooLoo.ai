@@ -1,110 +1,84 @@
 {
   "name": "TooLoo.ai Development",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
-  "forwardPorts": [
-    3000,
-    3001,
-    3002,
-    3003,
-    3004,
-    3005,
-    3006,
-    3007,
-    3008,
-    3009,
-    3020,
-    3100,
-    3123,
-    3200,
-    3300,
-    3400
-  ],
+  "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {
-      "label": "Web Server",
+      "label": "Web Server (Synapsys)",
       "onAutoForward": "notify",
       "requireLocalPort": true
     },
-    "3001": {
-      "label": "Training Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3002": {
-      "label": "Meta Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3003": {
-      "label": "Budget Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3004": {
-      "label": "Coach Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3005": {
-      "label": "Cup Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3006": {
-      "label": "Product Development Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3007": {
-      "label": "Segmentation Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3008": {
-      "label": "Reports Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3009": {
-      "label": "Capabilities Server",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3020": {
-      "label": "Context Service",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3100": {
-      "label": "Orchestration Service",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3123": {
-      "label": "Orchestrator",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3200": {
-      "label": "Provider Service",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3300": {
-      "label": "Analytics Service",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    },
-    "3400": {
-      "label": "Integration Service",
-      "onAutoForward": "notify",
-      "requireLocalPort": true
-    }
+    "4000": { "onAutoForward": "ignore" },
+    "3001": { "onAutoForward": "ignore" },
+    "3002": { "onAutoForward": "ignore" },
+    "3003": { "onAutoForward": "ignore" },
+    "3004": { "onAutoForward": "ignore" },
+    "3005": { "onAutoForward": "ignore" },
+    "3006": { "onAutoForward": "ignore" },
+    "3007": { "onAutoForward": "ignore" },
+    "3008": { "onAutoForward": "ignore" },
+    "3009": { "onAutoForward": "ignore" },
+    "3010": { "onAutoForward": "ignore" },
+    "3011": { "onAutoForward": "ignore" },
+    "3020": { "onAutoForward": "ignore" },
+    "3100": { "onAutoForward": "ignore" },
+    "3123": { "onAutoForward": "ignore" },
+    "3200": { "onAutoForward": "ignore" },
+    "3300": { "onAutoForward": "ignore" },
+    "3400": { "onAutoForward": "ignore" }
   },
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "npm install && npm config set fund false && npm config set update-notifier false",
+  "postStartCommand": "echo '🚀 Welcome to TooLoo.ai! Run \"npm run dev\" to start the system.'",
   "remoteUser": "node",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "humao.rest-client",
+        "rangav.vscode-thunder-client",
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        "eamodio.gitlens",
+        "vitest.explorer"
+      ],
+      "settings": {
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/dist/**": true,
+          "**/coverage/**": true,
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/temp/**": true,
+          "**/logs/**": true,
+          "**/cache/**": true,
+          "**/data/**": true,
+          "**/_archive/**": true,
+          "**/datasets/**": true
+        },
+        "search.exclude": {
+          "**/node_modules/**": true,
+          "**/dist/**": true,
+          "**/coverage/**": true,
+          "**/temp/**": true,
+          "**/logs/**": true,
+          "**/cache/**": true,
+          "**/data/**": true,
+          "**/_archive/**": true,
+          "**/datasets/**": true
+        },
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"]
+      }
+    }
   }
 }

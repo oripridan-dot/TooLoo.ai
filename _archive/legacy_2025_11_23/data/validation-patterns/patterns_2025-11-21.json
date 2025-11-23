@@ -1,0 +1,26 @@
+[
+  {
+    "id": "pattern_1763689302161_gzvjydta4",
+    "timestamp": "2025-11-21T01:41:42.161Z",
+    "question": "present tooloo.ai",
+    "responseLength": 1657,
+    "confidenceScore": 89,
+    "confidenceBracket": "High",
+    "recommendedAction": "Accept",
+    "verificationStatus": "verified",
+    "insightCount": 6,
+    "gapCount": 2,
+    "issueCount": 0,
+    "stagesExecuted": [
+      "cross-validation",
+      "smart-analysis",
+      "technical-validation",
+      "synthesis"
+    ],
+    "processingTime": 2,
+    "metadata": {
+      "question": "present tooloo.ai",
+      "responseLength": 1657
+    }
+  }
+]

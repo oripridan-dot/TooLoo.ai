@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Capability Activator Engine
  * Safely activates and manages the 242 discovered capabilities

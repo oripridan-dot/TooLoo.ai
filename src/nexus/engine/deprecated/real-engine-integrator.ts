@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // Real TooLoo.ai Engine Integration System
 // Actually updates the live pattern extractor and trait aggregator
 // Measures genuine performance improvements

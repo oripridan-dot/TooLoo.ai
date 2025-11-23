@@ -1,0 +1,187 @@
+{
+  "timestamp": "2025-11-19T21:25:30.471Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://cuberto.com",
+  "extractedAt": "2025-11-19T21:25:30.471Z",
+  "colorsExtracted": 9,
+  "typographyExtracted": 3,
+  "spacingExtracted": 9,
+  "estimatedMaturity": 60,
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#fc0019",
+        "rgb": {
+          "r": 252,
+          "g": 0,
+          "b": 25
+        },
+        "hsl": {
+          "h": 354,
+          "s": 100,
+          "l": 49
+        },
+        "lightness": 49,
+        "confidence": 0.85
+      },
+      "secondary": {
+        "name": "secondary",
+        "hex": "#000000",
+        "rgb": {
+          "r": 0,
+          "g": 0,
+          "b": 0
+        },
+        "hsl": {
+          "h": 0,
+          "s": 0,
+          "l": 0
+        },
+        "confidence": 0.75
+      },
+      "semantic": {
+        "error": {
+          "hex": "#da532c",
+          "confidence": 0.8
+        },
+        "warning": {
+          "hex": "#da532c",
+          "confidence": 0.8
+        }
+      },
+      "palettes": [
+        {
+          "hue": 0,
+          "name": "Red",
+          "shades": [
+            {
+              "hex": "#000000",
+              "lightness": 0
+            },
+            {
+              "hex": "#161616",
+              "lightness": 9
+            },
+            {
+              "hex": "#494949",
+              "lightness": 29
+            },
+            {
+              "hex": "#eb4242",
+              "lightness": 59
+            },
+            {
+              "hex": "#b7b7b7",
+              "lightness": 72
+            },
+            {
+              "hex": "#fafafa",
+              "lightness": 98
+            },
+            {
+              "hex": "#ffffff",
+              "lightness": 100
+            }
+          ]
+        }
+      ],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": {
+        "display": "Suisse Intl",
+        "body": "Manrope",
+        "confidence": 0.7
+      },
+      "hierarchy": [
+        {
+          "level": "h1",
+          "size": "48px",
+          "font": "Suisse Intl",
+          "weight": "700"
+        },
+        {
+          "level": "h2",
+          "size": "36px",
+          "font": "Suisse Intl",
+          "weight": "700"
+        },
+        {
+          "level": "h3",
+          "size": "28px",
+          "font": "Suisse Intl",
+          "weight": "600"
+        },
+        {
+          "level": "h4",
+          "size": "20px",
+          "font": "Manrope",
+          "weight": "600"
+        },
+        {
+          "level": "body",
+          "size": "16px",
+          "font": "Manrope",
+          "weight": "400"
+        },
+        {
+          "level": "small",
+          "size": "12px",
+          "font": "Manrope",
+          "weight": "400"
+        },
+        {
+          "level": "caption",
+          "size": "10px",
+          "font": "Manrope",
+          "weight": "500"
+        }
+      ],
+      "recommended": {
+        "displayFont": "Suisse Intl",
+        "bodyFont": "Manrope",
+        "pairingScore": 0.7
+      }
+    },
+    "spacing": {
+      "scale": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10
+      ],
+      "increment": 1,
+      "consistency": 1,
+      "suggested": {
+        "xs": "0.5px",
+        "sm": "1px",
+        "md": "1.5px",
+        "lg": "2px",
+        "xl": "3px",
+        "2xl": "4px",
+        "3xl": "6px"
+      }
+    },
+    "completeness": 100,
+    "maturity": 60,
+    "readiness": 79,
+    "confidence": {
+      "colors": 0.9,
+      "typography": 1,
+      "spacing": 1
+    }
+  },
+  "designSystemSize": {
+    "colors": 36,
+    "typography": 3,
+    "components": 0
+  }
+}

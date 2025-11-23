@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * SegmenterEngine (Phase P2)
  * Heuristic phase detection over parsed messages.

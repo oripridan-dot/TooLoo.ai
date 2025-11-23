@@ -1,4 +1,4 @@
-// @version 2.1.24
+// @version 2.1.28
 import { generateLLM } from "./providers/llm-provider.js";
 import { TOOLOO_PERSONA } from "../cortex/persona.js";
 

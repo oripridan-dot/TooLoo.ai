@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 class NeuralLearningOptimizer {
   constructor() {
     this.weights = new Map(); // Learning weights for different strategies

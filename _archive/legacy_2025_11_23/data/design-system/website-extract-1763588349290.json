@@ -1,0 +1,395 @@
+{
+  "id": "extract-1763588349290",
+  "timestamp": "2025-11-19T21:39:09.290Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://triolla.io",
+  "extractedAt": "2025-11-19T21:39:09.290Z",
+  "brand": {
+    "name": "Triolla",
+    "favicon": "https://triolla.io/wp-content/themes/triolla/favicon.ico",
+    "logo": "https://triolla.io/wp-content/uploads/2025/07/WhatsApp-Image-2025-07-01-at-21.45.37_46c5ac27.jpg",
+    "description": "#1 Product ux/ui design studio in Israel",
+    "colors": {
+      "primary": null,
+      "accent": null
+    }
+  },
+  "structure": {
+    "totalElements": 1153,
+    "hierarchy": {
+      "estimatedDepth": 8,
+      "mainSections": 0
+    },
+    "mainSections": [],
+    "componentCount": {
+      "buttons": 0,
+      "forms": 1,
+      "inputs": 14,
+      "images": 81,
+      "links": 136,
+      "headings": 31,
+      "cards": 0,
+      "modals": 0
+    }
+  },
+  "visualAssets": {
+    "icons": {
+      "svgInline": 11,
+      "iconFonts": 10,
+      "details": [
+        {
+          "name": "icon",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.ico",
+          "type": "icon-font"
+        },
+        {
+          "name": "false",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icons, and graphic elements. The right combination of UX and UI creates a product that is convenient, clear, and visually appealing.</span",
+          "type": "icon-font"
+        },
+        {
+          "name": "fasync=",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "false;\n                }\n                \n                                // Function to add the hidden fields\n                function addMaspikHiddenFields(form) {\n                    // Check if the fields already exist\n                    if (form.querySelector(",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon {\n                                background: url(https://triolla.io/wp-content/plugins/sitepress-multilingual-cms/vendor/otgs/installer//res/img/icon-wpml-info-white.svg) no-repeat;\n                                width: 20px;\n                                height: 20px;\n                                display: inline-block;\n                                position: absolute;\n                                margin-left: -23px;\n                            }\n                            .otgs-development-site-front-end {\n                                background-size: 32px;\n                                padding: 22px 0px;\n                                font-size: 12px;\n                                font-family: -apple-system,BlinkMacSystemFont,",
+          "type": "icon-font"
+        },
+        {
+          "name": "false,\n\t\tloop: true,\n\t\tautoplay: false,\n\t\tdots: true,\n\t\tmargin: 17,\n\t\tsingleItem: true,\n\t\tslideSpeed: 1000,\n\t\tsmartSpeed: 1000,\n\t\titems: 1.6,\n\t\t\t\trtl: false,\n\t\t\t\tnavText: [$(''),$('')],\n\t\t//animateOut: 'fadeOut',\n\t\tresponsiveClass: true,\n\t});\t\n\t\n\tvar bulletmob = $('.bullet_slider').owlCarousel({\n\t\tnav: true,\n\t\tloop: true,\n\t\tautoplay: false,\n\t\tdots: false,\n\t\tmargin: 0,\n\t\tsingleItem: true,\n\t\tslideSpeed: 2000,\n\t\tsmartSpeed: 2000,\n\t\titems: 4,\n\t\t\t\trtl: false,\n\t\t\t\tnavText: '',\n\t\t//animateOut: 'fadeOut',\n\t\tresponsiveClass: true,\n\t\tresponsive:{1366:{ items:4, }, 1024:{ items:4, }, 768:{ items:3.4, }, 512:{ items:2.4, }, 0:{ items:1.4, } }\n\t});\t\t\n\t\n\t\n\t\n\t$(",
+          "type": "icon-font"
+        }
+      ]
+    },
+    "images": {
+      "total": 20,
+      "sample": [
+        {
+          "src": "https://triolla.io/wp-content/themes/triolla/images/tickerxlose.svg",
+          "alt": "",
+          "type": "svg"
+        },
+        {
+          "src": "https://triolla.io/wp-content/uploads/2025/05/logo_triolla.svg",
+          "alt": "Triolla",
+          "type": "svg"
+        },
+        {
+          "src": "https://triolla.io/wp-content/uploads/2025/06/triollawhite.svg",
+          "alt": "Triolla",
+          "type": "svg"
+        },
+        {
+          "src": "https://triolla.io/wp-content/themes/triolla/images/hamburger.svg",
+          "alt": "",
+          "type": "svg"
+        },
+        {
+          "src": "https://triolla.io/wp-content/themes/triolla/images/hamburger_white.svg",
+          "alt": "",
+          "type": "svg"
+        }
+      ]
+    },
+    "patterns": {
+      "gradients": 10,
+      "shadows": 2,
+      "animations": 0,
+      "borderRadii": 1,
+      "details": {
+        "gradients": [
+          {
+            "id": "gradient-0",
+            "value": "linear-gradient(135deg,rgba(6,147,227,1)"
+          },
+          {
+            "id": "gradient-1",
+            "value": "linear-gradient(135deg,rgb(122,220,180)"
+          },
+          {
+            "id": "gradient-2",
+            "value": "linear-gradient(135deg,rgba(252,185,0,1)"
+          },
+          {
+            "id": "gradient-3",
+            "value": "linear-gradient(135deg,rgba(255,105,0,1)"
+          },
+          {
+            "id": "gradient-4",
+            "value": "linear-gradient(135deg,rgb(238,238,238)"
+          },
+          {
+            "id": "gradient-5",
+            "value": "linear-gradient(135deg,rgb(74,234,220)"
+          },
+          {
+            "id": "gradient-6",
+            "value": "linear-gradient(135deg,rgb(255,206,236)"
+          },
+          {
+            "id": "gradient-7",
+            "value": "linear-gradient(135deg,rgb(254,205,165)"
+          },
+          {
+            "id": "gradient-8",
+            "value": "linear-gradient(135deg,rgb(255,203,112)"
+          },
+          {
+            "id": "gradient-9",
+            "value": "linear-gradient(135deg,rgb(255,245,203)"
+          }
+        ],
+        "shadows": [
+          {
+            "id": "shadow-0",
+            "value": "box-shadow: none !important"
+          },
+          {
+            "id": "shadow-1",
+            "value": "box-shadow:none"
+          }
+        ],
+        "animations": [],
+        "borderRadii": [
+          {
+            "id": "border-radius-0",
+            "value": "9999px"
+          }
+        ]
+      }
+    }
+  },
+  "tokens": {
+    "colors": {
+      "#2874fc": {
+        "hex": "#2874fc",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#020381": {
+        "hex": "#020381",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#71ce7e": {
+        "hex": "#71ce7e",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#caf880": {
+        "hex": "#caf880",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#33a7b5": {
+        "hex": "#33a7b5",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#b6e3d4": {
+        "hex": "#b6e3d4",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#fff5cb": {
+        "hex": "#fff5cb",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#4158d0": {
+        "hex": "#4158d0",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#c751c0": {
+        "hex": "#c751c0",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#ffcb70": {
+        "hex": "#ffcb70",
+        "role": "rgb-value",
+        "context": "found"
+      }
+    },
+    "typography": {
+      "font--apple-system": "-apple-system",
+      "font-blinkmacsystemfont": "BlinkMacSystemFont"
+    },
+    "spacing": {
+      "xs": "6px",
+      "sm": "7px",
+      "md": "8px",
+      "lg": "11px",
+      "xl": "12px",
+      "2xl": "13px",
+      "3xl": "16px",
+      "4xl": "18px",
+      "5xl": "20px"
+    },
+    "components": {}
+  },
+  "statistics": {
+    "colorsExtracted": 10,
+    "typographyExtracted": 2,
+    "spacingExtracted": 9,
+    "componentsExtracted": 0,
+    "estimatedMaturity": 50
+  },
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#33a7b5",
+        "rgb": {
+          "r": 51,
+          "g": 167,
+          "b": 181
+        },
+        "hsl": {
+          "h": 186,
+          "s": 56,
+          "l": 45
+        },
+        "lightness": 45,
+        "confidence": 0.85
+      },
+      "secondary": {
+        "name": "secondary",
+        "hex": "#020381",
+        "rgb": {
+          "r": 2,
+          "g": 3,
+          "b": 129
+        },
+        "hsl": {
+          "h": 240,
+          "s": 97,
+          "l": 26
+        },
+        "confidence": 0.75
+      },
+      "semantic": {
+        "info": {
+          "hex": "#2874fc",
+          "confidence": 0.8
+        }
+      },
+      "palettes": [],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": {
+        "display": "-apple-system",
+        "body": "BlinkMacSystemFont",
+        "confidence": 0.7
+      },
+      "hierarchy": [
+        {
+          "level": "h1",
+          "size": "48px",
+          "font": "-apple-system",
+          "weight": "700"
+        },
+        {
+          "level": "h2",
+          "size": "36px",
+          "font": "-apple-system",
+          "weight": "700"
+        },
+        {
+          "level": "h3",
+          "size": "28px",
+          "font": "-apple-system",
+          "weight": "600"
+        },
+        {
+          "level": "h4",
+          "size": "20px",
+          "font": "BlinkMacSystemFont",
+          "weight": "600"
+        },
+        {
+          "level": "body",
+          "size": "16px",
+          "font": "BlinkMacSystemFont",
+          "weight": "400"
+        },
+        {
+          "level": "small",
+          "size": "12px",
+          "font": "BlinkMacSystemFont",
+          "weight": "400"
+        },
+        {
+          "level": "caption",
+          "size": "10px",
+          "font": "BlinkMacSystemFont",
+          "weight": "500"
+        }
+      ],
+      "recommended": {
+        "displayFont": "-apple-system",
+        "bodyFont": "BlinkMacSystemFont",
+        "pairingScore": 0.7
+      }
+    },
+    "spacing": {
+      "scale": [
+        6,
+        7,
+        8,
+        11,
+        12,
+        13,
+        16,
+        18,
+        20
+      ],
+      "increment": 2,
+      "consistency": 1,
+      "suggested": {
+        "xs": "1px",
+        "sm": "2px",
+        "md": "3px",
+        "lg": "4px",
+        "xl": "6px",
+        "2xl": "8px",
+        "3xl": "12px"
+      }
+    },
+    "completeness": 100,
+    "maturity": 60,
+    "readiness": 78,
+    "confidence": {
+      "colors": 1,
+      "typography": 0.6666666666666666,
+      "spacing": 1
+    }
+  },
+  "designSystemSize": {
+    "colors": 46,
+    "typography": 3,
+    "components": 0
+  }
+}

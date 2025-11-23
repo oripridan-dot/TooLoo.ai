@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // GITHUB_CONTEXT_SYSTEM_PROMPT.js
 // This file shows how to inject GitHub context into provider system prompts
 // When integrated into llm-provider.js, providers will see this context

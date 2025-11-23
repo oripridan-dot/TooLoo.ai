@@ -1,0 +1,262 @@
+{
+  "id": "extract-1763653562810",
+  "timestamp": "2025-11-20T15:46:02.810Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://friendly-space-adventure-x5qq564gjjp6cv9w9.github.dev",
+  "extractedAt": "2025-11-20T15:46:02.810Z",
+  "brand": {
+    "name": "GitHub",
+    "favicon": "https://github.githubassets.com/favicons/favicon",
+    "logo": "https://github.githubassets.com/assets/github-logo-55c5b9a1fe52.png",
+    "description": "GitHub is where people build software. More than 150 million people use GitHub to discover, fork, and contribute to over 420 million projects.",
+    "colors": {
+      "primary": null,
+      "accent": null
+    }
+  },
+  "structure": {
+    "totalElements": 293,
+    "hierarchy": {
+      "estimatedDepth": 6,
+      "mainSections": 1
+    },
+    "mainSections": [
+      {
+        "name": "Main Content",
+        "count": 1,
+        "estimated": true
+      }
+    ],
+    "componentCount": {
+      "buttons": 12,
+      "forms": 1,
+      "inputs": 16,
+      "images": 0,
+      "links": 11,
+      "headings": 2,
+      "cards": 1,
+      "modals": 1
+    }
+  },
+  "visualAssets": {
+    "icons": {
+      "svgInline": 12,
+      "iconFonts": 15,
+      "details": [
+        {
+          "name": "fallback",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "false",
+          "type": "icon-font"
+        },
+        {
+          "name": "icons/favicon.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icons/favicon.svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icons/favicon",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon octicon-alert",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-button-56c65aeb-5d8b-4842-b41f-8cc5c4ae5533",
+          "type": "icon-font"
+        },
+        {
+          "name": "iconOnly Button--invisible Button--medium flash-close js-flash-close",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon octicon-x Button-visual",
+          "type": "icon-font"
+        },
+        {
+          "name": "Icon--bKG5v",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon octicon-mark-github SessionsAuthHeader-module__avatarCoinGithub--Gu21L",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon octicon-x",
+          "type": "icon-font"
+        },
+        {
+          "name": "false&amp;is_emu_login=false&amp;mobile_ios=false&amp;return_to=https%3A%2F%2Fgithub.com%2Fcodespaces%2Ffriendly-space-adventure-x5qq564gjjp6cv9w9",
+          "type": "icon-font"
+        }
+      ],
+      "svgDetails": [
+        {
+          "id": "inline-svg-0",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-alert\">\n    <path d=\"M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.08..."
+        },
+        {
+          "id": "inline-svg-1",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-x Button-visual\">\n    <path d=\"M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l..."
+        },
+        {
+          "id": "inline-svg-2",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" focusable=\"false\" class=\"octicon octicon-mark-github SessionsAuthHeader-module__avatarCoinGithub--Gu21L\" viewBox=\"0 0 24 24\" width=\"48\" height=\"48\" fill=\"currentColor\" display=..."
+        },
+        {
+          "id": "inline-svg-3",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-x\">\n    <path d=\"M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749..."
+        },
+        {
+          "id": "inline-svg-4",
+          "type": "inline-svg",
+          "content": "<svg aria-label=\"Dismiss\" role=\"img\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-x\">\n    <path d=\"M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3..."
+        },
+        {
+          "id": "inline-svg-5",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-alert\">\n    <path d=\"M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.08..."
+        },
+        {
+          "id": "inline-svg-6",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-x\">\n    <path d=\"M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749..."
+        },
+        {
+          "id": "inline-svg-7",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-x\">\n    <path d=\"M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749..."
+        },
+        {
+          "id": "inline-svg-8",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-copy js-clipboard-copy-icon m-2\">\n    <path d=\"M0 6.75C0 5.784.784 5 ..."
+        },
+        {
+          "id": "inline-svg-9",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-check js-clipboard-check-icon color-fg-success d-none m-2\">\n    <path..."
+        },
+        {
+          "id": "inline-svg-10",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-copy js-clipboard-copy-icon\">\n    <path d=\"M0 6.75C0 5.784.784 5 1.75..."
+        },
+        {
+          "id": "inline-svg-11",
+          "type": "inline-svg",
+          "content": "<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-check js-clipboard-check-icon color-fg-success d-none\">\n    <path d=\"..."
+        }
+      ]
+    },
+    "images": {
+      "total": 0,
+      "sample": [],
+      "assets": []
+    },
+    "patterns": {
+      "gradients": 0,
+      "shadows": 0,
+      "animations": 0,
+      "borderRadii": 0,
+      "details": {
+        "gradients": [],
+        "shadows": [],
+        "animations": [],
+        "borderRadii": []
+      }
+    }
+  },
+  "tokens": {
+    "colors": {
+      "#1e2327": {
+        "hex": "#1e2327",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#000000": {
+        "hex": "#000000",
+        "role": "hex-value",
+        "context": "found"
+      }
+    },
+    "typography": {},
+    "spacing": {
+      "xs": "360px"
+    },
+    "components": {}
+  },
+  "statistics": {
+    "colorsExtracted": 2,
+    "typographyExtracted": 0,
+    "spacingExtracted": 1,
+    "componentsExtracted": 0,
+    "estimatedMaturity": 0
+  },
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#1e2327",
+        "rgb": {
+          "r": 30,
+          "g": 35,
+          "b": 39
+        },
+        "hsl": {
+          "h": 207,
+          "s": 13,
+          "l": 14
+        },
+        "lightness": 14,
+        "confidence": 0.85
+      },
+      "secondary": {},
+      "semantic": {},
+      "palettes": [],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": null,
+      "hierarchy": [],
+      "recommended": {}
+    },
+    "spacing": {
+      "scale": [],
+      "increment": null,
+      "consistency": 0,
+      "suggested": {}
+    },
+    "completeness": 0,
+    "maturity": 0,
+    "readiness": 4,
+    "confidence": {
+      "colors": 0.2
+    }
+  },
+  "designSystemSize": {
+    "colors": 50,
+    "typography": 3,
+    "components": 0
+  }
+}

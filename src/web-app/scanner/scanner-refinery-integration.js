@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Integration Example: AI Chat Scanner with Dynamic Refinery
  * Shows how to use the refinery engine within the scanner

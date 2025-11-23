@@ -1,0 +1,616 @@
+{
+  "id": "extract-1763654101166",
+  "timestamp": "2025-11-20T15:55:01.166Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://www.warnerbros.com",
+  "extractedAt": "2025-11-20T15:55:01.166Z",
+  "brand": {
+    "name": "www.warnerbros.com",
+    "favicon": "https://www.warnerbros.com/assets/favicon.ico",
+    "logo": null,
+    "description": "",
+    "colors": {
+      "primary": null,
+      "accent": null
+    }
+  },
+  "structure": {
+    "totalElements": 862,
+    "hierarchy": {
+      "estimatedDepth": 8,
+      "mainSections": 2
+    },
+    "mainSections": [
+      {
+        "name": "Header",
+        "count": 57,
+        "estimated": true
+      },
+      {
+        "name": "Navigation",
+        "count": 4,
+        "estimated": true
+      }
+    ],
+    "componentCount": {
+      "buttons": 2,
+      "forms": 0,
+      "inputs": 1,
+      "images": 13,
+      "links": 99,
+      "headings": 2,
+      "cards": 0,
+      "modals": 0
+    }
+  },
+  "visualAssets": {
+    "icons": {
+      "svgInline": 20,
+      "iconFonts": 9,
+      "details": [
+        {
+          "name": "icon",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.ico",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-16x16.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-32x32.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon{height:1.375rem;} .frHJmC a svg.linkedin-icon{height:1.25rem;margin-top:-0.125rem;} .frHJmC a svg.youtube-icon{height:1.4375rem;} .frHJmC a svg.newsletter-icon{height:1.25rem;margin-top:-0.0625rem;} @media not all and (pointer:coarse),(-ms-high-contrast:none),(-ms-high-contrast:active){.frHJmC a svg:hover{-webkit-transform:translate(0,-50%) scale(1.25);-ms-transform:translate(0,-50%) scale(1.25);transform:translate(0,-50%) scale(1.25);-webkit-transition:-webkit-transform 0.5s ease-out;-webkit-transition:transform 0.5s ease-out;transition:transform 0.5s ease-out;}.frHJmC a svg.twitter-icon:hover{fill:#38a1f3;}.frHJmC a svg.facebook-icon:hover{fill:#1877f2;}.frHJmC a svg.instagram-icon:hover{fill:#bc2a8d;}.frHJmC a svg.pinterest-icon:hover{fill:#e60023;}.frHJmC a svg.linkedin-icon:hover{fill:#00a0dc;}.frHJmC a svg.youtube-icon:hover{fill:#ff0000;}.frHJmC a svg.newsletter-icon:hover{fill:#3b5998;}} @media (pointer:coarse){.frHJmC a svg.twitter-icon:active{fill:#38a1f3;}.frHJmC a svg.facebook-icon:active{fill:#1877f2;}.frHJmC a svg.instagram-icon:active{fill:#bc2a8d;}.frHJmC a svg.pinterest-icon:active{fill:#e60023;}.frHJmC a svg.linkedin-icon:active{fill:#00a0dc;}.frHJmC a svg.youtube-icon:active{fill:#ff0000;}.frHJmC a svg.newsletter-icon:active{fill:#3b5998;}}\n/* sc-component-id: sc-cmTdod */\n.gpZYhI{width:100%;padding:0.5rem 0 0.75rem 0;} .gpZYhI a{line-height:1rem;color:#ffffff;white-space:normal;cursor:pointer;} .gpZYhI a span{margin-left:0.25rem;color:#999999;} @media (max-width:989px){.gpZYhI a{display:block;padding:0.5rem 0;}} @media (min-width:990px){.gpZYhI{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;-ms-flex-pack:justify;justify-content:space-between;padding:0.5rem 0;background-color:#0e0e0e;}.gpZYhI a{display:inline-block;}}\n/* sc-component-id: sc-jwKygS */\n.fHjRgX{display:inline-block;width:50%;box-sizing:border-box;padding:0 0 0 1.5rem;text-align:left;vertical-align:top;} @media (max-width:989px){.fHjRgX{padding-right:1rem;}} @media (min-width:990px){.fHjRgX{width:auto;}.fHjRgX a{white-space:nowrap;padding-right:1rem;}} @media print{.fHjRgX{display:none;}}\n/* sc-component-id: sc-btzYZH */\n.gjMtSm{display:inline-block;width:50%;box-sizing:border-box;padding:0 1.5rem 0 0;text-align:right;vertical-align:top;} @media (max-width:989px){.gjMtSm{border-left:1px solid #373737;border-left:1px solid rgba(255,255,255,0.1);padding-left:1rem;text-align:left;}} @media (min-width:990px){.gjMtSm{width:auto;}.gjMtSm a{white-space:nowrap;}.gjMtSm a:not(:first-of-type){padding-left:1rem;}} @media print{.gjMtSm{display:none;}}\n/* sc-component-id: sc-lhVmIH */\n.knmvIr{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;font-size:0.8125rem;color:#ffffff;background-color:#1a1a1a;-webkit-print-color-adjust:exact;clear:both;}\n/* sc-component-id: sc-elJkPf */\n.ceFbBU{position:relative;display:block;width:2.8125rem;height:100%;background:transparent;border:none;cursor:pointer;} .ceFbBU span{display:block;position:absolute;background-color:white;height:2px;opacity:1;left:0.625rem;right:0.625rem;-webkit-transform:rotate(0deg);-ms-transform:rotate(0deg);transform:rotate(0deg);-webkit-transition:all 0.6s cubic-bezier(0.25,1.7,0.35,0.8);transition:all 0.6s cubic-bezier(0.25,1.7,0.35,0.8);-webkit-transition-property:opacity,-webkit-transform;-webkit-transition-property:opacity,transform;transition-property:opacity,transform;} .ceFbBU span:nth-child(1){top:30%;} .ceFbBU span:nth-child(2),.ceFbBU span:nth-child(3){top:50%;} .ceFbBU span:nth-child(4){top:69%;} .ceFbBU:hover span{box-shadow:0 0 5px 0 rgba(255,255,255,1);} @media (max-width:768px){.ceFbBU:hover span{box-shadow:none;}} @media (max-width:1024px) and (orientation:landscape){.ceFbBU:hover span{outline:none;}} .ceFbBU:focus{outline:none;}\n/* sc-component-id: sc-jtRfpW */\n.exdZbj{width:4.25rem;} .exdZbj",
+          "type": "icon-font"
+        },
+        {
+          "name": "false",
+          "type": "icon-font"
+        },
+        {
+          "name": "false,\\",
+          "type": "icon-font"
+        },
+        {
+          "name": "falla-de-san-andres-0\\",
+          "type": "icon-font"
+        }
+      ],
+      "svgDetails": [
+        {
+          "id": "inline-svg-0",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M36.877 9.965V8.042l-2.573-1.393V4.638l-1.319-.627C29.239 2.222 25.093 1.028 20.313.392l-.312-.043-.312.043c-4.78..."
+        },
+        {
+          "id": "inline-svg-1",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M19.65 10c0-5.523-4.4-10-9.825-10C4.399 0 0 4.477 0 10s4.399 10 9.825 10h9.824c.234-.165.351-.436.351-.814 0-.378..."
+        },
+        {
+          "id": "inline-svg-2",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M18.549 3.409h-6.183L14.562.772c-.004-.294-.108-.506-.31-.634s-.476-.156-.821-.083l-2.616 3.354h-1.63L6.57.055c-...."
+        },
+        {
+          "id": "inline-svg-3",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M10.017 8.27v7.92c-1.17.068-1.817.14-1.941.215-.532.324-.933 1.084-.933 1.084s-.9 1.367-2.007 2.06c-1.658 1.036-4..."
+        },
+        {
+          "id": "inline-svg-4",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 21\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M9.767 16.427l-5.26 2.765a.5.5 0 01-.725-.527l1.005-5.857a.5.5 0 00-.144-.442L.388 8.218a.5.5 0 01.277-.853l5.88-..."
+        },
+        {
+          "id": "inline-svg-5",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M.833 6.25h10.834c.46 0 .833.433.833.968v11.915a.5.5 0 01-.75.433L6.45 16.498a.5.5 0 00-.504.002L.754 19.557A.5.5..."
+        },
+        {
+          "id": "inline-svg-6",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 66 58\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M41.11 50.9H24.26a1 1 0 010-2h16.85a1 1 0 010 2zM35.408 21.353c-.275 0-.524.105-1.296.654v2.958c1.335-1.492 1.715..."
+        },
+        {
+          "id": "inline-svg-7",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M19.252 19.394H3.03a.455.455 0 01-.454-.455v-3.112c0-.192.122-.363.303-.427a2.097 2.097 0 00.009-3.885.455.455 0 ..."
+        },
+        {
+          "id": "inline-svg-8",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 18 18\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M4.863 5.754V3.762C4.863 1.684 6.715 0 9 0c2.285 0 4.137 1.684 4.137 3.762v1.992h2.316a.5.5 0 01.493.415l1.952 11..."
+        },
+        {
+          "id": "inline-svg-9",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M18.89 16.676l-3.106-3.109c1.016-1.467 1.524-3.104 1.524-4.907a8.51 8.51 0 00-.682-3.365 8.655 8.655 0 00-1.844-2..."
+        },
+        {
+          "id": "inline-svg-10",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M18.89 16.676l-3.106-3.109c1.016-1.467 1.524-3.104 1.524-4.907a8.51 8.51 0 00-.682-3.365 8.655 8.655 0 00-1.844-2..."
+        },
+        {
+          "id": "inline-svg-11",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 12 22\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M11.603 19.193l-8.207-8.06a.56.56 0 010-.803l8.207-8.06a1.313 1.313 0 000-1.88 1.371 1.371 0 00-1.914 0L.595 9.32..."
+        },
+        {
+          "id": "inline-svg-12",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 12 22\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M11.603 19.193l-8.207-8.06a.56.56 0 010-.803l8.207-8.06a1.313 1.313 0 000-1.88 1.371 1.371 0 00-1.914 0L.595 9.32..."
+        },
+        {
+          "id": "inline-svg-13",
+          "type": "inline-svg",
+          "content": "<svg focusable=\"false\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M36.877 9.965V8.042l-2.573-1.393V4.638l-1.319-.627C29.239 2.222 25.093 1.028 20.313.392l-.312-.043-.312.043c-4.78..."
+        },
+        {
+          "id": "inline-svg-14",
+          "type": "inline-svg",
+          "content": "<svg class=\"facebook-icon\" viewBox=\"0 0 32 32\" focusable=\"false\" aria-label=\"Facebook\"><path d=\"M31.997 15.999c0-8.836-7.163-15.999-15.999-15.999s-15.999 7.163-15.999 15.999c0 7.985 5.851 14.604 13.49..."
+        },
+        {
+          "id": "inline-svg-15",
+          "type": "inline-svg",
+          "content": "<svg class=\"twitter-icon\" viewBox=\"0 0 32 32\" focusable=\"false\" aria-label=\"Twitter\"><path d=\"M 17.855469 12.695312 L 29.023438 0 L 26.375 0 L 16.679688 11.023438 L 8.933594 0 L 0 0 L 11.710938 16.671..."
+        },
+        {
+          "id": "inline-svg-16",
+          "type": "inline-svg",
+          "content": "<svg class=\"pinterest-icon\" viewBox=\"0 0 32 32\" focusable=\"false\" aria-label=\"Pinterest\"><path d=\"M16 2.138c-7.656 0-13.863 6.206-13.863 13.863 0 5.875 3.656 10.887 8.813 12.906-0.119-1.094-0.231-2.78..."
+        },
+        {
+          "id": "inline-svg-17",
+          "type": "inline-svg",
+          "content": "<svg class=\"instagram-icon\" viewBox=\"0 0 32 32\" focusable=\"false\" aria-label=\"Instagram\"><path d=\"M16 2.881c4.275 0 4.781 0.019 6.462 0.094 1.563 0.069 2.406 0.331 2.969 0.55 0.744 0.288 1.281 0.638 1..."
+        },
+        {
+          "id": "inline-svg-18",
+          "type": "inline-svg",
+          "content": "<svg class=\"linkedin-icon\" viewBox=\"0 0 32 32\" focusable=\"false\" aria-label=\"LinkedIn\"><path d=\"M12 12h5.535v2.837h0.079c0.77-1.381 2.655-2.837 5.464-2.837 5.842 0 6.922 3.637 6.922 8.367v9.633h-5.769..."
+        },
+        {
+          "id": "inline-svg-19",
+          "type": "inline-svg",
+          "content": "<svg class=\"youtube-icon\" viewBox=\"0 0 32 32\" focusable=\"false\" aria-label=\"Youtube\"><path d=\"M31.681 9.6c0 0-0.313-2.206-1.275-3.175-1.219-1.275-2.581-1.281-3.206-1.356-4.475-0.325-11.194-0.325-11.19..."
+        }
+      ]
+    },
+    "images": {
+      "total": 13,
+      "sample": [
+        {
+          "src": "https://www.warnerbros.com/assets/images/home/wb/logo.png",
+          "alt": "Logo",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo WB",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo WB",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo WB",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo Comedy",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo Comedy",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo Comedy",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo Horror",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo Horror",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo Horror",
+          "type": "png"
+        }
+      ],
+      "assets": [
+        {
+          "src": "https://www.warnerbros.com/assets/images/home/wb/logo.png",
+          "alt": "Logo",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo WB",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo WB",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo WB",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo Comedy",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo Comedy",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo Comedy",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo Horror",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo Horror",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo Horror",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Instagram Logo Epics",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "Tiktok Logo Epics",
+          "type": "png"
+        },
+        {
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3",
+          "alt": "FB Logo Epics",
+          "type": "png"
+        }
+      ]
+    },
+    "patterns": {
+      "gradients": 3,
+      "shadows": 5,
+      "animations": 0,
+      "borderRadii": 3,
+      "details": {
+        "gradients": [
+          {
+            "id": "gradient-0",
+            "value": "linear-gradient(to right,transparent,#015cfe 50%,transparent)"
+          },
+          {
+            "id": "gradient-1",
+            "value": "linear-gradient( to right, transparent, #015cfe 0%, #015cfe 100%, transparent )"
+          },
+          {
+            "id": "gradient-2",
+            "value": "linear-gradient( 270deg, #015cfe90, #0022af )"
+          }
+        ],
+        "shadows": [
+          {
+            "id": "shadow-0",
+            "value": "box-shadow:0 0 5px 0 rgba(255,255,255,1)"
+          },
+          {
+            "id": "shadow-1",
+            "value": "box-shadow:none"
+          },
+          {
+            "id": "shadow-2",
+            "value": "text-shadow:0 0 5px rgba(255,255,255,0.75)"
+          },
+          {
+            "id": "shadow-3",
+            "value": "box-shadow:-2px 2px 3px rgba(0,0,0,0.2),2px 2px 3px rgba(0,0,0,0.2)"
+          },
+          {
+            "id": "shadow-4",
+            "value": "text-shadow:1px 1px 2px rgba(0,0,0,1)"
+          }
+        ],
+        "animations": [],
+        "borderRadii": [
+          {
+            "id": "border-radius-0",
+            "value": "15px"
+          },
+          {
+            "id": "border-radius-1",
+            "value": "1rem"
+          },
+          {
+            "id": "border-radius-2",
+            "value": "50%"
+          }
+        ]
+      }
+    }
+  },
+  "tokens": {
+    "colors": {
+      "#04006c": {
+        "hex": "#04006c",
+        "role": "background",
+        "context": "css"
+      },
+      "#0022af": {
+        "hex": "#0022af",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#fec200": {
+        "hex": "#fec200",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#015cfe": {
+        "hex": "#015cfe",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#05008c": {
+        "hex": "#05008c",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#eeeeee": {
+        "hex": "#eeeeee",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#7f7f7f": {
+        "hex": "#7f7f7f",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#cccccc": {
+        "hex": "#cccccc",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#f2f2f2": {
+        "hex": "#f2f2f2",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#1e1e1e": {
+        "hex": "#1e1e1e",
+        "role": "hex-value",
+        "context": "found"
+      }
+    },
+    "typography": {
+      "font-montserrat": "Montserrat",
+      "font-arial": "Arial",
+      "font-helvetica": "Helvetica"
+    },
+    "spacing": {
+      "xs": "1px",
+      "sm": "2px",
+      "md": "3px",
+      "lg": "4px",
+      "xl": "5px",
+      "2xl": "6px",
+      "3xl": "8px",
+      "4xl": "9px",
+      "5xl": "10px"
+    },
+    "components": {}
+  },
+  "statistics": {
+    "colorsExtracted": 10,
+    "typographyExtracted": 3,
+    "spacingExtracted": 9,
+    "componentsExtracted": 0,
+    "estimatedMaturity": 80
+  },
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#0022af",
+        "rgb": {
+          "r": 0,
+          "g": 34,
+          "b": 175
+        },
+        "hsl": {
+          "h": 228,
+          "s": 100,
+          "l": 34
+        },
+        "lightness": 34,
+        "confidence": 0.85
+      },
+      "secondary": {
+        "name": "secondary",
+        "hex": "#1e1e1e",
+        "rgb": {
+          "r": 30,
+          "g": 30,
+          "b": 30
+        },
+        "hsl": {
+          "h": 0,
+          "s": 0,
+          "l": 12
+        },
+        "confidence": 0.75
+      },
+      "semantic": {
+        "warning": {
+          "hex": "#fec200",
+          "confidence": 0.8
+        }
+      },
+      "palettes": [
+        {
+          "hue": 0,
+          "name": "Red",
+          "shades": [
+            {
+              "hex": "#1e1e1e",
+              "lightness": 12
+            },
+            {
+              "hex": "#7f7f7f",
+              "lightness": 50
+            },
+            {
+              "hex": "#cccccc",
+              "lightness": 80
+            },
+            {
+              "hex": "#eeeeee",
+              "lightness": 93
+            },
+            {
+              "hex": "#f2f2f2",
+              "lightness": 95
+            }
+          ]
+        }
+      ],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": {
+        "display": "Montserrat",
+        "body": "Arial",
+        "confidence": 0.7
+      },
+      "hierarchy": [
+        {
+          "level": "h1",
+          "size": "48px",
+          "font": "Montserrat",
+          "weight": "700"
+        },
+        {
+          "level": "h2",
+          "size": "36px",
+          "font": "Montserrat",
+          "weight": "700"
+        },
+        {
+          "level": "h3",
+          "size": "28px",
+          "font": "Montserrat",
+          "weight": "600"
+        },
+        {
+          "level": "h4",
+          "size": "20px",
+          "font": "Arial",
+          "weight": "600"
+        },
+        {
+          "level": "body",
+          "size": "16px",
+          "font": "Arial",
+          "weight": "400"
+        },
+        {
+          "level": "small",
+          "size": "12px",
+          "font": "Arial",
+          "weight": "400"
+        },
+        {
+          "level": "caption",
+          "size": "10px",
+          "font": "Arial",
+          "weight": "500"
+        }
+      ],
+      "recommended": {
+        "displayFont": "Montserrat",
+        "bodyFont": "Arial",
+        "pairingScore": 0.7
+      }
+    },
+    "spacing": {
+      "scale": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        9,
+        10
+      ],
+      "increment": 1,
+      "consistency": 1,
+      "suggested": {
+        "xs": "0.5px",
+        "sm": "1px",
+        "md": "1.5px",
+        "lg": "2px",
+        "xl": "3px",
+        "2xl": "4px",
+        "3xl": "6px"
+      }
+    },
+    "completeness": 100,
+    "maturity": 85,
+    "readiness": 93,
+    "confidence": {
+      "colors": 1,
+      "typography": 1,
+      "spacing": 1
+    }
+  },
+  "designSystemSize": {
+    "colors": 60,
+    "typography": 3,
+    "components": 0
+  }
+}

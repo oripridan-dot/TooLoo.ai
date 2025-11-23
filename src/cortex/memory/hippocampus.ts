@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import * as fs from "fs/promises";
 import * as path from "path";

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // Snapshot Composer (P6) - Assembles final cognitive snapshot
 // Combines segments, patterns, and traits into exportable JSON format
 // Output: Complete conversation intelligence snapshot ready for UI/export

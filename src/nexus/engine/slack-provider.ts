@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Slack Provider
  * Handles communication with Slack API for notifications and interactions

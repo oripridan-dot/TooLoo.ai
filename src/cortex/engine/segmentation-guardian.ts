@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // Segmentation Guardian
 // - Monitors latency/segments drift from health logs
 // - Gating: runs benchmark suites before enabling riskier configs

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * TooLoo.ai Brand Color Palette & Customization System
  * Provides theme management and real-time color customization

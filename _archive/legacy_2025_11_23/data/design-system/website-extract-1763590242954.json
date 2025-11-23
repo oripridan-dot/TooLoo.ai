@@ -1,0 +1,462 @@
+{
+  "id": "extract-1763590242953",
+  "timestamp": "2025-11-19T22:10:42.953Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://cuberto.com",
+  "extractedAt": "2025-11-19T22:10:42.953Z",
+  "brand": {
+    "name": "Cuberto | Digital Product Agency",
+    "favicon": "https://cuberto.com/favicon-32x32.png",
+    "logo": "https://cuberto.com/cover.png",
+    "description": "Cuberto is a UI/UX design agency based in USA. We specialise in UI/UX design, branding, web, and mobile development.",
+    "colors": {
+      "primary": null,
+      "accent": null
+    }
+  },
+  "structure": {
+    "totalElements": 569,
+    "hierarchy": {
+      "estimatedDepth": 8,
+      "mainSections": 4
+    },
+    "mainSections": [
+      {
+        "name": "Header",
+        "count": 1,
+        "estimated": true
+      },
+      {
+        "name": "Navigation",
+        "count": 1,
+        "estimated": true
+      },
+      {
+        "name": "Main Content",
+        "count": 1,
+        "estimated": true
+      },
+      {
+        "name": "Footer",
+        "count": 1,
+        "estimated": true
+      }
+    ],
+    "componentCount": {
+      "buttons": 54,
+      "forms": 0,
+      "inputs": 0,
+      "images": 18,
+      "links": 51,
+      "headings": 7,
+      "cards": 90,
+      "modals": 4
+    }
+  },
+  "visualAssets": {
+    "icons": {
+      "svgInline": 11,
+      "iconFonts": 13,
+      "details": [
+        {
+          "name": "icon",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-32x32.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-16x16.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon{mix-blend-mode:normal;transition-delay:0s}.cb-cursor.-icon:before{transform:scale(1)}.cb-cursor.-icon.-active:before,.cb-navbar.-open .cb-navbar-toggle button.cb-cursor.-icon:before{transform:scale(.9)}.cb-cursor.-menu{z-index:250}.menu-open .cb-cursor.-menu{transition:none}.cb-cursor.-menu:before{transform:scale(.6)}.cb-cursor.-menu.-active:before,.cb-navbar.-open .cb-navbar-toggle button.cb-cursor.-menu:before{transform:scale(.55)}.cb-cursor.-hidden:before{transform:scale(0)}.cb-cursor.-under{z-index:0}.cb-cursor-text{position:absolute;top:-1.8rem;left:-1.8rem;width:3.6rem;height:3.6rem;display:flex;align-items:center;justify-content:center;transform:scale(0) rotate(10deg);opacity:0;color:#fff;font-size:1.6rem;line-height:120%;text-align:center;transition:opacity .4s,transform .3s}.cb-cursor.-icon .cb-cursor-text,.cb-cursor.-text .cb-cursor-text{opacity:1;transform:scale(1)}.cb-cursor.-icon .cb-cursor-text{font-size:2rem}.cb-cursor.-inverse .cb-cursor-text{color:#000}.cb-cursor-media{position:absolute;width:36rem;height:36rem;margin:-18rem 0 0 -18rem}.cb-cursor-media img,.cb-cursor-media video{width:100%;height:100%;object-fit:cover;transform:translateZ(0)}.cb-cursor-media-box{position:relative;width:100%;height:100%;overflow:hidden;transform:scale(0) translateZ(0);opacity:0;border-radius:50%;transition:transform .35s,opacity .2s .2s}.cb-cursor.-media .cb-cursor-media-box{opacity:1;transform:scale(.696);transition-duration:.4s,.4s;transition-delay:0s,0s}.cb-cursor.-media{z-index:0;mix-blend-mode:normal;transition-delay:0s}.cb-cursor.-media .cb-cursor-media-box{opacity:1;transform:scale(.696);transition-duration:.4s,.4s;transition-delay:0s,0s}.cb-cursor.-media.-media-lg .cb-cursor-media-box{transform:scale(1)!important}.cb-cursor.-media.-media-blend{z-index:150;mix-blend-mode:exclusion}@supports (mix-blend-mode:exclusion){.cb-cursor.-media.-media-blend .cb-cursor-media-box{filter:invert(1)}}.cb-divider{position:relative;height:1px}.cb-divider:before{content:",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon{position:relative;font-size:2rem;line-height:1;transition:opacity .2s,transform .4s}.cb-btn_round.-sm .cb-btn_round-icon{font-size:1.8rem}.cb-btn_round.-alt",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon{opacity:0}@media (pointer:fine){.cb-btn_round:hover .cb-btn_round-icon{transform:scale(.95);transition:transform .7s cubic-bezier(.34,4.56,.64,1)}}.cb-btn_round-icon svg{position:relative;top:-1px}.cb-btn_round-alt{position:absolute;top:0;left:0;right:0;bottom:0;display:inline-grid;grid-auto-flow:column;align-items:center;justify-content:center;gap:inherit;opacity:0;transition:opacity .2s}.cb-btn_round.-alt .cb-btn_round-alt{opacity:1}.cb-input_light{position:relative;display:block}.cb-input_light-line{position:absolute;top:0;left:0;right:0;bottom:0;width:300%;transform:translateX(-66.66%);opacity:.3;background-image:url('data:image/svg+xml,<svg xmlns=",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon{position:relative;display:inline-block;margin:2.5rem 0 0 0}@media (min-width:768px){.cb-summary-icon{margin:5rem 0 0 0}}.cb-summary-icon:first-of-type{margin:0}.cb-summary-icon img,.cb-summary-icon svg,.cb-summary-icon video{width:6rem;height:6rem;object-fit:cover}@media (min-width:768px){.cb-summary-icon img,.cb-summary-icon svg,.cb-summary-icon video{width:6.4rem;height:6.4rem}}.cb-summary-icon.-rotating img,.cb-summary-icon.-rotating svg,.cb-summary-icon.-rotating video{animation:cb-fx-rotating-360 5s infinite linear}.cb-summary-icon.-rotating.-cw img,.cb-summary-icon.-rotating.-cw svg,.cb-summary-icon.-rotating.-cw video{animation-direction:reverse}.cb-summary-icon.-stroka svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-stroka 5s infinite linear}.cb-summary-icon.-stroka svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-stroka{0%{stroke-dashoffset:0;stroke-dasharray:148 10}50%{stroke-dasharray:135 30}100%{stroke-dashoffset:157;stroke-dasharray:148 10}}.cb-summary-info{position:relative;margin:4rem 0 0 0}@media (min-width:768px){.cb-summary-info{margin:8rem 0 0 0}}@media (max-width:767px){.cb-summary-grid.-compact .cb-summary-info{margin:2rem 0 0 0}}@media (min-width:768px){.cb-summary-info:first-of-type{margin-top:0}}.cb-summary-caption{margin:0 0 2.4rem 0}@media (min-width:768px){.cb-summary-caption{margin:0 0 4.5rem 0}}.cb-summary-caption h2,.cb-summary-caption h3{font-weight:500;font-size:1.4rem;line-height:110%;text-transform:uppercase}@media (min-width:768px){.cb-summary-caption h2,.cb-summary-caption h3{font-size:1.28rem}}@media (min-width:768px){.cb-summary-caption.-offset{display:inline-block;position:absolute;top:.4rem;left:-2.5rem;margin:0}}@media (min-width:768px){.cb-summary-caption.-offset{top:.6rem;left:-4.2rem}}@media (min-width:768px){.cb-summary-caption.-offset h2,.cb-summary-caption.-offset h3{position:relative;left:-100%}}.cb-summary-brief{font-size:2.4rem;line-height:120%;letter-spacing:.02em}@media (min-width:768px){.cb-summary-brief{max-width:50rem;font-size:2.4rem}}.cb-summary-brief p{margin-bottom:1em}.cb-summary-brief p:last-of-type{margin-bottom:0}.cb-summary-text{font-size:2rem;line-height:120%}@media (min-width:768px){.cb-summary-text{max-width:50rem;font-size:2.6rem;letter-spacing:.02em}}@media (min-width:768px){.cb-summary-grid.-compact .cb-summary-text{max-width:86%}}.cb-summary-text p{margin-bottom:1em}.cb-summary-text p:last-of-type{margin-bottom:0}.cb-summary-entries{display:grid;gap:6rem}@media (min-width:768px){.cb-summary-entries{gap:4rem}}.cb-summary-cards{display:grid;gap:6rem}@media (min-width:768px){.cb-summary-cards{grid-template-columns:repeat(2,50rem);gap:10rem;justify-content:space-between}}.cb-summary-col{display:grid;grid-auto-rows:-webkit-min-content;grid-auto-rows:min-content;gap:6rem}@media (min-width:768px){.cb-summary-col{gap:10rem}.cb-summary-col:last-child{margin-top:33.1rem}.cb-summary-cards.-reverse .cb-summary-col:last-child{margin-top:8rem}}@media (min-width:768px){.cb-summary-entries.-cards .cb-summary-card:nth-child(2n){top:16.1rem}.cb-summary-entries.-cards .cb-summary-card:nth-child(2n):last-child{margin-bottom:16.1rem}}.cb-summary-action{margin:4rem 0 0 0}.cb-summary-more{margin:6rem 0 0 0;text-align:center}@media (min-width:768px){.cb-summary-more{margin:12rem 0 0 0}}.cb-overview{position:relative;overflow:hidden}.cb-overview-bg{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%}.cb-overview-bg-media{width:100%;height:100%}.cb-overview-bg-media video{width:100%;height:100%;object-fit:cover;object-position:bottom center}.cb-overview-header{margin:0 0 4rem 0;font-weight:500;font-size:4.5rem;line-height:100%;letter-spacing:-.02em}@media (min-width:768px){.cb-overview-header{margin:0 0 6rem 0;font-size:9rem}}@media (max-width:767px){.cb-overview-header:lang(ru){font-size:4.25rem}}.cb-overview-header:last-of-type{margin-bottom:0}.cb-overview-divider{margin:2rem 0 2.5rem 0}@media (min-width:768px){.cb-overview-divider{margin:6rem 0 4.5rem 0}}@media (min-width:768px){.cb-overview-grid{display:flex}}.cb-overview-grid-col{flex:0}.cb-overview-grid-col.-left{margin:0 0 2rem 0}@media (min-width:768px){.cb-overview-grid-col.-left{flex-basis:28%}}.cb-overview-grid-col.-right{flex-grow:1;min-width:0}.cb-overview-icon{position:relative;display:inline-block;margin:2.5rem 0 0 0;z-index:-1}@media (min-width:768px){.cb-overview-icon{margin:5rem 0 0 0}}.cb-overview-icon:first-of-type{margin:0}.cb-overview-icon img,.cb-overview-icon svg,.cb-overview-icon video{width:6rem;height:6rem;object-fit:cover}@media (min-width:768px){.cb-overview-icon img,.cb-overview-icon svg,.cb-overview-icon video{width:6.4rem;height:6.4rem}}.cb-overview-icon.-rotating img,.cb-overview-icon.-rotating svg,.cb-overview-icon.-rotating video{animation:cb-fx-rotating-360 5s infinite linear}.cb-overview-icon.-stroka svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-stroka 5s infinite linear}.cb-overview-icon.-stroka svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-stroka{0%{stroke-dashoffset:0;stroke-dasharray:148 10}50%{stroke-dasharray:135 30}100%{stroke-dashoffset:157;stroke-dasharray:148 10}}.cb-overview-info{position:relative;margin:6rem 0 0 0}@media (min-width:768px){.cb-overview-info{margin:8rem 0 0 0}}.cb-overview-info:first-of-type{margin-top:0}.cb-overview-caption{margin:0 0 2.4rem 0}@media (min-width:768px){.cb-overview-caption{margin:0 0 4.5rem 0}}.cb-overview-caption h2,.cb-overview-caption h3{font-size:1.4rem;line-height:110%;text-transform:uppercase}@media (min-width:768px){.cb-overview-caption h2,.cb-overview-caption h3{font-size:1.6rem}}@media (min-width:768px){.cb-overview-caption.-offset{display:inline-block;position:absolute;top:.4rem;left:-2.5rem;margin:0}}@media (min-width:768px){.cb-overview-caption.-offset{top:1.2rem;left:-4rem}}@media (min-width:768px){.cb-overview-caption.-offset h2,.cb-overview-caption.-offset h3{position:relative;left:-100%}}.cb-overview-author{display:flex;align-items:center;margin-bottom:2rem}@media (min-width:768px){.cb-overview-author{margin-bottom:3.1rem}}.cb-overview-author-line{width:20px;height:1px;margin:-1px 1.4rem 0 0;flex-shrink:0;background:currentColor}.cb-overview-author-name{color:#999;font-size:1.4rem;line-height:120%;text-transform:uppercase}@media (min-width:768px){.cb-overview-author-name{font-size:1.6rem}}.cb-overview-author-name b{color:#000;font-weight:400}.cb-overview-text{max-width:94%;font-size:2rem;line-height:130%;letter-spacing:.01em}@media (min-width:768px){.cb-overview-text{max-width:86%;font-size:2.56rem}}.cb-overview-text p{margin-bottom:1em}.cb-overview-text p:last-of-type{margin-bottom:0}.cb-overview-text p:empty{display:none}blockquote .cb-overview-text p:first-of-type:before{content:",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon=",
+          "type": "icon-font"
+        }
+      ]
+    },
+    "images": {
+      "total": 18,
+      "sample": [
+        {
+          "src": "https://cuberto.com/assets/projects/puntopago/cover.jpg",
+          "alt": "The First Super-App in Latin America",
+          "type": "jpg"
+        },
+        {
+          "src": "https://cuberto.com/assets/projects/daoway/cover.jpg",
+          "alt": "Astrology planner app: plan, achieve, thrive",
+          "type": "jpg"
+        },
+        {
+          "src": "https://cuberto.com/assets/projects/riyadh/cover.jpg",
+          "alt": "Official website of Riyadh, Saudi Arabia's capital",
+          "type": "jpg"
+        },
+        {
+          "src": "https://cuberto.com/assets/projects/qvino/cover.jpg",
+          "alt": "Wine marketplace with interactive learning",
+          "type": "jpg"
+        },
+        {
+          "src": "https://cuberto.com/assets/projects/potion/cover.jpg",
+          "alt": "Sales tool for increasing conversions",
+          "type": "jpg"
+        }
+      ]
+    },
+    "patterns": {
+      "gradients": 0,
+      "shadows": 1,
+      "animations": 5,
+      "borderRadii": 8,
+      "details": {
+        "gradients": [],
+        "shadows": [
+          {
+            "id": "shadow-0",
+            "value": "box-shadow:none}.cb-input_light input:disabled,.cb-input_light textarea:disabled"
+          }
+        ],
+        "animations": [
+          {
+            "name": "cb-fx-blink"
+          },
+          {
+            "name": "cb-fx-rotating-360"
+          },
+          {
+            "name": "cb-btn_menu-open-top"
+          },
+          {
+            "name": "cb-btn_menu-open-bottom"
+          },
+          {
+            "name": "cb-overview-icon-stroka"
+          }
+        ],
+        "borderRadii": [
+          {
+            "id": "border-radius-0",
+            "value": "50%"
+          },
+          {
+            "id": "border-radius-1",
+            "value": "0"
+          },
+          {
+            "id": "border-radius-2",
+            "value": "1000px"
+          },
+          {
+            "id": "border-radius-3",
+            "value": "1000px}.cb-btn_cta-ripple{display:block"
+          },
+          {
+            "id": "border-radius-4",
+            "value": "inherit}.cb-btn_cta-ripple span{display:block"
+          },
+          {
+            "id": "border-radius-5",
+            "value": "50% 50% 0 0"
+          },
+          {
+            "id": "border-radius-6",
+            "value": "50%}@media (min-width:768px){.cb-btn_round{width:6rem"
+          },
+          {
+            "id": "border-radius-7",
+            "value": "9999px}.cb-input_checkbox-ripple{display:block"
+          }
+        ]
+      }
+    }
+  },
+  "tokens": {
+    "colors": {
+      "#000000": {
+        "hex": "#000000",
+        "role": "rgb-value",
+        "context": "found"
+      },
+      "#161616": {
+        "hex": "#161616",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#fc0019": {
+        "hex": "#fc0019",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#b7b7b7": {
+        "hex": "#b7b7b7",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#fafafa": {
+        "hex": "#fafafa",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#eb4242": {
+        "hex": "#eb4242",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#494949": {
+        "hex": "#494949",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#ffffff": {
+        "hex": "#ffffff",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#da532c": {
+        "hex": "#da532c",
+        "role": "hex-value",
+        "context": "found"
+      }
+    },
+    "typography": {
+      "font-suisse-intl": "Suisse Intl",
+      "font-manrope": "Manrope",
+      "font-sans-serif": "sans-serif"
+    },
+    "spacing": {
+      "xs": "1px",
+      "sm": "2px",
+      "md": "3px",
+      "lg": "4px",
+      "xl": "5px",
+      "2xl": "6px",
+      "3xl": "7px",
+      "4xl": "8px",
+      "5xl": "10px"
+    },
+    "components": {}
+  },
+  "statistics": {
+    "colorsExtracted": 9,
+    "typographyExtracted": 3,
+    "spacingExtracted": 9,
+    "componentsExtracted": 0,
+    "estimatedMaturity": 60
+  },
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#fc0019",
+        "rgb": {
+          "r": 252,
+          "g": 0,
+          "b": 25
+        },
+        "hsl": {
+          "h": 354,
+          "s": 100,
+          "l": 49
+        },
+        "lightness": 49,
+        "confidence": 0.85
+      },
+      "secondary": {
+        "name": "secondary",
+        "hex": "#000000",
+        "rgb": {
+          "r": 0,
+          "g": 0,
+          "b": 0
+        },
+        "hsl": {
+          "h": 0,
+          "s": 0,
+          "l": 0
+        },
+        "confidence": 0.75
+      },
+      "semantic": {
+        "error": {
+          "hex": "#da532c",
+          "confidence": 0.8
+        },
+        "warning": {
+          "hex": "#da532c",
+          "confidence": 0.8
+        }
+      },
+      "palettes": [
+        {
+          "hue": 0,
+          "name": "Red",
+          "shades": [
+            {
+              "hex": "#000000",
+              "lightness": 0
+            },
+            {
+              "hex": "#161616",
+              "lightness": 9
+            },
+            {
+              "hex": "#494949",
+              "lightness": 29
+            },
+            {
+              "hex": "#eb4242",
+              "lightness": 59
+            },
+            {
+              "hex": "#b7b7b7",
+              "lightness": 72
+            },
+            {
+              "hex": "#fafafa",
+              "lightness": 98
+            },
+            {
+              "hex": "#ffffff",
+              "lightness": 100
+            }
+          ]
+        }
+      ],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": {
+        "display": "Suisse Intl",
+        "body": "Manrope",
+        "confidence": 0.7
+      },
+      "hierarchy": [
+        {
+          "level": "h1",
+          "size": "48px",
+          "font": "Suisse Intl",
+          "weight": "700"
+        },
+        {
+          "level": "h2",
+          "size": "36px",
+          "font": "Suisse Intl",
+          "weight": "700"
+        },
+        {
+          "level": "h3",
+          "size": "28px",
+          "font": "Suisse Intl",
+          "weight": "600"
+        },
+        {
+          "level": "h4",
+          "size": "20px",
+          "font": "Manrope",
+          "weight": "600"
+        },
+        {
+          "level": "body",
+          "size": "16px",
+          "font": "Manrope",
+          "weight": "400"
+        },
+        {
+          "level": "small",
+          "size": "12px",
+          "font": "Manrope",
+          "weight": "400"
+        },
+        {
+          "level": "caption",
+          "size": "10px",
+          "font": "Manrope",
+          "weight": "500"
+        }
+      ],
+      "recommended": {
+        "displayFont": "Suisse Intl",
+        "bodyFont": "Manrope",
+        "pairingScore": 0.7
+      }
+    },
+    "spacing": {
+      "scale": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        10
+      ],
+      "increment": 1,
+      "consistency": 1,
+      "suggested": {
+        "xs": "0.5px",
+        "sm": "1px",
+        "md": "1.5px",
+        "lg": "2px",
+        "xl": "3px",
+        "2xl": "4px",
+        "3xl": "6px"
+      }
+    },
+    "completeness": 100,
+    "maturity": 60,
+    "readiness": 79,
+    "confidence": {
+      "colors": 0.9,
+      "typography": 1,
+      "spacing": 1
+    }
+  },
+  "designSystemSize": {
+    "colors": 48,
+    "typography": 3,
+    "components": 0
+  }
+}

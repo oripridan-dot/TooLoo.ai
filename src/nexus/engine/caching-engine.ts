@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Caching Engine - Response Caching Layer
  * Caches analysis results to provide 80% performance improvement for repeated queries

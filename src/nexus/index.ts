@@ -1,4 +1,4 @@
-// @version 2.1.13
+// @version 2.1.28
 import express from "express";
 import path from "path";
 import { bus } from "../core/event-bus.js";
@@ -10,7 +10,7 @@ import capabilitiesRoutes from "./routes/capabilities.js";
 import { trainingRoutes } from "./routes/training.js";
 
 export function startNexus(port?: number) {
-  const PORT = port || Number(process.env.PORT) || 3000;
+  const PORT = port || Number(process.env.PORT) || 4000;
   const app = express();
 
   app.use(express.json());

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Product Development AI Analysis Engine
  * Calls real LLM providers to analyze product ideas, critique designs, and generate insights

@@ -1,0 +1,301 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-11-17",
+  "description": "Core Principles and Concepts for TooLoo.ai Learning System",
+  "principles": {
+    "computer_science": {
+      "fundamental_theorem_of_cs": {
+        "statement": "The Church-Turing Thesis: All reasonable models of computation are equivalent in computational power",
+        "implications": [
+          "Turing machines, lambda calculus, and general recursion compute exactly the same functions",
+          "There exist uncomputable functions (Halting Problem is undecidable)",
+          "Computational complexity is model-independent (up to polynomial factors)"
+        ]
+      },
+      "big_o_complexity_hierarchy": [
+        "O(1) - Constant time (hash table lookup)",
+        "O(log n) - Logarithmic (binary search)",
+        "O(n) - Linear (simple search)",
+        "O(n log n) - Linearithmic (efficient sorting)",
+        "O(n²) - Quadratic (naive sorting)",
+        "O(n³) - Cubic (naive matrix multiplication)",
+        "O(2^n) - Exponential (brute force search)",
+        "O(n!) - Factorial (permutations)"
+      ],
+      "cap_theorem": {
+        "statement": "In distributed systems, you can guarantee at most 2 of 3: Consistency, Availability, Partition Tolerance",
+        "tradeoffs": [
+          "CA: No partition tolerance (traditional databases)",
+          "CP: Sacrifice availability (strong consistency, some unavailability)",
+          "AP: Sacrifice consistency (eventual consistency, always available)"
+        ]
+      },
+      "acid_properties": {
+        "atomicity": "All or nothing - transaction either completes fully or not at all",
+        "consistency": "Data moves from one valid state to another, integrity constraints maintained",
+        "isolation": "Concurrent transactions don't interfere with each other",
+        "durability": "Committed data persists even after failures"
+      }
+    },
+    "learning_science": {
+      "forgetting_curve": {
+        "description": "Ebbinghaus's discovery: Humans forget information exponentially without review",
+        "implications": [
+          "First review within 24 hours can restore retention to ~100%",
+          "Optimal intervals: 1 day, 3 days, 1 week, 2 weeks, 1 month",
+          "Spacing effect: Distributed practice is far superior to massed practice",
+          "Testing effect: Retrieval practice is more effective than restudy"
+        ]
+      },
+      "bloom_taxonomy": {
+        "level_1_remember": "Recall facts and basic concepts",
+        "level_2_understand": "Explain ideas or concepts",
+        "level_3_apply": "Use information in new situations",
+        "level_4_analyze": "Draw connections among ideas",
+        "level_5_evaluate": "Justify a decision or choice",
+        "level_6_create": "Produce new or original work"
+      },
+      "cognitive_load_theory": {
+        "working_memory_limit": "Humans can hold ~7±2 items in working memory simultaneously",
+        "implications": [
+          "Break complex concepts into manageable chunks",
+          "Reduce extraneous cognitive load (remove irrelevant information)",
+          "Scaffold learning: provide structure and support that decreases over time",
+          "Expertise develops through schema building (mental models)"
+        ]
+      },
+      "metacognition": {
+        "definition": "Thinking about thinking; awareness and regulation of your own cognitive processes",
+        "practices": [
+          "Self-explanation: Talk through what you're doing and why",
+          "Planning: Decide which strategies to use",
+          "Monitoring: Track whether you understand",
+          "Evaluation: Assess quality of solutions",
+          "Regulation: Adjust strategies when necessary"
+        ]
+      }
+    },
+    "software_quality": {
+      "technical_debt": {
+        "definition": "The cost of prioritizing short-term solutions over long-term design",
+        "consequences": [
+          "Slower development velocity",
+          "Higher bug rate",
+          "Difficult refactoring",
+          "Team frustration"
+        ],
+        "managing": [
+          "Track and quantify technical debt",
+          "Balance new features with debt reduction",
+          "Pay down critical debt regularly",
+          "Communicate impact to stakeholders"
+        ]
+      },
+      "code_smell_indicators": [
+        "Duplicate code (DRY violation)",
+        "Long methods/functions (single responsibility violation)",
+        "Long parameter lists (too many dependencies)",
+        "Divergent change (one class changes for many reasons)",
+        "Shotgun surgery (many classes change for one reason)",
+        "Feature envy (method uses lots of other class's data)",
+        "Data clumps (same fields appear in multiple classes)",
+        "Comments (often indicate code could be clearer)"
+      ],
+      "testing_pyramid": {
+        "unit_tests_base": "70% - Fast, isolated, test single units",
+        "integration_tests_middle": "20% - Test component interactions",
+        "end_to_end_tests_top": "10% - Test full workflows, slowest"
+      }
+    },
+    "system_design": {
+      "scalability_dimensions": [
+        "Vertical scaling: More power per machine (CPU, RAM, SSD)",
+        "Horizontal scaling: More machines (requires stateless design)",
+        "Database scaling: Sharding, replication, partitioning",
+        "Caching: In-memory data store to reduce database load",
+        "Asynchronous processing: Use queues to decouple components"
+      ],
+      "failure_modes": [
+        "Hardware failures: Disk, network, power",
+        "Software bugs: Introduced through deployments",
+        "Resource exhaustion: CPU, memory, disk, connections",
+        "Cascading failures: One component down causes others to fail",
+        "Data corruption: Loss or corruption of critical data"
+      ],
+      "design_patterns_strengths": {
+        "singleton": "Ensures single instance, but can hide dependencies",
+        "factory": "Decouples object creation, promotes polymorphism",
+        "strategy": "Encapsulates algorithms, easy to swap implementations",
+        "observer": "Enables loose coupling between publishers and subscribers",
+        "adapter": "Makes incompatible interfaces work together",
+        "decorator": "Adds functionality without modifying original",
+        "facade": "Simplifies complex subsystems"
+      }
+    },
+    "product_development": {
+      "user_centered_design": {
+        "principles": [
+          "Understand users deeply through research and empathy",
+          "Involve users in design process with feedback and testing",
+          "Iterate rapidly based on user feedback",
+          "Design for accessibility from the start",
+          "Measure impact on actual user behavior"
+        ]
+      },
+      "metrics_that_matter": [
+        "Retention: % of users returning after first use",
+        "Engagement: How often/long users interact",
+        "Conversion: % of users taking target action",
+        "NPS (Net Promoter Score): Willingness to recommend (0-10 scale)",
+        "Churn: % of users who stop using product",
+        "DAU/MAU: Daily/monthly active users",
+        "ARPU: Average revenue per user"
+      ],
+      "feature_prioritization": {
+        "impact_effort_matrix": [
+          "High impact, low effort: Do first (quick wins)",
+          "High impact, high effort: Plan and execute systematically",
+          "Low impact, low effort: Quick wins if time permits",
+          "Low impact, high effort: Deprioritize or skip"
+        ],
+        "frameworks": [
+          "RICE: Reach, Impact, Confidence, Effort",
+          "KANO: Delighters, Performance needs, Basics",
+          "Jobs to be Done: What job is the user trying to accomplish?"
+        ]
+      }
+    },
+    "personal_growth": {
+      "deliberate_practice": {
+        "definition": "Focused, challenging practice with immediate feedback",
+        "requirements": [
+          "Clear goal and high level of commitment",
+          "Concentration and full attention",
+          "Immediate feedback on performance",
+          "Work on weak areas (not comfortable zone)",
+          "Expert feedback and guidance",
+          "Repeated practice with refinement"
+        ],
+        "benefits": [
+          "Develop true expertise (10,000-hour rule is about deliberate practice)",
+          "Overcome plateaus",
+          "Transfer learning to new domains",
+          "Build mental models of domain"
+        ]
+      },
+      "growth_mindset": {
+        "definition": "Belief that abilities can be developed through effort",
+        "contrasts_with": "Fixed mindset - belief that abilities are innate",
+        "practices": [
+          "Embrace challenges as opportunities to grow",
+          "View effort as path to mastery, not sign of weakness",
+          "Learn from criticism and feedback",
+          "Find inspiration in others' success",
+          "Persist through obstacles"
+        ]
+      },
+      "learning_loop": [
+        "1. Learn: Consume information (reading, watching, courses)",
+        "2. Reflect: Think about what you learned and how it applies",
+        "3. Do: Apply learning through practice and projects",
+        "4. Get feedback: From mentors, peers, users, metrics",
+        "5. Adjust: Update understanding based on feedback",
+        "6. Repeat: Cycle continues for deeper mastery"
+      ]
+    }
+  },
+  "essential_concepts": {
+    "by_difficulty": {
+      "beginner": [
+        "Variables and data types",
+        "Control flow (if/else, loops)",
+        "Functions and scope",
+        "Arrays and basic data structures",
+        "Time complexity basics (O, Ω, Θ notation)",
+        "HTTP request/response cycle",
+        "Basic SQL queries"
+      ],
+      "intermediate": [
+        "Tree and graph data structures",
+        "Dynamic programming",
+        "Sorting algorithms and analysis",
+        "Hashing and hash tables",
+        "Recursion and backtracking",
+        "Basic system design",
+        "Database transactions"
+      ],
+      "advanced": [
+        "Advanced algorithms (segment trees, KD-trees)",
+        "Distributed systems consensus",
+        "Machine learning fundamentals",
+        "Compiler design",
+        "OS internals and scheduling",
+        "Cryptographic protocols",
+        "Advanced system design at scale"
+      ]
+    },
+    "by_frequency_of_use": [
+      "1. Variables, functions, control flow - used in every program",
+      "2. Arrays, strings, loops - used in >90% of programs",
+      "3. Data structures (lists, dicts, sets) - used in >80% of programs",
+      "4. Sorting and searching - used in >70% of programs",
+      "5. Recursion - used in >50% of programs",
+      "6. Hash tables - used in >60% of programs",
+      "7. Basic trees (BST, heap) - used in >40% of programs",
+      "8. Graphs - used in >30% of programs",
+      "9. Dynamic programming - used in >20% of programs",
+      "10. Advanced algorithms - used in <10% of programs"
+    ]
+  },
+  "mental_models": {
+    "system_thinking": "View systems as interconnected parts where each part affects others; understand feedback loops and non-linear effects",
+    "first_principles": "Break down complex problems into fundamental truths; build solutions from ground up rather than analogies",
+    "inversion": "Think about what you want to avoid rather than what you want to achieve; prevents problems rather than solves them",
+    "second_order_thinking": "Consider consequences of consequences; think beyond immediate effects",
+    "probabilistic_thinking": "Make decisions based on likelihood and expected value, not certainties",
+    "network_effects": "Value of system grows with number of users (e.g., social networks, standards)",
+    "leverage_points": "Small changes in some variables have disproportionate effects on overall system",
+    "constraints": "System performance limited by its least efficient part (bottleneck)"
+  },
+  "skill_development_paths": {
+    "data_structures_algorithms": {
+      "phase_1_fundamentals": [
+        "Master basic types: arrays, strings, linked lists, stacks, queues",
+        "Understand time/space complexity analysis",
+        "Solve 50+ easy problems"
+      ],
+      "phase_2_intermediate": [
+        "Learn trees: BST, AVL, heap, trie",
+        "Master sorting: mergesort, quicksort, heapsort",
+        "Solve 100+ medium problems",
+        "Understand hashing and collision resolution"
+      ],
+      "phase_3_advanced": [
+        "Dynamic programming: memoization, tabulation",
+        "Graph algorithms: DFS, BFS, Dijkstra, MST",
+        "Solve 50+ hard problems",
+        "Understand advanced data structures"
+      ]
+    },
+    "system_design": {
+      "phase_1_foundations": [
+        "Understand databases (SQL, NoSQL, indexing)",
+        "Learn caching (Redis, memcached)",
+        "Understand load balancing",
+        "Know API design patterns"
+      ],
+      "phase_2_scaling": [
+        "Learn database scaling (sharding, replication)",
+        "Understand message queues",
+        "Learn microservices architecture",
+        "Study consistency models"
+      ],
+      "phase_3_mastery": [
+        "Design systems that scale to billions",
+        "Handle failures and cascading effects",
+        "Understand tradeoffs deeply",
+        "Think about cost and operational complexity"
+      ]
+    }
+  }
+}

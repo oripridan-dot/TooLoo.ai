@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 import { useState, useEffect } from 'react'
 import { Brain, TrendingUp, BookOpen, FileText, Target, Zap } from 'lucide-react'
 

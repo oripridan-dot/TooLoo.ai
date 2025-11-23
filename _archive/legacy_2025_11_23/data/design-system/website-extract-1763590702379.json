@@ -1,0 +1,334 @@
+{
+  "id": "extract-1763590702379",
+  "timestamp": "2025-11-19T22:18:22.379Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://www.nba.com",
+  "extractedAt": "2025-11-19T22:18:22.379Z",
+  "brand": {
+    "name": "NBA",
+    "favicon": "https://www.nba.com/favicon.ico",
+    "logo": "https://cdn.nba.com/next/fallback.jpg",
+    "description": "Follow the action on NBA scores, schedules, stats, news, teams, and players. Buy tickets or watch the games anywhere with NBA League Pass.",
+    "colors": {
+      "primary": null,
+      "accent": null
+    }
+  },
+  "structure": {
+    "totalElements": 1719,
+    "hierarchy": {
+      "estimatedDepth": 8,
+      "mainSections": 3
+    },
+    "mainSections": [
+      {
+        "name": "Header",
+        "count": 15,
+        "estimated": true
+      },
+      {
+        "name": "Navigation",
+        "count": 1,
+        "estimated": true
+      },
+      {
+        "name": "Footer",
+        "count": 1,
+        "estimated": true
+      }
+    ],
+    "componentCount": {
+      "buttons": 33,
+      "forms": 1,
+      "inputs": 1,
+      "images": 93,
+      "links": 319,
+      "headings": 77,
+      "cards": 9,
+      "modals": 0
+    }
+  },
+  "visualAssets": {
+    "icons": {
+      "svgInline": 20,
+      "iconFonts": 15,
+      "details": [
+        {
+          "name": "fallback.jpg",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.ico",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-32x32.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon-16x16.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "fari-pinned-tab.svg",
+          "type": "icon-font"
+        },
+        {
+          "name": "fallback/NBA.Com-National-Basketball-Association.png",
+          "type": "icon-font"
+        },
+        {
+          "name": "false",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon=",
+          "type": "icon-font"
+        },
+        {
+          "name": "Icon",
+          "type": "icon-font"
+        },
+        {
+          "name": "Icon__RwLgQ",
+          "type": "icon-font"
+        },
+        {
+          "name": "Icon__4MsLV",
+          "type": "icon-font"
+        },
+        {
+          "name": "icon__tCJrB",
+          "type": "icon-font"
+        },
+        {
+          "name": "icons/icon-event-play.svg",
+          "type": "icon-font"
+        }
+      ]
+    },
+    "images": {
+      "total": 20,
+      "sample": [
+        {
+          "src": "https://cdn.nba.com/logos/leagues/logo-nba.svg",
+          "alt": "NBA Logo",
+          "type": "svg"
+        },
+        {
+          "src": "https://cdn.nba.com/logos/nba/1610612738/primary/L/logo.svg",
+          "alt": "Boston Celtics Logo",
+          "type": "svg"
+        },
+        {
+          "src": "https://cdn.nba.com/logos/nba/1610612751/primary/L/logo.svg",
+          "alt": "Brooklyn Nets Logo",
+          "type": "svg"
+        },
+        {
+          "src": "https://cdn.nba.com/logos/nba/1610612752/primary/L/logo.svg",
+          "alt": "New York Knicks Logo",
+          "type": "svg"
+        },
+        {
+          "src": "https://cdn.nba.com/logos/nba/1610612755/primary/L/logo.svg",
+          "alt": "Philadelphia 76ers Logo",
+          "type": "svg"
+        }
+      ]
+    },
+    "patterns": {
+      "gradients": 0,
+      "shadows": 0,
+      "animations": 0,
+      "borderRadii": 0,
+      "details": {
+        "gradients": [],
+        "shadows": [],
+        "animations": [],
+        "borderRadii": []
+      }
+    }
+  },
+  "tokens": {
+    "colors": {
+      "#fbcd44": {
+        "hex": "#fbcd44",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#051c2d": {
+        "hex": "#051c2d",
+        "role": "hex-value",
+        "context": "found"
+      },
+      "#da532c": {
+        "hex": "#da532c",
+        "role": "hex-value",
+        "context": "found"
+      }
+    },
+    "typography": {
+      "font-roboto": "Roboto",
+      "font-roboto-condensed": "Roboto Condensed",
+      "font-roboto-slab": "Roboto Slab"
+    },
+    "spacing": {
+      "xs": "20px",
+      "sm": "40px",
+      "md": "282px"
+    },
+    "components": {}
+  },
+  "statistics": {
+    "colorsExtracted": 3,
+    "typographyExtracted": 3,
+    "spacingExtracted": 3,
+    "componentsExtracted": 0,
+    "estimatedMaturity": 50
+  },
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#da532c",
+        "rgb": {
+          "r": 218,
+          "g": 83,
+          "b": 44
+        },
+        "hsl": {
+          "h": 13,
+          "s": 70,
+          "l": 51
+        },
+        "lightness": 51,
+        "confidence": 0.85
+      },
+      "secondary": {
+        "name": "secondary",
+        "hex": "#051c2d",
+        "rgb": {
+          "r": 5,
+          "g": 28,
+          "b": 45
+        },
+        "hsl": {
+          "h": 206,
+          "s": 80,
+          "l": 10
+        },
+        "confidence": 0.75
+      },
+      "semantic": {
+        "error": {
+          "hex": "#da532c",
+          "confidence": 0.8
+        },
+        "warning": {
+          "hex": "#da532c",
+          "confidence": 0.8
+        }
+      },
+      "palettes": [],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": {
+        "display": "Roboto",
+        "body": "Roboto Condensed",
+        "confidence": 0.7
+      },
+      "hierarchy": [
+        {
+          "level": "h1",
+          "size": "48px",
+          "font": "Roboto",
+          "weight": "700"
+        },
+        {
+          "level": "h2",
+          "size": "36px",
+          "font": "Roboto",
+          "weight": "700"
+        },
+        {
+          "level": "h3",
+          "size": "28px",
+          "font": "Roboto",
+          "weight": "600"
+        },
+        {
+          "level": "h4",
+          "size": "20px",
+          "font": "Roboto Condensed",
+          "weight": "600"
+        },
+        {
+          "level": "body",
+          "size": "16px",
+          "font": "Roboto Condensed",
+          "weight": "400"
+        },
+        {
+          "level": "small",
+          "size": "12px",
+          "font": "Roboto Condensed",
+          "weight": "400"
+        },
+        {
+          "level": "caption",
+          "size": "10px",
+          "font": "Roboto Condensed",
+          "weight": "500"
+        }
+      ],
+      "recommended": {
+        "displayFont": "Roboto",
+        "bodyFont": "Roboto Condensed",
+        "pairingScore": 0.7
+      }
+    },
+    "spacing": {
+      "scale": [
+        20,
+        40,
+        282
+      ],
+      "increment": 131,
+      "consistency": 0,
+      "suggested": {
+        "xs": "65.5px",
+        "sm": "131px",
+        "md": "196.5px",
+        "lg": "262px",
+        "xl": "393px",
+        "2xl": "524px",
+        "3xl": "786px"
+      }
+    },
+    "completeness": 30,
+    "maturity": 25,
+    "readiness": 30,
+    "confidence": {
+      "colors": 0.3,
+      "typography": 1,
+      "spacing": 0
+    }
+  },
+  "designSystemSize": {
+    "colors": 48,
+    "typography": 3,
+    "components": 0
+  }
+}

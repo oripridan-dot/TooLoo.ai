@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // Robust summarizer: adaptive to text/code/JSON/HTML/logs
 // Fast, offline, with chunking and caching
 

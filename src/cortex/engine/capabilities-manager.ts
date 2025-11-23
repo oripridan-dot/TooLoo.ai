@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * CapabilitiesManager - Unified capabilities registry (stub)
  * Placeholder for Phase 11+ implementation

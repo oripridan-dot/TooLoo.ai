@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Semantic Conversation Understanding Engine
  * Uses LLM analysis to detect conversation intent, goal evolution, and context shifts

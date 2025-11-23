@@ -1,0 +1,148 @@
+{
+  "timestamp": "2025-11-19T21:27:15.464Z",
+  "source": "website-extraction",
+  "sourceUrl": "https://triolla.io",
+  "extractedAt": "2025-11-19T21:27:15.464Z",
+  "colorsExtracted": 10,
+  "typographyExtracted": 2,
+  "spacingExtracted": 9,
+  "estimatedMaturity": 50,
+  "analysis": {
+    "colors": {
+      "primary": {
+        "name": "primary",
+        "hex": "#33a7b5",
+        "rgb": {
+          "r": 51,
+          "g": 167,
+          "b": 181
+        },
+        "hsl": {
+          "h": 186,
+          "s": 56,
+          "l": 45
+        },
+        "lightness": 45,
+        "confidence": 0.85
+      },
+      "secondary": {
+        "name": "secondary",
+        "hex": "#020381",
+        "rgb": {
+          "r": 2,
+          "g": 3,
+          "b": 129
+        },
+        "hsl": {
+          "h": 240,
+          "s": 97,
+          "l": 26
+        },
+        "confidence": 0.75
+      },
+      "semantic": {
+        "info": {
+          "hex": "#2874fc",
+          "confidence": 0.8
+        }
+      },
+      "palettes": [],
+      "lightness": [],
+      "relationships": []
+    },
+    "typography": {
+      "families": [],
+      "pairing": {
+        "display": "-apple-system",
+        "body": "BlinkMacSystemFont",
+        "confidence": 0.7
+      },
+      "hierarchy": [
+        {
+          "level": "h1",
+          "size": "48px",
+          "font": "-apple-system",
+          "weight": "700"
+        },
+        {
+          "level": "h2",
+          "size": "36px",
+          "font": "-apple-system",
+          "weight": "700"
+        },
+        {
+          "level": "h3",
+          "size": "28px",
+          "font": "-apple-system",
+          "weight": "600"
+        },
+        {
+          "level": "h4",
+          "size": "20px",
+          "font": "BlinkMacSystemFont",
+          "weight": "600"
+        },
+        {
+          "level": "body",
+          "size": "16px",
+          "font": "BlinkMacSystemFont",
+          "weight": "400"
+        },
+        {
+          "level": "small",
+          "size": "12px",
+          "font": "BlinkMacSystemFont",
+          "weight": "400"
+        },
+        {
+          "level": "caption",
+          "size": "10px",
+          "font": "BlinkMacSystemFont",
+          "weight": "500"
+        }
+      ],
+      "recommended": {
+        "displayFont": "-apple-system",
+        "bodyFont": "BlinkMacSystemFont",
+        "pairingScore": 0.7
+      }
+    },
+    "spacing": {
+      "scale": [
+        6,
+        7,
+        8,
+        11,
+        12,
+        13,
+        16,
+        18,
+        20
+      ],
+      "increment": 2,
+      "consistency": 1,
+      "suggested": {
+        "xs": "1px",
+        "sm": "2px",
+        "md": "3px",
+        "lg": "4px",
+        "xl": "6px",
+        "2xl": "8px",
+        "3xl": "12px"
+      }
+    },
+    "completeness": 100,
+    "maturity": 60,
+    "readiness": 78,
+    "confidence": {
+      "colors": 1,
+      "typography": 0.6666666666666666,
+      "spacing": 1
+    }
+  },
+  "designSystemSize": {
+    "colors": 46,
+    "typography": 3,
+    "components": 0
+  }
+}

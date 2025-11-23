@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Multi-Provider Collaboration Framework
  * Enables Claude, Gemini, and OpenAI to work together

@@ -1,38 +1,34 @@
 # TooLoo.ai – Copilot Operating Brief
 
 ## Mission Snapshot
-- TooLoo.ai runs as a **multi-service Node.js network** fronted by `servers/web-server.js` (port 3000) and orchestrated by `servers/orchestrator.js`
+- **Identity**: TooLoo.ai is an **AI orchestrator and development platform**, NOT a learning platform for users. Its learning capabilities are built for **self-improvement** to enhance its own solutions and capabilities.
+- TooLoo.ai runs on the **Synapsys Architecture** (v2.1), a unified Node.js system initialized via `src/main.ts`.
+- **Core Modules**:
+  - **Cortex**: Cognitive Core (Planning, Memory, System Model)
+  - **Precog**: Predictive Intelligence (Budget, Oracle, Training)
+  - **Nexus**: Interface & Integration Layer (Express Server on Port 4000)
 - Core philosophy: **act first, explain second**. Implement the fix, verify it, then summarise outcome → tested → impact → next
 - Respond in structured, concise English. No raw code in chat unless explicitly asked; point to file paths instead
 
 ## Active Architecture
 ```
-Port 3000  → servers/web-server.js (static UI + API proxy + UI automation)
-Port 3001  → servers/training-server.js (selection engine, hyper-speed rounds)
-Port 3002  → servers/meta-server.js (meta-learning phases & boosts)
-Port 3003  → servers/budget-server.js (provider status, burst cache, policy tuning)
-Port 3004  → servers/coach-server.js (Auto-Coach loop + Fast Lane)
-Port 3005  → servers/cup-server.js (Provider Cup mini-tournaments)
-Port 3006  → servers/product-development-server.js (workflows, analysis, artifacts)
-Port 3007  → servers/segmentation-server.js (conversation segmentation & traits)
-Port 3008  → servers/reports-server.js
-Port 3009  → servers/capabilities-server.js
-Port 3123  → servers/orchestrator.js (/api/v1/system/*)
+Port 4000  → Nexus (src/nexus/index.ts)
+             - Serves static UI (src/web-app)
+             - API Gateway (/api/v1/*)
+             - System Control
 ```
-- Legacy `simple-api-server.js` remains available (`npm run start:simple`) but the Control Room path is the primary production surface
-- UI assets live in `web-app/*.html` – no Vite
+- **Entry Point**: `src/main.ts` (initializes Cortex, Precog, then Nexus)
+- **Legacy**: `servers/` directory has been deprecated and replaced by `src/` modules.
+- UI assets live in `src/web-app/*.html` – no Vite
 
 ## Start / Stop / Verify
-1. `npm run dev` → launches `launch-tooloo.sh`, starting web + orchestrator and pre-arming services
-2. Control the system directly via the web proxy: `curl -X POST http://127.0.0.1:3000/system/start`
-3. Shutdown helpers:
-   - `npm run stop:all` → targeted `pkill`
-   - `npm run clean` → kill any stray `node servers/*` **and** run the repo hygiene sweep
-   - `npm run hygiene -- --dry-run` → preview deletions without touching files
-4. Smoke checks (via proxy):
-   - Training: `curl http://127.0.0.1:3000/api/v1/training/overview`
-   - Provider burst: `curl -X POST http://127.0.0.1:3000/api/v1/providers/burst -H 'Content-Type: application/json' -d '{"prompt":"status"}'`
-   - System map: `curl http://127.0.0.1:3000/api/v1/system/processes`
+1. **Start**: `npm run start:synapsys` (or `npm start`)
+   - Launches `tsx src/main.ts`
+2. **Stop**: `npm run stop:all`
+   - Kills processes on Port 4000 and any lingering Node processes.
+3. **Verify**:
+   - Health: `curl http://127.0.0.1:4000/health`
+   - System Status: `curl http://127.0.0.1:4000/api/v1/system/status`
 
 ## Providers & Policy
 - Claude Haiku **4.5 preview** (`claude-3-5-haiku-20241022`) is the default Anthropic model

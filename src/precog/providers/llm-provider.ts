@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -389,16 +389,26 @@ export default class LLMProvider {
     if (!apiKey) throw new Error("Gemini not configured");
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const contents = [
-      {
-        role: "user",
-        parts: [{ text: system ? `${system}\n\n${prompt}` : prompt }],
-      },
-    ];
+    
+    const body: any = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+    };
+
+    if (system) {
+      body.systemInstruction = {
+        parts: [{ text: system }],
+      };
+    }
+
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents }),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {

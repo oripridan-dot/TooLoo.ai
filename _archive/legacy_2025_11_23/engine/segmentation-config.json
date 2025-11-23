@@ -1,0 +1,12 @@
+{
+  "mode": "hybrid",
+  "rule": {
+    "variant": "basic"
+  },
+  "canaryRatio": 0.1,
+  "thresholds": {
+    "maxSegments": 20,
+    "minMessagesPerSegment": 2
+  },
+  "version": 1
+}

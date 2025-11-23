@@ -1,0 +1,11 @@
+{
+  "id": "direct-test-1763812008",
+  "updatedAt": "2025-11-22T11:46:49.019Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Direct save test"
+    }
+  ],
+  "metadata": {}
+}

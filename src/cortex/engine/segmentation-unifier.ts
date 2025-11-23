@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // Segmentation Unifier
 // Centralizes strategy selection (rule, ml, hybrid), config, and health logging
 

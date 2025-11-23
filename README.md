@@ -67,6 +67,7 @@ That's it! The unified startup process will:
 
 Then access:
 - **Control Room**: http://127.0.0.1:3000/control-room
+- **Workstation**: http://127.0.0.1:3000/workstation (New!)
 - **Chat Interface**: http://127.0.0.1:3000/tooloo-chat
 - **Dashboard**: http://127.0.0.1:3000
 

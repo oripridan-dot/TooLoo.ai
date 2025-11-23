@@ -1,4 +1,4 @@
-// @version 2.1.25
+// @version 2.1.28
 import { bus } from "../core/event-bus.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
@@ -121,21 +121,17 @@ export class Cortex {
           });
         }
       } else {
-        // It's just chat. Use LLMProvider directly.
+        // It's just chat. Use Synthesizer for multi-provider aggregation.
         try {
-          const llm = new LLMProvider();
-          const response = await llm.generateSmartLLM({
-            prompt: message,
-            system: TOOLOO_PERSONA,
-            taskType: "chat",
-          });
+          const result = await synthesizer.synthesize(message);
 
           bus.publish("cortex", "cortex:response", {
             requestId,
             data: {
-              response: response.text || response.content,
-              provider: response.providerUsed || "Synapsys Chat",
+              response: result.response,
+              provider: "Synapsys Synthesizer",
               timestamp: new Date().toISOString(),
+              meta: result.meta
             },
           });
         } catch (err: any) {

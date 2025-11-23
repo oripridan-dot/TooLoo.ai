@@ -7,7 +7,7 @@
       "description": "Select ElevenLabs voice",
       "options": [
         "rachel",
-        "josh", 
+        "josh",
         "bella",
         "antoni",
         "elli",
@@ -38,7 +38,7 @@
     },
     {
       "label": "Speak Selection (Direct Input)",
-      "type": "shell", 
+      "type": "shell",
       "command": "echo",
       "args": ["'${selectedText}'", "|", "node", "scripts/speak-direct.js"],
       "options": {
@@ -63,7 +63,7 @@
       "label": "Voice Settings",
       "type": "shell",
       "command": "node",
-      "args": ["scripts/voice-picker.js"], 
+      "args": ["scripts/voice-picker.js"],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -77,7 +77,7 @@
     {
       "label": "Open Last Audio",
       "type": "shell",
-      "command": "node", 
+      "command": "node",
       "args": ["scripts/open-audio.js"],
       "group": "build",
       "presentation": {
@@ -92,8 +92,8 @@
     {
       "label": "Start Control Room + Orchestrator",
       "type": "shell",
-      "command": "bash",
-      "args": ["-lc", "node servers/web-server.js & sleep 1 && curl -s -X POST http://127.0.0.1:${WEB_PORT:-3000}/system/start -H 'Content-Type: application/json' -d '{\\\"autoOpen\\\":false}'"],
+      "command": "npm",
+      "args": ["run", "start:synapsys"],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -102,9 +102,8 @@
         "panel": "shared"
       },
       "problemMatcher": [],
-      "detail": "Start web proxy then orchestrator (pre-arms services)."
-    }
-    ,
+      "detail": "Start Synapsys Architecture (Nexus + Cortex + Precog)"
+    },
     {
       "label": "Design: Guiding Star",
       "type": "shell",
@@ -119,6 +118,30 @@
       },
       "problemMatcher": [],
       "detail": "Generate real design artifacts (brand board PDF + product page)"
+    },
+    {
+      "type": "npm",
+      "script": "dev",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "npm: dev",
+      "detail": "Start development environment"
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "group": "test",
+      "problemMatcher": [],
+      "label": "npm: test",
+      "detail": "Run all tests"
+    },
+    {
+      "type": "npm",
+      "script": "lint",
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish"],
+      "label": "npm: lint",
+      "detail": "Lint code"
     }
   ]
 }

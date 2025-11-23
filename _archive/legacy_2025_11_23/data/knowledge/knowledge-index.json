@@ -1,0 +1,83 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-11-17T03:42:55.875Z",
+  "description": "Index of available knowledge domains and learning materials",
+  "domains_available": 12,
+  "domains": [
+    {
+      "name": "data_structures_algorithms",
+      "full_name": "Data Structures & Algorithms",
+      "concepts": 9,
+      "references": 3
+    },
+    {
+      "name": "operating_systems",
+      "full_name": "Operating Systems",
+      "concepts": 8,
+      "references": 2
+    },
+    {
+      "name": "computer_networks",
+      "full_name": "Computer Networks",
+      "concepts": 9,
+      "references": 2
+    },
+    {
+      "name": "database_systems",
+      "full_name": "Database Systems",
+      "concepts": 9,
+      "references": 2
+    },
+    {
+      "name": "compilers",
+      "full_name": "Compilers & Language Processing",
+      "concepts": 8,
+      "references": 2
+    },
+    {
+      "name": "machine_learning",
+      "full_name": "Machine Learning & AI",
+      "concepts": 9,
+      "references": 3
+    },
+    {
+      "name": "security",
+      "full_name": "Computer Security & Cryptography",
+      "concepts": 10,
+      "references": 2
+    },
+    {
+      "name": "distributed_systems",
+      "full_name": "Distributed Systems",
+      "concepts": 9,
+      "references": 2
+    },
+    {
+      "name": "theory_of_computation",
+      "full_name": "Theory of Computation",
+      "concepts": 9,
+      "references": 2
+    },
+    {
+      "name": "system_design",
+      "full_name": "System Design & Architecture",
+      "concepts": 9,
+      "references": 2
+    },
+    {
+      "name": "software_engineering",
+      "full_name": "Software Engineering & Best Practices",
+      "concepts": 9,
+      "references": 3
+    },
+    {
+      "name": "design_principles",
+      "full_name": "UI/UX & Product Design",
+      "concepts": 10,
+      "references": 3
+    }
+  ],
+  "total_references": 28,
+  "fundamental_principles": 4,
+  "learning_strategies": 4
+}

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Response Formatter Integration
  * Middleware to wrap API responses with rich visualization support

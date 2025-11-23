@@ -1,13 +1,24 @@
-// @version 2.1.11
+// @version 2.1.28
 import { bus } from "./core/event-bus.js";
 import { cortex } from "./cortex/index.js";
 import { precog } from "./precog/index.js";
 import { startNexus } from "./nexus/index.js";
 import { VersionManager } from "./nexus/engine/version-manager.js";
+import * as fs from "fs";
+import * as path from "path";
 
 async function bootstrap() {
+  // Read version from package.json
+  let version = "Unknown";
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
+    version = pkg.version;
+  } catch (e) {
+    console.warn("[System] Could not read version from package.json");
+  }
+
   console.log("----------------------------------------");
-  console.log("   TooLoo.ai V2.1 • Synapsys Architecture    ");
+  console.log(`   TooLoo.ai V${version} • Synapsys Architecture    `);
   console.log("----------------------------------------");
 
   // Global Error Handling

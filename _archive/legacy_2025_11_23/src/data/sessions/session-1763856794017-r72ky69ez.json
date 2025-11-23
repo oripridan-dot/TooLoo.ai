@@ -1,0 +1,37 @@
+{
+  "id": "session-1763856794017-r72ky69ez",
+  "userId": "user",
+  "projectId": null,
+  "createdAt": 1763856795908,
+  "updatedAt": 1763856795908,
+  "messages": [
+    {
+      "role": "user",
+      "content": "[PROJECT CONTEXT: 1]\n[LONG TERM MEMORY]:\n# Long Term Memory for 1\n\n\n[SHORT TERM MEMORY]:\n# Short Term Memory for 1\n\n- Project initialized\n\nUSER QUERY: hi"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. How can I assist you today?"
+    }
+  ],
+  "metadata": {
+    "title": "Chat Session",
+    "description": "",
+    "tags": [],
+    "lastProvider": "openai"
+  },
+  "context": {
+    "providers": [],
+    "topics": [],
+    "sentiment": null,
+    "complexity": "low",
+    "keyInsights": []
+  },
+  "stats": {
+    "messageCount": 0,
+    "questionCount": 0,
+    "responseCount": 0,
+    "averageRating": 0,
+    "totalTokens": 0
+  }
+}

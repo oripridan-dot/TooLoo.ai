@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // engine/github-provider.js
 // Gives AI providers access to your GitHub repo for analysis and context
 // Providers can read issues, PRs, files, and repo metadata

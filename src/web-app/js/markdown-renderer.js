@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Markdown Renderer for TooLoo.ai
  * Converts markdown with emoji headers into beautiful HTML with visual hierarchy

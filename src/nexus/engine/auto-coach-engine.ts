@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 import axios from 'axios';
 const SYNAPSE_URL = 'http://localhost:3010/api/v1/synapse';
 

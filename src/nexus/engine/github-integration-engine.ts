@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * GitHub Integration Engine
  * Auto-commits analysis results, creates issues/PRs with findings

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 // Trait Aggregator (P4) - MVP
 // Consumes pattern extraction outputs and computes cognitive trait vector
 // Maps patterns to traits: decisionCompression, riskDiscipline, trustPriority, structureExpectation

@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 import express, { Request, Response } from 'express';
 import { SynapseBus } from '../core/bus/event-bus';
 import { TraitWeaver } from './trait-weaver';

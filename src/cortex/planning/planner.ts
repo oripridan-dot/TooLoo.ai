@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 import { EventBus } from "../../core/event-bus.js";
 import LLMProvider from "../../precog/providers/llm-provider.js";
 

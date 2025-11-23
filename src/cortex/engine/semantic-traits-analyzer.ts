@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Semantic Traits Analyzer
  * Detects 15+ conversation traits from message patterns using LLM

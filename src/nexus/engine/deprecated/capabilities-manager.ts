@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 /**
  * Capabilities Manager
  * Manages capability state, activation, deactivation, and execution

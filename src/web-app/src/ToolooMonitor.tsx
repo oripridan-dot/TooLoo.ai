@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.28
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const API_URL = '/api/v1/generate';

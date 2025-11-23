@@ -1,4 +1,4 @@
-// @version 2.1.26
+// @version 2.1.28
 import { bus } from "../core/event-bus.js";
 
 interface OrchestratorState {
@@ -10,6 +10,8 @@ interface OrchestratorState {
   };
   activeCycles: number;
   lastCycleTime: string | null;
+  planQueue: string[];
+  currentFocus: string;
 }
 
 export class Orchestrator {
@@ -19,6 +21,8 @@ export class Orchestrator {
     autonomousSettings: { mode: "safe", maxPerCycle: 1 },
     activeCycles: 0,
     lastCycleTime: null,
+    planQueue: [],
+    currentFocus: "idle",
   };
 
   constructor() {
@@ -68,9 +72,30 @@ export class Orchestrator {
             id: "synapsys-plan-v1",
             mode: this.state.autonomousMode ? "autonomous" : "manual",
             active_cycles: this.state.activeCycles,
-            queue: [],
-            current_focus: "awaiting_input",
+            queue: this.state.planQueue,
+            current_focus: this.state.currentFocus,
           },
+        },
+      });
+    });
+
+    // Plan Update
+    bus.on("nexus:orchestrator_plan_update", (event) => {
+      const { action, item } = event.payload;
+
+      if (action === "add" && item) {
+        this.state.planQueue.push(item);
+        console.log(`[Cortex] Added to plan queue: ${item}`);
+      } else if (action === "clear") {
+        this.state.planQueue = [];
+        console.log("[Cortex] Plan queue cleared.");
+      }
+
+      bus.publish("cortex", "cortex:response", {
+        requestId: event.payload.requestId,
+        data: {
+          ok: true,
+          queue: this.state.planQueue,
         },
       });
     });
@@ -104,11 +129,13 @@ export class Orchestrator {
 
       this.state.activeCycles++;
       this.state.lastCycleTime = new Date().toISOString();
+      this.state.currentFocus = "processing_cycle";
       console.log("[Cortex] Cycle activated.");
 
       // Simulate cycle work
       setTimeout(() => {
         this.state.activeCycles--;
+        this.state.currentFocus = this.state.activeCycles > 0 ? "processing_cycle" : "idle";
         console.log("[Cortex] Cycle completed.");
       }, 2000);
 
