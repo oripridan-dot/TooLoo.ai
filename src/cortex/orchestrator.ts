@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.26
 import { bus } from "../core/event-bus.js";
 
 interface OrchestratorState {
@@ -53,6 +53,23 @@ export class Orchestrator {
           data: {
             capabilities: ["chat", "code", "search", "planning"],
             providers: ["gemini", "anthropic", "openai"],
+          },
+        },
+      });
+    });
+
+    // Plan Retrieval
+    bus.on("nexus:orchestrator_plan", (event) => {
+      bus.publish("cortex", "cortex:response", {
+        requestId: event.payload.requestId,
+        data: {
+          ok: true,
+          data: {
+            id: "synapsys-plan-v1",
+            mode: this.state.autonomousMode ? "autonomous" : "manual",
+            active_cycles: this.state.activeCycles,
+            queue: [],
+            current_focus: "awaiting_input",
           },
         },
       });

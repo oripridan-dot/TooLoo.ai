@@ -1,4 +1,4 @@
-// @version 2.1.22
+// @version 2.1.25
 import { bus } from "../core/event-bus.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
@@ -6,7 +6,7 @@ import { MotorCortex } from "./motor/index.js";
 import { SensoryCortex } from "./sensory/index.js";
 import { Hippocampus } from "./memory/index.js";
 import { PrefrontalCortex } from "./planning/index.js";
-import LLMProvider from "../precog/providers/llm-provider.js";
+import { synthesizer } from "../precog/synthesizer.js";
 import { TOOLOO_PERSONA } from "./persona.js";
 
 export class Cortex {
