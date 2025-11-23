@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- @version 2.1.7 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -39,17 +40,22 @@
     <div class="chat-center">
       <div class="chat-messages" id="chatMessages"></div>
       
-      <div class="chat-input-area">
+      <!-- Input Area -->
+      <div class="chat-input-area" style="padding-bottom: 2rem; z-index: 100;">
         <div class="input-wrapper" style="
-            background: var(--g3-bg-tertiary); 
-            border: 1px solid var(--g3-border-color); 
+            background: #27272a; 
+            border: 1px solid #52525b; 
             border-radius: 16px; 
             padding: 12px; 
             display: flex; 
             align-items: flex-end; 
             gap: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             transition: border-color 0.2s, box-shadow 0.2s;
+            min-height: 60px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
         " id="inputContainer">
           <textarea 
             id="messageInput" 
@@ -59,15 +65,15 @@
               flex: 1; 
               background: transparent !important; 
               border: none !important; 
-              padding: 4px 0 !important; 
+              padding: 8px 0 !important; 
               min-height: 24px; 
               max-height: 200px; 
               resize: none; 
               box-shadow: none !important;
               line-height: 1.5;
-              color: var(--g3-text-primary) !important;
+              color: #fafafa !important;
               font-family: var(--g3-font-sans);
-              font-size: 0.9375rem;
+              font-size: 1rem;
               outline: none !important;
             "
           ></textarea>
@@ -1058,8 +1064,6 @@
       
       if (!currentSession) {
         newSession(`Session ${new Date().toLocaleTimeString()}`);
-      } else {
-        addWelcomeMessage();
       }
       
       // Update time
@@ -1073,6 +1077,18 @@
         e.target.style.height = 'auto';
         e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
       });
+
+      // Check for message in URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialMessage = urlParams.get('message');
+      if (initialMessage) {
+        const input = document.getElementById('messageInput');
+        input.value = initialMessage;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+        // Optional: Auto-send
+        // sendMessage();
+      }
     });
   </script>
   </div>
