@@ -1,11 +1,12 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.38",
+  "version": "2.1.39",
   "description": "TooLoo.ai multi-service personal AI development platform",
   "type": "module",
   "private": true,
   "scripts": {
     "start": "tsx src/main.ts",
+    "start:synapsys": "npm start",
     "dev": "tsx watch src/main.ts",
     "test": "vitest run",
     "lint": "eslint src/ --ext .ts",
