@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.11 -->
+<!-- @version 2.1.15 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -41,43 +41,13 @@
       <div class="chat-messages" id="chatMessages"></div>
       
       <!-- Input Area -->
-      <div class="chat-input-area" style="padding-bottom: 2rem; z-index: 100; background: var(--g3-bg-primary); border-top: 1px solid var(--g3-border-color);">
-        <div class="input-wrapper" style="
-            background: #27272a; 
-            border: 1px solid #52525b; 
-            border-radius: 16px; 
-            padding: 12px; 
-            display: flex; 
-            align-items: flex-end; 
-            gap: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            transition: border-color 0.2s, box-shadow 0.2s;
-            min-height: 60px;
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 101;
-        " id="inputContainer">
+      <div class="chat-input-area">
+        <div class="input-wrapper" id="inputContainer">
           <textarea 
             id="messageInput" 
             placeholder="Type a message..." 
             rows="1"
-            style="
-              flex: 1; 
-              background: transparent !important; 
-              border: none !important; 
-              padding: 8px 0 !important; 
-              min-height: 24px; 
-              max-height: 200px; 
-              resize: none; 
-              box-shadow: none !important;
-              line-height: 1.5;
-              color: #fafafa !important;
-              font-family: var(--g3-font-sans);
-              font-size: 1rem;
-              outline: none !important;
-            "
+            autofocus
           ></textarea>
           <button id="sendBtn" onclick="sendMessage()" style="
             background: var(--g3-accent-primary); 
