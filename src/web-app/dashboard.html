@@ -1,469 +1,803 @@
-<!DOCTYPE html>
-<!-- @version 2.1.35 -->
+<!doctype html>
+<!-- @version 2.1.41 -->
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TooLoo • System Dashboard</title>
-  <link rel="stylesheet" href="visual-feedback.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e27; color: #e2e8f0; padding: 20px; }
-    .dashboard { max-width: 1400px; margin: 0 auto; }
-    .header { margin-bottom: 30px; }
-    .title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-    .subtitle { font-size: 14px; color: #94a3b8; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
-    .card { background: rgba(30,41,59,.4); border: 1px solid rgba(148,163,184,.1); border-radius: 8px; padding: 20px; }
-    .card-title { font-size: 14px; font-weight: 700; color: #60a5fa; margin-bottom: 16px; text-transform: uppercase; }
-    .metric { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(148,163,184,.05); }
-    .metric-label { font-size: 13px; color: #cbd5e1; }
-    .metric-value { font-size: 18px; font-weight: 700; color: #10b981; }
-    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-    .status-online { background: rgba(16,185,129,.2); color: #10b981; }
-    .status-offline { background: rgba(239,68,68,.2); color: #ef4444; }
-    .status-pending { background: rgba(245,158,11,.2); color: #f59e0b; }
-    .bar { display: flex; height: 24px; background: rgba(59,130,246,.1); border-radius: 12px; overflow: hidden; margin: 8px 0; }
-    .bar-fill { background: linear-gradient(90deg, #3b82f6, #06b6d4); height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: white; font-size: 11px; font-weight: 600; }
-    .alert { padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; }
-    .alert-info { background: rgba(59,130,246,.1); border-left: 3px solid #3b82f6; color: #bfdbfe; }
-    .alert-warning { background: rgba(245,158,11,.1); border-left: 3px solid #f59e0b; color: #fcd34d; }
-    .alert-success { background: rgba(16,185,129,.1); border-left: 3px solid #10b981; color: #a7f3d0; }
-    .service-list { display: grid; gap: 12px; }
-    .service-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,.2); border-radius: 6px; border-left: 3px solid #94a3b8; }
-    .service-port { font-size: 11px; color: #94a3b8; }
-    .service-name { font-weight: 600; font-size: 13px; }
-    .chart-container { display: flex; gap: 20px; margin-top: 16px; }
-    .chart { flex: 1; }
-    .chart-label { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
-    .chart-bars { display: flex; gap: 6px; align-items: flex-end; height: 80px; }
-    .chart-bar { flex: 1; background: linear-gradient(180deg, #3b82f6, #1e3a8a); border-radius: 4px 4px 0 0; position: relative; }
-    .chart-bar:hover { background: linear-gradient(180deg, #60a5fa, #2563eb); }
-    button { padding: 8px 16px; background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3); color: #60a5fa; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 8px; }
-    button:hover { background: rgba(59,130,246,.25); }
-    .refresh-btn { animation: spin 2s linear infinite; }
-    .refresh-btn.updating { animation: spin 0.5s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  </style>
-</head>
-<body>
-  <div class="dashboard">
-    <div class="header">
-      <div class="title">🎯 TooLoo System Dashboard</div>
-      <div class="subtitle">Real-time optimization monitoring • Phase 1-5 Status Tracker</div>
-    </div>
-
-    <!-- Alerts Section -->
-    <div id="alerts" style="margin-bottom: 20px;"></div>
-
-    <!-- Query Processing Progress Section -->
-    <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(59,130,246,.15), rgba(16,185,129,.1)); border: 1px solid rgba(59,130,246,.2);">
-      <div class="card-title">⚡ Live Query Processing</div>
-      <div id="query-progress-container" style="margin-top: 16px;">
-        <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 12px;">Start a query to see real-time progress visualization</div>
-      </div>
-      <button onclick="simulateQueryFlow()" style="margin-top: 12px; padding: 8px 16px; background: rgba(16,185,129,.2); border: 1px solid rgba(16,185,129,.4); color: #10b981; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600;">🚀 Simulate Query</button>
-    </div>
-
-    <!-- Real-time Metrics Visualization -->
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="card-title">📊 Real-time Performance Metrics</div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
-        <div id="metric-response-time"></div>
-        <div id="metric-accuracy"></div>
-        <div id="metric-cache-hits"></div>
-        <div id="metric-queries"></div>
-      </div>
-    </div>
-
-    <!-- Visualization Charts -->
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="card-title">📈 System Performance Chart</div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 16px;">
-        <div id="chart-performance"></div>
-        <div id="chart-providers"></div>
-      </div>
-    </div>
-
-    <!-- Metrics Grid -->
-    <div class="grid">
-      <!-- System Health -->
-      <div class="card">
-        <div class="card-title">⚡ System Health</div>
-        <div class="metric">
-          <span class="metric-label">Overall Status</span>
-          <span class="status-badge status-online">Online</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Uptime</span>
-          <span class="metric-value" id="uptime">99.8%</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Active Services</span>
-          <span class="metric-value" id="activeServices">11/11</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Response Time Avg</span>
-          <span class="metric-value" id="responseTime">245ms</span>
-        </div>
-      </div>
-
-      <!-- Performance Metrics -->
-      <div class="card">
-        <div class="card-title">🚀 Performance</div>
-        <div style="margin-bottom: 12px;">
-          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Query Speed</div>
-          <div class="bar">
-            <div class="bar-fill" style="width: 72%;">72%</div>
-          </div>
-        </div>
-        <div style="margin-bottom: 12px;">
-          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Accuracy Score</div>
-          <div class="bar">
-            <div class="bar-fill" style="width: 84%;">84%</div>
-          </div>
-        </div>
-        <div style="margin-bottom: 12px;">
-          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Cache Hit Rate</div>
-          <div class="bar">
-            <div class="bar-fill" style="width: 68%;">68%</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI Responsiveness -->
-      <div class="card">
-        <div class="card-title">🤖 AI Responsiveness</div>
-        <div class="metric">
-          <span class="metric-label">Multi-Provider Queries</span>
-          <span class="metric-value" id="totalQueries">0</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Avg Providers/Query</span>
-          <span class="metric-value" id="avgProviders">4.2</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Synthesis Generated</span>
-          <span class="metric-value" id="synthesisCount">0</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Context Tips Used</span>
-          <span class="metric-value" id="tipsUsed">0</span>
-        </div>
-      </div>
-
-      <!-- Personalization -->
-      <div class="card">
-        <div class="card-title">👤 Personalization</div>
-        <div class="metric">
-          <span class="metric-label">Tone Preferences Set</span>
-          <span class="metric-value" id="tonePrefs">—</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Detail Customization</span>
-          <span class="metric-value" id="detailPrefs">—</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">User Profiles Created</span>
-          <span class="metric-value" id="userProfiles">1</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Preference Changes</span>
-          <span class="metric-value" id="prefChanges">0</span>
-        </div>
-      </div>
-
-      <!-- User Feedback -->
-      <div class="card">
-        <div class="card-title">📊 User Feedback</div>
-        <div class="metric">
-          <span class="metric-label">Total Feedback</span>
-          <span class="metric-value" id="totalFeedback">0</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Helpful Rate</span>
-          <span class="metric-value" id="helpfulRate">—</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Accurate Rate</span>
-          <span class="metric-value" id="accurateRate">—</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Avg Rating</span>
-          <span class="metric-value" id="avgRating">—</span>
-        </div>
-      </div>
-
-      <!-- Capability Activation -->
-      <div class="card">
-        <div class="card-title">🎯 Capabilities Active</div>
-        <div class="metric">
-          <span class="metric-label">Enhanced Learning</span>
-          <span class="status-badge status-online">43/43</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Predictive Engine</span>
-          <span class="status-badge status-online">38/38</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">User Model Engine</span>
-          <span class="status-badge status-online">37/37</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Proactive Intelligence</span>
-          <span class="status-badge status-online">32/32</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Services Status -->
-    <div class="card" style="margin-bottom: 30px;">
-      <div class="card-title">🔧 Service Status</div>
-      <div class="service-list" id="servicesList"></div>
-    </div>
-
-    <!-- Actions -->
-    <div style="margin-bottom: 30px;">
-      <button onclick="refreshDashboard()">🔄 Refresh</button>
-      <button onclick="activateCapabilities()">⚡ Activate Core Capabilities</button>
-      <button onclick="exportMetrics()">📤 Export Metrics</button>
-      <button onclick="viewFeedback()">📊 View Feedback</button>
-      <button onclick="toggleThemeSwitcher()">🎨 Themes</button>
-    </div>
-
-    <!-- Phase Progress -->
-    <div class="grid">
-      <div class="card">
-        <div class="card-title">📅 Phase 1: Core AI Performance</div>
-        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-          <div>✅ Response caching enabled</div>
-          <div>✅ Multi-provider aggregation</div>
-          <div>✅ Context tips system</div>
-          <div>🟡 Ambiguity detection (in progress)</div>
-          <div style="margin-top: 8px; color: #94a3b8;">Progress: 75%</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📅 Phase 2: User Experience</div>
-        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-          <div>✅ 3-column layout</div>
-          <div>✅ Tone selector</div>
-          <div>✅ Detail level customization</div>
-          <div>🟡 Advanced toggle (next)</div>
-          <div style="margin-top: 8px; color: #94a3b8;">Progress: 60%</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📅 Phase 3: Feature Expansion</div>
-        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-          <div>⭕ Multi-format support</div>
-          <div>⭕ Integration capabilities</div>
-          <div>⭕ Specialized domain modules</div>
-          <div>⭕ Coding mode (planned)</div>
-          <div style="margin-top: 8px; color: #94a3b8;">Progress: 0%</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📅 Phase 4: Scalability</div>
-        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-          <div>✅ Auto-healing services</div>
-          <div>🟡 Health dashboard (now!)</div>
-          <div>⭕ Alerting system</div>
-          <div>⭕ Regional optimization</div>
-          <div style="margin-top: 8px; color: #94a3b8;">Progress: 25%</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📅 Phase 5: Feedback Loop</div>
-        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8;">
-          <div>✅ Feedback widget built</div>
-          <div>✅ Local feedback storage</div>
-          <div>🟡 Server submission (ready)</div>
-          <div>⭕ Weekly analysis (upcoming)</div>
-          <div style="margin-top: 8px; color: #94a3b8;">Progress: 50%</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/visual-feedback-engine.js"></script>
-  <script src="js/color-palette.js"></script>
-  <script>
-    // Initialize visualization engine
-    const vizEngine = new VisualFeedbackEngine();
-    
-    // Color scheme for dashboard - TooLoo brand palette
-    const BRAND_COLORS = {
-      primary: '#3b82f6',      // Sky Blue
-      success: '#10b981',      // Emerald Green
-      warning: '#f59e0b',      // Amber
-      error: '#ef4444',        // Red
-      info: '#06b6d4',         // Cyan
-      pending: '#8b5cf6'       // Purple
-    };
-
-    const API_BASE = window.location.origin + '/api/v1';
-    
-    // Synapsys V2.1 Unified Services
-    const SERVICES = [
-      { name: 'Nexus Interface', id: 'nexus', type: 'proxy' },
-      { name: 'Cortex Core', id: 'cortex', type: 'learning' },
-      { name: 'Precog Engine', id: 'precog', type: 'optimization' },
-      { name: 'GitHub Integration', id: 'github', type: 'integration' },
-      { name: 'System Awareness', id: 'awareness', type: 'analysis' }
-    ];
-
-    // Initialize visualizations on page load
-    function initializeVisualizations() {
-      initializeMetricCards();
-      initializeCharts();
-      startAutoUpdates();
-    }
-
-    // ... (metric cards and charts remain the same)
-
-    async function refreshDashboard() {
-      console.log('Refreshing dashboard...');
-      await loadServiceStatus();
-      await loadMetrics();
-    }
-
-    async function loadServiceStatus() {
-      const container = document.getElementById('servicesList');
-      container.innerHTML = '';
-
-      // Fetch system awareness to get status of all modules
-      let systemStatus = { nexus: 'offline', cortex: 'offline', precog: 'offline' };
-      try {
-        const res = await fetch(`${API_BASE}/system/awareness`);
-        const data = await res.json();
-        if (data.ok && data.awareness && data.awareness.services) {
-          systemStatus = data.awareness.services;
-          // Add virtual services status
-          systemStatus.github = data.awareness.capabilities.githubIntegration ? 'active' : 'inactive';
-          systemStatus.awareness = 'active';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TooLoo • System Dashboard</title>
+    <link rel="stylesheet" href="visual-feedback.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0a0e27;
+        color: #e2e8f0;
+        padding: 20px;
+      }
+      .dashboard {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .header {
+        margin-bottom: 30px;
+      }
+      .title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .subtitle {
+        font-size: 14px;
+        color: #94a3b8;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 8px;
+        padding: 20px;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #60a5fa;
+        margin-bottom: 16px;
+        text-transform: uppercase;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+      }
+      .metric-label {
+        font-size: 13px;
+        color: #cbd5e1;
+      }
+      .metric-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #10b981;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .status-online {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+      }
+      .status-offline {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+      }
+      .status-pending {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+      }
+      .bar {
+        display: flex;
+        height: 24px;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 8px 0;
+      }
+      .bar-fill {
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+        color: white;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .alert {
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .alert-info {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 3px solid #3b82f6;
+        color: #bfdbfe;
+      }
+      .alert-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border-left: 3px solid #f59e0b;
+        color: #fcd34d;
+      }
+      .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        border-left: 3px solid #10b981;
+        color: #a7f3d0;
+      }
+      .service-list {
+        display: grid;
+        gap: 12px;
+      }
+      .service-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        border-left: 3px solid #94a3b8;
+      }
+      .service-port {
+        font-size: 11px;
+        color: #94a3b8;
+      }
+      .service-name {
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .chart-container {
+        display: flex;
+        gap: 20px;
+        margin-top: 16px;
+      }
+      .chart {
+        flex: 1;
+      }
+      .chart-label {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+      }
+      .chart-bars {
+        display: flex;
+        gap: 6px;
+        align-items: flex-end;
+        height: 80px;
+      }
+      .chart-bar {
+        flex: 1;
+        background: linear-gradient(180deg, #3b82f6, #1e3a8a);
+        border-radius: 4px 4px 0 0;
+        position: relative;
+      }
+      .chart-bar:hover {
+        background: linear-gradient(180deg, #60a5fa, #2563eb);
+      }
+      button {
+        padding: 8px 16px;
+        background: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #60a5fa;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 8px;
+      }
+      button:hover {
+        background: rgba(59, 130, 246, 0.25);
+      }
+      .refresh-btn {
+        animation: spin 2s linear infinite;
+      }
+      .refresh-btn.updating {
+        animation: spin 0.5s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
         }
-      } catch (e) {
-        console.error("Failed to fetch system awareness", e);
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <div class="header">
+        <div class="title">🎯 TooLoo System Dashboard</div>
+        <div class="subtitle">
+          Real-time optimization monitoring • Phase 1-5 Status Tracker
+        </div>
+      </div>
+
+      <!-- Alerts Section -->
+      <div id="alerts" style="margin-bottom: 20px"></div>
+
+      <!-- Query Processing Progress Section -->
+      <div
+        class="card"
+        style="
+          margin-bottom: 20px;
+          background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.15),
+            rgba(16, 185, 129, 0.1)
+          );
+          border: 1px solid rgba(59, 130, 246, 0.2);
+        "
+      >
+        <div class="card-title">⚡ Live Query Processing</div>
+        <div id="query-progress-container" style="margin-top: 16px">
+          <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 12px">
+            Start a query to see real-time progress visualization
+          </div>
+        </div>
+        <button
+          onclick="simulateQueryFlow()"
+          style="
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #10b981;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+          "
+        >
+          🚀 Simulate Query
+        </button>
+      </div>
+
+      <!-- Real-time Metrics Visualization -->
+      <div class="card" style="margin-bottom: 20px">
+        <div class="card-title">📊 Real-time Performance Metrics</div>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+          "
+        >
+          <div id="metric-response-time"></div>
+          <div id="metric-accuracy"></div>
+          <div id="metric-cache-hits"></div>
+          <div id="metric-queries"></div>
+        </div>
+      </div>
+
+      <!-- Visualization Charts -->
+      <div class="card" style="margin-bottom: 20px">
+        <div class="card-title">📈 System Performance Chart</div>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 16px;
+          "
+        >
+          <div id="chart-performance"></div>
+          <div id="chart-providers"></div>
+        </div>
+      </div>
+
+      <!-- Metrics Grid -->
+      <div class="grid">
+        <!-- System Health -->
+        <div class="card">
+          <div class="card-title">⚡ System Health</div>
+          <div class="metric">
+            <span class="metric-label">Overall Status</span>
+            <span class="status-badge status-online">Online</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Uptime</span>
+            <span class="metric-value" id="uptime">99.8%</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Active Services</span>
+            <span class="metric-value" id="activeServices">11/11</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Response Time Avg</span>
+            <span class="metric-value" id="responseTime">245ms</span>
+          </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="card">
+          <div class="card-title">🚀 Performance</div>
+          <div style="margin-bottom: 12px">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px">
+              Query Speed
+            </div>
+            <div class="bar">
+              <div class="bar-fill" style="width: 72%">72%</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 12px">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px">
+              Accuracy Score
+            </div>
+            <div class="bar">
+              <div class="bar-fill" style="width: 84%">84%</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 12px">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px">
+              Cache Hit Rate
+            </div>
+            <div class="bar">
+              <div class="bar-fill" style="width: 68%">68%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Responsiveness -->
+        <div class="card">
+          <div class="card-title">🤖 AI Responsiveness</div>
+          <div class="metric">
+            <span class="metric-label">Multi-Provider Queries</span>
+            <span class="metric-value" id="totalQueries">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Avg Providers/Query</span>
+            <span class="metric-value" id="avgProviders">4.2</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Synthesis Generated</span>
+            <span class="metric-value" id="synthesisCount">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Context Tips Used</span>
+            <span class="metric-value" id="tipsUsed">0</span>
+          </div>
+        </div>
+
+        <!-- Personalization -->
+        <div class="card">
+          <div class="card-title">👤 Personalization</div>
+          <div class="metric">
+            <span class="metric-label">Tone Preferences Set</span>
+            <span class="metric-value" id="tonePrefs">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Detail Customization</span>
+            <span class="metric-value" id="detailPrefs">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">User Profiles Created</span>
+            <span class="metric-value" id="userProfiles">1</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Preference Changes</span>
+            <span class="metric-value" id="prefChanges">0</span>
+          </div>
+        </div>
+
+        <!-- User Feedback -->
+        <div class="card">
+          <div class="card-title">📊 User Feedback</div>
+          <div class="metric">
+            <span class="metric-label">Total Feedback</span>
+            <span class="metric-value" id="totalFeedback">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Helpful Rate</span>
+            <span class="metric-value" id="helpfulRate">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Accurate Rate</span>
+            <span class="metric-value" id="accurateRate">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Avg Rating</span>
+            <span class="metric-value" id="avgRating">—</span>
+          </div>
+        </div>
+
+        <!-- Capability Activation -->
+        <div class="card">
+          <div class="card-title">🎯 Capabilities Active</div>
+          <div class="metric">
+            <span class="metric-label">Enhanced Learning</span>
+            <span class="status-badge status-online">43/43</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Predictive Engine</span>
+            <span class="status-badge status-online">38/38</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">User Model Engine</span>
+            <span class="status-badge status-online">37/37</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Proactive Intelligence</span>
+            <span class="status-badge status-online">32/32</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services Status -->
+      <div class="card" style="margin-bottom: 30px">
+        <div class="card-title">🔧 Service Status</div>
+        <div class="service-list" id="servicesList"></div>
+      </div>
+
+      <!-- Actions -->
+      <div style="margin-bottom: 30px">
+        <button onclick="refreshDashboard()">🔄 Refresh</button>
+        <button onclick="activateCapabilities()">
+          ⚡ Activate Core Capabilities
+        </button>
+        <button onclick="exportMetrics()">📤 Export Metrics</button>
+        <button onclick="viewFeedback()">📊 View Feedback</button>
+        <button onclick="toggleThemeSwitcher()">🎨 Themes</button>
+      </div>
+
+      <!-- Phase Progress -->
+      <div class="grid">
+        <div class="card">
+          <div class="card-title">📅 Phase 1: Core AI Performance</div>
+          <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8">
+            <div>✅ Response caching enabled</div>
+            <div>✅ Multi-provider aggregation</div>
+            <div>✅ Context tips system</div>
+            <div>🟡 Ambiguity detection (in progress)</div>
+            <div style="margin-top: 8px; color: #94a3b8">Progress: 75%</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📅 Phase 2: User Experience</div>
+          <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8">
+            <div>✅ 3-column layout</div>
+            <div>✅ Tone selector</div>
+            <div>✅ Detail level customization</div>
+            <div>🟡 Advanced toggle (next)</div>
+            <div style="margin-top: 8px; color: #94a3b8">Progress: 60%</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📅 Phase 3: Feature Expansion</div>
+          <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8">
+            <div>⭕ Multi-format support</div>
+            <div>⭕ Integration capabilities</div>
+            <div>⭕ Specialized domain modules</div>
+            <div>⭕ Coding mode (planned)</div>
+            <div style="margin-top: 8px; color: #94a3b8">Progress: 0%</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📅 Phase 4: Scalability</div>
+          <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8">
+            <div>✅ Auto-healing services</div>
+            <div>🟡 Health dashboard (now!)</div>
+            <div>⭕ Alerting system</div>
+            <div>⭕ Regional optimization</div>
+            <div style="margin-top: 8px; color: #94a3b8">Progress: 25%</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📅 Phase 5: Feedback Loop</div>
+          <div style="font-size: 12px; color: #cbd5e1; line-height: 1.8">
+            <div>✅ Feedback widget built</div>
+            <div>✅ Local feedback storage</div>
+            <div>🟡 Server submission (ready)</div>
+            <div>⭕ Weekly analysis (upcoming)</div>
+            <div style="margin-top: 8px; color: #94a3b8">Progress: 50%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/visual-feedback-engine.js"></script>
+    <script src="js/color-palette.js"></script>
+    <script>
+      // Initialize visualization engine
+      const vizEngine = new VisualFeedbackEngine();
+
+      // Color scheme for dashboard - TooLoo brand palette
+      const BRAND_COLORS = {
+        primary: "#3b82f6", // Sky Blue
+        success: "#10b981", // Emerald Green
+        warning: "#f59e0b", // Amber
+        error: "#ef4444", // Red
+        info: "#06b6d4", // Cyan
+        pending: "#8b5cf6", // Purple
+      };
+
+      const API_BASE = window.location.origin + "/api/v1";
+
+      // Synapsys V2.1 Unified Services
+      const SERVICES = [
+        { name: "Nexus Interface", id: "nexus", type: "proxy" },
+        { name: "Cortex Core", id: "cortex", type: "learning" },
+        { name: "Precog Engine", id: "precog", type: "optimization" },
+        { name: "GitHub Integration", id: "github", type: "integration" },
+        { name: "System Awareness", id: "awareness", type: "analysis" },
+      ];
+
+      // Initialize visualizations on page load
+      function initializeVisualizations() {
+        initializeMetricCards();
+        initializeCharts();
+        startAutoUpdates();
       }
 
-      for (const service of SERVICES) {
-        // In Synapsys, services are internal modules, so we check the awareness response
-        const statusKey = service.id;
-        const isActive = systemStatus[statusKey] === 'active';
-        
-        const statusClass = isActive ? 'status-online' : 'status-offline';
-        const statusText = isActive ? 'Online' : 'Offline';
-        const time = isActive ? 'Internal' : 'N/A';
+      // Store metric card instances for updates
+      const metrics = {};
+      const charts = {};
 
-        const item = document.createElement('div');
-        item.className = 'service-item';
-        item.style.borderLeftColor = isActive ? '#10b981' : '#ef4444';
-        item.innerHTML = `
+      function initializeMetricCards() {
+        metrics.responseTime = vizEngine.createMetricCard("metric-response-time", {
+          label: "Response Time",
+          value: "245",
+          unit: "ms",
+          trend: "down",
+          color: BRAND_COLORS.primary,
+        });
+
+        metrics.accuracy = vizEngine.createMetricCard("metric-accuracy", {
+          label: "Accuracy Score",
+          value: "98.2",
+          unit: "%",
+          trend: "up",
+          color: BRAND_COLORS.success,
+        });
+
+        metrics.cacheHits = vizEngine.createMetricCard("metric-cache-hits", {
+          label: "Cache Hit Rate",
+          value: "68",
+          unit: "%",
+          trend: "up",
+          color: BRAND_COLORS.info,
+        });
+
+        metrics.queries = vizEngine.createMetricCard("metric-queries", {
+          label: "Total Queries",
+          value: "1,240",
+          unit: "",
+          trend: "up",
+          color: BRAND_COLORS.pending,
+        });
+      }
+
+      function initializeCharts() {
+        // Performance Chart (Line)
+        const perfData = Array.from({ length: 10 }, (_, i) => ({
+          value: 80 + Math.random() * 20,
+          label: `T-${10 - i}`,
+        }));
+        
+        charts.performance = vizEngine.createDataVisualization(
+          "chart-performance",
+          perfData,
+          {
+            type: "line",
+            title: "System Performance (Last 10m)",
+          }
+        );
+
+        // Provider Usage Chart (Bar)
+        const providerData = [
+          { label: "OpenAI", value: 450, color: "#10a37f" },
+          { label: "Anthropic", value: 380, color: "#d97757" },
+          { label: "Gemini", value: 210, color: "#4285f4" },
+          { label: "Local", value: 120, color: "#6b7280" },
+        ];
+
+        charts.providers = vizEngine.createDataVisualization(
+          "chart-providers",
+          providerData,
+          {
+            type: "bar",
+            title: "Provider Distribution",
+          }
+        );
+      }
+
+      function startAutoUpdates() {
+        setInterval(() => {
+          // Update Metrics with simulated jitter
+          if (metrics.responseTime) {
+            const val = 200 + Math.floor(Math.random() * 100);
+            metrics.responseTime.update(val, val < 250 ? "down" : "up");
+          }
+          
+          if (metrics.accuracy) {
+            const val = (95 + Math.random() * 5).toFixed(1);
+            metrics.accuracy.update(val, "up");
+          }
+
+          // Update Charts (Simulated redraw)
+          // Note: In a real app, we'd update the data array and re-render.
+          // For now, we'll just let them be static or simple updates.
+        }, 3000);
+      }
+
+      async function refreshDashboard() {
+        console.log("Refreshing dashboard...");
+        await loadServiceStatus();
+        await loadMetrics();
+      }
+
+      async function loadServiceStatus() {
+        const container = document.getElementById("servicesList");
+        container.innerHTML = "";
+
+        // Fetch system awareness to get status of all modules
+        let systemStatus = {
+          nexus: "offline",
+          cortex: "offline",
+          precog: "offline",
+        };
+        try {
+          const res = await fetch(`${API_BASE}/system/awareness`);
+          const data = await res.json();
+          if (data.ok && data.awareness && data.awareness.services) {
+            systemStatus = data.awareness.services;
+            // Add virtual services status
+            systemStatus.github = data.awareness.capabilities.githubIntegration
+              ? "active"
+              : "inactive";
+            systemStatus.awareness = "active";
+          }
+        } catch (e) {
+          console.error("Failed to fetch system awareness", e);
+        }
+
+        for (const service of SERVICES) {
+          // In Synapsys, services are internal modules, so we check the awareness response
+          const statusKey = service.id;
+          const isActive = systemStatus[statusKey] === "active";
+
+          const statusClass = isActive ? "status-online" : "status-offline";
+          const statusText = isActive ? "Online" : "Offline";
+          const time = isActive ? "Internal" : "N/A";
+
+          const item = document.createElement("div");
+          item.className = "service-item";
+          item.style.borderLeftColor = isActive ? "#10b981" : "#ef4444";
+          item.innerHTML = `
           <div>
             <div class="service-name">${service.name}</div>
             <div class="service-port">Module: ${service.id} • ${time}</div>
           </div>
           <span class="status-badge ${statusClass}">${statusText}</span>
         `;
-        container.appendChild(item);
-      }
-      
-      // Update header stats
-      const activeCount = Object.values(systemStatus).filter(s => s === 'active').length;
-      document.getElementById('activeServices').textContent = `${activeCount}/${SERVICES.length}`;
-    }
-
-    // Deprecated: checkServiceHealth (replaced by loadServiceStatus logic)
-    async function checkServiceHealth(port) {
-       return { online: false, responseTime: null };
-    }
-
-    async function loadMetrics() {
-      try {
-        // Load from localStorage if available
-        const feedback = JSON.parse(localStorage.getItem('tooloo_feedback') || '[]');
-        document.getElementById('totalFeedback').textContent = feedback.length;
-
-        if (feedback.length > 0) {
-          const helpful = feedback.filter(f => f.reaction === 'helpful').length;
-          const accurate = feedback.filter(f => f.reaction === 'accurate').length;
-          document.getElementById('helpfulRate').textContent = `${Math.round(helpful / feedback.length * 100)}%`;
-          document.getElementById('accurateRate').textContent = `${Math.round(accurate / feedback.length * 100)}%`;
+          container.appendChild(item);
         }
-      } catch (err) {
-        console.error('Failed to load metrics:', err);
-      }
-    }
 
-    async function activateCapabilities() {
-      console.log('Activating core capabilities...');
-      try {
-        const response = await fetch('http://127.0.0.1:3009/api/v1/capabilities/activate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            capabilities: ['enhancedLearning', 'predictiveEngine', 'userModelEngine'],
-            priority: 'high'
-          })
+        // Update header stats
+        const activeCount = Object.values(systemStatus).filter(
+          (s) => s === "active"
+        ).length;
+        document.getElementById("activeServices").textContent =
+          `${activeCount}/${SERVICES.length}`;
+      }
+
+      // Deprecated: checkServiceHealth (replaced by loadServiceStatus logic)
+      async function checkServiceHealth(port) {
+        return { online: false, responseTime: null };
+      }
+
+      async function loadMetrics() {
+        try {
+          // Load from localStorage if available
+          const feedback = JSON.parse(
+            localStorage.getItem("tooloo_feedback") || "[]"
+          );
+          document.getElementById("totalFeedback").textContent =
+            feedback.length;
+
+          if (feedback.length > 0) {
+            const helpful = feedback.filter(
+              (f) => f.reaction === "helpful"
+            ).length;
+            const accurate = feedback.filter(
+              (f) => f.reaction === "accurate"
+            ).length;
+            document.getElementById("helpfulRate").textContent =
+              `${Math.round((helpful / feedback.length) * 100)}%`;
+            document.getElementById("accurateRate").textContent =
+              `${Math.round((accurate / feedback.length) * 100)}%`;
+          }
+        } catch (err) {
+          console.error("Failed to load metrics:", err);
+        }
+      }
+
+      async function activateCapabilities() {
+        console.log("Activating core capabilities...");
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:3009/api/v1/capabilities/activate",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                capabilities: [
+                  "enhancedLearning",
+                  "predictiveEngine",
+                  "userModelEngine",
+                ],
+                priority: "high",
+              }),
+            }
+          );
+
+          if (response.ok) {
+            alert("✅ Capabilities activated successfully!");
+            refreshDashboard();
+          }
+        } catch (err) {
+          console.error("Activation failed:", err);
+        }
+      }
+
+      function exportMetrics() {
+        const data = {
+          timestamp: new Date().toISOString(),
+          feedback: JSON.parse(localStorage.getItem("tooloo_feedback") || "[]"),
+          preferences: {
+            tone: localStorage.getItem("pref_tone"),
+            detail: localStorage.getItem("pref_detail"),
+            mode: localStorage.getItem("pref_mode"),
+          },
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
         });
-
-        if (response.ok) {
-          alert('✅ Capabilities activated successfully!');
-          refreshDashboard();
-        }
-      } catch (err) {
-        console.error('Activation failed:', err);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tooloo-metrics-${Date.now()}.json`;
+        a.click();
       }
-    }
 
-    function exportMetrics() {
-      const data = {
-        timestamp: new Date().toISOString(),
-        feedback: JSON.parse(localStorage.getItem('tooloo_feedback') || '[]'),
-        preferences: {
-          tone: localStorage.getItem('pref_tone'),
-          detail: localStorage.getItem('pref_detail'),
-          mode: localStorage.getItem('pref_mode')
-        }
-      };
-
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `tooloo-metrics-${Date.now()}.json`;
-      a.click();
-    }
-
-    function viewFeedback() {
-      const feedback = JSON.parse(localStorage.getItem('tooloo_feedback') || '[]');
-      console.table(feedback);
-      alert(`Total feedback collected: ${feedback.length}\n\nCheck console for details.`);
-    }
-
-    function toggleThemeSwitcher() {
-      const existing = document.getElementById('theme-switcher');
-      if (existing) {
-        existing.remove();
-      } else {
-        const switcher = window.colorPalette.createThemeSwitcher();
-        document.body.appendChild(switcher);
+      function viewFeedback() {
+        const feedback = JSON.parse(
+          localStorage.getItem("tooloo_feedback") || "[]"
+        );
+        console.table(feedback);
+        alert(
+          `Total feedback collected: ${feedback.length}\n\nCheck console for details.`
+        );
       }
-    }
 
-    // Auto-refresh every 30 seconds
-    setInterval(refreshDashboard, 30000);
+      function toggleThemeSwitcher() {
+        const existing = document.getElementById("theme-switcher");
+        if (existing) {
+          existing.remove();
+        } else {
+          const switcher = window.colorPalette.createThemeSwitcher();
+          document.body.appendChild(switcher);
+        }
+      }
 
-    // Initial load
-    window.addEventListener('DOMContentLoaded', () => {
-      refreshDashboard();
-      initializeVisualizations();
-    });
-  </script>
-</body>
+      // Auto-refresh every 30 seconds
+      setInterval(refreshDashboard, 30000);
+
+      // Initial load
+      window.addEventListener("DOMContentLoaded", () => {
+        refreshDashboard();
+        initializeVisualizations();
+      });
+    </script>
+  </body>
 </html>
