@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.28",
+  "version": "2.1.29",
   "description": "TooLoo.ai multi-service personal AI development platform",
   "type": "module",
   "private": true,
@@ -11,7 +11,12 @@
     "lint": "eslint src/ --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "clean": "rm -rf dist node_modules",
-    "info": "echo '📋 TooLoo.ai multi-service workspace'"
+    "info": "echo '📋 TooLoo.ai multi-service workspace'",
+    "tooloo:introspect": "curl http://127.0.0.1:4000/api/v1/system/introspect | jq '.'",
+    "tooloo:awareness": "curl http://127.0.0.1:4000/api/v1/system/awareness | jq '.'",
+    "tooloo:github:status": "curl http://127.0.0.1:4000/api/v1/github/health | jq '.'",
+    "tooloo:github:info": "curl http://127.0.0.1:4000/api/v1/github/info | jq '.'",
+    "tooloo:github:context": "curl http://127.0.0.1:4000/api/v1/github/context | jq '.context' | head -50"
   },
   "keywords": [
     "ai",
