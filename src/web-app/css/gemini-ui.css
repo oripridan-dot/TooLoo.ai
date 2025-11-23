@@ -1,4 +1,4 @@
-/* @version 2.1.14 */
+/* @version 2.1.19 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -240,6 +240,7 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow-y: auto;
 }
 
 .g3-main,
