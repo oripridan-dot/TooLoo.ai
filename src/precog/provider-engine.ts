@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.53
 import { SynapseBus } from '../core/bus/event-bus';
 import { ProviderAdapter, GenerationRequest, GenerationResponse } from './providers/types';
 import { OpenAIProvider, AnthropicProvider, GeminiProvider, OllamaProvider } from './providers/adapters';
@@ -87,6 +87,46 @@ export class ProviderEngine {
     }
 
     public async generate(req: GenerationRequest): Promise<GenerationResponse> {
+        // 0. Check Sandbox Mode
+        if (process.env.SANDBOX_MODE === 'true') {
+            console.log('[Precog] Sandbox Mode Active - Returning Mock Response');
+            
+            // Simulate latency
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Mock Planning Response
+            if (req.system && req.system.includes("steps")) {
+                return {
+                    content: JSON.stringify({
+                        steps: [
+                            {
+                                type: "command",
+                                description: "[MOCK] Create project directory",
+                                payload: { command: "mkdir -p projects/mock-project" }
+                            },
+                            {
+                                type: "file:write",
+                                description: "[MOCK] Create README",
+                                payload: { path: "projects/mock-project/README.md", content: "# Mock Project" }
+                            }
+                        ]
+                    }),
+                    provider: 'mock',
+                    model: 'sandbox-v1',
+                    latency: 500,
+                    metadata: { sandbox: true }
+                };
+            }
+
+            return {
+                content: "This is a mock response from the Sandbox environment. The system is operating in safe mode.",
+                provider: 'mock',
+                model: 'sandbox-v1',
+                latency: 500,
+                metadata: { sandbox: true }
+            };
+        }
+
         // 1. Select Provider
         const providerName = req.provider || this.selectBestProvider(req);
         const provider = this.providers.get(providerName);
