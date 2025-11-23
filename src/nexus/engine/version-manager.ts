@@ -1,4 +1,4 @@
-// @version 2.1.16
+// @version 2.1.17
 import * as fs from "fs";
 import * as path from "path";
 import { exec } from "child_process";
@@ -270,5 +270,34 @@ export class VersionManager {
       console.error(`[VersionManager] Error tagging ${filePath}:`, error);
     }
     return false;
+  }
+
+  private updateGitBranch(version: string) {
+    const newBranchName = `feature/tooloo-v${version}-synapsys`;
+    
+    // Check if we are already on this branch
+    this.execGit("rev-parse --abbrev-ref HEAD", (err, currentBranch) => {
+      if (!err && currentBranch && currentBranch.trim() === newBranchName) {
+        return; // Already on the correct branch
+      }
+
+      console.log(`[VersionManager] Switching to new branch: ${newBranchName}`);
+      
+      // Create and checkout new branch
+      this.execGit(`checkout -b ${newBranchName}`, (err) => {
+        if (err) {
+          // If branch exists, just checkout
+          this.execGit(`checkout ${newBranchName}`, (checkoutErr) => {
+            if (checkoutErr) {
+              console.error(`[VersionManager] Failed to switch to branch ${newBranchName}:`, checkoutErr);
+            } else {
+              console.log(`[VersionManager] Switched to existing branch: ${newBranchName}`);
+            }
+          });
+        } else {
+          console.log(`[VersionManager] Created and switched to branch: ${newBranchName}`);
+        }
+      });
+    });
   }
 }
