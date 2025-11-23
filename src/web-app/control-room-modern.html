@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.48 -->
+<!-- @version 2.1.50 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -804,6 +804,35 @@ Loading...</pre
       function clearCache() {
         localStorage.clear();
         console.log("Cache cleared");
+      }
+
+      async function toggleSandbox() {
+        const btn = document.getElementById("sandboxBtn");
+        const isEnabled = btn.classList.contains("btn-warning");
+        const newState = !isEnabled;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/system/sandbox`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled: newState }),
+          });
+          const data = await res.json();
+          
+          if (data.ok) {
+            if (newState) {
+              btn.classList.add("btn-warning");
+              btn.textContent = "🧪 Disable Sandbox";
+              document.body.classList.add("sandbox-mode");
+            } else {
+              btn.classList.remove("btn-warning");
+              btn.textContent = "🧪 Enable Sandbox";
+              document.body.classList.remove("sandbox-mode");
+            }
+          }
+        } catch (err) {
+          console.error("Failed to toggle sandbox:", err);
+        }
       }
 
       // ========== INITIALIZATION ==========
