@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.22
 import { bus } from "../core/event-bus.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
@@ -7,6 +7,7 @@ import { SensoryCortex } from "./sensory/index.js";
 import { Hippocampus } from "./memory/index.js";
 import { PrefrontalCortex } from "./planning/index.js";
 import LLMProvider from "../precog/providers/llm-provider.js";
+import { TOOLOO_PERSONA } from "./persona.js";
 
 export class Cortex {
   private motor: MotorCortex;
@@ -125,6 +126,7 @@ export class Cortex {
           const llm = new LLMProvider();
           const response = await llm.generateSmartLLM({
             prompt: message,
+            system: TOOLOO_PERSONA,
             taskType: "chat",
           });
 
