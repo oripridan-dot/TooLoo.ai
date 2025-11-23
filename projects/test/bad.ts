@@ -1,2 +1,3 @@
-// @version 2.1.74
-const x: number = 42;
+// @version 2.1.75
+// @ts-ignore
+const x: number = "string";
