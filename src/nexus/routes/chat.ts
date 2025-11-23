@@ -1,4 +1,4 @@
-// @version 2.1.33
+// @version 2.1.36
 import { Router } from "express";
 import { Cortex } from "../../cortex";
 import { Precog } from "../../precog";
@@ -10,7 +10,7 @@ const router = Router();
 // For now, we'll assume they are available or we'll mock the response structure
 // until we wire up the full event bus.
 
-router.post("/message", async (req, res) => {
+router.post("/synthesis", async (req, res) => {
   const { message, context, model } = req.body;
 
   try {
