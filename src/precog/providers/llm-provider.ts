@@ -1,4 +1,4 @@
-// @version 2.1.45
+// @version 2.1.47
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -10,13 +10,18 @@ import DomainExpertise from "../../nexus/engine/domain-expertise.js";
 import ContinuousLearning from "../../nexus/engine/continuous-learning.js";
 import fetch from "node-fetch";
 import ensureEnvLoaded from "../../nexus/engine/env-loader.js";
+import { MockProvider } from "./mock.js";
 
 ensureEnvLoaded();
 
 const env = (name, def = undefined) => process.env[name] ?? def;
 
 export default class LLMProvider {
+  private mockProvider: MockProvider;
+
   constructor() {
+    this.mockProvider = new MockProvider();
+
     Object.defineProperty(this, "providers", {
       get() {
         return {
@@ -151,6 +156,10 @@ export default class LLMProvider {
   }
 
   async generateSmartLLM(request) {
+    if (process.env.SANDBOX_MODE === "true") {
+      return this.mockProvider.generateSmartLLM(request);
+    }
+
     const { prompt, system, taskType = "chat", context = {} } = request || {};
     if (!prompt || typeof prompt !== "string") {
       return {
@@ -175,7 +184,7 @@ export default class LLMProvider {
 
     // Select provider considering domain expertise and learning data
     const availableProviders = Object.keys(this.providers).filter(
-      (p) => this.providers[p]
+      (p) => this.providers[p],
     );
     let provider;
 
@@ -183,7 +192,7 @@ export default class LLMProvider {
       // First try learning-based recommendation for this domain
       provider = this.learning.getBestProviderForDomain(
         detectedDomain,
-        availableProviders
+        availableProviders,
       );
 
       // Fallback to domain expertise preferences
@@ -191,7 +200,7 @@ export default class LLMProvider {
         provider = this.domainExpertise.selectProviderForDomain(
           detectedDomain,
           taskType,
-          availableProviders
+          availableProviders,
         );
       }
     }
@@ -263,7 +272,7 @@ export default class LLMProvider {
           detectedDomain,
           p,
           success,
-          latency
+          latency,
         );
 
         return { ...result, provider: p, domain: detectedDomain, latency };
@@ -457,7 +466,7 @@ export default class LLMProvider {
       return { content: text, confidence: 0.8 }; // Local models often good quality
     } catch (error) {
       throw new Error(
-        `Ollama connection failed: ${error.message}. Ensure Ollama is running on ${baseUrl}`
+        `Ollama connection failed: ${error.message}. Ensure Ollama is running on ${baseUrl}`,
       );
     }
   }
@@ -498,7 +507,7 @@ export default class LLMProvider {
       return { content: text, confidence: 0.75 };
     } catch (error) {
       throw new Error(
-        `LocalAI connection failed: ${error.message}. Ensure LocalAI is running on ${baseUrl}`
+        `LocalAI connection failed: ${error.message}. Ensure LocalAI is running on ${baseUrl}`,
       );
     }
   }
@@ -509,7 +518,7 @@ export default class LLMProvider {
 
     if (!this.providers.openinterpreter) {
       throw new Error(
-        "Open Interpreter not enabled. Set ENABLE_OPEN_INTERPRETER=true in .env"
+        "Open Interpreter not enabled. Set ENABLE_OPEN_INTERPRETER=true in .env",
       );
     }
 
@@ -528,7 +537,7 @@ export default class LLMProvider {
 
       if (!res.ok) {
         throw new Error(
-          `Open Interpreter error ${res.status}: ${await res.text()}`
+          `Open Interpreter error ${res.status}: ${await res.text()}`,
         );
       }
 
@@ -545,7 +554,7 @@ export default class LLMProvider {
       };
     } catch (error) {
       throw new Error(
-        `Open Interpreter connection failed: ${error.message}. Ensure OI server is running on ${baseUrl}`
+        `Open Interpreter connection failed: ${error.message}. Ensure OI server is running on ${baseUrl}`,
       );
     }
   }
@@ -557,7 +566,7 @@ export default class LLMProvider {
 
     if (!apiKey) {
       throw new Error(
-        "HuggingFace API key not configured. Set HF_API_KEY in .env"
+        "HuggingFace API key not configured. Set HF_API_KEY in .env",
       );
     }
 
@@ -1109,6 +1118,6 @@ export function getProviderStatus() {
           model: config?.model || null,
         },
       ];
-    })
+    }),
   );
 }
