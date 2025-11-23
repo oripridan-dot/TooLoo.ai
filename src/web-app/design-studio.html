@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.28 -->
+<!-- @version 2.1.40 -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -277,6 +277,21 @@
 
       // --- UI Logic ---
 
+      function setLoading(btn, isLoading, text = "Loading...") {
+        if (isLoading) {
+          btn.dataset.originalText = btn.textContent;
+          btn.textContent = text;
+          btn.disabled = true;
+          btn.style.opacity = "0.7";
+          btn.style.cursor = "not-allowed";
+        } else {
+          btn.textContent = btn.dataset.originalText || "Submit";
+          btn.disabled = false;
+          btn.style.opacity = "1";
+          btn.style.cursor = "pointer";
+        }
+      }
+
       function switchTab(tab) {
         document
           .querySelectorAll(".nav-tab")
@@ -364,11 +379,20 @@
         renderTokens(colors);
 
         log(`Loaded system: ${system.brand?.name || "Unknown"}`);
+        
+        // Switch to tokens view to show result
+        const tokensBtn = document.querySelector('.view-btn[onclick="switchView(\'tokens\')"]');
+        if(tokensBtn) tokensBtn.click();
       }
 
       function renderTokens(tokens) {
         const grid = document.getElementById("tokenGrid");
         grid.innerHTML = "";
+
+        if (Object.keys(tokens).length === 0) {
+             grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">No tokens found in this system.</div>`;
+             return;
+        }
 
         Object.entries(tokens).forEach(([key, val]) => {
           const card = document.createElement("div");
@@ -413,7 +437,10 @@
         .getElementById("extractForm")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
+          const btn = e.target.querySelector("button");
           const url = document.getElementById("websiteUrl").value;
+          
+          setLoading(btn, true, "Extracting...");
           log(`Extracting from ${url}...`);
 
           try {
@@ -434,6 +461,8 @@
             }
           } catch (e) {
             log("Error: " + e.message, "error");
+          } finally {
+            setLoading(btn, false);
           }
         });
 
@@ -441,9 +470,11 @@
         .getElementById("figmaForm")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
+          const btn = e.target.querySelector("button");
           const figmaUrl = document.getElementById("figmaUrl").value;
           const apiToken = document.getElementById("figmaToken").value;
 
+          setLoading(btn, true, "Importing...");
           log(`Importing from Figma...`);
 
           try {
@@ -464,6 +495,8 @@
             }
           } catch (e) {
             log("Error: " + e.message, "error");
+          } finally {
+            setLoading(btn, false);
           }
         });
 
@@ -471,9 +504,11 @@
         .getElementById("blueprintForm")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
+          const btn = e.target.querySelector("button");
           const goal = document.getElementById("blueprintGoal").value;
           if (!goal) return;
 
+          setLoading(btn, true, "Generating UI...");
           log(`Scaffolding UI for: ${goal}...`);
 
           try {
@@ -504,7 +539,8 @@
                 iframe.src = artifact.url;
 
                 // Switch to preview view
-                switchView("preview");
+                const previewBtn = document.querySelector('.view-btn[onclick="switchView(\'preview\')"]');
+                if(previewBtn) previewBtn.click();
               } else {
                 log("No design artifact generated.", "error");
               }
@@ -516,6 +552,8 @@
             }
           } catch (e) {
             log("Error: " + e.message, "error");
+          } finally {
+            setLoading(btn, false);
           }
         });
 
