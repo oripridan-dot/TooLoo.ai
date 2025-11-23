@@ -1,2 +1,3 @@
-// @version 2.1.68
-let x: number = 42;
+// @version 2.1.69
+// Intentional type error
+const x: number = "string";
