@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.29 -->
+<!-- @version 2.1.30 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -162,6 +162,101 @@
                 <option value="critical">Critical</option>
               </select>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GITHUB TAB -->
+      <div class="tab-content" id="github-tab">
+        <h2 style="margin-bottom: 20px; color: var(--brand);">GitHub Integration</h2>
+        
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Repository Info</span>
+            </div>
+            <div id="repoInfo" style="padding: 12px 0;">
+              <div class="metric-row">
+                <span class="metric-label">Name</span>
+                <span class="metric-value" id="repoName">-</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Branch</span>
+                <span class="metric-value" id="repoBranch">-</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Status</span>
+                <span class="metric-value" id="repoStatus">-</span>
+              </div>
+            </div>
+            <div style="margin-top: 12px;">
+               <button class="btn" onclick="refreshGitHub()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Quick Actions</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn btn-primary" onclick="showCreateIssueModal()">➕ New Issue</button>
+              <button class="btn" onclick="showCreatePRModal()">🔀 New Pull Request</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">Recent Issues</div>
+        <div id="issuesList" style="margin-bottom: 24px;"></div>
+      </div>
+
+      <!-- SYSTEM TAB -->
+      <div class="tab-content" id="system-tab">
+        <h2 style="margin-bottom: 20px; color: var(--brand);">System Internals</h2>
+        
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Self-Awareness</span>
+            </div>
+            <pre id="awarenessData" style="font-size: 11px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; overflow: auto; max-height: 200px;">Loading...</pre>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Introspection</span>
+            </div>
+            <pre id="introspectionData" style="font-size: 11px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; overflow: auto; max-height: 200px;">Loading...</pre>
+          </div>
+        </div>
+
+        <div class="section-title">Self-Modification (Danger Zone)</div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Apply Self-Patch</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600;">Action</label>
+              <select class="input-field" id="patchAction">
+                <option value="analyze">Analyze File</option>
+                <option value="create">Create File</option>
+                <option value="update">Update File</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600;">File Path</label>
+              <input type="text" class="input-field" id="patchFile" placeholder="src/...">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600;">Content (for Create/Update)</label>
+              <textarea class="input-field" id="patchContent" rows="5" style="font-family: monospace;"></textarea>
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600;">Commit Message</label>
+              <input type="text" class="input-field" id="patchMessage" placeholder="feat: update system...">
+            </div>
+            <button class="btn btn-danger" onclick="applySelfPatch()">🚀 Apply Patch</button>
+            <div id="patchResult" style="margin-top: 10px; font-size: 12px;"></div>
           </div>
         </div>
       </div>
