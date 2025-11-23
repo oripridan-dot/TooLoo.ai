@@ -1,11 +1,15 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.56",
+  "version": "2.1.57",
   "description": "TooLoo.ai multi-service personal AI development platform",
   "type": "module",
   "private": true,
+  "bin": {
+    "tooloo": "./src/cli/index.ts"
+  },
   "scripts": {
     "start": "tsx src/main.ts",
+    "tooloo": "tsx src/cli/index.ts",
     "start:synapsys": "npm start",
     "dev": "tsx watch src/main.ts",
     "test": "vitest run",
@@ -35,6 +39,7 @@
     "@anthropic-ai/sdk": "^0.69.0",
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
+    "@types/js-yaml": "^4.0.9",
     "axios": "^1.13.2",
     "chokidar": "^4.0.3",
     "commander": "^11.0.0",
@@ -46,6 +51,7 @@
     "fs-extra": "^11.3.2",
     "glob": "^13.0.0",
     "helmet": "^7.1.0",
+    "js-yaml": "^4.1.1",
     "node-fetch": "^3.3.2",
     "playwright": "^1.56.0",
     "socket.io": "^4.7.4",
