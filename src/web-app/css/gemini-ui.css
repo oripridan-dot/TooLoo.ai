@@ -1,4 +1,4 @@
-/* @version 2.1.19 */
+/* @version 2.1.20 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -795,4 +795,52 @@ input::placeholder {
   background: var(--g3-bg-tertiary);
   border-radius: 4px;
   font-size: 0.875rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1280px) {
+  .chat-layout {
+    grid-template-columns: 220px 1fr 220px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .g3-layout {
+    grid-template-columns: 220px 1fr;
+  }
+  .chat-layout {
+    grid-template-columns: 200px 1fr 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .g3-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .g3-sidebar {
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0.5rem;
+    border-right: none;
+    border-bottom: 1px solid var(--g3-border-color);
+  }
+  .g3-sidebar > div {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+    margin-right: 1rem;
+  }
+  .g3-sidebar nav {
+    flex-direction: row;
+  }
+  
+  .chat-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+  .chat-layout .g3-sidebar {
+    display: none; /* Hide sidebars on mobile for now */
+  }
 }
