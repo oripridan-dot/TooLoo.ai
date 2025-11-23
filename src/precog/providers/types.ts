@@ -1,3 +1,4 @@
+// @version 2.1.11
 export interface ProviderConfig {
     name: string;
     enabled: boolean;

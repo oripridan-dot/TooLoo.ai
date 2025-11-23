@@ -1,3 +1,4 @@
+// @version 2.1.11
 import { EventEmitter } from 'events';
 import { SynapseBus } from '../core/bus/event-bus';
 

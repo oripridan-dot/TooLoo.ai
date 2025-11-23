@@ -1,3 +1,4 @@
+// @version 2.1.11
 import { promises as fs } from 'fs';
 import path from 'path';
 

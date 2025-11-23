@@ -1,3 +1,4 @@
+// @version 2.1.11
 // EnvironmentHub: Central registry for engine coordination
 class EnvironmentHub {
   constructor() {

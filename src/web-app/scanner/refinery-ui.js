@@ -1,3 +1,4 @@
+// @version 2.1.11
 /**
  * Interactive Refinery UI Component
  * Displays weighted keywords and refinement suggestions visually

@@ -1,3 +1,4 @@
+// @version 2.1.11
 /**
  * Prompt Quality Analyzer
  * Scores prompts on 5 key dimensions

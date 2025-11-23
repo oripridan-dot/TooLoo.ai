@@ -1,3 +1,4 @@
+// @version 2.1.11
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { io } from 'socket.io-client';

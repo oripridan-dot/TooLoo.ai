@@ -1,21 +1,22 @@
+// @version 2.1.11
 // @ts-nocheck
 // Product Development Server - ES Module Compatible
 // Professional product development capabilities for TooLoo
 
-import express from 'express';
-import cors from 'cors';
-import fs from 'fs/promises';
-import path from 'path';
-import environmentHub from '../engine/environment-hub.js';
-import ProductAnalysisEngine from '../engine/product-analysis-engine.js';
-import { FigmaAdapter } from '../lib/adapters/figma-adapter.js';
-import { ServiceFoundation } from '../lib/service-foundation.js';
-import DesignSystemAnalytics from '../lib/design-system-analytics.js';
-import DesignAutoRemediation from '../lib/design-auto-remediation.js';
-import { IndustryRegistry } from '../lib/design-industry-registry.js';
-import DesignMLClustering from '../lib/design-ml-clustering.js';
-import DesignGovernance from '../lib/design-governance.js';
-import { getSessionManager } from '../services/session-memory-manager.js';
+import express from "express";
+import cors from "cors";
+import fs from "fs/promises";
+import path from "path";
+import environmentHub from "../../core/environment-hub.js";
+import ProductAnalysisEngine from "../../nexus/engine/product-analysis-engine.js";
+import { FigmaAdapter } from "../../lib/adapters/figma-adapter.js";
+import { ServiceFoundation } from "../../lib/service-foundation.js";
+import DesignSystemAnalytics from "../../lib/design-system-analytics.js";
+import DesignAutoRemediation from "../../lib/design-auto-remediation.js";
+import { IndustryRegistry } from "../../lib/design-industry-registry.js";
+import DesignMLClustering from "../../lib/design-ml-clustering.js";
+import DesignGovernance from "../../lib/design-governance.js";
+import { getSessionManager } from "../../services/session-memory-manager.js";
 
 class ProductDevelopmentServer {
   svc: ServiceFoundation;
@@ -46,7 +47,7 @@ class ProductDevelopmentServer {
   constructor() {
     // Initialize service with unified middleware (replaces 30 LOC of boilerplate)
     this.svc = new ServiceFoundation(
-      'product-development-server',
+      "product-development-server",
       process.env.PRODUCT_PORT || 3006
     );
     this.svc.setupMiddleware();
@@ -56,15 +57,15 @@ class ProductDevelopmentServer {
     this.port = this.svc.port;
 
     // JSON persistence setup
-    this.dataDir = path.join(process.cwd(), 'data', 'workflows');
-    this.artifactsDir = path.join(process.cwd(), 'data', 'artifacts');
-    this.workflowsFile = path.join(this.dataDir, 'active-workflows.json');
-    this.skillsFile = path.join(this.dataDir, 'skill-matrix.json');
-    this.eventsFile = path.join(this.dataDir, 'events.json');
-    this.artifactsIndexFile = path.join(this.artifactsDir, 'index.json');
+    this.dataDir = path.join(process.cwd(), "data", "workflows");
+    this.artifactsDir = path.join(process.cwd(), "data", "artifacts");
+    this.workflowsFile = path.join(this.dataDir, "active-workflows.json");
+    this.skillsFile = path.join(this.dataDir, "skill-matrix.json");
+    this.eventsFile = path.join(this.dataDir, "events.json");
+    this.artifactsIndexFile = path.join(this.artifactsDir, "index.json");
 
     // Session persistence setup
-    this.sessionsDir = path.join(process.cwd(), 'data', 'sessions');
+    this.sessionsDir = path.join(process.cwd(), "data", "sessions");
 
     // In-memory storage with persistence
     this.activeWorkflows = new Map();
@@ -74,7 +75,7 @@ class ProductDevelopmentServer {
     this.artifactTemplates = this.initializeArtifactTemplates();
 
     // Design system (consolidated from design-integration-server)
-    this.designDir = path.join(process.cwd(), 'data', 'design-system');
+    this.designDir = path.join(process.cwd(), "data", "design-system");
     this.designSystem = {
       colors: {},
       typography: {},
@@ -92,7 +93,7 @@ class ProductDevelopmentServer {
 
     // Phase 6 modules initialization
     this.mlClustering = new DesignMLClustering();
-    this.governance = new DesignGovernance('default');
+    this.governance = new DesignGovernance("default");
 
     this.initializeStorage();
 
@@ -100,11 +101,11 @@ class ProductDevelopmentServer {
     this.setupOLAMiddleware();
     this.setupRoutes();
 
-    environmentHub.registerComponent('productDevelopmentServer', this, [
-      'workflow-orchestration',
-      'dynamic-learning',
-      'bookworm-analysis',
-      'artifact-generation',
+    environmentHub.registerComponent("productDevelopmentServer", this, [
+      "workflow-orchestration",
+      "dynamic-learning",
+      "bookworm-analysis",
+      "artifact-generation",
     ]);
   }
 
@@ -120,16 +121,18 @@ class ProductDevelopmentServer {
 
       await this.loadPersistedData();
       await this.loadDesignSystem();
-      console.log('📁 Workflow, artifact, session, and design system persistence initialized');
+      console.log(
+        "📁 Workflow, artifact, session, and design system persistence initialized"
+      );
     } catch (error) {
-      console.warn('⚠️ Storage initialization failed:', error.message);
+      console.warn("⚠️ Storage initialization failed:", error.message);
     }
   }
 
   async loadDesignSystem() {
     try {
-      const designFile = path.join(this.designDir, 'system.json');
-      const data = await fs.readFile(designFile, 'utf8');
+      const designFile = path.join(this.designDir, "system.json");
+      const data = await fs.readFile(designFile, "utf8");
       this.designSystem = JSON.parse(data);
     } catch {
       // Design system file doesn't exist yet, use defaults
@@ -138,35 +141,38 @@ class ProductDevelopmentServer {
 
   async saveDesignSystem() {
     try {
-      const designFile = path.join(this.designDir, 'system.json');
-      await fs.writeFile(designFile, JSON.stringify(this.designSystem, null, 2));
+      const designFile = path.join(this.designDir, "system.json");
+      await fs.writeFile(
+        designFile,
+        JSON.stringify(this.designSystem, null, 2)
+      );
     } catch (err) {
-      console.warn('Failed to save design system:', err.message);
+      console.warn("Failed to save design system:", err.message);
     }
   }
 
   async loadPersistedData() {
     try {
       // Load workflows
-      const workflowsData = await fs.readFile(this.workflowsFile, 'utf8');
+      const workflowsData = await fs.readFile(this.workflowsFile, "utf8");
       const workflows = JSON.parse(workflowsData);
       for (const [id, workflow] of Object.entries(workflows)) {
         this.activeWorkflows.set(id, workflow);
       }
 
       // Load skills
-      const skillsData = await fs.readFile(this.skillsFile, 'utf8');
+      const skillsData = await fs.readFile(this.skillsFile, "utf8");
       const skills = JSON.parse(skillsData);
       for (const [key, skill] of Object.entries(skills)) {
         this.skillMatrix.set(key, skill);
       }
 
       // Load events
-      const eventsData = await fs.readFile(this.eventsFile, 'utf8');
+      const eventsData = await fs.readFile(this.eventsFile, "utf8");
       this.eventLog = JSON.parse(eventsData);
 
       // Load artifacts index
-      const artifactsData = await fs.readFile(this.artifactsIndexFile, 'utf8');
+      const artifactsData = await fs.readFile(this.artifactsIndexFile, "utf8");
       const artifacts = JSON.parse(artifactsData);
       for (const [id, artifact] of Object.entries(artifacts)) {
         this.artifactsIndex.set(id, artifact);
@@ -176,7 +182,7 @@ class ProductDevelopmentServer {
         `📋 Loaded ${this.activeWorkflows.size} workflows, ${this.skillMatrix.size} skills, ${this.eventLog.length} events, ${this.artifactsIndex.size} artifacts`
       );
     } catch (error) {
-      console.log('📝 Starting with empty state');
+      console.log("📝 Starting with empty state");
     }
   }
 
@@ -185,12 +191,18 @@ class ProductDevelopmentServer {
       // Create backups
       const timestamp = Date.now();
       try {
-        await fs.copyFile(this.workflowsFile, `${this.workflowsFile}.bak.${timestamp}`);
+        await fs.copyFile(
+          this.workflowsFile,
+          `${this.workflowsFile}.bak.${timestamp}`
+        );
       } catch {} // Ignore if file doesn't exist
 
       // Save workflows
       const workflowsObj = Object.fromEntries(this.activeWorkflows);
-      await fs.writeFile(this.workflowsFile, JSON.stringify(workflowsObj, null, 2));
+      await fs.writeFile(
+        this.workflowsFile,
+        JSON.stringify(workflowsObj, null, 2)
+      );
 
       // Save skills
       const skillsObj = Object.fromEntries(this.skillMatrix);
@@ -198,15 +210,21 @@ class ProductDevelopmentServer {
 
       // Save events (keep last 100)
       const recentEvents = this.eventLog.slice(-100);
-      await fs.writeFile(this.eventsFile, JSON.stringify(recentEvents, null, 2));
+      await fs.writeFile(
+        this.eventsFile,
+        JSON.stringify(recentEvents, null, 2)
+      );
 
       // Save artifacts index
       const artifactsObj = Object.fromEntries(this.artifactsIndex);
-      await fs.writeFile(this.artifactsIndexFile, JSON.stringify(artifactsObj, null, 2));
+      await fs.writeFile(
+        this.artifactsIndexFile,
+        JSON.stringify(artifactsObj, null, 2)
+      );
 
       return true;
     } catch (error) {
-      console.error('💾 Persistence failed:', error.message);
+      console.error("💾 Persistence failed:", error.message);
       return false;
     }
   }
@@ -229,7 +247,8 @@ class ProductDevelopmentServer {
     // Prevents BOLA vulnerabilities by checking user ownership
     this.app.use((req, res, next) => {
       // Extract user ID from header (for testing and client code)
-      const userId = req.headers['x-user-id'] || req.query.userId || 'default-user';
+      const userId =
+        req.headers["x-user-id"] || req.query.userId || "default-user";
       req.userId = userId;
 
       // Attach ownership check function to request
@@ -244,16 +263,16 @@ class ProductDevelopmentServer {
 
   setupRoutes() {
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get("/health", (req, res) => {
       res.json({
-        service: 'product-development',
-        status: 'healthy',
+        service: "product-development",
+        status: "healthy",
         timestamp: new Date().toISOString(),
         capabilities: [
-          'workflow-orchestration',
-          'dynamic-learning',
-          'bookworm-analysis',
-          'artifact-generation',
+          "workflow-orchestration",
+          "dynamic-learning",
+          "bookworm-analysis",
+          "artifact-generation",
         ],
         activeWorkflows: this.activeWorkflows.size,
         skillsAcquired: this.skillMatrix.size,
@@ -262,7 +281,7 @@ class ProductDevelopmentServer {
     });
 
     // Basic authentication middleware for workflow operations
-    this.app.use('/api/v1/workflows', (req, res, next) => {
+    this.app.use("/api/v1/workflows", (req, res, next) => {
       // Allow all requests - this is internal demo service
       // In production, implement proper auth layer
       next();
@@ -293,10 +312,10 @@ class ProductDevelopmentServer {
 
   setupWorkflowRoutes() {
     // Capability Scaffolding Protocol
-    this.app.post('/api/v1/workflows/scaffold', async (req, res) => {
+    this.app.post("/api/v1/workflows/scaffold", async (req, res) => {
       try {
         const { goal, context } = req.body;
-        if (!goal) return res.status(400).json({ error: 'Goal required' });
+        if (!goal) return res.status(400).json({ error: "Goal required" });
 
         const plan = await this.scaffoldGoal(goal, context);
 
@@ -304,7 +323,8 @@ class ProductDevelopmentServer {
           ok: true,
           goal,
           plan,
-          message: 'Goal decomposed into actionable steps via Capability Scaffolding Protocol',
+          message:
+            "Goal decomposed into actionable steps via Capability Scaffolding Protocol",
         });
       } catch (error) {
         res.status(500).json({ ok: false, error: error.message });
@@ -312,19 +332,20 @@ class ProductDevelopmentServer {
     });
 
     // Execute Blueprint Step
-    this.app.post('/api/v1/workflows/execute-step', async (req, res) => {
+    this.app.post("/api/v1/workflows/execute-step", async (req, res) => {
       try {
         const { step } = req.body;
-        if (!step) return res.status(400).json({ error: 'Step required' });
+        if (!step) return res.status(400).json({ error: "Step required" });
 
         // Sandbox execution to web-app/blueprints
-        const sandboxDir = path.join(process.cwd(), 'web-app', 'blueprints');
+        const sandboxDir = path.join(process.cwd(), "web-app", "blueprints");
         await fs.mkdir(sandboxDir, { recursive: true });
 
-        let result = '';
+        let result = "";
 
-        if (step.action === 'create_file') {
-          if (!step.path || !step.code) throw new Error('Path and code required for create_file');
+        if (step.action === "create_file") {
+          if (!step.path || !step.code)
+            throw new Error("Path and code required for create_file");
 
           // Simple path sanitization
           const fileName = path.basename(step.path);
@@ -332,13 +353,13 @@ class ProductDevelopmentServer {
 
           await fs.writeFile(safePath, step.code);
           result = `Created file: ${safePath}`;
-        } else if (step.action === 'run_command') {
+        } else if (step.action === "run_command") {
           // Simulate command execution for safety
           result = `Simulated command: ${step.command}`;
 
           // Special handling for git init simulation
-          if (step.command.includes('git init')) {
-            await fs.mkdir(path.join(sandboxDir, '.git'), { recursive: true });
+          if (step.command.includes("git init")) {
+            await fs.mkdir(path.join(sandboxDir, ".git"), { recursive: true });
           }
         } else {
           result = `Executed action: ${step.action}`;
@@ -346,19 +367,19 @@ class ProductDevelopmentServer {
 
         res.json({ ok: true, result });
       } catch (error) {
-        console.error('Step execution failed:', error);
+        console.error("Step execution failed:", error);
         res.status(500).json({ ok: false, error: error.message });
       }
     });
 
     // Start a new product development workflow
-    this.app.post('/api/v1/workflows/start', async (req, res) => {
+    this.app.post("/api/v1/workflows/start", async (req, res) => {
       try {
         const { type, requirements, options } = req.body;
 
         if (!type || !requirements) {
           return res.status(400).json({
-            error: 'Missing required fields: type, requirements',
+            error: "Missing required fields: type, requirements",
           });
         }
 
@@ -368,8 +389,8 @@ class ProductDevelopmentServer {
           type: type,
           requirements: requirements,
           options: options || {},
-          state: 'started',
-          currentPhase: 'discovery',
+          state: "started",
+          currentPhase: "discovery",
           startedAt: new Date().toISOString(),
           progress: 0,
           phases: this.getWorkflowPhases(type),
@@ -379,21 +400,21 @@ class ProductDevelopmentServer {
 
         // Log event and persist
         this.logEvent(
-          'workflow-started',
-          `${type} workflow started: ${requirements.productName || 'Unnamed Product'}`,
+          "workflow-started",
+          `${type} workflow started: ${requirements.productName || "Unnamed Product"}`,
           workflowId
         );
 
         res.json({
           ok: true,
           workflowId,
-          status: 'started',
+          status: "started",
           currentPhase: workflow.currentPhase,
           message: `${type} workflow started successfully`,
-          nextActions: ['Execute discovery phase', 'Begin market analysis'],
+          nextActions: ["Execute discovery phase", "Begin market analysis"],
         });
       } catch (error) {
-        console.error('Failed to start workflow:', error);
+        console.error("Failed to start workflow:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -402,7 +423,7 @@ class ProductDevelopmentServer {
     });
 
     // Execute workflow phase
-    this.app.post('/api/v1/workflows/:workflowId/execute', async (req, res) => {
+    this.app.post("/api/v1/workflows/:workflowId/execute", async (req, res) => {
       try {
         const { workflowId } = req.params;
         const { phase } = req.body;
@@ -411,7 +432,7 @@ class ProductDevelopmentServer {
         if (!workflow) {
           return res.status(404).json({
             ok: false,
-            error: 'Workflow not found',
+            error: "Workflow not found",
           });
         }
 
@@ -421,17 +442,17 @@ class ProductDevelopmentServer {
         // Update workflow progress
         workflow.progress = Math.min(workflow.progress + 0.2, 1.0);
         if (workflow.progress >= 1.0) {
-          workflow.state = 'completed';
+          workflow.state = "completed";
         }
 
         // Log event and persist
         this.logEvent(
-          'phase-executed',
+          "phase-executed",
           `${phase || workflow.currentPhase} phase completed (${phaseResult.qualityScore} quality)`,
           workflowId
         );
         this.logEvent(
-          'artifacts-generated',
+          "artifacts-generated",
           `Generated ${phaseResult.artifacts.length} artifacts`,
           workflowId
         );
@@ -440,14 +461,14 @@ class ProductDevelopmentServer {
           ok: true,
           workflowId,
           phase: phase || workflow.currentPhase,
-          status: 'completed',
+          status: "completed",
           qualityScore: phaseResult.qualityScore,
           artifactsGenerated: phaseResult.artifacts.length,
           progress: workflow.progress,
-          message: 'Phase executed successfully',
+          message: "Phase executed successfully",
         });
       } catch (error) {
-        console.error('Failed to execute workflow phase:', error);
+        console.error("Failed to execute workflow phase:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -456,85 +477,124 @@ class ProductDevelopmentServer {
     });
 
     // REAL Execute Task Endpoint - generates actual artifacts
-    this.app.post('/api/v1/workflows/execute-task', async (req, res) => {
+    this.app.post("/api/v1/workflows/execute-task", async (req, res) => {
       try {
-        const { task, description, taskType = 'action-item', context = {} } = req.body;
+        const {
+          task,
+          description,
+          taskType = "action-item",
+          context = {},
+        } = req.body;
 
         if (!task) {
-          return res.status(400).json({ ok: false, error: 'Task required' });
+          return res.status(400).json({ ok: false, error: "Task required" });
         }
 
         const taskLower = task.toLowerCase();
-        const fullText = taskLower + ' ' + (description || '').toLowerCase();
+        const fullText = taskLower + " " + (description || "").toLowerCase();
 
-        let result = '';
+        let result = "";
         let artifacts = [];
         const timestamp = Date.now();
 
         try {
-          const webTemp = path.join(process.cwd(), 'web-app', 'temp');
+          const webTemp = path.join(process.cwd(), "web-app", "temp");
           await fs.mkdir(webTemp, { recursive: true });
 
           if (
-            fullText.includes('design') ||
-            fullText.includes('mockup') ||
-            fullText.includes('ui')
+            fullText.includes("design") ||
+            fullText.includes("mockup") ||
+            fullText.includes("ui")
           ) {
             // REAL: Create SVG mockup files
             const mobileSvg = `<svg width="375" height="812" xmlns="http://www.w3.org/2000/svg"><rect width="375" height="812" fill="#f5f5f5"/><text x="187" y="406" text-anchor="middle" font-size="16">${task}</text></svg>`;
             const filename = `mockup-${timestamp}.svg`;
             await fs.writeFile(path.join(webTemp, filename), mobileSvg);
-            artifacts.push({ name: filename, url: `/temp/${filename}`, type: 'design' });
+            artifacts.push({
+              name: filename,
+              url: `/temp/${filename}`,
+              type: "design",
+            });
             result = `✅ Design Complete: Created interactive mockup (${filename})`;
-          } else if (fullText.includes('document') || fullText.includes('guide')) {
+          } else if (
+            fullText.includes("document") ||
+            fullText.includes("guide")
+          ) {
             // REAL: Create markdown document
-            const doc = `# ${task}\n\n${description || 'Generated documentation'}\n\nGenerated: ${new Date().toISOString()}`;
+            const doc = `# ${task}\n\n${description || "Generated documentation"}\n\nGenerated: ${new Date().toISOString()}`;
             const filename = `doc-${timestamp}.md`;
             await fs.writeFile(path.join(webTemp, filename), doc);
-            artifacts.push({ name: filename, url: `/temp/${filename}`, type: 'document' });
+            artifacts.push({
+              name: filename,
+              url: `/temp/${filename}`,
+              type: "document",
+            });
             result = `✅ Documentation Complete: ${filename}`;
-          } else if (fullText.includes('code') || fullText.includes('implement')) {
+          } else if (
+            fullText.includes("code") ||
+            fullText.includes("implement")
+          ) {
             // REAL: Create source code file
             const code = `// ${task}\n// Generated: ${new Date().toISOString()}\n\nclass Executor {\n  async run() {\n    return { status: 'completed' };\n  }\n}`;
             const filename = `code-${timestamp}.js`;
             await fs.writeFile(path.join(webTemp, filename), code);
-            artifacts.push({ name: filename, url: `/temp/${filename}`, type: 'code' });
-            result = `✅ Code Generated: ${code.split('\n').length} lines in ${filename}`;
-          } else if (fullText.includes('test') || fullText.includes('validate')) {
+            artifacts.push({
+              name: filename,
+              url: `/temp/${filename}`,
+              type: "code",
+            });
+            result = `✅ Code Generated: ${code.split("\n").length} lines in ${filename}`;
+          } else if (
+            fullText.includes("test") ||
+            fullText.includes("validate")
+          ) {
             // REAL: Create test file
             const test = `describe('${task}', () => {\n  test('should pass', () => {\n    expect(true).toBe(true);\n  });\n});`;
             const filename = `test-${timestamp}.js`;
             await fs.writeFile(path.join(webTemp, filename), test);
-            artifacts.push({ name: filename, url: `/temp/${filename}`, type: 'test' });
-            result = `✅ Tests Created: ${test.split('\n').length} lines in ${filename}`;
+            artifacts.push({
+              name: filename,
+              url: `/temp/${filename}`,
+              type: "test",
+            });
+            result = `✅ Tests Created: ${test.split("\n").length} lines in ${filename}`;
           } else if (
-            fullText.includes('data') ||
-            fullText.includes('csv') ||
-            fullText.includes('export')
+            fullText.includes("data") ||
+            fullText.includes("csv") ||
+            fullText.includes("export")
           ) {
             // REAL: Create CSV file
-            const csv = 'id,value,status\n1,100,active\n2,200,pending\n3,300,complete';
+            const csv =
+              "id,value,status\n1,100,active\n2,200,pending\n3,300,complete";
             const filename = `data-${timestamp}.csv`;
             await fs.writeFile(path.join(webTemp, filename), csv);
-            artifacts.push({ name: filename, url: `/temp/${filename}`, type: 'data' });
+            artifacts.push({
+              name: filename,
+              url: `/temp/${filename}`,
+              type: "data",
+            });
             result = `✅ Dataset Created: 3 records in ${filename}`;
           } else {
             // REAL: Create task report
-            const report = `# Task Report: ${task}\n\n${description || 'Execution report'}\n\nStatus: Completed\nTime: ${new Date().toISOString()}`;
+            const report = `# Task Report: ${task}\n\n${description || "Execution report"}\n\nStatus: Completed\nTime: ${new Date().toISOString()}`;
             const filename = `report-${timestamp}.md`;
             await fs.writeFile(path.join(webTemp, filename), report);
-            artifacts.push({ name: filename, url: `/temp/${filename}`, type: 'report' });
+            artifacts.push({
+              name: filename,
+              url: `/temp/${filename}`,
+              type: "report",
+            });
             result = `✅ Task Complete: Report generated (${filename})`;
           }
         } catch (fsError) {
-          console.error('File generation error:', fsError);
+          console.error("File generation error:", fsError);
           result = `✅ Task executed (file save error: ${fsError.message})`;
         }
 
         this.logEvent(
-          'task-executed',
+          "task-executed",
           `${taskType}: ${task} (${artifacts.length} artifacts generated)`,
-          'workspace'
+          "workspace"
         );
 
         res.json({
@@ -544,16 +604,16 @@ class ProductDevelopmentServer {
           result,
           artifacts: artifacts.map((a) => ({ name: a.name, url: a.url })),
           executedAt: new Date().toISOString(),
-          duration: '0.5s',
+          duration: "0.5s",
         });
       } catch (error) {
-        console.error('Failed to execute task:', error);
+        console.error("Failed to execute task:", error);
         res.status(500).json({ ok: false, error: error.message });
       }
     });
 
     // Get workflow status
-    this.app.get('/api/v1/workflows/:workflowId', (req, res) => {
+    this.app.get("/api/v1/workflows/:workflowId", (req, res) => {
       try {
         const { workflowId } = req.params;
         const workflow = this.activeWorkflows.get(workflowId);
@@ -561,7 +621,7 @@ class ProductDevelopmentServer {
         if (!workflow) {
           return res.status(404).json({
             ok: false,
-            error: 'Workflow not found',
+            error: "Workflow not found",
           });
         }
 
@@ -578,7 +638,7 @@ class ProductDevelopmentServer {
           },
         });
       } catch (error) {
-        console.error('Failed to get workflow status:', error);
+        console.error("Failed to get workflow status:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -587,16 +647,18 @@ class ProductDevelopmentServer {
     });
 
     // List all active workflows
-    this.app.get('/api/v1/workflows', (req, res) => {
+    this.app.get("/api/v1/workflows", (req, res) => {
       try {
-        const workflows = Array.from(this.activeWorkflows.values()).map((w) => ({
-          id: w.id,
-          type: w.type,
-          state: w.state,
-          currentPhase: w.currentPhase,
-          progress: w.progress,
-          startedAt: w.startedAt,
-        }));
+        const workflows = Array.from(this.activeWorkflows.values()).map(
+          (w) => ({
+            id: w.id,
+            type: w.type,
+            state: w.state,
+            currentPhase: w.currentPhase,
+            progress: w.progress,
+            startedAt: w.startedAt,
+          })
+        );
 
         res.json({
           ok: true,
@@ -604,7 +666,7 @@ class ProductDevelopmentServer {
           count: workflows.length,
         });
       } catch (error) {
-        console.error('Failed to list workflows:', error);
+        console.error("Failed to list workflows:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -613,21 +675,21 @@ class ProductDevelopmentServer {
     });
 
     // Get available workflow templates
-    this.app.get('/api/v1/workflows/templates', (req, res) => {
+    this.app.get("/api/v1/workflows/templates", (req, res) => {
       const templates = [
         {
-          type: 'concept-to-market',
-          name: 'Concept-to-Market Product Development',
-          description: 'Complete journey from idea to paying customers',
-          duration: '8-16 weeks',
-          phases: ['discovery', 'strategy', 'development', 'launch', 'scale'],
+          type: "concept-to-market",
+          name: "Concept-to-Market Product Development",
+          description: "Complete journey from idea to paying customers",
+          duration: "8-16 weeks",
+          phases: ["discovery", "strategy", "development", "launch", "scale"],
         },
         {
-          type: 'rapid-mvp',
-          name: 'Rapid MVP Development',
-          description: 'Fast-track from concept to testable product',
-          duration: '2-4 weeks',
-          phases: ['validate', 'build', 'test'],
+          type: "rapid-mvp",
+          name: "Rapid MVP Development",
+          description: "Fast-track from concept to testable product",
+          duration: "2-4 weeks",
+          phases: ["validate", "build", "test"],
         },
       ];
 
@@ -638,7 +700,7 @@ class ProductDevelopmentServer {
     });
 
     // Get event log
-    this.app.get('/api/v1/workflows/events', (req, res) => {
+    this.app.get("/api/v1/workflows/events", (req, res) => {
       const { limit = 50, workflowId } = req.query;
       let events = this.eventLog;
 
@@ -658,16 +720,19 @@ class ProductDevelopmentServer {
 
   async callLLM(prompt) {
     try {
-      const response = await fetch('http://127.0.0.1:3003/api/v1/providers/burst', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, criticality: 'high' }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:3003/api/v1/providers/burst",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, criticality: "high" }),
+        }
+      );
       const data = await response.json();
-      return data.text || '';
+      return data.text || "";
     } catch (error) {
-      console.error('LLM Call Failed:', error);
-      return '';
+      console.error("LLM Call Failed:", error);
+      return "";
     }
   }
 
@@ -719,36 +784,38 @@ class ProductDevelopmentServer {
         return JSON.parse(match[0]);
       }
     } catch (e) {
-      console.warn('LLM scaffolding failed, falling back to heuristics:', e);
+      console.warn("LLM scaffolding failed, falling back to heuristics:", e);
     }
 
     // Fallback to heuristics if LLM fails - NOW WITH LIVING BLUEPRINT TEMPLATES
     const steps = [];
     const lowerGoal = goal.toLowerCase();
-    let strategyName = 'Capability Scaffolding (Fallback)';
-    let rationale = 'Decomposed complex goal into verifiable, atomic units of work.';
+    let strategyName = "Capability Scaffolding (Fallback)";
+    let rationale =
+      "Decomposed complex goal into verifiable, atomic units of work.";
 
     if (
-      lowerGoal.includes('server') ||
-      lowerGoal.includes('api') ||
-      lowerGoal.includes('backend')
+      lowerGoal.includes("server") ||
+      lowerGoal.includes("api") ||
+      lowerGoal.includes("backend")
     ) {
-      strategyName = 'Microservice Blueprint';
-      rationale = 'Standard Node.js microservice architecture with Docker support.';
+      strategyName = "Microservice Blueprint";
+      rationale =
+        "Standard Node.js microservice architecture with Docker support.";
 
       steps.push({
         step: 1,
-        action: 'create_file',
-        path: 'package.json',
-        description: 'Initialize Node.js project manifest',
+        action: "create_file",
+        path: "package.json",
+        description: "Initialize Node.js project manifest",
         code: JSON.stringify(
           {
-            name: 'generated-service',
-            version: '1.0.0',
-            main: 'server.js',
-            type: 'module',
-            scripts: { start: 'node server.js' },
-            dependencies: { express: '^4.18.2', cors: '^2.8.5' },
+            name: "generated-service",
+            version: "1.0.0",
+            main: "server.js",
+            type: "module",
+            scripts: { start: "node server.js" },
+            dependencies: { express: "^4.18.2", cors: "^2.8.5" },
           },
           null,
           2
@@ -757,92 +824,92 @@ class ProductDevelopmentServer {
 
       steps.push({
         step: 2,
-        action: 'create_file',
-        path: 'Dockerfile',
-        description: 'Containerize the service',
+        action: "create_file",
+        path: "Dockerfile",
+        description: "Containerize the service",
         code: 'FROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nEXPOSE 3000\nCMD ["npm", "start"]',
       });
 
       steps.push({
         step: 3,
-        action: 'create_file',
-        path: 'server.js',
-        description: 'Create basic Express server',
+        action: "create_file",
+        path: "server.js",
+        description: "Create basic Express server",
         code: "import express from 'express';\nconst app = express();\napp.use(express.json());\napp.get('/health', (req, res) => res.json({status: 'ok'}));\napp.listen(3000, () => console.log('Server running on 3000'));",
       });
 
       steps.push({
         step: 4,
-        action: 'run_command',
-        command: 'npm install',
-        description: 'Install dependencies',
+        action: "run_command",
+        command: "npm install",
+        description: "Install dependencies",
       });
     } else if (
-      lowerGoal.includes('react') ||
-      lowerGoal.includes('frontend') ||
-      lowerGoal.includes('ui')
+      lowerGoal.includes("react") ||
+      lowerGoal.includes("frontend") ||
+      lowerGoal.includes("ui")
     ) {
-      strategyName = 'Frontend Blueprint';
-      rationale = 'Modern React application structure.';
+      strategyName = "Frontend Blueprint";
+      rationale = "Modern React application structure.";
 
       steps.push({
         step: 1,
-        action: 'run_command',
-        command: 'npx create-react-app my-app',
-        description: 'Scaffold React app',
+        action: "run_command",
+        command: "npx create-react-app my-app",
+        description: "Scaffold React app",
       });
       steps.push({
         step: 2,
-        action: 'create_file',
-        path: 'Dockerfile',
-        description: 'Containerize for static serving',
-        code: 'FROM node:18-alpine as build\nWORKDIR /app\nCOPY . .\nRUN npm install && npm run build\n\nFROM nginx:alpine\nCOPY --from=build /app/build /usr/share/nginx/html',
+        action: "create_file",
+        path: "Dockerfile",
+        description: "Containerize for static serving",
+        code: "FROM node:18-alpine as build\nWORKDIR /app\nCOPY . .\nRUN npm install && npm run build\n\nFROM nginx:alpine\nCOPY --from=build /app/build /usr/share/nginx/html",
       });
     } else {
       // Generic fallback but with structure
       steps.push({
         step: 1,
-        action: 'run_command',
-        command: 'git init',
-        description: 'Initialize version control',
+        action: "run_command",
+        command: "git init",
+        description: "Initialize version control",
       });
       steps.push({
         step: 2,
-        action: 'create_file',
-        path: 'README.md',
-        description: 'Create documentation',
+        action: "create_file",
+        path: "README.md",
+        description: "Create documentation",
         code: `# ${goal}\n\nGenerated by TooLoo Living Blueprint.`,
       });
       steps.push({
         step: 3,
-        action: 'plan_implementation',
-        description: 'Analyze requirements for: ' + goal,
+        action: "plan_implementation",
+        description: "Analyze requirements for: " + goal,
       });
     }
 
     return {
       strategy: strategyName,
       steps: steps,
-      rationale: rationale + ' (Heuristic Fallback)',
+      rationale: rationale + " (Heuristic Fallback)",
     };
   }
 
   setupLearningRoutes() {
     // Acquire new skill
-    this.app.post('/api/v1/learning/acquire', async (req, res) => {
+    this.app.post("/api/v1/learning/acquire", async (req, res) => {
       try {
         const { skillName, context, urgency } = req.body;
 
         if (!skillName) {
           return res.status(400).json({
-            error: 'Missing required field: skillName',
+            error: "Missing required field: skillName",
           });
         }
 
         // Simulate skill acquisition
         const skill = {
           name: skillName,
-          proficiency: 'professional',
+          proficiency: "professional",
           confidence: 0.85,
           acquiredAt: new Date().toISOString(),
           context: context || {},
@@ -858,7 +925,7 @@ class ProductDevelopmentServer {
           message: `Acquired ${skill.proficiency} level proficiency in ${skillName}`,
         });
       } catch (error) {
-        console.error('Failed to acquire skill:', error);
+        console.error("Failed to acquire skill:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -867,16 +934,22 @@ class ProductDevelopmentServer {
     });
 
     // Get skill matrix
-    this.app.get('/api/v1/learning/skills', (req, res) => {
+    this.app.get("/api/v1/learning/skills", (req, res) => {
       try {
         const skills = Array.from(this.skillMatrix.values());
         const skillMatrix = {
-          'technical-foundation': skills.filter(
-            (s) => this.categorizeToDomain(s.name) === 'technical'
+          "technical-foundation": skills.filter(
+            (s) => this.categorizeToDomain(s.name) === "technical"
           ),
-          'business-strategy': skills.filter((s) => this.categorizeToDomain(s.name) === 'business'),
-          'product-design': skills.filter((s) => this.categorizeToDomain(s.name) === 'design'),
-          'marketing-growth': skills.filter((s) => this.categorizeToDomain(s.name) === 'marketing'),
+          "business-strategy": skills.filter(
+            (s) => this.categorizeToDomain(s.name) === "business"
+          ),
+          "product-design": skills.filter(
+            (s) => this.categorizeToDomain(s.name) === "design"
+          ),
+          "marketing-growth": skills.filter(
+            (s) => this.categorizeToDomain(s.name) === "marketing"
+          ),
         };
 
         res.json({
@@ -886,7 +959,7 @@ class ProductDevelopmentServer {
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        console.error('Failed to get skill matrix:', error);
+        console.error("Failed to get skill matrix:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -895,13 +968,13 @@ class ProductDevelopmentServer {
     });
 
     // Learn for specific project
-    this.app.post('/api/v1/learning/project', async (req, res) => {
+    this.app.post("/api/v1/learning/project", async (req, res) => {
       try {
         const { projectType, requirements } = req.body;
 
         if (!projectType || !requirements) {
           return res.status(400).json({
-            error: 'Missing required fields: projectType, requirements',
+            error: "Missing required fields: projectType, requirements",
           });
         }
 
@@ -912,7 +985,7 @@ class ProductDevelopmentServer {
         for (const skillName of requiredSkills) {
           const skill = {
             name: skillName,
-            proficiency: 'professional',
+            proficiency: "professional",
             confidence: 0.8,
             acquiredAt: new Date().toISOString(),
             projectContext: projectType,
@@ -932,7 +1005,7 @@ class ProductDevelopmentServer {
           message: `Acquired ${results.length} skills for ${projectType} project`,
         });
       } catch (error) {
-        console.error('Failed to learn for project:', error);
+        console.error("Failed to learn for project:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -943,30 +1016,30 @@ class ProductDevelopmentServer {
 
   setupAnalysisRoutes() {
     // Analyze document with Book Worm mode
-    this.app.post('/api/v1/analysis/document', async (req, res) => {
+    this.app.post("/api/v1/analysis/document", async (req, res) => {
       try {
         const { content, type, mode, context, outputFormat } = req.body;
 
         if (!content) {
           return res.status(400).json({
-            error: 'Missing required field: content',
+            error: "Missing required field: content",
           });
         }
 
         // Simulate comprehensive analysis
         const analysis = this.simulateDocumentAnalysis(
           content,
-          type || 'general',
-          mode || 'comprehensive'
+          type || "general",
+          mode || "comprehensive"
         );
 
         res.json({
           ok: true,
           analysis: analysis,
-          message: 'Document analysis completed successfully',
+          message: "Document analysis completed successfully",
         });
       } catch (error) {
-        console.error('Failed to analyze document:', error);
+        console.error("Failed to analyze document:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -975,27 +1048,28 @@ class ProductDevelopmentServer {
     });
 
     // Get available analysis types
-    this.app.get('/api/v1/analysis/types', (req, res) => {
+    this.app.get("/api/v1/analysis/types", (req, res) => {
       const analysisTypes = [
         {
-          type: 'business-plan',
-          description: 'Comprehensive business plan analysis with market validation',
-          modes: ['rapid', 'comprehensive'],
+          type: "business-plan",
+          description:
+            "Comprehensive business plan analysis with market validation",
+          modes: ["rapid", "comprehensive"],
         },
         {
-          type: 'technical-spec',
-          description: 'Technical specification and architecture review',
-          modes: ['focused', 'comprehensive'],
+          type: "technical-spec",
+          description: "Technical specification and architecture review",
+          modes: ["focused", "comprehensive"],
         },
         {
-          type: 'design-document',
-          description: 'User experience and design system analysis',
-          modes: ['focused', 'comprehensive'],
+          type: "design-document",
+          description: "User experience and design system analysis",
+          modes: ["focused", "comprehensive"],
         },
         {
-          type: 'market-analysis',
-          description: 'Market opportunity and competitive landscape analysis',
-          modes: ['rapid', 'comprehensive'],
+          type: "market-analysis",
+          description: "Market opportunity and competitive landscape analysis",
+          modes: ["rapid", "comprehensive"],
         },
       ];
 
@@ -1008,22 +1082,24 @@ class ProductDevelopmentServer {
 
   setupArtifactRoutes() {
     // List all artifact templates
-    this.app.get('/api/v1/artifacts/templates', (req, res) => {
-      const templates = Array.from(this.artifactTemplates.entries()).map(([key, t]) => ({
-        type: key,
-        format: t.format,
-        sections: t.sections,
-        quality: t.quality,
-      }));
+    this.app.get("/api/v1/artifacts/templates", (req, res) => {
+      const templates = Array.from(this.artifactTemplates.entries()).map(
+        ([key, t]) => ({
+          type: key,
+          format: t.format,
+          sections: t.sections,
+          quality: t.quality,
+        })
+      );
       res.json({ ok: true, templates });
     });
 
     // Generate single artifact
-    this.app.post('/api/v1/artifacts/generate', async (req, res) => {
+    this.app.post("/api/v1/artifacts/generate", async (req, res) => {
       try {
         let { type, requirements, quality } = req.body || {};
         // Accept requirements as JSON string or object; allow simple text fallback
-        if (typeof requirements === 'string') {
+        if (typeof requirements === "string") {
           try {
             requirements = JSON.parse(requirements);
           } catch {
@@ -1036,11 +1112,15 @@ class ProductDevelopmentServer {
 
         if (!type || !requirements) {
           return res.status(400).json({
-            error: 'Missing required fields: type, requirements',
+            error: "Missing required fields: type, requirements",
           });
         }
 
-        const artifact = await this.generateSimulatedArtifact(type, requirements, quality);
+        const artifact = await this.generateSimulatedArtifact(
+          type,
+          requirements,
+          quality
+        );
 
         // Save artifact to persistent storage
         const saveResult = await this.saveArtifact(artifact);
@@ -1056,7 +1136,7 @@ class ProductDevelopmentServer {
           saved: !!saveResult,
         });
       } catch (error) {
-        console.error('Failed to generate artifact:', error);
+        console.error("Failed to generate artifact:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -1065,11 +1145,11 @@ class ProductDevelopmentServer {
     });
 
     // GET fallback for artifact generation (useful for curl/browser testing)
-    this.app.get('/api/v1/artifacts/generate/run', async (req, res) => {
+    this.app.get("/api/v1/artifacts/generate/run", async (req, res) => {
       try {
         const q = req.query || {};
-        const type = (q.type || 'business-plan').toString();
-        const quality = (q.quality || 'production').toString();
+        const type = (q.type || "business-plan").toString();
+        const quality = (q.quality || "production").toString();
         let requirements = {};
         // If requirements provided as JSON string
         if (q.requirements) {
@@ -1092,12 +1172,16 @@ class ProductDevelopmentServer {
           };
           if (Object.keys(requirements).length === 0) {
             requirements = {
-              productName: 'TooLoo Demo Product',
-              description: 'Auto-generated via GET fallback',
+              productName: "TooLoo Demo Product",
+              description: "Auto-generated via GET fallback",
             };
           }
         }
-        const artifact = await this.generateSimulatedArtifact(type, requirements, quality);
+        const artifact = await this.generateSimulatedArtifact(
+          type,
+          requirements,
+          quality
+        );
 
         // Save artifact to persistent storage
         const saveResult = await this.saveArtifact(artifact);
@@ -1110,36 +1194,37 @@ class ProductDevelopmentServer {
           ok: true,
           artifact,
           saved: !!saveResult,
-          note: 'Generated via GET fallback',
+          note: "Generated via GET fallback",
         });
       } catch (error) {
-        console.error('GET artifact generation failed:', error);
+        console.error("GET artifact generation failed:", error);
         return res.status(500).json({ ok: false, error: error.message });
       }
     });
 
     // Get available artifact types (must be before /:id route)
-    this.app.get('/api/v1/artifacts/types', (req, res) => {
+    this.app.get("/api/v1/artifacts/types", (req, res) => {
       const artifactTypes = [
         {
-          type: 'business-plan',
-          description: 'Comprehensive business plan with financial projections',
-          quality: ['draft', 'review', 'production'],
+          type: "business-plan",
+          description: "Comprehensive business plan with financial projections",
+          quality: ["draft", "review", "production"],
         },
         {
-          type: 'technical-specification',
-          description: 'Technical architecture and implementation specification',
-          quality: ['draft', 'review', 'production'],
+          type: "technical-specification",
+          description:
+            "Technical architecture and implementation specification",
+          quality: ["draft", "review", "production"],
         },
         {
-          type: 'design-system',
-          description: 'Complete design system with components and guidelines',
-          quality: ['draft', 'review', 'production'],
+          type: "design-system",
+          description: "Complete design system with components and guidelines",
+          quality: ["draft", "review", "production"],
         },
         {
-          type: 'marketing-strategy',
-          description: 'Go-to-market strategy and customer acquisition plan',
-          quality: ['draft', 'review', 'production'],
+          type: "marketing-strategy",
+          description: "Go-to-market strategy and customer acquisition plan",
+          quality: ["draft", "review", "production"],
         },
       ];
 
@@ -1150,7 +1235,7 @@ class ProductDevelopmentServer {
     });
 
     // List all generated artifacts (index)
-    this.app.get('/api/v1/artifacts', (req, res) => {
+    this.app.get("/api/v1/artifacts", (req, res) => {
       try {
         const { type, quality, limit = 50, offset = 0 } = req.query;
         let artifacts = Array.from(this.artifactsIndex.values());
@@ -1182,7 +1267,7 @@ class ProductDevelopmentServer {
           hasMore: parseInt(offset) + parseInt(limit) < total,
         });
       } catch (error) {
-        console.error('Failed to list artifacts:', error);
+        console.error("Failed to list artifacts:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -1191,7 +1276,7 @@ class ProductDevelopmentServer {
     });
 
     // Get specific artifact by ID
-    this.app.get('/api/v1/artifacts/:id', async (req, res) => {
+    this.app.get("/api/v1/artifacts/:id", async (req, res) => {
       try {
         const { id } = req.params;
         const artifact = await this.getArtifact(id);
@@ -1199,7 +1284,7 @@ class ProductDevelopmentServer {
         if (!artifact) {
           return res.status(404).json({
             ok: false,
-            error: 'Artifact not found',
+            error: "Artifact not found",
           });
         }
 
@@ -1208,7 +1293,7 @@ class ProductDevelopmentServer {
           artifact: artifact,
         });
       } catch (error) {
-        console.error('Failed to get artifact:', error);
+        console.error("Failed to get artifact:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -1217,45 +1302,54 @@ class ProductDevelopmentServer {
     });
 
     // Download artifact content as file
-    this.app.get('/api/v1/artifacts/:id/download', async (req, res) => {
+    this.app.get("/api/v1/artifacts/:id/download", async (req, res) => {
       try {
         const { id } = req.params;
-        const { format = 'markdown' } = req.query;
+        const { format = "markdown" } = req.query;
         const artifact = await this.getArtifact(id);
 
         if (!artifact) {
           return res.status(404).json({
             ok: false,
-            error: 'Artifact not found',
+            error: "Artifact not found",
           });
         }
 
         switch (format.toLowerCase()) {
-          case 'json':
+          case "json":
             const filename = `${artifact.type}-${id}.json`;
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.setHeader(
+              "Content-Disposition",
+              `attachment; filename="${filename}"`
+            );
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
             res.json(artifact);
             break;
 
-          case 'html':
+          case "html":
             const htmlFilename = `${artifact.type}-${id}.html`;
             const htmlContent = this.generateHtmlArtifact(artifact);
-            res.setHeader('Content-Disposition', `attachment; filename="${htmlFilename}"`);
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader(
+              "Content-Disposition",
+              `attachment; filename="${htmlFilename}"`
+            );
+            res.setHeader("Content-Type", "text/html; charset=utf-8");
             res.send(htmlContent);
             break;
 
-          case 'markdown':
+          case "markdown":
           default:
             const mdFilename = `${artifact.type}-${id}.md`;
-            res.setHeader('Content-Disposition', `attachment; filename="${mdFilename}"`);
-            res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+            res.setHeader(
+              "Content-Disposition",
+              `attachment; filename="${mdFilename}"`
+            );
+            res.setHeader("Content-Type", "text/markdown; charset=utf-8");
             res.send(artifact.content);
             break;
         }
       } catch (error) {
-        console.error('Failed to download artifact:', error);
+        console.error("Failed to download artifact:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -1264,10 +1358,12 @@ class ProductDevelopmentServer {
     });
 
     // Get artifact history with timeline data
-    this.app.get('/api/v1/artifacts/history/timeline', async (req, res) => {
+    this.app.get("/api/v1/artifacts/history/timeline", async (req, res) => {
       try {
         const { days = 30 } = req.query;
-        const cutoff = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+        const cutoff = new Date(
+          Date.now() - parseInt(days) * 24 * 60 * 60 * 1000
+        );
 
         const artifacts = Array.from(this.artifactsIndex.values())
           .filter((a) => new Date(a.createdAt) >= cutoff)
@@ -1276,7 +1372,7 @@ class ProductDevelopmentServer {
         // Group by date for timeline
         const timeline = {};
         artifacts.forEach((a) => {
-          const date = new Date(a.createdAt).toISOString().split('T')[0];
+          const date = new Date(a.createdAt).toISOString().split("T")[0];
           if (!timeline[date]) {
             timeline[date] = { date, artifacts: [], count: 0 };
           }
@@ -1298,7 +1394,7 @@ class ProductDevelopmentServer {
           period: `Last ${days} days`,
         });
       } catch (error) {
-        console.error('Failed to get artifact history:', error);
+        console.error("Failed to get artifact history:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -1311,9 +1407,10 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/learn-system - Upload and learn design system
      */
-    this.app.post('/api/v1/design/learn-system', async (req, res) => {
+    this.app.post("/api/v1/design/learn-system", async (req, res) => {
       try {
-        const { colors, typography, spacing, components, guidelines } = req.body;
+        const { colors, typography, spacing, components, guidelines } =
+          req.body;
 
         if (colors) this.designSystem.colors = colors;
         if (typography) this.designSystem.typography = typography;
@@ -1325,7 +1422,7 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          message: 'Design system learned',
+          message: "Design system learned",
           system: {
             colors: Object.keys(this.designSystem.colors).length,
             typography: Object.keys(this.designSystem.typography).length,
@@ -1341,7 +1438,7 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/design/system - Get current design system
      */
-    this.app.get('/api/v1/design/system', (req, res) => {
+    this.app.get("/api/v1/design/system", (req, res) => {
       res.json({
         ok: true,
         system: this.designSystem,
@@ -1351,16 +1448,21 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/generate-component - Generate UI component from description
      */
-    this.app.post('/api/v1/design/generate-component', async (req, res) => {
+    this.app.post("/api/v1/design/generate-component", async (req, res) => {
       try {
-        const { name, description, variant = 'react', withTest = true } = req.body;
+        const {
+          name,
+          description,
+          variant = "react",
+          withTest = true,
+        } = req.body;
 
         const component = {
           name,
           description,
           variant,
           designTokens: Object.keys(this.designSystem.colors).slice(0, 3),
-          accessibility: ['keyboard-nav', 'screen-reader', 'color-contrast'],
+          accessibility: ["keyboard-nav", "screen-reader", "color-contrast"],
         };
 
         res.json({
@@ -1376,18 +1478,18 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/convert-to-code - Design-to-Code conversion
      */
-    this.app.post('/api/v1/design/convert-to-code', async (req, res) => {
+    this.app.post("/api/v1/design/convert-to-code", async (req, res) => {
       try {
         const {
           designDescription,
-          targetFramework = 'react',
+          targetFramework = "react",
           responsive = true,
           includeStyles = true,
         } = req.body;
 
         const code = {
           component: `// Generated ${targetFramework} component`,
-          styles: includeStyles ? '/* Styles */' : null,
+          styles: includeStyles ? "/* Styles */" : null,
           responsive,
           framework: targetFramework,
           designTokensUsed: Object.keys(this.designSystem.colors).slice(0, 2),
@@ -1406,9 +1508,12 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/validate - Design validation & QA
      */
-    this.app.post('/api/v1/design/validate', async (req, res) => {
+    this.app.post("/api/v1/design/validate", async (req, res) => {
       try {
-        const { design, checks = ['accessibility', 'consistency', 'responsive'] } = req.body;
+        const {
+          design,
+          checks = ["accessibility", "consistency", "responsive"],
+        } = req.body;
 
         const validation = {
           design,
@@ -1429,9 +1534,9 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/brandboard - Generate brand board PDF
      */
-    this.app.post('/api/v1/design/brandboard', async (req, res) => {
+    this.app.post("/api/v1/design/brandboard", async (req, res) => {
       try {
-        const { tokens = {}, theme = 'light' } = req.body || {};
+        const { tokens = {}, theme = "light" } = req.body || {};
 
         // Generate brand board summary (mock for now, can be extended with PDFKit)
         const brandData = {
@@ -1445,7 +1550,7 @@ class ProductDevelopmentServer {
 
         // Store in temp directory for serving
         const timestamp = Date.now();
-        const tempDir = path.join(process.cwd(), 'web-app', 'temp');
+        const tempDir = path.join(process.cwd(), "web-app", "temp");
         await fs.mkdir(tempDir, { recursive: true });
 
         const brandFile = path.join(tempDir, `brand-board-${timestamp}.json`);
@@ -1453,13 +1558,13 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          message: 'Brand board generated',
+          message: "Brand board generated",
           file: `brand-board-${timestamp}.json`,
           path: `/temp/brand-board-${timestamp}.json`,
           data: brandData,
         });
       } catch (err) {
-        console.error('Brand board generation error:', err.message);
+        console.error("Brand board generation error:", err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });
@@ -1467,9 +1572,9 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/design/latest - Get latest design artifacts
      */
-    this.app.get('/api/v1/design/latest', async (req, res) => {
+    this.app.get("/api/v1/design/latest", async (req, res) => {
       try {
-        const tempDir = path.join(process.cwd(), 'web-app', 'temp');
+        const tempDir = path.join(process.cwd(), "web-app", "temp");
         await fs.mkdir(tempDir, { recursive: true });
 
         const files = await fs.readdir(tempDir);
@@ -1499,7 +1604,7 @@ class ProductDevelopmentServer {
           pdfs: pdfs.slice(0, 10),
         });
       } catch (err) {
-        console.error('Latest design artifacts error:', err.message);
+        console.error("Latest design artifacts error:", err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });
@@ -1508,20 +1613,22 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/import-figma - Import design system from Figma
      * Actual implementation with FigmaAdapter API calls
      */
-    this.app.post('/api/v1/design/import-figma', async (req, res) => {
+    this.app.post("/api/v1/design/import-figma", async (req, res) => {
       try {
         const { figmaUrl, apiToken } = req.body;
 
         if (!figmaUrl) {
-          return res.status(400).json({ ok: false, error: 'figmaUrl required' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "figmaUrl required" });
         }
 
         const token = apiToken || process.env.FIGMA_API_TOKEN;
         if (!token) {
           return res.status(401).json({
             ok: false,
-            error: 'Figma API token required',
-            hint: 'Provide apiToken in request body or set FIGMA_API_TOKEN environment variable',
+            error: "Figma API token required",
+            hint: "Provide apiToken in request body or set FIGMA_API_TOKEN environment variable",
           });
         }
 
@@ -1529,12 +1636,19 @@ class ProductDevelopmentServer {
         const figmaAdapter = new FigmaAdapter(token);
 
         // Perform full design system import from Figma
-        const importResult = await figmaAdapter.importDesignSystem(figmaUrl, token);
+        const importResult = await figmaAdapter.importDesignSystem(
+          figmaUrl,
+          token
+        );
 
         if (!importResult.ok) {
           return res
             .status(400)
-            .json({ ok: false, error: 'Figma import failed', details: importResult });
+            .json({
+              ok: false,
+              error: "Figma import failed",
+              details: importResult,
+            });
         }
 
         // Merge imported tokens into local design system
@@ -1544,11 +1658,20 @@ class ProductDevelopmentServer {
         this.designSystem = {
           ...this.designSystem,
           colors: { ...this.designSystem.colors, ...designSystem.colors },
-          typography: { ...this.designSystem.typography, ...designSystem.typography },
+          typography: {
+            ...this.designSystem.typography,
+            ...designSystem.typography,
+          },
           spacing: { ...this.designSystem.spacing, ...designSystem.spacing },
-          components: { ...this.designSystem.components, ...designSystem.components },
+          components: {
+            ...this.designSystem.components,
+            ...designSystem.components,
+          },
           patterns: { ...this.designSystem.patterns, ...designSystem.patterns },
-          guidelines: { ...this.designSystem.guidelines, ...designSystem.guidelines },
+          guidelines: {
+            ...this.designSystem.guidelines,
+            ...designSystem.guidelines,
+          },
         };
 
         // Persist the updated design system
@@ -1557,12 +1680,12 @@ class ProductDevelopmentServer {
         // Save import metadata for audit trail
         const importMetadata = {
           timestamp: new Date().toISOString(),
-          source: 'figma',
+          source: "figma",
           figmaFileId: importResult.fileId,
           figmaFileName: metadata.name,
           figmaFileVersion: metadata.version,
           importedTokens: tokensCount,
-          userEmail: metadata.role ? 'imported-system' : undefined,
+          userEmail: metadata.role ? "imported-system" : undefined,
           designSystemSize: {
             colors: Object.keys(this.designSystem.colors).length,
             typography: Object.keys(this.designSystem.typography).length,
@@ -1571,12 +1694,15 @@ class ProductDevelopmentServer {
           },
         };
 
-        const designFile = path.join(this.designDir, `figma-import-${Date.now()}.json`);
+        const designFile = path.join(
+          this.designDir,
+          `figma-import-${Date.now()}.json`
+        );
         await fs.writeFile(designFile, JSON.stringify(importMetadata, null, 2));
 
         res.json({
           ok: true,
-          message: 'Design system successfully imported from Figma',
+          message: "Design system successfully imported from Figma",
           fileId: importResult.fileId,
           metadata: {
             name: metadata.name,
@@ -1592,14 +1718,14 @@ class ProductDevelopmentServer {
             spacing: Object.keys(this.designSystem.spacing).length,
           },
           importFile: designFile,
-          source: 'figma',
+          source: "figma",
         });
       } catch (err) {
-        console.error('Figma import error:', err.message);
+        console.error("Figma import error:", err.message);
         res.status(500).json({
           ok: false,
           error: err.message,
-          hint: 'Check FIGMA_API_TOKEN validity and Figma file URL format',
+          hint: "Check FIGMA_API_TOKEN validity and Figma file URL format",
         });
       }
     });
@@ -1609,29 +1735,44 @@ class ProductDevelopmentServer {
      * Analyzes URL and extracts colors, fonts, spacing patterns
      * Returns structured tokens ready to use
      */
-    this.app.post('/api/v1/design/extract-from-website', async (req, res) => {
+    this.app.post("/api/v1/design/extract-from-website", async (req, res) => {
       try {
-        const { websiteUrl, includeElements = false, verbose = false } = req.body;
+        const {
+          websiteUrl,
+          includeElements = false,
+          verbose = false,
+        } = req.body;
 
         if (!websiteUrl) {
-          return res.status(400).json({ ok: false, error: 'websiteUrl required' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "websiteUrl required" });
         }
 
         // Validate URL format
         try {
           new URL(websiteUrl);
         } catch {
-          return res.status(400).json({ ok: false, error: 'Invalid URL format' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "Invalid URL format" });
         }
 
         // Import extractors
-        const { DesignExtractor } = await import('../lib/design-extractor.js');
-        const DesignSystemAnalyzer = await import('../lib/design-system-analyzer.js');
+        const { DesignExtractor } = await import(
+          "../../lib/design-extractor.js"
+        );
+        const DesignSystemAnalyzer = await import(
+          "../../lib/design-system-analyzer.js"
+        );
         const Analyzer = DesignSystemAnalyzer.default;
 
         const extractor = new DesignExtractor({ verbose });
 
-        if (verbose) console.log(`[Design Extract] Starting extraction from ${websiteUrl}`);
+        if (verbose)
+          console.log(
+            `[Design Extract] Starting extraction from ${websiteUrl}`
+          );
 
         const extraction = await extractor.extractFromUrl(websiteUrl, {
           includeElements,
@@ -1678,7 +1819,7 @@ class ProductDevelopmentServer {
         const extractionMetadata = {
           id: `extract-${Date.now()}`,
           timestamp: new Date().toISOString(),
-          source: 'website-extraction',
+          source: "website-extraction",
           sourceUrl: websiteUrl,
           extractedAt: new Date().toISOString(),
 
@@ -1687,7 +1828,7 @@ class ProductDevelopmentServer {
             name: brandDetection.name || new URL(websiteUrl).hostname,
             favicon: brandDetection.favicon,
             logo: brandDetection.logo,
-            description: brandDetection.description || '',
+            description: brandDetection.description || "",
             colors: {
               primary: brandDetection.primaryColor,
               accent: brandDetection.accentColor,
@@ -1760,13 +1901,19 @@ class ProductDevelopmentServer {
           },
         };
 
-        const designFile = path.join(this.designDir, `website-extract-${Date.now()}.json`);
-        await fs.writeFile(designFile, JSON.stringify(extractionMetadata, null, 2));
+        const designFile = path.join(
+          this.designDir,
+          `website-extract-${Date.now()}.json`
+        );
+        await fs.writeFile(
+          designFile,
+          JSON.stringify(extractionMetadata, null, 2)
+        );
 
         res.json({
           ok: true,
           message: `Design system extracted and analyzed from ${new URL(websiteUrl).hostname}`,
-          source: 'website',
+          source: "website",
           sourceUrl: websiteUrl,
           brand: extractionMetadata.brand,
           structure: extractionMetadata.structure,
@@ -1788,14 +1935,14 @@ class ProductDevelopmentServer {
           },
           extractionFile: designFile,
           extractionId: extractionMetadata.id,
-          hint: 'Use /api/v1/design/apply-tokens to integrate into UI',
+          hint: "Use /api/v1/design/apply-tokens to integrate into UI",
         });
       } catch (err) {
-        console.error('Website extraction error:', err.message);
+        console.error("Website extraction error:", err.message);
         res.status(500).json({
           ok: false,
           error: err.message,
-          hint: 'Ensure website is accessible and contains HTML content',
+          hint: "Ensure website is accessible and contains HTML content",
         });
       }
     });
@@ -1803,18 +1950,18 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/design/systems - List all extracted design systems
      */
-    this.app.get('/api/v1/design/systems', async (req, res) => {
+    this.app.get("/api/v1/design/systems", async (req, res) => {
       try {
         const files = await fs.readdir(this.designDir);
         const systems = [];
 
         for (const file of files) {
-          if (file.startsWith('website-extract-') && file.endsWith('.json')) {
+          if (file.startsWith("website-extract-") && file.endsWith(".json")) {
             const filePath = path.join(this.designDir, file);
-            const data = await fs.readFile(filePath, 'utf8');
+            const data = await fs.readFile(filePath, "utf8");
             const metadata = JSON.parse(data);
             systems.push({
-              id: file.replace('website-extract-', '').replace('.json', ''),
+              id: file.replace("website-extract-", "").replace(".json", ""),
               file,
               ...metadata,
             });
@@ -1837,13 +1984,16 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/design/systems/:id - Retrieve specific extracted system
      */
-    this.app.get('/api/v1/design/systems/:id', async (req, res) => {
+    this.app.get("/api/v1/design/systems/:id", async (req, res) => {
       try {
         const { id } = req.params;
-        const filePath = path.join(this.designDir, `website-extract-${id}.json`);
+        const filePath = path.join(
+          this.designDir,
+          `website-extract-${id}.json`
+        );
 
         try {
-          const data = await fs.readFile(filePath, 'utf8');
+          const data = await fs.readFile(filePath, "utf8");
           const metadata = JSON.parse(data);
           res.json({
             ok: true,
@@ -1851,7 +2001,7 @@ class ProductDevelopmentServer {
             ...metadata,
           });
         } catch {
-          res.status(404).json({ ok: false, error: 'System not found' });
+          res.status(404).json({ ok: false, error: "System not found" });
         }
       } catch (err) {
         res.status(500).json({ ok: false, error: err.message });
@@ -1861,60 +2011,75 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/systems/:id/compare/:otherId - Compare two extracted systems
      */
-    this.app.post('/api/v1/design/systems/:id/compare/:otherId', async (req, res) => {
-      try {
-        const { id, otherId } = req.params;
+    this.app.post(
+      "/api/v1/design/systems/:id/compare/:otherId",
+      async (req, res) => {
+        try {
+          const { id, otherId } = req.params;
 
-        const readSystem = async (sysId) => {
-          const filePath = path.join(this.designDir, `website-extract-${sysId}.json`);
-          const data = await fs.readFile(filePath, 'utf8');
-          return JSON.parse(data);
-        };
+          const readSystem = async (sysId) => {
+            const filePath = path.join(
+              this.designDir,
+              `website-extract-${sysId}.json`
+            );
+            const data = await fs.readFile(filePath, "utf8");
+            return JSON.parse(data);
+          };
 
-        const sys1 = await readSystem(id);
-        const sys2 = await readSystem(otherId);
+          const sys1 = await readSystem(id);
+          const sys2 = await readSystem(otherId);
 
-        const comparison = {
-          system1: { id, source: sys1.sourceUrl },
-          system2: { id: otherId, source: sys2.sourceUrl },
-          colors: {
-            system1Count: sys1.colorsExtracted,
-            system2Count: sys2.colorsExtracted,
-            difference: Math.abs(sys1.colorsExtracted - sys2.colorsExtracted),
-          },
-          typography: {
-            system1Count: sys1.typographyExtracted,
-            system2Count: sys2.typographyExtracted,
-            difference: Math.abs(sys1.typographyExtracted - sys2.typographyExtracted),
-          },
-          spacing: {
-            system1Count: sys1.spacingExtracted,
-            system2Count: sys2.spacingExtracted,
-            difference: Math.abs(sys1.spacingExtracted - sys2.spacingExtracted),
-          },
-          maturityGap: Math.abs(sys1.estimatedMaturity - sys2.estimatedMaturity),
-          readinessComparison: {
-            system1: sys1.analysis?.readiness || 'N/A',
-            system2: sys2.analysis?.readiness || 'N/A',
-          },
-        };
+          const comparison = {
+            system1: { id, source: sys1.sourceUrl },
+            system2: { id: otherId, source: sys2.sourceUrl },
+            colors: {
+              system1Count: sys1.colorsExtracted,
+              system2Count: sys2.colorsExtracted,
+              difference: Math.abs(sys1.colorsExtracted - sys2.colorsExtracted),
+            },
+            typography: {
+              system1Count: sys1.typographyExtracted,
+              system2Count: sys2.typographyExtracted,
+              difference: Math.abs(
+                sys1.typographyExtracted - sys2.typographyExtracted
+              ),
+            },
+            spacing: {
+              system1Count: sys1.spacingExtracted,
+              system2Count: sys2.spacingExtracted,
+              difference: Math.abs(
+                sys1.spacingExtracted - sys2.spacingExtracted
+              ),
+            },
+            maturityGap: Math.abs(
+              sys1.estimatedMaturity - sys2.estimatedMaturity
+            ),
+            readinessComparison: {
+              system1: sys1.analysis?.readiness || "N/A",
+              system2: sys2.analysis?.readiness || "N/A",
+            },
+          };
 
-        res.json({
-          ok: true,
-          comparison,
-        });
-      } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
+          res.json({
+            ok: true,
+            comparison,
+          });
+        } catch (err) {
+          res.status(500).json({ ok: false, error: err.message });
+        }
       }
-    });
+    );
 
     /**
      * DELETE /api/v1/design/systems/:id - Delete extracted system
      */
-    this.app.delete('/api/v1/design/systems/:id', async (req, res) => {
+    this.app.delete("/api/v1/design/systems/:id", async (req, res) => {
       try {
         const { id } = req.params;
-        const filePath = path.join(this.designDir, `website-extract-${id}.json`);
+        const filePath = path.join(
+          this.designDir,
+          `website-extract-${id}.json`
+        );
 
         await fs.unlink(filePath);
         res.json({
@@ -1929,18 +2094,25 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/systems/:id/refine - Refine extracted system with manual adjustments
      */
-    this.app.post('/api/v1/design/systems/:id/refine', async (req, res) => {
+    this.app.post("/api/v1/design/systems/:id/refine", async (req, res) => {
       try {
         const { id } = req.params;
-        const { colorAdjustments, typographyAdjustments, spacingAdjustments } = req.body;
+        const { colorAdjustments, typographyAdjustments, spacingAdjustments } =
+          req.body;
 
-        const filePath = path.join(this.designDir, `website-extract-${id}.json`);
-        const data = await fs.readFile(filePath, 'utf8');
+        const filePath = path.join(
+          this.designDir,
+          `website-extract-${id}.json`
+        );
+        const data = await fs.readFile(filePath, "utf8");
         const metadata = JSON.parse(data);
 
         // Apply refinements
         if (colorAdjustments) {
-          metadata.analysis.colors = { ...metadata.analysis.colors, ...colorAdjustments };
+          metadata.analysis.colors = {
+            ...metadata.analysis.colors,
+            ...colorAdjustments,
+          };
         }
         if (typographyAdjustments) {
           metadata.analysis.typography = {
@@ -1949,7 +2121,10 @@ class ProductDevelopmentServer {
           };
         }
         if (spacingAdjustments) {
-          metadata.analysis.spacing = { ...metadata.analysis.spacing, ...spacingAdjustments };
+          metadata.analysis.spacing = {
+            ...metadata.analysis.spacing,
+            ...spacingAdjustments,
+          };
         }
 
         // Update refinement timestamp
@@ -1960,7 +2135,7 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          message: 'System refined and saved',
+          message: "System refined and saved",
           id,
           refinedAt: metadata.refinedAt,
         });
@@ -1973,15 +2148,19 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/enhance/components - Detect UI component patterns in extracted system
      * Identifies buttons, cards, forms, navigation, modals, alerts, etc.
      */
-    this.app.post('/api/v1/design/enhance/components', async (req, res) => {
+    this.app.post("/api/v1/design/enhance/components", async (req, res) => {
       try {
         const { systemId, html } = req.body;
 
         if (!html) {
-          return res.status(400).json({ ok: false, error: 'html content required' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "html content required" });
         }
 
-        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const { default: DesignSystemEnhancer } = await import(
+          "../../lib/design-system-enhancer.js"
+        );
         const enhancer = new DesignSystemEnhancer();
 
         const components = await enhancer.detectComponents(html);
@@ -1991,9 +2170,15 @@ class ProductDevelopmentServer {
           components,
           summary: {
             totalComponentTypes: Object.keys(components).length,
-            totalComponentInstances: Object.values(components).reduce((sum, comp) => {
-              return sum + Object.values(comp).reduce((s, c) => s + (c.count || 0), 0);
-            }, 0),
+            totalComponentInstances: Object.values(components).reduce(
+              (sum, comp) => {
+                return (
+                  sum +
+                  Object.values(comp).reduce((s, c) => s + (c.count || 0), 0)
+                );
+              },
+              0
+            ),
           },
         });
       } catch (err) {
@@ -2005,25 +2190,32 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/enhance/maturity - Calculate design maturity score
      * Assesses color consistency, typography hierarchy, spacing scale, components
      */
-    this.app.post('/api/v1/design/enhance/maturity', async (req, res) => {
+    this.app.post("/api/v1/design/enhance/maturity", async (req, res) => {
       try {
         const { systemId } = req.body;
 
         let system = {};
         if (systemId) {
           try {
-            const filePath = path.join(this.designDir, `website-extract-${systemId}.json`);
-            const data = await fs.readFile(filePath, 'utf8');
+            const filePath = path.join(
+              this.designDir,
+              `website-extract-${systemId}.json`
+            );
+            const data = await fs.readFile(filePath, "utf8");
             const metadata = JSON.parse(data);
             system = metadata;
           } catch {
-            return res.status(404).json({ ok: false, error: 'System not found' });
+            return res
+              .status(404)
+              .json({ ok: false, error: "System not found" });
           }
         } else {
           system = this.designSystem || {};
         }
 
-        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const { default: DesignSystemEnhancer } = await import(
+          "../lib/design-system-enhancer.js"
+        );
         const enhancer = new DesignSystemEnhancer(system);
 
         const maturityScore = enhancer.scoreDesignMaturity(system);
@@ -2042,24 +2234,31 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/enhance/compare - Compare two design systems with detailed analysis
      * Analyzes similarities, differences, and recommendations
      */
-    this.app.post('/api/v1/design/enhance/compare', async (req, res) => {
+    this.app.post("/api/v1/design/enhance/compare", async (req, res) => {
       try {
         const { systemId1, systemId2 } = req.body;
 
         if (!systemId1 || !systemId2) {
-          return res.status(400).json({ ok: false, error: 'systemId1 and systemId2 required' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "systemId1 and systemId2 required" });
         }
 
         const readSystem = async (sysId) => {
-          const filePath = path.join(this.designDir, `website-extract-${sysId}.json`);
-          const data = await fs.readFile(filePath, 'utf8');
+          const filePath = path.join(
+            this.designDir,
+            `website-extract-${sysId}.json`
+          );
+          const data = await fs.readFile(filePath, "utf8");
           return JSON.parse(data);
         };
 
         const system1 = await readSystem(systemId1);
         const system2 = await readSystem(systemId2);
 
-        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const { default: DesignSystemEnhancer } = await import(
+          "../lib/design-system-enhancer.js"
+        );
         const enhancer = new DesignSystemEnhancer(system1);
 
         const comparison = enhancer.compareWithSystem(system2);
@@ -2082,25 +2281,32 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/enhance/semantic-names - Generate semantic names for design tokens
      * AI-powered naming and categorization
      */
-    this.app.post('/api/v1/design/enhance/semantic-names', async (req, res) => {
+    this.app.post("/api/v1/design/enhance/semantic-names", async (req, res) => {
       try {
         const { systemId, tokens } = req.body;
 
         let system = tokens || {};
         if (systemId) {
           try {
-            const filePath = path.join(this.designDir, `website-extract-${systemId}.json`);
-            const data = await fs.readFile(filePath, 'utf8');
+            const filePath = path.join(
+              this.designDir,
+              `website-extract-${systemId}.json`
+            );
+            const data = await fs.readFile(filePath, "utf8");
             const metadata = JSON.parse(data);
             system = metadata;
           } catch {
-            return res.status(404).json({ ok: false, error: 'System not found' });
+            return res
+              .status(404)
+              .json({ ok: false, error: "System not found" });
           }
         } else {
           system = tokens || this.designSystem || {};
         }
 
-        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
+        const { default: DesignSystemEnhancer } = await import(
+          "../lib/design-system-enhancer.js"
+        );
         const enhancer = new DesignSystemEnhancer(system);
 
         const semanticNames = enhancer.generateSemanticNames(system);
@@ -2110,17 +2316,19 @@ class ProductDevelopmentServer {
           semanticNames,
           recommendations: {
             colors: semanticNames.colors
-              ? Object.keys(semanticNames.colors).length + ' colors named'
-              : 'No colors found',
+              ? Object.keys(semanticNames.colors).length + " colors named"
+              : "No colors found",
             typography: semanticNames.typography
-              ? Object.keys(semanticNames.typography).length + ' typography entries named'
-              : 'No typography found',
+              ? Object.keys(semanticNames.typography).length +
+                " typography entries named"
+              : "No typography found",
             spacing: semanticNames.spacing
-              ? Object.keys(semanticNames.spacing).length + ' spacing values named'
-              : 'No spacing found',
+              ? Object.keys(semanticNames.spacing).length +
+                " spacing values named"
+              : "No spacing found",
             effects: semanticNames.effects
-              ? Object.keys(semanticNames.effects).length + ' effects named'
-              : 'No effects found',
+              ? Object.keys(semanticNames.effects).length + " effects named"
+              : "No effects found",
           },
         });
       } catch (err) {
@@ -2132,40 +2340,50 @@ class ProductDevelopmentServer {
      * GET /api/v1/design/enhance/analysis/:systemId - Get full enhancement analysis
      * Combines components, maturity, semantic naming for comprehensive view
      */
-    this.app.get('/api/v1/design/enhance/analysis/:systemId', async (req, res) => {
-      try {
-        const { systemId } = req.params;
-
-        const filePath = path.join(this.designDir, `website-extract-${systemId}.json`);
-        let system;
+    this.app.get(
+      "/api/v1/design/enhance/analysis/:systemId",
+      async (req, res) => {
         try {
-          const data = await fs.readFile(filePath, 'utf8');
-          system = JSON.parse(data);
-        } catch {
-          return res.status(404).json({ ok: false, error: 'System not found' });
+          const { systemId } = req.params;
+
+          const filePath = path.join(
+            this.designDir,
+            `website-extract-${systemId}.json`
+          );
+          let system;
+          try {
+            const data = await fs.readFile(filePath, "utf8");
+            system = JSON.parse(data);
+          } catch {
+            return res
+              .status(404)
+              .json({ ok: false, error: "System not found" });
+          }
+
+          const { default: DesignSystemEnhancer } = await import(
+            "../lib/design-system-enhancer.js"
+          );
+          const enhancer = new DesignSystemEnhancer(system);
+
+          const maturityScore = enhancer.scoreDesignMaturity(system);
+          const semanticNames = enhancer.generateSemanticNames(system);
+
+          res.json({
+            ok: true,
+            systemId,
+            source: system.sourceUrl,
+            analysis: {
+              maturity: maturityScore,
+              semanticNames,
+              components: enhancer.components,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (err) {
+          res.status(500).json({ ok: false, error: err.message });
         }
-
-        const { default: DesignSystemEnhancer } = await import('../lib/design-system-enhancer.js');
-        const enhancer = new DesignSystemEnhancer(system);
-
-        const maturityScore = enhancer.scoreDesignMaturity(system);
-        const semanticNames = enhancer.generateSemanticNames(system);
-
-        res.json({
-          ok: true,
-          systemId,
-          source: system.sourceUrl,
-          analysis: {
-            maturity: maturityScore,
-            semanticNames,
-            components: enhancer.components,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
       }
-    });
+    );
 
     /**
      * PHASE 5: ADVANCED ANALYTICS ROUTES
@@ -2175,14 +2393,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/analytics/trends - Analyze design system trends over time
      */
-    this.app.post('/api/v1/design/analytics/trends', async (req, res) => {
+    this.app.post("/api/v1/design/analytics/trends", async (req, res) => {
       try {
         const { systems } = req.body;
 
         if (!systems || systems.length < 2) {
           return res.status(400).json({
             ok: false,
-            error: 'At least 2 systems required for trend analysis',
+            error: "At least 2 systems required for trend analysis",
           });
         }
 
@@ -2201,15 +2419,18 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/analytics/benchmark - Benchmark against industry standards
      */
-    this.app.post('/api/v1/design/analytics/benchmark', async (req, res) => {
+    this.app.post("/api/v1/design/analytics/benchmark", async (req, res) => {
       try {
-        const { system, industry = 'saas' } = req.body;
+        const { system, industry = "saas" } = req.body;
 
         if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          return res.status(400).json({ ok: false, error: "System required" });
         }
 
-        const benchmark = this.designAnalytics.benchmarkAgainstIndustry(system, industry);
+        const benchmark = this.designAnalytics.benchmarkAgainstIndustry(
+          system,
+          industry
+        );
 
         res.json({
           ok: true,
@@ -2224,35 +2445,40 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/analytics/accessibility - Run WCAG compliance audit
      */
-    this.app.post('/api/v1/design/analytics/accessibility', async (req, res) => {
-      try {
-        const { system } = req.body;
+    this.app.post(
+      "/api/v1/design/analytics/accessibility",
+      async (req, res) => {
+        try {
+          const { system } = req.body;
 
-        if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          if (!system) {
+            return res
+              .status(400)
+              .json({ ok: false, error: "System required" });
+          }
+
+          const audit = this.designAnalytics.auditAccessibility(system);
+
+          res.json({
+            ok: true,
+            audit,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
+          res.status(500).json({ ok: false, error: err.message });
         }
-
-        const audit = this.designAnalytics.auditAccessibility(system);
-
-        res.json({
-          ok: true,
-          audit,
-          timestamp: new Date().toISOString(),
-        });
-      } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
       }
-    });
+    );
 
     /**
      * POST /api/v1/design/analytics/ml-predict - Predict system characteristics using ML
      */
-    this.app.post('/api/v1/design/analytics/ml-predict', async (req, res) => {
+    this.app.post("/api/v1/design/analytics/ml-predict", async (req, res) => {
       try {
         const { system, trainingSystems } = req.body;
 
         if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          return res.status(400).json({ ok: false, error: "System required" });
         }
 
         // Train model if provided
@@ -2260,7 +2486,8 @@ class ProductDevelopmentServer {
           this.designAnalytics.trainMLModel(trainingSystems);
         }
 
-        const prediction = this.designAnalytics.predictSystemCharacteristics(system);
+        const prediction =
+          this.designAnalytics.predictSystemCharacteristics(system);
 
         res.json({
           ok: true,
@@ -2275,18 +2502,21 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/analytics/anomalies - Detect anomalies in design system
      */
-    this.app.post('/api/v1/design/analytics/anomalies', async (req, res) => {
+    this.app.post("/api/v1/design/analytics/anomalies", async (req, res) => {
       try {
         const { system, baseline } = req.body;
 
         if (!system || !baseline) {
           return res.status(400).json({
             ok: false,
-            error: 'Both system and baseline required',
+            error: "Both system and baseline required",
           });
         }
 
-        const anomalies = this.designAnalytics.detectAnomalies(system, baseline);
+        const anomalies = this.designAnalytics.detectAnomalies(
+          system,
+          baseline
+        );
 
         res.json({
           ok: true,
@@ -2306,12 +2536,12 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/remediate/analyze - Analyze system for issues
      */
-    this.app.post('/api/v1/design/remediate/analyze', async (req, res) => {
+    this.app.post("/api/v1/design/remediate/analyze", async (req, res) => {
       try {
         const { system } = req.body;
 
         if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          return res.status(400).json({ ok: false, error: "System required" });
         }
 
         const remediation = new DesignAutoRemediation(system);
@@ -2330,12 +2560,12 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/remediate/apply-fixes - Apply automatic fixes
      */
-    this.app.post('/api/v1/design/remediate/apply-fixes', async (req, res) => {
+    this.app.post("/api/v1/design/remediate/apply-fixes", async (req, res) => {
       try {
         const { system } = req.body;
 
         if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          return res.status(400).json({ ok: false, error: "System required" });
         }
 
         const remediation = new DesignAutoRemediation(system);
@@ -2354,36 +2584,41 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/design/remediate/resolve-conflicts - Detect and resolve token conflicts
      */
-    this.app.post('/api/v1/design/remediate/resolve-conflicts', async (req, res) => {
-      try {
-        const { system } = req.body;
+    this.app.post(
+      "/api/v1/design/remediate/resolve-conflicts",
+      async (req, res) => {
+        try {
+          const { system } = req.body;
 
-        if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          if (!system) {
+            return res
+              .status(400)
+              .json({ ok: false, error: "System required" });
+          }
+
+          const remediation = new DesignAutoRemediation(system);
+          const conflicts = remediation.resolveConflicts();
+
+          res.json({
+            ok: true,
+            conflicts,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
+          res.status(500).json({ ok: false, error: err.message });
         }
-
-        const remediation = new DesignAutoRemediation(system);
-        const conflicts = remediation.resolveConflicts();
-
-        res.json({
-          ok: true,
-          conflicts,
-          timestamp: new Date().toISOString(),
-        });
-      } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
       }
-    });
+    );
 
     /**
      * POST /api/v1/design/remediate/optimize - Generate optimization suggestions
      */
-    this.app.post('/api/v1/design/remediate/optimize', async (req, res) => {
+    this.app.post("/api/v1/design/remediate/optimize", async (req, res) => {
       try {
         const { system } = req.body;
 
         if (!system) {
-          return res.status(400).json({ ok: false, error: 'System required' });
+          return res.status(400).json({ ok: false, error: "System required" });
         }
 
         const remediation = new DesignAutoRemediation(system);
@@ -2407,21 +2642,22 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/registry/register - Register a design system to the industry registry
      */
-    this.app.post('/api/v1/registry/register', async (req, res) => {
+    this.app.post("/api/v1/registry/register", async (req, res) => {
       try {
-        const { system, company, industry, country, teamSize, yearsOld, tags } = req.body;
+        const { system, company, industry, country, teamSize, yearsOld, tags } =
+          req.body;
 
         if (!system || !company) {
           return res.status(400).json({
             ok: false,
-            error: 'System and company name required',
+            error: "System and company name required",
           });
         }
 
         const result = this.industryRegistry.registerSystem(system, {
           company,
-          industry: industry || 'general',
-          country: country || 'Unknown',
+          industry: industry || "general",
+          country: country || "Unknown",
           teamSize: teamSize || 0,
           yearsOld: yearsOld || 0,
           tags: tags || [],
@@ -2440,9 +2676,10 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/registry/search - Search the industry registry
      */
-    this.app.get('/api/v1/registry/search', async (req, res) => {
+    this.app.get("/api/v1/registry/search", async (req, res) => {
       try {
-        const { company, industry, minMaturity, minColors, sortBy, tags } = req.query;
+        const { company, industry, minMaturity, minColors, sortBy, tags } =
+          req.query;
 
         const criteria = {};
         if (company) criteria.company = company;
@@ -2450,7 +2687,7 @@ class ProductDevelopmentServer {
         if (minMaturity) criteria.minMaturity = parseInt(minMaturity);
         if (minColors) criteria.minColors = parseInt(minColors);
         if (sortBy) criteria.sortBy = sortBy;
-        if (tags) criteria.tags = tags.split(',');
+        if (tags) criteria.tags = tags.split(",");
 
         const results = this.industryRegistry.search(criteria);
 
@@ -2467,11 +2704,13 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/registry/benchmark/:industry - Get industry benchmarking data
      */
-    this.app.get('/api/v1/registry/benchmark/:industry', async (req, res) => {
+    this.app.get("/api/v1/registry/benchmark/:industry", async (req, res) => {
       try {
         const { industry } = req.params;
 
-        const benchmark = this.industryRegistry.benchmarkIndustry(industry || 'general');
+        const benchmark = this.industryRegistry.benchmarkIndustry(
+          industry || "general"
+        );
 
         res.json({
           ok: true,
@@ -2486,14 +2725,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/registry/compare - Compare multiple companies
      */
-    this.app.post('/api/v1/registry/compare', async (req, res) => {
+    this.app.post("/api/v1/registry/compare", async (req, res) => {
       try {
         const { companies } = req.body;
 
         if (!companies || companies.length < 2) {
           return res.status(400).json({
             ok: false,
-            error: 'At least 2 companies required for comparison',
+            error: "At least 2 companies required for comparison",
           });
         }
 
@@ -2512,26 +2751,31 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/registry/standardization/:industry - Get standardization metrics
      */
-    this.app.get('/api/v1/registry/standardization/:industry', async (req, res) => {
-      try {
-        const { industry } = req.params;
+    this.app.get(
+      "/api/v1/registry/standardization/:industry",
+      async (req, res) => {
+        try {
+          const { industry } = req.params;
 
-        const metrics = this.industryRegistry.getStandardizationMetrics(industry || 'general');
+          const metrics = this.industryRegistry.getStandardizationMetrics(
+            industry || "general"
+          );
 
-        res.json({
-          ok: true,
-          metrics,
-          timestamp: new Date().toISOString(),
-        });
-      } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
+          res.json({
+            ok: true,
+            metrics,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
+          res.status(500).json({ ok: false, error: err.message });
+        }
       }
-    });
+    );
 
     /**
      * GET /api/v1/registry/statistics - Get registry statistics
      */
-    this.app.get('/api/v1/registry/statistics', async (req, res) => {
+    this.app.get("/api/v1/registry/statistics", async (req, res) => {
       try {
         const stats = this.industryRegistry.getStatistics();
 
@@ -2549,10 +2793,10 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/generate-css - Generate CSS variables from design system
      * Converts design tokens to CSS custom properties
      */
-    this.app.post('/api/v1/design/generate-css', async (req, res) => {
+    this.app.post("/api/v1/design/generate-css", async (req, res) => {
       try {
         const {
-          format = 'file',
+          format = "file",
           minify = false,
           includeComments = true,
           includeUtilities = true,
@@ -2561,71 +2805,79 @@ class ProductDevelopmentServer {
         if (!this.designSystem || Object.keys(this.designSystem).length === 0) {
           return res.status(400).json({
             ok: false,
-            error: 'No design system loaded',
-            hint: 'First import Figma design system using /api/v1/design/import-figma',
+            error: "No design system loaded",
+            hint: "First import Figma design system using /api/v1/design/import-figma",
           });
         }
 
         // Import DesignTokenConverter
-        const { DesignTokenConverter } = await import('../lib/adapters/design-token-converter.js');
+        const { DesignTokenConverter } = await import(
+          "../lib/adapters/design-token-converter.js"
+        );
         const converter = new DesignTokenConverter();
 
         // Generate CSS content
         const cssContent = converter.generateCssContent(this.designSystem, {
           minify,
           includeComments,
-          rootSelector: ':root',
+          rootSelector: ":root",
         });
 
         // Get all token metadata for inspection
         const tokenMetadata = converter.getTokenMetadata();
         const cssVariables = converter.getCssVariablesObject();
 
-        if (format === 'file') {
+        if (format === "file") {
           // Save CSS file
-          const cssFile = path.join(this.designDir, `design-tokens-${Date.now()}.css`);
+          const cssFile = path.join(
+            this.designDir,
+            `design-tokens-${Date.now()}.css`
+          );
           await fs.writeFile(cssFile, cssContent);
 
           res.json({
             ok: true,
-            message: 'CSS generated and saved',
+            message: "CSS generated and saved",
             file: cssFile,
-            cssFileContent: cssContent.substring(0, 500) + '...',
+            cssFileContent: cssContent.substring(0, 500) + "...",
             tokenStats: {
               totalVariables: Object.keys(cssVariables).length,
               colors: Object.keys(this.designSystem.colors || {}).length,
-              typography: Object.keys(this.designSystem.typography || {}).length,
+              typography: Object.keys(this.designSystem.typography || {})
+                .length,
               spacing: Object.keys(this.designSystem.spacing || {}).length,
               effects: Object.keys(this.designSystem.effects || {}).length,
             },
           });
-        } else if (format === 'inline') {
+        } else if (format === "inline") {
           // Return CSS content directly for inline injection
           res.json({
             ok: true,
-            message: 'CSS variables generated',
+            message: "CSS variables generated",
             css: cssContent,
             variables: cssVariables,
             metadata: tokenMetadata,
             tokenStats: {
               totalVariables: Object.keys(cssVariables).length,
               colors: Object.keys(this.designSystem.colors || {}).length,
-              typography: Object.keys(this.designSystem.typography || {}).length,
+              typography: Object.keys(this.designSystem.typography || {})
+                .length,
               spacing: Object.keys(this.designSystem.spacing || {}).length,
               effects: Object.keys(this.designSystem.effects || {}).length,
             },
           });
-        } else if (format === 'json') {
+        } else if (format === "json") {
           // Return as structured JSON
           res.json({
             ok: true,
-            message: 'CSS variables exported as JSON',
+            message: "CSS variables exported as JSON",
             variables: cssVariables,
             metadata: tokenMetadata,
             tokenStats: {
               totalVariables: Object.keys(cssVariables).length,
               colors: Object.keys(this.designSystem.colors || {}).length,
-              typography: Object.keys(this.designSystem.typography || {}).length,
+              typography: Object.keys(this.designSystem.typography || {})
+                .length,
               spacing: Object.keys(this.designSystem.spacing || {}).length,
               effects: Object.keys(this.designSystem.effects || {}).length,
             },
@@ -2633,15 +2885,15 @@ class ProductDevelopmentServer {
         } else {
           return res.status(400).json({
             ok: false,
-            error: 'Invalid format. Use: file, inline, or json',
+            error: "Invalid format. Use: file, inline, or json",
           });
         }
       } catch (err) {
-        console.error('CSS generation error:', err.message);
+        console.error("CSS generation error:", err.message);
         res.status(500).json({
           ok: false,
           error: err.message,
-          hint: 'Ensure design system tokens are valid',
+          hint: "Ensure design system tokens are valid",
         });
       }
     });
@@ -2649,7 +2901,7 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/design/tokens - Get all extracted design tokens
      */
-    this.app.get('/api/v1/design/tokens', (req, res) => {
+    this.app.get("/api/v1/design/tokens", (req, res) => {
       try {
         const { category } = req.query;
 
@@ -2688,7 +2940,7 @@ class ProductDevelopmentServer {
           tokens: response,
         });
       } catch (err) {
-        console.error('Token retrieval error:', err.message);
+        console.error("Token retrieval error:", err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });
@@ -2697,31 +2949,50 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/apply-tokens - Apply tokens to UI surface
      * Injects CSS variables into specified UI element
      */
-    this.app.post('/api/v1/design/apply-tokens', async (req, res) => {
+    this.app.post("/api/v1/design/apply-tokens", async (req, res) => {
       try {
-        const { surface = 'all', format = 'css', cssFile } = req.body;
+        const { surface = "all", format = "css", cssFile } = req.body;
 
         if (!this.designSystem || Object.keys(this.designSystem).length === 0) {
           return res.status(400).json({
             ok: false,
-            error: 'No design system loaded',
+            error: "No design system loaded",
           });
         }
 
         // Import token converter
-        const { DesignTokenConverter } = await import('../lib/adapters/design-token-converter.js');
+        const { DesignTokenConverter } = await import(
+          "../lib/adapters/design-token-converter.js"
+        );
         const converter = new DesignTokenConverter();
         const cssContent = converter.generateCssContent(this.designSystem);
 
         // Define UI surfaces
         const surfaces = {
-          'validation-dashboard': path.join(process.cwd(), 'web-app', 'validation-dashboard.html'),
-          'chat-professional': path.join(process.cwd(), 'web-app', 'chat-professional.html'),
-          'control-room': path.join(process.cwd(), 'web-app', 'control-room-clarity.html'),
-          'design-suite': path.join(process.cwd(), 'web-app', 'design-suite.html'),
+          "validation-dashboard": path.join(
+            process.cwd(),
+            "web-app",
+            "validation-dashboard.html"
+          ),
+          "chat-professional": path.join(
+            process.cwd(),
+            "web-app",
+            "chat-professional.html"
+          ),
+          "control-room": path.join(
+            process.cwd(),
+            "web-app",
+            "control-room-clarity.html"
+          ),
+          "design-suite": path.join(
+            process.cwd(),
+            "web-app",
+            "design-suite.html"
+          ),
         };
 
-        const surfacesToUpdate = surface === 'all' ? Object.keys(surfaces) : [surface];
+        const surfacesToUpdate =
+          surface === "all" ? Object.keys(surfaces) : [surface];
         const results = {};
 
         for (const surfaceKey of surfacesToUpdate) {
@@ -2735,14 +3006,14 @@ class ProductDevelopmentServer {
               .catch(() => false);
 
             if (!fileExists) {
-              results[surfaceKey] = { ok: false, error: 'File not found' };
+              results[surfaceKey] = { ok: false, error: "File not found" };
               continue;
             }
 
-            let content = await fs.readFile(filePath, 'utf8');
+            let content = await fs.readFile(filePath, "utf8");
 
             // Check if CSS is already injected
-            if (content.includes('/* TooLoo Design Tokens')) {
+            if (content.includes("/* TooLoo Design Tokens")) {
               // Update existing style block
               const styleRegex =
                 /<style[^>]*>[\s\S]*?<!-- TooLoo Design Tokens[\s\S]*?<!-- End TooLoo Design Tokens --><\/style>/;
@@ -2750,14 +3021,18 @@ class ProductDevelopmentServer {
               content = content.replace(styleRegex, newStyle);
             } else {
               // Inject new style block in <head>
-              const headCloseTag = '</head>';
+              const headCloseTag = "</head>";
               const newStyle = `  <style>\n    /* TooLoo Design Tokens - Auto-generated */\n    ${cssContent}\n    /* End TooLoo Design Tokens */\n  </style>\n${headCloseTag}`;
               content = content.replace(headCloseTag, newStyle);
             }
 
             // Save updated file
             await fs.writeFile(filePath, content);
-            results[surfaceKey] = { ok: true, message: 'Tokens applied', file: filePath };
+            results[surfaceKey] = {
+              ok: true,
+              message: "Tokens applied",
+              file: filePath,
+            };
           } catch (err) {
             results[surfaceKey] = { ok: false, error: err.message };
           }
@@ -2765,12 +3040,12 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          message: 'Design tokens applied to UI surfaces',
+          message: "Design tokens applied to UI surfaces",
           results,
           timestamp: new Date().toISOString(),
         });
       } catch (err) {
-        console.error('Token application error:', err.message);
+        console.error("Token application error:", err.message);
         res.status(500).json({
           ok: false,
           error: err.message,
@@ -2782,7 +3057,7 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/webhook/figma - Figma webhook for file updates
      * Receives notifications when Figma file changes and auto-syncs
      */
-    this.app.post('/api/v1/design/webhook/figma', async (req, res) => {
+    this.app.post("/api/v1/design/webhook/figma", async (req, res) => {
       try {
         const { type, file_id, file_key, timestamp } = req.body;
 
@@ -2792,10 +3067,13 @@ class ProductDevelopmentServer {
         console.log(`📝 Figma webhook received: ${type} for file ${file_key}`);
 
         // Only handle file update events
-        if (type !== 'FILE_UPDATE' && type !== 'FILE_CHANGE') {
+        if (type !== "FILE_UPDATE" && type !== "FILE_CHANGE") {
           return res
             .status(200)
-            .json({ ok: true, message: 'Event acknowledged but not processed' });
+            .json({
+              ok: true,
+              message: "Event acknowledged but not processed",
+            });
         }
 
         // Create webhook event log
@@ -2807,15 +3085,18 @@ class ProductDevelopmentServer {
           processed: false,
         };
 
-        const webhookDir = path.join(this.designDir, 'webhooks');
+        const webhookDir = path.join(this.designDir, "webhooks");
         await fs.mkdir(webhookDir, { recursive: true });
-        const webhookLogFile = path.join(webhookDir, `webhook-${Date.now()}.json`);
+        const webhookLogFile = path.join(
+          webhookDir,
+          `webhook-${Date.now()}.json`
+        );
         await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
 
         // Respond immediately to Figma (required for webhook)
         res.status(200).json({
           ok: true,
-          message: 'Webhook acknowledged',
+          message: "Webhook acknowledged",
           eventId: Date.now(),
         });
 
@@ -2824,18 +3105,25 @@ class ProductDevelopmentServer {
           try {
             const token = process.env.FIGMA_API_TOKEN;
             if (!token) {
-              console.warn('⚠️ Figma webhook: No API token configured for auto-sync');
+              console.warn(
+                "⚠️ Figma webhook: No API token configured for auto-sync"
+              );
               return;
             }
 
             // Re-import the file to get latest tokens
-            const { FigmaAdapter } = await import('../lib/adapters/figma-adapter.js');
+            const { FigmaAdapter } = await import(
+              "../lib/adapters/figma-adapter.js"
+            );
             const figmaAdapter = new FigmaAdapter(token);
 
             // Assuming we have the file URL stored or can reconstruct it
             const figmaUrl = `https://figma.com/file/${file_key}`;
 
-            const importResult = await figmaAdapter.importDesignSystem(figmaUrl, token);
+            const importResult = await figmaAdapter.importDesignSystem(
+              figmaUrl,
+              token
+            );
 
             if (importResult.ok) {
               // Update design system
@@ -2843,9 +3131,18 @@ class ProductDevelopmentServer {
               this.designSystem = {
                 ...this.designSystem,
                 colors: { ...this.designSystem.colors, ...designSystem.colors },
-                typography: { ...this.designSystem.typography, ...designSystem.typography },
-                spacing: { ...this.designSystem.spacing, ...designSystem.spacing },
-                components: { ...this.designSystem.components, ...designSystem.components },
+                typography: {
+                  ...this.designSystem.typography,
+                  ...designSystem.typography,
+                },
+                spacing: {
+                  ...this.designSystem.spacing,
+                  ...designSystem.spacing,
+                },
+                components: {
+                  ...this.designSystem.components,
+                  ...designSystem.components,
+                },
               };
 
               // Save updated design system
@@ -2853,19 +3150,25 @@ class ProductDevelopmentServer {
 
               // Regenerate CSS and apply to UI surfaces
               const { DesignTokenConverter } = await import(
-                '../lib/adapters/design-token-converter.js'
+                "../lib/adapters/design-token-converter.js"
               );
               const converter = new DesignTokenConverter();
-              const cssContent = converter.generateCssContent(this.designSystem);
+              const cssContent = converter.generateCssContent(
+                this.designSystem
+              );
 
               // Apply to all surfaces
               const surfaces = {
-                'validation-dashboard': path.join(
+                "validation-dashboard": path.join(
                   process.cwd(),
-                  'web-app',
-                  'validation-dashboard.html'
+                  "web-app",
+                  "validation-dashboard.html"
                 ),
-                'chat-professional': path.join(process.cwd(), 'web-app', 'chat-professional.html'),
+                "chat-professional": path.join(
+                  process.cwd(),
+                  "web-app",
+                  "chat-professional.html"
+                ),
               };
 
               for (const [surfaceKey, filePath] of Object.entries(surfaces)) {
@@ -2876,15 +3179,15 @@ class ProductDevelopmentServer {
                     .catch(() => false);
                   if (!fileExists) continue;
 
-                  let content = await fs.readFile(filePath, 'utf8');
+                  let content = await fs.readFile(filePath, "utf8");
 
-                  if (content.includes('/* TooLoo Design Tokens')) {
+                  if (content.includes("/* TooLoo Design Tokens")) {
                     const styleRegex =
                       /<style[^>]*>[\s\S]*?<!-- TooLoo Design Tokens[\s\S]*?<!-- End TooLoo Design Tokens --><\/style>/;
                     const newStyle = `<style>\n/* TooLoo Design Tokens - Auto-synced from Figma */\n${cssContent}\n/* End TooLoo Design Tokens */\n</style>`;
                     content = content.replace(styleRegex, newStyle);
                   } else {
-                    const headCloseTag = '</head>';
+                    const headCloseTag = "</head>";
                     const newStyle = `  <style>\n    /* TooLoo Design Tokens - Auto-synced from Figma */\n    ${cssContent}\n    /* End TooLoo Design Tokens */\n  </style>\n${headCloseTag}`;
                     content = content.replace(headCloseTag, newStyle);
                   }
@@ -2898,22 +3201,28 @@ class ProductDevelopmentServer {
               // Update webhook log
               webhookLog.processed = true;
               webhookLog.processedAt = new Date().toISOString();
-              webhookLog.status = 'success';
-              await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
+              webhookLog.status = "success";
+              await fs.writeFile(
+                webhookLogFile,
+                JSON.stringify(webhookLog, null, 2)
+              );
 
-              console.log('✅ Figma design system auto-synced successfully');
+              console.log("✅ Figma design system auto-synced successfully");
             }
           } catch (err) {
-            console.error('❌ Figma webhook processing failed:', err.message);
+            console.error("❌ Figma webhook processing failed:", err.message);
             webhookLog.processed = true;
             webhookLog.processedAt = new Date().toISOString();
-            webhookLog.status = 'error';
+            webhookLog.status = "error";
             webhookLog.error = err.message;
-            await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
+            await fs.writeFile(
+              webhookLogFile,
+              JSON.stringify(webhookLog, null, 2)
+            );
           }
         });
       } catch (err) {
-        console.error('Webhook error:', err.message);
+        console.error("Webhook error:", err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });
@@ -2922,15 +3231,15 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/webhook/register - Register Figma webhook
      * Sets up automatic sync on file changes
      */
-    this.app.post('/api/v1/design/webhook/register', async (req, res) => {
+    this.app.post("/api/v1/design/webhook/register", async (req, res) => {
       try {
         const { fileKey, apiToken } = req.body;
 
         if (!fileKey) {
           return res.status(400).json({
             ok: false,
-            error: 'fileKey required',
-            hint: 'Provide the Figma file key (part of file URL after /file/)',
+            error: "fileKey required",
+            hint: "Provide the Figma file key (part of file URL after /file/)",
           });
         }
 
@@ -2938,28 +3247,28 @@ class ProductDevelopmentServer {
         if (!token) {
           return res.status(401).json({
             ok: false,
-            error: 'Figma API token required',
+            error: "Figma API token required",
           });
         }
 
         // Webhook registration via Figma API
         // Note: Requires webhook API access (Team/Enterprise feature)
-        const webhookEndpoint = `${process.env.WEBHOOK_BASE_URL || 'http://127.0.0.1:3006'}/api/v1/design/webhook/figma`;
+        const webhookEndpoint = `${process.env.WEBHOOK_BASE_URL || "http://127.0.0.1:3006"}/api/v1/design/webhook/figma`;
 
         const registrationData = {
-          event_type: 'FILE_UPDATE',
+          event_type: "FILE_UPDATE",
           team_id: req.body.teamId,
           webhook_url: webhookEndpoint,
-          description: 'TooLoo auto-sync design tokens',
+          description: "TooLoo auto-sync design tokens",
         };
 
         // Attempt to register webhook (may fail if user doesn't have webhook permissions)
         try {
-          const response = await fetch('https://api.figma.com/v1/webhooks', {
-            method: 'POST',
+          const response = await fetch("https://api.figma.com/v1/webhooks", {
+            method: "POST",
             headers: {
-              'X-FIGMA-TOKEN': token,
-              'Content-Type': 'application/json',
+              "X-FIGMA-TOKEN": token,
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(registrationData),
           });
@@ -2968,27 +3277,28 @@ class ProductDevelopmentServer {
             const webhookData = await response.json();
             res.json({
               ok: true,
-              message: 'Figma webhook registered successfully',
+              message: "Figma webhook registered successfully",
               webhookId: webhookData.id,
               webhookUrl: webhookEndpoint,
               fileKey,
-              eventType: 'FILE_UPDATE',
+              eventType: "FILE_UPDATE",
             });
           } else {
             // Fallback: provide manual registration instructions
             const error = await response.json();
             res.json({
               ok: false,
-              error: 'Webhook registration requires Team/Enterprise permissions',
-              registrationMethod: 'manual',
+              error:
+                "Webhook registration requires Team/Enterprise permissions",
+              registrationMethod: "manual",
               instructions: {
-                step1: 'Go to https://www.figma.com/developers/webhooks',
-                step2: 'Create a new webhook for your team',
+                step1: "Go to https://www.figma.com/developers/webhooks",
+                step2: "Create a new webhook for your team",
                 step3: `Set webhook URL to: ${webhookEndpoint}`,
-                step4: 'Select FILE_UPDATE event type',
+                step4: "Select FILE_UPDATE event type",
               },
               fileKey,
-              hint: 'For self-hosted or free accounts, use manual webhook registration or poll the API periodically',
+              hint: "For self-hosted or free accounts, use manual webhook registration or poll the API periodically",
             });
           }
         } catch (err) {
@@ -2996,16 +3306,16 @@ class ProductDevelopmentServer {
           res.json({
             ok: false,
             error: err.message,
-            registrationMethod: 'manual',
+            registrationMethod: "manual",
             instructions: {
-              step1: 'Go to https://www.figma.com/developers/webhooks',
-              step2: 'Create webhook pointing to: ' + webhookEndpoint,
+              step1: "Go to https://www.figma.com/developers/webhooks",
+              step2: "Create webhook pointing to: " + webhookEndpoint,
               fileKey,
             },
           });
         }
       } catch (err) {
-        console.error('Webhook registration error:', err.message);
+        console.error("Webhook registration error:", err.message);
         res.status(500).json({
           ok: false,
           error: err.message,
@@ -3016,16 +3326,19 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/design/webhook/status - Check webhook status
      */
-    this.app.get('/api/v1/design/webhook/status', async (req, res) => {
+    this.app.get("/api/v1/design/webhook/status", async (req, res) => {
       try {
-        const webhookDir = path.join(this.designDir, 'webhooks');
+        const webhookDir = path.join(this.designDir, "webhooks");
         const files = await fs.readdir(webhookDir).catch(() => []);
 
         const webhookLogs = [];
         for (const file of files.slice(-10)) {
           // Last 10 webhooks
           try {
-            const content = await fs.readFile(path.join(webhookDir, file), 'utf8');
+            const content = await fs.readFile(
+              path.join(webhookDir, file),
+              "utf8"
+            );
             webhookLogs.push(JSON.parse(content));
           } catch (e) {
             // Skip invalid files
@@ -3034,12 +3347,12 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          webhookEndpoint: `${process.env.WEBHOOK_BASE_URL || 'http://127.0.0.1:3006'}/api/v1/design/webhook/figma`,
+          webhookEndpoint: `${process.env.WEBHOOK_BASE_URL || "http://127.0.0.1:3006"}/api/v1/design/webhook/figma`,
           recentWebhooks: webhookLogs,
           totalProcessed: webhookLogs.filter((w) => w.processed).length,
         });
       } catch (err) {
-        console.error('Webhook status error:', err.message);
+        console.error("Webhook status error:", err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });
@@ -3048,72 +3361,75 @@ class ProductDevelopmentServer {
      * POST /api/v1/design/load-sample - Load sample design system for demo
      * Loads a complete sample design system with colors, typography, spacing, components
      */
-    this.app.post('/api/v1/design/load-sample', async (req, res) => {
+    this.app.post("/api/v1/design/load-sample", async (req, res) => {
       try {
         // Load sample design system
         this.designSystem = {
           colors: {
-            primary: '#7c5cff',
-            'primary-light': '#9d8cff',
-            'primary-dark': '#5a3fb8',
-            secondary: '#00e9b0',
-            'secondary-light': '#33f0c0',
-            'secondary-dark': '#00cc8f',
-            accent: '#ffe770',
-            success: '#10b981',
-            warning: '#f59e0b',
-            error: '#ef4444',
-            'neutral-50': '#f9fafb',
-            'neutral-100': '#f3f4f6',
-            'neutral-900': '#111827',
+            primary: "#7c5cff",
+            "primary-light": "#9d8cff",
+            "primary-dark": "#5a3fb8",
+            secondary: "#00e9b0",
+            "secondary-light": "#33f0c0",
+            "secondary-dark": "#00cc8f",
+            accent: "#ffe770",
+            success: "#10b981",
+            warning: "#f59e0b",
+            error: "#ef4444",
+            "neutral-50": "#f9fafb",
+            "neutral-100": "#f3f4f6",
+            "neutral-900": "#111827",
           },
           typography: {
-            'font-family-sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto',
-            'font-size-xs': '12px',
-            'font-size-sm': '14px',
-            'font-size-base': '16px',
-            'font-size-lg': '18px',
-            'font-size-xl': '20px',
-            'font-weight-regular': '400',
-            'font-weight-medium': '500',
-            'font-weight-semibold': '600',
-            'font-weight-bold': '700',
-            'line-height-tight': '1.25',
-            'line-height-normal': '1.5',
-            'line-height-relaxed': '1.75',
+            "font-family-sans":
+              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto',
+            "font-size-xs": "12px",
+            "font-size-sm": "14px",
+            "font-size-base": "16px",
+            "font-size-lg": "18px",
+            "font-size-xl": "20px",
+            "font-weight-regular": "400",
+            "font-weight-medium": "500",
+            "font-weight-semibold": "600",
+            "font-weight-bold": "700",
+            "line-height-tight": "1.25",
+            "line-height-normal": "1.5",
+            "line-height-relaxed": "1.75",
           },
           spacing: {
-            'spacing-0': '0',
-            'spacing-1': '4px',
-            'spacing-2': '8px',
-            'spacing-3': '12px',
-            'spacing-4': '16px',
-            'spacing-6': '24px',
-            'spacing-8': '32px',
-            'spacing-12': '48px',
-            'spacing-16': '64px',
+            "spacing-0": "0",
+            "spacing-1": "4px",
+            "spacing-2": "8px",
+            "spacing-3": "12px",
+            "spacing-4": "16px",
+            "spacing-6": "24px",
+            "spacing-8": "32px",
+            "spacing-12": "48px",
+            "spacing-16": "64px",
           },
           components: {
-            'button-base': 'padding: 8px 16px; border-radius: 6px; font-weight: 600;',
-            'input-base': 'padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 6px;',
-            'card-base':
-              'background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);',
-            'shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
-            'shadow-md': '0 4px 6px rgba(0, 0, 0, 0.1)',
-            'shadow-lg': '0 10px 15px rgba(0, 0, 0, 0.1)',
+            "button-base":
+              "padding: 8px 16px; border-radius: 6px; font-weight: 600;",
+            "input-base":
+              "padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 6px;",
+            "card-base":
+              "background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);",
+            "shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
+            "shadow-md": "0 4px 6px rgba(0, 0, 0, 0.1)",
+            "shadow-lg": "0 10px 15px rgba(0, 0, 0, 0.1)",
           },
           patterns: {
-            'card-padding': '16px',
-            'section-gap': '24px',
-            'border-radius-sm': '4px',
-            'border-radius-md': '8px',
-            'border-radius-lg': '12px',
+            "card-padding": "16px",
+            "section-gap": "24px",
+            "border-radius-sm": "4px",
+            "border-radius-md": "8px",
+            "border-radius-lg": "12px",
           },
           guidelines: {
-            'min-touch-target': '44px',
-            'max-content-width': '1200px',
-            'mobile-breakpoint': '768px',
-            'tablet-breakpoint': '1024px',
+            "min-touch-target": "44px",
+            "max-content-width": "1200px",
+            "mobile-breakpoint": "768px",
+            "tablet-breakpoint": "1024px",
           },
         };
 
@@ -3124,13 +3440,13 @@ class ProductDevelopmentServer {
 
         res.json({
           ok: true,
-          message: 'Sample design system loaded',
+          message: "Sample design system loaded",
           totalTokens,
           categories: Object.keys(this.designSystem),
           design: this.designSystem,
         });
       } catch (err) {
-        console.error('Load sample error:', err.message);
+        console.error("Load sample error:", err.message);
         res.status(500).json({ ok: false, error: err.message });
       }
     });
@@ -3140,11 +3456,11 @@ class ProductDevelopmentServer {
      * Streams design tokens as they are generated from current design system
      * Enables real-time UI updates and progressive rendering
      */
-    this.app.get('/api/v1/design/stream', async (req, res) => {
+    this.app.get("/api/v1/design/stream", async (req, res) => {
       try {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
 
         const sendEvent = (type, data) => {
           res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -3152,7 +3468,12 @@ class ProductDevelopmentServer {
 
         // Ensure design system exists
         if (!this.designSystem) {
-          this.designSystem = { colors: {}, typography: {}, spacing: {}, components: {} };
+          this.designSystem = {
+            colors: {},
+            typography: {},
+            spacing: {},
+            components: {},
+          };
         }
 
         // Send metadata
@@ -3160,7 +3481,7 @@ class ProductDevelopmentServer {
           (sum, cat) => sum + Object.keys(this.designSystem[cat] || {}).length,
           0
         );
-        sendEvent('meta', {
+        sendEvent("meta", {
           totalTokens: tokenCount,
           categories: Object.keys(this.designSystem),
           timestamp: new Date().toISOString(),
@@ -3168,9 +3489,12 @@ class ProductDevelopmentServer {
 
         // Stream each category and its tokens
         for (const [category, tokens] of Object.entries(this.designSystem)) {
-          if (!tokens || typeof tokens !== 'object') continue;
+          if (!tokens || typeof tokens !== "object") continue;
 
-          sendEvent('category', { name: category, count: Object.keys(tokens).length });
+          sendEvent("category", {
+            name: category,
+            count: Object.keys(tokens).length,
+          });
 
           // Simulate streaming by sending tokens with a small delay
           const tokenEntries = Object.entries(tokens);
@@ -3180,7 +3504,7 @@ class ProductDevelopmentServer {
             // Add small delay to simulate generation (10ms per token)
             await new Promise((resolve) => setTimeout(resolve, 10));
 
-            sendEvent('token', {
+            sendEvent("token", {
               category,
               key,
               value,
@@ -3191,14 +3515,14 @@ class ProductDevelopmentServer {
         }
 
         // Send completion
-        sendEvent('done', {
+        sendEvent("done", {
           totalTokens: tokenCount,
           generatedAt: new Date().toISOString(),
         });
 
         res.end();
       } catch (err) {
-        console.error('Design stream error:', err.message);
+        console.error("Design stream error:", err.message);
         // If headers already sent, we can't send JSON error
         if (!res.headersSent) {
           res.status(500).json({ ok: false, error: err.message });
@@ -3211,16 +3535,22 @@ class ProductDevelopmentServer {
 
   setupSessionRoutes() {
     // Save full session state
-    this.app.post('/api/v1/product/session', async (req, res) => {
+    this.app.post("/api/v1/product/session", async (req, res) => {
       try {
         const { sessionId, messages, metadata, projectId } = req.body;
 
         if (!sessionId || !messages) {
-          return res.status(400).json({ error: 'sessionId and messages required' });
+          return res
+            .status(400)
+            .json({ error: "sessionId and messages required" });
         }
 
         // Use SessionManager to maintain state and cache
-        const session = await this.sessionManager.getOrCreateSession(sessionId, 'user', projectId);
+        const session = await this.sessionManager.getOrCreateSession(
+          sessionId,
+          "user",
+          projectId
+        );
         session.messages = messages;
         if (metadata) {
           session.metadata = { ...session.metadata, ...metadata };
@@ -3234,49 +3564,54 @@ class ProductDevelopmentServer {
 
         await this.sessionManager.saveSession(session);
 
-        res.json({ ok: true, message: 'Session saved', sessionId });
+        res.json({ ok: true, message: "Session saved", sessionId });
       } catch (error) {
-        console.error('Failed to save session:', error);
+        console.error("Failed to save session:", error);
         res.status(500).json({ ok: false, error: error.message });
       }
     });
 
     // Retrieve session state
-    this.app.get('/api/v1/product/session/:sessionId', async (req, res) => {
+    this.app.get("/api/v1/product/session/:sessionId", async (req, res) => {
       try {
         const { sessionId } = req.params;
         const session = await this.sessionManager.getOrCreateSession(sessionId);
 
         if (!session) {
-          return res.status(404).json({ ok: false, error: 'Session not found' });
+          return res
+            .status(404)
+            .json({ ok: false, error: "Session not found" });
         }
 
         res.json({ ok: true, session });
       } catch (error) {
-        console.error('Failed to get session:', error);
+        console.error("Failed to get session:", error);
         res.status(500).json({ ok: false, error: error.message });
       }
     });
 
     // Get intelligent context (Phase 7)
-    this.app.get('/api/v1/product/session/:sessionId/context', async (req, res) => {
-      try {
-        const { sessionId } = req.params;
-        const { message, strategy } = req.query;
+    this.app.get(
+      "/api/v1/product/session/:sessionId/context",
+      async (req, res) => {
+        try {
+          const { sessionId } = req.params;
+          const { message, strategy } = req.query;
 
-        const context = await this.sessionManager.getIntelligentHistory(
-          sessionId,
-          'user', // Default user ID
-          message || '',
-          { strategy: strategy || 'hybrid' }
-        );
+          const context = await this.sessionManager.getIntelligentHistory(
+            sessionId,
+            "user", // Default user ID
+            message || "",
+            { strategy: strategy || "hybrid" }
+          );
 
-        res.json({ ok: true, context });
-      } catch (error) {
-        console.error('Failed to get session context:', error);
-        res.status(500).json({ ok: false, error: error.message });
+          res.json({ ok: true, context });
+        } catch (error) {
+          console.error("Failed to get session context:", error);
+          res.status(500).json({ ok: false, error: error.message });
+        }
       }
-    });
+    );
   }
 
   /**
@@ -3287,14 +3622,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/ml/clustering/kmeans - K-Means token clustering
      */
-    this.app.post('/api/v1/ml/clustering/kmeans', async (req, res) => {
+    this.app.post("/api/v1/ml/clustering/kmeans", async (req, res) => {
       try {
         const { tokens, k } = req.body;
 
         if (!tokens || tokens.length === 0) {
           return res.status(400).json({
             ok: false,
-            error: 'No tokens provided for clustering',
+            error: "No tokens provided for clustering",
           });
         }
 
@@ -3313,14 +3648,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/ml/clustering/hierarchical - Hierarchical token clustering
      */
-    this.app.post('/api/v1/ml/clustering/hierarchical', async (req, res) => {
+    this.app.post("/api/v1/ml/clustering/hierarchical", async (req, res) => {
       try {
         const { tokens } = req.body;
 
         if (!tokens || tokens.length < 2) {
           return res.status(400).json({
             ok: false,
-            error: 'At least 2 tokens required for hierarchical clustering',
+            error: "At least 2 tokens required for hierarchical clustering",
           });
         }
 
@@ -3339,14 +3674,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/ml/clustering/pca - PCA visualization projection
      */
-    this.app.post('/api/v1/ml/clustering/pca', async (req, res) => {
+    this.app.post("/api/v1/ml/clustering/pca", async (req, res) => {
       try {
         const { tokens } = req.body;
 
         if (!tokens || tokens.length === 0) {
           return res.status(400).json({
             ok: false,
-            error: 'No tokens provided for PCA',
+            error: "No tokens provided for PCA",
           });
         }
 
@@ -3365,14 +3700,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/ml/clustering/archetype - Detect design system archetype
      */
-    this.app.post('/api/v1/ml/clustering/archetype', async (req, res) => {
+    this.app.post("/api/v1/ml/clustering/archetype", async (req, res) => {
       try {
         const system = req.body;
 
         if (!system || Object.keys(system).length === 0) {
           return res.status(400).json({
             ok: false,
-            error: 'Design system required',
+            error: "Design system required",
           });
         }
 
@@ -3397,14 +3732,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/governance/version/create - Create version checkpoint
      */
-    this.app.post('/api/v1/governance/version/create', async (req, res) => {
+    this.app.post("/api/v1/governance/version/create", async (req, res) => {
       try {
         const { system, metadata } = req.body;
 
         if (!system) {
           return res.status(400).json({
             ok: false,
-            error: 'Design system required',
+            error: "Design system required",
           });
         }
 
@@ -3427,7 +3762,7 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/governance/version/history - Get version history
      */
-    this.app.get('/api/v1/governance/version/history', async (req, res) => {
+    this.app.get("/api/v1/governance/version/history", async (req, res) => {
       try {
         const history = this.governance.getVersionHistory();
 
@@ -3444,14 +3779,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/governance/version/compare - Compare two versions
      */
-    this.app.post('/api/v1/governance/version/compare', async (req, res) => {
+    this.app.post("/api/v1/governance/version/compare", async (req, res) => {
       try {
         const { versionA, versionB } = req.body;
 
         if (!versionA || !versionB) {
           return res.status(400).json({
             ok: false,
-            error: 'Two version IDs required',
+            error: "Two version IDs required",
           });
         }
 
@@ -3469,14 +3804,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/governance/deprecate - Mark token as deprecated
      */
-    this.app.post('/api/v1/governance/deprecate', async (req, res) => {
+    this.app.post("/api/v1/governance/deprecate", async (req, res) => {
       try {
         const deprecation = req.body;
 
         if (!deprecation.token) {
           return res.status(400).json({
             ok: false,
-            error: 'Token name required',
+            error: "Token name required",
           });
         }
 
@@ -3499,7 +3834,7 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/governance/deprecations - Get deprecation status
      */
-    this.app.get('/api/v1/governance/deprecations', async (req, res) => {
+    this.app.get("/api/v1/governance/deprecations", async (req, res) => {
       try {
         const status = this.governance.getDeprecationStatus();
 
@@ -3515,14 +3850,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/governance/approval/create - Create approval workflow
      */
-    this.app.post('/api/v1/governance/approval/create', async (req, res) => {
+    this.app.post("/api/v1/governance/approval/create", async (req, res) => {
       try {
         const change = req.body;
 
         if (!change.type || !change.title) {
           return res.status(400).json({
             ok: false,
-            error: 'Change type and title required',
+            error: "Change type and title required",
           });
         }
 
@@ -3545,41 +3880,44 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/governance/approval/:workflowId/approve - Approve workflow
      */
-    this.app.post('/api/v1/governance/approval/:workflowId/approve', async (req, res) => {
-      try {
-        const { workflowId } = req.params;
-        const approval = req.body;
+    this.app.post(
+      "/api/v1/governance/approval/:workflowId/approve",
+      async (req, res) => {
+        try {
+          const { workflowId } = req.params;
+          const approval = req.body;
 
-        if (!approval.by) {
-          return res.status(400).json({
-            ok: false,
-            error: 'Approver name required',
+          if (!approval.by) {
+            return res.status(400).json({
+              ok: false,
+              error: "Approver name required",
+            });
+          }
+
+          const result = this.governance.approveWorkflow(workflowId, approval);
+
+          if (result.error) {
+            return res.status(404).json(result);
+          }
+
+          res.json({
+            ok: true,
+            workflow: {
+              id: result.id,
+              status: result.status,
+              approvals: `${result.approvals.length}/${result.requiredApprovals}`,
+            },
           });
+        } catch (err) {
+          res.status(500).json({ ok: false, error: err.message });
         }
-
-        const result = this.governance.approveWorkflow(workflowId, approval);
-
-        if (result.error) {
-          return res.status(404).json(result);
-        }
-
-        res.json({
-          ok: true,
-          workflow: {
-            id: result.id,
-            status: result.status,
-            approvals: `${result.approvals.length}/${result.requiredApprovals}`,
-          },
-        });
-      } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
       }
-    });
+    );
 
     /**
      * GET /api/v1/governance/approval/status - Get approval status
      */
-    this.app.get('/api/v1/governance/approval/status', async (req, res) => {
+    this.app.get("/api/v1/governance/approval/status", async (req, res) => {
       try {
         const status = this.governance.getApprovalStatus();
 
@@ -3595,14 +3933,14 @@ class ProductDevelopmentServer {
     /**
      * POST /api/v1/governance/migration - Generate migration path
      */
-    this.app.post('/api/v1/governance/migration', async (req, res) => {
+    this.app.post("/api/v1/governance/migration", async (req, res) => {
       try {
         const breaking = req.body;
 
         if (!breaking.type || !breaking.items) {
           return res.status(400).json({
             ok: false,
-            error: 'Breaking change type and items required',
+            error: "Breaking change type and items required",
           });
         }
 
@@ -3620,7 +3958,7 @@ class ProductDevelopmentServer {
     /**
      * GET /api/v1/governance/report - Generate comprehensive governance report
      */
-    this.app.get('/api/v1/governance/report', async (req, res) => {
+    this.app.get("/api/v1/governance/report", async (req, res) => {
       try {
         const report = this.governance.generateGovernanceReport();
 
@@ -3636,26 +3974,31 @@ class ProductDevelopmentServer {
 
   setupIntegrationRoutes() {
     // Book Worm Mode activation
-    this.app.post('/api/v1/bookworm/activate', async (req, res) => {
+    this.app.post("/api/v1/bookworm/activate", async (req, res) => {
       try {
         const { content, analysisType, depth } = req.body;
 
         if (!content) {
           return res.status(400).json({
-            error: 'Book Worm Mode requires content to analyze',
+            error: "Book Worm Mode requires content to analyze",
           });
         }
 
         // Comprehensive analysis simulation
-        const analysis = this.simulateBookWormAnalysis(content, analysisType, depth);
+        const analysis = this.simulateBookWormAnalysis(
+          content,
+          analysisType,
+          depth
+        );
 
         res.json({
           ok: true,
           bookWormResults: analysis,
-          message: 'Book Worm Mode analysis completed with professional artifacts',
+          message:
+            "Book Worm Mode analysis completed with professional artifacts",
         });
       } catch (error) {
-        console.error('Book Worm Mode failed:', error);
+        console.error("Book Worm Mode failed:", error);
         res.status(500).json({
           ok: false,
           error: error.message,
@@ -3664,80 +4007,99 @@ class ProductDevelopmentServer {
     });
 
     // System capabilities overview
-    this.app.get('/api/v1/capabilities', (req, res) => {
+    this.app.get("/api/v1/capabilities", (req, res) => {
       const capabilities = {
         workflowOrchestration: {
-          description: 'End-to-end product development workflows',
-          workflows: ['concept-to-market', 'rapid-mvp'],
-          features: ['quality gates', 'progress tracking', 'risk management'],
+          description: "End-to-end product development workflows",
+          workflows: ["concept-to-market", "rapid-mvp"],
+          features: ["quality gates", "progress tracking", "risk management"],
         },
         dynamicLearning: {
-          description: 'On-demand skill acquisition for any domain',
-          modes: ['project-based', 'industry-focused', 'skill-specific'],
-          features: ['contextual learning', 'proficiency tracking'],
+          description: "On-demand skill acquisition for any domain",
+          modes: ["project-based", "industry-focused", "skill-specific"],
+          features: ["contextual learning", "proficiency tracking"],
         },
         bookWormAnalysis: {
-          description: 'Professional-grade document analysis and feedback',
-          modes: ['rapid', 'focused', 'comprehensive'],
-          features: ['quality assessment', 'gap identification', 'improvement recommendations'],
+          description: "Professional-grade document analysis and feedback",
+          modes: ["rapid", "focused", "comprehensive"],
+          features: [
+            "quality assessment",
+            "gap identification",
+            "improvement recommendations",
+          ],
         },
         artifactGeneration: {
-          description: 'Production-ready deliverable creation',
-          types: ['business-documents', 'technical-specs', 'design-systems'],
-          quality: ['draft', 'review', 'production'],
+          description: "Production-ready deliverable creation",
+          types: ["business-documents", "technical-specs", "design-systems"],
+          quality: ["draft", "review", "production"],
         },
       };
 
       res.json({
         ok: true,
         capabilities: capabilities,
-        status: 'All systems operational',
-        version: '1.0.0',
+        status: "All systems operational",
+        version: "1.0.0",
       });
     });
 
     // === Showcase Demo Endpoints ===
     // Stage 1: Generate Ideas (REAL AI PROVIDER ANALYSIS)
-    this.app.post('/api/v1/showcase/generate-ideas', async (req, res) => {
+    this.app.post("/api/v1/showcase/generate-ideas", async (req, res) => {
       try {
-        const { topic = 'innovative products for productivity', count = 5 } = req.body || {};
+        const { topic = "innovative products for productivity", count = 5 } =
+          req.body || {};
 
         // Call real AI providers via ProductAnalysisEngine
-        const result = await ProductAnalysisEngine.generateProductIdeas(topic, count);
+        const result = await ProductAnalysisEngine.generateProductIdeas(
+          topic,
+          count
+        );
 
         res.json({ ok: true, ...result });
       } catch (error) {
-        console.error('Stage 1 (Ideas) failed:', error.message);
-        res.status(500).json({ ok: false, error: error.message, stage: 'generate-ideas' });
+        console.error("Stage 1 (Ideas) failed:", error.message);
+        res
+          .status(500)
+          .json({ ok: false, error: error.message, stage: "generate-ideas" });
       }
     });
 
     // Stage 2: Critique Ideas (REAL AI PROVIDER ANALYSIS)
-    this.app.post('/api/v1/showcase/critique-ideas', async (req, res) => {
+    this.app.post("/api/v1/showcase/critique-ideas", async (req, res) => {
       try {
         const { ideas = [], criteria } = req.body || {};
 
         if (!ideas || ideas.length === 0) {
-          return res.status(400).json({ ok: false, error: 'Ideas array required' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "Ideas array required" });
         }
 
         // Call real AI providers via ProductAnalysisEngine
-        const result = await ProductAnalysisEngine.critiqueProductIdeas(ideas, criteria);
+        const result = await ProductAnalysisEngine.critiqueProductIdeas(
+          ideas,
+          criteria
+        );
 
         res.json({ ok: true, ...result });
       } catch (error) {
-        console.error('Stage 2 (Critique) failed:', error.message);
-        res.status(500).json({ ok: false, error: error.message, stage: 'critique-ideas' });
+        console.error("Stage 2 (Critique) failed:", error.message);
+        res
+          .status(500)
+          .json({ ok: false, error: error.message, stage: "critique-ideas" });
       }
     });
 
     // Stage 3: Score and Rank Ideas (REAL AI PROVIDER ANALYSIS)
-    this.app.post('/api/v1/showcase/select-best', async (req, res) => {
+    this.app.post("/api/v1/showcase/select-best", async (req, res) => {
       try {
         const { ideas = [] } = req.body || {};
 
         if (!ideas || ideas.length === 0) {
-          return res.status(400).json({ ok: false, error: 'Ideas array required' });
+          return res
+            .status(400)
+            .json({ ok: false, error: "Ideas array required" });
         }
 
         // Call real AI providers via ProductAnalysisEngine
@@ -3747,7 +4109,7 @@ class ProductDevelopmentServer {
         const winner =
           result.rankedIdeas && result.rankedIdeas.length > 0
             ? result.rankedIdeas[0]
-            : { idea: 'Unable to rank', consensusScore: 0 };
+            : { idea: "Unable to rank", consensusScore: 0 };
 
         res.json({
           ok: true,
@@ -3757,25 +4119,35 @@ class ProductDevelopmentServer {
           methodology: result.methodology,
         });
       } catch (error) {
-        console.error('Stage 3 (Select Best) failed:', error.message);
-        res.status(500).json({ ok: false, error: error.message, stage: 'select-best' });
+        console.error("Stage 3 (Select Best) failed:", error.message);
+        res
+          .status(500)
+          .json({ ok: false, error: error.message, stage: "select-best" });
       }
     });
 
     // Stage 4: Generate Docs
-    this.app.post('/api/v1/showcase/generate-docs', async (req, res) => {
+    this.app.post("/api/v1/showcase/generate-docs", async (req, res) => {
       try {
         const requirements = {
-          productName: 'SkillSphere',
-          description: 'Adaptive learning and skill development hub',
-          audience: 'Professionals, students, lifelong learners',
+          productName: "SkillSphere",
+          description: "Adaptive learning and skill development hub",
+          audience: "Professionals, students, lifelong learners",
         };
 
-        const types = ['business-plan', 'technical-specification', 'marketing-strategy'];
+        const types = [
+          "business-plan",
+          "technical-specification",
+          "marketing-strategy",
+        ];
         const artifacts = [];
 
         for (const type of types) {
-          const artifact = await this.generateSimulatedArtifact(type, requirements, 'production');
+          const artifact = await this.generateSimulatedArtifact(
+            type,
+            requirements,
+            "production"
+          );
           const saveResult = await this.saveArtifact(artifact);
 
           if (saveResult) {
@@ -3783,22 +4155,22 @@ class ProductDevelopmentServer {
             artifact.createdAt = saveResult.createdAt;
           }
 
-          artifact.preview = artifact.content.substring(0, 400) + '...';
+          artifact.preview = artifact.content.substring(0, 400) + "...";
           artifacts.push(artifact);
         }
 
         res.json({ ok: true, artifacts });
       } catch (error) {
-        console.error('Stage 4 failed:', error);
+        console.error("Stage 4 failed:", error);
         res.status(500).json({ ok: false, error: error.message });
       }
     });
 
     // Stage 5: Finalize Presentation
-    this.app.post('/api/v1/showcase/finalize', async (req, res) => {
+    this.app.post("/api/v1/showcase/finalize", async (req, res) => {
       try {
-        const productName = 'SkillSphere';
-        const tagline = 'Adaptive learning and skill development hub';
+        const productName = "SkillSphere";
+        const tagline = "Adaptive learning and skill development hub";
 
         // Get last 3 artifacts
         const allArtifacts = Array.from(this.artifactsIndex.values())
@@ -3810,15 +4182,28 @@ class ProductDevelopmentServer {
         for (const indexEntry of allArtifacts) {
           const fullArtifact = await this.getArtifact(indexEntry.id);
           if (fullArtifact) {
-            fullArtifact.preview = fullArtifact.content?.substring(0, 400) + '...';
+            fullArtifact.preview =
+              fullArtifact.content?.substring(0, 400) + "...";
             artifacts.push(fullArtifact);
           }
         }
 
         const critiques = [
-          { provider: 'Claude', score: 9, summary: 'Excellent market fit and technical approach.' },
-          { provider: 'GPT-4', score: 10, summary: 'Outstanding innovation and scalability.' },
-          { provider: 'Gemini', score: 9, summary: 'Strong go-to-market and user engagement.' },
+          {
+            provider: "Claude",
+            score: 9,
+            summary: "Excellent market fit and technical approach.",
+          },
+          {
+            provider: "GPT-4",
+            score: 10,
+            summary: "Outstanding innovation and scalability.",
+          },
+          {
+            provider: "Gemini",
+            score: 9,
+            summary: "Strong go-to-market and user engagement.",
+          },
         ];
 
         const stats = {
@@ -3828,16 +4213,23 @@ class ProductDevelopmentServer {
           timeElapsed: 7,
         };
 
-        res.json({ ok: true, productName, tagline, artifacts, critiques, stats });
+        res.json({
+          ok: true,
+          productName,
+          tagline,
+          artifacts,
+          critiques,
+          stats,
+        });
       } catch (error) {
-        console.error('Stage 5 failed:', error);
+        console.error("Stage 5 failed:", error);
         res.status(500).json({ ok: false, error: error.message });
       }
     });
     // Component Scanner for Design Studio
-    this.app.get('/api/v1/design/components', async (req, res) => {
+    this.app.get("/api/v1/design/components", async (req, res) => {
       try {
-        const webAppDir = path.join(process.cwd(), 'web-app');
+        const webAppDir = path.join(process.cwd(), "web-app");
         const components = [];
 
         // Helper to scan directory
@@ -3845,9 +4237,9 @@ class ProductDevelopmentServer {
           try {
             const files = await fs.readdir(dir);
             for (const file of files) {
-              if (file.endsWith('.html')) {
+              if (file.endsWith(".html")) {
                 const filePath = path.join(dir, file);
-                const content = await fs.readFile(filePath, 'utf8');
+                const content = await fs.readFile(filePath, "utf8");
                 // Extract title
                 const titleMatch = content.match(/<title>(.*?)<\/title>/);
                 const title = titleMatch ? titleMatch[1] : file;
@@ -3855,9 +4247,9 @@ class ProductDevelopmentServer {
                 components.push({
                   id: file,
                   name: title,
-                  category: category || 'Pages',
+                  category: category || "Pages",
                   path: `/${file}`, // Relative path for frontend (web-app is root)
-                  type: 'page',
+                  type: "page",
                 });
               }
             }
@@ -3866,10 +4258,10 @@ class ProductDevelopmentServer {
           }
         };
 
-        await scanDir(webAppDir, 'Pages');
+        await scanDir(webAppDir, "Pages");
 
         // Also check for a components directory if it exists
-        await scanDir(path.join(webAppDir, 'components'), 'Components');
+        await scanDir(path.join(webAppDir, "components"), "Components");
 
         res.json({
           ok: true,
@@ -3919,7 +4311,7 @@ class ProductDevelopmentServer {
 
       return { id, createdAt: timestamp };
     } catch (error) {
-      console.error('Failed to save artifact:', error.message);
+      console.error("Failed to save artifact:", error.message);
       return null;
     }
   }
@@ -3930,10 +4322,10 @@ class ProductDevelopmentServer {
       if (!indexEntry) return null;
 
       const filePath = path.join(this.artifactsDir, indexEntry.fileName);
-      const data = await fs.readFile(filePath, 'utf8');
+      const data = await fs.readFile(filePath, "utf8");
       return JSON.parse(data);
     } catch (error) {
-      console.error('Failed to load artifact:', error.message);
+      console.error("Failed to load artifact:", error.message);
       return null;
     }
   }
@@ -3966,27 +4358,27 @@ class ProductDevelopmentServer {
 <body>
     <div class="header">
         <h1>${artifact.type
-          .split('-')
+          .split("-")
           .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ')}</h1>
+          .join(" ")}</h1>
         <div class="meta">
             <span>Quality: ${artifact.quality}</span>
             <span>Generated: ${new Date(artifact.createdAt || artifact.metadata?.generated).toLocaleDateString()}</span>
-            <span>Score: ${artifact.metadata?.qualityScore || 'N/A'}</span>
+            <span>Score: ${artifact.metadata?.qualityScore || "N/A"}</span>
         </div>
     </div>
     <div class="content">
         ${artifact.content
-          .split('\n')
+          .split("\n")
           .map((line) => {
-            if (line.startsWith('# ')) return `<h1>${line.slice(2)}</h1>`;
-            if (line.startsWith('## ')) return `<h2>${line.slice(3)}</h2>`;
-            if (line.startsWith('**') && line.endsWith('**'))
+            if (line.startsWith("# ")) return `<h1>${line.slice(2)}</h1>`;
+            if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`;
+            if (line.startsWith("**") && line.endsWith("**"))
               return `<p><strong>${line.slice(2, -2)}</strong></p>`;
-            if (line.trim() === '') return '';
+            if (line.trim() === "") return "";
             return `<p>${line}</p>`;
           })
-          .join('\n')}
+          .join("\n")}
     </div>
     <div class="footer">
         Generated by TooLoo.ai Professional Artifact Generator
@@ -4002,36 +4394,42 @@ class ProductDevelopmentServer {
 
   getWorkflowPhases(type) {
     const phaseMap = {
-      'concept-to-market': [
-        { name: 'discovery', status: 'active' },
-        { name: 'strategy', status: 'pending' },
-        { name: 'development', status: 'pending' },
-        { name: 'launch', status: 'pending' },
-        { name: 'scale', status: 'pending' },
+      "concept-to-market": [
+        { name: "discovery", status: "active" },
+        { name: "strategy", status: "pending" },
+        { name: "development", status: "pending" },
+        { name: "launch", status: "pending" },
+        { name: "scale", status: "pending" },
       ],
-      'rapid-mvp': [
-        { name: 'validate', status: 'active' },
-        { name: 'build', status: 'pending' },
-        { name: 'test', status: 'pending' },
+      "rapid-mvp": [
+        { name: "validate", status: "active" },
+        { name: "build", status: "pending" },
+        { name: "test", status: "pending" },
       ],
     };
-    return phaseMap[type] || phaseMap['concept-to-market'];
+    return phaseMap[type] || phaseMap["concept-to-market"];
   }
 
   async simulatePhaseExecution(workflow, phase) {
     // Simulate phase execution with realistic timing
     await new Promise((resolve) => setTimeout(resolve, 100));
     // Select artifact templates based on workflow type and phase
-    const type = workflow.type || 'default';
+    const type = workflow.type || "default";
     const phaseName = phase || workflow.currentPhase;
     let selected = [];
-    if (phaseName === 'discovery') selected = ['business-plan', 'user-journey-map'];
-    else if (phaseName === 'strategy') selected = ['go-to-market-plan', 'risk-assessment'];
-    else if (phaseName === 'development') selected = ['technical-specification', 'pitch-deck'];
-    else if (phaseName === 'launch') selected = ['investor-summary', 'pitch-deck'];
-    else selected = ['default'];
+    if (phaseName === "discovery")
+      selected = ["business-plan", "user-journey-map"];
+    else if (phaseName === "strategy")
+      selected = ["go-to-market-plan", "risk-assessment"];
+    else if (phaseName === "development")
+      selected = ["technical-specification", "pitch-deck"];
+    else if (phaseName === "launch")
+      selected = ["investor-summary", "pitch-deck"];
+    else selected = ["default"];
     const artifacts = selected.map((key) => {
-      const t = this.artifactTemplates.get(key) || this.artifactTemplates.get('default');
+      const t =
+        this.artifactTemplates.get(key) ||
+        this.artifactTemplates.get("default");
       return {
         type: key,
         format: t.format,
@@ -4044,13 +4442,13 @@ class ProductDevelopmentServer {
       phase: phaseName,
       qualityScore: 0.9,
       artifacts,
-      insights: ['Market validated', 'Technical approach confirmed'],
-      nextActions: ['Proceed to next phase', 'Review deliverables'],
+      insights: ["Market validated", "Technical approach confirmed"],
+      nextActions: ["Proceed to next phase", "Review deliverables"],
     };
   }
 
   simulateDocumentAnalysis(content, type, mode) {
-    const wordCount = content.split(' ').length;
+    const wordCount = content.split(" ").length;
     const complexityScore = Math.min(wordCount / 1000, 1.0);
 
     return {
@@ -4061,27 +4459,32 @@ class ProductDevelopmentServer {
         documentType: type,
       },
       analysis: {
-        structure: { score: 0.8, clarity: 'good' },
+        structure: { score: 0.8, clarity: "good" },
         content: { completeness: 0.85, relevance: 0.9 },
         quality: { overall: 0.82, professional: true },
       },
       feedback: {
-        executive: 'Document shows strong foundation with opportunities for enhancement.',
+        executive:
+          "Document shows strong foundation with opportunities for enhancement.",
         recommendations: [
           {
-            priority: 'high',
-            area: 'market-analysis',
-            description: 'Expand competitive landscape section',
+            priority: "high",
+            area: "market-analysis",
+            description: "Expand competitive landscape section",
           },
           {
-            priority: 'medium',
-            area: 'financials',
-            description: 'Add sensitivity analysis to projections',
+            priority: "medium",
+            area: "financials",
+            description: "Add sensitivity analysis to projections",
           },
-          { priority: 'low', area: 'formatting', description: 'Standardize section headers' },
+          {
+            priority: "low",
+            area: "formatting",
+            description: "Standardize section headers",
+          },
         ],
-        strengths: ['Clear value proposition', 'Solid technical approach'],
-        improvements: ['Market size validation', 'Risk assessment detail'],
+        strengths: ["Clear value proposition", "Solid technical approach"],
+        improvements: ["Market size validation", "Risk assessment detail"],
       },
     };
   }
@@ -4089,53 +4492,57 @@ class ProductDevelopmentServer {
   simulateBookWormAnalysis(content, analysisType, depth) {
     const analysis = this.simulateDocumentAnalysis(
       content,
-      analysisType || 'comprehensive',
-      depth || 'comprehensive'
+      analysisType || "comprehensive",
+      depth || "comprehensive"
     );
 
     return {
       analysis: analysis,
       artifacts: [
         {
-          type: 'professional-report',
-          title: 'Book Worm Analysis Report',
+          type: "professional-report",
+          title: "Book Worm Analysis Report",
           content:
-            '# Professional Analysis\n\nComprehensive review completed with actionable insights...',
+            "# Professional Analysis\n\nComprehensive review completed with actionable insights...",
         },
         {
-          type: 'action-plan',
-          title: 'Implementation Roadmap',
+          type: "action-plan",
+          title: "Implementation Roadmap",
           content:
-            '# Action Plan\n\n## Priority 1 Actions\n- Address market analysis gaps\n- Validate financial assumptions',
+            "# Action Plan\n\n## Priority 1 Actions\n- Address market analysis gaps\n- Validate financial assumptions",
         },
       ],
       insights: analysis.feedback.recommendations.slice(0, 5),
       nextActions: [
-        'Implement priority recommendations',
-        'Generate supporting artifacts',
-        'Schedule follow-up analysis',
+        "Implement priority recommendations",
+        "Generate supporting artifacts",
+        "Schedule follow-up analysis",
       ],
     };
   }
 
   async generateSimulatedArtifact(type, requirements, quality) {
-    const templates = this.artifactTemplates.get(type) || this.artifactTemplates.get('default');
+    const templates =
+      this.artifactTemplates.get(type) || this.artifactTemplates.get("default");
 
     // Simple quality scoring guardrail
     const reqCount = Object.keys(requirements || {}).length;
     const sectionCount = templates.sections?.length || 5;
     const base = 0.6 + Math.min(0.2, reqCount / 10);
     const sectionBonus = Math.min(0.2, sectionCount / 10);
-    const qualityScore = Math.min(1.0, Number((base + sectionBonus).toFixed(2)));
+    const qualityScore = Math.min(
+      1.0,
+      Number((base + sectionBonus).toFixed(2))
+    );
     const thresholds = { draft: 0.0, review: 0.75, production: 0.85 };
-    const requested = (quality || 'production').toLowerCase();
+    const requested = (quality || "production").toLowerCase();
     let decidedQuality = requested;
-    let rationale = 'meets threshold';
-    if (requested === 'production' && qualityScore < thresholds.production) {
-      decidedQuality = qualityScore >= thresholds.review ? 'review' : 'draft';
+    let rationale = "meets threshold";
+    if (requested === "production" && qualityScore < thresholds.production) {
+      decidedQuality = qualityScore >= thresholds.review ? "review" : "draft";
       rationale = `downgraded: score ${qualityScore} < production ${thresholds.production}`;
-    } else if (requested === 'review' && qualityScore < thresholds.review) {
-      decidedQuality = 'draft';
+    } else if (requested === "review" && qualityScore < thresholds.review) {
+      decidedQuality = "draft";
       rationale = `downgraded: score ${qualityScore} < review ${thresholds.review}`;
     }
 
@@ -4158,46 +4565,47 @@ class ProductDevelopmentServer {
         {
           name: `${type}-${Date.now()}.md`,
           content: content,
-          type: 'primary',
+          type: "primary",
         },
       ],
     };
   }
 
   async generateArtifactContent(type, requirements) {
-    const productName = requirements.productName || requirements.companyName || 'Product';
-    const description = requirements.description || '';
-    const audience = requirements.audience || '';
+    const productName =
+      requirements.productName || requirements.companyName || "Product";
+    const description = requirements.description || "";
+    const audience = requirements.audience || "";
 
     // Build context for AI generation
     const contextInfo = `Product: ${productName}\nDescription: ${description}\nTarget Audience: ${audience}`;
 
     // Use real AI to generate professional content
     try {
-      const { generateSmartLLM } = await import('../engine/llm-provider.js');
+      const { generateSmartLLM } = await import("../engine/llm-provider.js");
 
-      let prompt = '';
+      let prompt = "";
       switch (type) {
-        case 'business-plan':
-          prompt = `Create a comprehensive, professional business plan for "${productName}". ${description ? 'Description: ' + description : ''} ${audience ? 'Target audience: ' + audience : ''}\n\nInclude:\n- Executive Summary (2-3 paragraphs)\n- Market Analysis with specific data points\n- Competitive Landscape\n- Business Model and Revenue Streams\n- Financial Projections (3-year outlook)\n- Go-to-Market Strategy\n- Risk Assessment\n\nMake it investor-ready and specific to this product. Use markdown formatting.`;
+        case "business-plan":
+          prompt = `Create a comprehensive, professional business plan for "${productName}". ${description ? "Description: " + description : ""} ${audience ? "Target audience: " + audience : ""}\n\nInclude:\n- Executive Summary (2-3 paragraphs)\n- Market Analysis with specific data points\n- Competitive Landscape\n- Business Model and Revenue Streams\n- Financial Projections (3-year outlook)\n- Go-to-Market Strategy\n- Risk Assessment\n\nMake it investor-ready and specific to this product. Use markdown formatting.`;
           break;
 
-        case 'technical-specification':
-          prompt = `Create a detailed technical specification for "${productName}". ${description ? 'Description: ' + description : ''} ${audience ? 'Target users: ' + audience : ''}\n\nInclude:\n- System Architecture (detailed components)\n- Technology Stack with justifications\n- API Design (RESTful endpoints)\n- Data Models and Schemas\n- Security Architecture\n- Scalability Plan\n- Performance Requirements\n- Integration Points\n\nMake it implementation-ready. Use markdown formatting with code examples where appropriate.`;
+        case "technical-specification":
+          prompt = `Create a detailed technical specification for "${productName}". ${description ? "Description: " + description : ""} ${audience ? "Target users: " + audience : ""}\n\nInclude:\n- System Architecture (detailed components)\n- Technology Stack with justifications\n- API Design (RESTful endpoints)\n- Data Models and Schemas\n- Security Architecture\n- Scalability Plan\n- Performance Requirements\n- Integration Points\n\nMake it implementation-ready. Use markdown formatting with code examples where appropriate.`;
           break;
 
-        case 'marketing-strategy':
-          prompt = `Create a comprehensive marketing strategy for "${productName}". ${description ? 'Description: ' + description : ''} ${audience ? 'Target audience: ' + audience : ''}\n\nInclude:\n- Target Market Analysis\n- Customer Personas (3-4 detailed profiles)\n- Value Proposition and Messaging\n- Channel Strategy (digital, content, paid, organic)\n- Campaign Timeline (6-month plan)\n- Budget Allocation\n- KPIs and Success Metrics\n- Competitor Positioning\n\nMake it actionable and specific. Use markdown formatting.`;
+        case "marketing-strategy":
+          prompt = `Create a comprehensive marketing strategy for "${productName}". ${description ? "Description: " + description : ""} ${audience ? "Target audience: " + audience : ""}\n\nInclude:\n- Target Market Analysis\n- Customer Personas (3-4 detailed profiles)\n- Value Proposition and Messaging\n- Channel Strategy (digital, content, paid, organic)\n- Campaign Timeline (6-month plan)\n- Budget Allocation\n- KPIs and Success Metrics\n- Competitor Positioning\n\nMake it actionable and specific. Use markdown formatting.`;
           break;
 
         default:
-          prompt = `Create a professional ${type.replace('-', ' ')} for "${productName}". ${description ? 'Description: ' + description : ''}\n\nMake it comprehensive, actionable, and production-ready. Use markdown formatting.`;
+          prompt = `Create a professional ${type.replace("-", " ")} for "${productName}". ${description ? "Description: " + description : ""}\n\nMake it comprehensive, actionable, and production-ready. Use markdown formatting.`;
       }
 
       const response = await generateSmartLLM({
         prompt,
-        taskType: 'analysis',
-        criticality: 'high', // Use high criticality for professional artifacts
+        taskType: "analysis",
+        criticality: "high", // Use high criticality for professional artifacts
         maxTokens: 3000, // Allow longer, comprehensive outputs
       });
 
@@ -4205,23 +4613,23 @@ class ProductDevelopmentServer {
         return response.text;
       }
     } catch (error) {
-      console.error('AI generation failed, using fallback:', error.message);
+      console.error("AI generation failed, using fallback:", error.message);
     }
 
     // Fallback to basic template if AI fails
     const contextSection =
       description || audience
-        ? `\n\n## Project Context\n${description ? '**Description:** ' + description + '\n\n' : ''}${audience ? '**Target Audience:** ' + audience + '\n\n' : ''}`
-        : '';
+        ? `\n\n## Project Context\n${description ? "**Description:** " + description + "\n\n" : ""}${audience ? "**Target Audience:** " + audience + "\n\n" : ""}`
+        : "";
 
     switch (type) {
-      case 'business-plan':
+      case "business-plan":
         return `# Business Plan: ${productName}${contextSection}## Executive Summary\nComprehensive business plan with market analysis and financial projections.\n\n## Market Analysis\nTarget market validation and competitive landscape.\n\n## Financial Projections\nRevenue forecasts and funding requirements.\n\n*Generated by TooLoo.ai Professional Artifact Generator*`;
 
-      case 'technical-specification':
+      case "technical-specification":
         return `# Technical Specification: ${productName}${contextSection}## System Architecture\nScalable architecture designed for growth.\n\n## API Design\nRESTful API with comprehensive documentation.\n\n## Security\nIndustry-standard security measures.\n\n*Generated by TooLoo.ai Technical Specification Generator*`;
 
-      case 'marketing-strategy':
+      case "marketing-strategy":
         return `# Marketing Strategy: ${productName}${contextSection}## Go-to-Market Plan\nStrategic approach to market entry and customer acquisition.\n\n## Customer Segments\nDetailed analysis of target customer segments and positioning.\n\n## Campaign Strategy\nMulti-channel marketing approach with success metrics.\n\n*Generated by TooLoo.ai Marketing Strategy Generator*`;
 
       default:
@@ -4231,77 +4639,111 @@ class ProductDevelopmentServer {
 
   getSkillApplications(skillName) {
     const applicationMap = {
-      'market-analysis': ['competitor research', 'market sizing', 'trend analysis'],
-      'business-strategy': ['business model design', 'strategic planning', 'financial modeling'],
-      'technical-architecture': ['system design', 'scalability planning', 'technology selection'],
-      'user-experience': ['user research', 'interaction design', 'usability testing'],
+      "market-analysis": [
+        "competitor research",
+        "market sizing",
+        "trend analysis",
+      ],
+      "business-strategy": [
+        "business model design",
+        "strategic planning",
+        "financial modeling",
+      ],
+      "technical-architecture": [
+        "system design",
+        "scalability planning",
+        "technology selection",
+      ],
+      "user-experience": [
+        "user research",
+        "interaction design",
+        "usability testing",
+      ],
     };
-    return applicationMap[skillName] || ['general application', 'project support'];
+    return (
+      applicationMap[skillName] || ["general application", "project support"]
+    );
   }
 
   getProjectSkills(projectType) {
     const skillMap = {
-      'saas-product': [
-        'market-analysis',
-        'technical-architecture',
-        'user-experience',
-        'business-strategy',
+      "saas-product": [
+        "market-analysis",
+        "technical-architecture",
+        "user-experience",
+        "business-strategy",
       ],
-      'mobile-app': ['user-experience', 'mobile-development', 'app-store-optimization'],
-      'e-commerce': ['digital-marketing', 'conversion-optimization', 'inventory-management'],
+      "mobile-app": [
+        "user-experience",
+        "mobile-development",
+        "app-store-optimization",
+      ],
+      "e-commerce": [
+        "digital-marketing",
+        "conversion-optimization",
+        "inventory-management",
+      ],
     };
-    return skillMap[projectType] || ['project-management', 'analysis'];
+    return skillMap[projectType] || ["project-management", "analysis"];
   }
 
   categorizeToDomain(skillName) {
-    if (skillName.includes('technical') || skillName.includes('architecture')) return 'technical';
-    if (skillName.includes('business') || skillName.includes('market')) return 'business';
-    if (skillName.includes('design') || skillName.includes('user')) return 'design';
-    if (skillName.includes('marketing') || skillName.includes('growth')) return 'marketing';
-    return 'general';
+    if (skillName.includes("technical") || skillName.includes("architecture"))
+      return "technical";
+    if (skillName.includes("business") || skillName.includes("market"))
+      return "business";
+    if (skillName.includes("design") || skillName.includes("user"))
+      return "design";
+    if (skillName.includes("marketing") || skillName.includes("growth"))
+      return "marketing";
+    return "general";
   }
 
   initializeArtifactTemplates() {
     const templates = new Map();
-    templates.set('business-plan', {
-      sections: ['executive-summary', 'market-analysis', 'financial-projections'],
-      format: 'markdown',
-      quality: ['draft', 'review', 'production'],
+    templates.set("business-plan", {
+      sections: [
+        "executive-summary",
+        "market-analysis",
+        "financial-projections",
+      ],
+      format: "markdown",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('technical-specification', {
-      sections: ['architecture', 'requirements', 'implementation'],
-      format: 'markdown',
-      quality: ['draft', 'review', 'production'],
+    templates.set("technical-specification", {
+      sections: ["architecture", "requirements", "implementation"],
+      format: "markdown",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('pitch-deck', {
-      sections: ['problem', 'solution', 'traction', 'team', 'financials'],
-      format: 'presentation',
-      quality: ['draft', 'review', 'production'],
+    templates.set("pitch-deck", {
+      sections: ["problem", "solution", "traction", "team", "financials"],
+      format: "presentation",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('go-to-market-plan', {
-      sections: ['target-market', 'channels', 'budget', 'timeline'],
-      format: 'markdown',
-      quality: ['draft', 'review', 'production'],
+    templates.set("go-to-market-plan", {
+      sections: ["target-market", "channels", "budget", "timeline"],
+      format: "markdown",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('user-journey-map', {
-      sections: ['persona', 'touchpoints', 'pain-points', 'opportunities'],
-      format: 'diagram',
-      quality: ['draft', 'review', 'production'],
+    templates.set("user-journey-map", {
+      sections: ["persona", "touchpoints", "pain-points", "opportunities"],
+      format: "diagram",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('risk-assessment', {
-      sections: ['risks', 'mitigation', 'impact', 'likelihood'],
-      format: 'markdown',
-      quality: ['draft', 'review', 'production'],
+    templates.set("risk-assessment", {
+      sections: ["risks", "mitigation", "impact", "likelihood"],
+      format: "markdown",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('investor-summary', {
-      sections: ['company-overview', 'market', 'traction', 'ask'],
-      format: 'markdown',
-      quality: ['draft', 'review', 'production'],
+    templates.set("investor-summary", {
+      sections: ["company-overview", "market", "traction", "ask"],
+      format: "markdown",
+      quality: ["draft", "review", "production"],
     });
-    templates.set('default', {
-      sections: ['overview', 'details', 'recommendations'],
-      format: 'markdown',
-      quality: ['draft', 'review', 'production'],
+    templates.set("default", {
+      sections: ["overview", "details", "recommendations"],
+      format: "markdown",
+      quality: ["draft", "review", "production"],
     });
     return templates;
   }
@@ -4309,7 +4751,7 @@ class ProductDevelopmentServer {
   start() {
     this.svc.start();
     console.log(
-      '🏭 Product Development Server capabilities: Workflow Orchestration | Dynamic Learning | Book Worm Analysis | Artifact Generation'
+      "🏭 Product Development Server capabilities: Workflow Orchestration | Dynamic Learning | Book Worm Analysis | Artifact Generation"
     );
   }
 }

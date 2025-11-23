@@ -1,3 +1,4 @@
+// @version 2.1.11
 import { ProviderAdapter, GenerationRequest, GenerationResponse, ProviderConfig } from './types';
 import fetch from 'node-fetch';
 

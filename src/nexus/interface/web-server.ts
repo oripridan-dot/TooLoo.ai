@@ -1,4 +1,4 @@
-// @version 2.1.6
+// @version 2.1.11
 // System Check endpoint: runs smoke tests for key services and returns structured results
 // (Moved below app initialization)
 

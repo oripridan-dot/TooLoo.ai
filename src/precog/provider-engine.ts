@@ -1,3 +1,4 @@
+// @version 2.1.11
 import { SynapseBus } from '../core/bus/event-bus';
 import { ProviderAdapter, GenerationRequest, GenerationResponse } from './providers/types';
 import { OpenAIProvider, AnthropicProvider, GeminiProvider, OllamaProvider } from './providers/adapters';

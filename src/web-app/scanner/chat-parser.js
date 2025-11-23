@@ -1,3 +1,4 @@
+// @version 2.1.11
 /**
  * ChatGPT/Claude JSON Export Parser
  * Parses conversation exports and extracts prompts
