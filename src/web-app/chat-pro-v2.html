@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.7 -->
+<!-- @version 2.1.9 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -41,7 +41,7 @@
       <div class="chat-messages" id="chatMessages"></div>
       
       <!-- Input Area -->
-      <div class="chat-input-area" style="padding-bottom: 2rem; z-index: 100;">
+      <div class="chat-input-area" style="padding-bottom: 2rem; z-index: 100; background: var(--g3-bg-primary); border-top: 1px solid var(--g3-border-color);">
         <div class="input-wrapper" style="
             background: #27272a; 
             border: 1px solid #52525b; 
@@ -56,6 +56,8 @@
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 101;
         " id="inputContainer">
           <textarea 
             id="messageInput" 
@@ -1091,6 +1093,5 @@
       }
     });
   </script>
-  </div>
 </body>
 </html>
