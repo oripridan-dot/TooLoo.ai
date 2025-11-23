@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.30 -->
+<!-- @version 2.1.31 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -309,8 +309,130 @@
       // Load tab data
       if (tabName === 'dashboard') loadDashboard();
       else if (tabName === 'providers') loadProviders();
+      else if (tabName === 'github') loadGitHub();
+      else if (tabName === 'system') loadSystem();
       else if (tabName === 'features') loadFeatures();
       else if (tabName === 'settings') loadSettings();
+    }
+
+    // ========== GITHUB ==========
+    async function loadGitHub() {
+      try {
+        // Health/Status
+        const healthRes = await fetch(`${API_BASE}/api/v1/github/health`);
+        const healthData = await healthRes.json();
+        
+        // Info
+        const infoRes = await fetch(`${API_BASE}/api/v1/github/info`);
+        const infoData = await infoRes.json();
+        
+        // Issues
+        const issuesRes = await fetch(`${API_BASE}/api/v1/github/issues?limit=5`);
+        const issuesData = await issuesRes.json();
+
+        // Update UI
+        document.getElementById('repoStatus').textContent = healthData.status === 'connected' ? 'Connected' : 'Disconnected';
+        document.getElementById('repoStatus').style.color = healthData.status === 'connected' ? 'var(--success)' : 'var(--danger)';
+        
+        if (infoData.ok && infoData.info) {
+          document.getElementById('repoName').textContent = infoData.info.name;
+          document.getElementById('repoBranch').textContent = infoData.info.defaultBranchRef?.name || 'main';
+        }
+
+        if (issuesData.ok && issuesData.issues) {
+          document.getElementById('issuesList').innerHTML = issuesData.issues.map(i => `
+            <div class="service-item">
+              <div class="service-info">
+                <div class="service-name">#${i.number} ${i.title}</div>
+                <div class="service-port" style="font-size: 10px;">${new Date(i.createdAt).toLocaleDateString()}</div>
+              </div>
+              <div class="service-actions">
+                <a href="${i.url}" target="_blank" class="btn" style="text-decoration: none;">View</a>
+              </div>
+            </div>
+          `).join('');
+        }
+
+      } catch (err) {
+        console.error('GitHub load error:', err);
+        document.getElementById('repoStatus').textContent = 'Error';
+      }
+    }
+
+    function refreshGitHub() {
+      loadGitHub();
+    }
+
+    function showCreateIssueModal() {
+      const title = prompt("Issue Title:");
+      if (!title) return;
+      const body = prompt("Issue Description:");
+      if (!body) return;
+      
+      fetch(`${API_BASE}/api/v1/github/create-issue`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          alert('Issue created: ' + data.url);
+          loadGitHub();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      });
+    }
+
+    function showCreatePRModal() {
+      alert("PR creation requires more inputs. Use the API directly for now.");
+    }
+
+    // ========== SYSTEM ==========
+    async function loadSystem() {
+      try {
+        const awareRes = await fetch(`${API_BASE}/api/v1/system/awareness`);
+        const awareData = await awareRes.json();
+        document.getElementById('awarenessData').textContent = JSON.stringify(awareData, null, 2);
+
+        const introRes = await fetch(`${API_BASE}/api/v1/system/introspect`);
+        const introData = await introRes.json();
+        document.getElementById('introspectionData').textContent = JSON.stringify(introData, null, 2);
+      } catch (err) {
+        console.error('System load error:', err);
+      }
+    }
+
+    async function applySelfPatch() {
+      const action = document.getElementById('patchAction').value;
+      const file = document.getElementById('patchFile').value;
+      const content = document.getElementById('patchContent').value;
+      const message = document.getElementById('patchMessage').value;
+      const resultDiv = document.getElementById('patchResult');
+
+      resultDiv.textContent = "Processing...";
+      resultDiv.style.color = "var(--text-muted)";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/system/self-patch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, file, content, message })
+        });
+        const data = await res.json();
+        
+        if (data.ok) {
+          resultDiv.textContent = "Success: " + JSON.stringify(data);
+          resultDiv.style.color = "var(--success)";
+        } else {
+          resultDiv.textContent = "Error: " + data.error;
+          resultDiv.style.color = "var(--danger)";
+        }
+      } catch (err) {
+        resultDiv.textContent = "Request Failed: " + err.message;
+        resultDiv.style.color = "var(--danger)";
+      }
     }
 
     // ========== DASHBOARD ==========
