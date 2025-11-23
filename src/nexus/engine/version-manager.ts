@@ -1,4 +1,4 @@
-// @version 2.1.11
+// @version 2.1.16
 import * as fs from "fs";
 import * as path from "path";
 import { exec } from "child_process";
@@ -123,6 +123,9 @@ export class VersionManager {
 
     // 2. Update package.json
     this.updatePackageJson(newVersionString);
+
+    // 2.5 Update Git Branch
+    this.updateGitBranch(newVersionString);
 
     // 3. Tag Files
     const filesToTag = Array.from(this.pendingChanges);
