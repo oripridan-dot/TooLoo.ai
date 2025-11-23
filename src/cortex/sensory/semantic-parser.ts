@@ -1,5 +1,5 @@
-// @version 2.1.58
-import * as fs from "fs-extra";
+// @version 2.1.59
+import fs from "fs-extra";
 import * as path from "path";
 import { EventBus } from "../../core/event-bus.js";
 
