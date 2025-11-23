@@ -1,36 +1,47 @@
-// @version 2.1.36
+// @version 2.1.38
 import { Router } from "express";
-import { Cortex } from "../../cortex";
-import { Precog } from "../../precog";
+import { precog } from "../../precog/index.js";
 
 const router = Router();
 
-// We need access to the core systems. 
-// In a real dependency injection scenario, these would be passed in.
-// For now, we'll assume they are available or we'll mock the response structure
-// until we wire up the full event bus.
-
 router.post("/synthesis", async (req, res) => {
-  const { message, context, model } = req.body;
+  const { message, context, model, projectId } = req.body;
 
   try {
-    // TODO: Route to actual Cortex/Precog instance
-    // For now, return a mock response to unblock the UI
-    
-    console.log(`[Chat] Received: ${message}`);
+    console.log(`[Chat] Processing: ${message.substring(0, 50)}...`);
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Construct system prompt with context
+    let systemPrompt = "You are TooLoo.ai, an advanced AI development platform assistant. You are helpful, concise, and technical.";
+    if (context) systemPrompt += `\n\nContext:\n${context}`;
+    if (projectId) systemPrompt += `\n\nProject ID: ${projectId}`;
 
-    res.json({
-      ok: true,
-      response: `[System] I received your message: "${message}". \n\n(Note: The Chat Pro v2 backend is currently being wired to the unified Nexus Cortex. Full cognitive capabilities will be restored shortly.)`,
-      usage: {
-        prompt_tokens: 10,
-        completion_tokens: 20,
-        total_tokens: 30
-      }
-    });
+    try {
+        const result = await precog.providers.generate({
+            prompt: message,
+            system: systemPrompt,
+            taskType: 'general',
+            provider: model // Optional: allow user to select model
+        });
+
+        res.json({
+            ok: true,
+            response: result.content,
+            provider: result.provider,
+            model: result.model,
+            usage: {
+                total_tokens: 0 // We don't track this yet in the unified response
+            }
+        });
+    } catch (genError: any) {
+        console.warn("[Chat] Provider generation failed, falling back to system message:", genError.message);
+        
+        // Fallback if no providers are configured
+        res.json({
+            ok: true,
+            response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${genError.message}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
+            provider: 'system-fallback'
+        });
+    }
 
   } catch (error: any) {
     console.error("[Chat] Error:", error);
