@@ -1,4 +1,4 @@
-// @version 2.1.203
+// @version 2.1.240
 import express from "express";
 import { createServer } from "http";
 import path from "path";
@@ -15,6 +15,7 @@ import chatRoutes from "./routes/chat.js";
 import designRoutes from "./routes/design.js";
 import workflowsRoutes from "./routes/workflows.js";
 import observabilityRoutes from "./routes/observability.js";
+import contextRoutes from "./routes/context.js";
 import { trainingRoutes } from "./routes/training.js";
 
 export function startNexus(port?: number) {
@@ -38,6 +39,7 @@ export function startNexus(port?: number) {
   app.use("/api/v1/design", designRoutes);
   app.use("/api/v1/workflows", workflowsRoutes);
   app.use("/api/v1/observability", observabilityRoutes);
+  app.use("/api/v1/context", contextRoutes);
 
   // Training & Sources Routes (Precog)
 
