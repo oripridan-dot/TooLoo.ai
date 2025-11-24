@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.214 -->
+<!-- @version 2.1.218 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -184,6 +184,38 @@
 
     <script src="js/gemini-core.js"></script>
     <script>
+      function toggleSidebar() {
+        const sidebar = document.getElementById('mainSidebar');
+        const layout = document.querySelector('.g3-layout');
+        const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+        
+        sidebar.classList.toggle('collapsed');
+        layout.classList.toggle('sidebar-collapsed');
+        
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('tooloo_sidebar_collapsed', isCollapsed);
+        
+        if (isCollapsed) {
+            toggleBtn.textContent = '▶';
+        } else {
+            toggleBtn.textContent = '◀';
+        }
+      }
+
+      // Initialize sidebar state
+      document.addEventListener('DOMContentLoaded', () => {
+        const isCollapsed = localStorage.getItem('tooloo_sidebar_collapsed') === 'true';
+        if (isCollapsed) {
+            const sidebar = document.getElementById('mainSidebar');
+            const layout = document.querySelector('.g3-layout');
+            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+            
+            sidebar.classList.add('collapsed');
+            layout.classList.add('sidebar-collapsed');
+            toggleBtn.textContent = '▶';
+        }
+      });
+
       function startChat() {
         const input = document.getElementById("heroInput");
         const message = input.value.trim();
