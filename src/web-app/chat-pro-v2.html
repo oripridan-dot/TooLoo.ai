@@ -1,11 +1,94 @@
 <!DOCTYPE html>
-<!-- @version 2.1.28 -->
+<!-- @version 2.1.188 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TooLoo.ai Chat Pro</title>
   <link rel="stylesheet" href="css/gemini-ui.css">
+  <style>
+    /* Thought Bubble Styles */
+    .thought-bubble {
+      margin: 8px 0 16px 0;
+      border: 1px solid var(--g3-border-color);
+      border-radius: 8px;
+      background: var(--g3-bg-secondary);
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    .thought-header {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .thought-header:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .thought-icon {
+      font-size: 14px;
+    }
+
+    .thought-status {
+      flex: 1;
+      color: var(--g3-text-secondary);
+      font-weight: 500;
+    }
+
+    .thought-toggle {
+      color: var(--g3-text-tertiary);
+      font-size: 10px;
+      transition: transform 0.2s;
+    }
+
+    .thought-bubble.collapsed .thought-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .thought-content {
+      padding: 8px 12px;
+      border-top: 1px solid var(--g3-border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .thought-bubble.collapsed .thought-content {
+      display: none;
+    }
+
+    .thought-step {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      color: var(--g3-text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .step-icon {
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center;
+    }
+
+    .step-text {
+      word-break: break-word;
+    }
+
+    .step-meta {
+      font-size: 10px;
+      color: var(--g3-text-tertiary);
+      margin-left: auto;
+    }
+  </style>
 </head>
 <body>
   <div class="chat-layout">
@@ -150,11 +233,87 @@
     </div>
   </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const API_BASE = window.location.origin;
     let currentSession = null;
     let messageCount = 0;
     let sessionStartTime = Date.now();
+    
+    // Socket Connection
+    const socket = io();
+    let activeRequestId = null;
+    let activeThoughtBubble = null;
+
+    socket.on('connect', () => {
+      console.log('Connected to Synapsys Event Stream');
+    });
+
+    socket.on('synapsys:event', (event) => {
+      // Only process events for the active request
+      // Note: Some events might not have requestId in payload, or it might be nested
+      // We need to check payload.id or payload.requestId
+      
+      // Heuristic matching for now, ideally we pass requestId in all events
+      // For now, if we have an active bubble, we assume events are for it
+      if (!activeThoughtBubble) return;
+
+      const type = event.type;
+      const payload = event.payload;
+
+      // Filter by requestId if available
+      if (payload.requestId && payload.requestId !== activeRequestId) return;
+      // Some events use 'id' for step ID, not request ID.
+      
+      updateThoughtBubble(type, payload);
+    });
+
+    function createThoughtBubble() {
+      const bubble = document.createElement('div');
+      bubble.className = 'thought-bubble';
+      bubble.innerHTML = `
+        <div class="thought-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="thought-icon">🧠</span>
+          <span class="thought-status">Thinking...</span>
+          <span class="thought-toggle">▼</span>
+        </div>
+        <div class="thought-content"></div>
+      `;
+      document.getElementById('chatMessages').appendChild(bubble);
+      document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+      return bubble;
+    }
+
+    function updateThoughtBubble(type, payload) {
+      if (!activeThoughtBubble) return;
+      
+      const content = activeThoughtBubble.querySelector('.thought-content');
+      const status = activeThoughtBubble.querySelector('.thought-status');
+      
+      let stepHtml = '';
+      
+      if (type === 'planning:plan:created') {
+        status.textContent = `Planned ${payload.plan.steps.length} steps`;
+        stepHtml = `<div class="thought-step"><span class="step-icon">📋</span><span class="step-text">Plan created: ${payload.plan.goal}</span></div>`;
+      } else if (type === 'cortex:tool:call') {
+        status.textContent = `Executing: ${payload.type}`;
+        stepHtml = `<div class="thought-step"><span class="step-icon">🛠️</span><span class="step-text">Tool: ${payload.type}</span></div>`;
+      } else if (type === 'cortex:tool:result') {
+        const icon = payload.result.ok ? '✅' : '❌';
+        stepHtml = `<div class="thought-step"><span class="step-icon">${icon}</span><span class="step-text">Result: ${payload.result.ok ? 'Success' : 'Failed'}</span></div>`;
+      } else if (type === 'planning:replan:request') {
+        status.textContent = 'Replanning...';
+        stepHtml = `<div class="thought-step"><span class="step-icon">🔄</span><span class="step-text">Replanning: ${payload.critique}</span></div>`;
+      } else if (type === 'sensory:observation:error') {
+        stepHtml = `<div class="thought-step"><span class="step-icon">⚠️</span><span class="step-text">Error: ${payload.details}</span></div>`;
+      }
+
+      if (stepHtml) {
+        content.insertAdjacentHTML('beforeend', stepHtml);
+        // Auto-scroll bubble content
+        // content.scrollTop = content.scrollHeight; 
+      }
+    }
 
     // ========== MODAL UTILS ==========
     function showModal(title, message, hasInput = false, defaultValue = '') {
