@@ -1,4 +1,4 @@
-/* @version 2.1.222 */
+/* @version 2.1.223 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -263,6 +263,48 @@ input::placeholder {
   background: rgba(9, 9, 11, 0.8);
   backdrop-filter: blur(8px);
   z-index: 10;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  height: 60px;
+  background: var(--g3-bg-secondary);
+  border-bottom: 1px solid var(--g3-border-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  padding: 0 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 95;
+  backdrop-filter: blur(2px);
+}
+
+.mobile-overlay.active {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+  }
+  
+  .g3-main {
+    padding-top: 60px; /* Ensure content doesn't go under header */
+  }
 }
 
 /* Navigation */

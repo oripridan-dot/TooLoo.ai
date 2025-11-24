@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.221 -->
+<!-- @version 2.1.223 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,6 +12,16 @@
     />
   </head>
   <body>
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+      <button class="g3-btn" onclick="toggleMobileSidebar()">☰</button>
+      <span style="font-weight: 700; font-size: 1.1rem;">TooLoo.ai</span>
+      <div style="width: 32px;"></div>
+    </div>
+
     <div class="g3-layout">
       <!-- Sidebar -->
       <aside class="g3-sidebar" id="mainSidebar">
