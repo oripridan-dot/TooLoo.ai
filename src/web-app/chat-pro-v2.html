@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.209 -->
+<!-- @version 2.1.215 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -265,39 +265,23 @@
         <button class="g3-btn g3-btn-primary" style="padding: 4px 12px; font-size: 12px;" onclick="newSession()">
           + New
         </button>
+
+        <div class="top-bar-status">
+            <div class="status-item" title="Context">
+                <span>📌</span> <span id="contextInfo">None</span>
+            </div>
+            <div class="status-item" title="Saved Items">
+                <span>💾</span> <span id="savedCount">0</span>
+            </div>
+            <div class="status-item" title="Session Time">
+                <span>⏱️</span> <span id="sessionTime">00:00</span>
+            </div>
+        </div>
       </div>
 
       <div style="display: flex; flex: 1; overflow: hidden;">
-      <!-- ========== LEFT: MEMORY (Collapsed/Hidden or repurposed) ========== -->
-      <!-- We removed the session list from here. We can keep it for Memory stats or remove it entirely if desired. 
-           The user asked to "make the sessions bar horizontal at the top". 
-           Let's keep the left sidebar but remove the sessions list and project selector from it. -->
-      <div class="g3-sidebar" style="width: 200px;">
-        <div class="sidebar-header">📊 Status</div>
-        
-        <div class="g3-p-4" style="padding-left: 0; padding-right: 0; flex: 1;">
-          <div class="section-title">Memory Stats</div>
-          <div
-            style="
-              padding: 8px 12px;
-              font-size: 11px;
-              color: var(--g3-text-tertiary);
-              line-height: 1.5;
-            "
-          >
-            <div style="margin-bottom: 8px">
-              📌 <strong>Context:</strong>
-              <span id="contextInfo">Loading...</span>
-            </div>
-            <div style="margin-bottom: 8px">
-              💾 <strong>Saved:</strong> <span id="savedCount">0</span> items
-            </div>
-            <div>
-              ⏱️ <strong>Session:</strong> <span id="sessionTime">00:00</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- ========== LEFT: MEMORY (REMOVED) ========== -->
+      <!-- Left sidebar removed and merged into top bar as requested -->
 
       <!-- ========== CENTER: CONVERSATION ========== -->
       <div class="chat-center">
