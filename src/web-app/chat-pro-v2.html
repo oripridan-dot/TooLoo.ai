@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.216 -->
+<!-- @version 2.1.217 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -611,6 +611,19 @@
       let currentSession = null;
       let messageCount = 0;
       let sessionStartTime = Date.now();
+
+      function toggleRightSidebar() {
+        const sidebar = document.getElementById('rightSidebar');
+        const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+        
+        sidebar.classList.toggle('collapsed');
+        
+        if (sidebar.classList.contains('collapsed')) {
+            toggleBtn.textContent = '◀';
+        } else {
+            toggleBtn.textContent = '▶';
+        }
+      }
 
       // Socket Connection
       const socket = io();
@@ -1643,7 +1656,7 @@
                 (p) => p.id === savedProjectId,
               );
               if (exists) {
-                selectProject(savedProjectId);
+                selectProject(savedSavedProjectId);
               }
             } else if (currentProjectId) {
               select.value = currentProjectId;
