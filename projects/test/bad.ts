@@ -1,2 +1,2 @@
-// @version 2.1.106
+// @version 2.1.107
 const x: number = "string";
