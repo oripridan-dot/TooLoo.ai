@@ -1,3 +1,2 @@
-// @version 2.1.132
-// Deliberately creating a type error
+// @version 2.1.133
 const x: number = "string";
