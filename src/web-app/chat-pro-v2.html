@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.195 -->
+<!-- @version 2.1.196 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -344,6 +344,29 @@
         stepHtml = `<div class="thought-step"><span class="step-icon">🔄</span><span class="step-text">Replanning: ${payload.critique}</span></div>`;
       } else if (type === 'sensory:observation:error') {
         stepHtml = `<div class="thought-step"><span class="step-icon">⚠️</span><span class="step-text">Error: ${payload.details}</span></div>`;
+      } else if (type === 'planning:paused') {
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('resumeBtn').style.display = 'block';
+        document.getElementById('resumeBtn').textContent = '▶️ Resume';
+        status.textContent = 'Paused';
+        stepHtml = `<div class="thought-step" style="color: #f59e0b;"><span class="step-icon">⏸️</span><span class="step-text">Execution Paused</span></div>`;
+      } else if (type === 'planning:resumed') {
+        document.getElementById('pauseBtn').style.display = 'block';
+        document.getElementById('resumeBtn').style.display = 'none';
+        status.textContent = 'Resumed';
+        stepHtml = `<div class="thought-step" style="color: #10b981;"><span class="step-icon">▶️</span><span class="step-text">Execution Resumed</span></div>`;
+      } else if (type === 'planning:awaiting_approval') {
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('resumeBtn').style.display = 'block';
+        document.getElementById('resumeBtn').textContent = '✅ Approve Step';
+        status.textContent = 'Awaiting Approval';
+        stepHtml = `<div class="thought-step" style="background: rgba(251, 191, 36, 0.1); border-left: 2px solid #fbbf24; padding: 4px 8px;">
+            <span class="step-icon">✋</span>
+            <span class="step-text">Approval needed for: ${payload.step.description}</span>
+        </div>`;
+      } else if (type === 'planning:plan:created') {
+         // Show pause button when plan starts
+         document.getElementById('pauseBtn').style.display = 'block';
       }
 
       if (stepHtml) {
