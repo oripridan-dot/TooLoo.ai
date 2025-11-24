@@ -1,4 +1,4 @@
-// @version 2.1.228
+// @version 2.1.234
 import { bus } from "../core/event-bus.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
@@ -36,7 +36,7 @@ export class Cortex {
   private setupListeners() {
     // Handle Chat Requests
     bus.on("nexus:chat_request", async (event) => {
-      const { message, requestId, projectId } = event.payload;
+      const { message, requestId, projectId, responseType } = event.payload;
       console.log("[Cortex] Processing chat request:", requestId);
 
       // 1. Quick Intent Analysis (Heuristic for now)
