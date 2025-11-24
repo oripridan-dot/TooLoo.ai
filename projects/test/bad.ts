@@ -1,2 +1,2 @@
-// @version 2.1.116
-const x: number = 42;
+// @version 2.1.117
+let x: number = "string";
