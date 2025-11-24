@@ -1,2 +1,2 @@
-// @version 2.1.105
-const x: number = 42;
+// @version 2.1.106
+const x: number = "string";
