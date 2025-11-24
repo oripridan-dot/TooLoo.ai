@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.230",
+  "version": "2.1.231",
   "description": "TooLoo.ai multi-service personal AI development platform",
   "type": "module",
   "private": true,

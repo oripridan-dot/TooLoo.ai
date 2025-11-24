@@ -1,4 +1,4 @@
-// @version 2.1.230
+// @version 2.1.231
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import fs from "fs-extra";
@@ -98,14 +98,13 @@ router.post("/self-patch", async (req, res) => {
           .status(400)
           .json({ ok: false, error: "File and content required" });
       }
-      const fullPath = path.resolve(process.cwd(), file);
-
-      // Security check: prevent writing outside workspace
-      if (!fullPath.startsWith(process.cwd())) {
-        return res.status(403).json({ ok: false, error: "Access denied" });
+      
+      try {
+        // Use SmartFS for safe writing
+        await smartFS.writeSafe(file, content);
+      } catch (e: any) {
+        return res.status(500).json({ ok: false, error: e.message });
       }
-
-      await fs.outputFile(fullPath, content);
 
       bus.publish("nexus", "system:self_patch", {
         action,
