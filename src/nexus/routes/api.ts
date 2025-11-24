@@ -1,4 +1,4 @@
-// @version 2.1.187
+// @version 2.1.192
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 
@@ -76,6 +76,26 @@ router.post("/projects/:id/memory", (req, res) => {
     { projectId: req.params.id, ...req.body },
     res
   );
+});
+
+// Intervention Endpoints
+router.post("/intervention/mode", (req, res) => {
+  // { enabled: boolean }
+  bus.publish("nexus", "nexus:intervention:set_mode", req.body);
+  res.json({
+    ok: true,
+    mode: req.body.enabled ? "intervention" : "autonomous",
+  });
+});
+
+router.post("/intervention/pause", (req, res) => {
+  bus.publish("nexus", "nexus:intervention:pause", {});
+  res.json({ ok: true, status: "paused" });
+});
+
+router.post("/intervention/resume", (req, res) => {
+  bus.publish("nexus", "nexus:intervention:resume", {});
+  res.json({ ok: true, status: "resumed" });
 });
 
 export default router;
