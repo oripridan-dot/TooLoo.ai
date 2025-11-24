@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.183 -->
+<!-- @version 2.1.184 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -255,7 +255,7 @@
         list.innerHTML = traces
           .map(
             (t) => `
-                <div class="trace-item" onclick="loadTraceDetail('${t.id}')">
+                <div class="trace-item ${t.id === document.querySelector(".trace-item.active")?.dataset.id ? 'active' : ''}" data-id="${t.id}" onclick="loadTraceDetail('${t.id}')">
                     <div style="display: flex; align-items: center; margin-bottom: 0.25rem;">
                         <span class="trace-status status-${t.status}"></span>
                         <span style="font-weight: 500; font-size: 0.9rem;">${t.id.split("-")[1]}...</span>
@@ -275,7 +275,9 @@
         document
           .querySelectorAll(".trace-item")
           .forEach((el) => el.classList.remove("active"));
-        event.currentTarget.classList.add("active");
+        
+        const item = document.querySelector(`.trace-item[data-id="${id}"]`);
+        if (item) item.classList.add("active");
 
         try {
           const res = await fetch(`/api/v1/observability/traces/${id}`);
@@ -330,8 +332,8 @@
 
       // Initial load
       loadTraces();
-      // Auto-refresh every 5s
-      setInterval(loadTraces, 5000);
+      // Auto-refresh every 5s (Removed in favor of Sockets)
+      // setInterval(loadTraces, 5000);
     </script>
   </body>
 </html>
