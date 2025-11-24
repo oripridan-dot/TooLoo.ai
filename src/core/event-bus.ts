@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.201
 import { EventEmitter } from "events";
 
 // Define the standard event shape for Synapsys
@@ -10,8 +10,11 @@ export interface SynapsysEvent<T = any> {
 }
 
 export class EventBus extends EventEmitter {
+  private id: string;
   constructor() {
     super();
+    this.id = Math.random().toString(36).substring(7);
+    console.log(`[EventBus] Initialized instance ${this.id}`);
     this.setMaxListeners(50); // Allow many modules to listen
   }
 
