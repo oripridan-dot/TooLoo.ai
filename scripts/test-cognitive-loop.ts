@@ -1,4 +1,4 @@
-// @version 2.1.173
+// @version 2.1.174
 
 import { bus } from "../src/core/event-bus.js";
 import { cortex } from "../src/cortex/index.js";
@@ -84,7 +84,7 @@ async function runTest() {
     // Wait a bit for systems to settle
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    bus.publish("nexus:chat_request", {
+    bus.publish("nexus", "nexus:chat_request", {
         requestId,
         message: testGoal
     });
