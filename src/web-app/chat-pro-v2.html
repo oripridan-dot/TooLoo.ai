@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.206 -->
+<!-- @version 2.1.207 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -874,13 +874,33 @@
           return;
         }
 
-        const sessionsHtml = `
-        <div class="session-item active">
-          <div style="font-weight: 500;">${currentSession.name}</div>
-          <div class="session-meta">${new Date(currentSession.created).toLocaleDateString()}</div>
-        </div>
-      `;
+        // Horizontal Session Chips
+        // We should load ALL sessions from localStorage to list them
+        const sessions = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.startsWith("tooloo_session_")) {
+            try {
+              sessions.push(JSON.parse(localStorage.getItem(key)));
+            } catch (e) {}
+          }
+        }
+        sessions.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+        const sessionsHtml = sessions.map(s => `
+          <div class="session-chip ${s.id === currentSession.id ? 'active' : ''}" onclick="switchSession('${s.id}')">
+            <span>${s.id === currentSession.id ? '💬' : '🗨️'}</span>
+            ${s.name}
+          </div>
+        `).join("");
+        
         document.getElementById("sessionsList").innerHTML = sessionsHtml;
+      }
+
+      function switchSession(sessionId) {
+        localStorage.setItem("tooloo_current_session_id", sessionId);
+        currentSession = null; // Force reload
+        loadSessions();
       }
 
       function addWelcomeMessage() {
@@ -954,6 +974,8 @@
               "assistant",
               responseData.response,
               responseData.provider,
+              true,
+              responseData.confidence // Pass confidence from backend
             );
           } else {
             addMessage(
@@ -1006,15 +1028,17 @@
         }
       }
 
-      function addRichMessage(role, text, provider, save = true) {
+      function addRichMessage(role, text, provider, save = true, confidenceValue = null) {
         const msg = document.createElement("div");
         msg.className = `message-group ${role}`;
         const timestamp = new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         });
-        const confidence =
-          role === "user" ? null : Math.floor(Math.random() * 20 + 75); // Random between 75-95% for assistant only
+        
+        // Use provided confidence or default to null (no random generation)
+        const confidence = confidenceValue !== null ? confidenceValue : (role === 'assistant' ? 90 : null);
+        
         const avatar = role === "user" ? "👤" : "🤖";
         const header = role === "user" ? "You" : "TooLoo.ai";
 
@@ -1023,9 +1047,18 @@
         if (role === "assistant" && confidence !== null) {
           bodyHTML += `
             <div class="message-metadata">
-              <div class="metadata-confidence">
-                <span class="confidence-badge">${confidence}%</span>
+              <div class="metadata-confidence confidence-wrapper">
+                <span class="confidence-badge" style="cursor: help;">${confidence}%</span>
                 <span>confidence</span>
+                <div class="confidence-tooltip">
+                  <strong>Confidence Score: ${confidence}%</strong>
+                  <div class="confidence-bar-bg">
+                    <div class="confidence-bar-fill" style="width: ${confidence}%"></div>
+                  </div>
+                  <div style="margin-top: 4px; color: #9ca3af;">
+                    Based on provider consensus and internal validation.
+                  </div>
+                </div>
               </div>
               <span class="metadata-separator">·</span>
               <div class="metadata-timestamp">
@@ -1059,6 +1092,7 @@
             provider,
             type: "rich",
             timestamp: Date.now(),
+            confidence: confidence // Persist confidence
           });
           localStorage.setItem(
             `tooloo_session_${currentSession.id}`,
