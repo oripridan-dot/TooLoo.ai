@@ -1,4 +1,4 @@
-// @version 2.1.204
+// @version 2.1.228
 import * as fs from "fs/promises";
 import * as path from "path";
 import { generateLLM } from "../precog/providers/llm-provider.js";
@@ -54,12 +54,18 @@ export class ProjectManager {
 
   async listProjects() {
     await this.init();
-    return this.projects.map(p => ({ id: p.id, name: p.name, created: p.created }));
+    return this.projects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      created: p.created,
+    }));
   }
 
   async createProject(name: string) {
     await this.init();
-    if (this.projects.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    if (
+      this.projects.some((p) => p.name.toLowerCase() === name.toLowerCase())
+    ) {
       throw new Error("Project already exists");
     }
 
@@ -69,8 +75,8 @@ export class ProjectManager {
       created: Date.now(),
       memory: {
         shortTerm: "",
-        longTerm: ""
-      }
+        longTerm: "",
+      },
     };
 
     this.projects.push(newProject);
@@ -80,12 +86,16 @@ export class ProjectManager {
 
   async getProject(id: string) {
     await this.init();
-    return this.projects.find(p => p.id === id);
+    return this.projects.find((p) => p.id === id);
   }
 
-  async updateMemory(id: string, type: "short-term" | "long-term", content: string) {
+  async updateMemory(
+    id: string,
+    type: "short-term" | "long-term",
+    content: string,
+  ) {
     await this.init();
-    const project = this.projects.find(p => p.id === id);
+    const project = this.projects.find((p) => p.id === id);
     if (!project) throw new Error("Project not found");
 
     if (type === "short-term") {
@@ -98,12 +108,18 @@ export class ProjectManager {
     return project;
   }
 
-  async autoUpdateMemory(id: string, userMessage: string, assistantResponse: string) {
+  async autoUpdateMemory(
+    id: string,
+    userMessage: string,
+    assistantResponse: string,
+  ) {
     await this.init();
-    const project = this.projects.find(p => p.id === id);
+    const project = this.projects.find((p) => p.id === id);
     if (!project) return;
 
-    console.log(`[ProjectManager] Auto-updating memory for project ${project.name}...`);
+    console.log(
+      `[ProjectManager] Auto-updating memory for project ${project.name}...`,
+    );
 
     const prompt = `
 You are the Memory Manager for the project "${project.name}".
@@ -129,15 +145,20 @@ If no change is needed for a field, return the current value.
         prompt,
         provider: "gemini", // Use a fast/smart model
         system: "You are a JSON generator. Output ONLY valid JSON.",
-        maxTokens: 1000
+        maxTokens: 1000,
       });
 
       // Parse JSON (handle potential markdown wrapping)
-      let jsonStr = result.replace(/```json/g, "").replace(/```/g, "").trim();
+      let jsonStr = result
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
       const memoryUpdate = JSON.parse(jsonStr);
 
-      if (memoryUpdate.shortTerm) project.memory.shortTerm = memoryUpdate.shortTerm;
-      if (memoryUpdate.longTerm) project.memory.longTerm = memoryUpdate.longTerm;
+      if (memoryUpdate.shortTerm)
+        project.memory.shortTerm = memoryUpdate.shortTerm;
+      if (memoryUpdate.longTerm)
+        project.memory.longTerm = memoryUpdate.longTerm;
 
       await this.save();
       console.log(`[ProjectManager] Memory updated for ${project.name}`);

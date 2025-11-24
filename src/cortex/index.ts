@@ -1,4 +1,4 @@
-// @version 2.1.205
+// @version 2.1.228
 import { bus } from "../core/event-bus.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
@@ -132,13 +132,15 @@ export class Cortex {
           provider,
           timestamp: new Date().toISOString(),
           meta,
-          confidence: 95 // High confidence for system responses
+          confidence: 95, // High confidence for system responses
         },
       });
 
       // Auto-Update Memory
       if (projectId) {
-        this.projectManager.autoUpdateMemory(projectId, message, responseText).catch(console.error);
+        this.projectManager
+          .autoUpdateMemory(projectId, message, responseText)
+          .catch(console.error);
       }
     });
 
@@ -161,7 +163,9 @@ export class Cortex {
     // Handle Project Create
     bus.on("nexus:project_create_request", async (event) => {
       try {
-        const project = await this.projectManager.createProject(event.payload.name);
+        const project = await this.projectManager.createProject(
+          event.payload.name,
+        );
         bus.publish("cortex", "cortex:response", {
           requestId: event.payload.requestId,
           data: { ok: true, project },
@@ -177,7 +181,9 @@ export class Cortex {
     // Handle Project Details
     bus.on("nexus:project_details_request", async (event) => {
       try {
-        const project = await this.projectManager.getProject(event.payload.projectId);
+        const project = await this.projectManager.getProject(
+          event.payload.projectId,
+        );
         if (project) {
           bus.publish("cortex", "cortex:response", {
             requestId: event.payload.requestId,
@@ -207,7 +213,7 @@ export class Cortex {
         await this.projectManager.updateMemory(
           event.payload.projectId,
           event.payload.type,
-          event.payload.content
+          event.payload.content,
         );
         bus.publish("cortex", "cortex:response", {
           requestId: event.payload.requestId,

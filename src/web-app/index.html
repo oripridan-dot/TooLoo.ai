@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.223 -->
+<!-- @version 2.1.228 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -13,13 +13,17 @@
   </head>
   <body>
     <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+    <div
+      class="mobile-overlay"
+      id="mobileOverlay"
+      onclick="closeMobileSidebar()"
+    ></div>
 
     <!-- Mobile Header -->
     <div class="mobile-header">
       <button class="g3-btn" onclick="toggleMobileSidebar()">☰</button>
-      <span style="font-weight: 700; font-size: 1.1rem;">TooLoo.ai</span>
-      <div style="width: 32px;"></div>
+      <span style="font-weight: 700; font-size: 1.1rem">TooLoo.ai</span>
+      <div style="width: 32px"></div>
     </div>
 
     <div class="g3-layout">
@@ -196,34 +200,49 @@
     <script src="js/gemini-core.js"></script>
     <script>
       function toggleSidebar() {
-        const sidebar = document.getElementById('mainSidebar');
-        const layout = document.querySelector('.g3-layout');
-        const toggleBtn = sidebar.querySelector('.sidebar-toggle');
-        
-        sidebar.classList.toggle('collapsed');
-        layout.classList.toggle('sidebar-collapsed');
-        
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        localStorage.setItem('tooloo_sidebar_collapsed', isCollapsed);
-        
+        const sidebar = document.getElementById("mainSidebar");
+        const layout = document.querySelector(".g3-layout");
+        const toggleBtn = sidebar.querySelector(".sidebar-toggle");
+
+        sidebar.classList.toggle("collapsed");
+        layout.classList.toggle("sidebar-collapsed");
+
+        const isCollapsed = sidebar.classList.contains("collapsed");
+        localStorage.setItem("tooloo_sidebar_collapsed", isCollapsed);
+
         if (isCollapsed) {
-            toggleBtn.textContent = '▶';
+          toggleBtn.textContent = "▶";
         } else {
-            toggleBtn.textContent = '◀';
+          toggleBtn.textContent = "◀";
         }
       }
 
+      function toggleMobileSidebar() {
+        const sidebar = document.getElementById("mainSidebar");
+        const overlay = document.getElementById("mobileOverlay");
+        sidebar.classList.toggle("mobile-open");
+        overlay.classList.toggle("active");
+      }
+
+      function closeMobileSidebar() {
+        const sidebar = document.getElementById("mainSidebar");
+        const overlay = document.getElementById("mobileOverlay");
+        sidebar.classList.remove("mobile-open");
+        overlay.classList.remove("active");
+      }
+
       // Initialize sidebar state
-      document.addEventListener('DOMContentLoaded', () => {
-        const isCollapsed = localStorage.getItem('tooloo_sidebar_collapsed') === 'true';
+      document.addEventListener("DOMContentLoaded", () => {
+        const isCollapsed =
+          localStorage.getItem("tooloo_sidebar_collapsed") === "true";
         if (isCollapsed) {
-            const sidebar = document.getElementById('mainSidebar');
-            const layout = document.querySelector('.g3-layout');
-            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
-            
-            sidebar.classList.add('collapsed');
-            layout.classList.add('sidebar-collapsed');
-            toggleBtn.textContent = '▶';
+          const sidebar = document.getElementById("mainSidebar");
+          const layout = document.querySelector(".g3-layout");
+          const toggleBtn = sidebar.querySelector(".sidebar-toggle");
+
+          sidebar.classList.add("collapsed");
+          layout.classList.add("sidebar-collapsed");
+          toggleBtn.textContent = "▶";
         }
       });
 

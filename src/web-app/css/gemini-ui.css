@@ -1,4 +1,4 @@
-/* @version 2.1.223 */
+/* @version 2.1.228 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -301,7 +301,7 @@ input::placeholder {
   .mobile-header {
     display: flex;
   }
-  
+
   .g3-main {
     padding-top: 60px; /* Ensure content doesn't go under header */
   }
@@ -1036,7 +1036,7 @@ input::placeholder {
     grid-template-columns: 1fr; /* Stack layout */
     grid-template-rows: auto 1fr;
   }
-  
+
   /* Mobile Sidebar - Hidden by default or transformed */
   .g3-sidebar {
     position: fixed;
@@ -1049,7 +1049,7 @@ input::placeholder {
     transition: transform 0.3s ease;
     box-shadow: var(--g3-shadow-lg);
   }
-  
+
   .g3-sidebar.mobile-open {
     transform: translateX(0);
   }
@@ -1062,7 +1062,7 @@ input::placeholder {
   .chat-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .chat-layout .g3-sidebar {
     position: fixed;
     top: 0;
@@ -1074,7 +1074,7 @@ input::placeholder {
     background: var(--g3-bg-secondary);
     border-left: 1px solid var(--g3-border-color);
   }
-  
+
   .chat-layout .g3-sidebar.mobile-open {
     transform: translateX(0);
   }
@@ -1082,7 +1082,11 @@ input::placeholder {
 
 /* Collapsible Sidebar Styles */
 .g3-sidebar {
-  transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease, transform 0.3s ease;
+  transition:
+    width 0.3s ease,
+    min-width 0.3s ease,
+    padding 0.3s ease,
+    transform 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
