@@ -1,3 +1,2 @@
-// @version 2.1.164
-// Intentional type error: assigning string to number type
-const x: number = "string";
+// @version 2.1.165
+let x: number = 42; // Corrected to use 'let' and a valid number value
