@@ -1,3 +1,2 @@
-// @version 2.1.125
-// Intentional type error example
-const x: number = "string";
+// @version 2.1.126
+let x: number = 42;
