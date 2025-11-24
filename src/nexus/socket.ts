@@ -1,4 +1,4 @@
-// @version 2.1.182
+// @version 2.1.199
 
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
@@ -42,6 +42,9 @@ export class SocketServer {
       "planning:plan:completed",
       "planning:plan:failed",
       "planning:replan:request",
+      "planning:paused",
+      "planning:resumed",
+      "planning:awaiting_approval",
       "motor:execute",
       "motor:file:write",
       "motor:file:read",
