@@ -1,2 +1,3 @@
-// @version 2.1.138
-const x: number = 42;
+// @version 2.1.139
+// Type error demonstrating incorrect type assignment
+const x: number = "string";
