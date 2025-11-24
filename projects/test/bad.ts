@@ -1,3 +1,2 @@
-// @version 2.1.149
-// Type error demonstration
-const x: number = "string";
+// @version 2.1.150
+const x: number = 42;
