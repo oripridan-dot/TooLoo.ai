@@ -1,2 +1,3 @@
-// @version 2.1.179
-const x: number = 'hello';
+// @version 2.1.180
+// Intentional type error for demonstration
+let x: number = 'hello';
