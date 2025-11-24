@@ -1,2 +1,3 @@
-// @version 2.1.153
-const x: number = 42;
+// @version 2.1.154
+// Intentional type error demonstrating type mismatch
+const x: number = "string";
