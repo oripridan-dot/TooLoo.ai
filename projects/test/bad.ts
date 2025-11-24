@@ -1,3 +1,2 @@
-// @version 2.1.137
-// Explicit type error by assigning string to number
-const x: number = "string";
+// @version 2.1.138
+const x: number = 42;
