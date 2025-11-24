@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.194 -->
+<!-- @version 2.1.195 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -288,6 +288,23 @@
       
       updateThoughtBubble(type, payload);
     });
+
+    // Intervention Logic
+    async function toggleIntervention(enabled) {
+        await fetch(`${API_BASE}/api/v1/intervention/mode`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+    }
+
+    async function pauseExecution() {
+        await fetch(`${API_BASE}/api/v1/intervention/pause`, { method: 'POST' });
+    }
+
+    async function resumeExecution() {
+        await fetch(`${API_BASE}/api/v1/intervention/resume`, { method: 'POST' });
+    }
 
     function createThoughtBubble() {
       const bubble = document.createElement('div');
