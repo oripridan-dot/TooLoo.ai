@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.208 -->
+<!-- @version 2.1.209 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1716,12 +1716,20 @@
           document.getElementById("shortTermMemory").value = "";
           document.getElementById("longTermMemory").value = "";
           document.getElementById("contextInfo").textContent = "None";
+          document.getElementById("currentProjectName").textContent = "Select Project";
           return;
         }
 
         currentProjectId = projectId;
         localStorage.setItem("tooloo_current_project_id", projectId);
         document.getElementById("projectSelect").value = projectId;
+
+        // Update Top Bar Label
+        const select = document.getElementById("projectSelect");
+        const option = select.options[select.selectedIndex];
+        if (option) {
+            document.getElementById("currentProjectName").textContent = option.text;
+        }
 
         // Load memory
         try {
