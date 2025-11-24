@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.220 -->
+<!-- @version 2.1.221 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -344,7 +344,7 @@
 
       <!-- ========== RIGHT: OPTIONS & INSIGHTS ========== -->
       <div class="g3-sidebar" id="rightSidebar">
-        <div class="sidebar-toggle" onclick="toggleRightSidebar()">▶</div>
+        
         <!-- MEMORY -->
         <div
           class="right-section"
@@ -356,7 +356,10 @@
             min-height: 300px;
           "
         >
-          <div class="sidebar-header">🧠 Project Memory</div>
+          <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🧠 Project Memory</span>
+            <div class="sidebar-toggle" onclick="toggleRightSidebar()">▶</div>
+          </div>
 
           <div style="display: flex; gap: 4px; margin-bottom: 8px">
             <button
