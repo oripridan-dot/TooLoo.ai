@@ -1,3 +1,2 @@
-// @version 2.1.146
-// Typescript file with type error
-const x: number = "string";
+// @version 2.1.147
+const x: number = 42;
