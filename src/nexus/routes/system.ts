@@ -1,4 +1,4 @@
-// @version 2.1.49
+// @version 2.1.230
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import fs from "fs-extra";
@@ -176,17 +176,8 @@ router.get("/config", (req, res) => {
       { name: "Environment", value: process.env.NODE_ENV || "development" },
       { name: "Web Port", value: process.env.PORT || 3000 },
       { name: "Architecture", value: "Synapsys" },
-      { name: "Sandbox Mode", value: process.env.SANDBOX_MODE === "true" ? "Enabled" : "Disabled" },
     ],
   });
-});
-
-// Toggle Sandbox
-router.post("/sandbox", (req, res) => {
-  const { enabled } = req.body;
-  process.env.SANDBOX_MODE = enabled ? "true" : "false";
-  console.log(`[System] Sandbox mode set to: ${process.env.SANDBOX_MODE}`);
-  res.json({ ok: true, sandbox: enabled });
 });
 
 // Real Capabilities (Mock)
@@ -211,6 +202,51 @@ router.get("/real-capabilities", (req, res) => {
       },
     ],
   });
+});
+
+// SmartFS Routes
+import { smartFS } from "../../core/fs-manager.js";
+
+router.get('/fs/context', async (req, res) => {
+    try {
+        const { path: filePath } = req.query;
+        
+        if (!filePath || typeof filePath !== 'string') {
+             res.status(400).json({ error: 'File path is required' });
+             return;
+        }
+
+        const bundle = await smartFS.getGoldenPlate(filePath);
+        
+        res.json({
+            success: true,
+            data: bundle
+        });
+    } catch (error: any) {
+        res.status(404).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/fs/transaction', (req, res) => {
+    const id = smartFS.startTransaction();
+    res.json({ success: true, transactionId: id });
+});
+
+router.post('/fs/rollback', async (req, res) => {
+    const { transactionId } = req.body;
+    if (!transactionId) {
+         res.status(400).json({ error: 'Transaction ID required' });
+         return;
+    }
+
+    const success = await smartFS.rollback(transactionId);
+    res.json({ success, message: success ? 'System restored' : 'Transaction not found' });
+});
+
+router.post('/fs/commit', (req, res) => {
+    const { transactionId } = req.body;
+    smartFS.commit(transactionId);
+    res.json({ success: true });
 });
 
 export default router;
