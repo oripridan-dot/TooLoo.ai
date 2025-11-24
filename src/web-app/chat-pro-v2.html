@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.219 -->
+<!-- @version 2.1.220 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1659,7 +1659,7 @@
                 (p) => p.id === savedProjectId,
               );
               if (exists) {
-                selectProject(savedSavedProjectId);
+                selectProject(savedProjectId);
               }
             } else if (currentProjectId) {
               select.value = currentProjectId;
@@ -1833,6 +1833,15 @@
 
       // ========== INITIALIZATION ==========
       document.addEventListener("DOMContentLoaded", () => {
+        // Restore sidebar state
+        const isCollapsed = localStorage.getItem('tooloo_chat_sidebar_collapsed') === 'true';
+        if (isCollapsed) {
+            const sidebar = document.getElementById('rightSidebar');
+            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+            sidebar.classList.add('collapsed');
+            toggleBtn.textContent = '◀';
+        }
+
         loadProjects(); // Load projects on start
 
         // Try to load existing session first
