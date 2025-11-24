@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.228 -->
+<!-- @version 2.1.233 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -460,6 +460,17 @@
         <div class="right-section" style="margin-bottom: 2rem">
           <div class="sidebar-header">⚡ Actions</div>
           <div class="g3-flex g3-flex-col g3-gap-2">
+            <div style="margin-bottom: 8px;">
+                <label style="font-size: 11px; color: var(--g3-text-tertiary); display: block; margin-bottom: 4px;">Response Preference</label>
+                <select id="responsePreference" class="g3-input" style="width: 100%; padding: 4px 8px; font-size: 12px;">
+                    <option value="context-driven">Context Driven (Default)</option>
+                    <option value="list">List / Bullet Points</option>
+                    <option value="structured">Structured Plan</option>
+                    <option value="detailed">Detailed Explanation</option>
+                    <option value="concise">Concise / Quick</option>
+                </select>
+            </div>
+
             <button class="g3-btn" onclick="copyResponse()">
               📋 Copy Response
             </button>
