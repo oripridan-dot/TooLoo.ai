@@ -1,3 +1,3 @@
-// @version 2.1.124
-// TypeScript file with type error
+// @version 2.1.125
+// Intentional type error example
 const x: number = "string";
