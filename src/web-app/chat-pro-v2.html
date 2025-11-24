@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.225 -->
+<!-- @version 2.1.226 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1534,4 +1534,336 @@
         if (!confidence) {
           quality = 70;
           if (content.length > 100) quality += 10;
-          if
+          if (hasHeadings) quality += 5;
+          if (hasCode) quality += 8;
+          if (hasList) quality += 5;
+          quality = Math.min(99, quality);
+        }
+
+        const qualityEl = document.getElementById("qualityScore");
+        if (qualityEl) qualityEl.textContent = quality + "%";
+
+        // Generate contextual suggestions
+        const suggestions = [];
+        if (!content.includes("example") && !content.includes("Example")) {
+          suggestions.push("📊 Request examples");
+        }
+        if (content.length > 200) {
+          suggestions.push("📖 Summarize this");
+        }
+        if (hasCode && !content.includes("explanation")) {
+          suggestions.push("🔍 Explain the code");
+        }
+        if (content.length < 300) {
+          suggestions.push("📖 Elaborate further");
+        }
+        suggestions.push("🔗 Explore related topic");
+
+        // Update insights section
+        const insightsEl = document.getElementById("insights");
+        if (insightsEl) {
+          insightsEl.innerHTML = `
+          <div class="insight-item">
+            <div class="insight-label">Provider</div>
+            <div class="insight-value" id="providerInsight">${provider || "Gemini 3 Pro"}</div>
+          </div>
+          <div class="insight-item">
+            <div class="insight-label">Response Type</div>
+            <div class="insight-value" id="responseType">${responseType}</div>
+          </div>
+          <div class="insight-item">
+            <div class="insight-label">Quality Score</div>
+            <div class="insight-value" id="qualityScore">${quality}%</div>
+          </div>
+        `;
+        }
+
+        const suggestionsEl = document.getElementById("suggestions");
+        if (suggestionsEl) {
+          suggestionsEl.innerHTML = suggestions
+            .slice(0, 3)
+            .map(
+              (s) =>
+                `<div class="insight-item"><div class="insight-value">${s}</div></div>`,
+            )
+            .join("");
+        }
+      }
+
+      // ========== RIGHT SIDEBAR ACTIONS ==========
+      function copyResponse() {
+        const lastMessage = document.querySelector(
+          ".message-group.assistant:last-of-type",
+        );
+        if (lastMessage) {
+          const text = lastMessage.textContent;
+          navigator.clipboard.writeText(text);
+          showAlert("Success", "Copied to clipboard!");
+        }
+      }
+
+      function deepDive() {
+        const lastMessage = document.querySelector(
+          ".message-group.assistant:last-of-type",
+        );
+        if (lastMessage) {
+          document.getElementById("messageInput").value =
+            "Tell me more about the key points you just mentioned.";
+          sendMessage();
+        }
+      }
+
+      function refineResponse() {
+        const lastMessage = document.querySelector(
+          ".message-group.assistant:last-of-type",
+        );
+        if (lastMessage) {
+          document.getElementById("messageInput").value =
+            "Can you refine that response to be more concise and actionable?";
+          sendMessage();
+        }
+      }
+
+      function exportResponse() {
+        const msgs = document.querySelectorAll(".message-group");
+        let text = "TooLoo.ai Chat Transcript\n" + "=".repeat(40) + "\n\n";
+        msgs.forEach((msg) => {
+          const role = msg.classList.contains("user") ? "You" : "TooLoo.ai";
+          const content = msg.textContent
+            .replace(/^(You|TooLoo\.ai)/, "")
+            .trim();
+          text += `${role}:\n${content}\n\n`;
+        });
+
+        const blob = new Blob([text], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "chat-" + Date.now() + ".txt";
+        a.click();
+      }
+
+      function saveResponse() {
+        const lastMessage = document.querySelector(
+          ".message-group.assistant:last-of-type",
+        );
+        if (lastMessage) {
+          showAlert(
+            "Saved",
+            "Response saved! (Saved items: " +
+              (parseInt(document.getElementById("savedCount").textContent) +
+                1) +
+              ")",
+          );
+          document.getElementById("savedCount").textContent =
+            parseInt(document.getElementById("savedCount").textContent) + 1;
+        }
+      }
+
+      // ========== PROJECT MANAGEMENT ==========
+      let currentProjectId = null;
+
+      async function loadProjects() {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/projects`);
+          const data = await res.json();
+          const payload = data.content || data;
+
+          if (payload.ok) {
+            const select = document.getElementById("projectSelect");
+            select.innerHTML = '<option value="">Select Project...</option>';
+            payload.projects.forEach((p) => {
+              const opt = document.createElement("option");
+              opt.value = p.id;
+              opt.textContent = p.name;
+              select.appendChild(opt);
+            });
+
+            // Restore selection from localStorage if exists
+            const savedProjectId = localStorage.getItem(
+              "tooloo_current_project_id",
+            );
+            if (savedProjectId) {
+              // Verify it still exists in the list
+              const exists = payload.projects.find(
+                (p) => p.id === savedProjectId,
+              );
+              if (exists) {
+                selectProject(savedProjectId);
+              }
+            } else if (currentProjectId) {
+              select.value = currentProjectId;
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load projects:", err);
+        }
+      }
+
+      async function selectProject(projectId) {
+        if (!projectId) {
+          currentProjectId = null;
+          localStorage.removeItem("tooloo_current_project_id");
+          document.getElementById("shortTermMemory").value = "";
+          document.getElementById("longTermMemory").value = "";
+          document.getElementById("contextInfo").textContent = "None";
+          document.getElementById("currentProjectName").textContent = "Select Project";
+          return;
+        }
+
+        currentProjectId = projectId;
+        localStorage.setItem("tooloo_current_project_id", projectId);
+        document.getElementById("projectSelect").value = projectId;
+
+        // Update Top Bar Label
+        const select = document.getElementById("projectSelect");
+        const option = select.options[select.selectedIndex];
+        if (option) {
+            document.getElementById("currentProjectName").textContent = option.text;
+        }
+
+        // Load memory
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/projects/${projectId}`);
+          const data = await res.json();
+          const payload = data.content || data;
+
+          if (payload.ok) {
+            document.getElementById("shortTermMemory").value =
+              payload.memory.shortTerm || "";
+            document.getElementById("longTermMemory").value =
+              payload.memory.longTerm || "";
+
+            // Update context info
+            document.getElementById("contextInfo").textContent =
+              payload.project.name;
+          }
+        } catch (err) {
+          console.error("Failed to load project details:", err);
+        }
+      }
+
+      function showMemoryTab(type) {
+        const shortDiv = document.getElementById("memory-short");
+        const longDiv = document.getElementById("memory-long");
+
+        if (type === "short") {
+          shortDiv.style.display = "flex";
+          longDiv.style.display = "none";
+        } else {
+          shortDiv.style.display = "none";
+          longDiv.style.display = "flex";
+        }
+      }
+
+      async function saveProjectMemory() {
+        if (!currentProjectId) {
+          await showAlert("Warning", "Please select a project first");
+          return;
+        }
+
+        const shortTerm = document.getElementById("shortTermMemory").value;
+        const longTerm = document.getElementById("longTermMemory").value;
+
+        try {
+          // Save Short Term
+          const res1 = await fetch(
+            `${API_BASE}/api/v1/projects/${currentProjectId}/memory`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "short-term", content: shortTerm }),
+            },
+          );
+
+          if (!res1.ok) throw new Error("Failed to save short-term memory");
+
+          // Save Long Term
+          const res2 = await fetch(
+            `${API_BASE}/api/v1/projects/${currentProjectId}/memory`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "long-term", content: longTerm }),
+            },
+          );
+
+          if (!res2.ok) throw new Error("Failed to save long-term memory");
+
+          await showAlert("Success", "Memory saved successfully!");
+        } catch (err) {
+          console.error("Save memory error:", err);
+          await showAlert("Error", "Failed to save memory: " + err.message);
+        }
+      }
+
+      // ========== KEYBOARD SHORTCUTS ==========
+      document
+        .getElementById("messageInput")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+
+      // Focus effects
+      const inputContainer = document.getElementById("inputContainer");
+      const msgInput = document.getElementById("messageInput");
+
+      msgInput.addEventListener("focus", () => {
+        inputContainer.style.borderColor = "var(--g3-accent-primary)";
+        inputContainer.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.2)";
+      });
+
+      msgInput.addEventListener("blur", () => {
+        inputContainer.style.borderColor = "var(--g3-border-color)";
+        inputContainer.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+      });
+
+      // ========== INITIALIZATION ==========
+      document.addEventListener("DOMContentLoaded", () => {
+        // Restore sidebar state
+        const isCollapsed = localStorage.getItem('tooloo_chat_sidebar_collapsed') === 'true';
+        if (isCollapsed) {
+            const sidebar = document.getElementById('rightSidebar');
+            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+            sidebar.classList.add('collapsed');
+            toggleBtn.textContent = '◀';
+        }
+
+        loadProjects(); // Load projects on start
+
+        // Try to load existing session first
+        loadSessions();
+
+        if (!currentSession) {
+          newSession(`Session ${new Date().toLocaleTimeString()}`);
+        }
+
+        // Update time
+        setInterval(() => {
+          updateStats();
+        }, 1000);
+
+        // Auto-expand textarea
+        document
+          .getElementById("messageInput")
+          .addEventListener("input", (e) => {
+            e.target.style.height = "auto";
+            e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
+          });
+
+        // Check for message in URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialMessage = urlParams.get("message");
+        if (initialMessage) {
+          const input = document.getElementById("messageInput");
+          input.value = initialMessage;
+          input.style.height = "auto";
+          input.style.height = Math.min(input.scrollHeight, 100) + "px";
+        }
+      });
+    </script>
+  </body>
+</html>
