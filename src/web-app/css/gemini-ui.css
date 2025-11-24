@@ -1,4 +1,4 @@
-/* @version 2.1.42 */
+/* @version 2.1.213 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -823,12 +823,17 @@ input::placeholder {
 .swatch {
   height: 80px;
   width: 100%;
-  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                    linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                    linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0px;
 }
 
 .token-info {
@@ -896,10 +901,18 @@ input::placeholder {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.log-info { color: var(--g3-text-secondary); }
-.log-success { color: var(--g3-success); }
-.log-error { color: var(--g3-error); }
-.log-warning { color: var(--g3-warning); }
+.log-info {
+  color: var(--g3-text-secondary);
+}
+.log-success {
+  color: var(--g3-success);
+}
+.log-error {
+  color: var(--g3-error);
+}
+.log-warning {
+  color: var(--g3-warning);
+}
 
 .hidden {
   display: none !important;
@@ -1006,4 +1019,97 @@ input::placeholder {
   .chat-layout .g3-sidebar {
     display: none; /* Hide sidebars on mobile for now */
   }
+}
+
+/* Collapsible Sidebar Styles */
+.g3-sidebar {
+  transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
+  position: relative;
+}
+
+.g3-sidebar.collapsed {
+  width: 60px !important;
+  min-width: 60px !important;
+  padding: 1rem 0.5rem;
+}
+
+.g3-sidebar.collapsed .nav-text,
+.g3-sidebar.collapsed .sidebar-header,
+.g3-sidebar.collapsed .project-info,
+.g3-sidebar.collapsed .memory-content,
+.g3-sidebar.collapsed .action-buttons span,
+.g3-sidebar.collapsed .g3-badge-nano,
+.g3-sidebar.collapsed .system-status-text,
+.g3-sidebar.collapsed .logo-text,
+.g3-sidebar.collapsed .right-section-content {
+  display: none !important;
+}
+
+.g3-sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.g3-sidebar.collapsed .nav-item span:first-child {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--g3-bg-tertiary);
+  border: 1px solid var(--g3-border-color);
+  border-radius: 4px;
+  color: var(--g3-text-secondary);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+  background: var(--g3-bg-secondary);
+  color: var(--g3-text-primary);
+}
+
+.g3-sidebar.collapsed .sidebar-toggle {
+  right: 50%;
+  transform: translateX(50%);
+  top: 0.5rem;
+}
+
+.g3-sidebar.collapsed .sidebar-toggle i {
+  transform: rotate(180deg);
+}
+
+/* Adjust layout when sidebar is collapsed */
+.g3-layout.sidebar-collapsed {
+  grid-template-columns: 60px 1fr;
+}
+
+/* Top Bar Status Styles */
+.top-bar-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--g3-text-tertiary);
+  margin-left: auto;
+  padding-right: 1rem;
+  border-left: 1px solid var(--g3-border-color);
+  padding-left: 1rem;
+  height: 32px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
