@@ -1,14 +1,13 @@
-// @version 2.1.28
+// @version 2.1.235
 import { generateLLM } from "./providers/llm-provider.js";
 import { TOOLOO_PERSONA } from "../cortex/persona.js";
 
 export class Synthesizer {
-  
-  async synthesize(prompt: string) {
+  async synthesize(prompt: string, responseType: string = "context-driven") {
     console.log("[Synthesizer] Starting multi-provider synthesis...");
 
     const providers = ["gemini", "anthropic", "openai"];
-    
+
     // 1. Parallel Execution
     const promises = providers.map(async (provider) => {
       try {
@@ -16,7 +15,7 @@ export class Synthesizer {
           prompt,
           provider,
           system: TOOLOO_PERSONA,
-          maxTokens: 1024
+          maxTokens: 1024,
         });
         return { provider, response, success: true };
       } catch (error: any) {
@@ -26,7 +25,7 @@ export class Synthesizer {
     });
 
     const rawResults = await Promise.all(promises);
-    const successful = rawResults.filter(r => r.success);
+    const successful = rawResults.filter((r) => r.success);
 
     if (successful.length === 0) {
       throw new Error("All providers failed to generate a response.");
@@ -39,7 +38,7 @@ You are the Chief Synthesizer for TooLoo.ai.
 You have received responses from multiple AI models to the user's query: "${prompt}".
 
 Here are the responses:
-${successful.map(r => `--- PROVIDER: ${r.provider.toUpperCase()} ---\n${r.response}\n`).join("\n")}
+${successful.map((r) => `--- PROVIDER: ${r.provider.toUpperCase()} ---\n${r.response}\n`).join("\n")}
 
 Your task:
 1. Analyze the responses for consensus and unique insights.
@@ -55,15 +54,15 @@ Return ONLY the synthesized response.
         prompt: synthesisPrompt,
         provider: "gemini", // Use Gemini as the synthesizer
         system: TOOLOO_PERSONA,
-        maxTokens: 2048
+        maxTokens: 2048,
       });
 
       return {
         response: finalResponse,
         meta: {
-          providers: successful.map(r => r.provider),
-          count: successful.length
-        }
+          providers: successful.map((r) => r.provider),
+          count: successful.length,
+        },
       };
     } catch (error) {
       // Fallback: just return the first successful response
@@ -71,8 +70,8 @@ Return ONLY the synthesized response.
         response: successful[0].response,
         meta: {
           providers: [successful[0].provider],
-          note: "Synthesis failed, returning single provider response."
-        }
+          note: "Synthesis failed, returning single provider response.",
+        },
       };
     }
   }
