@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.241 -->
+<!-- @version 2.1.242 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -189,7 +189,7 @@
                     body: JSON.stringify({
                         message: text,
                         mode: currentMode,
-                        // attachments: [] // TODO: Add attachments
+                        attachments: activeAttachments
                     })
                 });
                 
@@ -339,43 +339,6 @@
                 div.innerHTML = `<span class="text-red-400">❌</span> ${file.name} (Failed)`;
             }
         }
-
-        // Update sendMessage to include attachments
-        const originalSendMessage = sendMessage;
-        sendMessage = async function() {
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            appendMessage('user', text);
-            userInput.value = '';
-            userInput.style.height = 'auto';
-            if (window.StoryBoard) window.StoryBoard.setState('dreaming');
-
-            try {
-                const response = await fetch('/api/v1/chat/message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: text,
-                        mode: currentMode,
-                        attachments: activeAttachments
-                    })
-                });
-                
-                const data = await response.json();
-                appendMessage('tooloo', data.response || "I've processed that.");
-                
-                if (window.StoryBoard) window.StoryBoard.setState('celebrating');
-                setTimeout(() => {
-                    if (window.StoryBoard) window.StoryBoard.setState('listening');
-                }, 3000);
-
-            } catch (error) {
-                console.error('Error:', error);
-                appendMessage('tooloo', 'Sorry, something went wrong.');
-                if (window.StoryBoard) window.StoryBoard.setState('confused');
-            }
-        };
     </script>
 </body>
 </html>
