@@ -1,3 +1,2 @@
-// @version 2.1.139
-// Type error demonstrating incorrect type assignment
+// @version 2.1.140
 const x: number = "string";
