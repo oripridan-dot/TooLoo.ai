@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.217 -->
+<!-- @version 2.1.219 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -618,7 +618,10 @@
         
         sidebar.classList.toggle('collapsed');
         
-        if (sidebar.classList.contains('collapsed')) {
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('tooloo_chat_sidebar_collapsed', isCollapsed);
+        
+        if (isCollapsed) {
             toggleBtn.textContent = '◀';
         } else {
             toggleBtn.textContent = '▶';
