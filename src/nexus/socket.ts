@@ -1,4 +1,4 @@
-// @version 2.1.199
+// @version 2.1.203
 
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
@@ -49,7 +49,7 @@ export class SocketServer {
       "motor:file:write",
       "motor:file:read",
       "sensory:observation:error",
-      "cortex:response" // Final response
+      "cortex:response", // Final response
     ];
 
     // Listen to all events on the bus
@@ -57,7 +57,10 @@ export class SocketServer {
     bus.on("*", (event: SynapsysEvent) => {
       // Filter or forward all?
       // Let's forward interesting ones
-      if (forwardEvents.includes(event.type) || event.type.startsWith("cortex:")) {
+      if (
+        forwardEvents.includes(event.type) ||
+        event.type.startsWith("cortex:")
+      ) {
         this.io.emit("synapsys:event", event);
       }
     });

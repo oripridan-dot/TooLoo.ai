@@ -1,7 +1,9 @@
-// @version 2.1.34
+// @version 2.1.203
 import express from "express";
+import { createServer } from "http";
 import path from "path";
 import { bus } from "../core/event-bus.js";
+import { SocketServer } from "./socket.js";
 import apiRoutes from "./routes/api.js";
 import systemRoutes from "./routes/system.js";
 import providersRoutes from "./routes/providers.js";
@@ -11,11 +13,17 @@ import githubRoutes from "./routes/github.js";
 import projectsRoutes from "./routes/projects.js";
 import chatRoutes from "./routes/chat.js";
 import designRoutes from "./routes/design.js";
+import workflowsRoutes from "./routes/workflows.js";
+import observabilityRoutes from "./routes/observability.js";
 import { trainingRoutes } from "./routes/training.js";
 
 export function startNexus(port?: number) {
   const PORT = port || Number(process.env.PORT) || 4000;
   const app = express();
+  const httpServer = createServer(app);
+
+  // Initialize Socket Server
+  new SocketServer(httpServer);
 
   app.use(express.json());
 
@@ -28,8 +36,11 @@ export function startNexus(port?: number) {
   app.use("/api/v1/projects", projectsRoutes);
   app.use("/api/v1/chat", chatRoutes);
   app.use("/api/v1/design", designRoutes);
+  app.use("/api/v1/workflows", workflowsRoutes);
+  app.use("/api/v1/observability", observabilityRoutes);
 
   // Training & Sources Routes (Precog)
+
   app.use("/api/v1", trainingRoutes);
 
   // API Routes
@@ -58,7 +69,7 @@ export function startNexus(port?: number) {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`[Nexus] Web Server running on port ${PORT}`);
     bus.publish("nexus", "nexus:started", { port: PORT });
   });

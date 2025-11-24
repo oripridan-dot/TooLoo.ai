@@ -1,4 +1,4 @@
-// @version 2.1.198
+// @version 2.1.203
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import { Plan, PlanStep } from "./planner.js";
 import { Reflector, ReflectionResult } from "./reflector.js";
@@ -51,20 +51,24 @@ export class Executive {
         // Run Verification if it was a file write
         let verificationResult;
         if (result.ok && currentStep.type === "file:write") {
-            verificationResult = await this.verifier.verifyFile(currentStep.payload.path);
+          verificationResult = await this.verifier.verifyFile(
+            currentStep.payload.path,
+          );
         }
 
         // Invoke Reflector
-        console.log(`[Executive] Reflecting on step: ${currentStep.description}`);
+        console.log(
+          `[Executive] Reflecting on step: ${currentStep.description}`,
+        );
         const reflection: ReflectionResult = await this.reflector.reflect(
           currentStep,
           result,
           this.currentPlan,
-          verificationResult
+          verificationResult,
         );
 
         console.log(
-          `[Executive] Reflection Result: ${reflection.action} - ${reflection.critique}`
+          `[Executive] Reflection Result: ${reflection.action} - ${reflection.critique}`,
         );
 
         if (reflection.action === "CONTINUE") {
@@ -78,9 +82,7 @@ export class Executive {
             // Update the step with the modification
             this.currentPlan.steps[this.currentStepIndex] =
               reflection.modifiedStep;
-            console.log(
-              `[Executive] Applied modification to step payload.`
-            );
+            console.log(`[Executive] Applied modification to step payload.`);
           }
           // Re-execute the current step (index hasn't changed)
           this.executeStep(this.currentPlan.steps[this.currentStepIndex]);
@@ -88,15 +90,15 @@ export class Executive {
           console.error(`[Executive] Plan failed, requesting replan.`);
           currentStep.status = "failed";
           currentStep.result = result;
-          
+
           // Publish replan request
           this.bus.publish("cortex", "planning:replan:request", {
             originalPlan: this.currentPlan,
             failedStep: currentStep,
             critique: reflection.critique,
-            result: result
+            result: result,
           });
-          
+
           this.reset(); // Stop current execution
         }
       }
@@ -109,7 +111,7 @@ export class Executive {
     }
 
     console.log(
-      `[Executive] Starting execution of plan: ${plan.id} (${plan.steps.length} steps)`
+      `[Executive] Starting execution of plan: ${plan.id} (${plan.steps.length} steps)`,
     );
     this.currentPlan = plan;
     this.currentPlan.status = "in-progress";
@@ -137,29 +139,32 @@ export class Executive {
       this.bus.publish("cortex", "planning:resumed", {
         planId: this.currentPlan.id,
       });
-      
+
       // If we haven't started the current step yet (paused before execution), execute it now.
       // If we are between steps, executeNextStep would have been called but returned early.
       // However, executeNextStep increments the index. We need to be careful.
-      
+
       // Strategy: executeNextStep increments index. If we paused inside it, we returned.
       // So we need to call executeStep with the *current* index.
-      
-      if (this.currentStepIndex >= 0 && this.currentStepIndex < this.currentPlan.steps.length) {
-          const step = this.currentPlan.steps[this.currentStepIndex];
-          // Only execute if it's not already running or completed
-          if (step.status === 'pending') {
-              this.executeStep(step);
-          } else {
-              // If it was running when we paused, we just wait for it to finish.
-              // If it was completed, we should move to next.
-              if (step.status === 'completed') {
-                  this.executeNextStep();
-              }
+
+      if (
+        this.currentStepIndex >= 0 &&
+        this.currentStepIndex < this.currentPlan.steps.length
+      ) {
+        const step = this.currentPlan.steps[this.currentStepIndex];
+        // Only execute if it's not already running or completed
+        if (step.status === "pending") {
+          this.executeStep(step);
+        } else {
+          // If it was running when we paused, we just wait for it to finish.
+          // If it was completed, we should move to next.
+          if (step.status === "completed") {
+            this.executeNextStep();
           }
+        }
       } else {
-          // Should not happen if paused, but safety check
-          this.executeNextStep();
+        // Should not happen if paused, but safety check
+        this.executeNextStep();
       }
     }
   }
@@ -179,13 +184,15 @@ export class Executive {
 
     const step = this.currentPlan.steps[this.currentStepIndex];
 
-    console.log(`[Executive] Checking intervention mode: ${this.interventionMode}`);
+    console.log(
+      `[Executive] Checking intervention mode: ${this.interventionMode}`,
+    );
 
     // Check for Intervention Mode
     if (this.interventionMode) {
       this.isPaused = true;
       console.log(
-        `[Executive] Pausing for intervention before step: ${step.description}`
+        `[Executive] Pausing for intervention before step: ${step.description}`,
       );
       this.bus.publish("cortex", "planning:awaiting_approval", {
         planId: this.currentPlan.id,
@@ -202,7 +209,7 @@ export class Executive {
     console.log(
       `[Executive] Executing step ${this.currentStepIndex + 1}/${
         this.currentPlan!.steps.length
-      }: ${step.description}`
+      }: ${step.description}`,
     );
 
     // Dispatch to Motor Cortex
@@ -225,7 +232,7 @@ export class Executive {
         content: step.payload.content,
       });
     } else if (step.type === "file:read") {
-       this.bus.publish("cortex", "motor:file:read", {
+      this.bus.publish("cortex", "motor:file:read", {
         id: step.id,
         path: step.payload.path,
       });

@@ -1,4 +1,4 @@
-// @version 2.1.192
+// @version 2.1.203
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 
@@ -6,7 +6,9 @@ const router = Router();
 
 // Helper for Event Bus Request/Response
 const request = (event: string, payload: any, res: any, timeout = 5000) => {
-  const requestId = payload.requestId || `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const requestId =
+    payload.requestId ||
+    `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const responseListener = (evt: any) => {
     if (evt.payload.requestId === requestId) {
@@ -74,7 +76,7 @@ router.post("/projects/:id/memory", (req, res) => {
   request(
     "nexus:project_memory_update",
     { projectId: req.params.id, ...req.body },
-    res
+    res,
   );
 });
 

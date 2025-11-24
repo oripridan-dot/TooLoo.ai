@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<!-- @version 2.1.184 -->
+<!doctype html>
+<!-- @version 2.1.203 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -224,16 +224,20 @@
       socket.on("synapsys:event", (event) => {
         console.log("Event:", event);
         // If it's a trace-related event, refresh the list or detail
-        if (event.type.startsWith("planning:") || event.type.startsWith("cortex:")) {
-            // Simple strategy: just reload traces for now to keep it synced
-            // Ideally we would append to the UI directly
-            loadTraces();
-            
-            // If we are viewing a trace that just updated, reload it
-            const activeId = document.querySelector(".trace-item.active")?.dataset.id;
-            if (activeId) {
-                loadTraceDetail(activeId);
-            }
+        if (
+          event.type.startsWith("planning:") ||
+          event.type.startsWith("cortex:")
+        ) {
+          // Simple strategy: just reload traces for now to keep it synced
+          // Ideally we would append to the UI directly
+          loadTraces();
+
+          // If we are viewing a trace that just updated, reload it
+          const activeId =
+            document.querySelector(".trace-item.active")?.dataset.id;
+          if (activeId) {
+            loadTraceDetail(activeId);
+          }
         }
       });
 
@@ -255,7 +259,7 @@
         list.innerHTML = traces
           .map(
             (t) => `
-                <div class="trace-item ${t.id === document.querySelector(".trace-item.active")?.dataset.id ? 'active' : ''}" data-id="${t.id}" onclick="loadTraceDetail('${t.id}')">
+                <div class="trace-item ${t.id === document.querySelector(".trace-item.active")?.dataset.id ? "active" : ""}" data-id="${t.id}" onclick="loadTraceDetail('${t.id}')">
                     <div style="display: flex; align-items: center; margin-bottom: 0.25rem;">
                         <span class="trace-status status-${t.status}"></span>
                         <span style="font-weight: 500; font-size: 0.9rem;">${t.id.split("-")[1]}...</span>
@@ -275,7 +279,7 @@
         document
           .querySelectorAll(".trace-item")
           .forEach((el) => el.classList.remove("active"));
-        
+
         const item = document.querySelector(`.trace-item[data-id="${id}"]`);
         if (item) item.classList.add("active");
 

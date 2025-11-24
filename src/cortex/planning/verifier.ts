@@ -1,4 +1,4 @@
-// @version 2.1.185
+// @version 2.1.203
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as path from "path";
@@ -15,7 +15,6 @@ export class Verifier {
   constructor(private workspaceRoot: string) {}
 
   async checkEslintConfig(): Promise<boolean> {
-    const fs = await import("fs-extra");
     const configFiles = [
       ".eslintrc.js",
       ".eslintrc.json",
@@ -50,46 +49,52 @@ export class Verifier {
     // Only run if config exists to avoid parsing errors on unconfigured files
     const hasEslintConfig = await this.checkEslintConfig();
     if (hasEslintConfig) {
-        try {
+      try {
         // Only run lint on .ts and .js files
         if (filePath.endsWith(".ts") || filePath.endsWith(".js")) {
-            await execAsync(`npx eslint "${filePath}"`, { cwd: this.workspaceRoot });
+          await execAsync(`npx eslint "${filePath}"`, {
+            cwd: this.workspaceRoot,
+          });
         }
-        } catch (error: any) {
+      } catch (error: any) {
         // ESLint returns non-zero exit code on errors
         if (error.stdout) {
-            errors.push(`Lint Error: ${error.stdout}`);
+          errors.push(`Lint Error: ${error.stdout}`);
         } else {
-            errors.push(`Lint Failed: ${error.message}`);
+          errors.push(`Lint Failed: ${error.message}`);
         }
-        }
+      }
     }
 
     // 3. Run Type Check (TSC)
     // Only for .ts files
     if (filePath.endsWith(".ts")) {
       try {
-                // We use tsc --noEmit and target the specific file
+        // We use tsc --noEmit and target the specific file
         // We add standard modern flags to avoid "const" errors (ES3 default)
         const cmd = `npx tsc --noEmit "${filePath}" --target es2022 --module NodeNext --moduleResolution NodeNext --esModuleInterop --skipLibCheck`;
         // console.log(`[Verifier] Running: ${cmd}`);
 
-await execAsync(cmd, { cwd: this.workspaceRoot });
-} catch (error: any) {
-    if (error.stdout) {
-        console.log(`[Verifier] Raw TSC Output:
+        await execAsync(cmd, { cwd: this.workspaceRoot });
+      } catch (error: any) {
+        if (error.stdout) {
+          console.log(`[Verifier] Raw TSC Output:
 ${error.stdout}`);
-        // Filter output to only show errors relevant to the file
-        const relevantErrors = error.stdout
-            .split('\n')
-            .filter((line: string) => line.includes(path.basename(filePath)) && line.includes("error"))
-            .join('\n');
-        
-        if (relevantErrors) {
+          // Filter output to only show errors relevant to the file
+          const relevantErrors = error.stdout
+            .split("\n")
+            .filter(
+              (line: string) =>
+                line.includes(path.basename(filePath)) &&
+                line.includes("error"),
+            )
+            .join("\n");
+
+          if (relevantErrors) {
             errors.push(`Type Error: ${relevantErrors}`);
+          }
         }
-    }
-}
+      }
     }
 
     return {
