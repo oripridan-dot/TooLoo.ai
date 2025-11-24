@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.237",
+  "version": "2.1.238",
   "description": "TooLoo.ai multi-service personal AI development platform",
   "type": "module",
   "private": true,
@@ -41,6 +41,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
     "@types/js-yaml": "^4.0.9",
+    "@types/multer": "^2.0.0",
     "axios": "^1.13.2",
     "chokidar": "^4.0.3",
     "commander": "^11.0.0",
@@ -53,6 +54,7 @@
     "glob": "^13.0.0",
     "helmet": "^7.1.0",
     "js-yaml": "^4.1.1",
+    "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "playwright": "^1.56.0",
     "socket.io": "^4.7.4",
