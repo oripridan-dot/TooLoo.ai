@@ -1,4 +1,4 @@
-// @version 2.1.191
+// @version 2.1.198
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import { Plan, PlanStep } from "./planner.js";
 import { Reflector, ReflectionResult } from "./reflector.js";
@@ -115,12 +115,60 @@ export class Executive {
     this.currentPlan.status = "in-progress";
     this.currentStepIndex = -1;
     this.isExecuting = true;
+    this.isPaused = false;
 
     this.executeNextStep();
   }
 
+  public pause() {
+    if (this.isExecuting && !this.isPaused) {
+      this.isPaused = true;
+      console.log("[Executive] Execution paused.");
+      this.bus.publish("cortex", "planning:paused", {
+        planId: this.currentPlan?.id,
+      });
+    }
+  }
+
+  public resume() {
+    if (this.isPaused && this.currentPlan) {
+      this.isPaused = false;
+      console.log("[Executive] Execution resumed.");
+      this.bus.publish("cortex", "planning:resumed", {
+        planId: this.currentPlan.id,
+      });
+      
+      // If we haven't started the current step yet (paused before execution), execute it now.
+      // If we are between steps, executeNextStep would have been called but returned early.
+      // However, executeNextStep increments the index. We need to be careful.
+      
+      // Strategy: executeNextStep increments index. If we paused inside it, we returned.
+      // So we need to call executeStep with the *current* index.
+      
+      if (this.currentStepIndex >= 0 && this.currentStepIndex < this.currentPlan.steps.length) {
+          const step = this.currentPlan.steps[this.currentStepIndex];
+          // Only execute if it's not already running or completed
+          if (step.status === 'pending') {
+              this.executeStep(step);
+          } else {
+              // If it was running when we paused, we just wait for it to finish.
+              // If it was completed, we should move to next.
+              if (step.status === 'completed') {
+                  this.executeNextStep();
+              }
+          }
+      } else {
+          // Should not happen if paused, but safety check
+          this.executeNextStep();
+      }
+    }
+  }
+
   private executeNextStep() {
     if (!this.currentPlan) return;
+
+    // If we are already paused, do not proceed.
+    if (this.isPaused) return;
 
     this.currentStepIndex++;
 
@@ -130,6 +178,22 @@ export class Executive {
     }
 
     const step = this.currentPlan.steps[this.currentStepIndex];
+
+    console.log(`[Executive] Checking intervention mode: ${this.interventionMode}`);
+
+    // Check for Intervention Mode
+    if (this.interventionMode) {
+      this.isPaused = true;
+      console.log(
+        `[Executive] Pausing for intervention before step: ${step.description}`
+      );
+      this.bus.publish("cortex", "planning:awaiting_approval", {
+        planId: this.currentPlan.id,
+        step: step,
+      });
+      return;
+    }
+
     this.executeStep(step);
   }
 
