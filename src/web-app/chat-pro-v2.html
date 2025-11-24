@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.207 -->
+<!-- @version 2.1.208 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -860,7 +860,7 @@
             if (currentSession.messages) {
               currentSession.messages.forEach((msg) => {
                 if (msg.type === "rich") {
-                  addRichMessage(msg.role, msg.text, msg.provider, false);
+                  addRichMessage(msg.role, msg.text, msg.provider, false, msg.confidence);
                 } else {
                   addMessage(msg.role, msg.text, false);
                 }
@@ -1514,15 +1514,8 @@
         suggestions.push("🔗 Explore related topic");
 
         // Build validation card first
-        const validationHtml = `
-        <div class="validation-card">
-          <div class="validation-header">
-            ✓ Validation
-          </div>
-          <div class="validation-confidence">${quality}%</div>
-          <div class="validation-text">Response confidence & quality score</div>
-        </div>
-      `;
+        // REMOVED: Large confidence square as per user request
+        const validationHtml = ``;
 
         // Update insights section with validation card and suggestions
         const insightsEl = document.getElementById("insights");
