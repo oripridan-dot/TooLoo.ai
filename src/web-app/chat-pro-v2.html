@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.221 -->
+<!-- @version 2.1.224 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -276,12 +276,19 @@
             <div class="status-item" title="Session Time">
                 <span>⏱️</span> <span id="sessionTime">00:00</span>
             </div>
+            <!-- Mobile Toggle for Right Sidebar -->
+            <button class="g3-btn" onclick="toggleRightSidebarMobile()" style="display: none; padding: 4px 8px; margin-left: 8px;" id="mobileRightToggle">
+              ℹ️
+            </button>
         </div>
       </div>
 
-      <div style="display: flex; flex: 1; overflow: hidden;">
+      <div style="display: flex; flex: 1; overflow: hidden; position: relative;">
       <!-- ========== LEFT: MEMORY (REMOVED) ========== -->
       <!-- Left sidebar removed and merged into top bar as requested -->
+
+      <!-- Mobile Overlay for Right Sidebar -->
+      <div class="mobile-overlay" id="rightMobileOverlay" onclick="closeRightSidebarMobile()"></div>
 
       <!-- ========== CENTER: CONVERSATION ========== -->
       <div class="chat-center" style="flex: 1;">
@@ -629,6 +636,20 @@
         } else {
             toggleBtn.textContent = '▶';
         }
+      }
+
+      function toggleRightSidebarMobile() {
+        const sidebar = document.getElementById('rightSidebar');
+        const overlay = document.getElementById('rightMobileOverlay');
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+      }
+
+      function closeRightSidebarMobile() {
+        const sidebar = document.getElementById('rightSidebar');
+        const overlay = document.getElementById('rightMobileOverlay');
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
       }
 
       // Socket Connection
