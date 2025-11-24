@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.203 -->
+<!-- @version 2.1.206 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -115,44 +115,168 @@
       input:checked + .slider:before {
         transform: translateX(14px);
       }
+
+      /* Top Bar Styles */
+      .top-bar {
+        height: 50px;
+        background: var(--g3-bg-secondary);
+        border-bottom: 1px solid var(--g3-border-color);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+
+      .project-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        padding: 4px 12px;
+        border-radius: 20px;
+        color: var(--g3-accent-primary);
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .project-selector:hover {
+        background: rgba(59, 130, 246, 0.2);
+      }
+
+      .project-icon {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--g3-accent-primary);
+        box-shadow: 0 0 8px var(--g3-accent-primary);
+      }
+
+      .sessions-bar {
+        flex: 1;
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 4px; /* For scrollbar */
+        scrollbar-width: none;
+      }
+      
+      .sessions-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .session-chip {
+        padding: 4px 12px;
+        background: var(--g3-bg-primary);
+        border: 1px solid var(--g3-border-color);
+        border-radius: 16px;
+        font-size: 12px;
+        color: var(--g3-text-secondary);
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .session-chip:hover {
+        border-color: var(--g3-text-tertiary);
+        color: var(--g3-text-primary);
+      }
+
+      .session-chip.active {
+        background: var(--g3-bg-tertiary);
+        border-color: var(--g3-text-secondary);
+        color: var(--g3-text-primary);
+        font-weight: 500;
+      }
+
+      /* Confidence Tooltip */
+      .confidence-wrapper {
+        position: relative;
+        display: inline-block;
+      }
+
+      .confidence-tooltip {
+        visibility: hidden;
+        width: 200px;
+        background-color: #1f2937;
+        color: #fff;
+        text-align: left;
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%; /* Position above */
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 11px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        border: 1px solid var(--g3-border-color);
+        pointer-events: none;
+      }
+
+      .confidence-wrapper:hover .confidence-tooltip {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .confidence-bar-bg {
+        width: 100%;
+        height: 4px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+      
+      .confidence-bar-fill {
+        height: 100%;
+        background: var(--g3-accent-primary);
+      }
+
     </style>
   </head>
   <body>
-    <div class="chat-layout">
-      <!-- ========== LEFT: MEMORY & SESSIONS ========== -->
-      <div class="g3-sidebar">
-        <div class="sidebar-header">📚 Sessions</div>
-        <button class="g3-btn g3-btn-primary" onclick="newSession()">
-          + New Session
-        </button>
-
-        <div
-          class="g3-p-4"
-          style="padding-left: 0; padding-right: 0; flex: 1; overflow-y: auto"
-        >
-          <div class="section-title">Current Project</div>
-          <div style="display: flex; gap: 8px; padding: 0 12px 8px 12px">
-            <select
+    <div class="chat-layout" style="flex-direction: column;">
+      <!-- ========== TOP BAR: SESSIONS & PROJECT ========== -->
+      <div class="top-bar">
+        <div class="project-selector" onclick="document.getElementById('projectSelect').click()">
+          <div class="project-icon"></div>
+          <span id="currentProjectName">Select Project</span>
+          <select
               id="projectSelect"
-              class="g3-input"
-              style="flex: 1; height: 32px; padding: 4px 8px; font-size: 12px"
+              style="opacity: 0; position: absolute; width: 1px; height: 1px;"
               onchange="selectProject(this.value)"
             >
               <option value="">Select Project...</option>
             </select>
-            <button
-              class="g3-btn"
-              style="padding: 4px 8px"
-              onclick="createProject()"
-            >
-              +
-            </button>
-          </div>
+        </div>
+        <div style="width: 1px; height: 24px; background: var(--g3-border-color); margin: 0 8px;"></div>
+        <div class="sessions-bar" id="sessionsList">
+          <!-- Sessions injected here -->
+        </div>
+        <button class="g3-btn g3-btn-primary" style="padding: 4px 12px; font-size: 12px;" onclick="newSession()">
+          + New
+        </button>
+      </div>
 
-          <div class="section-title">Recent Sessions</div>
-          <div id="sessionsList"></div>
-
-          <div class="section-title">Memory</div>
+      <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- ========== LEFT: MEMORY (Collapsed/Hidden or repurposed) ========== -->
+      <!-- We removed the session list from here. We can keep it for Memory stats or remove it entirely if desired. 
+           The user asked to "make the sessions bar horizontal at the top". 
+           Let's keep the left sidebar but remove the sessions list and project selector from it. -->
+      <div class="g3-sidebar" style="width: 200px;">
+        <div class="sidebar-header">📊 Status</div>
+        
+        <div class="g3-p-4" style="padding-left: 0; padding-right: 0; flex: 1;">
+          <div class="section-title">Memory Stats</div>
           <div
             style="
               padding: 8px 12px;
