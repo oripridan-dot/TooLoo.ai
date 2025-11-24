@@ -1,2 +1,2 @@
-// @version 2.1.144
-const x: number = 42; // Corrected to assign a valid number
+// @version 2.1.145
+const x: number = "string";
