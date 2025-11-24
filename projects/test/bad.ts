@@ -1,3 +1,2 @@
-// @version 2.1.119
-// @ts-ignore
+// @version 2.1.120
 const x: number = "string";
