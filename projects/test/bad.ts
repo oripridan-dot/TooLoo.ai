@@ -1,2 +1,2 @@
-// @version 2.1.126
-let x: number = 42;
+// @version 2.1.127
+const x: number = 42;
