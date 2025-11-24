@@ -1,4 +1,4 @@
-// @version 2.1.171
+// @version 2.1.172
 
 import { bus } from "../src/core/event-bus.js";
 import { cortex } from "../src/cortex/index.js";
@@ -73,6 +73,12 @@ async function runTest() {
     const testGoal = "Create a TypeScript file src/temp-fail.ts with content: const x: number = 'hello';";
 
     console.log(`Sending request: "${testGoal}"`);
+
+    // Debug listener
+    bus.on("nexus:chat_request", (e) => console.log("DEBUG: Bus received nexus:chat_request"));
+
+    // Wait a bit for systems to settle
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     bus.publish("nexus:chat_request", {
         requestId,
