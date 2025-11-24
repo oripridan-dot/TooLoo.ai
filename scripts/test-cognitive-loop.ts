@@ -1,4 +1,4 @@
-// @version 2.1.172
+// @version 2.1.173
 
 import { bus } from "../src/core/event-bus.js";
 import { cortex } from "../src/cortex/index.js";
@@ -13,6 +13,10 @@ import * as path from "path";
 
 async function runTest() {
     console.log("Starting Cognitive Loop Test...");
+
+    // Test Bus
+    bus.on("test:event", (e) => console.log("DEBUG: Bus working", e.payload));
+    bus.publish("system", "test:event", { msg: "hello" });
 
     // Initialize System
     await cortex.init();
