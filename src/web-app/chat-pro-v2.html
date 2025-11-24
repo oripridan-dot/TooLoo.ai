@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.188 -->
+<!-- @version 2.1.193 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -88,6 +88,16 @@
       color: var(--g3-text-tertiary);
       margin-left: auto;
     }
+
+    /* Switch Toggle */
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { background-color: #374151; }
+    .slider:before {
+      position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--g3-accent-primary); }
+    input:checked + .slider:before { transform: translateX(14px); }
   </style>
 </head>
 <body>
@@ -466,23 +476,40 @@
       input.value = '';
       input.style.height = 'auto';
 
+      // Generate Request ID
+      const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      activeRequestId = requestId;
+
+      // Create Thought Bubble
+      activeThoughtBubble = createThoughtBubble();
+
       // Send to API
       try {
         document.getElementById('sendBtn').disabled = true;
-        const response = await fetch(`${API_BASE}/api/v1/chat/synthesis`, {
+        
+        // Use the Event Bus endpoint to trigger Cortex Loop
+        const response = await fetch(`${API_BASE}/api/v1/chat/message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             message: message, 
+            requestId: requestId, // Pass ID to server
             conversationHistory: [],
             sessionId: currentSession?.id,
-            projectId: currentProjectId // Add project context
+            projectId: currentProjectId
           })
         });
 
         const data = await response.json();
         const responseData = data.content || data;
         
+        // Collapse thought bubble on completion
+        if (activeThoughtBubble) {
+            activeThoughtBubble.classList.add('collapsed');
+            activeThoughtBubble.querySelector('.thought-status').textContent = 'Thinking Complete';
+            activeThoughtBubble = null;
+        }
+
         if (responseData.response) {
           addRichMessage('assistant', responseData.response, responseData.provider);
         } else {
@@ -491,8 +518,12 @@
       } catch (err) {
         console.error('Send error:', err);
         addMessage('assistant', 'Failed to get response. Check connection.');
+        if (activeThoughtBubble) {
+            activeThoughtBubble.querySelector('.thought-status').textContent = 'Error';
+        }
       } finally {
         document.getElementById('sendBtn').disabled = false;
+        activeRequestId = null;
       }
 
       messageCount++;
