@@ -1,5 +1,6 @@
-// @version 2.1.52
+// @version 2.1.232
 import { bus } from "../core/event-bus.js";
+import { smartFS } from "../core/fs-manager.js";
 
 interface OrchestratorState {
   initialized: boolean;
@@ -111,7 +112,7 @@ export class Orchestrator {
       if (maxPerCycle) this.state.autonomousSettings.maxPerCycle = maxPerCycle;
 
       console.log(
-        `[Cortex] Autonomous mode set to ${enabled} (${this.state.autonomousSettings.mode})`
+        `[Cortex] Autonomous mode set to ${enabled} (${this.state.autonomousSettings.mode})`,
       );
 
       bus.publish("cortex", "cortex:response", {
@@ -170,7 +171,7 @@ export class Orchestrator {
         retries++;
         this.retryMap.set(goal, retries);
         console.log(
-          `[Cortex] Retrying goal (${retries}/${this.maxRetries}): "${goal}"`
+          `[Cortex] Retrying goal (${retries}/${this.maxRetries}): "${goal}"`,
         );
 
         // Re-queue at the front
@@ -199,7 +200,7 @@ export class Orchestrator {
     });
   }
 
-  private processQueue() {
+  private async processQueue() {
     if (this.state.planQueue.length === 0) {
       console.log("[Cortex] Queue empty.");
       this.state.activeCycles = 0;
@@ -212,7 +213,20 @@ export class Orchestrator {
       console.log(`[Cortex] Processing next goal: "${nextGoal}"`);
       this.state.currentFocus = `executing: ${nextGoal}`;
       this.state.activeCycles++;
-      bus.publish("cortex", "planning:intent", { goal: nextGoal });
+
+      // Get Golden Plate if goal mentions a file
+      let contextBundle = null;
+      // Simple heuristic: check if goal contains a file path
+      const fileMatch = nextGoal.match(/[\w-]+\.ts/);
+      if (fileMatch) {
+          try {
+              contextBundle = await smartFS.getGoldenPlate(fileMatch[0]);
+          } catch (e) {
+              // Ignore
+          }
+      }
+
+      bus.publish("cortex", "planning:intent", { goal: nextGoal, context: contextBundle });
     }
   }
 }

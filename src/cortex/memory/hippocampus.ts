@@ -1,7 +1,9 @@
-// @version 2.1.28
+// @version 2.1.232
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { VectorStore } from "./vector-store.js";
+import { smartFS } from "../../core/fs-manager.js";
 
 interface MemoryEntry {
   id: string;
@@ -9,6 +11,8 @@ interface MemoryEntry {
   type: "action" | "observation" | "thought" | "system";
   content: any;
   tags: string[];
+  transactionId?: string;
+  affectedFiles?: string[];
 }
 
 export class Hippocampus {
@@ -16,6 +20,7 @@ export class Hippocampus {
   private readonly STM_LIMIT = 100;
   private memoryPath: string;
   private isReady: boolean = false;
+  private vectorStore: VectorStore;
 
   constructor(
     private bus: EventBus,
@@ -27,6 +32,7 @@ export class Hippocampus {
       "memory",
       "episodic.json"
     );
+    this.vectorStore = new VectorStore(workspaceRoot);
   }
 
   async initialize() {
@@ -34,6 +40,7 @@ export class Hippocampus {
 
     await this.ensureStorage();
     await this.loadLongTermMemory(); // For now, just load recent history or ensure file exists
+    await this.vectorStore.initialize();
 
     this.setupListeners();
 
@@ -95,15 +102,27 @@ export class Hippocampus {
         results,
       });
     });
+
+    // Semantic Search
+    this.bus.on("memory:semantic_search", async (event) => {
+        const { query, k, requestId } = event.payload;
+        const results = await this.vectorStore.search(query, k);
+        this.bus.publish("cortex", "memory:semantic_search:result", {
+            requestId,
+            results
+        });
+    });
   }
 
-  private record(type: MemoryEntry["type"], content: any, tags: string[]) {
+  private record(type: MemoryEntry["type"], content: any, tags: string[], transactionId?: string, affectedFiles?: string[]) {
     const entry: MemoryEntry = {
       id: Math.random().toString(36).substring(7),
       timestamp: Date.now(),
       type,
       content,
       tags,
+      transactionId,
+      affectedFiles
     };
 
     // Add to Short Term Memory
@@ -116,6 +135,12 @@ export class Hippocampus {
     this.persist(entry).catch((err) =>
       console.error(`[Hippocampus] Failed to persist memory: ${err.message}`)
     );
+
+    // Add to Vector Store if applicable
+    if (typeof content === 'string' || (content && content.description)) {
+        const text = typeof content === 'string' ? content : content.description || JSON.stringify(content);
+        this.vectorStore.add(text, { type, tags, id: entry.id });
+    }
   }
 
   private async persist(entry: MemoryEntry) {
@@ -133,8 +158,8 @@ export class Hippocampus {
 
       history.push(entry);
 
-      // Write back
-      await fs.writeFile(this.memoryPath, JSON.stringify(history, null, 2));
+      // Write back using SmartFS for safety
+      await smartFS.writeSafe(this.memoryPath, JSON.stringify(history, null, 2));
     } catch (err) {
       console.error("[Hippocampus] Persistence error", err);
     }

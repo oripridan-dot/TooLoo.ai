@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.232
 import { EventEmitter } from 'events';
 import { SynapseBus } from '../core/bus/event-bus';
 
@@ -19,6 +19,7 @@ export interface Context {
     recentTopics: string[];
     activeFiles: string[];
     userIntent?: string;
+    activeContext?: any; // ContextBundle from SmartFS
 }
 
 export interface ResonanceResult {
@@ -124,6 +125,18 @@ export class ContextResonanceEngine extends EventEmitter {
         // 5. Contextual Keyword Match (Simple string match for now)
         if (memory.content.includes(context.currentTask)) {
             score += 0.4;
+        }
+
+        // 6. Dependency Resonance (SmartFS)
+        if (context.activeContext && context.activeContext.dependencies) {
+             const deps = context.activeContext.dependencies;
+             // If memory content mentions any dependency path
+             for (const dep of deps) {
+                 if (memory.content.includes(dep.path)) {
+                     score += 0.3;
+                     break;
+                 }
+             }
         }
 
         return Math.min(1, score); // Normalize to 0-1

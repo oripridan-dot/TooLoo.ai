@@ -1,5 +1,6 @@
-// @version 2.1.28
+// @version 2.1.232
 import { SynapseBus } from '../core/bus/event-bus';
+import { smartFS } from '../core/fs-manager.js';
 
 export class Oracle {
     private bus: SynapseBus;
@@ -15,16 +16,21 @@ export class Oracle {
         });
     }
 
-    private analyzeChange(change: { event: string, path: string }) {
+    private async analyzeChange(change: { event: string, path: string }) {
         // Simple heuristic prediction
         if (change.event === 'change' || change.event === 'add') {
             if (change.path.endsWith('.ts') && !change.path.includes('.test.')) {
-                this.predictNeedForTest(change.path);
+                try {
+                    const bundle = await smartFS.getGoldenPlate(change.path);
+                    this.predictNeedForTest(change.path, bundle);
+                } catch (e) {
+                    this.predictNeedForTest(change.path);
+                }
             }
         }
     }
 
-    private predictNeedForTest(filePath: string) {
+    private predictNeedForTest(filePath: string, contextBundle?: any) {
         console.log(`🔮 Precog Oracle: Detected change in ${filePath}. Predicting need for tests...`);
         
         // In a real system, this would trigger a proactive prompt to the user
@@ -33,7 +39,7 @@ export class Oracle {
             type: 'suggestion',
             content: `It looks like you're working on ${filePath}. Would you like me to generate a Vitest suite for it?`,
             confidence: 0.85,
-            context: { filePath }
+            context: { filePath, bundle: contextBundle }
         }, 'precog-oracle');
     }
 }
