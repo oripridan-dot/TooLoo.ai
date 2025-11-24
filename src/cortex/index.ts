@@ -1,4 +1,4 @@
-// @version 2.1.234
+// @version 2.1.236
 import { bus } from "../core/event-bus.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
@@ -114,7 +114,7 @@ export class Cortex {
       } else {
         // It's just chat. Use Synthesizer for multi-provider aggregation.
         try {
-          const result = await synthesizer.synthesize(message);
+          const result = await synthesizer.synthesize(message, responseType);
           responseText = result.response;
           provider = "Synapsys Synthesizer";
           meta = result.meta;

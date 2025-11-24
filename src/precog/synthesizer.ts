@@ -1,4 +1,4 @@
-// @version 2.1.235
+// @version 2.1.236
 import { generateLLM } from "./providers/llm-provider.js";
 import { TOOLOO_PERSONA } from "../cortex/persona.js";
 
@@ -33,6 +33,30 @@ export class Synthesizer {
 
     // 2. Aggregation / Synthesis
     // We use the "best" provider (Gemini usually) to synthesize the results
+
+    let styleInstruction = "";
+    switch (responseType) {
+      case "list":
+        styleInstruction =
+          "Format the response as a concise list or bullet points.";
+        break;
+      case "structured":
+        styleInstruction =
+          "Format the response as a structured plan with clear sections and steps.";
+        break;
+      case "detailed":
+        styleInstruction = "Provide a detailed, comprehensive explanation.";
+        break;
+      case "concise":
+        styleInstruction = "Be extremely concise and to the point.";
+        break;
+      case "context-driven":
+      default:
+        styleInstruction =
+          "Choose the most appropriate format based on the context (e.g. list for steps, code for technical queries, text for explanations).";
+        break;
+    }
+
     const synthesisPrompt = `
 You are the Chief Synthesizer for TooLoo.ai.
 You have received responses from multiple AI models to the user's query: "${prompt}".
@@ -45,6 +69,7 @@ Your task:
 2. Synthesize a single, superior response that combines the best parts of all answers.
 3. Resolve any contradictions based on your knowledge.
 4. Maintain the TooLoo.ai persona (helpful, concise, structured).
+5. ${styleInstruction}
 
 Return ONLY the synthesized response.
 `;
