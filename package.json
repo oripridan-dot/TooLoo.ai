@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.210",
+  "version": "2.1.211",
   "description": "TooLoo.ai multi-service personal AI development platform",
   "type": "module",
   "private": true,
@@ -8,10 +8,11 @@
     "tooloo": "./src/cli/index.ts"
   },
   "scripts": {
-    "start": "tsx src/main.ts",
+    "update-context": "tsx scripts/update-copilot-context.ts",
+    "start": "npm run update-context && tsx src/main.ts",
     "tooloo": "tsx src/cli/index.ts",
     "start:synapsys": "npm start",
-    "dev": "tsx watch src/main.ts",
+    "dev": "npm run update-context && tsx watch src/main.ts",
     "test": "vitest run",
     "lint": "eslint src/ --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",

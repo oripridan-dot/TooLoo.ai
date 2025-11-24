@@ -1,4 +1,4 @@
-// @version 2.1.210
+// @version 2.1.211
 
 import fs from 'fs';
 import path from 'path';
@@ -33,8 +33,8 @@ async function generateContext() {
     }
   }
 
-  // Get recent docs
-  const docFiles = await glob('docs/*.md');
+  // Get recent docs (root markdown files)
+  const docFiles = await glob('*.md');
   const docs = docFiles.map(f => `- [${path.basename(f)}](${f})`).join('\n');
 
   return `
