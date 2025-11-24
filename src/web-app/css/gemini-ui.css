@@ -1,4 +1,4 @@
-/* @version 2.1.213 */
+/* @version 2.1.222 */
 :root {
   /* Gemini 3 Pro Theme Variables */
   --g3-bg-primary: #09090b;
@@ -976,73 +976,94 @@ input::placeholder {
 /* Responsive Adjustments */
 @media (max-width: 1280px) {
   .chat-layout {
-    grid-template-columns: 220px 1fr 220px;
+    grid-template-columns: 1fr 280px; /* Remove left column space if it was there, keep right */
   }
 }
 
 @media (max-width: 1024px) {
   .g3-layout {
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 240px 1fr;
   }
   .chat-layout {
-    grid-template-columns: 200px 1fr 200px;
+    grid-template-columns: 1fr 260px;
   }
 }
 
 @media (max-width: 768px) {
   .g3-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Stack layout */
     grid-template-rows: auto 1fr;
   }
+  
+  /* Mobile Sidebar - Hidden by default or transformed */
   .g3-sidebar {
-    height: auto;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 0.5rem;
-    border-right: none;
-    border-bottom: 1px solid var(--g3-border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: var(--g3-shadow-lg);
   }
-  .g3-sidebar > div {
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-    border-bottom: none !important;
-    margin-right: 1rem;
+  
+  .g3-sidebar.mobile-open {
+    transform: translateX(0);
   }
-  .g3-sidebar nav {
-    flex-direction: row;
+
+  /* Add a mobile header for the main layout */
+  .g3-main {
+    padding-top: 60px; /* Space for mobile header */
   }
 
   .chat-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
   }
+  
   .chat-layout .g3-sidebar {
-    display: none; /* Hide sidebars on mobile for now */
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    transform: translateX(100%);
+    z-index: 100;
+    background: var(--g3-bg-secondary);
+    border-left: 1px solid var(--g3-border-color);
+  }
+  
+  .chat-layout .g3-sidebar.mobile-open {
+    transform: translateX(0);
   }
 }
 
 /* Collapsible Sidebar Styles */
 .g3-sidebar {
-  transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
+  transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease, transform 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .g3-sidebar.collapsed {
-  width: 60px !important;
-  min-width: 60px !important;
+  width: 70px !important;
+  min-width: 70px !important;
   padding: 1rem 0.5rem;
 }
 
-.g3-sidebar.collapsed .nav-text,
-.g3-sidebar.collapsed .sidebar-header,
-.g3-sidebar.collapsed .project-info,
-.g3-sidebar.collapsed .memory-content,
-.g3-sidebar.collapsed .action-buttons span,
-.g3-sidebar.collapsed .g3-badge-nano,
-.g3-sidebar.collapsed .system-status-text,
 .g3-sidebar.collapsed .logo-text,
-.g3-sidebar.collapsed .right-section-content {
+.g3-sidebar.collapsed .nav-text,
+.g3-sidebar.collapsed .system-status-text,
+.g3-sidebar.collapsed .right-section > *:not(.sidebar-header),
+.g3-sidebar.collapsed .sidebar-header span {
   display: none !important;
+}
+
+/* Special handling for right sidebar header when collapsed */
+.g3-sidebar.collapsed .sidebar-header {
+  justify-content: center !important;
+  margin-bottom: 1rem;
 }
 
 .g3-sidebar.collapsed .nav-item {
@@ -1057,9 +1078,6 @@ input::placeholder {
 
 /* Sidebar Toggle Button */
 .sidebar-toggle {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
   width: 24px;
   height: 24px;
   display: flex;
@@ -1070,8 +1088,8 @@ input::placeholder {
   border-radius: 4px;
   color: var(--g3-text-secondary);
   cursor: pointer;
-  z-index: 10;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
@@ -1080,18 +1098,18 @@ input::placeholder {
 }
 
 .g3-sidebar.collapsed .sidebar-toggle {
-  right: 50%;
-  transform: translateX(50%);
-  top: 0.5rem;
-}
-
-.g3-sidebar.collapsed .sidebar-toggle i {
   transform: rotate(180deg);
 }
 
 /* Adjust layout when sidebar is collapsed */
 .g3-layout.sidebar-collapsed {
-  grid-template-columns: 60px 1fr;
+  grid-template-columns: 70px 1fr;
+}
+
+@media (max-width: 768px) {
+  .g3-layout.sidebar-collapsed {
+    grid-template-columns: 1fr; /* Keep stacked on mobile */
+  }
 }
 
 /* Top Bar Status Styles */
