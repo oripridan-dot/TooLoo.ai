@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.264
 /**
  * Workstation UI Controller (Phase 2d)
  * 
@@ -22,6 +22,45 @@ class WorkstationUI {
     this.initializeElements();
     this.attachEventListeners();
     this.startLiveUpdates();
+    this.connectToPredictions();
+  }
+
+  connectToPredictions() {
+    const eventSource = new EventSource('/api/v1/synapse/predictions');
+    
+    eventSource.onmessage = (event) => {
+        try {
+            const prediction = JSON.parse(event.data);
+            this.handlePrediction(prediction);
+        } catch (e) {
+            console.error('Error parsing prediction:', e);
+        }
+    };
+
+    eventSource.onerror = (err) => {
+        console.error('Prediction stream error:', err);
+        eventSource.close();
+        // Retry after 5 seconds
+        setTimeout(() => this.connectToPredictions(), 5000);
+    };
+  }
+
+  handlePrediction(prediction) {
+      if (prediction.type === 'suggestion') {
+          this.showToast(`🔮 ${prediction.content}`, 'info');
+      }
+  }
+
+  showToast(message, type = 'info') {
+      // Simple toast implementation if not exists
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-4 right-4 p-4 rounded shadow-lg text-white ${type === 'error' ? 'bg-red-500' : 'bg-blue-600'} transition-opacity duration-500`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 500);
+      }, 5000);
   }
 
   initializeElements() {
@@ -249,7 +288,7 @@ class WorkstationUI {
   /**
    * Set execution mode
    */
-  setExecutionMode(mode) {
+  setExecutionMode(mode = 'balanced') {
     this.executionMode = mode;
 
     // Update button styles
