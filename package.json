@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.276",
+  "version": "2.1.277",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -31,6 +31,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/multer": "^2.0.0",
     "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
     "chokidar": "^4.0.3",
     "commander": "^11.0.0",
     "cors": "^2.8.5",
