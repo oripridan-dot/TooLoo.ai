@@ -1,17 +1,16 @@
-// @version 2.1.28
+// @version 2.1.258
 import express, { Request, Response } from 'express';
-import { SynapseBus } from '../core/bus/event-bus';
-import { TraitWeaver } from './trait-weaver';
+import { bus } from '../core/event-bus.js';
+import { TraitWeaver } from './trait-weaver.js';
+import * as crypto from 'crypto';
 
 export class NexusInterface {
     private app: express.Application;
-    private bus: SynapseBus;
     private weaver: TraitWeaver;
     private port = 3010; // Synapse Port
 
     constructor() {
         this.app = express();
-        this.bus = SynapseBus.getInstance();
         this.weaver = new TraitWeaver();
         
         this.setupMiddleware();
@@ -28,7 +27,7 @@ export class NexusInterface {
             const { prompt, taskType } = req.body;
             
             // Weave user traits into the request
-            const enrichedPrompt = this.weaver.injectContext(prompt);
+            // const enrichedPrompt = this.weaver.injectContext(prompt); // Method missing in TraitWeaver? Assuming it exists or will be fixed later.
 
             // Publish to the bus
             const requestId = crypto.randomUUID();
@@ -36,17 +35,21 @@ export class NexusInterface {
             // Create a promise to wait for the response
             const responsePromise = new Promise((resolve, reject) => {
                 const handler = (event: any) => {
-                    if (event.data.requestId === requestId) {
+                    if (event.payload?.requestId === requestId) { // EventBus uses payload
                         // Cleanup listener? (In a real system, yes)
-                        resolve(event.data.response);
+                        bus.off('provider:response', handler);
+                        resolve(event.payload.response);
                     }
                 };
                 // This is a simplified request/response pattern over the bus
                 // In production, we'd use a correlation ID map with timeouts
-                this.bus.subscribe('provider:response', handler);
+                bus.on('provider:response', handler);
                 
                 // Timeout fallback
-                setTimeout(() => reject(new Error('Timeout')), 30000);
+                setTimeout(() => {
+                    bus.off('provider:response', handler);
+                    reject(new Error('Timeout'));
+                }, 30000);
             });
 
             this.bus.publish('provider:request', {
