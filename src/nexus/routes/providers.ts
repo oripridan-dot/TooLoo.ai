@@ -10,7 +10,7 @@ router.get("/status", (req, res) => {
   res.json({
     ok: true,
     active: "Gemini",
-    model: "gemini-2.0-pro-exp-02-05",
+    model: "gemini-3-pro-preview",
     latency: 120,
     available: [
       { id: "gemini", name: "Gemini 3 Pro", status: "Ready" },

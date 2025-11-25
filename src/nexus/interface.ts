@@ -28,6 +28,7 @@ export class NexusInterface {
             
             // Weave user traits into the request
             // const enrichedPrompt = this.weaver.injectContext(prompt); // Method missing in TraitWeaver? Assuming it exists or will be fixed later.
+            const enrichedPrompt = prompt; // Fallback
 
             // Publish to the bus
             const requestId = crypto.randomUUID();
@@ -52,11 +53,11 @@ export class NexusInterface {
                 }, 30000);
             });
 
-            this.bus.publish('provider:request', {
+            bus.publish('nexus', 'provider:request', {
                 id: requestId, // Pass ID through
                 prompt: enrichedPrompt,
                 taskType: taskType || 'general'
-            }, 'nexus');
+            });
 
             try {
                 const result = await responsePromise;
@@ -82,19 +83,19 @@ export class NexusInterface {
 
             const responsePromise = new Promise((resolve, reject) => {
                 const handler = (event: any) => {
-                    if (event.data.requestId === requestId) {
-                        resolve(event.data.results);
+                    if (event.payload?.requestId === requestId) {
+                        resolve(event.payload.results);
                     }
                 };
-                this.bus.subscribe('memory:response', handler);
+                bus.on('memory:response', handler);
                 setTimeout(() => reject(new Error('Timeout')), 5000);
             });
 
-            this.bus.publish('memory:query', {
+            bus.publish('nexus', 'memory:query', {
                 requestId,
                 context,
                 limit: limit || 5
-            }, 'nexus');
+            });
 
             try {
                 const results = await responsePromise;
@@ -104,15 +105,21 @@ export class NexusInterface {
             }
         });
 
-        // 4. Ingest Endpoint
-        this.app.post('/api/v1/synapse/memory', (req: Request, res: Response) => {
-            const { content, type, tags } = req.body;
-            this.bus.publish('memory:ingest', {
-                content,
-                type,
-                tags
-            }, 'nexus');
-            res.json({ success: true, message: 'Memory ingested' });
+        // 4. Prediction Stream (SSE)
+        this.app.get('/api/v1/synapse/predictions', (req: Request, res: Response) => {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+
+            const handler = (event: any) => {
+                res.write(`data: ${JSON.stringify(event.payload)}\n\n`);
+            };
+
+            bus.on('precog:prediction', handler);
+
+            req.on('close', () => {
+                bus.off('precog:prediction', handler);
+            });
         });
     }
 

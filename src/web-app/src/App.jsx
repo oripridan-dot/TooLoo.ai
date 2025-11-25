@@ -5,6 +5,7 @@ import SelfImprovement from './components/SelfImprovement';
 import ActivityFeed from './components/ActivityFeed';
 import UICustomizer from './components/UICustomizer';
 import Chat from './components/Chat';
+import VisualDesigner from './components/VisualDesigner';
 
 function App() {
   const [activeComponent, setActiveComponent] = useState('Chat');
@@ -17,6 +18,8 @@ function App() {
         return <ActivityFeed />;
       case 'UI Customizer':
         return <UICustomizer />;
+      case 'Visual Designer':
+        return <VisualDesigner />;
       default:
         return <Chat />;
     }

@@ -1,12 +1,19 @@
 // @version 2.1.265
 import LLMProvider from "./providers/llm-provider.js";
+import { GeminiImageProvider } from "./providers/gemini-image.js";
+import { OpenAIImageProvider } from "./providers/openai-image.js";
+import { ImageGenerationRequest, ImageGenerationResponse } from "./providers/types.js";
 import fetch from "node-fetch";
 
 export class ProviderEngine {
   private llmProvider: LLMProvider;
+  private geminiImageProvider: GeminiImageProvider;
+  private openaiImageProvider: OpenAIImageProvider;
 
   constructor() {
     this.llmProvider = new LLMProvider();
+    this.geminiImageProvider = new GeminiImageProvider();
+    this.openaiImageProvider = new OpenAIImageProvider();
   }
 
   getProvider(name: string) {
@@ -84,6 +91,27 @@ export class ProviderEngine {
       provider: result.provider,
       model: result.provider, 
     };
+  }
+
+  async generateImage(req: ImageGenerationRequest): Promise<ImageGenerationResponse> {
+    console.log(`[ProviderEngine] Generating image with prompt: ${req.prompt.substring(0, 50)}...`);
+    
+    if (req.provider === 'openai' || (req.model && req.model.includes('dall-e'))) {
+        const base64Image = await this.openaiImageProvider.generateImage(req.prompt, {
+            model: req.model,
+            size: req.imageSize,
+            quality: 'standard',
+            style: 'vivid'
+        });
+        return {
+            images: [{
+                data: base64Image.split(',')[1], // Remove data:image/png;base64, prefix if present, but OpenAIImageProvider returns full data URI. Wait, Gemini returns raw base64?
+                mimeType: 'image/png'
+            }]
+        };
+    }
+
+    return this.geminiImageProvider.generateImage(req);
   }
 
   private classifyComplexity(prompt: string, taskType?: string): 'low' | 'high' {

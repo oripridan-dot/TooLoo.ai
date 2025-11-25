@@ -10,6 +10,7 @@ const Sidebar = ({ setActiveComponent }) => {
           <li className="mb-2"><a href="#" onClick={() => setActiveComponent('Self-Improvement')} className="hover:text-gray-300">Self-Improvement</a></li>
           <li className="mb-2"><a href="#" onClick={() => setActiveComponent('Activity Feed')} className="hover:text-gray-300">Activity Feed</a></li>
           <li className="mb-2"><a href="#" onClick={() => setActiveComponent('UI Customizer')} className="hover:text-gray-300">UI Customizer</a></li>
+          <li className="mb-2"><a href="#" onClick={() => setActiveComponent('Visual Designer')} className="hover:text-gray-300 text-blue-400 font-bold">Visual Designer</a></li>
         </ul>
       </nav>
     </aside>

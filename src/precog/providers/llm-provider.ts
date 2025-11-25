@@ -10,10 +10,12 @@ import DomainExpertise from "../../nexus/engine/domain-expertise.js";
 import ContinuousLearning from "../../nexus/engine/continuous-learning.js";
 import fetch from "node-fetch";
 import ensureEnvLoaded from "../../nexus/engine/env-loader.js";
+import { amygdala, AmygdalaState } from "../../cortex/amygdala/index.js";
+import { bus } from "../../core/event-bus.js";
 
 ensureEnvLoaded();
 
-const env = (name, def = undefined) => process.env[name] ?? def;
+const env = (name: string, def: any = undefined) => process.env[name] ?? def;
 
 export default class LLMProvider {
   constructor() {
@@ -24,7 +26,7 @@ export default class LLMProvider {
           anthropic: providerAvailable("anthropic"),
           openai: providerAvailable("openai"),
           gemini: providerAvailable("gemini"),
-          ollama: providerAvailable("ollama"),
+          // ollama: providerAvailable("ollama"), // Dropped
           localai: providerAvailable("localai"),
           openinterpreter: providerAvailable("openinterpreter"),
           huggingface: providerAvailable("huggingface"),
@@ -38,8 +40,8 @@ export default class LLMProvider {
           deepseek: env("DEEPSEEK_MODEL", "deepseek-chat"),
           anthropic: env("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022"),
           openai: env("OPENAI_MODEL", "gpt-4o-mini"),
-          gemini: env("GEMINI_MODEL", "gemini-1.5-flash"), // Gemini 1.5 Flash (Default)
-          ollama: env("OLLAMA_MODEL", "llama3.2:latest"),
+          gemini: env("GEMINI_MODEL", "gemini-3-pro-preview"), // Gemini 3 Pro
+          // ollama: env("OLLAMA_MODEL", "llama3.2:latest"), // Dropped
           localai: env("LOCALAI_MODEL", "gpt-4"),
           openinterpreter: env("OI_MODEL", "ollama/llama3.2"),
           huggingface: env("HF_MODEL", "microsoft/DialoGPT-large"),
@@ -90,7 +92,7 @@ export default class LLMProvider {
     // Default chat: Prefer Gemini 3 Pro, then others
     const order = [
       "gemini", // Gemini 3 Pro (Default)
-      "ollama", // Free local inference (Ollama)
+      // "ollama", // Dropped
       "anthropic", // Premium reasoning (Claude)
       "openai", // Premium reliable
       "localai", // Free local OpenAI-compatible
@@ -247,6 +249,12 @@ export default class LLMProvider {
     let lastError = null;
     const startTime = Date.now();
 
+    // Check Amygdala State - if PANIC/CRITICAL, maybe avoid expensive models?
+    // For now, we just log it.
+    if (amygdala.currentState === AmygdalaState.PANIC || amygdala.currentState === AmygdalaState.CRITICAL) {
+        console.warn(`[LLMProvider] System Stress High (${amygdala.currentState}). Proceeding with caution.`);
+    }
+
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
       try {
@@ -267,7 +275,16 @@ export default class LLMProvider {
         );
 
         return { ...result, provider: p, domain: detectedDomain, latency };
-      } catch (err) {
+      } catch (err: any) {
+        console.warn(`[LLMProvider] Provider ${p} failed: ${err.message}. Falling back...`);
+        
+        // Amygdala Feedback Loop
+        if (err.message.includes("503") || err.message.includes("429") || err.message.includes("Overloaded")) {
+            amygdala.spikeCortisol(0.2); // Significant stress from API failure
+        } else {
+            amygdala.spikeCortisol(0.05); // Minor stress from other errors
+        }
+
         lastError = err;
         // Continue to next provider
       }
@@ -405,19 +422,35 @@ export default class LLMProvider {
       };
     }
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    // Notify UI of deep thinking
+    bus.publish("synapsys", "synapsys:event", {
+        type: "thought",
+        payload: {
+            text: `Consulting Gemini 3 Pro (${model})... This may take a moment.`
+        }
     });
 
-    if (!res.ok) {
-      const err = await safeJson(res);
-      throw new Error(`Gemini error ${res.status}: ${JSON.stringify(err)}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300000); // 5 minutes for deep reasoning
+
+    try {
+        const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal
+        });
+
+        if (!res.ok) {
+        const err = await safeJson(res);
+        throw new Error(`Gemini error ${res.status}: ${JSON.stringify(err)}`);
+        }
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return { content: text, confidence: 0.75 };
+    } finally {
+        clearTimeout(timeout);
     }
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    return { content: text, confidence: 0.75 };
   }
 
   // OSS Provider implementations
@@ -631,7 +664,7 @@ const providerBuilders = {
   gemini: () => {
     const rawKey = (process.env.GEMINI_API_KEY || "").trim();
     const key = rawKey.startsWith("sk-") ? rawKey.slice(3) : rawKey;
-    const model = env("GEMINI_MODEL", "gemini-3.0-pro-preview");
+    const model = env("GEMINI_MODEL", "gemini-3-pro-preview");
     return {
       name: "gemini",
       url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -786,7 +819,7 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
     throw new Error("Provider or API key missing");
   }
 
-  const headers = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (config.header && config.key) {
     headers[config.header] =
       config.header === "Authorization" ? `Bearer ${config.key}` : config.key;
@@ -830,32 +863,43 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
     }
   }
 
-  const res = await fetch(requestUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(bodyObj),
-  });
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
 
-  const data = await res.json();
-  if (provider === "deepseek") return data.choices?.[0]?.message?.content || "";
-  if (provider === "gemini")
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  if (provider === "claude" || provider === "anthropic")
-    return data.content?.[0]?.text || "";
-  if (provider === "openai") return data.choices?.[0]?.message?.content || "";
-  if (provider === "huggingface") return data[0]?.generated_text || "";
-  if (provider === "ollama") return data.message?.content || "";
-  if (provider === "localai") return data.choices?.[0]?.message?.content || "";
-  if (provider === "openinterpreter") {
-    return Array.isArray(data)
-      ? data.map((chunk) => chunk.content || chunk.message || "").join("")
-      : data.content || data.message || "";
-  }
+  try {
+    const res = await fetch(requestUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(bodyObj),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-  return "";
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    const data: any = await res.json();
+    if (provider === "gemini")
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    if (provider === "deepseek") return data.choices?.[0]?.message?.content || "";
+    if (provider === "claude" || provider === "anthropic")
+      return data.content?.[0]?.text || "";
+    if (provider === "openai") return data.choices?.[0]?.message?.content || "";
+    if (provider === "huggingface") return data[0]?.generated_text || "";
+    if (provider === "ollama") return data.message?.content || "";
+    if (provider === "localai") return data.choices?.[0]?.message?.content || "";
+    if (provider === "openinterpreter") {
+      return Array.isArray(data)
+        ? data.map((chunk: any) => chunk.content || chunk.message || "").join("")
+        : data.content || data.message || "";
+    }
+
+    return "";
+      } catch (error: any) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 }
 
 function providerEnabled(name) {
@@ -981,6 +1025,17 @@ export async function generateSmartLLM({
   criticality = "normal",
   maxTokens,
 }) {
+  // Amygdala Integration: Check stress levels
+  if (
+    amygdala.currentState === AmygdalaState.CRITICAL ||
+    amygdala.currentState === AmygdalaState.PANIC
+  ) {
+    console.warn(
+      `[LLMProvider] Amygdala High Stress (${amygdala.currentState}). Downgrading criticality to 'low'.`,
+    );
+    criticality = "low"; // Force cheaper/faster models to reduce load/cost
+  }
+
   const det = taskType
     ? { type: taskType, matches: 0 }
     : detectTaskType(prompt);
@@ -1087,11 +1142,24 @@ export async function generateSmartLLM({
         };
       }
       tried.push({ name, available: true, empty: true });
-    } catch (e) {
+    } catch (e: any) {
+      console.error(`[LLMProvider] ${name} failed:`, e.message);
+
+      // Amygdala Feedback: Report pain/stress
+      if (
+        e.message.includes("503") ||
+        e.message.includes("429") ||
+        e.message.includes("overloaded")
+      ) {
+        amygdala.spikeCortisol(0.2); // Significant stress for overload
+      } else {
+        amygdala.spikeCortisol(0.05); // Minor stress for other errors
+      }
+
       tried.push({ name, available: true, error: e.message?.slice(0, 200) });
     }
   }
-  const err = new Error("All providers failed");
+  const err: any = new Error("All providers failed");
   err.details = tried;
   throw err;
 }

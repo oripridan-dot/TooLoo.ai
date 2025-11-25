@@ -1,4 +1,4 @@
-// @version 2.1.242
+// @version 2.1.243
 import { bus } from "../core/event-bus.js";
 import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
@@ -10,7 +10,11 @@ import { PrefrontalCortex } from "./planning/index.js";
 import { synthesizer } from "../precog/synthesizer.js";
 import { TOOLOO_PERSONA } from "./persona.js";
 import { tracer } from "./tracer.js";
+import { metaprogrammer } from "./metaprogrammer.js";
 import { ProjectManager } from "./project-manager.js";
+import { visualCortex } from "./imagination/visual-cortex.js";
+import { registry } from "../core/module-registry.js";
+import { SYSTEM_VERSION } from "../core/system-info.js";
 
 export class Cortex {
   private motor: MotorCortex;
@@ -21,10 +25,20 @@ export class Cortex {
 
   constructor() {
     console.log("[Cortex] Initializing Cognitive Core...");
+    
+    registry.register({
+        name: "cortex",
+        version: SYSTEM_VERSION,
+        status: "booting"
+    });
+
     // Ensure sub-modules are instantiated
+    const _0 = amygdala; // Initialize Amygdala first for protection
     const _ = orchestrator;
     const __ = capabilities;
     const ___ = tracer;
+    const ____ = metaprogrammer;
+    const _____ = visualCortex;
 
     this.motor = new MotorCortex(bus, process.cwd());
     this.sensory = new SensoryCortex(bus, process.cwd());
@@ -245,4 +259,5 @@ export class Cortex {
   }
 }
 
+export { visualCortex } from "./imagination/visual-cortex.js";
 export const cortex = new Cortex();

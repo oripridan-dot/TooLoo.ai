@@ -6,7 +6,7 @@ export enum AmygdalaState {
   CALM = "CALM",
   ALERT = "ALERT",
   PANIC = "PANIC",
-  CRITICAL = "CRITICAL"
+  CRITICAL = "CRITICAL",
 }
 
 export class Amygdala {
@@ -15,7 +15,7 @@ export class Amygdala {
   private eventCount: number = 0;
   private lastTick: number = Date.now();
   private eventHistory: number[] = []; // Rolling window of event counts per second
-  
+
   // Thresholds
   private readonly MEMORY_WARNING_THRESHOLD = 0.7; // 70% of max heap
   private readonly MEMORY_CRITICAL_THRESHOLD = 0.9; // 90% of max heap
@@ -25,6 +25,16 @@ export class Amygdala {
     console.log("[Amygdala] Initializing Survival Instincts...");
     this.startMonitoring();
     this.setupReflexes();
+  }
+
+  public spikeCortisol(amount: number) {
+    this.cortisol = Math.min(1.0, this.cortisol + amount);
+    this.updateState();
+    console.warn(`[Amygdala] Cortisol spike: +${amount.toFixed(2)} -> ${this.cortisol.toFixed(2)}`);
+  }
+
+  public get currentState(): AmygdalaState {
+    return this.state;
   }
 
   private startMonitoring() {
@@ -62,7 +72,9 @@ export class Amygdala {
 
     // Log if stressed
     if (this.state !== AmygdalaState.CALM) {
-      console.warn(`[Amygdala] State: ${this.state} | Cortisol: ${this.cortisol.toFixed(2)} | MemStress: ${memoryStress.toFixed(2)} | Load: ${cognitiveLoad.toFixed(2)}`);
+      console.warn(
+        `[Amygdala] State: ${this.state} | Cortisol: ${this.cortisol.toFixed(2)} | MemStress: ${memoryStress.toFixed(2)} | Load: ${cognitiveLoad.toFixed(2)}`,
+      );
     }
   }
 
@@ -80,14 +92,14 @@ export class Amygdala {
   private checkCognitiveLoad(): number {
     // Simple heuristic: if events > threshold, stress increases
     if (this.eventCount > this.EVENT_SPIKE_THRESHOLD) {
-        return 0.1 + ((this.eventCount - this.EVENT_SPIKE_THRESHOLD) / 100);
+      return 0.1 + (this.eventCount - this.EVENT_SPIKE_THRESHOLD) / 100;
     }
     return 0;
   }
 
   private updateState() {
     const oldState = this.state;
-    
+
     if (this.cortisol > 0.9) this.state = AmygdalaState.CRITICAL;
     else if (this.cortisol > 0.7) this.state = AmygdalaState.PANIC;
     else if (this.cortisol > 0.4) this.state = AmygdalaState.ALERT;
@@ -95,14 +107,14 @@ export class Amygdala {
 
     if (oldState !== this.state) {
       console.log(`[Amygdala] State changed: ${oldState} -> ${this.state}`);
-      bus.publish("system", "amygdala:state_change", { 
-        from: oldState, 
-        to: this.state, 
-        cortisol: this.cortisol 
+      bus.publish("system", "amygdala:state_change", {
+        from: oldState,
+        to: this.state,
+        cortisol: this.cortisol,
       });
-      
+
       if (this.state === AmygdalaState.CRITICAL) {
-          this.emergencyShutdown();
+        this.emergencyShutdown();
       }
     }
   }
@@ -113,7 +125,10 @@ export class Amygdala {
       this.eventCount++;
 
       // Always allow system/amygdala events to pass (so we don't block our own recovery)
-      if (event.type.startsWith("amygdala:") || event.type.startsWith("system:")) {
+      if (
+        event.type.startsWith("amygdala:") ||
+        event.type.startsWith("system:")
+      ) {
         return true;
       }
 
@@ -124,17 +139,17 @@ export class Amygdala {
 
         case AmygdalaState.ALERT:
           // Mild throttling: Add small delay to slow down the loop
-          await new Promise(resolve => setTimeout(resolve, 10)); 
+          await new Promise((resolve) => setTimeout(resolve, 10));
           return true;
 
         case AmygdalaState.PANIC:
           // Fight or Flight: Block non-essential sensory inputs
           if (event.source === "nexus" || event.type.includes("sensory")) {
-             // Flight: Ignore external stimuli
-             return false; 
+            // Flight: Ignore external stimuli
+            return false;
           }
           // Throttling
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
           return true;
 
         case AmygdalaState.CRITICAL:
@@ -146,17 +161,21 @@ export class Amygdala {
   }
 
   private emergencyShutdown() {
-      console.error("[Amygdala] CRITICAL STRESS LEVEL. INITIATING EMERGENCY PROTOCOLS.");
-      // In a real scenario, we might try to save state.
-      // For now, we just want to stop the bleeding.
-      // We could emit a special event to stop all loops.
-      bus.publish("system", "system:emergency_stop", { reason: "Cortisol Overload" });
-      
-      // Force GC if possible (requires --expose-gc, usually not available but good intent)
-      if (global.gc) {
-          console.log("[Amygdala] Forcing Garbage Collection...");
-          global.gc();
-      }
+    console.error(
+      "[Amygdala] CRITICAL STRESS LEVEL. INITIATING EMERGENCY PROTOCOLS.",
+    );
+    // In a real scenario, we might try to save state.
+    // For now, we just want to stop the bleeding.
+    // We could emit a special event to stop all loops.
+    bus.publish("system", "system:emergency_stop", {
+      reason: "Cortisol Overload",
+    });
+
+    // Force GC if possible (requires --expose-gc, usually not available but good intent)
+    if (global.gc) {
+      console.log("[Amygdala] Forcing Garbage Collection...");
+      global.gc();
+    }
   }
 }
 

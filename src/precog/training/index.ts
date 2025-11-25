@@ -44,7 +44,7 @@ export class TrainingService extends EventEmitter {
     this.sourcesStateFile = path.join(
       this.workspaceRoot,
       "data",
-      "sources-github-state.json"
+      "sources-github-state.json",
     );
     this.initializeEngines();
   }
@@ -309,7 +309,7 @@ export class TrainingService extends EventEmitter {
           type: "object",
           properties: ["ok", "domains", "questionsProcessed"],
         },
-      }
+      },
     );
   }
 
@@ -336,7 +336,7 @@ export class TrainingService extends EventEmitter {
   async startTrainingSession(
     userId: string,
     focusArea: string,
-    roundCount?: number
+    roundCount?: number,
   ) {
     return await this.trainingCamp.startTraining(userId, focusArea, {
       roundCount,
@@ -370,7 +370,7 @@ export class TrainingService extends EventEmitter {
   async startChallenge(
     userId: string,
     skill: string,
-    difficulty: string = "medium"
+    difficulty: string = "medium",
   ) {
     return await this.trainingCamp.startChallenge(userId, skill, difficulty);
   }
@@ -409,6 +409,9 @@ export class TrainingService extends EventEmitter {
     };
 
     this.feedbackStore.feedback.push(feedbackEntry);
+    if (this.feedbackStore.feedback.length > 1000) {
+      this.feedbackStore.feedback.shift();
+    }
     this.feedbackStore.count = this.feedbackStore.feedback.length;
     this.feedbackStore.lastUpdated = Date.now();
 
@@ -437,7 +440,7 @@ export class TrainingService extends EventEmitter {
 
   getProviderFeedback(provider: string) {
     const providerFeedback = this.feedbackStore.feedback.filter(
-      (f) => f.provider === provider
+      (f) => f.provider === provider,
     );
     const avg = (arr: number[]) =>
       arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
@@ -476,6 +479,9 @@ export class TrainingService extends EventEmitter {
     };
 
     this.metricsStore.responses.push(metricEntry);
+    if (this.metricsStore.responses.length > 1000) {
+      this.metricsStore.responses.shift();
+    }
     this.metricsStore.lastUpdated = Date.now();
 
     if (!this.metricsStore.providers[provider]) {
@@ -538,7 +544,7 @@ export class TrainingService extends EventEmitter {
 
   getUserProfile(userId: string) {
     const userInteractions = this.feedbackStore.interactions.filter(
-      (i) => i.userId === userId
+      (i) => i.userId === userId,
     );
 
     return {
@@ -553,7 +559,7 @@ export class TrainingService extends EventEmitter {
 
   getRecommendations(userId: string, currentQuery: string = "") {
     const userInteractions = this.feedbackStore.interactions.filter(
-      (i) => i.userId === userId
+      (i) => i.userId === userId,
     );
 
     return {

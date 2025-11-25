@@ -40,3 +40,25 @@ export interface ProviderAdapter {
     generate(req: GenerationRequest): Promise<GenerationResponse>;
     embed?(text: string): Promise<number[]>; // Optional embedding support
 }
+
+export interface ImageGenerationRequest {
+    prompt: string;
+    provider?: 'gemini' | 'openai'; // Select provider
+    model?: string; // 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview' | 'dall-e-3'
+    aspectRatio?: string; // "1:1", "16:9", etc.
+    imageSize?: string; // "1K", "2K", "4K" (for Pro)
+    negativePrompt?: string;
+    referenceImages?: {
+        data: string; // base64
+        mimeType: string;
+    }[];
+    mode?: 'generate' | 'edit';
+}
+
+export interface ImageGenerationResponse {
+    images: {
+        data: string; // base64
+        mimeType: string;
+    }[];
+    metadata?: any;
+}

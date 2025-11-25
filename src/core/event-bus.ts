@@ -9,7 +9,9 @@ export interface SynapsysEvent<T = any> {
   timestamp: number;
 }
 
-export type EventInterceptor = (event: SynapsysEvent) => boolean | Promise<boolean>;
+export type EventInterceptor = (
+  event: SynapsysEvent,
+) => boolean | Promise<boolean>;
 
 export class EventBus extends EventEmitter {
   private id: string;

@@ -13,6 +13,7 @@ import githubRoutes from "./routes/github.js";
 import projectsRoutes from "./routes/projects.js";
 import chatRoutes from "./routes/chat.js";
 import designRoutes from "./routes/design.js";
+import visualsRoutes from "./routes/visuals.js";
 import workflowsRoutes from "./routes/workflows.js";
 import observabilityRoutes from "./routes/observability.js";
 import contextRoutes from "./routes/context.js";
@@ -54,6 +55,7 @@ export function startNexus(port?: number) {
   app.use("/api/v1/projects", projectsRoutes);
   app.use("/api/v1/chat", chatRoutes);
   app.use("/api/v1/design", designRoutes);
+  app.use("/api/v1/visuals", visualsRoutes);
   app.use("/api/v1/workflows", workflowsRoutes);
   app.use("/api/v1/observability", observabilityRoutes);
   app.use("/api/v1/context", contextRoutes);
@@ -82,6 +84,11 @@ export function startNexus(port?: number) {
   const webAppPath = path.join(process.cwd(), "src", "web-app");
   app.use(express.static(webAppPath));
   console.log(`[Nexus] Serving static files from: ${webAppPath}`);
+
+  // Serve React App Build
+  const distPath = path.join(process.cwd(), "src", "web-app", "dist");
+  app.use("/app", express.static(distPath));
+  console.log(`[Nexus] Serving React app from: ${distPath}`);
 
   // Health Check
   app.get("/health", (req, res) => {
