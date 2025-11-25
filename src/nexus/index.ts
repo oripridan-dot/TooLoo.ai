@@ -1,4 +1,4 @@
-// @version 2.1.240
+// @version 2.1.263
 import express from "express";
 import { createServer } from "http";
 import path from "path";
@@ -17,9 +17,26 @@ import workflowsRoutes from "./routes/workflows.js";
 import observabilityRoutes from "./routes/observability.js";
 import contextRoutes from "./routes/context.js";
 import { trainingRoutes } from "./routes/training.js";
+import { registry } from "../core/module-registry.js";
+import { SYSTEM_VERSION } from "../core/system-info.js";
+import { autoArchitect } from "./auto-architect.js";
+import { NexusInterface } from "./interface.js";
 
 export function startNexus(port?: number) {
   const PORT = port || Number(process.env.PORT) || 4000;
+  
+  // Initialize Auto-Architect
+  const _ = autoArchitect;
+  // Initialize Nexus Interface (Synapse)
+  const synapse = new NexusInterface();
+
+  registry.register({
+    name: "nexus",
+    version: SYSTEM_VERSION,
+    status: "booting",
+    meta: { port: PORT }
+  });
+
   const app = express();
   const httpServer = createServer(app);
 
