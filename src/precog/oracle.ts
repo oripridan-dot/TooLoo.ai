@@ -1,18 +1,16 @@
-// @version 2.1.232
-import { SynapseBus } from '../core/bus/event-bus';
+// @version 2.1.261
+import { bus } from '../core/event-bus.js';
 import { smartFS } from '../core/fs-manager.js';
 
 export class Oracle {
-    private bus: SynapseBus;
 
     constructor() {
-        this.bus = SynapseBus.getInstance();
         this.setupListeners();
     }
 
     private setupListeners() {
-        this.bus.subscribe('system:file_changed', (event: any) => {
-            this.analyzeChange(event.data);
+        bus.on('system:file_changed', (event: any) => {
+            this.analyzeChange(event.payload);
         });
     }
 
@@ -35,11 +33,11 @@ export class Oracle {
         
         // In a real system, this would trigger a proactive prompt to the user
         // or even auto-generate the test in the background.
-        this.bus.publish('precog:prediction', {
+        bus.publish('precog-oracle', 'precog:prediction', {
             type: 'suggestion',
             content: `It looks like you're working on ${filePath}. Would you like me to generate a Vitest suite for it?`,
             confidence: 0.85,
             context: { filePath, bundle: contextBundle }
-        }, 'precog-oracle');
+        });
     }
 }
