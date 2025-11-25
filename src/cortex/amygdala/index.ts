@@ -1,5 +1,6 @@
-// @version 2.1.241
+// @version 2.1.243
 import { bus, SynapsysEvent } from "../../core/event-bus.js";
+import * as v8 from "v8";
 
 export enum AmygdalaState {
   CALM = "CALM",
@@ -16,8 +17,8 @@ export class Amygdala {
   private eventHistory: number[] = []; // Rolling window of event counts per second
   
   // Thresholds
-  private readonly MEMORY_WARNING_THRESHOLD = 0.7; // 70% of heap
-  private readonly MEMORY_CRITICAL_THRESHOLD = 0.9; // 90% of heap
+  private readonly MEMORY_WARNING_THRESHOLD = 0.7; // 70% of max heap
+  private readonly MEMORY_CRITICAL_THRESHOLD = 0.9; // 90% of max heap
   private readonly EVENT_SPIKE_THRESHOLD = 50; // Events per second
 
   constructor() {
@@ -66,13 +67,13 @@ export class Amygdala {
   }
 
   private checkMemory(): number {
-    const mem = process.memoryUsage();
-    const heapUsed = mem.heapUsed;
-    const heapTotal = mem.heapTotal;
-    const ratio = heapUsed / heapTotal;
+    const stats = v8.getHeapStatistics();
+    const heapUsed = stats.used_heap_size;
+    const heapLimit = stats.heap_size_limit;
+    const ratio = heapUsed / heapLimit;
 
-    if (ratio > this.MEMORY_CRITICAL_THRESHOLD) return 0.3; // High stress increase
-    if (ratio > this.MEMORY_WARNING_THRESHOLD) return 0.1; // Moderate stress increase
+    if (ratio > this.MEMORY_CRITICAL_THRESHOLD) return 0.1; // High stress increase
+    if (ratio > this.MEMORY_WARNING_THRESHOLD) return 0.05; // Moderate stress increase
     return 0;
   }
 
