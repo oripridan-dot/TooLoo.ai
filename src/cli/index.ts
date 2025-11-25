@@ -1,4 +1,4 @@
-// @version 2.1.283
+// @version 2.1.284
 #!/usr/bin/env node
 import { Command } from "commander";
 import { deployCommand } from "./commands/deploy.js";
