@@ -2,6 +2,7 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import { generateLLM } from "../precog/providers/llm-provider.js";
+import { smartFS } from "../core/fs-manager.js";
 
 export interface Project {
   id: string;
@@ -49,7 +50,7 @@ export class ProjectManager {
   }
 
   private async save() {
-    await fs.writeFile(this.dataPath, JSON.stringify(this.projects, null, 2));
+    await smartFS.writeSafe(this.dataPath, JSON.stringify(this.projects, null, 2));
   }
 
   async listProjects() {

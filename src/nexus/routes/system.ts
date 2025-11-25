@@ -3,8 +3,21 @@ import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import fs from "fs-extra";
 import path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
 
+const execAsync = promisify(exec);
 const router = Router();
+
+// Helper to execute shell commands (duplicated from github.ts for independence)
+async function execCommand(command: string, cwd: string = process.cwd()) {
+  try {
+    const { stdout, stderr } = await execAsync(command, { cwd });
+    return { stdout: stdout.trim(), stderr: stderr.trim() };
+  } catch (error: any) {
+    throw new Error(error.stderr || error.message);
+  }
+}
 
 // System Status
 router.get("/status", (req, res) => {
@@ -70,7 +83,7 @@ router.get("/introspect", (req, res) => {
 
 // Self-Patch (Self-Modification)
 router.post("/self-patch", async (req, res) => {
-  const { action, file, content, message } = req.body;
+  const { action, file, content, message, branch, createPr } = req.body;
 
   if (!action) {
     return res.status(400).json({ ok: false, error: "Action required" });
@@ -100,22 +113,48 @@ router.post("/self-patch", async (req, res) => {
       }
       
       try {
+        // 1. Write the file (Direct Commit / Local Change)
         // Use SmartFS for safe writing
         await smartFS.writeSafe(file, content);
+
+        // 2. Handle GitHub Integration if requested
+        let prUrl = null;
+        if (createPr && message) {
+            const targetBranch = branch || `patch-${Date.now()}`;
+            
+            // Create branch
+            await execCommand(`git checkout -b ${targetBranch}`);
+            
+            // Commit
+            await execCommand(`git add "${file}"`);
+            await execCommand(`git commit -m "${message}"`);
+            
+            // Push & PR
+            await execCommand(`git push -u origin ${targetBranch}`);
+            const { stdout } = await execCommand(`gh pr create --title "${message}" --body "Auto-generated patch by TooLoo.ai" --head ${targetBranch} --base main`);
+            prUrl = stdout;
+
+            // Switch back to main (optional, depending on workflow)
+            await execCommand(`git checkout main`);
+        }
+
+        bus.publish("nexus", "system:self_patch", {
+            action,
+            file,
+            message: message || "Self-patch applied",
+            prUrl
+        });
+
+        res.json({
+            ok: true,
+            message: `File ${file} ${action === "create" ? "created" : "updated"}`,
+            prUrl
+        });
+
       } catch (e: any) {
         return res.status(500).json({ ok: false, error: e.message });
       }
 
-      bus.publish("nexus", "system:self_patch", {
-        action,
-        file,
-        message: message || "Self-patch applied",
-      });
-
-      res.json({
-        ok: true,
-        message: `File ${file} ${action === "create" ? "created" : "updated"}`,
-      });
     } else {
       res.status(400).json({ ok: false, error: "Invalid action" });
     }

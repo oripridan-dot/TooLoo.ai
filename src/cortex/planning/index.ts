@@ -43,5 +43,27 @@ export class PrefrontalCortex {
         console.error(`[PrefrontalCortex] Execution error: ${err.message}`);
       }
     });
+
+    // Listen for replan requests
+    this.bus.on("planning:replan:request", async (event: SynapsysEvent) => {
+      const { originalPlan, failedStep, critique } = event.payload;
+      console.log(`[PrefrontalCortex] Replanning for: "${originalPlan.goal}"`);
+
+      // 1. Re-Plan with context
+      const plan = await this.planner.createPlan(originalPlan.goal, {
+        critique,
+        failedStep,
+      });
+
+      // 2. Announce New Plan
+      this.bus.publish("cortex", "planning:plan:created", { plan });
+
+      // 3. Execute
+      try {
+        await this.executive.execute(plan);
+      } catch (err: any) {
+        console.error(`[PrefrontalCortex] Execution error (Replan): ${err.message}`);
+      }
+    });
   }
 }

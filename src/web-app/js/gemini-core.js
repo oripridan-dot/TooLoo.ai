@@ -8,7 +8,7 @@ function loadView(viewName, params = {}) {
   // Update Nav
   navItems.forEach((item) => item.classList.remove("active"));
   const activeNav = Array.from(navItems).find((item) =>
-    item.innerText.toLowerCase().includes(viewName)
+    item.innerText.toLowerCase().includes(viewName),
   );
   if (activeNav) activeNav.classList.add("active");
 
@@ -42,6 +42,7 @@ function loadView(viewName, params = {}) {
     projects: "projects.html",
     design: "design-studio.html",
     control: "control-room-modern.html",
+    traces: "trace-viewer.html",
     workbench: "/workbench",
   };
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <!-- @version 2.1.40 -->
 <html lang="en">
   <head>
@@ -168,7 +168,7 @@
           <div class="preview-frame">
             <iframe
               id="previewFrame"
-              src="/dashboard.html"
+              src="/design-placeholder.html"
               style="width: 100%; height: 100%; border: none"
             ></iframe>
           </div>
@@ -320,7 +320,7 @@
           document.getElementById("jsonOutput").textContent = JSON.stringify(
             currentSystem,
             null,
-            2
+            2,
           );
         }
       }
@@ -379,10 +379,12 @@
         renderTokens(colors);
 
         log(`Loaded system: ${system.brand?.name || "Unknown"}`);
-        
+
         // Switch to tokens view to show result
-        const tokensBtn = document.querySelector('.view-btn[onclick="switchView(\'tokens\')"]');
-        if(tokensBtn) tokensBtn.click();
+        const tokensBtn = document.querySelector(
+          ".view-btn[onclick=\"switchView('tokens')\"]",
+        );
+        if (tokensBtn) tokensBtn.click();
       }
 
       function renderTokens(tokens) {
@@ -390,8 +392,8 @@
         grid.innerHTML = "";
 
         if (Object.keys(tokens).length === 0) {
-             grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">No tokens found in this system.</div>`;
-             return;
+          grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">No tokens found in this system.</div>`;
+          return;
         }
 
         Object.entries(tokens).forEach(([key, val]) => {
@@ -439,7 +441,7 @@
           e.preventDefault();
           const btn = e.target.querySelector("button");
           const url = document.getElementById("websiteUrl").value;
-          
+
           setLoading(btn, true, "Extracting...");
           log(`Extracting from ${url}...`);
 
@@ -539,15 +541,17 @@
                 iframe.src = artifact.url;
 
                 // Switch to preview view
-                const previewBtn = document.querySelector('.view-btn[onclick="switchView(\'preview\')"]');
-                if(previewBtn) previewBtn.click();
+                const previewBtn = document.querySelector(
+                  ".view-btn[onclick=\"switchView('preview')\"]",
+                );
+                if (previewBtn) previewBtn.click();
               } else {
                 log("No design artifact generated.", "error");
               }
             } else {
               log(
                 "Scaffold failed: " + (data.error || "Unknown error"),
-                "error"
+                "error",
               );
             }
           } catch (e) {

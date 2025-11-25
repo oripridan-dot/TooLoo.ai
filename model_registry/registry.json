@@ -1,0 +1,17 @@
+{
+  "models": {
+    "demo-transformer": {
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "timestamp": "2025-11-23T23:00:27.532706",
+          "path": "./model_registry/demo-transformer/v1.0.0",
+          "metadata": {
+            "accuracy": 0.92,
+            "author": "tooloo-ai"
+          }
+        }
+      ]
+    }
+  }
+}

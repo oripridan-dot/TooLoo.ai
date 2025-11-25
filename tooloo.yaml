@@ -1,0 +1,10 @@
+project:
+  name: "tooloo-core"
+  version: "2.1.56"
+
+deploy:
+  target: "local"
+  resources:
+    cpu: "2"
+    memory: "4Gi"
+    gpu: false

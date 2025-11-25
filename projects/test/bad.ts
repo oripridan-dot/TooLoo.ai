@@ -1,2 +1,1 @@
-// @version 2.1.168
-const x: number = "string";
+let x: number = 42; // Corrected to use 'let' and a valid number

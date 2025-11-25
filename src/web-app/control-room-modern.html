@@ -482,7 +482,7 @@ Loading...</pre
 
           // Issues
           const issuesRes = await fetch(
-            `${API_BASE}/api/v1/github/issues?limit=5`
+            `${API_BASE}/api/v1/github/issues?limit=5`,
           );
           const issuesData = await issuesRes.json();
 
@@ -514,7 +514,7 @@ Loading...</pre
                 <a href="${i.url}" target="_blank" class="btn" style="text-decoration: none;">View</a>
               </div>
             </div>
-          `
+          `,
               )
               .join("");
           }
@@ -552,7 +552,7 @@ Loading...</pre
 
       function showCreatePRModal() {
         alert(
-          "PR creation requires more inputs. Use the API directly for now."
+          "PR creation requires more inputs. Use the API directly for now.",
         );
       }
 
@@ -564,7 +564,7 @@ Loading...</pre
           document.getElementById("awarenessData").textContent = JSON.stringify(
             awareData,
             null,
-            2
+            2,
           );
 
           const introRes = await fetch(`${API_BASE}/api/v1/system/introspect`);
@@ -621,7 +621,7 @@ Loading...</pre
           // Update metrics
           const processes = sysData.processes || [];
           const runningCount = processes.filter(
-            (p) => p.status === "running"
+            (p) => p.status === "running",
           ).length;
 
           document.getElementById("servicesCount").textContent = runningCount;
@@ -646,7 +646,7 @@ Loading...</pre
               ${p.status === "running" ? `<span style="font-size: 11px; color: var(--success);">● Running</span>` : `<span style="font-size: 11px; color: var(--danger);">● Offline</span>`}
             </div>
           </div>
-        `
+        `,
             )
             .join("");
 
@@ -687,7 +687,7 @@ Loading...</pre
           document.getElementById("providerPriority").innerHTML = priority
             .map(
               (p, i) =>
-                `<div class="metric-row"><span>${i + 1}. ${p}</span></div>`
+                `<div class="metric-row"><span>${i + 1}. ${p}</span></div>`,
             )
             .join("");
 
@@ -705,7 +705,7 @@ Loading...</pre
               <button class="btn" onclick="selectProvider('${p.id}')">Use</button>
             </div>
           </div>
-        `
+        `,
             )
             .join("");
         } catch (err) {
@@ -719,7 +719,7 @@ Loading...</pre
       async function loadFeatures() {
         try {
           const res = await fetch(
-            `${API_BASE}/api/v1/system/real-capabilities`
+            `${API_BASE}/api/v1/system/real-capabilities`,
           );
           const data = await res.json();
           const capData = data.content || data;
@@ -737,7 +737,7 @@ Loading...</pre
               ${f.status === "active" ? "✓ Active" : "⚠ " + (f.status || "Available")}
             </div>
           </div>
-        `
+        `,
             )
             .join("");
         } catch (err) {
@@ -762,7 +762,7 @@ Loading...</pre
             <div class="setting-label">${s.name}</div>
             <div class="setting-value">${s.value || "Not set"}</div>
           </div>
-        `
+        `,
             )
             .join("");
         } catch (err) {
@@ -839,7 +839,7 @@ Loading...</pre
             body: JSON.stringify({ enabled: newState }),
           });
           const data = await res.json();
-          
+
           if (data.ok) {
             if (newState) {
               btn.classList.add("btn-warning");

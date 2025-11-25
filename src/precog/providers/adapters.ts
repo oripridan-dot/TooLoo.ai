@@ -6,6 +6,7 @@ export abstract class BaseProvider implements ProviderAdapter {
     constructor(protected config: ProviderConfig) {}
 
     get name() { return this.config.name; }
+    get type() { return this.config.type; }
 
     isAvailable(): boolean {
         if (!this.config.enabled) return false;
@@ -52,6 +53,21 @@ export class OpenAIProvider extends BaseProvider {
             model: this.config.model,
             latency: Date.now() - start
         };
+    }
+
+    async embed(text: string): Promise<number[]> {
+        const data = await this.fetchJson('https://api.openai.com/v1/embeddings', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.config.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "text-embedding-3-small",
+                input: text
+            })
+        });
+        return data.data[0].embedding;
     }
 }
 

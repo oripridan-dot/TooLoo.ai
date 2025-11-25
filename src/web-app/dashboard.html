@@ -543,13 +543,16 @@
       const charts = {};
 
       function initializeMetricCards() {
-        metrics.responseTime = vizEngine.createMetricCard("metric-response-time", {
-          label: "Response Time",
-          value: "245",
-          unit: "ms",
-          trend: "down",
-          color: BRAND_COLORS.primary,
-        });
+        metrics.responseTime = vizEngine.createMetricCard(
+          "metric-response-time",
+          {
+            label: "Response Time",
+            value: "245",
+            unit: "ms",
+            trend: "down",
+            color: BRAND_COLORS.primary,
+          },
+        );
 
         metrics.accuracy = vizEngine.createMetricCard("metric-accuracy", {
           label: "Accuracy Score",
@@ -582,14 +585,14 @@
           value: 80 + Math.random() * 20,
           label: `T-${10 - i}`,
         }));
-        
+
         charts.performance = vizEngine.createDataVisualization(
           "chart-performance",
           perfData,
           {
             type: "line",
             title: "System Performance (Last 10m)",
-          }
+          },
         );
 
         // Provider Usage Chart (Bar)
@@ -606,7 +609,7 @@
           {
             type: "bar",
             title: "Provider Distribution",
-          }
+          },
         );
       }
 
@@ -617,7 +620,7 @@
             const val = 200 + Math.floor(Math.random() * 100);
             metrics.responseTime.update(val, val < 250 ? "down" : "up");
           }
-          
+
           if (metrics.accuracy) {
             const val = (95 + Math.random() * 5).toFixed(1);
             metrics.accuracy.update(val, "up");
@@ -684,7 +687,7 @@
 
         // Update header stats
         const activeCount = Object.values(systemStatus).filter(
-          (s) => s === "active"
+          (s) => s === "active",
         ).length;
         document.getElementById("activeServices").textContent =
           `${activeCount}/${SERVICES.length}`;
@@ -699,17 +702,17 @@
         try {
           // Load from localStorage if available
           const feedback = JSON.parse(
-            localStorage.getItem("tooloo_feedback") || "[]"
+            localStorage.getItem("tooloo_feedback") || "[]",
           );
           document.getElementById("totalFeedback").textContent =
             feedback.length;
 
           if (feedback.length > 0) {
             const helpful = feedback.filter(
-              (f) => f.reaction === "helpful"
+              (f) => f.reaction === "helpful",
             ).length;
             const accurate = feedback.filter(
-              (f) => f.reaction === "accurate"
+              (f) => f.reaction === "accurate",
             ).length;
             document.getElementById("helpfulRate").textContent =
               `${Math.round((helpful / feedback.length) * 100)}%`;
@@ -724,21 +727,18 @@
       async function activateCapabilities() {
         console.log("Activating core capabilities...");
         try {
-          const response = await fetch(
-            "http://127.0.0.1:3009/api/v1/capabilities/activate",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                capabilities: [
-                  "enhancedLearning",
-                  "predictiveEngine",
-                  "userModelEngine",
-                ],
-                priority: "high",
-              }),
-            }
-          );
+          const response = await fetch("/api/v1/capabilities/activate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              capabilities: [
+                "enhancedLearning",
+                "predictiveEngine",
+                "userModelEngine",
+              ],
+              priority: "high",
+            }),
+          });
 
           if (response.ok) {
             alert("✅ Capabilities activated successfully!");
@@ -747,6 +747,35 @@
         } catch (err) {
           console.error("Activation failed:", err);
         }
+      }
+
+      function simulateQueryFlow() {
+        const container = document.getElementById("query-progress-container");
+        container.innerHTML = "";
+
+        const steps = [
+          "Analyzing Intent",
+          "Selecting Provider",
+          "Generating Response",
+          "Validating Output",
+        ];
+        let current = 0;
+
+        const interval = setInterval(() => {
+          if (current >= steps.length) {
+            clearInterval(interval);
+            container.innerHTML += `<div style="color: #10b981; font-size: 12px; margin-top: 8px;">✅ Query Complete</div>`;
+            return;
+          }
+
+          const step = document.createElement("div");
+          step.style.fontSize = "12px";
+          step.style.marginBottom = "4px";
+          step.style.color = "#cbd5e1";
+          step.innerHTML = `⚡ ${steps[current]}...`;
+          container.appendChild(step);
+          current++;
+        }, 800);
       }
 
       function exportMetrics() {
@@ -772,11 +801,11 @@
 
       function viewFeedback() {
         const feedback = JSON.parse(
-          localStorage.getItem("tooloo_feedback") || "[]"
+          localStorage.getItem("tooloo_feedback") || "[]",
         );
         console.table(feedback);
         alert(
-          `Total feedback collected: ${feedback.length}\n\nCheck console for details.`
+          `Total feedback collected: ${feedback.length}\n\nCheck console for details.`,
         );
       }
 

@@ -29,12 +29,15 @@ export class Planner {
   /**
    * Generates a plan based on a high-level goal using the Precog LLM service.
    */
-  async createPlan(goal: string): Promise<Plan> {
+  async createPlan(goal: string, context?: { critique: string; failedStep?: any }): Promise<Plan> {
     console.log(`[Planner] Devising plan for: "${goal}"`);
+    if (context) {
+        console.log(`[Planner] Incorporating critique: ${context.critique}`);
+    }
 
     const planId = Math.random().toString(36).substring(7);
 
-    const systemPrompt = `You are the Prefrontal Cortex of an autonomous AI system. 
+    let systemPrompt = `You are the Prefrontal Cortex of an autonomous AI system. 
 Your task is to break down a high-level goal into a sequence of executable steps.
 The system has the following capabilities (tools):
 1. 'command': Execute a shell command. Payload: { "command": "string", "cwd": "string" (optional) }
@@ -50,7 +53,18 @@ Return ONLY a JSON object with a 'steps' array. Each step must have:
 - 'type': One of the capabilities above.
 - 'description': A short human-readable description.
 - 'payload': The specific arguments for the capability.
+`;
 
+    if (context) {
+        systemPrompt += `
+\nPREVIOUS ATTEMPT FAILED:
+The previous plan failed at step: "${context.failedStep?.description}".
+Critique: "${context.critique}"
+Please generate a NEW plan that addresses this failure. Do not repeat the same mistake.
+`;
+    }
+
+    systemPrompt += `
 Example JSON output:
 {
   "steps": [

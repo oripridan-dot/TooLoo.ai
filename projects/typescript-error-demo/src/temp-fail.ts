@@ -1,2 +1,2 @@
-// @version 2.1.175
-const x: number = 42;
+// Explicitly typing with a type error
+const x: number = 'hello';

@@ -1,15 +1,18 @@
 // @version 2.1.28
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import { FileWatcher } from "./watcher.js";
+import { SemanticParser } from "./semantic-parser.js";
 
 export class SensoryCortex {
   private watcher: FileWatcher;
+  private parser: SemanticParser;
 
   constructor(
     private bus: EventBus,
     private workspaceRoot: string
   ) {
     this.watcher = new FileWatcher(bus, workspaceRoot);
+    this.parser = new SemanticParser(bus, workspaceRoot);
   }
 
   async initialize() {
@@ -18,6 +21,9 @@ export class SensoryCortex {
     // Start watching the workspace
     // We watch the root by default, but exclude heavy folders in the watcher config
     this.watcher.start(["."]);
+
+    // Initial Project Analysis
+    await this.parser.analyzeProject();
 
     this.setupListeners();
 
@@ -34,6 +40,11 @@ export class SensoryCortex {
       console.log(
         `[SensoryCortex] Focus request received: ${JSON.stringify(event.payload)}`
       );
+    });
+
+    // Listen for project re-analysis request
+    this.bus.on("sensory:analyze_project", async () => {
+        await this.parser.analyzeProject();
     });
 
     // Listen for motor output to "see" what the hands are doing

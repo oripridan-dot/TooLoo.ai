@@ -9,7 +9,7 @@ const router = Router();
 const DESIGN_SYSTEM_PATH = path.join(
   process.cwd(),
   "data",
-  "design-system.json"
+  "design-system.json",
 );
 
 // Ensure data dir exists
@@ -39,7 +39,7 @@ if (!fs.existsSync(DESIGN_SYSTEM_PATH)) {
       },
       components: [],
     },
-    { spaces: 2 }
+    { spaces: 2 },
   );
 }
 
@@ -138,11 +138,11 @@ router.post("/extract-from-website", async (req, res) => {
         tokens: {
           colors: colorArray.reduce(
             (acc, c, i) => ({ ...acc, [`color-${i + 1}`]: c }),
-            {}
+            {},
           ),
           typography: fontArray.reduce(
             (acc, f, i) => ({ ...acc, [`font-${i + 1}`]: f }),
-            {}
+            {},
           ),
         },
       };
@@ -161,7 +161,9 @@ router.post("/import-figma", async (req, res) => {
   const { figmaUrl, apiToken } = req.body;
 
   if (!apiToken) {
-    return res.status(400).json({ ok: false, error: "Figma API Token required" });
+    return res
+      .status(400)
+      .json({ ok: false, error: "Figma API Token required" });
   }
 
   try {
@@ -176,13 +178,13 @@ router.post("/import-figma", async (req, res) => {
       `https://api.figma.com/v1/files/${fileKey}/styles`,
       {
         headers: { "X-Figma-Token": apiToken },
-      }
+      },
     );
 
     const styles = response.data.meta.styles;
     const colors: any = {};
-    
-    // Note: To get actual color values, we'd need to fetch the nodes. 
+
+    // Note: To get actual color values, we'd need to fetch the nodes.
     // For now, we'll just list the style names as a proof of connection.
     // A full implementation would require a second call to /files/:key/nodes?ids=...
 

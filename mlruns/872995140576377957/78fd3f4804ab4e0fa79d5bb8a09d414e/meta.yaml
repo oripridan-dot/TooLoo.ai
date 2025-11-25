@@ -1,0 +1,14 @@
+artifact_uri: /workspaces/TooLoo.ai/mlruns/872995140576377957/78fd3f4804ab4e0fa79d5bb8a09d414e/artifacts
+end_time: 1763938995444
+entry_point_name: ''
+experiment_id: '872995140576377957'
+lifecycle_stage: active
+run_id: 78fd3f4804ab4e0fa79d5bb8a09d414e
+run_name: run-integration-01
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1763938995431
+status: 3
+tags: []
+user_id: node

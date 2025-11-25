@@ -10,18 +10,13 @@ import DomainExpertise from "../../nexus/engine/domain-expertise.js";
 import ContinuousLearning from "../../nexus/engine/continuous-learning.js";
 import fetch from "node-fetch";
 import ensureEnvLoaded from "../../nexus/engine/env-loader.js";
-import { MockProvider } from "./mock.js";
 
 ensureEnvLoaded();
 
 const env = (name, def = undefined) => process.env[name] ?? def;
 
 export default class LLMProvider {
-  private mockProvider: MockProvider;
-
   constructor() {
-    this.mockProvider = new MockProvider();
-
     Object.defineProperty(this, "providers", {
       get() {
         return {
@@ -156,10 +151,6 @@ export default class LLMProvider {
   }
 
   async generateSmartLLM(request) {
-    if (process.env.SANDBOX_MODE === "true") {
-      return this.mockProvider.generateSmartLLM(request);
-    }
-
     const { prompt, system, taskType = "chat", context = {} } = request || {};
     if (!prompt || typeof prompt !== "string") {
       return {

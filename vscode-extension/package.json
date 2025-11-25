@@ -1,0 +1,94 @@
+{
+  "name": "tooloo-vscode",
+  "displayName": "TooLoo.ai Extension",
+  "description": "VS Code extension for TooLoo.ai",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tooloo.deploy",
+        "title": "TooLoo: Deploy"
+      },
+      {
+        "command": "tooloo.logs",
+        "title": "TooLoo: View Logs"
+      },
+      {
+        "command": "tooloo.train",
+        "title": "TooLoo: One-click Training",
+        "icon": "$(play)"
+      },
+      {
+        "command": "tooloo.refreshStatus",
+        "title": "Refresh Status",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tooloo-explorer",
+          "title": "TooLoo.ai",
+          "icon": "resources/tooloo-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "tooloo-explorer": [
+        {
+          "id": "toolooStatus",
+          "name": "Project Status"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "tooloo.refreshStatus",
+          "when": "view == toolooStatus",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "tooloo.train",
+          "when": "view == toolooStatus && viewItem == trainingJob",
+          "group": "inline"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "yaml",
+        "aliases": [
+          "YAML",
+          "yaml"
+        ],
+        "extensions": [
+          ".yaml",
+          ".yml"
+        ],
+        "filenamePatterns": [
+          "tooloo.yaml"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -4,6 +4,60 @@ import { precog } from "../../precog/index.js";
 
 const router = Router();
 
+router.post("/message", async (req, res) => {
+  const { message, mode = "quick", context, attachments } = req.body;
+
+  try {
+    console.log(`[Chat] Processing (${mode}): ${message.substring(0, 50)}...`);
+
+    let systemPrompt =
+      "You are TooLoo.ai, an advanced AI development platform assistant.";
+    let taskType = "general";
+
+    // Mode Logic
+    switch (mode) {
+      case "quick":
+        systemPrompt += " Be concise, direct, and fast. Avoid fluff.";
+        break;
+      case "technical":
+        systemPrompt +=
+          " You are an expert software architect. Provide detailed technical explanations, code snippets, and implementation strategies. Focus on correctness and best practices.";
+        taskType = "code";
+        break;
+      case "creative":
+        systemPrompt +=
+          " You are a creative partner. Brainstorm ideas, explore possibilities, and think outside the box. Use metaphors and vivid language.";
+        taskType = "creative";
+        break;
+      case "structured":
+        systemPrompt +=
+          " Output your response in a structured format (JSON, Markdown tables, or lists). Be strictly organized.";
+        break;
+    }
+
+    if (context) systemPrompt += `\n\nContext:\n${context}`;
+    if (attachments && attachments.length > 0) {
+      systemPrompt += `\n\nAttachments:\n${JSON.stringify(attachments)}`;
+    }
+
+    const result = await precog.providers.generate({
+      prompt: message,
+      system: systemPrompt,
+      taskType: taskType,
+    });
+
+    res.json({
+      ok: true,
+      response: result.content,
+      provider: result.provider,
+      model: result.model,
+    });
+  } catch (error: any) {
+    console.error("[Chat] Error:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 router.post("/synthesis", async (req, res) => {
   const { message, context, model, projectId } = req.body;
 
@@ -11,38 +65,41 @@ router.post("/synthesis", async (req, res) => {
     console.log(`[Chat] Processing: ${message.substring(0, 50)}...`);
 
     // Construct system prompt with context
-    let systemPrompt = "You are TooLoo.ai, an advanced AI development platform assistant. You are helpful, concise, and technical.";
+    let systemPrompt =
+      "You are TooLoo.ai, an advanced AI development platform assistant. You are helpful, concise, and technical.";
     if (context) systemPrompt += `\n\nContext:\n${context}`;
     if (projectId) systemPrompt += `\n\nProject ID: ${projectId}`;
 
     try {
-        const result = await precog.providers.generate({
-            prompt: message,
-            system: systemPrompt,
-            taskType: 'general',
-            provider: model // Optional: allow user to select model
-        });
+      const result = await precog.providers.generate({
+        prompt: message,
+        system: systemPrompt,
+        taskType: "general",
+        provider: model, // Optional: allow user to select model
+      });
 
-        res.json({
-            ok: true,
-            response: result.content,
-            provider: result.provider,
-            model: result.model,
-            usage: {
-                total_tokens: 0 // We don't track this yet in the unified response
-            }
-        });
+      res.json({
+        ok: true,
+        response: result.content,
+        provider: result.provider,
+        model: result.model,
+        usage: {
+          total_tokens: 0, // We don't track this yet in the unified response
+        },
+      });
     } catch (genError: any) {
-        console.warn("[Chat] Provider generation failed, falling back to system message:", genError.message);
-        
-        // Fallback if no providers are configured
-        res.json({
-            ok: true,
-            response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${genError.message}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
-            provider: 'system-fallback'
-        });
-    }
+      console.warn(
+        "[Chat] Provider generation failed, falling back to system message:",
+        genError.message,
+      );
 
+      // Fallback if no providers are configured
+      res.json({
+        ok: true,
+        response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${genError.message}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
+        provider: "system-fallback",
+      });
+    }
   } catch (error: any) {
     console.error("[Chat] Error:", error);
     res.status(500).json({ ok: false, error: error.message });
