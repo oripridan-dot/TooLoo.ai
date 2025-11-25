@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.238
 import * as chokidar from "chokidar";
 import { EventBus } from "../../core/event-bus.js";
 import * as path from "path";
@@ -24,6 +24,9 @@ export class FileWatcher {
         "**/coverage/**",
         "**/.git/**",
         "**/temp/**",
+        "**/data/**",
+        "**/logs/**",
+        "**/_archive/**",
       ],
       persistent: true,
       ignoreInitial: true, // Don't emit 'add' for existing files on startup
