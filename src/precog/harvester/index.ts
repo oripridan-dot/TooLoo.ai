@@ -1,4 +1,4 @@
-// @version 2.1.280
+// @version 2.1.281
 import { StaticCollector } from './collectors/static-collector.js';
 import { DynamicCollector } from './collectors/dynamic-collector.js';
 import { Refinery } from './refinery/index.js';
@@ -27,18 +27,43 @@ export class Harvester {
         bus.on('harvester:request', async (event: any) => {
             try {
                 const result = await this.harvest(event.payload);
-                bus.publish('harvester', 'harvester:result', {
+                bus.publish('precog', 'harvester:result', {
                     requestId: event.payload.requestId,
                     data: result
                 });
             } catch (error: any) {
-                bus.publish('harvester', 'harvester:error', {
+                bus.publish('precog', 'harvester:error', {
                     requestId: event.payload.requestId,
                     error: error.message
                 });
             }
         });
     }
+// ...existing code...
+                try {
+                    const jsonResponse = JSON.parse(output);
+                    if (jsonResponse.status === 'error') {
+                        reject(new Error(jsonResponse.error));
+                    } else {
+                        resolve({
+                            url: request.url,
+                            content: jsonResponse.transcript,
+                            metadata: {
+                                ...jsonResponse.metadata,
+                                url: request.url,
+                                timestamp: new Date().toISOString(),
+                                contentType: 'media/transcript'
+                            },
+                            raw: jsonResponse
+                        });
+                    }
+                } catch (e: any) {
+                    reject(new Error(`Failed to parse media processor output: ${e.message}`));
+                }
+            });
+        });
+    }
+}
 
     async harvest(request: HarvestRequest): Promise<any> {
         console.log(`[Harvester] Processing request for: ${request.url} (${request.type})`);
