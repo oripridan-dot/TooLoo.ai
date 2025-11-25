@@ -1,4 +1,4 @@
-// @version 2.1.273
+// @version 2.1.274
 import React from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -70,13 +70,13 @@ const VisualDesigner: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-900/50 text-white p-6 font-sans rounded-tl-2xl border-t border-l border-gray-800">
-            <header className="mb-6 flex justify-between items-center border-b border-gray-800 pb-4">
+        <div className="flex flex-col h-full bg-white text-gray-900 p-6 font-sans rounded-tl-2xl border-t border-l border-gray-200">
+            <header className="mb-6 flex justify-between items-center border-b border-gray-200 pb-4">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+                    <h1 className="text-3xl font-bold text-gray-900">
                         Nano Banana Studio
                     </h1>
-                    <p className="text-gray-400 mt-1">Cognitive Visual Engine • Gemini & DALL-E</p>
+                    <p className="text-gray-500 mt-1">Cognitive Visual Engine • Gemini & DALL-E</p>
                 </div>
                 <div className="flex gap-4">
                     <select 
@@ -88,7 +88,7 @@ const VisualDesigner: React.FC = () => {
                                 model: newProvider === 'openai' ? 'dall-e-3' : 'gemini-2.5-flash-image'
                             });
                         }}
-                        className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm"
+                        className="bg-white border border-gray-300 rounded px-3 py-1 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     >
                         <option value="gemini">Nano Banana (Gemini)</option>
                         <option value="openai">DELL-E (OpenAI)</option>
@@ -96,7 +96,7 @@ const VisualDesigner: React.FC = () => {
                     <select 
                         value={settings.model}
                         onChange={(e) => updateSettings({ model: e.target.value })}
-                        className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm"
+                        className="bg-white border border-gray-300 rounded px-3 py-1 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     >
                         {settings.provider === 'gemini' ? (
                             <>
@@ -110,7 +110,7 @@ const VisualDesigner: React.FC = () => {
                     <select 
                         value={settings.aspectRatio}
                         onChange={(e) => updateSettings({ aspectRatio: e.target.value })}
-                        className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm"
+                        className="bg-white border border-gray-300 rounded px-3 py-1 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     >
                         <option value="1:1">1:1 Square</option>
                         <option value="16:9">16:9 Landscape</option>
@@ -122,7 +122,7 @@ const VisualDesigner: React.FC = () => {
 
             <div className="flex-1 flex gap-6 overflow-hidden">
                 {/* Main Canvas / Gallery */}
-                <div className="flex-1 bg-gray-800/50 rounded-2xl border border-gray-700/50 p-6 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 p-6 overflow-y-auto custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <AnimatePresence mode='popLayout'>
                             {generatedImages.map((img) => (
@@ -132,7 +132,7 @@ const VisualDesigner: React.FC = () => {
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    className="group relative aspect-square rounded-xl overflow-hidden bg-gray-800 border border-gray-700"
+                                    className="group relative aspect-square rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                                 >
                                     <img 
                                         src={`data:${img.mimeType};base64,${img.data}`} 
@@ -140,22 +140,22 @@ const VisualDesigner: React.FC = () => {
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
-                                        <p className="text-sm text-gray-200 line-clamp-2">{img.prompt}</p>
+                                        <p className="text-sm text-white line-clamp-2">{img.prompt}</p>
                                     </div>
                                 </motion.div>
                             ))}
                         </AnimatePresence>
                         
                         {generatedImages.length === 0 && !isGenerating && (
-                            <div className="col-span-full flex flex-col items-center justify-center h-96 text-gray-500">
+                            <div className="col-span-full flex flex-col items-center justify-center h-96 text-gray-400">
                                 <ImageIcon size={48} className="mb-4 opacity-50" />
                                 <p>Start creating by entering a prompt below</p>
                             </div>
                         )}
 
                         {isGenerating && (
-                            <div className="aspect-square rounded-xl bg-gray-800/50 border border-gray-700 flex items-center justify-center animate-pulse">
-                                <Loader2 className="animate-spin text-blue-500" size={32} />
+                            <div className="aspect-square rounded-xl bg-white border border-gray-200 flex items-center justify-center animate-pulse shadow-sm">
+                                <Loader2 className="animate-spin text-blue-600" size={32} />
                             </div>
                         )}
                     </div>
@@ -165,12 +165,12 @@ const VisualDesigner: React.FC = () => {
             {/* Input Area */}
             <div className="mt-6">
                 <div className="max-w-4xl mx-auto mb-2 flex justify-end">
-                    <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white transition-colors">
+                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-gray-900 transition-colors">
                         <input 
                             type="checkbox" 
                             checked={settings.enhancePrompt}
                             onChange={(e) => updateSettings({ enhancePrompt: e.target.checked })}
-                            className="rounded bg-gray-800 border-gray-700 text-blue-500 focus:ring-blue-500/50"
+                            className="rounded bg-white border-gray-300 text-blue-600 focus:ring-blue-500/20"
                         />
                         <span>Auto-Enhance Prompt (Creative Director)</span>
                     </label>
@@ -181,13 +181,13 @@ const VisualDesigner: React.FC = () => {
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder="Describe your vision... (e.g. 'A futuristic city with neon lights in a cyberpunk style')"
-                        className="w-full bg-gray-800 border border-gray-700 rounded-xl py-4 pl-6 pr-16 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-lg"
+                        className="w-full bg-white border border-gray-300 rounded-xl py-4 pl-6 pr-16 text-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                         disabled={isGenerating}
                     />
                     <button
                         type="submit"
                         disabled={isGenerating || !prompt.trim()}
-                        className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg flex items-center justify-center transition-colors"
+                        className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 hover:bg-blue-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg flex items-center justify-center transition-colors text-white"
                     >
                         {isGenerating ? (
                             <Loader2 className="animate-spin" size={20} />
