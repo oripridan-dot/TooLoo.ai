@@ -1,4 +1,4 @@
-// @version 2.1.265
+// @version 2.1.287
 import fs from "fs-extra";
 import * as path from "path";
 import { precog } from "../../precog/index.js";
@@ -58,33 +58,60 @@ export class VectorStore {
       return;
     }
 
-    try {
-      const embedding = await openai.embed(text);
+    // Chunking Strategy:
+    // OpenAI text-embedding-3-small has a limit of 8191 tokens.
+    // We'll use a safe character limit of 8000 chars (~2000 tokens) to ensure we never hit the limit
+    // and to provide better semantic granularity for retrieval.
+    const CHUNK_SIZE = 8000;
+    const chunks = this.chunkText(text, CHUNK_SIZE);
 
-      const doc: VectorDocument = {
-        id: Math.random().toString(36).substring(7),
-        text,
-        embedding,
-        metadata,
-        createdAt: Date.now(),
-      };
+    console.log(`[VectorStore] Processing ${chunks.length} chunks for document...`);
 
-      this.documents.push(doc);
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      try {
+        const embedding = await openai.embed(chunk);
 
-      // Monitor size
-      if (this.documents.length > 5000) {
-        console.warn(
-          "[VectorStore] Warning: Vector store size exceeding 5000 documents. Consider pruning.",
-        );
+        const doc: VectorDocument = {
+          id: Math.random().toString(36).substring(7),
+          text: chunk,
+          embedding,
+          metadata: {
+            ...metadata,
+            chunkIndex: i,
+            totalChunks: chunks.length,
+            originalLength: text.length
+          },
+          createdAt: Date.now(),
+        };
+
+        this.documents.push(doc);
+      } catch (error) {
+        console.error(`[VectorStore] Failed to generate embedding for chunk ${i}: ${error}`);
       }
-
-      this.scheduleSave();
-      console.log(
-        `[VectorStore] Added document: "${text.substring(0, 30)}..."`,
-      );
-    } catch (error) {
-      console.error(`[VectorStore] Failed to generate embedding: ${error}`);
     }
+
+    // Monitor size
+    if (this.documents.length > 5000) {
+      console.warn(
+        "[VectorStore] Warning: Vector store size exceeding 5000 documents. Consider pruning.",
+      );
+    }
+
+    this.scheduleSave();
+    console.log(
+      `[VectorStore] Added document chunks: "${text.substring(0, 30)}..." (${chunks.length} chunks)`,
+    );
+  }
+
+  private chunkText(text: string, size: number): string[] {
+    const chunks: string[] = [];
+    let index = 0;
+    while (index < text.length) {
+      chunks.push(text.slice(index, index + size));
+      index += size;
+    }
+    return chunks;
   }
   // ...existing code...
   private scheduleSave() {
