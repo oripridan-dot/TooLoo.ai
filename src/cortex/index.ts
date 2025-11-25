@@ -1,5 +1,6 @@
-// @version 2.1.236
+// @version 2.1.242
 import { bus } from "../core/event-bus.js";
+import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
 import { MotorCortex } from "./motor/index.js";
