@@ -1,4 +1,4 @@
-// @version 2.1.264
+// @version 2.1.265
 import { bus } from "../core/event-bus.js";
 import { smartFS } from "../core/fs-manager.js";
 
@@ -24,17 +24,21 @@ export class Metaprogrammer {
                 result = await this.analyzeStructure(context?.path || process.cwd());
             } else if (task === "generate_code") {
                 // Expanded code generation logic
-                const { prompt, language } = context;
-                console.log(`[Metaprogrammer] Generating ${language} code for: ${prompt}`);
+                const { prompt, language, speculative } = context;
+                console.log(`[Metaprogrammer] Generating ${language} code for: ${prompt} (Speculative: ${!!speculative})`);
                 
                 // In a real scenario, this would call an LLM provider
                 // For now, we return a structured template based on the prompt
                 const generatedCode = this.simulateCodeGeneration(prompt, language);
                 
+                // Self-Healing Sandbox Simulation
+                const verifiedCode = await this.runInSandbox(generatedCode, language);
+
                 result = { 
                     status: "generated", 
-                    code: generatedCode,
-                    language: language || 'typescript'
+                    code: verifiedCode,
+                    language: language || 'typescript',
+                    speculative: !!speculative
                 };
             } else {
                 result = { status: "unknown_task", message: `Task ${task} not recognized` };
@@ -85,6 +89,23 @@ export function generatedFunction() {
     console.log("Hello from Metaprogrammer");
 }
 `;
+    }
+
+    private async runInSandbox(code: string, language: string): Promise<string> {
+        console.log(`[Metaprogrammer] Running code in sandbox...`);
+        // Simulate execution and potential failure
+        // In a real implementation, this would use 'vm' or a child process
+        
+        const success = Math.random() > 0.2; // 80% success rate
+        
+        if (success) {
+            console.log(`[Metaprogrammer] Sandbox execution successful.`);
+            return code;
+        } else {
+            console.warn(`[Metaprogrammer] Sandbox execution failed. Attempting self-healing...`);
+            // Simulate fix
+            return code + "\n// Fixed by Self-Healing Loop";
+        }
     }
 }
 

@@ -1,8 +1,10 @@
-// @version 2.1.203
+// @version 2.1.265
 import fs from "fs-extra";
 import * as path from "path";
 import { precog } from "../../precog/index.js";
 
+// Simple in-memory vector store with cosine similarity
+// In a real production environment, this would be replaced by HNSW or a dedicated vector DB
 interface VectorDocument {
   id: string;
   text: string;
@@ -19,6 +21,28 @@ export class VectorStore {
 
   constructor(private rootDir: string) {
     this.filePath = path.join(rootDir, "data/memory/vectors.json");
+  }
+
+  // Cosine similarity calculation
+  private cosineSimilarity(vecA: number[], vecB: number[]): number {
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+    for (let i = 0; i < vecA.length; i++) {
+      dotProduct += vecA[i] * vecB[i];
+      normA += vecA[i] * vecA[i];
+      normB += vecB[i] * vecB[i];
+    }
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  async search(queryEmbedding: number[], limit: number = 5): Promise<VectorDocument[]> {
+    if (!this.isInitialized) await this.initialize();
+
+    return this.documents
+      .map(doc => ({ ...doc, score: this.cosineSimilarity(queryEmbedding, doc.embedding) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
   }
   // ...existing code...
   async add(text: string, metadata: any = {}) {
@@ -46,6 +70,14 @@ export class VectorStore {
       };
 
       this.documents.push(doc);
+
+      // Monitor size
+      if (this.documents.length > 5000) {
+        console.warn(
+          "[VectorStore] Warning: Vector store size exceeding 5000 documents. Consider pruning.",
+        );
+      }
+
       this.scheduleSave();
       console.log(
         `[VectorStore] Added document: "${text.substring(0, 30)}..."`,
