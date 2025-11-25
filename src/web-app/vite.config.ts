@@ -1,4 +1,4 @@
-// @version 2.1.269
+// @version 2.1.272
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -13,6 +13,7 @@ const hmrConfig =
     : undefined;
 
 export default defineConfig({
+  base: '/app/',
   plugins: [react()],
   build: {
     rollupOptions: {
