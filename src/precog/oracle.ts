@@ -1,4 +1,4 @@
-// @version 2.1.265
+// @version 2.1.266
 import { bus } from '../core/event-bus.js';
 import { smartFS } from '../core/fs-manager.js';
 
