@@ -1,4 +1,4 @@
-// @version 2.1.60
+// @version 2.1.247
 import { SynapseBus } from "../core/bus/event-bus.js";
 import {
   ProviderAdapter,
