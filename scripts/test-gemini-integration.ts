@@ -1,4 +1,4 @@
-// @version 2.1.254
+// @version 2.1.255
 import { precog } from "../src/precog/index.js";
 import { bus } from "../src/core/event-bus.js";
 
@@ -6,8 +6,9 @@ async function test() {
     console.log("Starting Gemini Integration Test...");
     
     bus.on("*", (event) => {
-        if (event.type === "thought") {
-            console.log("[EVENT] Thought:", event.payload.text);
+        // console.log("Event:", event.type);
+        if (event.type === "synapsys:event" && event.payload?.type === "thought") {
+            console.log("[EVENT] Thought:", event.payload.payload.text);
         }
     });
 
