@@ -117,10 +117,10 @@ POST /api/v1/system/self-patch
 <!-- DYNAMIC-CONTEXT-START -->
 
 ## 🔄 Dynamic Context (Auto-Updated)
-*Last Updated: 2025-11-24T21:25:12.745Z*
+*Last Updated: 2025-11-25T02:06:26.789Z*
 
 ### 📦 Project Status
-- **Version**: 2.1.245
+- **Version**: 2.1.248
 - **Scripts**: update-context, start, tooloo, start:synapsys, dev, test, lint, format, clean, info, tooloo:introspect, tooloo:awareness, tooloo:github:status, tooloo:github:info, tooloo:github:context
 
 ### 📂 Module Structure (src/)
