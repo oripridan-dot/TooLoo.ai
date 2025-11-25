@@ -1,8 +1,9 @@
+// @version 2.1.283
 #!/usr/bin/env node
 import { Command } from "commander";
 import { deployCommand } from "./commands/deploy.js";
 import { logsCommand } from "./commands/logs.js";
-import { readConfig } from "./config.js";
+import { systemCommand } from "./commands/system.js";
 import fs from "fs-extra";
 import path from "path";
 
@@ -22,6 +23,7 @@ async function main() {
 
   program.addCommand(deployCommand);
   program.addCommand(logsCommand);
+  program.addCommand(systemCommand);
 
   program.parse(process.argv);
 }
