@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.266",
+  "version": "2.1.268",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
+    "@google/genai": "^1.30.0",
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
     "@types/js-yaml": "^4.0.9",
