@@ -1,4 +1,4 @@
-// @version 2.1.327
+// @version 2.1.332
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
 import { successResponse, errorResponse } from "../utils.js";
@@ -50,16 +50,14 @@ router.post("/message", async (req, res) => {
       taskType: taskType,
     });
 
-    res.json({
-      ok: true,
+    res.json(successResponse({
       response: result.content,
       provider: result.provider,
       model: result.model,
-    });
+    }));
   } catch (error: unknown) {
     console.error("[Chat] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ ok: false, error: errorMessage });
+    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
   }
 });
 
@@ -80,18 +78,17 @@ router.post("/synthesis", async (req, res) => {
         prompt: message,
         system: systemPrompt,
         taskType: "general",
-        provider: model, // Optional: allow user to select model
+        // Note: 'provider' is not a supported parameter in generate()
       });
 
-      res.json({
-        ok: true,
+      res.json(successResponse({
         response: result.content,
         provider: result.provider,
         model: result.model,
         usage: {
           total_tokens: 0, // We don't track this yet in the unified response
         },
-      });
+      }));
     } catch (genError: unknown) {
       const errorMessage = genError instanceof Error ? genError.message : String(genError);
       console.warn(
@@ -100,26 +97,24 @@ router.post("/synthesis", async (req, res) => {
       );
 
       // Fallback if no providers are configured
-      res.json({
-        ok: true,
+      res.json(successResponse({
         response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${errorMessage}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
         provider: "system-fallback",
-      });
+      }));
     }
   } catch (error: unknown) {
     console.error("[Chat] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ ok: false, error: errorMessage });
+    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
   }
 });
 
 router.get("/history", async (req, res) => {
   // Return empty history for now
-  res.json({ ok: true, history: [] });
+  res.json(successResponse({ history: [] }));
 });
 
 router.delete("/history", async (req, res) => {
-  res.json({ ok: true });
+  res.json(successResponse({}));
 });
 
 export default router;
