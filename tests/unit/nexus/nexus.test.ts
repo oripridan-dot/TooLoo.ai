@@ -1,31 +1,35 @@
-// @version 2.1.293
+// @version 2.1.294
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { createNexusApp } from '../../../src/nexus/index';
 
 // Mock middleware function
-const mockMiddleware = (req: any, res: any, next: any) => {
-  if (req.path === '/test') {
-    res.json({ ok: true });
-  } else {
-    next();
-  }
-};
+const mocks = vi.hoisted(() => {
+  return {
+    middleware: (req: any, res: any, next: any) => {
+      if (req.path === '/test') {
+        res.json({ ok: true });
+      } else {
+        next();
+      }
+    }
+  };
+});
 
-vi.mock('../../../src/nexus/routes/api', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/system', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/providers', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/orchestrator', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/capabilities', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/github', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/projects', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/chat', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/design', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/visuals', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/workflows', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/observability', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/context', () => ({ default: mockMiddleware }));
-vi.mock('../../../src/nexus/routes/training', () => ({ trainingRoutes: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/api', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/system', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/providers', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/orchestrator', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/capabilities', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/github', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/projects', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/chat', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/design', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/visuals', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/workflows', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/observability', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/context', () => ({ default: mocks.middleware }));
+vi.mock('../../../src/nexus/routes/training', () => ({ trainingRoutes: mocks.middleware }));
 
 // Mock other dependencies
 vi.mock('../../../src/nexus/socket', () => ({ SocketServer: vi.fn() }));
