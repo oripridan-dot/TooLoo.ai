@@ -1,7 +1,7 @@
-// @version 2.1.307
+// @version 2.1.309
 export default {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},
   },
-}
+};

@@ -1,4 +1,4 @@
-// @version 2.1.263
+// @version 2.1.309
 import express from "express";
 import { createServer } from "http";
 import path from "path";
@@ -23,26 +23,8 @@ import { SYSTEM_VERSION } from "../core/system-info.js";
 import { autoArchitect } from "./auto-architect.js";
 import { NexusInterface } from "./interface.js";
 
-export function startNexus(port?: number) {
-  const PORT = port || Number(process.env.PORT) || 4000;
-  
-  // Initialize Auto-Architect
-  const _ = autoArchitect;
-  // Initialize Nexus Interface (Synapse)
-  const synapse = new NexusInterface();
-
-  registry.register({
-    name: "nexus",
-    version: SYSTEM_VERSION,
-    status: "booting",
-    meta: { port: PORT }
-  });
-
+export function createNexusApp() {
   const app = express();
-  const httpServer = createServer(app);
-
-  // Initialize Socket Server
-  new SocketServer(httpServer);
 
   app.use(express.json());
 
@@ -61,13 +43,17 @@ export function startNexus(port?: number) {
   app.use("/api/v1/context", contextRoutes);
 
   // Training & Sources Routes (Precog)
-
   app.use("/api/v1", trainingRoutes);
 
   // API Routes
   app.use("/api/v1", apiRoutes);
   // Legacy alias
   app.use("/api", apiRoutes);
+
+  // Redirect /visuals.html to /app/visuals.html
+  app.get("/visuals.html", (req, res) => {
+    res.redirect("/app/visuals.html");
+  });
 
   // Legacy System Control
   app.post("/system/start", (req, res) => {
@@ -94,6 +80,31 @@ export function startNexus(port?: number) {
   app.get("/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  return app;
+}
+
+export function startNexus(port?: number) {
+  const PORT = port || Number(process.env.PORT) || 4000;
+
+  // Initialize Auto-Architect
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  autoArchitect;
+  // Initialize Nexus Interface (Synapse)
+  new NexusInterface();
+
+  registry.register({
+    name: "nexus",
+    version: SYSTEM_VERSION,
+    status: "booting",
+    meta: { port: PORT },
+  });
+
+  const app = createNexusApp();
+  const httpServer = createServer(app);
+
+  // Initialize Socket Server
+  new SocketServer(httpServer);
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`[Nexus] Web Server running on port ${PORT}`);
