@@ -1,4 +1,4 @@
-// @version 2.1.300
+// @version 2.1.301
 /**
  * Training Camp for TooLoo.ai - Phase 2
  * 9 CS domains with parallel training, spaced repetition, and weak-area focus
@@ -1006,7 +1006,7 @@ export default class TrainingCamp {
   }
 
   // User Session Methods (Stubbed for TrainingService compatibility)
-  async startTraining(userId: string, focusArea: string, options: any) {
+  async startTraining(userId: string, focusArea: string, _options: any) {
     return {
       sessionId: 'session-' + Date.now(),
       focusArea,
@@ -1015,7 +1015,7 @@ export default class TrainingCamp {
     };
   }
 
-  async completeRound(roundId: string, response: string, score: number) {
+  async completeRound(roundId: string, _response: string, score: number) {
     return {
       roundId,
       status: 'completed',
@@ -1024,11 +1024,11 @@ export default class TrainingCamp {
     };
   }
 
-  getMasteryMetrics(userId: string) {
+  getMasteryMetrics(_userId: string) {
     return this.progress; // Return global progress for now
   }
 
-  getUserSessions(userId: string) {
+  getUserSessions(_userId: string) {
     return [];
   }
 
@@ -1044,7 +1044,7 @@ export default class TrainingCamp {
     };
   }
 
-  async startChallenge(userId: string, skill: string, difficulty: string) {
+  async startChallenge(_userId: string, skill: string, difficulty: string) {
     return {
       challengeId: 'chal-' + Date.now(),
       skill,
@@ -1053,7 +1053,7 @@ export default class TrainingCamp {
     };
   }
 
-  async gradeChallenge(challengeId: string, response: string) {
+  async gradeChallenge(_challengeId: string, _response: string) {
     return {
       score: 90,
       feedback: 'Good job'
