@@ -1,4 +1,4 @@
-// @version 2.1.309
+// @version 2.1.310
 import React from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,8 +9,11 @@ const VisualDesigner: React.FC = () => {
   const {
     prompt,
     setPrompt,
+    negativePrompt,
+    setNegativePrompt,
     generatedImages,
     addGeneratedImage,
+    clearGeneratedImages,
     isGenerating,
     setIsGenerating,
     settings,
@@ -24,6 +27,7 @@ const VisualDesigner: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
+          negativePrompt: negativePrompt,
           provider: settings.provider,
           model: settings.model,
           aspectRatio: settings.aspectRatio,
@@ -36,7 +40,8 @@ const VisualDesigner: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Generation failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || "Generation failed");
       }
 
       return response.json();
@@ -58,9 +63,10 @@ const VisualDesigner: React.FC = () => {
       }
       setIsGenerating(false);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Generation error:", error);
       setIsGenerating(false);
+      alert(`Error: ${error.message}`); // Simple alert for now, could be a toast
     },
   });
 
@@ -98,8 +104,16 @@ const VisualDesigner: React.FC = () => {
               className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="gemini">Nano Banana (Gemini)</option>
-              <option value="openai">DELL-E (OpenAI)</option>
+              <option value="openai">DALL-E (OpenAI)</option>
             </select>
+            {generatedImages.length > 0 && (
+              <button
+                onClick={clearGeneratedImages}
+                className="px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
+              >
+                Clear Gallery
+              </button>
+            )}
             <select
               value={settings.model}
               onChange={(e) => updateSettings({ model: e.target.value })}
@@ -205,26 +219,36 @@ const VisualDesigner: React.FC = () => {
               <span>Auto-Enhance Prompt (Creative Director)</span>
             </label>
           </div>
-          <form onSubmit={handleSubmit} className="relative">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe your vision... (e.g. 'A futuristic city with neon lights in a cyberpunk style')"
+                className="w-full p-4 pr-16 border border-gray-700 bg-[#0f1117] rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-inner transition-all"
+                disabled={isGenerating}
+              />
+              <button
+                type="submit"
+                disabled={isGenerating || !prompt.trim()}
+                className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed rounded-lg flex items-center justify-center transition-colors text-white shadow-lg"
+              >
+                {isGenerating ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <Send size={20} />
+                )}
+              </button>
+            </div>
             <input
               type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe your vision... (e.g. 'A futuristic city with neon lights in a cyberpunk style')"
-              className="w-full p-4 pr-16 border border-gray-700 bg-[#0f1117] rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-inner transition-all"
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              placeholder="Negative prompt (what to avoid)..."
+              className="w-full p-3 border border-gray-700 bg-[#0f1117] rounded-xl text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent shadow-inner transition-all"
               disabled={isGenerating}
             />
-            <button
-              type="submit"
-              disabled={isGenerating || !prompt.trim()}
-              className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed rounded-lg flex items-center justify-center transition-colors text-white shadow-lg"
-            >
-              {isGenerating ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Send size={20} />
-              )}
-            </button>
           </form>
         </div>
       </div>
