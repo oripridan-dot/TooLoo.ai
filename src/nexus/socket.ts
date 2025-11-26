@@ -102,6 +102,7 @@ export class SocketServer {
       "motor:file:write",
       "motor:file:read",
       "sensory:observation:error",
+      "arena:event",
     ];
 
     // Broadcast other events to all connected clients

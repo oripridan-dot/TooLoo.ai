@@ -12,6 +12,7 @@ import ensureEnvLoaded from '../../nexus/engine/env-loader.js';
 import { generateLLM, getProviderStatus } from '../providers/llm-provider.js';
 import environmentHub from '../../core/environment-hub.js';
 import { arenaStore } from './arena-store.js';
+import { bus } from '../../core/event-bus.js';
 
 ensureEnvLoaded();
 
@@ -475,7 +476,8 @@ app.post('/api/v1/arena/events', async (req, res) => {
     // Store event in persistent storage
     await arenaStore.addEvent(event);
     
-    // TODO: Broadcast to connected WebSocket clients (Phase 2)
+    // Broadcast to connected WebSocket clients
+    bus.publish('precog', 'arena:event', event);
 
     res.json({
       ok: true,
