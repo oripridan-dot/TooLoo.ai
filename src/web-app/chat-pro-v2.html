@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.346 -->
+<!-- @version 2.1.347 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -482,22 +482,31 @@
       });
 
       // Socket Connection
-      const socket = io();
+      let socket = null;
       let activeRequestId = null;
       let activeThoughtBubble = null;
 
-      socket.on("connect", () =>
-        console.log("Connected to Synapsys Event Stream"),
-      );
-      socket.on("synapsys:event", (event) => {
-        if (!activeThoughtBubble) return;
-        if (
-          event.payload.requestId &&
-          event.payload.requestId !== activeRequestId
-        )
-          return;
-        updateThoughtBubble(event.type, event.payload);
-      });
+      try {
+        if (typeof io !== 'undefined') {
+          socket = io();
+          socket.on("connect", () =>
+            console.log("Connected to Synapsys Event Stream"),
+          );
+          socket.on("synapsys:event", (event) => {
+            if (!activeThoughtBubble) return;
+            if (
+              event.payload.requestId &&
+              event.payload.requestId !== activeRequestId
+            )
+              return;
+            updateThoughtBubble(event.type, event.payload);
+          });
+        } else {
+          console.warn("Socket.io not loaded. Real-time updates disabled.");
+        }
+      } catch (e) {
+        console.error("Socket initialization failed:", e);
+      }
 
       function createThoughtBubble() {
         const bubble = document.createElement("div");
