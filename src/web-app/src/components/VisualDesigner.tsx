@@ -1,4 +1,4 @@
-// @version 2.1.337
+// @version 2.1.338
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -84,13 +84,22 @@ const VisualDesigner: React.FC = () => {
         <header className="flex justify-between items-center bg-[#1e293b] p-4 rounded-xl shadow-lg border border-gray-800">
           <div>
             <h1 className="text-2xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-              Nano Banana Studio
+              TooLoo.ai - DeSign
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              Cognitive Visual Engine • Gemini & DALL-E
+              Cognitive Visual Engine • Gemini & DALL-E • Design Suite
             </p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={() => setShowTools(!showTools)}
+              className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+                showTools ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
+              }`}
+            >
+              <PenTool className="w-4 h-4" />
+              Tools
+            </button>
             <select
               value={settings.preset || "custom"}
               onChange={(e) => {
@@ -174,6 +183,19 @@ const VisualDesigner: React.FC = () => {
             </select>
           </div>
         </header>
+
+        <AnimatePresence>
+          {showTools && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <DesignTools />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Canvas / Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
