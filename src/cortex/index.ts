@@ -1,4 +1,4 @@
-// @version 2.1.317
+// @version 2.1.318
 import { bus, SynapsysEvent } from "../core/event-bus.js";
 import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
@@ -148,30 +148,48 @@ export class Cortex {
           provider = "Synapsys Agent";
         }
       } else {
-        // It's just chat. Use Synthesizer for multi-provider aggregation.
+        // It's just chat. Use Synthesizer for multi-provider aggregation with timeout.
         try {
           console.log(`[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`);
-          const result = await Promise.race([
+          
+          // Create a timeout promise
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Synthesizer timeout after 8s')), 8000)
+          );
+
+          const result = (await Promise.race([
             synthesizer.synthesize(message, responseType),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Synthesizer timeout')), 10000)
-            )
-          ]) as any;
+            timeoutPromise
+          ])) as any;
+
           responseText = result.response;
           provider = "Synapsys Synthesizer";
           meta = result.meta;
-          console.log(`[Cortex] Synthesizer responded with ${responseText.length} chars`);
+          console.log(`[Cortex] Synthesizer responded successfully`);
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : String(err);
-          responseText = `I'm having trouble thinking right now: ${errorMessage}`;
-          provider = "Synapsys System";
           console.error(`[Cortex] Synthesis error: ${errorMessage}`);
+          
+          // Fallback: Generate a simple response directly
+          try {
+            const fallbackResult = await synthesizer.generateLLM({
+              prompt: message,
+              system: "You are TooLoo.ai, an AI assistant. Respond helpfully and concisely.",
+              maxTokens: 512,
+            });
+            responseText = fallbackResult.content || `Fallback response to: ${message}`;
+            provider = "Synapsys Fallback";
+          } catch (fallbackErr) {
+            responseText = `I'm having trouble thinking right now: ${errorMessage}`;
+            provider = "Synapsys System";
+          }
         }
       }
 
       console.log(`[Cortex] Publishing response for requestId: ${requestId}`);
       // Analyze response for visual rendering
       const visualData = visualizer.analyzeResponse(responseText, message);
+      console.log(`[Cortex] Visual data: ${visualData ? visualData.type : 'none'}`);
 
       // Send Response
       bus.publish("cortex", "cortex:response", {
