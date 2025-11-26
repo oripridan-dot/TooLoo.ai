@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.302
 import { useState } from 'react';
 import Layout from './components/Layout';
 import SelfImprovement from './components/SelfImprovement';
@@ -8,7 +8,9 @@ import Chat from './components/Chat';
 import VisualDesigner from './components/VisualDesigner';
 
 function App() {
-  const [activeComponent, setActiveComponent] = useState('Chat');
+  // Check if we are on the visuals page
+  const isVisualsPage = window.location.pathname.includes('visuals.html');
+  const [activeComponent, setActiveComponent] = useState(isVisualsPage ? 'Visual Designer' : 'Chat');
 
   const renderComponent = () => {
     switch (activeComponent) {
