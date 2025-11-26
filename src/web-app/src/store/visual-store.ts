@@ -1,5 +1,6 @@
-// @version 2.1.309
+// @version 2.1.313
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface GeneratedImage {
   id: string;
@@ -12,9 +13,13 @@ export interface GeneratedImage {
 interface VisualState {
   prompt: string;
   setPrompt: (prompt: string) => void;
+  
+  negativePrompt: string;
+  setNegativePrompt: (negativePrompt: string) => void;
 
   generatedImages: GeneratedImage[];
   addGeneratedImage: (image: GeneratedImage) => void;
+  clearGeneratedImages: () => void;
 
   isGenerating: boolean;
   setIsGenerating: (isGenerating: boolean) => void;
@@ -26,33 +31,51 @@ interface VisualState {
     imageSize: string;
     enhancePrompt: boolean;
     useContext: boolean;
+    preset?: string;
   };
   updateSettings: (settings: Partial<VisualState["settings"]>) => void;
 }
 
-export const useVisualStore = create<VisualState>((set) => ({
-  prompt: "",
-  setPrompt: (prompt) => set({ prompt }),
+export const useVisualStore = create<VisualState>()(
+  persist(
+    (set) => ({
+      prompt: "",
+      setPrompt: (prompt) => set({ prompt }),
 
-  generatedImages: [],
-  addGeneratedImage: (image) =>
-    set((state) => ({
-      generatedImages: [image, ...state.generatedImages],
-    })),
+      negativePrompt: "",
+      setNegativePrompt: (negativePrompt) => set({ negativePrompt }),
 
-  isGenerating: false,
-  setIsGenerating: (isGenerating) => set({ isGenerating }),
+      generatedImages: [],
+      addGeneratedImage: (image) =>
+        set((state) => ({
+          generatedImages: [image, ...state.generatedImages],
+        })),
+      clearGeneratedImages: () => set({ generatedImages: [] }),
 
-  settings: {
-    provider: "gemini",
-    model: "gemini-2.0-flash-exp",
-    aspectRatio: "1:1",
-    imageSize: "1K",
-    enhancePrompt: true,
-    useContext: true,
-  },
-  updateSettings: (newSettings) =>
-    set((state) => ({
-      settings: { ...state.settings, ...newSettings },
-    })),
-}));
+      isGenerating: false,
+      setIsGenerating: (isGenerating) => set({ isGenerating }),
+
+      settings: {
+        provider: "gemini",
+        model: "gemini-2.0-flash-exp",
+        aspectRatio: "1:1",
+        imageSize: "1K",
+        enhancePrompt: true,
+        useContext: true,
+        preset: "custom",
+      },
+      updateSettings: (newSettings) =>
+        set((state) => ({
+          settings: { ...state.settings, ...newSettings },
+        })),
+    }),
+    {
+      name: "visual-store",
+      partialize: (state) => ({
+        settings: state.settings,
+        // We don't persist images in localStorage to avoid quota limits with base64
+        // We could use IndexedDB but for now let's keep it simple or just persist settings
+      }),
+    }
+  )
+);
