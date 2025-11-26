@@ -3,6 +3,13 @@ import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import { FileWatcher } from "./watcher.js";
 import { SemanticParser } from "./semantic-parser.js";
 
+interface MotorResult {
+  ok: boolean;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+}
+
 export class SensoryCortex {
   private watcher: FileWatcher;
   private parser: SemanticParser;
@@ -53,7 +60,7 @@ export class SensoryCortex {
     });
   }
 
-  private analyzeMotorOutput(result: any) {
+  private analyzeMotorOutput(result: MotorResult) {
     // This is where we "read" the terminal output
     if (!result.ok) {
       console.log(

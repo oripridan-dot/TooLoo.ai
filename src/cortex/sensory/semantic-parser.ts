@@ -5,6 +5,36 @@ import { glob } from "glob";
 import * as ts from "typescript";
 import { EventBus } from "../../core/event-bus.js";
 
+interface FunctionInfo {
+  name: string;
+  documentation: string;
+}
+
+interface InterfaceInfo {
+  name: string;
+  documentation: string;
+}
+
+interface ClassInfo {
+  name: string;
+  documentation: string;
+  methods: string[];
+}
+
+interface SymbolInfo {
+  path: string;
+  classes: ClassInfo[];
+  interfaces: InterfaceInfo[];
+  functions: FunctionInfo[];
+}
+
+interface ProjectInfo {
+  dependencies: Record<string, string>;
+  scripts: Record<string, string>;
+  tsconfig: any;
+  symbols: SymbolInfo[];
+}
+
 export class SemanticParser {
   private cachePath: string;
 
@@ -57,7 +87,7 @@ export class SemanticParser {
   }
 
   private async runFullAnalysis() {
-    const projectInfo: any = {
+    const projectInfo: ProjectInfo = {
       dependencies: {},
       scripts: {},
       tsconfig: {},
@@ -78,9 +108,10 @@ export class SemanticParser {
           `[SemanticParser] Found ${Object.keys(projectInfo.dependencies).length} dependencies.`,
         );
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
       console.warn(
-        `[SemanticParser] Failed to parse package.json: ${e.message}`,
+        `[SemanticParser] Failed to parse package.json: ${errorMessage}`,
       );
     }
 
@@ -101,9 +132,10 @@ export class SemanticParser {
         compilerOptions = parsedConfig.options;
         console.log("[SemanticParser] Found tsconfig.json");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
       console.warn(
-        `[SemanticParser] Failed to parse tsconfig.json: ${e.message}`,
+        `[SemanticParser] Failed to parse tsconfig.json: ${errorMessage}`,
       );
     }
 
@@ -113,9 +145,10 @@ export class SemanticParser {
       console.log(
         `[SemanticParser] Analyzed ${projectInfo.symbols.length} source files.`,
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
       console.warn(
-        `[SemanticParser] Failed to analyze source files: ${e.message}`,
+        `[SemanticParser] Failed to analyze source files: ${errorMessage}`,
       );
     }
 
@@ -141,7 +174,7 @@ export class SemanticParser {
 
   private async analyzeSourceFiles(
     options: ts.CompilerOptions,
-  ): Promise<any[]> {
+  ): Promise<SymbolInfo[]> {
     const files = await glob("src/**/*.ts", {
       cwd: this.workspaceRoot,
       absolute: true,
@@ -149,13 +182,13 @@ export class SemanticParser {
 
     const program = ts.createProgram(files, options);
     const checker = program.getTypeChecker();
-    const results: any[] = [];
+    const results: SymbolInfo[] = [];
 
     for (const file of files) {
       const sourceFile = program.getSourceFile(file);
       if (!sourceFile) continue;
 
-      const fileSymbols: any = {
+      const fileSymbols: SymbolInfo = {
         path: path.relative(this.workspaceRoot, file),
         classes: [],
         interfaces: [],

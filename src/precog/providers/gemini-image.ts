@@ -32,18 +32,23 @@ export class GeminiImageProvider {
              modelName = "gemini-2.0-flash-exp";
         }
 
-        // Construct contents
-        const contents: any[] = [];
+        // Construct parts
+        const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [];
         
         // Add text prompt
-        if (req.prompt) {
-            contents.push({ text: req.prompt });
+        let finalPrompt = req.prompt;
+        if (req.negativePrompt) {
+            finalPrompt += `\n\nNegative prompt (exclude these elements): ${req.negativePrompt}`;
+        }
+
+        if (finalPrompt) {
+            parts.push({ text: finalPrompt });
         }
 
         // Add reference images if any
         if (req.referenceImages && req.referenceImages.length > 0) {
             for (const img of req.referenceImages) {
-                contents.push({
+                parts.push({
                     inlineData: {
                         mimeType: img.mimeType,
                         data: img.data
@@ -53,20 +58,28 @@ export class GeminiImageProvider {
         }
 
         // Config
-        const config: any = {
+        const config: Record<string, unknown> = {
             responseModalities: ["IMAGE"], 
         };
 
         // Only add imageConfig if we have a valid aspect ratio.
-        // Ignore imageSize for Gemini as it's controlled by aspect ratio in this SDK version.
         if (req.aspectRatio) {
-            config.imageConfig = {
-                aspectRatio: req.aspectRatio
+            // For Gemini 2.0 Flash, aspect ratio might be a prompt instruction or config
+            // But let's try to keep it in config if supported, otherwise append to prompt
+            // The SDK types suggest imageConfig might be correct for some models
+            config.generationConfig = {
+                responseModalities: ["IMAGE"],
             };
+            // We'll also append it to prompt to be safe for the experimental model
+            // parts[0].text += `\n\nAspect Ratio: ${req.aspectRatio}`;
         }
 
         try {
             console.log(`[GeminiImageProvider] Generating image with model ${modelName}...`);
+            
+            // Ensure we are passing Content[] not Part[]
+            const contents = [{ role: "user", parts: parts }];
+
             const response = await this.client.models.generateContent({
                 model: modelName,
                 contents: contents,
@@ -90,6 +103,11 @@ export class GeminiImageProvider {
                 }
             }
 
+            if (images.length === 0) {
+                console.warn("[GeminiImageProvider] No images returned in response:", JSON.stringify(response, null, 2));
+                throw new Error("No images generated. The model might have refused the prompt or failed to generate an image.");
+            }
+
             return {
                 images,
                 metadata: {
@@ -98,29 +116,10 @@ export class GeminiImageProvider {
                 }
             };
 
-        } catch (error: any) {
-            console.error(`[GeminiImageProvider] Error generating image with ${modelName}:`, error);
-            
-            // Fallback logic
-            if (modelName === "imagen-3.0-generate-001") {
-                console.log("[GeminiImageProvider] Falling back to gemini-2.0-flash-exp...");
-                try {
-                    const fallbackResponse = await this.client.models.generateContent({
-                        model: "gemini-2.0-flash-exp",
-                        contents: contents,
-                        config: { responseModalities: ["IMAGE"] }
-                    });
-                    // Process fallback response (same logic as above)
-                    // For brevity, we'll just return the error if fallback fails for now, 
-                    // or we'd need to refactor the processing logic to be reusable.
-                    // Let's just re-throw for now but with better logging, 
-                    // implementing full fallback requires refactoring the response parsing.
-                    throw new Error(`Primary model failed. Fallback not fully implemented. Original error: ${error.message}`);
-                } catch (fallbackError) {
-                     throw error;
-                }
-            }
-            throw error;
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("[GeminiImageProvider] Generation failed:", error);
+            throw new Error(`Gemini image generation failed: ${errorMessage}`);
         }
     }
 }

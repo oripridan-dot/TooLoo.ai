@@ -1,6 +1,7 @@
-// @version 2.1.231
+// @version 2.1.331
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
+import { successResponse, errorResponse } from "../utils.js";
 import fs from "fs-extra";
 import path from "path";
 import { exec } from "child_process";
@@ -22,63 +23,59 @@ async function execCommand(command: string, cwd: string = process.cwd()) {
 // System Status
 router.get("/status", (req, res) => {
   // In Synapsys, we are always "active" if this code runs
-  res.json({
-    ok: true,
-    status: {
-      services: 3, // Cortex, Precog, Nexus
-      active: true,
-      architecture: "Synapsys V2.1",
+  res.json(successResponse({
+    services: 3, // Cortex, Precog, Nexus
+    active: true,
+    architecture: "Synapsys V2.1",
+    modules: {
+      cortex: { status: "loaded", role: "Cognitive Core" },
+      precog: { status: "loaded", role: "Predictive Intelligence" },
+      nexus: { status: "loaded", role: "Interface Layer" },
     },
-  });
+  }));
 });
 
 // System Awareness
 router.get("/awareness", (req, res) => {
-  res.json({
-    ok: true,
-    awareness: {
-      identity: "TooLoo.ai",
-      architecture: "Synapsys V2.1",
-      capabilities: {
-        selfModification: true,
-        githubIntegration: true,
-        autonomousPlanning: true,
-      },
-      services: {
-        cortex: "active",
-        precog: "active",
-        nexus: "active",
-      },
-      environment: {
-        nodeEnv: process.env.NODE_ENV || "development",
-        cwd: process.cwd(),
-      },
+  res.json(successResponse({
+    identity: "TooLoo.ai",
+    architecture: "Synapsys V2.1",
+    capabilities: {
+      selfModification: true,
+      githubIntegration: true,
+      autonomousPlanning: true,
     },
-  });
+    services: {
+      cortex: "active",
+      precog: "active",
+      nexus: "active",
+    },
+    environment: {
+      nodeEnv: process.env.NODE_ENV || "development",
+      cwd: process.cwd(),
+    },
+  }));
 });
 
 // System Introspection
 router.get("/introspect", (req, res) => {
   const memoryUsage = process.memoryUsage();
-  res.json({
-    ok: true,
-    introspection: {
-      process: {
-        pid: process.pid,
-        uptime: process.uptime(),
-        memory: {
-          rss: Math.round(memoryUsage.rss / 1024 / 1024) + "MB",
-          heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + "MB",
-          heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + "MB",
-        },
-      },
-      modules: {
-        cortex: { status: "loaded", role: "Cognitive Core" },
-        precog: { status: "loaded", role: "Predictive Intelligence" },
-        nexus: { status: "loaded", role: "Interface Layer" },
+  res.json(successResponse({
+    process: {
+      pid: process.pid,
+      uptime: process.uptime(),
+      memory: {
+        rss: Math.round(memoryUsage.rss / 1024 / 1024) + "MB",
+        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + "MB",
+        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + "MB",
       },
     },
-  });
+    modules: {
+      cortex: { status: "loaded", role: "Cognitive Core" },
+      precog: { status: "loaded", role: "Predictive Intelligence" },
+      nexus: { status: "loaded", role: "Interface Layer" },
+    },
+  }));
 });
 
 // Self-Patch (Self-Modification)
@@ -86,30 +83,27 @@ router.post("/self-patch", async (req, res) => {
   const { action, file, content, message, branch, createPr } = req.body;
 
   if (!action) {
-    return res.status(400).json({ ok: false, error: "Action required" });
+    return res.status(400).json(errorResponse("Action required"));
   }
 
   try {
     if (action === "analyze") {
       // Just check if file exists and return info
       if (!file)
-        return res.status(400).json({ ok: false, error: "File required" });
+        return res.status(400).json(errorResponse("File required"));
       const fullPath = path.resolve(process.cwd(), file);
       const exists = await fs.pathExists(fullPath);
-      res.json({
-        ok: true,
-        analysis: {
-          file,
-          exists,
-          path: fullPath,
-          writable: true, // Assuming we have write access
-        },
-      });
+      res.json(successResponse({
+        file,
+        exists,
+        path: fullPath,
+        writable: true, // Assuming we have write access
+      }));
     } else if (action === "create" || action === "update") {
       if (!file || content === undefined) {
         return res
           .status(400)
-          .json({ ok: false, error: "File and content required" });
+          .json(errorResponse("File and content required"));
       }
       
       try {
@@ -145,28 +139,26 @@ router.post("/self-patch", async (req, res) => {
             prUrl
         });
 
-        res.json({
-            ok: true,
+        res.json(successResponse({
             message: `File ${file} ${action === "create" ? "created" : "updated"}`,
             prUrl
-        });
+        }));
 
       } catch (e: any) {
-        return res.status(500).json({ ok: false, error: e.message });
+        return res.status(500).json(errorResponse(e.message));
       }
 
     } else {
-      res.status(400).json({ ok: false, error: "Invalid action" });
+      res.status(400).json(errorResponse("Invalid action"));
     }
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json(errorResponse(error.message));
   }
 });
 
 // System Processes (Mocking the old response for compatibility)
 router.get("/processes", (req, res) => {
-  res.json({
-    ok: true,
+  res.json(successResponse({
     processes: [
       {
         name: "nexus",
@@ -190,38 +182,36 @@ router.get("/processes", (req, res) => {
         uptime: process.uptime(),
       },
     ],
-  });
+  }));
 });
 
 // System Priority
 router.post("/priority/chat", (req, res) => {
   bus.publish("nexus", "system:priority_change", { mode: "chat-priority" });
-  res.json({ ok: true, mode: "chat-priority" });
+  res.json(successResponse({ mode: "chat-priority" }));
 });
 
 router.post("/priority/background", (req, res) => {
   bus.publish("nexus", "system:priority_change", {
     mode: "background-priority",
   });
-  res.json({ ok: true, mode: "background-priority" });
+  res.json(successResponse({ mode: "background-priority" }));
 });
 
 // System Config
 router.get("/config", (req, res) => {
-  res.json({
-    ok: true,
+  res.json(successResponse({
     settings: [
       { name: "Environment", value: process.env.NODE_ENV || "development" },
       { name: "Web Port", value: process.env.PORT || 3000 },
       { name: "Architecture", value: "Synapsys" },
     ],
-  });
+  }));
 });
 
 // Real Capabilities (Mock)
 router.get("/real-capabilities", (req, res) => {
-  res.json({
-    ok: true,
+  res.json(successResponse({
     capabilities: [
       {
         name: "Cognitive Core",
@@ -239,7 +229,7 @@ router.get("/real-capabilities", (req, res) => {
         status: "active",
       },
     ],
-  });
+  }));
 });
 
 // SmartFS Routes
@@ -250,41 +240,41 @@ router.get('/fs/context', async (req, res) => {
         const { path: filePath } = req.query;
         
         if (!filePath || typeof filePath !== 'string') {
-             res.status(400).json({ error: 'File path is required' });
+             res.status(400).json(errorResponse('File path is required'));
              return;
         }
 
         const bundle = await smartFS.getGoldenPlate(filePath);
         
-        res.json({
-            success: true,
-            data: bundle
-        });
+        res.json(successResponse(bundle));
     } catch (error: any) {
-        res.status(404).json({ success: false, error: error.message });
+        res.status(404).json(errorResponse(error.message));
     }
 });
 
 router.post('/fs/transaction', (req, res) => {
     const id = smartFS.startTransaction();
-    res.json({ success: true, transactionId: id });
+    res.json(successResponse({ transactionId: id }));
 });
 
 router.post('/fs/rollback', async (req, res) => {
     const { transactionId } = req.body;
     if (!transactionId) {
-         res.status(400).json({ error: 'Transaction ID required' });
+         res.status(400).json(errorResponse('Transaction ID required'));
          return;
     }
 
     const success = await smartFS.rollback(transactionId);
-    res.json({ success, message: success ? 'System restored' : 'Transaction not found' });
+    res.json(successResponse({ 
+      success, 
+      message: success ? 'System restored' : 'Transaction not found' 
+    }));
 });
 
 router.post('/fs/commit', (req, res) => {
     const { transactionId } = req.body;
     smartFS.commit(transactionId);
-    res.json({ success: true });
+    res.json(successResponse({ success: true }));
 });
 
 export default router;

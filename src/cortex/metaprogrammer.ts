@@ -1,6 +1,5 @@
 // @version 2.1.265
 import { bus } from "../core/event-bus.js";
-import { smartFS } from "../core/fs-manager.js";
 
 export class Metaprogrammer {
     constructor() {
@@ -71,7 +70,7 @@ export class Metaprogrammer {
         };
     }
 
-    private simulateCodeGeneration(prompt: string, language: string = 'typescript'): string {
+    private simulateCodeGeneration(prompt: string, _language: string = 'typescript'): string {
         if (prompt.includes('test')) {
             return `
 import { describe, it, expect } from 'vitest';
@@ -91,7 +90,7 @@ export function generatedFunction() {
 `;
     }
 
-    private async runInSandbox(code: string, language: string): Promise<string> {
+    private async runInSandbox(code: string, _language: string): Promise<string> {
         console.log(`[Metaprogrammer] Running code in sandbox...`);
         // Simulate execution and potential failure
         // In a real implementation, this would use 'vm' or a child process

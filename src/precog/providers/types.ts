@@ -25,7 +25,7 @@ export interface GenerationResponse {
     model: string;
     latency: number;
     cost?: number;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
     usage?: {
         promptTokens: number;
         completionTokens: number;
@@ -48,11 +48,8 @@ export interface ImageGenerationRequest {
     aspectRatio?: string; // "1:1", "16:9", etc.
     imageSize?: string; // "1K", "2K", "4K" (for Pro)
     negativePrompt?: string;
-    referenceImages?: {
-        data: string; // base64
-        mimeType: string;
-    }[];
-    mode?: 'generate' | 'edit';
+    referenceImages?: string[];
+    mode?: 'fast' | 'quality' | 'artistic';
 }
 
 export interface ImageGenerationResponse {
@@ -60,5 +57,30 @@ export interface ImageGenerationResponse {
         data: string; // base64
         mimeType: string;
     }[];
-    metadata?: any;
+    metadata?: Record<string, unknown>;
+}
+
+export interface DesignProvider extends ProviderAdapter {
+    generateLayout(prompt: string): Promise<LayoutResponse>;
+    generatePalette(prompt: string): Promise<ColorPalette>;
+    generateComponent(prompt: string, system: any): Promise<ComponentCode>;
+}
+
+export interface LayoutResponse {
+    structure: any;
+    description: string;
+}
+
+export interface ColorPalette {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    text: string;
+}
+
+export interface ComponentCode {
+    code: string;
+    language: string;
+    framework: string;
 }

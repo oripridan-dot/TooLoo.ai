@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 // @version 2.1.28
 /**
  * Professional Design System Engine
@@ -8,6 +11,29 @@
  */
 
 class ProfessionalDesignSystem {
+  public artifacts: string[] = [];
+  public tokenCategories: any;
+  public componentMap: any;
+
+  public ingestArtifacts(dir: string = path.join(process.cwd(), 'data', 'design-artifacts')) {
+    if (!fs.existsSync(dir)) {
+        try {
+            fs.mkdirSync(dir, { recursive: true });
+        } catch (e) {
+            console.warn("[DesignSystem] Could not create artifacts dir:", e);
+            return;
+        }
+    }
+    
+    try {
+        const files = fs.readdirSync(dir);
+        this.artifacts = files.filter(f => /\.(png|jpg|jpeg|svg|webp)$/i.test(f));
+        console.log(`[DesignSystem] Ingested ${this.artifacts.length} artifacts from ${dir}`);
+    } catch (e) {
+        console.error("[DesignSystem] Failed to ingest artifacts:", e);
+    }
+  }
+
   constructor() {
     // Comprehensive token structure matching professional design systems
     this.tokenCategories = {
@@ -581,7 +607,7 @@ class ProfessionalDesignSystem {
   /**
    * Map a design system to semantic tokens
    */
-  mapDesignSystemToTokens(designInput) {
+  mapDesignSystemToTokens(designInput: Record<string, any>) {
     const tokens = { ...this.tokenCategories };
 
     // Map colors
@@ -602,7 +628,6 @@ class ProfessionalDesignSystem {
 
     // Map typography
     if (designInput.typography) {
-      const primaryFont = designInput.typography.primary || 'system-ui, sans-serif';
       const monoFont = designInput.typography.mono || 'monospace';
       
       tokens.typography['heading-1'].size = '2.5rem';
@@ -644,7 +669,7 @@ class ProfessionalDesignSystem {
   /**
    * Generate comprehensive CSS for all components
    */
-  generateComprehensiveCSS(tokens) {
+  generateComprehensiveCSS(tokens: Record<string, any>) {
     let css = '/* AUTO-GENERATED COMPREHENSIVE COMPONENT CSS FROM DESIGN TOKENS */\n\n';
 
     // CSS Variables from tokens
@@ -687,10 +712,11 @@ class ProfessionalDesignSystem {
 
     // Generate CSS rules for components
     Object.entries(this.componentMap).forEach(([componentName, componentDef]) => {
-      if (componentDef.css) {
+      const typedComponentDef = componentDef as Record<string, any>;
+      if (typedComponentDef.css) {
         css += `/* ${componentName} */\n`;
         css += `.${componentName} {\n`;
-        css += `  ${componentDef.css.trim().split('\n').join('\n  ')}\n`;
+        css += `  ${typedComponentDef.css.trim().split('\n').join('\n  ')}\n`;
         css += '}\n\n';
       }
     });
@@ -701,12 +727,13 @@ class ProfessionalDesignSystem {
   /**
    * Build component map showing which tokens affect which components
    */
-  buildComponentMap(tokens) {
-    const map = {};
+  buildComponentMap(_tokens: Record<string, any>): Record<string, string[]> {
+    const map: Record<string, string[]> = {};
 
     Object.entries(this.componentMap).forEach(([componentName, componentDef]) => {
-      if (componentDef.tokens) {
-        componentDef.tokens.forEach(tokenName => {
+      const typedComponentDef = componentDef as Record<string, any>;
+      if (typedComponentDef.tokens) {
+        typedComponentDef.tokens.forEach((tokenName: string) => {
           if (!map[tokenName]) {
             map[tokenName] = [];
           }
@@ -721,8 +748,8 @@ class ProfessionalDesignSystem {
   /**
    * Get all components for a specific category
    */
-  getComponentsByCategory(category) {
-    const categories = {
+  getComponentsByCategory(category: string): string[] {
+    const categories: Record<string, string[]> = {
       buttons: Object.keys(this.componentMap).filter(c => c.includes('button')),
       forms: Object.keys(this.componentMap).filter(c => ['input', 'textarea', 'select', 'checkbox', 'radio', 'toggle'].includes(c)),
       navigation: Object.keys(this.componentMap).filter(c => ['nav', 'breadcrumb', 'pagination', 'tabs'].includes(c) || c.includes('nav.')),
@@ -733,7 +760,7 @@ class ProfessionalDesignSystem {
       interactive: Object.keys(this.componentMap).filter(c => ['accordion', 'dropdown', 'popover'].includes(c) || c.includes('accordion.') || c.includes('tabs.')),
     };
 
-    return categories[category] || [];
+    return (categories as Record<string, string[]>)[category] || [];
   }
 
   /**

@@ -182,13 +182,13 @@ router.post("/import-figma", async (req, res) => {
     );
 
     const styles = response.data.meta.styles;
-    const colors: any = {};
+    const colors: Record<string, string> = {};
 
     // Note: To get actual color values, we'd need to fetch the nodes.
     // For now, we'll just list the style names as a proof of connection.
     // A full implementation would require a second call to /files/:key/nodes?ids=...
 
-    styles.forEach((s: any) => {
+    styles.forEach((s: { style_type: string; name: string }) => {
       if (s.style_type === "FILL") {
         colors[s.name] = "#000000"; // Placeholder as we need node data
       }
@@ -213,7 +213,7 @@ router.get("/stream", (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const send = (data: any) => {
+  const send = (data: Record<string, unknown>) => {
     res.write(`event: token\ndata: ${JSON.stringify(data)}\n\n`);
   };
 

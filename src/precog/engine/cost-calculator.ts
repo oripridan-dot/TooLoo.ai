@@ -7,7 +7,7 @@
  * to enable budget-conscious training decisions.
  */
 
-class CostCalculator {
+export class CostCalculator {
   constructor() {
     // Provider cost registry ($/request or $/token)
     this.providers = {

@@ -117,29 +117,42 @@ POST /api/v1/system/self-patch
 <!-- DYNAMIC-CONTEXT-START -->
 
 ## 🔄 Dynamic Context (Auto-Updated)
-*Last Updated: 2025-11-25T02:06:26.789Z*
+*Last Updated: 2025-11-26T15:58:23.197Z*
 
 ### 📦 Project Status
-- **Version**: 2.1.248
-- **Scripts**: update-context, start, tooloo, start:synapsys, dev, test, lint, format, clean, info, tooloo:introspect, tooloo:awareness, tooloo:github:status, tooloo:github:info, tooloo:github:context
+- **Version**: 2.1.314
+- **Scripts**: start, start:synapsys, dev, stop:all, test, test:watch, lint, format, clean, clean:deep, info, update-context, tooloo, tooloo:introspect, tooloo:awareness, tooloo:github:status, tooloo:github:info, tooloo:github:context, branch:status
 
 ### 📂 Module Structure (src/)
 - **main.ts** (1 files)
   - src/main.ts
-- **web-app** (54 files)
+- **web-app** (39 files)
   - src/web-app/vite.config.ts
   - src/web-app/tailwind.config.js
-  - src/web-app/temp/test-git.js
-  - src/web-app/temp/test-git-3.js
-  - src/web-app/temp/test-git-2.js
-  - src/web-app/temp/test-1762116493263.js
-  - src/web-app/temp/test-1762116482273.js
-  - src/web-app/temp/test-1761991239967.js
-  - src/web-app/temp/test-1761991169209.js
-  - src/web-app/temp/test-1761991163916.js
-  - ... and 44 more
-- **precog** (20 files)
+  - src/web-app/postcss.config.js
+  - src/web-app/src/main.jsx
+  - src/web-app/src/ToolooMonitor.tsx
+  - src/web-app/src/ToolooMonitor.test.tsx
+  - src/web-app/src/SelfImprovementDashboard.jsx
+  - src/web-app/src/App.jsx
+  - src/web-app/scanner/scanner-refinery-integration.js
+  - src/web-app/scanner/refinery-ui.js
+  - ... and 29 more
+- **nexus** (112 files)
+  - src/nexus/utils.ts
+  - src/nexus/trait-weaver.ts
+  - src/nexus/socket.ts
+  - src/nexus/interface.ts
+  - src/nexus/index.ts
+  - src/nexus/auto-architect.ts
+  - src/nexus/traits/user-model-engine.ts
+  - src/nexus/routes/workflows.ts
+  - src/nexus/routes/visuals.ts
+  - src/nexus/routes/training.ts
+  - ... and 102 more
+- **precog** (29 files)
   - src/precog/synthesizer.ts
+  - src/precog/scheduler.ts
   - src/precog/provider-engine.ts
   - src/precog/oracle.ts
   - src/precog/market.ts
@@ -148,30 +161,8 @@ POST /api/v1/system/self-patch
   - src/precog/training/providers-arena-server.ts
   - src/precog/training/index.ts
   - src/precog/providers/types.ts
-  - src/precog/providers/provider-service.ts
-  - src/precog/providers/llm-provider.ts
-  - src/precog/providers/adapters.ts
-  - src/precog/oracle/budget-server.ts
-  - src/precog/engine/validated-execution-framework.ts
-  - src/precog/engine/training-camp.ts
-  - src/precog/engine/parallel-provider-orchestrator.ts
-  - src/precog/engine/meta-learning-engine.ts
-  - src/precog/engine/hyper-speed-training-camp.ts
-  - src/precog/engine/cost-calculator.ts
-  - src/precog/engine/budget-manager.ts
-- **nexus** (109 files)
-  - src/nexus/trait-weaver.ts
-  - src/nexus/socket.ts
-  - src/nexus/interface.ts
-  - src/nexus/index.ts
-  - src/nexus/auto-architect.ts
-  - src/nexus/traits/user-model-engine.ts
-  - src/nexus/routes/workflows.ts
-  - src/nexus/routes/training.ts
-  - src/nexus/routes/system.ts
-  - src/nexus/routes/providers.ts
-  - ... and 99 more
-- **cortex** (43 files)
+  - ... and 19 more
+- **cortex** (45 files)
   - src/cortex/tracer.ts
   - src/cortex/system-model.ts
   - src/cortex/project-manager.ts
@@ -182,25 +173,31 @@ POST /api/v1/system/self-patch
   - src/cortex/index.ts
   - src/cortex/context-resonance.ts
   - src/cortex/system-model/orchestrator.ts
-  - ... and 33 more
-- **core** (5 files)
+  - ... and 35 more
+- **core** (8 files)
+  - src/core/system-info.ts
+  - src/core/module-registry.ts
   - src/core/metrics-collector.ts
   - src/core/fs-manager.ts
   - src/core/event-bus.ts
   - src/core/environment-hub.ts
+  - src/core/config.ts
   - src/core/bus/event-bus.ts
-- **cli** (4 files)
+- **cli** (5 files)
   - src/cli/index.ts
   - src/cli/config.ts
+  - src/cli/commands/system.ts
   - src/cli/commands/logs.ts
   - src/cli/commands/deploy.ts
 
 
 ### 📚 Documentation Index
 - [UPGRADE_PLAN.md](UPGRADE_PLAN.md)
+- [TEST_FILE.md](TEST_FILE.md)
 - [SYSTEM_RESTORATION_REPORT.md](SYSTEM_RESTORATION_REPORT.md)
 - [README.md](README.md)
 - [OBSERVABILITY_IMPLEMENTATION_REPORT.md](OBSERVABILITY_IMPLEMENTATION_REPORT.md)
+- [INSPECTION_PLAN.md](INSPECTION_PLAN.md)
 - [CONSOLIDATION_REPORT.md](CONSOLIDATION_REPORT.md)
 - [CHAT_ACTIVATION_REPORT.md](CHAT_ACTIVATION_REPORT.md)
 

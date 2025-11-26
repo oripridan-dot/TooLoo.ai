@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import ReactMarkdown from 'react-markdown';
+import VisualCard from './VisualCard';
 
 const Chat = () => {
   const [input, setInput] = useState('');
@@ -29,6 +30,7 @@ const Chat = () => {
         id: Date.now(),
         type: 'assistant',
         content: data.content,
+        visual: data.visual,
         timestamp: new Date(),
       }]);
       setIsLoading(false);
@@ -80,6 +82,9 @@ const Chat = () => {
               msg.type === 'user' ? 'bg-blue-500 text-white' : 
               msg.type === 'assistant' ? 'bg-gray-200 text-gray-800' : 'bg-red-500 text-white'
             }`}>
+              {msg.visual ? (
+                <VisualCard type={msg.visual.type} data={msg.visual.data} />
+              ) : (
               <ReactMarkdown
                 components={{
                   code({node, inline, className, children, ...props}) {
@@ -98,6 +103,7 @@ const Chat = () => {
               >
                 {msg.content}
               </ReactMarkdown>
+              )}
               <div className="text-xs opacity-75 mt-1 text-right">
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </div>

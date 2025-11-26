@@ -35,7 +35,7 @@ export class ProjectManager {
     const dir = path.dirname(this.dataPath);
     try {
       await fs.mkdir(dir, { recursive: true });
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }
@@ -44,7 +44,7 @@ export class ProjectManager {
     try {
       const data = await fs.readFile(this.dataPath, "utf-8");
       this.projects = JSON.parse(data);
-    } catch (e) {
+    } catch {
       this.projects = [];
     }
   }
@@ -150,7 +150,7 @@ If no change is needed for a field, return the current value.
       });
 
       // Parse JSON (handle potential markdown wrapping)
-      let jsonStr = result
+      const jsonStr = result
         .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();

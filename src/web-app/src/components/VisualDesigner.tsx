@@ -1,16 +1,27 @@
-// @version 2.1.309
-import React from "react";
+// @version 2.1.342
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVisualStore } from "../store/visual-store";
-import { Loader2, Send, Image as ImageIcon, Settings } from "lucide-react";
+import {
+  Loader2,
+  Send,
+  Image as ImageIcon,
+  Settings,
+  PenTool,
+} from "lucide-react";
+import DesignTools from "./DesignTools.jsx";
 
 const VisualDesigner: React.FC = () => {
+  const [showTools, setShowTools] = useState(false);
   const {
     prompt,
     setPrompt,
+    negativePrompt,
+    setNegativePrompt,
     generatedImages,
     addGeneratedImage,
+    clearGeneratedImages,
     isGenerating,
     setIsGenerating,
     settings,
@@ -24,6 +35,7 @@ const VisualDesigner: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
+          negativePrompt: negativePrompt,
           provider: settings.provider,
           model: settings.model,
           aspectRatio: settings.aspectRatio,
@@ -36,7 +48,10 @@ const VisualDesigner: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Generation failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.details || errorData.error || "Generation failed",
+        );
       }
 
       return response.json();
@@ -58,9 +73,10 @@ const VisualDesigner: React.FC = () => {
       }
       setIsGenerating(false);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Generation error:", error);
       setIsGenerating(false);
+      alert(`Error: ${error.message}`); // Simple alert for now, could be a toast
     },
   });
 
@@ -76,13 +92,54 @@ const VisualDesigner: React.FC = () => {
         <header className="flex justify-between items-center bg-[#1e293b] p-4 rounded-xl shadow-lg border border-gray-800">
           <div>
             <h1 className="text-2xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-              Nano Banana Studio
+              TooLoo.ai - DeSign
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              Cognitive Visual Engine • Gemini & DALL-E
+              Cognitive Visual Engine • Gemini & DALL-E • Design Suite
             </p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={() => setShowTools(!showTools)}
+              className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+                showTools
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+              }`}
+            >
+              <PenTool className="w-4 h-4" />
+              Tools
+            </button>
+            <select
+              value={settings.preset || "custom"}
+              onChange={(e) => {
+                const preset = e.target.value;
+                if (preset === "ui-design") {
+                  updateSettings({
+                    preset: "ui-design",
+                    aspectRatio: "16:9",
+                    enhancePrompt: true,
+                  });
+                  setPrompt(
+                    "Modern dashboard interface for Tooloo.ai, dark mode, cybernetic aesthetic, data visualization widgets",
+                  );
+                } else if (preset === "icon") {
+                  updateSettings({
+                    preset: "icon",
+                    aspectRatio: "1:1",
+                    enhancePrompt: false,
+                  });
+                  setPrompt("Minimalist app icon, vector style, flat design");
+                } else {
+                  updateSettings({ preset: "custom" });
+                }
+              }}
+              className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="custom">Custom</option>
+              <option value="ui-design">UI Design (Tooloo)</option>
+              <option value="icon">App Icon</option>
+            </select>
             <select
               value={settings.provider}
               onChange={(e) => {
@@ -98,8 +155,16 @@ const VisualDesigner: React.FC = () => {
               className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="gemini">Nano Banana (Gemini)</option>
-              <option value="openai">DELL-E (OpenAI)</option>
+              <option value="openai">DALL-E (OpenAI)</option>
             </select>
+            {generatedImages.length > 0 && (
+              <button
+                onClick={clearGeneratedImages}
+                className="px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
+              >
+                Clear Gallery
+              </button>
+            )}
             <select
               value={settings.model}
               onChange={(e) => updateSettings({ model: e.target.value })}
@@ -130,6 +195,19 @@ const VisualDesigner: React.FC = () => {
             </select>
           </div>
         </header>
+
+        <AnimatePresence>
+          {showTools && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <DesignTools />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Canvas / Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -205,26 +283,36 @@ const VisualDesigner: React.FC = () => {
               <span>Auto-Enhance Prompt (Creative Director)</span>
             </label>
           </div>
-          <form onSubmit={handleSubmit} className="relative">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe your vision... (e.g. 'A futuristic city with neon lights in a cyberpunk style')"
+                className="w-full p-4 pr-16 border border-gray-700 bg-[#0f1117] rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-inner transition-all"
+                disabled={isGenerating}
+              />
+              <button
+                type="submit"
+                disabled={isGenerating || !prompt.trim()}
+                className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed rounded-lg flex items-center justify-center transition-colors text-white shadow-lg"
+              >
+                {isGenerating ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <Send size={20} />
+                )}
+              </button>
+            </div>
             <input
               type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe your vision... (e.g. 'A futuristic city with neon lights in a cyberpunk style')"
-              className="w-full p-4 pr-16 border border-gray-700 bg-[#0f1117] rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-inner transition-all"
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              placeholder="Negative prompt (what to avoid)..."
+              className="w-full p-3 border border-gray-700 bg-[#0f1117] rounded-xl text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent shadow-inner transition-all"
               disabled={isGenerating}
             />
-            <button
-              type="submit"
-              disabled={isGenerating || !prompt.trim()}
-              className="absolute right-2 top-2 bottom-2 aspect-square bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed rounded-lg flex items-center justify-center transition-colors text-white shadow-lg"
-            >
-              {isGenerating ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Send size={20} />
-              )}
-            </button>
           </form>
         </div>
       </div>

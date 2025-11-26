@@ -1,5 +1,5 @@
 // @version 2.1.266
-import { bus } from '../core/event-bus.js';
+import { bus, SynapsysEvent } from '../core/event-bus.js';
 import { smartFS } from '../core/fs-manager.js';
 
 interface ContextShadow {
@@ -19,24 +19,30 @@ export class Oracle {
     }
 
     private setupListeners() {
-        bus.on('system:file_changed', (event: any) => {
+        bus.on('sensory:file:change', (event: SynapsysEvent) => {
+            this.analyzeChange(event.payload);
+        });
+        // Also listen for legacy/system events just in case
+        bus.on('system:file_changed', (event: SynapsysEvent) => {
             this.analyzeChange(event.payload);
         });
     }
 
-    private async analyzeChange(change: { event: string, path: string }) {
+    private async analyzeChange(change: { type?: string, event?: string, path: string }) {
+        const eventType = change.type || change.event;
+        
         // Update Context Shadow
-        if (change.event === 'change' || change.event === 'add') {
+        if (eventType === 'change' || eventType === 'add') {
             await this.updateShadow(change.path);
         }
 
         // Simple heuristic prediction
-        if (change.event === 'change' || change.event === 'add') {
+        if (eventType === 'change' || eventType === 'add') {
             if (change.path.endsWith('.ts') && !change.path.includes('.test.')) {
                 try {
                     const bundle = await smartFS.getGoldenPlate(change.path);
                     this.predictNeedForTest(change.path, bundle);
-                } catch (e) {
+                } catch {
                     this.predictNeedForTest(change.path);
                 }
             }
@@ -55,7 +61,7 @@ export class Oracle {
         console.log(`[Oracle] Updated shadow for ${filePath}`);
     }
 
-    private predictNeedForTest(filePath: string, contextBundle?: any) {
+    private predictNeedForTest(filePath: string, contextBundle?: unknown) {
         console.log(`🔮 Precog Oracle: Detected change in ${filePath}. Predicting need for tests...`);
         
         // Speculative Execution: Start generating immediately

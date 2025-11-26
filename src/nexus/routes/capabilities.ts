@@ -1,11 +1,12 @@
 // @version 2.1.28
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
+import { request } from "../utils.js";
 
 const router = Router();
 
 // Helper for Event Bus Request/Response (Duplicated from api.ts for now, should be shared util)
-const request = (event: string, payload: any, res: any, timeout = 5000) => {
+const capabilityRequest = (event: string, payload: any, res: any, timeout = 5000) => {
   const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const listener = (evt: any) => {
@@ -35,17 +36,17 @@ const request = (event: string, payload: any, res: any, timeout = 5000) => {
 
 // List Discovered Capabilities
 router.get("/discovered", (req, res) => {
-  request("nexus:capabilities_list", {}, res);
+  capabilityRequest("nexus:capabilities_list", {}, res);
 });
 
 // Get Status
 router.get("/status", (req, res) => {
-  request("nexus:capabilities_status", {}, res);
+  capabilityRequest("nexus:capabilities_status", {}, res);
 });
 
 // Activate Capability
 router.post("/activate", (req, res) => {
-  request("nexus:capabilities_activate", req.body, res);
+  capabilityRequest("nexus:capabilities_activate", req.body, res);
 });
 
 export default router;

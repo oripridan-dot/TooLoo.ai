@@ -21,7 +21,21 @@ const PROJECT_ROOT = path.resolve(__dirname, "../../..");
 // ============================================================================
 // SERVICE REGISTRY (Trinity Architecture)
 // ============================================================================
-const SERVICE_REGISTRY = [
+
+interface Service {
+  id: string;
+  name: string;
+  file: string;
+  ports: number[];
+  primaryPort: number;
+  envVars: Record<string, string>;
+  priority: number;
+  healthEndpoint: string;
+  timeout: number;
+  dependencies: string[];
+}
+
+const SERVICE_REGISTRY: Service[] = [
   // --- NEXUS (Interface) ---
   {
     id: "web-interface",
@@ -131,7 +145,7 @@ const SERVICE_REGISTRY = [
 // UTILITIES
 // ============================================================================
 
-async function checkHealth(service: any) {
+async function checkHealth(service: Service) {
   try {
     const url = `http://127.0.0.1:${service.primaryPort}${service.healthEndpoint}`;
     const controller = new AbortController();
@@ -139,15 +153,15 @@ async function checkHealth(service: any) {
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
     return response.status === 200;
-  } catch (e) {
+  } catch (e: unknown) {
     return false;
   }
 }
 
-async function waitForDependencies(service: any, maxWaitMs = 30000) {
+async function waitForDependencies(service: Service, maxWaitMs = 30000) {
   const depServices = service.dependencies
     .map((depId: string) => SERVICE_REGISTRY.find((s) => s.id === depId))
-    .filter(Boolean);
+    .filter((s): s is Service => !!s);
 
   if (depServices.length === 0) return true;
 
@@ -155,7 +169,7 @@ async function waitForDependencies(service: any, maxWaitMs = 30000) {
 
   while (Date.now() - startTime < maxWaitMs) {
     const allHealthy = await Promise.all(
-      depServices.map((dep: any) => checkHealth(dep))
+      depServices.map((dep: Service) => checkHealth(dep))
     );
 
     if (allHealthy.every((h) => h)) return true;
@@ -166,7 +180,7 @@ async function waitForDependencies(service: any, maxWaitMs = 30000) {
   return false;
 }
 
-async function spawnService(service: any) {
+async function spawnService(service: Service) {
   const filePath = path.join(PROJECT_ROOT, service.file);
 
   if (!fs.existsSync(filePath)) {

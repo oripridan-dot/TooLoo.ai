@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.337
 /**
  * Providers Arena Server
  * 
@@ -8,9 +8,11 @@
 
 import express from 'express';
 import cors from 'cors';
-import ensureEnvLoaded from '../engine/env-loader.js';
-import { generateLLM, getProviderStatus } from '../engine/llm-provider.js';
-import environmentHub from '../engine/environment-hub.js';
+import ensureEnvLoaded from '../../nexus/engine/env-loader.js';
+import { generateLLM, getProviderStatus } from '../providers/llm-provider.js';
+import environmentHub from '../../core/environment-hub.js';
+import { arenaStore } from './arena-store.js';
+import { bus } from '../../core/event-bus.js';
 
 ensureEnvLoaded();
 
@@ -471,8 +473,11 @@ app.post('/api/v1/arena/events', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
-    // TODO: Store event in persistent storage
-    // TODO: Broadcast to connected WebSocket clients
+    // Store event in persistent storage
+    await arenaStore.addEvent(event);
+    
+    // Broadcast to connected WebSocket clients
+    bus.publish('precog', 'arena:event', event);
 
     res.json({
       ok: true,
@@ -491,24 +496,14 @@ app.post('/api/v1/arena/events', async (req, res) => {
 app.get('/api/v1/arena/events', async (req, res) => {
   try {
     const { limit = 50, source } = req.query;
+    const limitNum = parseInt(limit as string) || 50;
 
-    // TODO: Fetch from persistent storage
-    // For now, return mock recent events
-    const mockEvents = [
-      {
-        id: 'evt_sample_1',
-        eventType: 'query',
-        query: 'Sample query',
-        providers: ['claude', 'openai'],
-        source: 'ui',
-        timestamp: new Date(Date.now() - 60000).toISOString()
-      }
-    ];
+    const events = await arenaStore.getEvents(limitNum, source as string);
 
     res.json({
       ok: true,
-      events: mockEvents,
-      total: mockEvents.length
+      events,
+      total: events.length
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
@@ -571,11 +566,11 @@ app.post('/api/v1/arena/export', async (req, res) => {
  */
 app.get('/api/v1/arena/history', async (req, res) => {
   try {
-    // TODO: Fetch from persistent storage with user context
+    const history = await arenaStore.getHistory();
     res.json({
       ok: true,
-      history: [],
-      message: 'History tracking to be implemented'
+      history,
+      message: 'History retrieved from ArenaStore'
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
