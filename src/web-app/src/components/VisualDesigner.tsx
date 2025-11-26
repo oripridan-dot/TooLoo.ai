@@ -1,9 +1,15 @@
-// @version 2.1.338
+// @version 2.1.342
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVisualStore } from "../store/visual-store";
-import { Loader2, Send, Image as ImageIcon, Settings, PenTool } from "lucide-react";
+import {
+  Loader2,
+  Send,
+  Image as ImageIcon,
+  Settings,
+  PenTool,
+} from "lucide-react";
 import DesignTools from "./DesignTools.jsx";
 
 const VisualDesigner: React.FC = () => {
@@ -43,7 +49,9 @@ const VisualDesigner: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.details || errorData.error || "Generation failed");
+        throw new Error(
+          errorData.details || errorData.error || "Generation failed",
+        );
       }
 
       return response.json();
@@ -94,7 +102,9 @@ const VisualDesigner: React.FC = () => {
             <button
               onClick={() => setShowTools(!showTools)}
               className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
-                showTools ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
+                showTools
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
               }`}
             >
               <PenTool className="w-4 h-4" />
@@ -110,7 +120,9 @@ const VisualDesigner: React.FC = () => {
                     aspectRatio: "16:9",
                     enhancePrompt: true,
                   });
-                  setPrompt("Modern dashboard interface for Tooloo.ai, dark mode, cybernetic aesthetic, data visualization widgets");
+                  setPrompt(
+                    "Modern dashboard interface for Tooloo.ai, dark mode, cybernetic aesthetic, data visualization widgets",
+                  );
                 } else if (preset === "icon") {
                   updateSettings({
                     preset: "icon",

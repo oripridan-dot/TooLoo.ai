@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<!-- @version 2.1.341 -->
+<!doctype html>
+<!-- @version 2.1.342 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -211,38 +211,44 @@
           .querySelectorAll(".tab-btn")
           .forEach((b) => b.classList.remove("active"));
         event.target.classList.add("active");
-        
+
         // Simple tab switching logic
-        if (tabName === 'system') {
-            fetchSystemStatus();
+        if (tabName === "system") {
+          fetchSystemStatus();
         } else {
-            fetchProviderStatus();
+          fetchProviderStatus();
         }
       }
 
       async function fetchProviderStatus() {
         const content = document.getElementById("tab-content");
-        content.innerHTML = '<div class="text-center text-gray-500">Loading provider status...</div>';
-        
-        try {
-            const res = await fetch(`${API_BASE}/api/v1/providers/status`);
-            const json = await res.json();
-            // Handle StandardResponse: { ok: true, data: { ... }, version: ... }
-            const status = json.data || json;
-            
-            if (!status.available) {
-                 content.innerHTML = '<div class="text-red-400">Failed to load provider status (Invalid Data)</div>';
-                 console.error("Invalid provider status data:", json);
-                 return;
-            }
+        content.innerHTML =
+          '<div class="text-center text-gray-500">Loading provider status...</div>';
 
-            let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
-            status.available.forEach(p => {
-                const isOperational = p.status === 'Ready' || p.status === 'Operational';
-                const color = isOperational ? 'emerald' : 'yellow';
-                const borderColor = p.id === status.active ? 'border-cyan-500/50' : 'border-transparent';
-                
-                html += `
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/providers/status`);
+          const json = await res.json();
+          // Handle StandardResponse: { ok: true, data: { ... }, version: ... }
+          const status = json.data || json;
+
+          if (!status.available) {
+            content.innerHTML =
+              '<div class="text-red-400">Failed to load provider status (Invalid Data)</div>';
+            console.error("Invalid provider status data:", json);
+            return;
+          }
+
+          let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+          status.available.forEach((p) => {
+            const isOperational =
+              p.status === "Ready" || p.status === "Operational";
+            const color = isOperational ? "emerald" : "yellow";
+            const borderColor =
+              p.id === status.active
+                ? "border-cyan-500/50"
+                : "border-transparent";
+
+            html += `
                 <div class="glass p-6 rounded-lg border ${borderColor}">
                   <h3 class="text-lg font-bold text-white mb-4">${p.name}</h3>
                   <div class="flex items-center justify-between mb-2">
@@ -251,49 +257,50 @@
                   </div>
                   <div class="flex items-center justify-between">
                     <span class="text-gray-400 text-xs">Latency</span>
-                    <span class="text-white text-xs mono">${status.latency || '--'}ms</span>
+                    <span class="text-white text-xs mono">${status.latency || "--"}ms</span>
                   </div>
                 </div>`;
-            });
-            html += '</div>';
-            content.innerHTML = html;
+          });
+          html += "</div>";
+          content.innerHTML = html;
         } catch (e) {
-            content.innerHTML = `<div class="text-red-400">Error: ${e.message}</div>`;
+          content.innerHTML = `<div class="text-red-400">Error: ${e.message}</div>`;
         }
       }
 
       async function fetchSystemStatus() {
         const content = document.getElementById("tab-content");
-        content.innerHTML = '<div class="text-center text-gray-500">Loading system status...</div>';
-        
-        try {
-            const res = await fetch(`${API_BASE}/api/v1/system/awareness`);
-            const data = await res.json();
-            const awareness = data.content || data;
+        content.innerHTML =
+          '<div class="text-center text-gray-500">Loading system status...</div>';
 
-            content.innerHTML = `
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/system/awareness`);
+          const data = await res.json();
+          const awareness = data.content || data;
+
+          content.innerHTML = `
                 <div class="glass p-6 rounded-lg">
                     <h3 class="text-lg font-bold text-white mb-4">System Awareness</h3>
                     <div class="space-y-2">
                         <div class="flex justify-between border-b border-white/10 pb-2">
                             <span class="text-gray-400">Version</span>
-                            <span class="text-cyan-400 mono">${awareness.version || 'Unknown'}</span>
+                            <span class="text-cyan-400 mono">${awareness.version || "Unknown"}</span>
                         </div>
                         <div class="flex justify-between border-b border-white/10 pb-2">
                             <span class="text-gray-400">Environment</span>
-                            <span class="text-white mono">${awareness.environment || 'Production'}</span>
+                            <span class="text-white mono">${awareness.environment || "Production"}</span>
                         </div>
                          <div class="mt-4">
                             <h4 class="text-sm font-bold text-gray-300 mb-2">Capabilities</h4>
                             <div class="flex flex-wrap gap-2">
-                                ${(awareness.capabilities || []).map(c => `<span class="px-2 py-1 rounded bg-gray-800 text-xs text-gray-300 border border-white/10">${c}</span>`).join('')}
+                                ${(awareness.capabilities || []).map((c) => `<span class="px-2 py-1 rounded bg-gray-800 text-xs text-gray-300 border border-white/10">${c}</span>`).join("")}
                             </div>
                         </div>
                     </div>
                 </div>
             `;
         } catch (e) {
-             content.innerHTML = `<div class="text-red-400">Error: ${e.message}</div>`;
+          content.innerHTML = `<div class="text-red-400">Error: ${e.message}</div>`;
         }
       }
 
@@ -309,9 +316,10 @@
           }
         }
       }
-      
+
       // Initial Load
       fetchProviderStatus();
     </script>
+    <script src="js/version-sync.js"></script>
   </body>
 </html>
