@@ -6,42 +6,24 @@ import { io } from "socket.io-client";
 
 const results = [];
 
-function recordFeature(
-  feature,
-  category,
-  status,
-  duration,
-  message,
-  metrics,
-) {
+function recordFeature(feature, category, status, duration, message, metrics) {
   results.push({ feature, category, status, duration, message, metrics });
 }
 
-async function testFeature(
-  name,
-  category,
-  testFn,
-  timeoutMs = 10000,
-) {
+async function testFeature(name, category, testFn, timeoutMs = 10000) {
   const start = Date.now();
   try {
     await Promise.race([
       testFn(),
       new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Test timeout")),
-          timeoutMs,
-        ),
+        setTimeout(() => reject(new Error("Test timeout")), timeoutMs),
       ),
     ]);
     const duration = Date.now() - start;
     recordFeature(name, category, "PASS", duration, "Feature operational");
   } catch (err) {
     const duration = Date.now() - start;
-    if (
-      err instanceof Error &&
-      err.message.includes("timeout")
-    ) {
+    if (err instanceof Error && err.message.includes("timeout")) {
       recordFeature(
         name,
         category,
@@ -130,8 +112,7 @@ async function runAdvancedTests() {
         socket.on("connect", () => {
           // Send message that should trigger process visualization (numbered list)
           socket.emit("generate", {
-            message:
-              "List the steps: 1. First 2. Second 3. Third",
+            message: "List the steps: 1. First 2. Second 3. Third",
             requestId,
           });
         });
@@ -140,15 +121,12 @@ async function runAdvancedTests() {
           socket.disconnect();
           if (
             data.visual &&
-            (data.visual.type === "process" ||
-              data.visual.type === "info")
+            (data.visual.type === "process" || data.visual.type === "info")
           ) {
             resolve();
           } else {
             reject(
-              new Error(
-                `Visual type not detected. Got: ${data.visual?.type}`,
-              ),
+              new Error(`Visual type not detected. Got: ${data.visual?.type}`),
             );
           }
         });
@@ -347,31 +325,25 @@ async function runAdvancedTests() {
   console.log("Feature Breakdown by Category:");
   console.log();
 
-  const byCategory = results.reduce(
-    (acc, r) => {
-      if (!acc[r.category]) {
-        acc[r.category] = { passed: 0, failed: 0, timeout: 0, tests: [] };
-      }
-      if (r.status === "PASS") acc[r.category].passed++;
-      else if (r.status === "FAIL") acc[r.category].failed++;
-      else acc[r.category].timeout++;
-      acc[r.category].tests.push(r);
-      return acc;
-    },
-    {},
-  );
+  const byCategory = results.reduce((acc, r) => {
+    if (!acc[r.category]) {
+      acc[r.category] = { passed: 0, failed: 0, timeout: 0, tests: [] };
+    }
+    if (r.status === "PASS") acc[r.category].passed++;
+    else if (r.status === "FAIL") acc[r.category].failed++;
+    else acc[r.category].timeout++;
+    acc[r.category].tests.push(r);
+    return acc;
+  }, {});
 
   Object.entries(byCategory).forEach(([category, data]) => {
-    const status =
-      data.failed > 0 || data.timeout > 0 ? "❌" : "✅";
+    const status = data.failed > 0 || data.timeout > 0 ? "❌" : "✅";
     console.log(
       `${status} ${category}: ${data.passed}/${data.passed + data.failed + data.timeout} operational`,
     );
     data.tests.forEach((t) => {
       const icon = t.status === "PASS" ? "✅" : "⚠️";
-      console.log(
-        `   ${icon} ${t.feature} (${t.duration}ms)`,
-      );
+      console.log(`   ${icon} ${t.feature} (${t.duration}ms)`);
     });
   });
 
@@ -388,9 +360,7 @@ async function runAdvancedTests() {
     results
       .filter((r) => r.status !== "PASS")
       .forEach((r) => {
-        console.log(
-          `  ⚠️ ${r.feature}: ${r.message}`,
-        );
+        console.log(`  ⚠️ ${r.feature}: ${r.message}`);
       });
   }
 

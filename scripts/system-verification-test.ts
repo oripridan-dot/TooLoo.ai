@@ -152,7 +152,10 @@ async function runTests() {
       throw new Error("Cortex Orchestrator file not found");
     }
     const content = fs.readFileSync(orchestratorPath, "utf8");
-    if (!content.includes("class Orchestrator") && !content.includes("Orchestrator")) {
+    if (
+      !content.includes("class Orchestrator") &&
+      !content.includes("Orchestrator")
+    ) {
       throw new Error("Orchestrator class not found");
     }
     const fileSize = fs.statSync(orchestratorPath).size;
@@ -205,7 +208,10 @@ async function runTests() {
       throw new Error("Synthesizer file not found");
     }
     const content = fs.readFileSync(synthPath, "utf8");
-    if (!content.includes("class Synthesizer") && !content.includes("synthesizer")) {
+    if (
+      !content.includes("class Synthesizer") &&
+      !content.includes("synthesizer")
+    ) {
       throw new Error("Synthesizer not found");
     }
     recordTest(
@@ -221,7 +227,10 @@ async function runTests() {
   // Test 8: Precog Training Service
   console.log("📦 Testing: Precog Training Service");
   await testModule("Precog", async () => {
-    const trainingPath = path.join(workspaceRoot, "src/precog/training/index.ts");
+    const trainingPath = path.join(
+      workspaceRoot,
+      "src/precog/training/index.ts",
+    );
     if (!fs.existsSync(trainingPath)) {
       throw new Error("Training service file not found");
     }
@@ -299,7 +308,11 @@ async function runTests() {
       throw new Error("main.ts not found");
     }
     const content = fs.readFileSync(mainPath, "utf8");
-    if (!content.includes("Cortex") || !content.includes("Precog") || !content.includes("Nexus")) {
+    if (
+      !content.includes("Cortex") ||
+      !content.includes("Precog") ||
+      !content.includes("Nexus")
+    ) {
       throw new Error("Main file doesn't initialize all modules");
     }
     recordTest(

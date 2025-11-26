@@ -6,7 +6,12 @@ import { request } from "../utils.js";
 const router = Router();
 
 // Helper for Event Bus Request/Response (Duplicated from api.ts for now, should be shared util)
-const capabilityRequest = (event: string, payload: any, res: any, timeout = 5000) => {
+const capabilityRequest = (
+  event: string,
+  payload: any,
+  res: any,
+  timeout = 5000,
+) => {
   const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const listener = (evt: any) => {

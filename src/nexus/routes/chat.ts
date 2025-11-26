@@ -1,21 +1,96 @@
 // @version 2.1.332
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
+import { cortex, visualCortex } from "../../cortex/index.js";
 import { successResponse, errorResponse } from "../utils.js";
 
 const router = Router();
 
 router.post("/message", async (req, res) => {
   // Extend timeout for deep reasoning models (Gemini 3 Pro)
-  req.setTimeout(300000); 
-  
+  req.setTimeout(300000);
+
   const { message, mode = "quick", context, attachments } = req.body;
 
   try {
     console.log(`[Chat] Processing (${mode}): ${message.substring(0, 50)}...`);
 
-    let systemPrompt =
-      "You are TooLoo.ai, an advanced AI development platform assistant. You are powered by Google's Gemini 3 Pro (Preview) model, which is fully integrated into the Synapsys architecture. You have deep reasoning capabilities and access to the entire workspace.";
+    // Visual Request Handling
+    if (
+      message.toLowerCase().includes("generate image") ||
+      message.toLowerCase().includes("create an image") ||
+      message.toLowerCase().includes("generate a logo") ||
+      message.toLowerCase().includes("make an image")
+    ) {
+      try {
+        const imageResult = await visualCortex.imagine(message, {
+          provider: "openai",
+        });
+
+        if (imageResult.images && imageResult.images.length > 0) {
+          const img = imageResult.images[0];
+          const imgTag = `![Generated Image](data:${img.mimeType};base64,${img.data})`;
+
+          res.json(
+            successResponse({
+              response: `Here is the image you requested:\n\n${imgTag}`,
+              provider: "dall-e-3",
+              model: "dall-e-3",
+            }),
+          );
+          return;
+        }
+      } catch (e) {
+        console.warn("[Chat] Visual generation failed:", e);
+        // Fall through to text generation
+      }
+    }
+
+    // RAG: Search Vector Store
+    let ragContext = "";
+    let sources: any[] = [];
+    try {
+      const searchResults = await cortex.hippocampus.vectorStore.search(
+        message,
+        3,
+      );
+      if (searchResults && searchResults.length > 0) {
+        ragContext = searchResults
+          .map(
+            (result) =>
+              `[Source: ${result.doc.metadata.source}]\n${result.doc.text}`,
+          )
+          .join("\n\n");
+        sources = searchResults.map((result) => ({
+          source: result.doc.metadata.source,
+          relevance: result.score,
+        }));
+      }
+    } catch (err) {
+      console.warn("[Chat] Vector search failed:", err);
+    }
+
+    let systemPrompt = `You are TooLoo.ai, the central intelligence of the Synapsys Architecture.
+
+SYSTEM IDENTITY:
+- You are an Orchestrator AI, not just a single model. While you may be using Gemini 3 Pro for this specific conversation, you manage a multi-provider ecosystem.
+- You have access to and control over:
+  * OpenAI (GPT-4, DALL-E 3)
+  * Anthropic (Claude 3.5 Sonnet/Haiku)
+  * Google (Gemini Pro/Flash, Imagen)
+  * Local Models (Ollama)
+
+CAPABILITIES:
+- "Nano Banana Studio": You control this internal visual design engine for generating images and UI assets.
+- "Precog": Your predictive engine that routes tasks to the best model (e.g., coding to Claude, reasoning to Gemini).
+- "Cortex": Your cognitive core for memory and planning.
+
+Your goal is to use these tools to serve the user. Never claim to be isolated or limited to a single provider. You ARE the system.`;
+
+    // Visual Capabilities Instruction
+    systemPrompt +=
+      "\n\nVISUAL CAPABILITIES:\n- You can generate diagrams using Mermaid.js syntax. Wrap them in ```mermaid code blocks.\n- Supported diagram types: Flowcharts, Sequence Diagrams, Class Diagrams, State Diagrams, Entity Relationship Diagrams, Gantt Charts, Pie Charts, Git Graphs, C4 Models.\n- When explaining complex logic, architecture, or flows, ALWAYS include a Mermaid diagram.\n- For HTML/CSS/JS artifacts, wrap them in standard code blocks. The user can preview them.";
+
     let taskType = "general";
 
     // Mode Logic
@@ -40,6 +115,8 @@ router.post("/message", async (req, res) => {
     }
 
     if (context) systemPrompt += `\n\nContext:\n${context}`;
+    if (ragContext)
+      systemPrompt += `\n\nRelevant Knowledge Base:\n${ragContext}`;
     if (attachments && attachments.length > 0) {
       systemPrompt += `\n\nAttachments:\n${JSON.stringify(attachments)}`;
     }
@@ -50,26 +127,33 @@ router.post("/message", async (req, res) => {
       taskType: taskType,
     });
 
-    res.json(successResponse({
-      response: result.content,
-      provider: result.provider,
-      model: result.model,
-    }));
+    res.json(
+      successResponse({
+        response: result.content,
+        provider: result.provider,
+        model: result.model,
+        sources: sources,
+      }),
+    );
   } catch (error: unknown) {
     console.error("[Chat] Error:", error);
-    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
   }
 });
 
 router.post("/synthesis", async (req, res) => {
-  const { message, context, model, projectId } = req.body;
+  const { message, context, projectId } = req.body;
 
   try {
     console.log(`[Chat] Processing: ${message.substring(0, 50)}...`);
 
     // Construct system prompt with context
     let systemPrompt =
-      "You are TooLoo.ai, an advanced AI development platform assistant. You are helpful, concise, and technical.";
+      "You are TooLoo.ai, the central intelligence of the Synapsys Architecture. You orchestrate multiple AI providers (Gemini, Claude, OpenAI) to serve the user. You are helpful, concise, and technical.";
     if (context) systemPrompt += `\n\nContext:\n${context}`;
     if (projectId) systemPrompt += `\n\nProject ID: ${projectId}`;
 
@@ -81,30 +165,39 @@ router.post("/synthesis", async (req, res) => {
         // Note: 'provider' is not a supported parameter in generate()
       });
 
-      res.json(successResponse({
-        response: result.content,
-        provider: result.provider,
-        model: result.model,
-        usage: {
-          total_tokens: 0, // We don't track this yet in the unified response
-        },
-      }));
+      res.json(
+        successResponse({
+          response: result.content,
+          provider: result.provider,
+          model: result.model,
+          usage: {
+            total_tokens: 0, // We don't track this yet in the unified response
+          },
+        }),
+      );
     } catch (genError: unknown) {
-      const errorMessage = genError instanceof Error ? genError.message : String(genError);
+      const errorMessage =
+        genError instanceof Error ? genError.message : String(genError);
       console.warn(
         "[Chat] Provider generation failed, falling back to system message:",
         errorMessage,
       );
 
       // Fallback if no providers are configured
-      res.json(successResponse({
-        response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${errorMessage}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
-        provider: "system-fallback",
-      }));
+      res.json(
+        successResponse({
+          response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${errorMessage}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
+          provider: "system-fallback",
+        }),
+      );
     }
   } catch (error: unknown) {
     console.error("[Chat] Error:", error);
-    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
   }
 });
 

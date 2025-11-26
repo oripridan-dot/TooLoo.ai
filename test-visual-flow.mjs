@@ -26,7 +26,12 @@ socket.on("response", (data) => {
   console.log("✓ Got response:", {
     provider: data.provider,
     response: data.response?.substring(0, 100),
-    visual: data.visual ? { type: data.visual.type, dataKeys: Object.keys(data.visual.data || {}) } : null,
+    visual: data.visual
+      ? {
+          type: data.visual.type,
+          dataKeys: Object.keys(data.visual.data || {}),
+        }
+      : null,
   });
   process.exit(0);
 });

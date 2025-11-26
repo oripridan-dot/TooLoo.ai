@@ -1,19 +1,19 @@
 // @version 2.1.28
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import { io } from 'socket.io-client';
-import ReactMarkdown from 'react-markdown';
-import VisualCard from './VisualCard';
+import React, { useState, useEffect, useRef } from "react";
+import { Send, Loader2 } from "lucide-react";
+import { io } from "socket.io-client";
+import ReactMarkdown from "react-markdown";
+import VisualCard from "./VisualCard";
 
 const Chat = () => {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
     {
-      id: 'initial-welcome',
-      type: 'assistant',
-      content: 'Welcome to TooLoo.ai! How can I help you today?',
+      id: "initial-welcome",
+      type: "assistant",
+      content: "Welcome to TooLoo.ai! How can I help you today?",
       timestamp: new Date(),
-    }
+    },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [socket, setSocket] = useState(null);
@@ -23,26 +23,32 @@ const Chat = () => {
     const newSocket = io();
     setSocket(newSocket);
 
-    newSocket.on('thinking', () => setIsLoading(true));
+    newSocket.on("thinking", () => setIsLoading(true));
 
-    newSocket.on('response', (data) => {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'assistant',
-        content: data.content,
-        visual: data.visual,
-        timestamp: new Date(),
-      }]);
+    newSocket.on("response", (data) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          type: "assistant",
+          content: data.content,
+          visual: data.visual,
+          timestamp: new Date(),
+        },
+      ]);
       setIsLoading(false);
     });
 
-    newSocket.on('error', (data) => {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'error',
-        content: `Error: ${data.message}`,
-        timestamp: new Date(),
-      }]);
+    newSocket.on("error", (data) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          type: "error",
+          content: `Error: ${data.message}`,
+          timestamp: new Date(),
+        },
+      ]);
       setIsLoading(false);
     });
 
@@ -59,50 +65,62 @@ const Chat = () => {
 
     const userMessage = {
       id: Date.now(),
-      type: 'user',
+      type: "user",
       content: input.trim(),
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    
+    setMessages((prev) => [...prev, userMessage]);
+
     if (socket) {
-      socket.emit('generate', { prompt: input.trim() });
+      socket.emit("generate", { prompt: input.trim() });
     }
 
-    setInput('');
+    setInput("");
   };
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-lg lg:max-w-2xl px-4 py-2 rounded-lg ${
-              msg.type === 'user' ? 'bg-blue-500 text-white' : 
-              msg.type === 'assistant' ? 'bg-gray-200 text-gray-800' : 'bg-red-500 text-white'
-            }`}>
+          <div
+            key={msg.id}
+            className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-lg lg:max-w-2xl px-4 py-2 rounded-lg ${
+                msg.type === "user"
+                  ? "bg-blue-500 text-white"
+                  : msg.type === "assistant"
+                    ? "bg-gray-200 text-gray-800"
+                    : "bg-red-500 text-white"
+              }`}
+            >
               {msg.visual ? (
                 <VisualCard type={msg.visual.type} data={msg.visual.data} />
               ) : (
-              <ReactMarkdown
-                components={{
-                  code({node, inline, className, children, ...props}) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return !inline && match ? (
-                      <div className="bg-gray-800 text-white p-2 rounded my-2">
-                        <pre><code className={className} {...props}>{children}</code></pre>
-                      </div>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    )
-                  }
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
+                <ReactMarkdown
+                  components={{
+                    code({ node, inline, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || "");
+                      return !inline && match ? (
+                        <div className="bg-gray-800 text-white p-2 rounded my-2">
+                          <pre>
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          </pre>
+                        </div>
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
               )}
               <div className="text-xs opacity-75 mt-1 text-right">
                 {new Date(msg.timestamp).toLocaleTimeString()}

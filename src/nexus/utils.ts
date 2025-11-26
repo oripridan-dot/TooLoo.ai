@@ -16,7 +16,9 @@ export interface StandardResponse {
  * Wrap successful response with standard schema
  * {ok: true, data: payload, timestamp, version}
  */
-export const successResponse = (data: Record<string, any> = {}): StandardResponse => ({
+export const successResponse = (
+  data: Record<string, any> = {},
+): StandardResponse => ({
   ok: true,
   data,
   timestamp: Date.now(),
@@ -39,7 +41,7 @@ export const errorResponse = (error: string | Error): StandardResponse => ({
  * Wraps response data if not already wrapped
  */
 export const withMetadata = (response: any): StandardResponse => {
-  if (response && typeof response === 'object' && 'ok' in response) {
+  if (response && typeof response === "object" && "ok" in response) {
     // Already has standard schema, just ensure metadata
     return {
       ...response,
@@ -51,7 +53,12 @@ export const withMetadata = (response: any): StandardResponse => {
   return successResponse(response || {});
 };
 
-export const request = (event: string, payload: Record<string, any>, res: Response, timeout = 5000) => {
+export const request = (
+  event: string,
+  payload: Record<string, any>,
+  res: Response,
+  timeout = 5000,
+) => {
   const requestId =
     payload.requestId ||
     `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

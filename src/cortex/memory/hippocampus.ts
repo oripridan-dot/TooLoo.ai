@@ -20,7 +20,7 @@ export class Hippocampus {
   private readonly STM_LIMIT = 100;
   private memoryPath: string;
   private isReady: boolean = false;
-  private vectorStore: VectorStore;
+  public vectorStore: VectorStore;
 
   constructor(
     private bus: EventBus,

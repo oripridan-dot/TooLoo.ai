@@ -344,7 +344,10 @@ async function runIntegrationTests() {
           const responseText = data?.response;
           if (responseText && responseText.length > 10) {
             clearTimeout(timeout);
-            console.log("  ✓ Response content valid, length:", responseText.length);
+            console.log(
+              "  ✓ Response content valid, length:",
+              responseText.length,
+            );
             socket.disconnect();
             resolve();
           } else {
@@ -522,9 +525,7 @@ async function runIntegrationTests() {
 
         const timeout = setTimeout(() => {
           socket.disconnect();
-          reject(
-            new Error(`Only ${responsesReceived}/3 concurrent responses`),
-          );
+          reject(new Error(`Only ${responsesReceived}/3 concurrent responses`));
         }, 5000);
 
         socket.on("connect", () => {

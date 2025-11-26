@@ -27,6 +27,8 @@ export class FileWatcher {
         "**/data/**",
         "**/logs/**",
         "**/_archive/**",
+        "**/*.log",
+        "server.log",
         "data",
         "logs",
         "_archive",

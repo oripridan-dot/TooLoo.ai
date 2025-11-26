@@ -1,918 +1,220 @@
 <!doctype html>
-<!-- @version 2.1.247 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TooLoo.ai Projects</title>
-    <link rel="icon" type="image/svg+xml" href="brain.svg" />
-    <link rel="stylesheet" href="css/gemini-ui.css" />
+    <title>Tooloo Synapsys // Projects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      .project-card {
-        background: var(--g3-surface);
-        border: 1px solid var(--g3-border-color);
-        border-radius: 12px;
-        padding: 20px;
-        cursor: pointer;
-        transition: all 0.2s;
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #030712;
+        color: #e2e8f0;
       }
-      .project-card:hover {
-        border-color: var(--brand);
-        transform: translateY(-2px);
+      .mono {
+        font-family: "JetBrains Mono", monospace;
       }
-      .project-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 8px;
+      .glass {
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
       }
-      .project-desc {
-        font-size: 14px;
-        color: var(--g3-text-secondary);
-        margin-bottom: 16px;
+      .glass-hover:hover {
+        background: rgba(17, 24, 39, 0.9);
+        border-color: rgba(6, 182, 212, 0.3);
       }
-      .project-meta {
-        font-size: 12px;
-        color: var(--g3-text-tertiary);
-        display: flex;
-        justify-content: space-between;
+      .glow-text {
+        text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
       }
-      .modal {
+      .scrollbar-hide::-webkit-scrollbar {
         display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-      }
-      .modal.active {
-        display: flex;
-      }
-      .modal-content {
-        background: var(--g3-surface);
-        padding: 24px;
-        border-radius: 16px;
-        width: 400px;
-        border: 1px solid var(--g3-border-color);
-      }
-      .tab-nav {
-        display: flex;
-        gap: 20px;
-        border-bottom: 1px solid var(--g3-border-color);
-        margin-bottom: 20px;
-      }
-      .tab-item {
-        padding: 10px 0;
-        cursor: pointer;
-        color: var(--g3-text-secondary);
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s;
-      }
-      .tab-item:hover {
-        color: var(--g3-text-primary);
-      }
-      .tab-item.active {
-        color: var(--brand);
-        border-bottom-color: var(--brand);
-      }
-      .tab-content {
-        display: none;
-      }
-      .tab-content.active {
-        display: block;
-      }
-      .kanban-board {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        height: 500px;
-      }
-      .kanban-column {
-        background: var(--g3-surface-hover);
-        border-radius: 8px;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-      }
-      .kanban-header {
-        font-weight: 600;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--g3-border-color);
-        display: flex;
-        justify-content: space-between;
-      }
-      .task-card {
-        background: var(--g3-surface);
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        border: 1px solid var(--g3-border-color);
-        cursor: grab;
-      }
-      .file-tree-item {
-        padding: 4px 8px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        border-radius: 4px;
-      }
-      .file-tree-item:hover {
-        background: var(--g3-surface-hover);
       }
     </style>
   </head>
-  <body>
-    <div style="padding: 20px">
-      <div id="projects-view">
+  <body class="h-screen w-screen overflow-hidden flex text-sm">
+    <!-- SIDEBAR -->
+    <aside class="w-64 flex flex-col border-r border-white/10 bg-gray-900/50">
+      <div class="p-4 border-b border-white/10 flex items-center gap-3">
         <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-          "
+          class="w-8 h-8 rounded bg-cyan-500/20 border border-cyan-500 flex items-center justify-center text-cyan-400 font-bold"
         >
-          <h2 style="color: var(--brand)">My Projects</h2>
-          <button class="btn btn-primary" onclick="openNewProjectModal()">
+          T
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight">TooLoo.ai</h1>
+          <p class="text-xs text-gray-500 mono">Synapsys v2.4</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto py-4">
+        <div
+          class="px-4 mb-2 text-xs font-bold text-gray-600 uppercase tracking-wider"
+        >
+          Core
+        </div>
+        <a
+          href="index.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Home</a
+        >
+        <a
+          href="chat-pro-v2.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Chat Pro</a
+        >
+        <a
+          href="projects.html"
+          class="block px-4 py-2 border-l-2 border-cyan-500 bg-cyan-500/10 text-cyan-300"
+          >Projects</a
+        >
+
+        <div
+          class="px-4 mt-6 mb-2 text-xs font-bold text-gray-600 uppercase tracking-wider"
+        >
+          Tools
+        </div>
+        <a
+          href="visuals.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Visual Designer</a
+        >
+        <a
+          href="control-room.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Control Room</a
+        >
+        <a
+          href="system-awareness.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >System Awareness</a
+        >
+      </nav>
+
+      <div class="p-4 border-t border-white/10">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-gray-500">System Load</span>
+          <span class="text-xs text-emerald-400 mono" id="systemLoad">--%</span>
+        </div>
+        <div class="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-cyan-500 w-0 transition-all duration-500"
+            id="loadBar"
+          ></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col relative overflow-y-auto">
+      <!-- Header -->
+      <header
+        class="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-gray-900/30 sticky top-0 backdrop-blur z-10"
+      >
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+          <span class="mono text-xs text-cyan-400">PROJECT MANAGER</span>
+        </div>
+        <div class="flex gap-4 items-center">
+          <button
+            onclick="createNewProject()"
+            class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold transition"
+          >
             + New Project
           </button>
         </div>
+      </header>
 
-        <div class="grid-3" id="projects-list">
-          <!-- Projects will be loaded here -->
+      <div class="p-8 max-w-7xl mx-auto w-full space-y-6">
+        <div class="flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-white">Active Projects</h1>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              placeholder="Search projects..."
+              class="bg-gray-900 border border-white/10 rounded px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
         </div>
-      </div>
 
-      <div id="project-detail-view" style="display: none">
         <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-          "
+          id="projectsGrid"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          <div style="display: flex; align-items: center; gap: 12px">
-            <button class="btn" onclick="showProjects()">← Back</button>
-            <h2 id="detail-title" style="color: var(--brand)">Project Name</h2>
-          </div>
-          <div style="display: flex; gap: 12px; align-items: center">
-            <div class="status-badge active" id="detail-type">General</div>
-            <button
-              class="btn btn-sm"
-              onclick="deleteProject()"
-              style="
-                background: rgba(239, 68, 68, 0.1);
-                color: #ef4444;
-                border: 1px solid rgba(239, 68, 68, 0.2);
-              "
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-
-        <div class="tab-nav">
-          <div class="tab-item active" onclick="switchTab('overview')">
-            Overview
-          </div>
-          <div class="tab-item" onclick="switchTab('tasks')">Tasks</div>
-          <div class="tab-item" onclick="switchTab('files')">Files</div>
-          <div class="tab-item" onclick="switchTab('git')">Git Control</div>
-        </div>
-
-        <!-- OVERVIEW TAB -->
-        <div id="tab-overview" class="tab-content active">
-          <div class="grid-2">
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Memory</span>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 16px">
-                <div>
-                  <label
-                    style="
-                      font-size: 12px;
-                      font-weight: 600;
-                      margin-bottom: 4px;
-                      display: block;
-                    "
-                    >Long Term Memory</label
-                  >
-                  <textarea
-                    id="long-term-memory"
-                    class="input-field"
-                    style="height: 150px; font-family: monospace"
-                  ></textarea>
-                  <button
-                    class="btn btn-sm"
-                    onclick="saveMemory('long-term')"
-                    style="margin-top: 8px"
-                  >
-                    Save
-                  </button>
-                </div>
-                <div>
-                  <label
-                    style="
-                      font-size: 12px;
-                      font-weight: 600;
-                      margin-bottom: 4px;
-                      display: block;
-                    "
-                    >Short Term Memory</label
-                  >
-                  <textarea
-                    id="short-term-memory"
-                    class="input-field"
-                    style="height: 150px; font-family: monospace"
-                  ></textarea>
-                  <button
-                    class="btn btn-sm"
-                    onclick="saveMemory('short-term')"
-                    style="margin-top: 8px"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Project Chat</span>
-              </div>
-              <div
-                id="chat-history"
-                style="
-                  height: 300px;
-                  overflow-y: auto;
-                  border: 1px solid var(--g3-border-color);
-                  border-radius: 8px;
-                  padding: 12px;
-                  margin-bottom: 12px;
-                  background: var(--g3-bg);
-                "
-              >
-                <div
-                  style="
-                    color: var(--g3-text-tertiary);
-                    text-align: center;
-                    margin-top: 100px;
-                  "
-                >
-                  Start chatting with your project context...
-                </div>
-              </div>
-              <div style="display: flex; gap: 8px">
-                <input
-                  type="text"
-                  id="chat-input"
-                  class="input-field"
-                  placeholder="Ask about this project..."
-                  onkeypress="if(event.key === 'Enter') sendChat()"
-                />
-                <button class="btn btn-primary" onclick="sendChat()">
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TASKS TAB -->
-        <div id="tab-tasks" class="tab-content">
-          <div class="kanban-board">
-            <div class="kanban-column" id="col-todo">
-              <div class="kanban-header">
-                <span>To Do</span>
-                <button class="btn btn-sm" onclick="addTask('todo')">+</button>
-              </div>
-              <div class="task-list" id="list-todo"></div>
-            </div>
-            <div class="kanban-column" id="col-inprogress">
-              <div class="kanban-header">
-                <span>In Progress</span>
-                <button class="btn btn-sm" onclick="addTask('inprogress')">
-                  +
-                </button>
-              </div>
-              <div class="task-list" id="list-inprogress"></div>
-            </div>
-            <div class="kanban-column" id="col-done">
-              <div class="kanban-header">
-                <span>Done</span>
-                <button class="btn btn-sm" onclick="addTask('done')">+</button>
-              </div>
-              <div class="task-list" id="list-done"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FILES TAB -->
-        <div id="tab-files" class="tab-content">
-          <div
-            style="
-              display: grid;
-              grid-template-columns: 250px 1fr;
-              gap: 16px;
-              height: 500px;
-            "
-          >
-            <div class="card" style="overflow-y: auto">
-              <div class="card-header">
-                <span class="card-title">Explorer</span>
-              </div>
-              <div id="file-tree"></div>
-            </div>
-            <div class="card" style="display: flex; flex-direction: column">
-              <div
-                class="card-header"
-                style="display: flex; justify-content: space-between"
-              >
-                <span class="card-title" id="current-file-name"
-                  >No file selected</span
-                >
-                <button
-                  class="btn btn-sm btn-primary"
-                  onclick="saveCurrentFile()"
-                >
-                  Save
-                </button>
-              </div>
-              <textarea
-                id="file-editor"
-                class="input-field"
-                style="flex: 1; font-family: monospace; resize: none"
-                disabled
-              ></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- GIT TAB -->
-        <div id="tab-git" class="tab-content">
-          <div class="grid-2">
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Status & Commit</span>
-              </div>
-              <pre
-                id="git-status"
-                style="
-                  background: var(--g3-bg);
-                  padding: 12px;
-                  border-radius: 6px;
-                  height: 200px;
-                  overflow: auto;
-                  font-size: 12px;
-                  margin-bottom: 16px;
-                "
-              ></pre>
-              <div style="display: flex; gap: 8px">
-                <input
-                  type="text"
-                  id="commit-message"
-                  class="input-field"
-                  placeholder="Commit message..."
-                />
-                <button class="btn btn-primary" onclick="gitCommit()">
-                  Commit
-                </button>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">History</span>
-              </div>
-              <pre
-                id="git-log"
-                style="
-                  background: var(--g3-bg);
-                  padding: 12px;
-                  border-radius: 6px;
-                  height: 240px;
-                  overflow: auto;
-                  font-size: 12px;
-                "
-              ></pre>
-              <button
-                class="btn btn-sm"
-                onclick="loadGitInfo()"
-                style="margin-top: 8px"
-              >
-                Refresh
-              </button>
-            </div>
+          <!-- Projects injected here -->
+          <div class="col-span-full text-center py-12 text-gray-500 italic">
+            Loading projects...
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- New Project Modal -->
-    <div class="modal" id="new-project-modal">
-      <div class="modal-content">
-        <h3 style="margin-bottom: 16px">Create New Project</h3>
-        <div
-          id="modal-error"
-          style="
-            display: none;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 13px;
-          "
-        ></div>
-        <div style="margin-bottom: 16px">
-          <label style="display: block; margin-bottom: 8px">Project Name</label>
-          <input
-            type="text"
-            id="new-project-name"
-            class="input-field"
-            placeholder="e.g. My Awesome App"
-          />
-        </div>
-        <div style="margin-bottom: 16px">
-          <label style="display: block; margin-bottom: 8px">Description</label>
-          <textarea
-            id="new-project-desc"
-            class="input-field"
-            placeholder="What is this project about?"
-          ></textarea>
-        </div>
-        <div style="margin-bottom: 24px">
-          <label style="display: block; margin-bottom: 8px">Type</label>
-          <select id="new-project-type" class="input-field">
-            <option value="general">General</option>
-            <option value="web-app">Web Application</option>
-            <option value="mobile-app">Mobile App</option>
-            <option value="library">Library/Package</option>
-          </select>
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 12px">
-          <button class="btn" onclick="closeNewProjectModal()">Cancel</button>
-          <button class="btn btn-primary" onclick="createProject()">
-            Create Project
-          </button>
-        </div>
-      </div>
-    </div>
+    </main>
 
     <script>
       const API_BASE = window.location.origin;
-      let currentProjectId = null;
-      let currentTasks = [];
-      let currentFilePath = null;
-
-      function switchTab(tabName) {
-        document
-          .querySelectorAll(".tab-item")
-          .forEach((el) => el.classList.remove("active"));
-        document
-          .querySelectorAll(".tab-content")
-          .forEach((el) => el.classList.remove("active"));
-
-        document
-          .querySelector(`.tab-item[onclick="switchTab('${tabName}')"]`)
-          .classList.add("active");
-        document.getElementById(`tab-${tabName}`).classList.add("active");
-
-        if (tabName === "tasks") loadTasks();
-        if (tabName === "files") loadFiles();
-        if (tabName === "git") loadGitInfo();
-      }
 
       async function loadProjects() {
         try {
           const res = await fetch(`${API_BASE}/api/v1/projects`);
           const data = await res.json();
-          const payload = data.content || data;
+          const projects = data.content?.projects || [];
 
-          const list = document.getElementById("projects-list");
-          if (payload.projects && payload.projects.length > 0) {
-            list.innerHTML = payload.projects
-              .map(
-                (p) => `
-            <div class="project-card" onclick="openProject('${p.id}')">
-              <div class="project-title">${p.name}</div>
-              <div class="project-desc">${p.description || "No description"}</div>
-              <div class="project-meta">
-                <span>${p.type}</span>
-                <span>${new Date(p.updatedAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          `,
-              )
-              .join("");
-          } else {
-            list.innerHTML =
-              '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--g3-text-secondary);">No projects found. Create one to get started!</div>';
+          const grid = document.getElementById("projectsGrid");
+          grid.innerHTML = "";
+
+          if (projects.length === 0) {
+            grid.innerHTML =
+              '<div class="col-span-full text-center py-12 text-gray-500">No projects found. Create one to get started.</div>';
+            return;
           }
-        } catch (err) {
-          console.error("Failed to load projects:", err);
+
+          projects.forEach((p) => {
+            const card = document.createElement("div");
+            card.className =
+              "glass glass-hover p-5 rounded-lg cursor-pointer transition group relative overflow-hidden";
+            card.onclick = () => openProject(p.id);
+
+            card.innerHTML = `
+                        <div class="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition">
+                            <button class="text-gray-400 hover:text-white">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-lg">
+                                ${p.name.charAt(0).toUpperCase()}
+                            </div>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-1 group-hover:text-cyan-400 transition">${p.name}</h3>
+                        <p class="text-xs text-gray-500 mono mb-4 truncate">${p.path}</p>
+                        
+                        <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                            <span class="text-[10px] text-gray-600 uppercase tracking-wider font-bold">ID: ${p.id.substr(0, 6)}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
+                        </div>
+                    `;
+            grid.appendChild(card);
+          });
+        } catch (e) {
+          console.error("Failed to load projects", e);
+          document.getElementById("projectsGrid").innerHTML =
+            '<div class="col-span-full text-center py-12 text-red-400">Failed to load projects.</div>';
         }
       }
 
-      function showProjects() {
-        document.getElementById("projects-view").style.display = "block";
-        document.getElementById("project-detail-view").style.display = "none";
-        currentProjectId = null;
-        localStorage.removeItem("tooloo_current_project_id");
-        loadProjects();
-      }
-
-      async function openProject(id) {
-        currentProjectId = id;
+      function openProject(id) {
+        // Save as current project and go to chat
         localStorage.setItem("tooloo_current_project_id", id);
-        document.getElementById("projects-view").style.display = "none";
-        document.getElementById("project-detail-view").style.display = "block";
-        switchTab("overview");
-
-        try {
-          const res = await fetch(`${API_BASE}/api/v1/projects/${id}`);
-          const data = await res.json();
-          const payload = data.content || data;
-
-          if (payload.ok) {
-            document.getElementById("detail-title").textContent =
-              payload.project.name;
-            document.getElementById("detail-type").textContent =
-              payload.project.type;
-            document.getElementById("long-term-memory").value =
-              payload.memory.longTerm || "";
-            document.getElementById("short-term-memory").value =
-              payload.memory.shortTerm || "";
-
-            // Clear chat
-            document.getElementById("chat-history").innerHTML =
-              '<div style="color: var(--g3-text-tertiary); text-align: center; margin-top: 100px;">Start chatting with your project context...</div>';
-          }
-        } catch (err) {
-          console.error("Failed to load project details:", err);
-        }
+        window.location.href = "chat-pro-v2.html";
       }
 
-      // --- TASKS ---
-      async function loadTasks() {
-        if (!currentProjectId) return;
-        try {
-          const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/tasks`,
-          );
-          const data = await res.json();
-          const payload = data.content || data;
-          if (payload.ok) {
-            currentTasks = payload.tasks;
-            renderTasks();
-          }
-        } catch (err) {
-          console.error(err);
-        }
+      function createNewProject() {
+        alert("Project creation wizard coming soon.");
       }
 
-      function renderTasks() {
-        ["todo", "inprogress", "done"].forEach((status) => {
-          const list = document.getElementById(`list-${status}`);
-          list.innerHTML = currentTasks
-            .filter((t) => t.status === status)
-            .map(
-              (t) => `
-            <div class="task-card" draggable="true" ondragstart="drag(event, '${t.id}')">
-              <div style="font-weight: 500; margin-bottom: 4px;">${t.title}</div>
-              <div style="font-size: 12px; color: var(--g3-text-secondary);">${t.description || ""}</div>
-              <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                <button class="btn btn-sm" onclick="deleteTask('${t.id}')" style="padding: 2px 6px; font-size: 10px;">🗑️</button>
-              </div>
-            </div>
-          `,
-            )
-            .join("");
-
-          // Add drop listeners
-          const col = document.getElementById(`col-${status}`);
-          col.ondragover = allowDrop;
-          col.ondrop = (e) => drop(e, status);
-        });
-      }
-
-      function allowDrop(ev) {
-        ev.preventDefault();
-      }
-      function drag(ev, id) {
-        ev.dataTransfer.setData("text", id);
-      }
-      function drop(ev, status) {
-        ev.preventDefault();
-        const id = ev.dataTransfer.getData("text");
-        const task = currentTasks.find((t) => t.id === id);
-        if (task) {
-          task.status = status;
-          saveTasks();
-          renderTasks();
-        }
-      }
-
-      async function addTask(status) {
-        const title = prompt("Task title:");
-        if (!title) return;
-        currentTasks.push({
-          id: Date.now().toString(),
-          title,
-          status,
-          description: "",
-        });
-        saveTasks();
-        renderTasks();
-      }
-
-      async function deleteTask(id) {
-        if (!confirm("Delete task?")) return;
-        currentTasks = currentTasks.filter((t) => t.id !== id);
-        saveTasks();
-        renderTasks();
-      }
-
-      async function saveTasks() {
-        await fetch(`${API_BASE}/api/v1/projects/${currentProjectId}/tasks`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tasks: currentTasks }),
-        });
-      }
-
-      // --- FILES ---
-      async function loadFiles(path = ".") {
-        if (!currentProjectId) return;
-        try {
-          const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/files?path=${path}`,
-          );
-          const data = await res.json();
-          const payload = data.content || data;
-          if (payload.ok) {
-            const tree = document.getElementById("file-tree");
-            // Simple flat list for now, could be recursive
-            tree.innerHTML = `
-            ${path !== "." ? `<div class="file-tree-item" onclick="loadFiles('.')">📁 ..</div>` : ""}
-            ${payload.files
-              .map(
-                (f) => `
-              <div class="file-tree-item" onclick="${f.type === "folder" ? `loadFiles('${f.path}')` : `openFile('${f.path}')`}">
-                ${f.type === "folder" ? "📁" : "📄"} ${f.name}
-              </div>
-            `,
-              )
-              .join("")}
-          `;
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      async function openFile(path) {
-        try {
-          const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/files/content?path=${path}`,
-          );
-          const data = await res.json();
-          const payload = data.content || data;
-          if (payload.ok) {
-            currentFilePath = path;
-            document.getElementById("current-file-name").textContent = path;
-            document.getElementById("file-editor").value = payload.content;
-            document.getElementById("file-editor").disabled = false;
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      async function saveCurrentFile() {
-        if (!currentFilePath) return;
-        const content = document.getElementById("file-editor").value;
-        try {
-          await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/files/content`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ path: currentFilePath, content }),
-            },
-          );
-          alert("File saved!");
-        } catch (err) {
-          alert("Error saving file");
-        }
-      }
-
-      // --- GIT ---
-      async function loadGitInfo() {
-        if (!currentProjectId) return;
-        try {
-          const statusRes = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/git/status`,
-          );
-          const statusData = await statusRes.json();
-          const statusPayload = statusData.content || statusData;
-          document.getElementById("git-status").textContent =
-            statusPayload.status || "No changes";
-
-          const logRes = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/git/log`,
-          );
-          const logData = await logRes.json();
-          const logPayload = logData.content || logData;
-          document.getElementById("git-log").textContent = logPayload.log;
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      async function gitCommit() {
-        const message = document.getElementById("commit-message").value;
-        if (!message) return alert("Message required");
-        try {
-          const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/git/commit`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message }),
-            },
-          );
-          const data = await res.json();
-          const payload = data.content || data;
-          if (payload.ok) {
-            document.getElementById("commit-message").value = "";
-            loadGitInfo();
-            alert("Committed!");
-          }
-        } catch (err) {
-          alert("Commit failed");
-        }
-      }
-
-      async function saveMemory(type) {
-        if (!currentProjectId) return;
-
-        const content = document.getElementById(`${type}-memory`).value;
-        try {
-          const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/memory`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ type, content }),
-            },
-          );
-          const data = await res.json();
-          const payload = data.content || data;
-          if (payload.ok) {
-            alert("Memory saved!");
-          } else {
-            alert("Failed to save memory: " + payload.error);
-          }
-        } catch (err) {
-          console.error("Failed to save memory:", err);
-        }
-      }
-
-      function openNewProjectModal() {
-        document.getElementById("new-project-modal").classList.add("active");
-      }
-
-      function closeNewProjectModal() {
-        document.getElementById("new-project-modal").classList.remove("active");
-      }
-
-      async function createProject() {
-        const name = document.getElementById("new-project-name").value;
-        const description = document.getElementById("new-project-desc").value;
-        const type = document.getElementById("new-project-type").value;
-        const errorEl = document.getElementById("modal-error");
-        const createBtn = document.querySelector(
-          "#new-project-modal .btn-primary",
-        );
-
-        errorEl.style.display = "none";
-
-        if (!name) {
-          errorEl.textContent = "Project name is required";
-          errorEl.style.display = "block";
-          return;
-        }
-
-        // Disable button to prevent double-submit
-        createBtn.disabled = true;
-        createBtn.textContent = "Creating...";
-
-        try {
-          const res = await fetch(`${API_BASE}/api/v1/projects`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, description, type }),
-          });
-          const data = await res.json();
-          const payload = data.content || data;
-
-          if (payload.ok) {
-            closeNewProjectModal();
-            loadProjects();
-            // Reset form
-            document.getElementById("new-project-name").value = "";
-            document.getElementById("new-project-desc").value = "";
-          } else {
-            errorEl.textContent = payload.error || "Failed to create project";
-            errorEl.style.display = "block";
-          }
-        } catch (err) {
-          console.error("Failed to create project:", err);
-          errorEl.textContent = "Network error occurred";
-          errorEl.style.display = "block";
-        } finally {
-          // Re-enable button
-          createBtn.disabled = false;
-          createBtn.textContent = "Create Project";
-        }
-      }
-
-      async function sendChat() {
-        const input = document.getElementById("chat-input");
-        const message = input.value.trim();
-        if (!message || !currentProjectId) return;
-
-        // Add user message
-        const history = document.getElementById("chat-history");
-        if (
-          history.children.length === 1 &&
-          history.children[0].textContent.includes("Start chatting")
-        ) {
-          history.innerHTML = "";
-        }
-
-        const userDiv = document.createElement("div");
-        userDiv.style.marginBottom = "12px";
-        userDiv.style.textAlign = "right";
-        userDiv.innerHTML = `<span style="background: var(--brand); color: white; padding: 8px 12px; border-radius: 12px 12px 0 12px; display: inline-block;">${message}</span>`;
-        history.appendChild(userDiv);
-        history.scrollTop = history.scrollHeight;
-
-        input.value = "";
-
-        // Send to chat API (using general chat for now, but injecting project context)
-        // In a real implementation, we'd use a dedicated project chat endpoint or enrich the context
-        try {
-          // Get memory context
-          const longTerm = document.getElementById("long-term-memory").value;
-          const shortTerm = document.getElementById("short-term-memory").value;
-          const projectName =
-            document.getElementById("detail-title").textContent;
-
-          const enrichedMessage = `[PROJECT CONTEXT: ${projectName}]
-[LONG TERM MEMORY]:
-${longTerm}
-[SHORT TERM MEMORY]:
-${shortTerm}
-
-USER QUERY: ${message}`;
-
-          const res = await fetch(`${API_BASE}/api/v1/chat/message`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: enrichedMessage }),
-          });
-
-          const data = await res.json();
-          const payload = data.content || data;
-
-          const botDiv = document.createElement("div");
-          botDiv.style.marginBottom = "12px";
-          botDiv.style.textAlign = "left";
-          botDiv.innerHTML = `<span style="background: var(--g3-surface-hover); color: var(--g3-text-primary); padding: 8px 12px; border-radius: 12px 12px 12px 0; display: inline-block; border: 1px solid var(--g3-border-color);">${payload.response}</span>`;
-          history.appendChild(botDiv);
-          history.scrollTop = history.scrollHeight;
-        } catch (err) {
-          console.error("Chat failed:", err);
-        }
-      }
-
-      // Initialize
-      document.addEventListener("DOMContentLoaded", async () => {
-        await loadProjects();
-        const savedId = localStorage.getItem("tooloo_current_project_id");
-        if (savedId) {
-          openProject(savedId);
-        }
-      });
+      loadProjects();
     </script>
   </body>
 </html>

@@ -15,9 +15,7 @@ router.post("/sources/github/issues/sync", async (req, res) => {
       force = false,
     } = req.body || {};
     if (!repo || !token) {
-      return res
-        .status(400)
-        .json(errorResponse("repo and token required"));
+      return res.status(400).json(errorResponse("repo and token required"));
     }
     const result = await precog.training.syncGithubIssues(repo, token, force);
     res.json(successResponse(result));
@@ -45,15 +43,13 @@ router.post("/training/start", async (req, res) => {
       const result = await precog.training.startTrainingSession(
         userId,
         focusArea,
-        roundCount
+        roundCount,
       );
-      res
-        .status(201)
-        .json({
-          success: true,
-          data: result,
-          message: "Training session started",
-        });
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: "Training session started",
+      });
     } else {
       // System training camp
       const result = await precog.training.startCamp();
@@ -80,7 +76,7 @@ router.post("/training/round", async (req, res) => {
       const result = await precog.training.completeTrainingRound(
         roundId,
         response,
-        score
+        score,
       );
       res.json({
         success: true,
@@ -328,7 +324,7 @@ router.post("/training/hyper-speed/micro-batch", async (req, res) => {
   try {
     const result = await precog.training.runMicroBatch(
       req.body?.domain,
-      req.body?.question
+      req.body?.question,
     );
     if (result.ok) {
       res.json({
@@ -338,13 +334,11 @@ router.post("/training/hyper-speed/micro-batch", async (req, res) => {
         execution: result.execution,
       });
     } else {
-      res
-        .status(result.safeMode ? 503 : 500)
-        .json({
-          ...result,
-          endpoint: "micro-batch",
-          timestamp: new Date().toISOString(),
-        });
+      res.status(result.safeMode ? 503 : 500).json({
+        ...result,
+        endpoint: "micro-batch",
+        timestamp: new Date().toISOString(),
+      });
     }
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e.message });
@@ -436,7 +430,7 @@ router.post("/challenges/start", async (req, res) => {
     const result = await precog.training.startChallenge(
       userId,
       skill,
-      difficulty
+      difficulty,
     );
     res
       .status(201)

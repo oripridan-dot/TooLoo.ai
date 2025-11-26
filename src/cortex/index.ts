@@ -28,7 +28,7 @@ interface PlanResult {
 export class Cortex {
   private motor: MotorCortex;
   private sensory: SensoryCortex;
-  private hippocampus: Hippocampus;
+  public hippocampus: Hippocampus;
   private prefrontal: PrefrontalCortex;
   private projectManager: ProjectManager;
   public contextResonance: ContextResonanceEngine;
@@ -150,16 +150,21 @@ export class Cortex {
       } else {
         // It's just chat. Use Synthesizer for multi-provider aggregation with timeout.
         try {
-          console.log(`[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`);
-          
+          console.log(
+            `[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`,
+          );
+
           // Create a timeout promise (reduced to 4s for faster response delivery)
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Synthesizer timeout after 4s')), 4000)
+            setTimeout(
+              () => reject(new Error("Synthesizer timeout after 4s")),
+              4000,
+            ),
           );
 
           const result = (await Promise.race([
             synthesizer.synthesize(message, responseType),
-            timeoutPromise
+            timeoutPromise,
           ])) as any;
 
           responseText = result.response;
@@ -169,7 +174,7 @@ export class Cortex {
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : String(err);
           console.error(`[Cortex] Synthesis error: ${errorMessage}`);
-          
+
           // Instant fallback - no async operations
           responseText = `I understand you're asking about: "${message}"
 
@@ -196,7 +201,9 @@ Here are the key points in response:
       console.log(`[Cortex] Publishing response for requestId: ${requestId}`);
       // Analyze response for visual rendering
       const visualData = visualizer.analyzeResponse(responseText, message);
-      console.log(`[Cortex] Visual data: ${visualData ? visualData.type : 'none'}`);
+      console.log(
+        `[Cortex] Visual data: ${visualData ? visualData.type : "none"}`,
+      );
 
       // Send Response
       bus.publish("cortex", "cortex:response", {

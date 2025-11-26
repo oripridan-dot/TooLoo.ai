@@ -51,9 +51,13 @@ router.get("/:filename", (req, res) => {
 // Process Asset (Crop, Resize, Enhance)
 router.post("/process", async (req, res) => {
   const { id, operations } = req.body;
-  
+
   if (!id || !operations || !Array.isArray(operations)) {
-    return res.status(400).json({ error: "Invalid request. 'id' and 'operations' array required." });
+    return res
+      .status(400)
+      .json({
+        error: "Invalid request. 'id' and 'operations' array required.",
+      });
   }
 
   const inputPath = path.join(ASSETS_DIR, id);
@@ -66,9 +70,16 @@ router.post("/process", async (req, res) => {
 
     for (const op of operations) {
       if (op.type === "resize") {
-        pipeline = pipeline.resize(op.width, op.height, { fit: op.fit || "cover" });
+        pipeline = pipeline.resize(op.width, op.height, {
+          fit: op.fit || "cover",
+        });
       } else if (op.type === "crop") {
-        pipeline = pipeline.extract({ left: op.left, top: op.top, width: op.width, height: op.height });
+        pipeline = pipeline.extract({
+          left: op.left,
+          top: op.top,
+          width: op.width,
+          height: op.height,
+        });
       } else if (op.type === "grayscale") {
         pipeline = pipeline.grayscale();
       } else if (op.type === "blur") {
@@ -91,7 +102,9 @@ router.post("/process", async (req, res) => {
     });
   } catch (error: any) {
     console.error("Asset processing error:", error);
-    res.status(500).json({ error: "Processing failed", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Processing failed", details: error.message });
   }
 });
 

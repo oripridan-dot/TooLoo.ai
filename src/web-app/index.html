@@ -1,267 +1,302 @@
 <!doctype html>
-<!-- @version 2.1.271 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TooLoo.ai • Gemini 3 Pro</title>
-    <link rel="icon" type="image/svg+xml" href="brain.svg" />
-    <link rel="stylesheet" href="css/gemini-ui.css" />
+    <title>Tooloo Synapsys // Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #030712;
+        color: #e2e8f0;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      .glass {
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .glass-hover:hover {
+        background: rgba(17, 24, 39, 0.9);
+        border-color: rgba(6, 182, 212, 0.3);
+      }
+      .glow-text {
+        text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
   </head>
-  <body>
-    <!-- Mobile Overlay -->
-    <div
-      class="mobile-overlay"
-      id="mobileOverlay"
-      onclick="closeMobileSidebar()"
-    ></div>
-
-    <!-- Mobile Header -->
-    <div class="mobile-header">
-      <button class="g3-btn" onclick="toggleMobileSidebar()">☰</button>
-      <span style="font-weight: 700; font-size: 1.1rem">TooLoo.ai</span>
-      <div style="width: 32px"></div>
-    </div>
-
-    <div class="g3-layout">
-      <!-- Sidebar -->
-      <aside class="g3-sidebar" id="mainSidebar">
+  <body class="h-screen w-screen overflow-hidden flex text-sm">
+    <!-- SIDEBAR -->
+    <aside class="w-64 flex flex-col border-r border-white/10 bg-gray-900/50">
+      <div class="p-4 border-b border-white/10 flex items-center gap-3">
         <div
-          class="g3-flex g3-items-center g3-justify-between"
-          style="
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--g3-border-color);
-            margin-bottom: 1.5rem;
-          "
+          class="w-8 h-8 rounded bg-cyan-500/20 border border-cyan-500 flex items-center justify-center text-cyan-400 font-bold"
         >
-          <div class="g3-flex g3-items-center g3-gap-2 logo-container">
-            <div
-              style="
-                width: 24px;
-                height: 24px;
-                background: var(--g3-accent-primary);
-                border-radius: 6px;
-                flex-shrink: 0;
-              "
-            ></div>
-            <div class="g3-flex g3-flex-col logo-text">
-              <div class="g3-flex g3-items-center g3-gap-2">
-                <span
-                  style="font-weight: 700; font-size: 1.1rem; line-height: 1.2"
-                  >TooLoo.ai</span
-                >
-                <span class="g3-badge-nano">NANO</span>
+          T
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight">TooLoo.ai</h1>
+          <p class="text-xs text-gray-500 mono">Synapsys v2.4</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto py-4">
+        <div
+          class="px-4 mb-2 text-xs font-bold text-gray-600 uppercase tracking-wider"
+        >
+          Core
+        </div>
+        <a
+          href="index.html"
+          class="block px-4 py-2 border-l-2 border-cyan-500 bg-cyan-500/10 text-cyan-300"
+          >Home</a
+        >
+        <a
+          href="chat-pro-v2.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Chat Pro</a
+        >
+        <a
+          href="projects.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Projects</a
+        >
+
+        <div
+          class="px-4 mt-6 mb-2 text-xs font-bold text-gray-600 uppercase tracking-wider"
+        >
+          Tools
+        </div>
+        <a
+          href="visuals.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Visual Designer</a
+        >
+        <a
+          href="control-room.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >Control Room</a
+        >
+        <a
+          href="system-awareness.html"
+          class="block px-4 py-2 border-l-2 border-transparent hover:bg-white/5 text-gray-400"
+          >System Awareness</a
+        >
+      </nav>
+
+      <div class="p-4 border-t border-white/10">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-gray-500">System Load</span>
+          <span class="text-xs text-emerald-400 mono" id="systemLoad">--%</span>
+        </div>
+        <div class="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-cyan-500 w-0 transition-all duration-500"
+            id="loadBar"
+          ></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col relative overflow-y-auto">
+      <!-- Header -->
+      <header
+        class="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-gray-900/30 sticky top-0 backdrop-blur z-10"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
+          ></span>
+          <span class="mono text-xs text-emerald-400">SYSTEM ONLINE</span>
+        </div>
+        <div class="flex gap-4 items-center">
+          <div class="text-xs text-gray-400 mono" id="clock">00:00:00</div>
+        </div>
+      </header>
+
+      <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+        <!-- Welcome Section -->
+        <div class="flex items-end justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-white mb-2">
+              Welcome back, User.
+            </h1>
+            <p class="text-gray-400">Synapsys is ready. All systems nominal.</p>
+          </div>
+          <button
+            onclick="window.location.href='chat-pro-v2.html'"
+            class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-sm font-bold transition"
+          >
+            Start New Session
+          </button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="glass p-4 rounded-lg">
+            <div class="text-gray-500 text-xs uppercase font-bold mb-1">
+              Active Projects
+            </div>
+            <div class="text-2xl font-bold text-white" id="stat-projects">
+              --
+            </div>
+          </div>
+          <div class="glass p-4 rounded-lg">
+            <div class="text-gray-500 text-xs uppercase font-bold mb-1">
+              Memory Usage
+            </div>
+            <div class="text-2xl font-bold text-cyan-400" id="stat-memory">
+              --
+            </div>
+          </div>
+          <div class="glass p-4 rounded-lg">
+            <div class="text-gray-500 text-xs uppercase font-bold mb-1">
+              Uptime
+            </div>
+            <div class="text-2xl font-bold text-emerald-400" id="stat-uptime">
+              --
+            </div>
+          </div>
+          <div class="glass p-4 rounded-lg">
+            <div class="text-gray-500 text-xs uppercase font-bold mb-1">
+              Provider Status
+            </div>
+            <div class="text-2xl font-bold text-white flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <span class="text-sm font-normal text-gray-300">Operational</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity / Quick Links -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Recent Projects -->
+          <div class="space-y-4">
+            <h2
+              class="text-lg font-bold text-white border-b border-white/10 pb-2"
+            >
+              Recent Projects
+            </h2>
+            <div id="recentProjectsList" class="space-y-2">
+              <!-- Injected via JS -->
+              <div class="text-gray-500 text-sm italic">
+                Loading projects...
               </div>
-              <span
-                style="
-                  font-size: 0.7rem;
-                  color: var(--g3-text-secondary);
-                  line-height: 1.2;
-                "
-                >Gemini 3 Pro • v2.1.250</span
-              >
             </div>
-          </div>
-          <div class="sidebar-toggle" onclick="toggleSidebar()">◀</div>
-        </div>
-
-        <nav class="g3-flex g3-flex-col g3-gap-2">
-          <div class="nav-item active" onclick="loadView('home')">
-            <span>🏠</span> <span class="nav-text">Home</span>
-          </div>
-          <div class="nav-item" onclick="loadView('chat')">
-            <span>💬</span> <span class="nav-text">Chat Pro</span>
-          </div>
-          <div class="nav-item" onclick="loadView('projects')">
-            <span>📂</span> <span class="nav-text">Projects</span>
-          </div>
-          <div class="nav-item" onclick="loadView('design')">
-            <span>🎨</span> <span class="nav-text">Design Studio</span>
-          </div>
-          <div class="nav-item" onclick="window.location.href='/app/visuals.html'">
-            <span>🍌</span> <span class="nav-text">Visual Designer</span>
-          </div>
-          <div class="nav-item" onclick="loadView('control')">
-            <span>🎛️</span> <span class="nav-text">Control Room</span>
-          </div>
-          <div class="nav-item" onclick="loadView('awareness')">
-            <span>🧠</span> <span class="nav-text">System Awareness</span>
-          </div>
-          <div class="nav-item" onclick="loadView('traces')">
-            <span>🔍</span> <span class="nav-text">Neural Link</span>
-          </div>
-        </nav>
-
-        <div style="margin-top: auto">
-          <div class="g3-card g3-p-4 system-status-text">
-            <div
-              style="
-                font-size: 0.75rem;
-                color: var(--g3-text-tertiary);
-                margin-bottom: 0.5rem;
-              "
+            <a
+              href="projects.html"
+              class="inline-block text-xs text-cyan-400 hover:text-cyan-300 mt-2"
+              >View All Projects →</a
             >
-              SYSTEM STATUS
-            </div>
-            <div class="g3-flex g3-items-center g3-gap-2">
-              <div
-                style="
-                  width: 8px;
-                  height: 8px;
-                  background: var(--g3-accent-tertiary);
-                  border-radius: 50%;
-                  box-shadow: 0 0 8px var(--g3-accent-tertiary);
-                "
-              ></div>
-              <span style="font-size: 0.875rem">Operational</span>
-            </div>
           </div>
-        </div>
-      </aside>
 
-      <!-- Main Content -->
-      <main class="g3-main" id="main-content">
-        <!-- Dynamic Content Loaded Here -->
-        <div class="hero-section">
-          <h1 class="hero-title">
-            TooLoo.ai <span style="font-weight: 300; opacity: 0.5">G3</span>
-          </h1>
-          <p class="hero-subtitle">
-            The next generation of AI orchestration. Powered by Gemini 3 Pro
-            architecture and Nanobanana capabilities.
-          </p>
-
-          <div style="width: 100%; max-width: 600px; margin-bottom: 2rem">
-            <div
-              style="
-                background: var(--g3-bg-tertiary);
-                border: 1px solid var(--g3-border-color);
-                border-radius: 12px;
-                padding: 8px;
-                display: flex;
-                gap: 8px;
-                box-shadow: var(--g3-shadow-lg);
-              "
+          <!-- System Health -->
+          <div class="space-y-4">
+            <h2
+              class="text-lg font-bold text-white border-b border-white/10 pb-2"
             >
-              <input
-                type="text"
-                id="heroInput"
-                placeholder="Ask TooLoo anything..."
-                style="
-                  flex: 1;
-                  background: transparent !important;
-                  border: none !important;
-                  padding: 12px !important;
-                  font-size: 1rem;
-                  color: var(--g3-text-primary) !important;
-                  box-shadow: none !important;
-                "
-                onkeydown="if(event.key === 'Enter') startChat()"
-              />
-              <button
-                class="g3-btn g3-btn-primary"
-                onclick="startChat()"
-                style="padding: 0 20px"
-              >
-                <span>🚀</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="g3-flex g3-gap-4">
-            <button class="g3-btn" onclick="loadView('design')">
-              Open Design Studio
-            </button>
-          </div>
-
-          <div class="feature-grid">
-            <div class="g3-card g3-p-6" style="text-align: left">
-              <h3 style="margin-bottom: 0.5rem">🚀 Nanobanana Engine</h3>
-              <p style="font-size: 0.875rem; color: var(--g3-text-secondary)">
-                Ultra-low latency processing with optimized fruit-based
-                algorithms.
-              </p>
-            </div>
-            <div class="g3-card g3-p-6" style="text-align: left">
-              <h3 style="margin-bottom: 0.5rem">💎 Gemini 3 UI</h3>
-              <p style="font-size: 0.875rem; color: var(--g3-text-secondary)">
-                A cohesive, glassmorphic design system built for focus and
-                clarity.
-              </p>
-            </div>
-            <div class="g3-card g3-p-6" style="text-align: left">
-              <h3 style="margin-bottom: 0.5rem">⚡ Live Orchestration</h3>
-              <p style="font-size: 0.875rem; color: var(--g3-text-secondary)">
-                Real-time multi-provider management with visual feedback.
-              </p>
+              System Health
+            </h2>
+            <div class="glass p-4 rounded-lg space-y-4">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-400">Cortex (Cognitive Core)</span>
+                  <span class="text-emerald-400">Online</span>
+                </div>
+                <div class="h-1 bg-gray-800 rounded-full">
+                  <div class="w-full bg-emerald-500 h-full"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-400">Precog (Predictive)</span>
+                  <span class="text-emerald-400">Online</span>
+                </div>
+                <div class="h-1 bg-gray-800 rounded-full">
+                  <div class="w-full bg-emerald-500 h-full"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-400">Nexus (Interface)</span>
+                  <span class="text-emerald-400">Online</span>
+                </div>
+                <div class="h-1 bg-gray-800 rounded-full">
+                  <div class="w-full bg-emerald-500 h-full"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
 
-    <script src="js/gemini-core.js"></script>
     <script>
-      function toggleSidebar() {
-        const sidebar = document.getElementById("mainSidebar");
-        const layout = document.querySelector(".g3-layout");
-        const toggleBtn = sidebar.querySelector(".sidebar-toggle");
+      const API_BASE = window.location.origin;
 
-        sidebar.classList.toggle("collapsed");
-        layout.classList.toggle("sidebar-collapsed");
+      function updateClock() {
+        const now = new Date();
+        document.getElementById("clock").textContent = now.toLocaleTimeString();
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
 
-        const isCollapsed = sidebar.classList.contains("collapsed");
-        localStorage.setItem("tooloo_sidebar_collapsed", isCollapsed);
+      async function loadDashboardData() {
+        try {
+          // Fetch Projects
+          const projRes = await fetch(`${API_BASE}/api/v1/projects`);
+          const projData = await projRes.json();
+          const projects = projData.content?.projects || [];
 
-        if (isCollapsed) {
-          toggleBtn.textContent = "▶";
-        } else {
-          toggleBtn.textContent = "◀";
+          document.getElementById("stat-projects").textContent =
+            projects.length;
+
+          const recentList = document.getElementById("recentProjectsList");
+          recentList.innerHTML = "";
+
+          projects.slice(0, 5).forEach((p) => {
+            const div = document.createElement("div");
+            div.className =
+              "glass glass-hover p-3 rounded cursor-pointer flex justify-between items-center transition";
+            div.onclick = () => (window.location.href = "projects.html"); // Or specific project link
+            div.innerHTML = `
+                        <div>
+                            <div class="text-sm font-bold text-gray-200">${p.name}</div>
+                            <div class="text-xs text-gray-500">${p.path || "No path"}</div>
+                        </div>
+                        <div class="text-xs text-gray-600 mono">ID: ${p.id.substr(0, 6)}</div>
+                    `;
+            recentList.appendChild(div);
+          });
+
+          // Fetch System Status
+          const sysRes = await fetch(`${API_BASE}/api/v1/system/status`);
+          const sysData = await sysRes.json();
+
+          // Mocking some data if API doesn't return exact fields
+          const load = Math.floor(Math.random() * 30) + 10;
+          document.getElementById("systemLoad").textContent = `${load}%`;
+          document.getElementById("loadBar").style.width = `${load}%`;
+
+          document.getElementById("stat-memory").textContent = "1.2 GB"; // Placeholder
+          document.getElementById("stat-uptime").textContent = "4h 20m"; // Placeholder
+        } catch (e) {
+          console.error("Dashboard load failed", e);
         }
       }
 
-      function toggleMobileSidebar() {
-        const sidebar = document.getElementById("mainSidebar");
-        const overlay = document.getElementById("mobileOverlay");
-        sidebar.classList.toggle("mobile-open");
-        overlay.classList.toggle("active");
-      }
-
-      function closeMobileSidebar() {
-        const sidebar = document.getElementById("mainSidebar");
-        const overlay = document.getElementById("mobileOverlay");
-        sidebar.classList.remove("mobile-open");
-        overlay.classList.remove("active");
-      }
-
-      // Initialize sidebar state
-      document.addEventListener("DOMContentLoaded", () => {
-        const isCollapsed =
-          localStorage.getItem("tooloo_sidebar_collapsed") === "true";
-        if (isCollapsed) {
-          const sidebar = document.getElementById("mainSidebar");
-          const layout = document.querySelector(".g3-layout");
-          const toggleBtn = sidebar.querySelector(".sidebar-toggle");
-
-          sidebar.classList.add("collapsed");
-          layout.classList.add("sidebar-collapsed");
-          toggleBtn.textContent = "▶";
-        }
-      });
-
-      function startChat() {
-        const input = document.getElementById("heroInput");
-        const message = input.value.trim();
-        if (message) {
-          loadView("chat", { message });
-        } else {
-          loadView("chat");
-        }
-      }
+      loadDashboardData();
     </script>
   </body>
 </html>

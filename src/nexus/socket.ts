@@ -28,16 +28,18 @@ export class SocketServer {
       socket.on("generate", (data: any) => {
         try {
           const { message, requestId } = data;
-          console.log(`[Socket] Received generate request: ${requestId} - Message: "${message.substring(0, 50)}..."`);
-          
+          console.log(
+            `[Socket] Received generate request: ${requestId} - Message: "${message.substring(0, 50)}..."`,
+          );
+
           // Store socket mapping for this request so we can route response back
           this.socketMap.set(requestId, socket);
           console.log(`[Socket] Stored mapping for ${requestId}`);
-          
+
           // Emit thinking status to client immediately
           socket.emit("thinking", { requestId });
           console.log(`[Socket] Emitted thinking to client`);
-          
+
           // Publish chat request to cortex
           bus.publish("nexus", "nexus:chat_request", {
             message,
@@ -73,7 +75,7 @@ export class SocketServer {
     bus.on("cortex:response", (event: SynapsysEvent) => {
       const requestId = event.payload?.requestId;
       console.log(`[Socket] Received cortex:response for: ${requestId}`);
-      
+
       if (requestId) {
         const socket = this.socketMap.get(requestId);
         if (socket) {

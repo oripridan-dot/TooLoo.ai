@@ -65,7 +65,9 @@ export class VectorStore {
     const CHUNK_SIZE = 8000;
     const chunks = this.chunkText(text, CHUNK_SIZE);
 
-    console.log(`[VectorStore] Processing ${chunks.length} chunks for document...`);
+    console.log(
+      `[VectorStore] Processing ${chunks.length} chunks for document...`,
+    );
 
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
@@ -80,14 +82,16 @@ export class VectorStore {
             ...metadata,
             chunkIndex: i,
             totalChunks: chunks.length,
-            originalLength: text.length
+            originalLength: text.length,
           },
           createdAt: Date.now(),
         };
 
         this.documents.push(doc);
       } catch (error) {
-        console.error(`[VectorStore] Failed to generate embedding for chunk ${i}: ${error}`);
+        console.error(
+          `[VectorStore] Failed to generate embedding for chunk ${i}: ${error}`,
+        );
       }
     }
 
@@ -104,7 +108,10 @@ export class VectorStore {
     );
   }
 
-  async search(query: string, k: number = 3): Promise<VectorDocument[]> {
+  async search(
+    query: string,
+    k: number = 3,
+  ): Promise<{ doc: VectorDocument; score: number }[]> {
     if (!this.isInitialized) await this.initialize();
 
     const openai = precog.providers.getProvider("openai");
@@ -115,17 +122,20 @@ export class VectorStore {
 
     try {
       const queryEmbedding = await openai.embed(query);
+      if (!queryEmbedding) return [];
 
       // Calculate cosine similarity
-      const scored = this.documents.map((doc) => ({
-        doc,
-        score: this.cosineSimilarity(queryEmbedding, doc.embedding),
-      }));
+      const scored = this.documents
+        .filter((doc) => doc.embedding && Array.isArray(doc.embedding))
+        .map((doc) => ({
+          doc,
+          score: this.cosineSimilarity(queryEmbedding, doc.embedding),
+        }));
 
       // Sort by score descending
       scored.sort((a, b) => b.score - a.score);
 
-      return scored.slice(0, k).map((s) => s.doc);
+      return scored.slice(0, k);
     } catch (error) {
       console.error(`[VectorStore] Search failed: ${error}`);
       return [];

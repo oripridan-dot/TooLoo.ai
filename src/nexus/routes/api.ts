@@ -7,7 +7,9 @@ const router = Router();
 
 // Health Check
 router.get("/health", (req, res) => {
-  res.json(successResponse({ status: "ok", system: "Synapsys", module: "nexus" }));
+  res.json(
+    successResponse({ status: "ok", system: "Synapsys", module: "nexus" }),
+  );
 });
 
 // Chat Message Endpoint (Legacy & New)
@@ -40,9 +42,11 @@ router.post("/projects/:id/memory", (req, res) => {
 router.post("/intervention/mode", (req, res) => {
   // { enabled: boolean }
   bus.publish("nexus", "nexus:intervention:set_mode", req.body);
-  res.json(successResponse({
-    mode: req.body.enabled ? "intervention" : "autonomous",
-  }));
+  res.json(
+    successResponse({
+      mode: req.body.enabled ? "intervention" : "autonomous",
+    }),
+  );
 });
 
 router.post("/intervention/pause", (req, res) => {

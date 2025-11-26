@@ -127,31 +127,31 @@ export class VisualCortex {
       aspectRatio: options.aspectRatio,
       imageSize: options.imageSize,
       negativePrompt: options.negativePrompt,
-      referenceImages: options.referenceImages?.map(img => img.data),
-      mode: options.mode === 'generate' ? 'quality' : 'fast', // Map to provider modes
+      referenceImages: options.referenceImages?.map((img) => img.data),
+      mode: options.mode === "generate" ? "quality" : "fast", // Map to provider modes
     });
   }
 
   public async design(
     prompt: string,
     type: "layout" | "palette" | "component",
-    _system?: any
+    _system?: any,
   ): Promise<any> {
     console.log(`[VisualCortex] Designing ${type}: ${prompt}`);
-    
+
     // In a real implementation, this would call a DesignProvider
     // For now, we'll use the text generator to create a JSON structure
-    
+
     const designPrompt = `You are a UI/UX Design Engine. Generate a ${type} for: "${prompt}".
     Return ONLY valid JSON.
-    ${type === 'layout' ? 'Format: { structure: [], description: "" }' : ''}
-    ${type === 'palette' ? 'Format: { primary: "", secondary: "", accent: "", background: "", text: "" }' : ''}
-    ${type === 'component' ? 'Format: { code: "", language: "jsx", framework: "react" }' : ''}
+    ${type === "layout" ? 'Format: { structure: [], description: "" }' : ""}
+    ${type === "palette" ? 'Format: { primary: "", secondary: "", accent: "", background: "", text: "" }' : ""}
+    ${type === "component" ? 'Format: { code: "", language: "jsx", framework: "react" }' : ""}
     `;
 
     const response = await precog.providers.generate({
       prompt: designPrompt,
-      taskType: "creative"
+      taskType: "creative",
     });
 
     try {
@@ -160,7 +160,10 @@ export class VisualCortex {
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
-      return { error: "Failed to parse design response", raw: response.content };
+      return {
+        error: "Failed to parse design response",
+        raw: response.content,
+      };
     } catch (e) {
       return { error: "Design generation failed", details: e };
     }
