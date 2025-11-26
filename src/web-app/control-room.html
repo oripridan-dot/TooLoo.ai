@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.339 -->
+<!-- @version 2.1.341 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -52,7 +52,7 @@
         </div>
         <div>
           <h1 class="font-bold tracking-tight">TooLoo.ai</h1>
-          <p class="text-xs text-gray-500 mono">Synapsys v2.4</p>
+          <p class="text-xs text-gray-500 mono system-version">Synapsys v2.4</p>
         </div>
       </div>
 
@@ -226,11 +226,13 @@
         
         try {
             const res = await fetch(`${API_BASE}/api/v1/providers/status`);
-            const data = await res.json();
-            const status = data.content || data;
+            const json = await res.json();
+            // Handle StandardResponse: { ok: true, data: { ... }, version: ... }
+            const status = json.data || json;
             
             if (!status.available) {
-                 content.innerHTML = '<div class="text-red-400">Failed to load provider status</div>';
+                 content.innerHTML = '<div class="text-red-400">Failed to load provider status (Invalid Data)</div>';
+                 console.error("Invalid provider status data:", json);
                  return;
             }
 
