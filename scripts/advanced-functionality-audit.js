@@ -231,7 +231,9 @@ async function runAdvancedTests() {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        const data = await response.json();
+        const result = await response.json();
+        // New standardized response has data wrapper
+        const data = result.data || result;
         if (
           !data ||
           !data.capabilities ||
@@ -262,7 +264,9 @@ async function runAdvancedTests() {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        const data = await response.json();
+        const result = await response.json();
+        // New standardized response has data wrapper
+        const data = result.data || result;
         if (!data || !data.modules) {
           throw new Error("Invalid status response structure");
         }

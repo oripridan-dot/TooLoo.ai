@@ -1,13 +1,13 @@
 // @version 2.1.203
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
-import { request } from "../utils.js";
+import { request, successResponse, errorResponse } from "../utils.js";
 
 const router = Router();
 
 // Health Check
 router.get("/health", (req, res) => {
-  res.json({ status: "ok", system: "Synapsys", module: "nexus" });
+  res.json(successResponse({ status: "ok", system: "Synapsys", module: "nexus" }));
 });
 
 // Chat Message Endpoint (Legacy & New)
@@ -40,20 +40,19 @@ router.post("/projects/:id/memory", (req, res) => {
 router.post("/intervention/mode", (req, res) => {
   // { enabled: boolean }
   bus.publish("nexus", "nexus:intervention:set_mode", req.body);
-  res.json({
-    ok: true,
+  res.json(successResponse({
     mode: req.body.enabled ? "intervention" : "autonomous",
-  });
+  }));
 });
 
 router.post("/intervention/pause", (req, res) => {
   bus.publish("nexus", "nexus:intervention:pause", {});
-  res.json({ ok: true, status: "paused" });
+  res.json(successResponse({ status: "paused" }));
 });
 
 router.post("/intervention/resume", (req, res) => {
   bus.publish("nexus", "nexus:intervention:resume", {});
-  res.json({ ok: true, status: "resumed" });
+  res.json(successResponse({ status: "resumed" }));
 });
 
 export default router;
