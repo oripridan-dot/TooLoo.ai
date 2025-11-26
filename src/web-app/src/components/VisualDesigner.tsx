@@ -1,11 +1,13 @@
-// @version 2.1.312
-import React from "react";
+// @version 2.1.337
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVisualStore } from "../store/visual-store";
-import { Loader2, Send, Image as ImageIcon, Settings } from "lucide-react";
+import { Loader2, Send, Image as ImageIcon, Settings, PenTool } from "lucide-react";
+import DesignTools from "./DesignTools.jsx";
 
 const VisualDesigner: React.FC = () => {
+  const [showTools, setShowTools] = useState(false);
   const {
     prompt,
     setPrompt,
