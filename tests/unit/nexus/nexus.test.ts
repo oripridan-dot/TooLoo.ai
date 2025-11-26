@@ -1,27 +1,31 @@
-// @version 2.1.292
+// @version 2.1.293
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { createNexusApp } from '../../../src/nexus/index';
-import express from 'express';
 
-// Mock route modules
-const mockRouter = express.Router();
-mockRouter.get('/test', (req, res) => res.json({ ok: true }));
+// Mock middleware function
+const mockMiddleware = (req: any, res: any, next: any) => {
+  if (req.path === '/test') {
+    res.json({ ok: true });
+  } else {
+    next();
+  }
+};
 
-vi.mock('../../../src/nexus/routes/api', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/system', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/providers', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/orchestrator', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/capabilities', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/github', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/projects', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/chat', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/design', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/visuals', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/workflows', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/observability', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/context', () => ({ default: mockRouter }));
-vi.mock('../../../src/nexus/routes/training', () => ({ trainingRoutes: mockRouter }));
+vi.mock('../../../src/nexus/routes/api', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/system', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/providers', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/orchestrator', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/capabilities', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/github', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/projects', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/chat', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/design', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/visuals', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/workflows', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/observability', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/context', () => ({ default: mockMiddleware }));
+vi.mock('../../../src/nexus/routes/training', () => ({ trainingRoutes: mockMiddleware }));
 
 // Mock other dependencies
 vi.mock('../../../src/nexus/socket', () => ({ SocketServer: vi.fn() }));
@@ -42,10 +46,5 @@ describe('Nexus API', () => {
     const response = await request(app).get('/api/v1/system/test');
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
-  });
-
-  it('should serve static files', async () => {
-    // We can't easily test static files without real files, but we can check if the middleware is there.
-    // Or just skip this for unit tests.
   });
 });
