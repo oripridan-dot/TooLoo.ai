@@ -15,9 +15,16 @@ import { bus } from "../../core/event-bus.js";
 
 ensureEnvLoaded();
 
-const env = (name: string, def: unknown = undefined) => process.env[name] ?? def;
+const env = (name: string, def: unknown = undefined) =>
+  process.env[name] ?? def;
 
 export default class LLMProvider {
+  public providers: any;
+  public defaultModel: any;
+  public baseUrls: any;
+  public domainExpertise: DomainExpertise;
+  public learning: ContinuousLearning;
+
   constructor() {
     Object.defineProperty(this, "providers", {
       get() {
@@ -65,6 +72,27 @@ export default class LLMProvider {
 
     // Initialize continuous learning system
     this.learning = new ContinuousLearning();
+  }
+
+  getProviderStatus() {
+    const providerList = [
+      { id: "gemini", name: "Gemini 3 Pro" },
+      { id: "anthropic", name: "Claude 3.5 Sonnet" },
+      { id: "openai", name: "GPT-4o" },
+      { id: "deepseek", name: "DeepSeek V3" },
+      { id: "localai", name: "LocalAI" },
+      { id: "ollama", name: "Ollama" },
+    ];
+
+    return providerList.map((p) => {
+      const isAvailable = providerAvailable(p.id);
+      return {
+        id: p.id,
+        name: p.name,
+        status: isAvailable ? "Ready" : "Missing Key",
+        latency: isAvailable ? Math.floor(Math.random() * 50) + 50 : 0, // Simulated latency for now
+      };
+    });
   }
 
   // Check if Ollama is running locally
@@ -867,7 +895,7 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
     requestUrl = `${requestUrl}${separator}key=${encodeURIComponent(config.key)}`;
   }
 
-  let bodyObj = config.format(prompt);
+  const bodyObj = config.format(prompt);
 
   if (system) {
     if (["deepseek", "openai", "ollama", "localai"].includes(provider)) {
@@ -920,7 +948,10 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
     if (provider === "openinterpreter") {
       return Array.isArray(data)
         ? data
-            .map((chunk: Record<string, unknown>) => (chunk.content as string) || (chunk.message as string) || "")
+            .map(
+              (chunk: Record<string, unknown>) =>
+                (chunk.content as string) || (chunk.message as string) || "",
+            )
             .join("")
         : data.content || data.message || "";
     }
@@ -1190,7 +1221,9 @@ export async function generateSmartLLM({
       tried.push({ name, available: true, error: e.message?.slice(0, 200) });
     }
   }
-  const err = new Error("All providers failed") as Error & { details: unknown[] };
+  const err = new Error("All providers failed") as Error & {
+    details: unknown[];
+  };
   err.details = tried;
   throw err;
 }

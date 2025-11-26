@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import { successResponse, errorResponse } from "../utils.js";
+import { SYSTEM_VERSION } from "../../core/system-info.js";
 import fs from "fs-extra";
 import path from "path";
 import { exec } from "child_process";
@@ -25,6 +26,7 @@ router.get("/status", (req, res) => {
   // In Synapsys, we are always "active" if this code runs
   res.json(
     successResponse({
+      version: SYSTEM_VERSION,
       services: 3, // Cortex, Precog, Nexus
       active: true,
       architecture: "Synapsys V2.1",

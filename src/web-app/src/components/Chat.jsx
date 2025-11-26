@@ -31,7 +31,7 @@ const Chat = () => {
         {
           id: Date.now(),
           type: "assistant",
-          content: data.content,
+          content: data.response || data.content,
           visual: data.visual,
           timestamp: new Date(),
         },

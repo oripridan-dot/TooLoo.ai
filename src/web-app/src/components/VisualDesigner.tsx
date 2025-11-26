@@ -11,7 +11,7 @@ import {
   PenTool,
   Palette,
   Layout,
-  Wand2
+  Wand2,
 } from "lucide-react";
 import DesignTools from "./DesignTools.jsx";
 
@@ -103,10 +103,11 @@ const VisualDesigner: React.FC = () => {
               </h1>
             </div>
             <p className="text-sm text-gray-400 ml-1 flex items-center gap-2">
-              <Wand2 className="w-3 h-3" /> Cognitive Visual Engine • Gemini & DALL-E
+              <Wand2 className="w-3 h-3" /> Cognitive Visual Engine • Gemini &
+              DALL-E
             </p>
           </div>
-          
+
           <div className="flex flex-wrap gap-3 items-center bg-black/20 p-2 rounded-xl border border-white/5">
             <button
               onClick={() => setShowTools(!showTools)}
@@ -119,7 +120,7 @@ const VisualDesigner: React.FC = () => {
               <Layout className="w-4 h-4" />
               Studio Tools
             </button>
-            
+
             <div className="h-6 w-px bg-white/10 mx-1"></div>
 
             <select

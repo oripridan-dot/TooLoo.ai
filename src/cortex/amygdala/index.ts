@@ -23,7 +23,7 @@ export class Amygdala {
   private readonly MEMORY_WARNING_THRESHOLD = 0.7; // 70% of max heap
   private readonly MEMORY_CRITICAL_THRESHOLD = 0.9; // 90% of max heap
   private readonly EVENT_SPIKE_THRESHOLD = 50; // Events per second
-  private readonly CLUTTER_THRESHOLD = 1000; // Max backup files before stress
+  private readonly CLUTTER_THRESHOLD = 50; // Max backup files before stress
 
   private tickCount: number = 0;
 
@@ -59,9 +59,9 @@ export class Amygdala {
     const memoryStress = this.checkMemory();
     const cognitiveLoad = this.checkCognitiveLoad(); // Based on eventCount
 
-    // Periodic Checks (every 60s)
+    // Periodic Checks (every 10s)
     this.tickCount++;
-    if (this.tickCount % 60 === 0) {
+    if (this.tickCount % 10 === 0) {
       const clutterStress = this.checkDiskClutter();
       if (clutterStress > 0) this.cortisol += clutterStress;
     }
