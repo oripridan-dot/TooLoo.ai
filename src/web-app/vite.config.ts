@@ -1,4 +1,4 @@
-// @version 2.1.272
+// @version 2.1.344
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -40,6 +40,12 @@ export default defineConfig({
             console.log('Proxying:', req.method, req.url);
           });
         }
+      },
+      '/socket.io': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+        ws: true
       },
     },
     hmr: hmrConfig,
