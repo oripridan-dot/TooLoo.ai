@@ -1,4 +1,4 @@
-// @version 2.1.329
+// @version 2.1.330
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
 import { successResponse, errorResponse } from "../utils.js";
@@ -17,21 +17,21 @@ router.post("/sources/github/issues/sync", async (req, res) => {
     if (!repo || !token) {
       return res
         .status(400)
-        .json({ ok: false, error: "repo and token required" });
+        .json(errorResponse("repo and token required"));
     }
     const result = await precog.training.syncGithubIssues(repo, token, force);
-    res.json({ ok: true, ...result });
+    res.json(successResponse(result));
   } catch (e: any) {
-    res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json(errorResponse(e.message));
   }
 });
 
 router.get("/sources/github/:repo/status", (req, res) => {
   try {
     const result = precog.training.getGithubSourceStatus(req.params.repo);
-    res.json({ ok: true, ...result });
+    res.json(successResponse(result));
   } catch (e: any) {
-    res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json(errorResponse(e.message));
   }
 });
 
