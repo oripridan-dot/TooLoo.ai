@@ -1,4 +1,4 @@
-// @version 2.1.326
+// @version 2.1.331
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import { successResponse, errorResponse } from "../utils.js";
@@ -27,6 +27,11 @@ router.get("/status", (req, res) => {
     services: 3, // Cortex, Precog, Nexus
     active: true,
     architecture: "Synapsys V2.1",
+    modules: {
+      cortex: { status: "loaded", role: "Cognitive Core" },
+      precog: { status: "loaded", role: "Predictive Intelligence" },
+      nexus: { status: "loaded", role: "Interface Layer" },
+    },
   }));
 });
 
