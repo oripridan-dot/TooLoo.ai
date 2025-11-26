@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.350 -->
+<!-- @version 2.1.351 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -458,8 +458,25 @@
       let messageCount = 0;
       let sessionStartTime = Date.now();
 
+      // Version Check & Sync
+      async function checkSystemVersion() {
+        try {
+          const response = await fetch(`${API_BASE}/api/v1/system/status`);
+          const data = await response.json();
+          if (data.ok && data.data) {
+            const backendVersion = data.data.version || data.data.architecture || 'Unknown';
+            document.getElementById('versionDisplay').textContent = `Synapsys ${backendVersion}`;
+            localStorage.setItem('tooloo_backend_version', backendVersion);
+          }
+        } catch (e) {
+          console.error('Failed to fetch system version:', e);
+          document.getElementById('versionDisplay').textContent = 'Synapsys (Offline)';
+        }
+      }
+
       // Initialize
       document.addEventListener("DOMContentLoaded", () => {
+        checkSystemVersion();
         loadProjects();
         loadSessions();
         if (!currentSession)
@@ -898,13 +915,26 @@
         if (typeof text === 'object') {
           try {
             text = JSON.stringify(text, null, 2);
-            return `<pre><code class="hljs language-json">${text}</code></pre>`;
+            const highlighted = hljs.highlight(text, { language: 'json' }).value;
+            return `<div class="bg-gray-950 p-4 rounded-lg border border-white/10 my-4 overflow-x-auto"><pre><code class="hljs language-json">${highlighted}</code></pre></div>`;
           } catch (e) {
             text = "[Complex Object]";
           }
         }
+        if (typeof text !== 'string') {
+          text = String(text);
+        }
         try {
-          // Sanitize and parse
+          // Check if it looks like code/json
+          if (text.includes('<') || text.includes('{') || text.includes('[')) {
+            try {
+              const highlighted = hljs.highlightAuto(text).value;
+              return `<div class="bg-gray-950 p-4 rounded-lg border border-white/10 my-4 overflow-x-auto"><code class="hljs">${highlighted}</code></div>`;
+            } catch (e) {
+              // Fall through to markdown
+            }
+          }
+          // Sanitize and parse as markdown
           const rawHtml = marked.parse(text || "");
           return DOMPurify.sanitize(rawHtml, {
             ADD_TAGS: ["div", "span", "code", "pre"],
@@ -912,7 +942,7 @@
           });
         } catch (e) {
           console.error("Markdown parsing error:", e);
-          return text;
+          return `<p>${DOMPurify.sanitize(text)}</p>`;
         }
       }
 
