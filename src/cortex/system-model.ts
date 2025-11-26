@@ -1,8 +1,8 @@
-// @version 2.1.28
+// @version 2.1.260
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as chokidar from 'chokidar';
-import { SynapseBus } from '../core/bus/event-bus';
+import { bus } from '../core/event-bus.js';
 
 export interface SystemNode {
     id: string;
@@ -15,10 +15,8 @@ export class SystemModel {
     private nodes: Map<string, SystemNode> = new Map();
     private initialized: boolean = false;
     private watcher: chokidar.FSWatcher | null = null;
-    private bus: SynapseBus;
 
     constructor(private rootDir: string) {
-        this.bus = SynapseBus.getInstance();
     }
 
     async initialize() {
@@ -71,11 +69,11 @@ export class SystemModel {
             });
         }
 
-        this.bus.publish('system:file_changed', {
+        bus.publish('cortex', 'system:file_changed', {
             event,
             path: relativePath,
             timestamp: Date.now()
-        }, 'cortex');
+        });
     }
 
     private determineType(filePath: string): SystemNode['type'] {

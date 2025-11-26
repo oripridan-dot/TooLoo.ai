@@ -1,40 +1,120 @@
-// @version 2.1.28
+// @version 2.1.298
 import path from "path";
 import fs from "fs";
 import fetch from "node-fetch";
 import { EventEmitter } from "events";
 
 // Engines
-// @ts-ignore
 import TrainingCamp from "../engine/training-camp.js";
-// @ts-ignore
 import MetaLearningEngine from "../engine/meta-learning-engine.js";
-// @ts-ignore
 import HyperSpeedTrainingCamp from "../engine/hyper-speed-training-camp.js";
-// @ts-ignore
 import ParallelProviderOrchestrator from "../engine/parallel-provider-orchestrator.js";
-// @ts-ignore
-import { createValidationFramework } from "../engine/validated-execution-framework.js";
+import ValidatedExecutionFramework, { createValidationFramework } from "../engine/validated-execution-framework.js";
+
+interface FeedbackEntry {
+  id: string;
+  quality: number;
+  relevance: number;
+  clarity: number;
+  provider: string;
+  helpful: boolean | null;
+  comment: string;
+  timestamp: number;
+  averageScore: number;
+}
+
+interface InteractionEntry {
+  userId: string;
+  engaged: boolean;
+  [key: string]: unknown;
+}
+
+interface FeedbackStore {
+  feedback: FeedbackEntry[];
+  count: number;
+  interactions: InteractionEntry[];
+  lastUpdated: number;
+}
+
+interface ProviderMetrics {
+  totalRequests: number;
+  averageLatency: number;
+  averageQuality: number;
+  totalCost: number;
+}
+
+interface MetricsStore {
+  providers: Record<string, ProviderMetrics>;
+  responses: MetricsData[];
+  averageQuality: number;
+  lastUpdated: number;
+}
+
+interface TopicData {
+  key?: string;
+  id?: string;
+  topic?: string;
+  name?: string;
+  problems?: unknown[];
+  background?: boolean;
+  force?: boolean;
+}
+
+interface Domain {
+  name: string;
+  mastery: number;
+}
+
+interface TrainingSettings {
+  [key: string]: unknown;
+}
+
+interface MetricsData {
+  responseId: string;
+  provider: string;
+  latency: number;
+  tokensUsed: number;
+  costEstimate: number;
+  quality: number;
+  timestamp: number;
+}
+
+interface InteractionData {
+  [key: string]: unknown;
+}
+
+interface OptimizationTask {
+  original?: string;
+  [key: string]: unknown;
+}
+
+interface OptimizationContext {
+  [key: string]: unknown;
+}
+
+interface FeedbackData {
+  [key: string]: unknown;
+}
 
 export class TrainingService extends EventEmitter {
-  private trainingCamp: any;
-  private meta: any;
-  private hyperCamp: any;
-  private orchestrator: any;
-  private validationFramework: any;
+  private trainingCamp!: TrainingCamp;
+  private meta!: MetaLearningEngine;
+  private hyperCamp!: HyperSpeedTrainingCamp;
+  private orchestrator!: ParallelProviderOrchestrator;
+  private validationFramework!: ValidatedExecutionFramework;
   private sourcesStateFile: string;
 
   // In-memory stores
-  private feedbackStore = {
-    feedback: [] as any[],
+  private feedbackStore: FeedbackStore = {
+    feedback: [],
     count: 0,
-    interactions: [] as any[],
+    interactions: [],
     lastUpdated: Date.now(),
   };
 
-  private metricsStore = {
-    providers: {} as any,
-    responses: [] as any[],
+  private metricsStore: MetricsStore = {
+    providers: {},
+    responses: [],
     averageQuality: 0,
     lastUpdated: Date.now(),
   };
@@ -44,7 +124,7 @@ export class TrainingService extends EventEmitter {
     this.sourcesStateFile = path.join(
       this.workspaceRoot,
       "data",
-      "sources-github-state.json"
+      "sources-github-state.json",
     );
     this.initializeEngines();
   }
@@ -72,7 +152,7 @@ export class TrainingService extends EventEmitter {
     }
   }
 
-  private saveSourcesState(state: any) {
+  private saveSourcesState(state: Record<string, unknown>) {
     if (!fs.existsSync(path.dirname(this.sourcesStateFile))) {
       fs.mkdirSync(path.dirname(this.sourcesStateFile), { recursive: true });
     }
@@ -96,11 +176,25 @@ export class TrainingService extends EventEmitter {
       throw new Error(`GitHub API error: ${r.statusText}`);
     }
 
-    const issues: any = await r.json();
+    interface GitHubLabel {
+      name: string;
+    }
+
+    interface GitHubIssue {
+      id: number;
+      title: string;
+      html_url: string;
+      body: string;
+      created_at: string;
+      labels?: GitHubLabel[];
+    }
+
+    const issues = (await r.json()) as GitHubIssue[];
     const newTopics = [];
 
     for (const issue of issues) {
-      if (!issue.id || state[repo]?.ids?.includes(issue.id)) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!issue.id || (state[repo] as any)?.ids?.includes(issue.id)) continue;
 
       const topic = {
         key: `github-issue-${issue.id}`,
@@ -110,14 +204,15 @@ export class TrainingService extends EventEmitter {
         url: issue.html_url,
         body: issue.body || "",
         created_at: issue.created_at,
-        labels: issue.labels?.map((l: any) => l.name) || [],
+        labels: issue.labels?.map((l: GitHubLabel) => l.name) || [],
       };
 
       try {
         const result = this.trainingCamp.addTopic(topic);
         if (result.ok) newTopics.push(topic);
-      } catch (e: any) {
-        console.warn(`Failed to add issue ${issue.id}:`, e.message);
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        console.warn(`Failed to add issue ${issue.id}:`, errorMessage);
       }
 
       state[repo] = state[repo] || { ids: [], lastSync: 0 };
@@ -181,7 +276,7 @@ export class TrainingService extends EventEmitter {
     return this.trainingCamp.getDeepDiveData(topic);
   }
 
-  addTopic(data: any) {
+  addTopic(data: TopicData) {
     const key = data.key || data.id || data.topic || "systems";
     const name = data.name || "Systems Design";
     const problems = Array.isArray(data.problems) ? data.problems : undefined;
@@ -229,12 +324,12 @@ export class TrainingService extends EventEmitter {
     const overview = this.trainingCamp.getOverviewData();
     const domains = Array.isArray(overview?.domains) ? overview.domains : [];
     const avg = domains.length
-      ? domains.reduce((s: number, d: any) => s + (d.mastery || 0), 0) /
+      ? domains.reduce((s: number, d: Domain) => s + (d.mastery || 0), 0) /
         domains.length
       : 0;
     const gaps = domains
-      .filter((d: any) => (d.mastery || 0) < 80)
-      .map((d: any) => ({ name: d.name, mastery: d.mastery }));
+      .filter((d: Domain) => (d.mastery || 0) < 80)
+      .map((d: Domain) => ({ name: d.name, mastery: d.mastery }));
 
     await this.meta.init();
     const insights = this.meta.getInsights();
@@ -262,7 +357,7 @@ export class TrainingService extends EventEmitter {
     return this.trainingCamp.getSettings();
   }
 
-  setSettings(settings: any) {
+  setSettings(settings: TrainingSettings) {
     return this.trainingCamp.setSettings(settings);
   }
 
@@ -298,7 +393,7 @@ export class TrainingService extends EventEmitter {
 
   async runMicroBatch(domain?: string, question?: string) {
     return await this.validationFramework.safeExecute(
-      async ({ domain, question }: any) => {
+        async ({ domain, question }: { domain: string; question: string }) => {
         return await this.hyperCamp.runMicroBatch({ domain, question });
       },
       { domain, question },
@@ -309,7 +404,7 @@ export class TrainingService extends EventEmitter {
           type: "object",
           properties: ["ok", "domains", "questionsProcessed"],
         },
-      }
+      },
     );
   }
 
@@ -336,14 +431,14 @@ export class TrainingService extends EventEmitter {
   async startTrainingSession(
     userId: string,
     focusArea: string,
-    roundCount?: number
+    roundCount?: number,
   ) {
     return await this.trainingCamp.startTraining(userId, focusArea, {
       roundCount,
     });
   }
 
-  async completeTrainingRound(roundId: string, response: any, score?: number) {
+  async completeTrainingRound(roundId: string, response: string, score?: number) {
     return await this.trainingCamp.completeRound(roundId, response, score);
   }
 
@@ -370,12 +465,12 @@ export class TrainingService extends EventEmitter {
   async startChallenge(
     userId: string,
     skill: string,
-    difficulty: string = "medium"
+    difficulty: string = "medium",
   ) {
     return await this.trainingCamp.startChallenge(userId, skill, difficulty);
   }
 
-  async gradeChallenge(challengeId: string, response: any) {
+  async gradeChallenge(challengeId: string, response: string) {
     return await this.trainingCamp.gradeChallenge(challengeId, response);
   }
 
@@ -385,16 +480,14 @@ export class TrainingService extends EventEmitter {
 
   // ============= Feedback & Metrics Logic =============
 
-  submitFeedback(data: any) {
-    const {
-      responseId,
-      quality = 3,
-      relevance = 3,
-      clarity = 3,
-      provider = "unknown",
-      helpful = null,
-      comment = "",
-    } = data;
+  submitFeedback(data: FeedbackData) {
+    const quality = (data.quality as number) || 3;
+    const relevance = (data.relevance as number) || 3;
+    const clarity = (data.clarity as number) || 3;
+    const provider = (data.provider as string) || "unknown";
+    const helpful = (data.helpful as boolean) || null;
+    const comment = (data.comment as string) || "";
+    const responseId = data.responseId as string;
 
     const feedbackEntry = {
       id: responseId,
@@ -409,6 +502,9 @@ export class TrainingService extends EventEmitter {
     };
 
     this.feedbackStore.feedback.push(feedbackEntry);
+    if (this.feedbackStore.feedback.length > 1000) {
+      this.feedbackStore.feedback.shift();
+    }
     this.feedbackStore.count = this.feedbackStore.feedback.length;
     this.feedbackStore.lastUpdated = Date.now();
 
@@ -437,7 +533,7 @@ export class TrainingService extends EventEmitter {
 
   getProviderFeedback(provider: string) {
     const providerFeedback = this.feedbackStore.feedback.filter(
-      (f) => f.provider === provider
+      (f) => f.provider === provider,
     );
     const avg = (arr: number[]) =>
       arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
@@ -455,7 +551,7 @@ export class TrainingService extends EventEmitter {
     };
   }
 
-  recordMetrics(data: any) {
+  recordMetrics(data: MetricsData) {
     const {
       responseId,
       provider = "unknown",
@@ -466,7 +562,7 @@ export class TrainingService extends EventEmitter {
     } = data;
 
     const metricEntry = {
-      id: responseId,
+      responseId,
       provider,
       latency,
       tokensUsed,
@@ -476,6 +572,9 @@ export class TrainingService extends EventEmitter {
     };
 
     this.metricsStore.responses.push(metricEntry);
+    if (this.metricsStore.responses.length > 1000) {
+      this.metricsStore.responses.shift();
+    }
     this.metricsStore.lastUpdated = Date.now();
 
     if (!this.metricsStore.providers[provider]) {
@@ -510,23 +609,14 @@ export class TrainingService extends EventEmitter {
     };
   }
 
-  trackInteraction(data: any) {
-    const {
-      userId,
-      queryType,
-      selectedProvider,
-      responseTime,
-      engaged,
-      followUpQuery,
-    } = data;
-
+  trackInteraction(data: InteractionData) {
     const interaction = {
-      userId,
-      queryType,
-      selectedProvider,
-      responseTime,
-      engaged,
-      followUpQuery,
+      userId: (data.userId as string) || "unknown",
+      queryType: data.queryType,
+      selectedProvider: data.selectedProvider,
+      responseTime: data.responseTime,
+      engaged: (data.engaged as boolean) || false,
+      followUpQuery: data.followUpQuery,
       timestamp: Date.now(),
     };
 
@@ -538,7 +628,7 @@ export class TrainingService extends EventEmitter {
 
   getUserProfile(userId: string) {
     const userInteractions = this.feedbackStore.interactions.filter(
-      (i) => i.userId === userId
+      (i) => i.userId === userId,
     );
 
     return {
@@ -553,7 +643,7 @@ export class TrainingService extends EventEmitter {
 
   getRecommendations(userId: string, currentQuery: string = "") {
     const userInteractions = this.feedbackStore.interactions.filter(
-      (i) => i.userId === userId
+      (i) => i.userId === userId,
     );
 
     return {
@@ -586,7 +676,7 @@ export class TrainingService extends EventEmitter {
     };
   }
 
-  getOptimizationPlan(task: any, context: any) {
+  getOptimizationPlan(task: OptimizationTask, context: OptimizationContext) {
     // 1. Select Provider
     let provider = "openai";
     if (task?.type === "creative") provider = "gemini";

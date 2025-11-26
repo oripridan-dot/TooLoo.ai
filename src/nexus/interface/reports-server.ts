@@ -220,14 +220,14 @@ async function loadPeerProfiles() {
           memory: 0.65,
         },
         {
-          id: "gemini-1.5",
-          label: "Gemini-1.5 class",
+          id: "gemini-3-pro",
+          label: "Gemini 3 Pro class",
           costPerCall: 0.01,
-          reasoning: 0.88,
-          coding: 0.83,
-          speed: 0.8,
-          toolUse: 0.78,
-          memory: 0.7,
+          reasoning: 0.95, // State of the art
+          coding: 0.92, // State of the art
+          speed: 0.85,
+          toolUse: 0.90,
+          memory: 0.85,
         },
       ],
     };

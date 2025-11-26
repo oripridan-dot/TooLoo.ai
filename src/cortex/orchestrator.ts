@@ -1,4 +1,4 @@
-// @version 2.1.232
+// @version 2.1.265
 import { bus } from "../core/event-bus.js";
 import { smartFS } from "../core/fs-manager.js";
 
@@ -84,12 +84,22 @@ export class Orchestrator {
     });
 
     // Plan Update
-    bus.on("nexus:orchestrator_plan_update", (event) => {
-      const { action, item } = event.payload;
+    bus.on("nexus:orchestrator_plan_update", async (event) => {
+      const { action, item, items } = event.payload;
 
       if (action === "add" && item) {
         this.state.planQueue.push(item);
         console.log(`[Cortex] Added to plan queue: ${item}`);
+      } else if (action === "add_batch" && items) {
+          // Parallel Execution Logic
+          console.log(`[Cortex] Received batch of ${items.length} tasks. Executing in parallel...`);
+          await Promise.all(items.map(async (task: string) => {
+              console.log(`[Cortex] Starting parallel task: ${task}`);
+              // Simulate task execution
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              console.log(`[Cortex] Completed parallel task: ${task}`);
+          }));
+          this.state.planQueue.push(...items); // Keep in queue for history
       } else if (action === "clear") {
         this.state.planQueue = [];
         console.log("[Cortex] Plan queue cleared.");

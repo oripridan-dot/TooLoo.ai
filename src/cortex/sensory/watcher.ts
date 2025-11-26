@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.239
 import * as chokidar from "chokidar";
 import { EventBus } from "../../core/event-bus.js";
 import * as path from "path";
@@ -9,7 +9,7 @@ export class FileWatcher {
 
   constructor(
     private bus: EventBus,
-    private workspaceRoot: string
+    private workspaceRoot: string,
   ) {}
 
   public start(paths: string[] = ["."]) {
@@ -24,6 +24,12 @@ export class FileWatcher {
         "**/coverage/**",
         "**/.git/**",
         "**/temp/**",
+        "**/data/**",
+        "**/logs/**",
+        "**/_archive/**",
+        "data",
+        "logs",
+        "_archive",
       ],
       persistent: true,
       ignoreInitial: true, // Don't emit 'add' for existing files on startup
@@ -34,12 +40,12 @@ export class FileWatcher {
       .on("change", (path) => this.emitChange("change", path))
       .on("unlink", (path) => this.emitChange("unlink", path))
       .on("error", (error) =>
-        console.error(`[Sensory:FileWatcher] Error: ${error}`)
+        console.error(`[Sensory:FileWatcher] Error: ${error}`),
       )
       .on("ready", () => {
         this.isReady = true;
         console.log(
-          "[Sensory:FileWatcher] Initial scan complete. Ready for changes."
+          "[Sensory:FileWatcher] Initial scan complete. Ready for changes.",
         );
         this.bus.publish("cortex", "sensory:watcher:ready", { ready: true });
       });

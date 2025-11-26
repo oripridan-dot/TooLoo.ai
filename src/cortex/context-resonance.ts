@@ -1,6 +1,6 @@
-// @version 2.1.232
+// @version 2.1.259
 import { EventEmitter } from 'events';
-import { SynapseBus } from '../core/bus/event-bus';
+import { bus } from '../core/event-bus.js';
 
 export interface Memory {
     id: string;
@@ -30,24 +30,22 @@ export interface ResonanceResult {
 
 export class ContextResonanceEngine extends EventEmitter {
     private memories: Map<string, Memory>;
-    private bus: SynapseBus;
     private readonly DECAY_FACTOR = 0.95;
     private readonly ACQUISITION_BOOST_THRESHOLD = 3; // Accesses before boost
 
     constructor() {
         super();
         this.memories = new Map();
-        this.bus = SynapseBus.getInstance();
         this.setupBusListeners();
     }
 
     private setupBusListeners() {
-        this.bus.subscribe<any>('memory:ingest', (event) => {
-            const data = event.data;
+        bus.on('memory:ingest', (event: any) => {
+            const data = event.payload;
             this.ingest(data.content, data.type, data.tags);
         });
 
-        this.bus.subscribe<any>('memory:query', (event) => {
+        bus.on('memory:query', (event: any) => {
             const data = event.data;
             const results = this.retrieveResonantMemory(data.context, data.limit);
             this.bus.publish('memory:response', {

@@ -1,6 +1,7 @@
-// @version 2.1.28
+// @version 2.1.272
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 const isCodespace = Boolean(process.env.CODESPACES);
 const csName = process.env.CODESPACE_NAME;
@@ -12,14 +13,22 @@ const hmrConfig =
     : undefined;
 
 export default defineConfig({
+  base: '/app/',
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      input: {
+        visuals: resolve(__dirname, 'visuals.html'),
+      },
+    },
+  },
   server: {
     host: true,
     port: 5173,
     strictPort: true,
     proxy: {
       '/api': { 
-        target: 'http://localhost:3001', 
+        target: 'http://localhost:4000', 
         changeOrigin: true, 
         secure: false,
         ws: true, // Enable WebSocket proxying

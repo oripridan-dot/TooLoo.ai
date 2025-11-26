@@ -1,10 +1,11 @@
-<!DOCTYPE html>
-<!-- @version 2.1.28 -->
+<!doctype html>
+<!-- @version 2.1.247 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TooLoo.ai Projects</title>
+    <link rel="icon" type="image/svg+xml" href="brain.svg" />
     <link rel="stylesheet" href="css/gemini-ui.css" />
     <style>
       .project-card {
@@ -508,7 +509,7 @@
                 <span>${new Date(p.updatedAt).toLocaleDateString()}</span>
               </div>
             </div>
-          `
+          `,
               )
               .join("");
           } else {
@@ -564,7 +565,7 @@
         if (!currentProjectId) return;
         try {
           const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/tasks`
+            `${API_BASE}/api/v1/projects/${currentProjectId}/tasks`,
           );
           const data = await res.json();
           const payload = data.content || data;
@@ -591,7 +592,7 @@
                 <button class="btn btn-sm" onclick="deleteTask('${t.id}')" style="padding: 2px 6px; font-size: 10px;">🗑️</button>
               </div>
             </div>
-          `
+          `,
             )
             .join("");
 
@@ -652,7 +653,7 @@
         if (!currentProjectId) return;
         try {
           const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/files?path=${path}`
+            `${API_BASE}/api/v1/projects/${currentProjectId}/files?path=${path}`,
           );
           const data = await res.json();
           const payload = data.content || data;
@@ -667,7 +668,7 @@
               <div class="file-tree-item" onclick="${f.type === "folder" ? `loadFiles('${f.path}')` : `openFile('${f.path}')`}">
                 ${f.type === "folder" ? "📁" : "📄"} ${f.name}
               </div>
-            `
+            `,
               )
               .join("")}
           `;
@@ -680,7 +681,7 @@
       async function openFile(path) {
         try {
           const res = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/files/content?path=${path}`
+            `${API_BASE}/api/v1/projects/${currentProjectId}/files/content?path=${path}`,
           );
           const data = await res.json();
           const payload = data.content || data;
@@ -705,7 +706,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ path: currentFilePath, content }),
-            }
+            },
           );
           alert("File saved!");
         } catch (err) {
@@ -718,7 +719,7 @@
         if (!currentProjectId) return;
         try {
           const statusRes = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/git/status`
+            `${API_BASE}/api/v1/projects/${currentProjectId}/git/status`,
           );
           const statusData = await statusRes.json();
           const statusPayload = statusData.content || statusData;
@@ -726,7 +727,7 @@
             statusPayload.status || "No changes";
 
           const logRes = await fetch(
-            `${API_BASE}/api/v1/projects/${currentProjectId}/git/log`
+            `${API_BASE}/api/v1/projects/${currentProjectId}/git/log`,
           );
           const logData = await logRes.json();
           const logPayload = logData.content || logData;
@@ -746,7 +747,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ message }),
-            }
+            },
           );
           const data = await res.json();
           const payload = data.content || data;
@@ -771,7 +772,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ type, content }),
-            }
+            },
           );
           const data = await res.json();
           const payload = data.content || data;
@@ -799,7 +800,7 @@
         const type = document.getElementById("new-project-type").value;
         const errorEl = document.getElementById("modal-error");
         const createBtn = document.querySelector(
-          "#new-project-modal .btn-primary"
+          "#new-project-modal .btn-primary",
         );
 
         errorEl.style.display = "none";

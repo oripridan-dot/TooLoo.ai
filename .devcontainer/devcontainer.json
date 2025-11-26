@@ -1,6 +1,9 @@
 {
   "name": "TooLoo.ai Development",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "containerEnv": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
   "forwardPorts": [3000, 4000],
   "portsAttributes": {
     "3000": {

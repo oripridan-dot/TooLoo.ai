@@ -5,13 +5,16 @@ import { precog } from "../../precog/index.js";
 const router = Router();
 
 router.post("/message", async (req, res) => {
+  // Extend timeout for deep reasoning models (Gemini 3 Pro)
+  req.setTimeout(300000); 
+  
   const { message, mode = "quick", context, attachments } = req.body;
 
   try {
     console.log(`[Chat] Processing (${mode}): ${message.substring(0, 50)}...`);
 
     let systemPrompt =
-      "You are TooLoo.ai, an advanced AI development platform assistant.";
+      "You are TooLoo.ai, an advanced AI development platform assistant. You are powered by Google's Gemini 3 Pro (Preview) model, which is fully integrated into the Synapsys architecture. You have deep reasoning capabilities and access to the entire workspace.";
     let taskType = "general";
 
     // Mode Logic

@@ -1,5 +1,5 @@
-// @version 2.1.28
-import { SynapseBus } from '../core/bus/event-bus';
+// @version 2.1.257
+import { bus } from '../core/event-bus.js';
 
 export interface UserTrait {
     key: string;
@@ -10,10 +10,8 @@ export interface UserTrait {
 
 export class TraitWeaver {
     private traits: Map<string, UserTrait> = new Map();
-    private bus: SynapseBus;
 
     constructor() {
-        this.bus = SynapseBus.getInstance();
         this.initializeDefaultTraits();
         this.setupListeners();
     }
@@ -27,7 +25,7 @@ export class TraitWeaver {
 
     private setupListeners() {
         // Listen for successful generations to reinforce traits
-        this.bus.subscribe('provider:response', (event) => {
+        bus.on('provider:response', (event) => {
             // In the future, analyze response acceptance to tune traits
         });
     }

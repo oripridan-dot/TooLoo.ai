@@ -1,10 +1,11 @@
 <!doctype html>
-<!-- @version 2.1.228 -->
+<!-- @version 2.1.271 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TooLoo.ai • Gemini 3 Pro</title>
+    <link rel="icon" type="image/svg+xml" href="brain.svg" />
     <link rel="stylesheet" href="css/gemini-ui.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
@@ -58,10 +59,10 @@
               <span
                 style="
                   font-size: 0.7rem;
-                  color: var(--g3-text-tertiary);
-                  margin-top: 2px;
+                  color: var(--g3-text-secondary);
+                  line-height: 1.2;
                 "
-                >Gemini 3 Pro</span
+                >Gemini 3 Pro • v2.1.250</span
               >
             </div>
           </div>
@@ -81,8 +82,14 @@
           <div class="nav-item" onclick="loadView('design')">
             <span>🎨</span> <span class="nav-text">Design Studio</span>
           </div>
+          <div class="nav-item" onclick="window.location.href='/app/visuals.html'">
+            <span>🍌</span> <span class="nav-text">Visual Designer</span>
+          </div>
           <div class="nav-item" onclick="loadView('control')">
             <span>🎛️</span> <span class="nav-text">Control Room</span>
+          </div>
+          <div class="nav-item" onclick="loadView('awareness')">
+            <span>🧠</span> <span class="nav-text">System Awareness</span>
           </div>
           <div class="nav-item" onclick="loadView('traces')">
             <span>🔍</span> <span class="nav-text">Neural Link</span>

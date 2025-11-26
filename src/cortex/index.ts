@@ -1,5 +1,6 @@
-// @version 2.1.236
-import { bus } from "../core/event-bus.js";
+// @version 2.1.309
+import { bus, SynapsysEvent } from "../core/event-bus.js";
+import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
 import { capabilities } from "./capabilities/index.js";
 import { MotorCortex } from "./motor/index.js";
@@ -7,9 +8,21 @@ import { SensoryCortex } from "./sensory/index.js";
 import { Hippocampus } from "./memory/index.js";
 import { PrefrontalCortex } from "./planning/index.js";
 import { synthesizer } from "../precog/synthesizer.js";
-import { TOOLOO_PERSONA } from "./persona.js";
 import { tracer } from "./tracer.js";
+import { metaprogrammer } from "./metaprogrammer.js";
 import { ProjectManager } from "./project-manager.js";
+import { visualCortex } from "./imagination/visual-cortex.js";
+import { registry } from "../core/module-registry.js";
+import { Plan } from "./planning/planner.js";
+import { SYSTEM_VERSION } from "../core/system-info.js";
+import { ContextResonanceEngine } from "./context-resonance.js";
+
+interface PlanResult {
+  ok?: boolean;
+  timeout?: boolean;
+  plan?: Plan;
+  reason?: string;
+}
 
 export class Cortex {
   private motor: MotorCortex;
@@ -17,19 +30,38 @@ export class Cortex {
   private hippocampus: Hippocampus;
   private prefrontal: PrefrontalCortex;
   private projectManager: ProjectManager;
+  public contextResonance: ContextResonanceEngine;
 
   constructor() {
     console.log("[Cortex] Initializing Cognitive Core...");
+
+    registry.register({
+      name: "cortex",
+      version: SYSTEM_VERSION,
+      status: "booting",
+    });
+
     // Ensure sub-modules are instantiated
-    const _ = orchestrator;
-    const __ = capabilities;
-    const ___ = tracer;
+    // Initialize Amygdala first for protection
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    amygdala;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    orchestrator;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    capabilities;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    tracer;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    metaprogrammer;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    visualCortex;
 
     this.motor = new MotorCortex(bus, process.cwd());
     this.sensory = new SensoryCortex(bus, process.cwd());
     this.hippocampus = new Hippocampus(bus, process.cwd());
     this.prefrontal = new PrefrontalCortex(bus, process.cwd());
     this.projectManager = new ProjectManager(process.cwd());
+    this.contextResonance = new ContextResonanceEngine();
     this.setupListeners();
   }
 
@@ -67,15 +99,15 @@ export class Cortex {
         );
 
         // Wait for plan completion (with timeout)
-        const planPromise = new Promise((resolve) => {
-          const onComplete = (e: any) => {
+        const planPromise = new Promise<PlanResult>((resolve) => {
+          const onComplete = (e: SynapsysEvent) => {
             // Simple correlation check (in prod use IDs)
             if (e.payload.plan.goal === message) {
               cleanup();
               resolve({ ok: true, plan: e.payload.plan });
             }
           };
-          const onFail = (e: any) => {
+          const onFail = (e: SynapsysEvent) => {
             if (e.payload.plan.goal === message) {
               cleanup();
               resolve({ ok: false, reason: e.payload.reason });
@@ -94,16 +126,19 @@ export class Cortex {
           bus.publish("cortex", "planning:intent", { goal: message });
         });
 
-        const timeoutPromise = new Promise((resolve) => {
+        const timeoutPromise = new Promise<PlanResult>((resolve) => {
           setTimeout(() => resolve({ timeout: true }), 25000);
         });
 
-        const result: any = await Promise.race([planPromise, timeoutPromise]);
+        const result: PlanResult = await Promise.race([
+          planPromise,
+          timeoutPromise,
+        ]);
 
         if (result.timeout) {
           responseText = `I've started working on "${message}", but it's taking a while. I'll continue in the background.`;
           provider = "Synapsys Agent";
-        } else if (result.ok) {
+        } else if (result.ok && result.plan) {
           responseText = `✅ Task completed: "${message}".\n\nExecuted ${result.plan.steps.length} steps successfully.`;
           provider = "Synapsys Agent";
           meta = { plan: result.plan };
@@ -118,8 +153,9 @@ export class Cortex {
           responseText = result.response;
           provider = "Synapsys Synthesizer";
           meta = result.meta;
-        } catch (err: any) {
-          responseText = `I'm having trouble thinking right now: ${err.message}`;
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          responseText = `I'm having trouble thinking right now: ${errorMessage}`;
           provider = "Synapsys System";
         }
       }
@@ -152,10 +188,11 @@ export class Cortex {
           requestId: event.payload.requestId,
           data: { ok: true, projects },
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
         bus.publish("cortex", "cortex:response", {
           requestId: event.payload.requestId,
-          data: { ok: false, error: e.message },
+          data: { ok: false, error: errorMessage },
         });
       }
     });
@@ -170,10 +207,11 @@ export class Cortex {
           requestId: event.payload.requestId,
           data: { ok: true, project },
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
         bus.publish("cortex", "cortex:response", {
           requestId: event.payload.requestId,
-          data: { ok: false, error: e.message },
+          data: { ok: false, error: errorMessage },
         });
       }
     });
@@ -199,10 +237,11 @@ export class Cortex {
             data: { ok: false, error: "Project not found" },
           });
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
         bus.publish("cortex", "cortex:response", {
           requestId: event.payload.requestId,
-          data: { ok: false, error: e.message },
+          data: { ok: false, error: errorMessage },
         });
       }
     });
@@ -219,10 +258,11 @@ export class Cortex {
           requestId: event.payload.requestId,
           data: { ok: true },
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
         bus.publish("cortex", "cortex:response", {
           requestId: event.payload.requestId,
-          data: { ok: false, error: e.message },
+          data: { ok: false, error: errorMessage },
         });
       }
     });
@@ -244,4 +284,6 @@ export class Cortex {
   }
 }
 
+export { visualCortex } from "./imagination/visual-cortex.js";
 export const cortex = new Cortex();
+export const contextResonance = cortex.contextResonance;

@@ -42,6 +42,7 @@ function loadView(viewName, params = {}) {
     projects: "projects.html",
     design: "design-studio.html",
     control: "control-room-modern.html",
+    awareness: "control-room-awareness.html",
     traces: "trace-viewer.html",
     workbench: "/workbench",
   };
