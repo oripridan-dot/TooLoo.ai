@@ -1,4 +1,4 @@
-// @version 2.1.297
+// @version 2.1.298
 import path from "path";
 import fs from "fs";
 import fetch from "node-fetch";
@@ -97,11 +97,11 @@ interface FeedbackData {
 }
 
 export class TrainingService extends EventEmitter {
-  private trainingCamp: any;
-  private meta: any;
-  private hyperCamp: any;
-  private orchestrator: any;
-  private validationFramework: any;
+  private trainingCamp!: TrainingCamp;
+  private meta!: MetaLearningEngine;
+  private hyperCamp!: HyperSpeedTrainingCamp;
+  private orchestrator!: ParallelProviderOrchestrator;
+  private validationFramework!: ValidatedExecutionFramework;
   private sourcesStateFile: string;
 
   // In-memory stores
