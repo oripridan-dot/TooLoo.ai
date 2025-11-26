@@ -54,7 +54,7 @@ const Sidebar = ({ setActiveComponent }) => {
               onClick={() => setActiveComponent("Visual Designer")}
               className="block px-3 py-2 rounded-lg bg-blue-900/20 text-blue-400 font-medium border border-blue-900/30 hover:bg-blue-900/30 transition-all"
             >
-              <span className="mr-2">🎨</span> DeSign
+              <span className="mr-2">🎨</span> Visual Designer
             </a>
           </li>
         </ul>

@@ -684,12 +684,32 @@
 
           const data = await response.json();
           const responseData = data.data || data.content || data;
-          const responseText =
-            responseData.response ||
-            responseData.content ||
-            (typeof responseData === "string"
-              ? responseData
-              : JSON.stringify(responseData));
+          
+          // Properly extract response text from various response formats
+          let responseText = "";
+          if (typeof responseData === "string") {
+            responseText = responseData;
+          } else if (responseData.response) {
+            responseText = responseData.response;
+          } else if (responseData.content) {
+            responseText = responseData.content;
+          } else if (responseData.text) {
+            responseText = responseData.text;
+          } else if (responseData.message) {
+            responseText = responseData.message;
+          } else {
+            // If still no text found, extract from the object keys
+            const keys = Object.keys(responseData).filter(
+              k => !['provider', 'confidence', 'sources', 'data', 'meta', 'error', 'status', 'code'].includes(k)
+            );
+            if (keys.length > 0) {
+              const firstKey = keys[0];
+              const val = responseData[firstKey];
+              responseText = typeof val === 'string' ? val : JSON.stringify(val, null, 2);
+            } else {
+              responseText = "No response text found";
+            }
+          }
 
           if (activeThoughtBubble) {
             activeThoughtBubble.classList.add("collapsed");
@@ -699,13 +719,28 @@
           }
 
           if (responseText) {
+            // Parse sources - ensure it's an array
+            let sources = [];
+            if (responseData.sources) {
+              if (Array.isArray(responseData.sources)) {
+                sources = responseData.sources;
+              } else if (typeof responseData.sources === 'string') {
+                try {
+                  sources = JSON.parse(responseData.sources);
+                  if (!Array.isArray(sources)) sources = [];
+                } catch (e) {
+                  sources = [];
+                }
+              }
+            }
+            
             addRichMessage(
               "assistant",
               responseText,
               responseData.provider || "System",
               true,
-              responseData.confidence,
-              responseData.sources,
+              responseData.confidence || 85,
+              sources,
             );
           } else {
             addMessage(
