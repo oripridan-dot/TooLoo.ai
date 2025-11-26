@@ -1,4 +1,4 @@
-// @version 2.1.310
+// @version 2.1.312
 import React from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -89,6 +89,34 @@ const VisualDesigner: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-3">
+            <select
+              value={settings.preset || "custom"}
+              onChange={(e) => {
+                const preset = e.target.value;
+                if (preset === "ui-design") {
+                  updateSettings({
+                    preset: "ui-design",
+                    aspectRatio: "16:9",
+                    enhancePrompt: true,
+                  });
+                  setPrompt("Modern dashboard interface for Tooloo.ai, dark mode, cybernetic aesthetic, data visualization widgets");
+                } else if (preset === "icon") {
+                  updateSettings({
+                    preset: "icon",
+                    aspectRatio: "1:1",
+                    enhancePrompt: false,
+                  });
+                  setPrompt("Minimalist app icon, vector style, flat design");
+                } else {
+                  updateSettings({ preset: "custom" });
+                }
+              }}
+              className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="custom">Custom</option>
+              <option value="ui-design">UI Design (Tooloo)</option>
+              <option value="icon">App Icon</option>
+            </select>
             <select
               value={settings.provider}
               onChange={(e) => {
