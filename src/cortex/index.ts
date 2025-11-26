@@ -1,4 +1,4 @@
-// @version 2.1.322
+// @version 2.1.333
 import { bus, SynapsysEvent } from "../core/event-bus.js";
 import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
@@ -152,9 +152,9 @@ export class Cortex {
         try {
           console.log(`[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`);
           
-          // Create a timeout promise
+          // Create a timeout promise (reduced to 4s for faster response delivery)
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Synthesizer timeout after 8s')), 8000)
+            setTimeout(() => reject(new Error('Synthesizer timeout after 4s')), 4000)
           );
 
           const result = (await Promise.race([
