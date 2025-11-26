@@ -15,7 +15,7 @@ import { bus } from "../../core/event-bus.js";
 
 ensureEnvLoaded();
 
-const env = (name: string, def: any = undefined) => process.env[name] ?? def;
+const env = (name: string, def: unknown = undefined) => process.env[name] ?? def;
 
 export default class LLMProvider {
   constructor() {
@@ -153,7 +153,13 @@ export default class LLMProvider {
   }
 
   async generateSmartLLM(request) {
-    const { prompt, system, taskType = "chat", context = {} } = request || {};
+    const {
+      prompt,
+      system,
+      taskType = "chat",
+      context = {},
+      modelTier,
+    } = request || {};
     if (!prompt || typeof prompt !== "string") {
       return {
         content:
@@ -220,7 +226,8 @@ export default class LLMProvider {
       anthropic: () =>
         this.callClaude(prompt, enhancedSystem, taskType, context),
       openai: () => this.callOpenAI(prompt, enhancedSystem, taskType, context),
-      gemini: () => this.callGemini(prompt, enhancedSystem, taskType, context),
+      gemini: () =>
+        this.callGemini(prompt, enhancedSystem, taskType, context, modelTier),
 
       // OSS providers
       ollama: () => this.callOllama(prompt, enhancedSystem, taskType, context),
@@ -251,8 +258,13 @@ export default class LLMProvider {
 
     // Check Amygdala State - if PANIC/CRITICAL, maybe avoid expensive models?
     // For now, we just log it.
-    if (amygdala.currentState === AmygdalaState.PANIC || amygdala.currentState === AmygdalaState.CRITICAL) {
-        console.warn(`[LLMProvider] System Stress High (${amygdala.currentState}). Proceeding with caution.`);
+    if (
+      amygdala.currentState === AmygdalaState.PANIC ||
+      amygdala.currentState === AmygdalaState.CRITICAL
+    ) {
+      console.warn(
+        `[LLMProvider] System Stress High (${amygdala.currentState}). Proceeding with caution.`,
+      );
     }
 
     for (const p of tryOrder) {
@@ -275,14 +287,21 @@ export default class LLMProvider {
         );
 
         return { ...result, provider: p, domain: detectedDomain, latency };
-      } catch (err: any) {
-        console.warn(`[LLMProvider] Provider ${p} failed: ${err.message}. Falling back...`);
-        
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        console.warn(
+          `[LLMProvider] Provider ${p} failed: ${errorMessage}. Falling back...`,
+        );
+
         // Amygdala Feedback Loop
-        if (err.message.includes("503") || err.message.includes("429") || err.message.includes("Overloaded")) {
-            amygdala.spikeCortisol(0.2); // Significant stress from API failure
+        if (
+          errorMessage.includes("503") ||
+          errorMessage.includes("429") ||
+          errorMessage.includes("Overloaded")
+        ) {
+          amygdala.spikeCortisol(0.2); // Significant stress from API failure
         } else {
-            amygdala.spikeCortisol(0.05); // Minor stress from other errors
+          amygdala.spikeCortisol(0.05); // Minor stress from other errors
         }
 
         lastError = err;
@@ -400,9 +419,14 @@ export default class LLMProvider {
     return { content: text, confidence: 0.88 };
   }
 
-  async callGemini(prompt, system) {
+  async callGemini(prompt, system, taskType, context, modelTier) {
     const apiKey = env("GEMINI_API_KEY");
-    const model = this.defaultModel.gemini;
+    let model = this.defaultModel.gemini;
+
+    if (modelTier === "flash") {
+      model = "gemini-2.0-flash-exp";
+    }
+
     if (!apiKey) throw new Error("Gemini not configured");
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -424,32 +448,32 @@ export default class LLMProvider {
 
     // Notify UI of deep thinking
     bus.publish("synapsys", "synapsys:event", {
-        type: "thought",
-        payload: {
-            text: `Consulting Gemini 3 Pro (${model})... This may take a moment.`
-        }
+      type: "thought",
+      payload: {
+        text: `Consulting Gemini 3 Pro (${model})... This may take a moment.`,
+      },
     });
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 300000); // 5 minutes for deep reasoning
 
     try {
-        const res = await fetch(url, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        signal: controller.signal
-        });
+        signal: controller.signal,
+      });
 
-        if (!res.ok) {
+      if (!res.ok) {
         const err = await safeJson(res);
         throw new Error(`Gemini error ${res.status}: ${JSON.stringify(err)}`);
-        }
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        return { content: text, confidence: 0.75 };
+      }
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      return { content: text, confidence: 0.75 };
     } finally {
-        clearTimeout(timeout);
+      clearTimeout(timeout);
     }
   }
 
@@ -819,7 +843,9 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
     throw new Error("Provider or API key missing");
   }
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (config.header && config.key) {
     headers[config.header] =
       config.header === "Authorization" ? `Bearer ${config.key}` : config.key;
@@ -882,21 +908,25 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
     const data: any = await res.json();
     if (provider === "gemini")
       return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    if (provider === "deepseek") return data.choices?.[0]?.message?.content || "";
+    if (provider === "deepseek")
+      return data.choices?.[0]?.message?.content || "";
     if (provider === "claude" || provider === "anthropic")
       return data.content?.[0]?.text || "";
     if (provider === "openai") return data.choices?.[0]?.message?.content || "";
     if (provider === "huggingface") return data[0]?.generated_text || "";
     if (provider === "ollama") return data.message?.content || "";
-    if (provider === "localai") return data.choices?.[0]?.message?.content || "";
+    if (provider === "localai")
+      return data.choices?.[0]?.message?.content || "";
     if (provider === "openinterpreter") {
       return Array.isArray(data)
-        ? data.map((chunk: any) => chunk.content || chunk.message || "").join("")
+        ? data
+            .map((chunk: Record<string, unknown>) => (chunk.content as string) || (chunk.message as string) || "")
+            .join("")
         : data.content || data.message || "";
     }
 
     return "";
-      } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeoutId);
     throw error;
   }
@@ -1142,12 +1172,13 @@ export async function generateSmartLLM({
         };
       }
       tried.push({ name, available: true, empty: true });
-    } catch (e: any) {
-      console.error(`[LLMProvider] ${name} failed:`, e.message);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      console.error(`[LLMProvider] ${name} failed:`, errorMessage);
 
       // Amygdala Feedback: Report pain/stress
       if (
-        e.message.includes("503") ||
+        errorMessage.includes("503") ||
         e.message.includes("429") ||
         e.message.includes("overloaded")
       ) {
@@ -1159,7 +1190,7 @@ export async function generateSmartLLM({
       tried.push({ name, available: true, error: e.message?.slice(0, 200) });
     }
   }
-  const err: any = new Error("All providers failed");
+  const err = new Error("All providers failed") as Error & { details: unknown[] };
   err.details = tried;
   throw err;
 }

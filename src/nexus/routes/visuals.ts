@@ -26,7 +26,11 @@ router.post("/generate", async (req, res) => {
         res.json(response);
     } catch (error: any) {
         console.error("[Visuals API] Error generating image:", error);
-        res.status(500).json({ error: error.message || "Internal Server Error" });
+        // Return 500 but with the actual error message so the frontend can display it
+        res.status(500).json({ 
+            error: "Generation failed", 
+            details: error.message || String(error) 
+        });
     }
 });
 

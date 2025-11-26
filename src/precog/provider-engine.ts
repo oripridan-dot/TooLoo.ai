@@ -3,17 +3,26 @@ import LLMProvider from "./providers/llm-provider.js";
 import { GeminiImageProvider } from "./providers/gemini-image.js";
 import { OpenAIImageProvider } from "./providers/openai-image.js";
 import { ImageGenerationRequest, ImageGenerationResponse } from "./providers/types.js";
+import { CostCalculator } from "./engine/cost-calculator.js";
 import fetch from "node-fetch";
+
+interface OpenAIEmbeddingResponse {
+  data: {
+    embedding: number[];
+  }[];
+}
 
 export class ProviderEngine {
   private llmProvider: LLMProvider;
   private geminiImageProvider: GeminiImageProvider;
   private openaiImageProvider: OpenAIImageProvider;
+  private costCalculator: CostCalculator;
 
   constructor() {
     this.llmProvider = new LLMProvider();
     this.geminiImageProvider = new GeminiImageProvider();
     this.openaiImageProvider = new OpenAIImageProvider();
+    this.costCalculator = new CostCalculator();
   }
 
   getProvider(name: string) {
@@ -50,7 +59,7 @@ export class ProviderEngine {
               return null;
             }
 
-            const data: any = await response.json();
+            const data = (await response.json()) as OpenAIEmbeddingResponse;
             if (data && data.data && data.data.length > 0) {
               return data.data[0].embedding;
             }
@@ -86,6 +95,10 @@ export class ProviderEngine {
       modelTier // Pass tier to provider (needs implementation in LLMProvider)
     });
 
+    // Cost Tracking
+    const cost = this.costCalculator.getProviderCost(result.provider);
+    console.log(`[ProviderEngine] Request completed via ${result.provider}. Est. Cost: $${cost}`);
+
     return {
       content: result.content,
       provider: result.provider,
@@ -97,18 +110,30 @@ export class ProviderEngine {
     console.log(`[ProviderEngine] Generating image with prompt: ${req.prompt.substring(0, 50)}...`);
     
     if (req.provider === 'openai' || (req.model && req.model.includes('dall-e'))) {
-        const base64Image = await this.openaiImageProvider.generateImage(req.prompt, {
-            model: req.model,
-            size: req.imageSize,
-            quality: 'standard',
-            style: 'vivid'
-        });
-        return {
-            images: [{
-                data: base64Image.split(',')[1], // Remove data:image/png;base64, prefix if present, but OpenAIImageProvider returns full data URI. Wait, Gemini returns raw base64?
-                mimeType: 'image/png'
-            }]
-        };
+        try {
+            const base64Image = await this.openaiImageProvider.generateImage(req.prompt, {
+                model: req.model,
+                size: req.imageSize,
+                quality: 'standard',
+                style: 'vivid'
+            });
+            
+            // Handle data URI format if present
+            const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+            
+            return {
+                images: [{
+                    data: data,
+                    mimeType: 'image/png'
+                }]
+            };
+        } catch (error: any) {
+            console.error("[ProviderEngine] OpenAI generation failed:", error);
+            // Fallback to Gemini if OpenAI fails and provider wasn't strictly enforced? 
+            // For now, just rethrow with a clearer message or let the caller handle it.
+            // But if the user explicitly asked for OpenAI, we should probably fail.
+            throw new Error(`OpenAI generation failed: ${error.message}`);
+        }
     }
 
     return this.geminiImageProvider.generateImage(req);

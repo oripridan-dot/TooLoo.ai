@@ -17,6 +17,8 @@ import visualsRoutes from "./routes/visuals.js";
 import workflowsRoutes from "./routes/workflows.js";
 import observabilityRoutes from "./routes/observability.js";
 import contextRoutes from "./routes/context.js";
+import learningRoutes from "./routes/learning.js";
+import assetsRoutes from "./routes/assets.js";
 import { trainingRoutes } from "./routes/training.js";
 import { registry } from "../core/module-registry.js";
 import { SYSTEM_VERSION } from "../core/system-info.js";
@@ -41,6 +43,8 @@ export function createNexusApp() {
   app.use("/api/v1/workflows", workflowsRoutes);
   app.use("/api/v1/observability", observabilityRoutes);
   app.use("/api/v1/context", contextRoutes);
+  app.use("/api/v1/learning", learningRoutes);
+  app.use("/api/v1/assets", assetsRoutes);
 
   // Training & Sources Routes (Precog)
   app.use("/api/v1", trainingRoutes);

@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 // @version 2.1.28
 /**
  * Professional Design System Engine
@@ -8,6 +11,29 @@
  */
 
 class ProfessionalDesignSystem {
+  public artifacts: string[] = [];
+  public tokenCategories: any;
+  public componentMap: any;
+
+  public ingestArtifacts(dir: string = path.join(process.cwd(), 'data', 'design-artifacts')) {
+    if (!fs.existsSync(dir)) {
+        try {
+            fs.mkdirSync(dir, { recursive: true });
+        } catch (e) {
+            console.warn("[DesignSystem] Could not create artifacts dir:", e);
+            return;
+        }
+    }
+    
+    try {
+        const files = fs.readdirSync(dir);
+        this.artifacts = files.filter(f => /\.(png|jpg|jpeg|svg|webp)$/i.test(f));
+        console.log(`[DesignSystem] Ingested ${this.artifacts.length} artifacts from ${dir}`);
+    } catch (e) {
+        console.error("[DesignSystem] Failed to ingest artifacts:", e);
+    }
+  }
+
   constructor() {
     // Comprehensive token structure matching professional design systems
     this.tokenCategories = {

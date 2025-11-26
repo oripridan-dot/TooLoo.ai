@@ -25,7 +25,7 @@ export class TraitWeaver {
 
     private setupListeners() {
         // Listen for successful generations to reinforce traits
-        bus.on('provider:response', (event) => {
+        bus.on('provider:response', (_event) => {
             // In the future, analyze response acceptance to tune traits
         });
     }

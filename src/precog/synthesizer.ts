@@ -89,7 +89,7 @@ Return ONLY the synthesized response.
           count: successful.length,
         },
       };
-    } catch (error) {
+    } catch {
       // Fallback: just return the first successful response
       return {
         response: successful[0].response,

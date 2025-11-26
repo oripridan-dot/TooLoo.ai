@@ -55,9 +55,10 @@ router.post("/message", async (req, res) => {
       provider: result.provider,
       model: result.model,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Chat] Error:", error);
-    res.status(500).json({ ok: false, error: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: errorMessage });
   }
 });
 
@@ -90,22 +91,24 @@ router.post("/synthesis", async (req, res) => {
           total_tokens: 0, // We don't track this yet in the unified response
         },
       });
-    } catch (genError: any) {
+    } catch (genError: unknown) {
+      const errorMessage = genError instanceof Error ? genError.message : String(genError);
       console.warn(
         "[Chat] Provider generation failed, falling back to system message:",
-        genError.message,
+        errorMessage,
       );
 
       // Fallback if no providers are configured
       res.json({
         ok: true,
-        response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${genError.message}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
+        response: `[System] I received your message, but I couldn't connect to any AI providers. \n\nError: ${errorMessage}\n\nPlease check your .env file and ensure OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY are set.`,
         provider: "system-fallback",
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Chat] Error:", error);
-    res.status(500).json({ ok: false, error: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: errorMessage });
   }
 });
 

@@ -2,15 +2,24 @@
 import OpenAI from 'openai';
 
 export class OpenAIImageProvider {
-  private client: OpenAI;
+  private client: OpenAI | null = null;
 
   constructor() {
-    this.client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (apiKey) {
+      this.client = new OpenAI({
+        apiKey: apiKey,
+      });
+    } else {
+      console.warn("[OpenAIImageProvider] OPENAI_API_KEY is not set. OpenAI image generation will be unavailable.");
+    }
   }
 
-  async generateImage(prompt: string, options: any = {}): Promise<string> {
+  async generateImage(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
+    if (!this.client) {
+      throw new Error("OpenAI API key is missing. Please set OPENAI_API_KEY in your environment variables.");
+    }
+
     console.log(`[OpenAIImageProvider] Generating image with model dall-e-3...`);
     
     try {

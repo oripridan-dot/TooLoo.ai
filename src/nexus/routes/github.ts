@@ -13,8 +13,9 @@ async function execCommand(command: string, cwd: string = process.cwd()) {
   try {
     const { stdout, stderr } = await execAsync(command, { cwd });
     return { stdout: stdout.trim(), stderr: stderr.trim() };
-  } catch (error: any) {
-    throw new Error(error.stderr || error.message);
+  } catch (error: unknown) {
+    const err = error as { stderr?: string; message?: string };
+    throw new Error(err.stderr || err.message || String(error));
   }
 }
 
@@ -29,11 +30,12 @@ router.get("/health", async (req, res) => {
       status: "connected",
       details: stdout,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     res.status(500).json({
       ok: false,
       status: "disconnected",
-      error: error.message,
+      error: message,
     });
   }
 });
@@ -44,8 +46,9 @@ router.get("/info", async (req, res) => {
       "gh repo view --json name,owner,description,url,defaultBranchRef"
     );
     res.json({ ok: true, info: JSON.parse(stdout) });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -56,8 +59,9 @@ router.get("/issues", async (req, res) => {
       `gh issue list --limit ${limit} --json number,title,state,url,createdAt,updatedAt`
     );
     res.json({ ok: true, issues: JSON.parse(stdout) });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -81,8 +85,9 @@ router.post("/file", async (req, res) => {
 
     const content = await fs.readFile(fullPath, "utf-8");
     res.json({ ok: true, content });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -106,8 +111,9 @@ router.post("/files", async (req, res) => {
       }
     }
     res.json({ ok: true, files });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -119,8 +125,9 @@ router.get("/structure", async (req, res) => {
       nodir: true,
     });
     res.json({ ok: true, structure: files });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -150,8 +157,9 @@ router.get("/context", async (req, res) => {
         files,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -188,8 +196,9 @@ router.post("/update-file", async (req, res) => {
     }
 
     res.json({ ok: true, message: `File ${file} updated` });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -207,8 +216,9 @@ router.post("/create-branch", async (req, res) => {
       ok: true,
       message: `Branch ${name} created from ${baseBranch}`,
     });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -227,8 +237,9 @@ router.post("/create-pr", async (req, res) => {
       `gh pr create --title "${title}" --body "${body}" ${baseArg} ${headArg}`
     );
     res.json({ ok: true, url: stdout });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -246,8 +257,9 @@ router.post("/create-issue", async (req, res) => {
       `gh issue create --title "${title}" --body "${body}" ${labelsArg}`
     );
     res.json({ ok: true, url: stdout });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -262,8 +274,9 @@ router.patch("/pr/:number", async (req, res) => {
 
     const { stdout } = await execCommand(command);
     res.json({ ok: true, url: stdout });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -277,8 +290,9 @@ router.put("/pr/:number/merge", async (req, res) => {
       `gh pr merge ${number} ${methodArg} --auto`
     );
     res.json({ ok: true, message: "PR merged" });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -295,8 +309,9 @@ router.post("/comment", async (req, res) => {
       `gh issue comment ${issueNumber} --body "${body}"`
     );
     res.json({ ok: true, url: stdout });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 

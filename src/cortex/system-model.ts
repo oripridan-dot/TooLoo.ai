@@ -39,6 +39,7 @@ export class SystemModel {
         console.log('👁️  Cortex: Starting real-time file watch...');
         this.watcher = chokidar.watch(this.rootDir, {
             ignored: [
+                // eslint-disable-next-line no-useless-escape
                 /(^|[\/\\])\../, // ignore dotfiles
                 '**/node_modules/**',
                 '**/dist/**',

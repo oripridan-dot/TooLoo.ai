@@ -159,7 +159,7 @@ export class Orchestrator {
     });
 
     // Listen for Plan Completion
-    bus.on("planning:plan:completed", (event) => {
+    bus.on("planning:plan:completed", (_event) => {
       console.log("[Cortex] Plan completed. Checking queue...");
       this.state.activeCycles = Math.max(0, this.state.activeCycles - 1);
       this.state.currentFocus = "idle";
@@ -231,7 +231,7 @@ export class Orchestrator {
       if (fileMatch) {
           try {
               contextBundle = await smartFS.getGoldenPlate(fileMatch[0]);
-          } catch (e) {
+          } catch {
               // Ignore
           }
       }

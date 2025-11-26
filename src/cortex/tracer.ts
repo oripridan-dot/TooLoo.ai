@@ -4,8 +4,8 @@ export interface TraceStep {
   id: string;
   timestamp: string;
   type: "thought" | "tool" | "result" | "error";
-  content: any;
-  meta?: any;
+  content: unknown;
+  meta?: Record<string, unknown>;
 }
 
 export interface ExecutionTrace {
@@ -15,8 +15,8 @@ export interface ExecutionTrace {
   endTime?: string;
   status: "running" | "completed" | "failed";
   steps: TraceStep[];
-  result?: any;
-  error?: any;
+  result?: unknown;
+  error?: unknown;
 }
 
 export class ExecutionTracer {
@@ -79,7 +79,7 @@ export class ExecutionTracer {
     console.log(`[Tracer] Started trace: ${id} for goal: "${goal}"`);
   }
 
-  private endTrace(status: "completed" | "failed", result?: any, error?: any) {
+  private endTrace(status: "completed" | "failed", result?: unknown, error?: unknown) {
     if (!this.activeTraceId) return;
 
     const trace = this.traces.find((t) => t.id === this.activeTraceId);

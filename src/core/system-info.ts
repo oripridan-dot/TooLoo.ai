@@ -10,7 +10,7 @@ try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
         pkgVersion = pkg.version;
     }
-} catch (e) {
+} catch {
     console.warn('[SystemInfo] Failed to read package.json version');
 }
 

@@ -1,6 +1,9 @@
 // @version 2.1.243
 import { bus, SynapsysEvent } from "../../core/event-bus.js";
+import { smartFS } from "../../core/fs-manager.js";
 import * as v8 from "v8";
+import fs from "fs";
+import path from "path";
 
 export enum AmygdalaState {
   CALM = "CALM",
@@ -20,6 +23,9 @@ export class Amygdala {
   private readonly MEMORY_WARNING_THRESHOLD = 0.7; // 70% of max heap
   private readonly MEMORY_CRITICAL_THRESHOLD = 0.9; // 90% of max heap
   private readonly EVENT_SPIKE_THRESHOLD = 50; // Events per second
+  private readonly CLUTTER_THRESHOLD = 1000; // Max backup files before stress
+
+  private tickCount: number = 0;
 
   constructor() {
     console.log("[Amygdala] Initializing Survival Instincts...");
@@ -30,7 +36,9 @@ export class Amygdala {
   public spikeCortisol(amount: number) {
     this.cortisol = Math.min(1.0, this.cortisol + amount);
     this.updateState();
-    console.warn(`[Amygdala] Cortisol spike: +${amount.toFixed(2)} -> ${this.cortisol.toFixed(2)}`);
+    console.warn(
+      `[Amygdala] Cortisol spike: +${amount.toFixed(2)} -> ${this.cortisol.toFixed(2)}`,
+    );
   }
 
   public get currentState(): AmygdalaState {
@@ -50,6 +58,13 @@ export class Amygdala {
     // 1. Measure Stressors
     const memoryStress = this.checkMemory();
     const cognitiveLoad = this.checkCognitiveLoad(); // Based on eventCount
+
+    // Periodic Checks (every 60s)
+    this.tickCount++;
+    if (this.tickCount % 60 === 0) {
+      const clutterStress = this.checkDiskClutter();
+      if (clutterStress > 0) this.cortisol += clutterStress;
+    }
 
     // 2. Update Cortisol (with decay)
     // Base decay
@@ -76,6 +91,30 @@ export class Amygdala {
         `[Amygdala] State: ${this.state} | Cortisol: ${this.cortisol.toFixed(2)} | MemStress: ${memoryStress.toFixed(2)} | Load: ${cognitiveLoad.toFixed(2)}`,
       );
     }
+  }
+
+  private checkDiskClutter(): number {
+    try {
+      const recoveryDir = path.resolve(process.cwd(), ".tooloo/recovery");
+      if (!fs.existsSync(recoveryDir)) return 0;
+
+      const files = fs.readdirSync(recoveryDir);
+      if (files.length > this.CLUTTER_THRESHOLD) {
+        console.warn(
+          `[Amygdala] 🗑️ Disk clutter detected: ${files.length} files. Triggering cleanup reflex.`,
+        );
+        // Fire and forget cleanup
+        smartFS
+          .cleanRecovery()
+          .catch((err) =>
+            console.error("[Amygdala] Cleanup reflex failed:", err),
+          );
+        return 0.2; // Stress spike
+      }
+    } catch {
+      return 0;
+    }
+    return 0;
   }
 
   private checkMemory(): number {

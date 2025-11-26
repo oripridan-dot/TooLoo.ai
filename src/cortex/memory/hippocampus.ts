@@ -98,6 +98,13 @@ export class Hippocampus {
       this.record("observation", event.payload, ["sensory", "fs"]);
     });
 
+    // Explicit Memory Storage
+    this.bus.on("memory:store", async (event: any) => {
+      const { content, type, tags, metadata } = event.payload;
+      await this.vectorStore.add(content, metadata);
+      this.record(type || "thought", { content, metadata }, tags || []);
+    });
+
     // Allow explicit memory storage
     this.bus.on("memory:store", (event) =>
       this.record("thought", event.payload, ["explicit"]),
