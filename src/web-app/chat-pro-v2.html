@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.342 -->
+<!-- @version 2.1.345 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -885,9 +885,17 @@
       });
 
       function formatRichResponse(text) {
+        if (typeof text === 'object') {
+          try {
+            text = JSON.stringify(text, null, 2);
+            return `<pre><code class="hljs language-json">${text}</code></pre>`;
+          } catch (e) {
+            text = "[Complex Object]";
+          }
+        }
         try {
           // Sanitize and parse
-          const rawHtml = marked.parse(text);
+          const rawHtml = marked.parse(text || "");
           return DOMPurify.sanitize(rawHtml, {
             ADD_TAGS: ["div", "span", "code", "pre"],
             ADD_ATTR: ["class", "target", "rel"],
