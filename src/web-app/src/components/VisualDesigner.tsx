@@ -1,4 +1,4 @@
-// @version 2.1.342
+// @version 2.1.349
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,11 +9,14 @@ import {
   Image as ImageIcon,
   Settings,
   PenTool,
+  Palette,
+  Layout,
+  Wand2
 } from "lucide-react";
 import DesignTools from "./DesignTools.jsx";
 
 const VisualDesigner: React.FC = () => {
-  const [showTools, setShowTools] = useState(false);
+  const [showTools, setShowTools] = useState(true); // Default to showing tools
   const {
     prompt,
     setPrompt,
@@ -89,27 +92,36 @@ const VisualDesigner: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#0f1117] text-gray-100">
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        <header className="flex justify-between items-center bg-[#1e293b] p-4 rounded-xl shadow-lg border border-gray-800">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#1e293b]/80 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/5 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-              TooLoo.ai - DeSign
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Cognitive Visual Engine • Gemini & DALL-E • Design Suite
+            <div className="flex items-center gap-3 mb-1">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-lg">
+                <Palette className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">
+                <span className="text-blue-400">DeSign</span>
+              </h1>
+            </div>
+            <p className="text-sm text-gray-400 ml-1 flex items-center gap-2">
+              <Wand2 className="w-3 h-3" /> Cognitive Visual Engine • Gemini & DALL-E
             </p>
           </div>
-          <div className="flex gap-3">
+          
+          <div className="flex flex-wrap gap-3 items-center bg-black/20 p-2 rounded-xl border border-white/5">
             <button
               onClick={() => setShowTools(!showTools)}
-              className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${
                 showTools
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <PenTool className="w-4 h-4" />
-              Tools
+              <Layout className="w-4 h-4" />
+              Studio Tools
             </button>
+            
+            <div className="h-6 w-px bg-white/10 mx-1"></div>
+
             <select
               value={settings.preset || "custom"}
               onChange={(e) => {
@@ -134,9 +146,9 @@ const VisualDesigner: React.FC = () => {
                   updateSettings({ preset: "custom" });
                 }
               }}
-              className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none hover:border-gray-600 transition-colors"
             >
-              <option value="custom">Custom</option>
+              <option value="custom">Custom Preset</option>
               <option value="ui-design">UI Design (Tooloo)</option>
               <option value="icon">App Icon</option>
             </select>
