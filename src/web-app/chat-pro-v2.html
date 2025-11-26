@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.345 -->
+<!-- @version 2.1.346 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -653,6 +653,7 @@
 
           const data = await response.json();
           const responseData = data.data || data.content || data;
+          const responseText = responseData.response || responseData.content || (typeof responseData === 'string' ? responseData : JSON.stringify(responseData));
 
           if (activeThoughtBubble) {
             activeThoughtBubble.classList.add("collapsed");
@@ -661,11 +662,11 @@
             activeThoughtBubble = null;
           }
 
-          if (responseData.response) {
+          if (responseText) {
             addRichMessage(
               "assistant",
-              responseData.response,
-              responseData.provider,
+              responseText,
+              responseData.provider || "System",
               true,
               responseData.confidence,
               responseData.sources,
