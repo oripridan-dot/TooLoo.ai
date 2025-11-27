@@ -1,4 +1,4 @@
-// @version 2.2.31
+// @version 2.2.42
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -47,17 +47,7 @@ const Chat = () => {
     const newSocket = io();
     setSocket(newSocket);
 
-    newSocket.on("thinking", () => setIsLoading(true));
-
-    // Listen for Synapsys events (including planning)
-    newSocket.on("synapsys:event", (event) => {
-      if (event.type.startsWith("planning:")) {
-        handlePlanningEvent(event);
-      } else if (event.type === "visual:generated") {
-        handleVisualEvent(event);
-      }
-    });
-
+    // Define handlers first, before using them
     const handleVisualEvent = (event) => {
       const payload = event.payload;
       setMessages((prev) => [
@@ -133,7 +123,16 @@ const Chat = () => {
       });
     };
 
-    newSocket.on("response", (data) => {
+    newSocket.on("thinking", () => setIsLoading(true));
+
+    // Now use the handlers
+    newSocket.on("synapsys:event", (event) => {
+      if (event.type.startsWith("planning:")) {
+        handlePlanningEvent(event);
+      } else if (event.type === "visual:generated") {
+        handleVisualEvent(event);
+      }
+    });
       // Check if response contains code-like content
       const content = data.response || data.content || "";
       let visual = data.visual;
