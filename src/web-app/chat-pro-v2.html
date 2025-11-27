@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.355 -->
+<!-- @version 2.1.356 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -724,9 +724,6 @@
           
           console.log("[Chat] Final responseText:", responseText.substring(0, 100));
           console.log("[Chat] Type of responseText:", typeof responseText);
-          
-          // Use data object for provider/sources metadata
-          const responseData = data;
 
           if (activeThoughtBubble) {
             activeThoughtBubble.classList.add("collapsed");
