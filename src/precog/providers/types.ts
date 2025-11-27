@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.378
 export interface ProviderConfig {
   name: string;
   enabled: boolean;
@@ -83,4 +83,75 @@ export interface ComponentCode {
   code: string;
   language: string;
   framework: string;
+}
+
+/**
+ * Context-aware visual generation interfaces
+ * Enables visual providers (Nano Banana, DALL-E) to generate functional code
+ * by analyzing design context and requirements
+ */
+
+export interface VisualContext {
+  designTokens?: {
+    colors?: Record<string, string>;
+    typography?: Record<string, unknown>;
+    spacing?: Record<string, string>;
+    borderRadius?: Record<string, string>;
+  };
+  uiPatterns?: string[]; // e.g., ["card", "grid", "sidebar", "modal"]
+  componentRequirements?: {
+    name: string;
+    purpose: string;
+    props?: Record<string, unknown>;
+  }[];
+  existingComponents?: {
+    name: string;
+    code: string;
+  }[];
+  brandGuidelines?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    fontFamily?: string;
+    tone?: string;
+  };
+  customInstructions?: string;
+}
+
+export interface VisualContextAnalysis {
+  extractedTokens: Record<string, unknown>;
+  identifiedPatterns: string[];
+  requirements: string[];
+  recommendations: string[];
+  codeGenStrategy: "component" | "layout" | "system" | "utility";
+}
+
+export interface ImageCodeGenerationRequest {
+  visualPrompt: string; // Description of visual/design intent
+  codePrompt: string; // Specific code generation instructions
+  context: VisualContext; // Design tokens, patterns, requirements
+  outputFormat: "html" | "react" | "vue" | "markdown"; // Target language
+  provider?: "gemini-nano" | "dalle3"; // Force provider (Nano Banana or DALL-E)
+  includeImage?: boolean; // Also generate visual mockup
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ImageCodeGenerationResponse {
+  code: string;
+  language: string;
+  framework: string;
+  imageUrl?: string; // Optional visual mockup (base64)
+  contextAnalysis: VisualContextAnalysis;
+  provider: string;
+  model: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ContextAwareImageProvider extends ProviderAdapter {
+  generateCodeFromContext(
+    req: ImageCodeGenerationRequest
+  ): Promise<ImageCodeGenerationResponse>;
+  analyzeVisualContext(
+    context: VisualContext
+  ): Promise<VisualContextAnalysis>;
 }
