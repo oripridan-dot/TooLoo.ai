@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.354 -->
+<!-- @version 2.1.355 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -684,29 +684,46 @@
 
           const data = await response.json();
           console.log("[Chat] Received response:", data);
+          console.log("[Chat] data.ok:", data.ok);
+          console.log("[Chat] data.data:", data.data);
           
-          // Extract response text - backend returns { response, provider, sessionId, ... }
+          // Handle wrapped format: {ok: true, data: {response: "..."}}
           let responseText = "";
-          if (typeof data === "string") {
+          let responseData = {};
+          
+          if (data.ok === true && data.data) {
+            // Wrapped format - extract from data.data
+            console.log("[Chat] Using wrapped format (data.data)");
+            responseData = data.data;
+            if (typeof responseData.response === "string") {
+              responseText = responseData.response;
+            } else if (responseData.content) {
+              responseText = responseData.content;
+            } else {
+              console.error("[Chat] data.data exists but no response field:", responseData);
+              responseText = JSON.stringify(responseData, null, 2);
+            }
+          } else if (typeof data === "string") {
             responseText = data;
-          } else if (data.response) {
-            // Primary response field from backend
+            responseData = {};
+          } else if (data.response && typeof data.response === "string") {
+            // Direct format with string response
             responseText = data.response;
-          } else if (data.content) {
-            responseText = data.content;
-          } else if (data.text) {
-            responseText = data.text;
-          } else if (data.message) {
-            responseText = data.message;
-          } else if (data.data && typeof data.data === "string") {
-            responseText = data.data;
-          } else if (data.data && data.data.response) {
-            responseText = data.data.response;
+            responseData = data;
+          } else if (data.response && typeof data.response === "object") {
+            // Response is an object - stringify it
+            console.warn("[Chat] data.response is an object:", data.response);
+            responseText = JSON.stringify(data.response, null, 2);
+            responseData = data;
           } else {
-            // Last resort: show entire response
-            console.error("[Chat] Unexpected response format:", data);
-            responseText = "Error: Unexpected response format - " + JSON.stringify(data, null, 2);
+            // Fallback
+            console.error("[Chat] Could not extract response from:", data);
+            responseText = "Error: " + JSON.stringify(data, null, 2);
+            responseData = data;
           }
+          
+          console.log("[Chat] Final responseText:", responseText.substring(0, 100));
+          console.log("[Chat] Type of responseText:", typeof responseText);
           
           // Use data object for provider/sources metadata
           const responseData = data;
