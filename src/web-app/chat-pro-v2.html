@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.365 -->
+<!-- @version 2.1.366 -->
 <!-- @version 2.1.363-fix -->
 <html lang="en">
   <head>
@@ -1032,14 +1032,6 @@
           // Fallback: just escape and return
           const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
           return `<p>${escaped}</p>`;
-        }
-      }
-            ADD_TAGS: ["div", "span", "code", "pre"],
-            ADD_ATTR: ["class", "target", "rel"],
-          });
-        } catch (e) {
-          console.error("Markdown parsing error:", e);
-          return `<p>${DOMPurify.sanitize(text)}</p>`;
         }
       }
 
