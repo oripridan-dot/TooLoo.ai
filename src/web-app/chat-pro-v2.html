@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.356 -->
+<!-- @version 2.1.359 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -670,7 +670,7 @@
         activeThoughtBubble = createThoughtBubble();
 
         try {
-          const response = await fetch(`${API_BASE}/api/v1/chat/message`, {
+          const response = await fetch(`${API_BASE}/api/v1/chat/pro`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -686,11 +686,11 @@
           console.log("[Chat] Received response:", data);
           console.log("[Chat] data.ok:", data.ok);
           console.log("[Chat] data.data:", data.data);
-          
+
           // Handle wrapped format: {ok: true, data: {response: "..."}}
           let responseText = "";
           let responseData = {};
-          
+
           if (data.ok === true && data.data) {
             // Wrapped format - extract from data.data
             console.log("[Chat] Using wrapped format (data.data)");
@@ -700,7 +700,10 @@
             } else if (responseData.content) {
               responseText = responseData.content;
             } else {
-              console.error("[Chat] data.data exists but no response field:", responseData);
+              console.error(
+                "[Chat] data.data exists but no response field:",
+                responseData,
+              );
               responseText = JSON.stringify(responseData, null, 2);
             }
           } else if (typeof data === "string") {
@@ -721,8 +724,11 @@
             responseText = "Error: " + JSON.stringify(data, null, 2);
             responseData = data;
           }
-          
-          console.log("[Chat] Final responseText:", responseText.substring(0, 100));
+
+          console.log(
+            "[Chat] Final responseText:",
+            responseText.substring(0, 100),
+          );
           console.log("[Chat] Type of responseText:", typeof responseText);
 
           if (activeThoughtBubble) {
@@ -738,7 +744,7 @@
             if (responseData.sources) {
               if (Array.isArray(responseData.sources)) {
                 sources = responseData.sources;
-              } else if (typeof responseData.sources === 'string') {
+              } else if (typeof responseData.sources === "string") {
                 try {
                   sources = JSON.parse(responseData.sources);
                   if (!Array.isArray(sources)) sources = [];
@@ -747,7 +753,7 @@
                 }
               }
             }
-            
+
             addRichMessage(
               "assistant",
               responseText,

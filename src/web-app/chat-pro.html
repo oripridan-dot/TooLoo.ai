@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.242 -->
+<!-- @version 2.1.359 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -324,7 +324,7 @@
         if (window.StoryBoard) window.StoryBoard.setState("dreaming");
 
         try {
-          const response = await fetch("/api/v1/chat/message", {
+          const response = await fetch("/api/v1/chat/pro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
