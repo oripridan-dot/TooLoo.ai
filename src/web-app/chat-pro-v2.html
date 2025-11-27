@@ -1,11 +1,18 @@
 <!doctype html>
-<!-- @version 2.1.362 -->
+<!-- @version 2.1.363 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tooloo Synapsys // Orchestrator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?v=3.4.1"></script>
+    <script>
+      tailwind.config = {
+        corePlugins: {
+          preflight: true,
+        }
+      }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
