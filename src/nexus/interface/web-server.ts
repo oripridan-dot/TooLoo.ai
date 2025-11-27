@@ -1,4 +1,4 @@
-// @version 2.1.372
+// @version 2.1.373
 // System Check endpoint: runs smoke tests for key services and returns structured results
 // (Moved below app initialization)
 
@@ -1264,59 +1264,66 @@ app.post("/api/v1/chat/pro", async (req, res) => {
   req.setTimeout(300000); // 5 min timeout for deep reasoning
   
   try {
-    const {
-      message,
-      sessionId: providedSessionId,
-      userId = "anonymous",
-      provider: preferredProvider,
-      responseType = "balanced",
-      context,
-      attachments,
-    } = req.body;
+    const { message, sessionId: providedSessionId, userId = "anonymous" } = req.body;
 
     if (!message) {
       return res.status(400).json({ ok: false, error: "Message required" });
     }
 
+    // Get session
     const sessionManager = await getSessionManager();
     const sessionId = providedSessionId || sessionManager.generateSessionId();
     const session = await sessionManager.getOrCreateSession(sessionId, userId);
 
-    // Route through LLM provider
-    const llm = new LLMProvider();
-    const result = await llm.generate({
-      prompt: message,
-      system: "You are TooLoo, an advanced AI assistant. Provide thoughtful, comprehensive responses.",
-      taskType: responseType === "reasoning" ? "reasoning" : "general",
-      maxTokens: 2000,
-    });
+    // Call LLM
+    try {
+      const llm = new LLMProvider();
+      const result = await llm.generate({
+        prompt: message,
+        system: "You are TooLoo, an advanced AI assistant. Provide thoughtful, comprehensive responses.",
+        taskType: "general",
+      });
 
-    // Store in session
-    session.messages.push({
-      role: "user",
-      content: message,
-      timestamp: new Date(),
-    });
-    session.messages.push({
-      role: "assistant",
-      content: result.content,
-      metadata: { provider: result.provider || "anthropic", confidence: result.confidence },
-      timestamp: new Date(),
-    });
-    await sessionManager.saveSession(session);
+      // Ensure we have content
+      const responseText = result?.content || "Unable to generate response";
 
-    res.json({
-      ok: true,
-      data: {
-        response: result.content,
-        message: result.content,
-        provider: result.provider || "anthropic",
-        confidence: result.confidence || 0.85,
-        sessionId,
-      },
-    });
+      // Store in session
+      session.messages.push({
+        role: "user",
+        content: message,
+        timestamp: new Date(),
+      });
+      session.messages.push({
+        role: "assistant",
+        content: responseText,
+        timestamp: new Date(),
+      });
+      
+      try {
+        await sessionManager.saveSession(session);
+      } catch (saveErr) {
+        console.warn("[Chat Pro] Session save failed:", saveErr.message);
+      }
+
+      return res.json({
+        ok: true,
+        data: {
+          response: responseText,
+          message: responseText,
+          provider: result?.provider || "anthropic",
+          confidence: result?.confidence || 0.85,
+          sessionId,
+        },
+      });
+    } catch (llmErr) {
+      console.error("[Chat Pro] LLM Error:", llmErr.message);
+      return res.status(503).json({
+        ok: false,
+        error: `Provider error: ${llmErr.message}`,
+      });
+    }
   } catch (error) {
-    console.error("[Chat Pro] Error:", error.message);
+    console.error("[Chat Pro] Fatal error:", error.message);
     res.status(500).json({
       ok: false,
       error: error.message || "Chat Pro request failed",
