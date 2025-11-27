@@ -1,3 +1,4 @@
+// @version 2.2.38
 import React, { useState, useEffect } from 'react';
 
 const Projects = ({ setActiveComponent }) => {
@@ -11,7 +12,8 @@ const Projects = ({ setActiveComponent }) => {
       try {
         const res = await fetch('/api/v1/projects');
         const data = await res.json();
-        setProjects(data.content?.projects || []);
+        // Backend returns { ok: true, projects: [...] }
+        setProjects(data.projects || []);
       } catch (e) {
         console.error("Failed to load projects", e);
         setError("Failed to load projects.");
@@ -28,8 +30,29 @@ const Projects = ({ setActiveComponent }) => {
     setActiveComponent('Chat');
   };
 
-  const handleCreateProject = () => {
-    alert("Project creation wizard coming soon.");
+  const handleCreateProject = async () => {
+    const name = prompt("Enter project name:");
+    if (!name) return;
+
+    const description = prompt("Enter project description (optional):");
+    
+    try {
+      const res = await fetch('/api/v1/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description, type: 'general' })
+      });
+      
+      const data = await res.json();
+      if (data.ok) {
+        setProjects([...projects, data.project]);
+      } else {
+        alert("Failed to create project: " + data.error);
+      }
+    } catch (e) {
+      console.error("Error creating project", e);
+      alert("Error creating project");
+    }
   };
 
   const filteredProjects = projects.filter(p => 
