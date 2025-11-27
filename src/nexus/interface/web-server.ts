@@ -1,4 +1,4 @@
-// @version 2.1.353
+// @version 2.1.372
 // System Check endpoint: runs smoke tests for key services and returns structured results
 // (Moved below app initialization)
 
@@ -109,7 +109,7 @@ const hotUpdateManager = setupAppHotUpdate(app, {
 // Watch server file for changes
 hotReloadManager.watchFile("src/nexus/interface/web-server.ts", async () => {
   console.log(
-    "[HotReload] Web server code changed - consider restarting for full reload"
+    "[HotReload] Web server code changed - consider restarting for full reload",
   );
 });
 
@@ -173,7 +173,7 @@ const capabilityActivator = new CapabilityActivator({
 svc.environmentHub.registerComponent(
   "capabilityActivator",
   capabilityActivator,
-  ["capabilities", "activation", "autonomous-evolution"]
+  ["capabilities", "activation", "autonomous-evolution"],
 );
 
 // ========== CAPABILITY ORCHESTRATOR INITIALIZATION ==========
@@ -184,7 +184,7 @@ const capabilityOrchestrator = new CapabilityOrchestrator();
 svc.environmentHub.registerComponent(
   "capabilityOrchestrator",
   capabilityOrchestrator,
-  ["capabilities", "orchestration", "discovery"]
+  ["capabilities", "orchestration", "discovery"],
 );
 
 // ========== NEW CAPABILITY ENGINES INITIALIZATION ==========
@@ -197,19 +197,19 @@ const reasoningVerificationEngine = new ReasoningVerificationEngine();
 svc.environmentHub.registerComponent(
   "emotionDetectionEngine",
   emotionDetectionEngine,
-  ["emotions", "sentiment", "nuance-detection"]
+  ["emotions", "sentiment", "nuance-detection"],
 );
 
 svc.environmentHub.registerComponent(
   "creativeGenerationEngine",
   creativeGenerationEngine,
-  ["creativity", "ideation", "autonomous-evolution"]
+  ["creativity", "ideation", "autonomous-evolution"],
 );
 
 svc.environmentHub.registerComponent(
   "reasoningVerificationEngine",
   reasoningVerificationEngine,
-  ["reasoning", "logic", "verification"]
+  ["reasoning", "logic", "verification"],
 );
 
 // ========== PHASE 4: CACHING ENGINE INITIALIZATION ==========
@@ -231,7 +231,7 @@ const multiLanguageEngine = new MultiLanguageEngine();
 svc.environmentHub.registerComponent(
   "multiLanguageEngine",
   multiLanguageEngine,
-  ["languages", "internationalization", "localization"]
+  ["languages", "internationalization", "localization"],
 );
 
 // ========== PHASE 4 FEATURE 3: GITHUB INTEGRATION ENGINE INITIALIZATION ==========
@@ -242,7 +242,7 @@ const gitHubIntegrationEngine = new GitHubIntegrationEngine(githubProvider);
 svc.environmentHub.registerComponent(
   "gitHubIntegrationEngine",
   gitHubIntegrationEngine,
-  ["github", "automation", "ci-cd"]
+  ["github", "automation", "ci-cd"],
 );
 
 // ========== PHASE 4 FEATURE 4: SLACK NOTIFICATION ENGINE INITIALIZATION ==========
@@ -253,7 +253,7 @@ const slackNotificationEngine = new SlackNotificationEngine(slackProvider);
 svc.environmentHub.registerComponent(
   "slackNotificationEngine",
   slackNotificationEngine,
-  ["slack", "notifications", "collaboration"]
+  ["slack", "notifications", "collaboration"],
 );
 
 // ========== TIER 1: KNOWLEDGE ENHANCEMENT ENGINE INITIALIZATION ==========
@@ -279,23 +279,23 @@ async function initializeTier1KnowledgeEnhancement() {
     svc.environmentHub.registerComponent(
       "tier1KnowledgeEnhancement",
       tier1KnowledgeEnhancementEngine,
-      ["knowledge", "learning", "sources", "improvements"]
+      ["knowledge", "learning", "sources", "improvements"],
     );
 
     console.log("✅ Tier 1 Knowledge Enhancement: ACTIVE");
     console.log(
-      `   • Web sources: ${result.summary.engines.webSources.sourcesLoaded} loaded`
+      `   • Web sources: ${result.summary.engines.webSources.sourcesLoaded} loaded`,
     );
     console.log(
-      `   • Conversation memory: ${result.summary.engines.conversationMemory.memoriesStored} conversations`
+      `   • Conversation memory: ${result.summary.engines.conversationMemory.memoriesStored} conversations`,
     );
     console.log(
-      `   • Benchmark learning: ${result.summary.engines.benchmarkImprovement.weakAreasIdentified} weak areas identified`
+      `   • Benchmark learning: ${result.summary.engines.benchmarkImprovement.weakAreasIdentified} weak areas identified`,
     );
   } catch (error) {
     console.warn(
       "⚠ Tier 1 Knowledge Enhancement initialization failed:",
-      error.message
+      error.message,
     );
     console.log("  → Knowledge enhancement endpoints will not be available");
     // Continue startup even if this fails - not critical
@@ -399,7 +399,7 @@ app.use((req, res, next) => {
   // Force fresh fetch for ALL resources - this is the key to dev updates showing immediately
   res.setHeader(
     "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
   );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
@@ -435,7 +435,7 @@ app.use("/api", async (req, res, next) => {
   res.setHeader("X-RateLimit-Limit", "1000");
   res.setHeader(
     "X-RateLimit-Remaining",
-    Math.max(0, Math.floor(result.waitTime / 10))
+    Math.max(0, Math.floor(result.waitTime / 10)),
   );
   next();
 });
@@ -488,21 +488,21 @@ app.use((req, res, next) => {
         // Add cache-busting to all script src attributes (except heartbeat which is external)
         updated = updated.replace(
           /src="\/js\/([^"]+)"/g,
-          `src="/js/$1${cbParam}"`
+          `src="/js/$1${cbParam}"`,
         );
         updated = updated.replace(
           /src="\.\/js\/([^"]+)"/g,
-          `src="./js/$1${cbParam}"`
+          `src="./js/$1${cbParam}"`,
         );
 
         // Add cache-busting to all link href attributes (CSS)
         updated = updated.replace(
           /href="\/css\/([^"]+)"/g,
-          `href="/css/$1${cbParam}"`
+          `href="/css/$1${cbParam}"`,
         );
         updated = updated.replace(
           /href="\.\/css\/([^"]+)"/g,
-          `href="./css/$1${cbParam}"`
+          `href="./css/$1${cbParam}"`,
         );
 
         // Inject heartbeat script if not already present
@@ -525,7 +525,7 @@ app.use((req, res, next) => {
 // Phase 3 Control Center - BEFORE static middleware to override file serving
 app.get(["/phase3", "/phase3-control-center"], (req, res) => {
   res.sendFile(
-    path.join(process.cwd(), "web-app", "phase3-control-center.html")
+    path.join(process.cwd(), "web-app", "phase3-control-center.html"),
   );
 });
 
@@ -574,7 +574,7 @@ app.use(
   express.static(path.join(webDir, "temp"), {
     maxAge: 0,
     etag: false,
-  })
+  }),
 );
 
 // TooLoo Hub page route
@@ -607,7 +607,7 @@ app.get(["/", "/interface", "/home", "/unified"], (req, res) => {
 // Main Control Room - Modern unified interface (DEFAULT)
 app.get(["/control-room"], (req, res) => {
   res.sendFile(
-    path.join(__dirname, "../../web-app", "control-room-modern.html")
+    path.join(__dirname, "../../web-app", "control-room-modern.html"),
   );
 });
 
@@ -619,7 +619,7 @@ app.get(["/control-room/legacy", "/control-room-home"], (req, res) => {
 // Advanced control room (for backward compatibility)
 app.get("/control-room/advanced", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "../../web-app", "control-room-redesigned.html")
+    path.join(__dirname, "../../web-app", "control-room-redesigned.html"),
   );
 });
 
@@ -651,13 +651,13 @@ app.get(
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
     res.sendFile(path.join(__dirname, "../../web-app", "chat-pro-v2.html"));
-  }
+  },
 );
 
 // Serve the workflow control room (product development focused)
 app.get("/workflow-control-room", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "../../web-app", "workflow-control-room.html")
+    path.join(__dirname, "../../web-app", "workflow-control-room.html"),
   );
 });
 
@@ -693,7 +693,7 @@ app.get(
     } catch {
       return res.status(404).send("Intelligence Dashboard missing");
     }
-  }
+  },
 );
 
 // Capability Activation friendly alias
@@ -707,7 +707,7 @@ app.get(
     } catch {
       return res.status(404).send("Capability Activation missing");
     }
-  }
+  },
 );
 
 // Capabilities Dashboard alias
@@ -721,7 +721,7 @@ app.get(
     } catch {
       return res.status(404).send("Capabilities Dashboard missing");
     }
-  }
+  },
 );
 
 // Design Demo friendly alias
@@ -757,7 +757,7 @@ app.get(
     } catch {
       return res.status(404).send("Analytics Dashboard missing");
     }
-  }
+  },
 );
 
 // ===== DESIGN TRANSFORMATION API =====
@@ -797,7 +797,7 @@ app.post("/api/v1/design/apply-system", async (req, res) => {
         totalTokens: Object.keys(mappedTokens).length,
         affectedComponents: Object.keys(componentMap).reduce(
           (sum, token) => sum + componentMap[token].length,
-          0
+          0,
         ),
         categories: ["colors", "typography", "spacing", "shadows"],
       },
@@ -1013,9 +1013,9 @@ function detectProviderFromResponse(response) {
     return "deepseek";
   }
 
-  // Ollama/local signatures
+  // LocalAI/Hugging Face signatures
   if (lower.includes("llama") || lower.includes("local model")) {
-    return "ollama";
+    return "localai";
   }
 
   return "multi-provider";
@@ -1102,7 +1102,7 @@ YOUR ROLE:
 
       const systemPrompt = sessionManager.buildAwareSystemPrompt(
         sessionId,
-        baseSystemPrompt
+        baseSystemPrompt,
       );
 
       // Select provider (preferred or auto-selected by LLMProvider)
@@ -1120,19 +1120,19 @@ YOUR ROLE:
           enhancedSystemPrompt = providerInstructions.buildSpecializedPrompt(
             selectedProvider,
             baseSystemPrompt,
-            { taskType: "chat", sessionContext: true }
+            { taskType: "chat", sessionContext: true },
           );
           // Add session context to the specialized prompt
           const contextSummary = sessionManager.buildAwareSystemPrompt(
             sessionId,
-            ""
+            "",
           );
           enhancedSystemPrompt += "\n" + contextSummary;
         }
       } catch (instrErr) {
         console.warn(
           "[Chat] Could not load provider instructions:",
-          instrErr.message
+          instrErr.message,
         );
         // Fall back to standard system prompt if instructions unavailable
       }
@@ -1170,7 +1170,7 @@ YOUR ROLE:
             responseTime,
             model: `${detectedProvider || "multi"}-orchestrated`,
             confidence: 0.85,
-          }
+          },
         );
 
         // Update session metadata
@@ -1195,7 +1195,7 @@ YOUR ROLE:
       } catch (orchestrationErr) {
         console.warn(
           "[Chat] Multi-provider orchestration failed, falling back to standard LLM:",
-          orchestrationErr.message
+          orchestrationErr.message,
         );
 
         // Fallback: Use standard LLM provider if orchestration fails
@@ -1223,7 +1223,7 @@ YOUR ROLE:
             responseTime,
             model: result.model || "standard-llm",
             confidence: result.confidence || 0.8,
-          }
+          },
         );
 
         // Update session metadata
@@ -1256,6 +1256,71 @@ YOUR ROLE:
   } catch (error) {
     console.error("[Chat] Fatal error:", error.message);
     return res.status(500).json({ error: error.message });
+  }
+});
+
+// Chat Pro API endpoint - deep reasoning with provider routing
+app.post("/api/v1/chat/pro", async (req, res) => {
+  req.setTimeout(300000); // 5 min timeout for deep reasoning
+  
+  try {
+    const {
+      message,
+      sessionId: providedSessionId,
+      userId = "anonymous",
+      provider: preferredProvider,
+      responseType = "balanced",
+      context,
+      attachments,
+    } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ ok: false, error: "Message required" });
+    }
+
+    const sessionManager = await getSessionManager();
+    const sessionId = providedSessionId || sessionManager.generateSessionId();
+    const session = await sessionManager.getOrCreateSession(sessionId, userId);
+
+    // Route through LLM provider
+    const llm = new LLMProvider();
+    const result = await llm.generate({
+      prompt: message,
+      system: "You are TooLoo, an advanced AI assistant. Provide thoughtful, comprehensive responses.",
+      taskType: responseType === "reasoning" ? "reasoning" : "general",
+      maxTokens: 2000,
+    });
+
+    // Store in session
+    session.messages.push({
+      role: "user",
+      content: message,
+      timestamp: new Date(),
+    });
+    session.messages.push({
+      role: "assistant",
+      content: result.content,
+      metadata: { provider: result.provider || "anthropic", confidence: result.confidence },
+      timestamp: new Date(),
+    });
+    await sessionManager.saveSession(session);
+
+    res.json({
+      ok: true,
+      data: {
+        response: result.content,
+        message: result.content,
+        provider: result.provider || "anthropic",
+        confidence: result.confidence || 0.85,
+        sessionId,
+      },
+    });
+  } catch (error) {
+    console.error("[Chat Pro] Error:", error.message);
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Chat Pro request failed",
+    });
   }
 });
 
@@ -1307,10 +1372,10 @@ app.post("/api/v1/chat/synthesis", async (req, res) => {
       ];
 
       const isSelfAwarenessQuestion = selfAwarenessKeywords.some((keyword) =>
-        message.toLowerCase().includes(keyword)
+        message.toLowerCase().includes(keyword),
       );
       const isSystemStatusQuestion = systemStatusKeywords.some((keyword) =>
-        message.toLowerCase().includes(keyword)
+        message.toLowerCase().includes(keyword),
       );
       const isTooLooQuestion = message.toLowerCase().includes("tooloo");
       const isEvolveRequest = message.toLowerCase().includes("evolve");
@@ -1418,7 +1483,7 @@ app.post("/api/v1/chat/synthesis", async (req, res) => {
         let providerContext = "";
         try {
           const providerResponse = await fetch(
-            "http://127.0.0.1:3003/api/v1/providers/status"
+            "http://127.0.0.1:3003/api/v1/providers/status",
           );
           if (providerResponse.ok) {
             const providerData = await providerResponse.json();
@@ -1487,7 +1552,7 @@ INSTRUCTIONS:
       let activeProvidersList = [];
       try {
         const providerResponse = await fetch(
-          "http://127.0.0.1:3003/api/v1/providers/status"
+          "http://127.0.0.1:3003/api/v1/providers/status",
         );
         if (providerResponse.ok) {
           const providerData = await providerResponse.json();
@@ -1540,7 +1605,7 @@ async function synthesizeProviderResponses(
   message,
   providerResponses,
   llmProvider,
-  systemContext
+  systemContext,
 ) {
   try {
     // Build context from individual responses
@@ -1630,10 +1695,10 @@ app.post("/api/v1/chat/ensemble", async (req, res) => {
       ];
 
       const isSelfAwarenessQuestion = selfAwarenessKeywords.some((keyword) =>
-        message.toLowerCase().includes(keyword)
+        message.toLowerCase().includes(keyword),
       );
       const isSystemStatusQuestion = systemStatusKeywords.some((keyword) =>
-        message.toLowerCase().includes(keyword)
+        message.toLowerCase().includes(keyword),
       );
       const isTooLooQuestion = message.toLowerCase().includes("tooloo");
 
@@ -1762,7 +1827,7 @@ INSTRUCTIONS:
         {
           taskType: "chat",
           aggregationContext: true,
-        }
+        },
       );
 
       // Extract successful responses
@@ -1830,7 +1895,7 @@ INSTRUCTIONS:
         message,
         responses,
         llmProvider,
-        actualSystemContext
+        actualSystemContext,
       );
 
       return res.json({
@@ -1893,7 +1958,7 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
 
     try {
       console.log(
-        `[CrossValidation] Starting cross-validation for ${providers.length} providers`
+        `[CrossValidation] Starting cross-validation for ${providers.length} providers`,
       );
 
       // Get provider instructions for specialized prompts
@@ -1912,7 +1977,7 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
               {
                 taskType: "validation",
                 aggregationContext: true,
-              }
+              },
             );
 
             let result;
@@ -1960,10 +2025,10 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
           } catch (error) {
             console.warn(
               `[CrossValidation] ${provider} failed:`,
-              error.message
+              error.message,
             );
           }
-        })()
+        })(),
       );
 
       await Promise.allSettled(providerCalls);
@@ -1977,7 +2042,7 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
       }
 
       console.log(
-        `[CrossValidation] Received ${providerResponses.length} responses, starting validation...`
+        `[CrossValidation] Received ${providerResponses.length} responses, starting validation...`,
       );
 
       // Step 2: Initialize cross-validator and orchestrate validation
@@ -1985,7 +2050,7 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
       const validationReport = await validator.orchestrateCrossValidation(
         message,
         providerResponses,
-        llmProvider
+        llmProvider,
       );
 
       // Step 3: Add to session if provided
@@ -2001,18 +2066,18 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
               type: "cross-validation",
               report: validationReport,
               timestamp: new Date().toISOString(),
-            }
+            },
           );
         } catch (sessionErr) {
           console.warn(
             "[CrossValidation] Could not update session:",
-            sessionErr.message
+            sessionErr.message,
           );
         }
       }
 
       console.log(
-        `[CrossValidation] Complete - synthesis score: ${validationReport.synthesisScore}`
+        `[CrossValidation] Complete - synthesis score: ${validationReport.synthesisScore}`,
       );
 
       return res.json({
@@ -2033,7 +2098,7 @@ app.post("/api/v1/chat/cross-validate", async (req, res) => {
     } catch (validationErr) {
       console.error(
         "[CrossValidation] Validation error:",
-        validationErr.message
+        validationErr.message,
       );
       return res.status(500).json({
         error: "Validation failed",
@@ -2092,7 +2157,7 @@ app.post("/api/v1/chat/smart-intelligence", async (req, res) => {
       const validator = new ResponseCrossValidator();
       crossValidationResult = validator.validateResponses(
         question,
-        providerResponses
+        providerResponses,
       );
     }
 
@@ -2104,14 +2169,14 @@ app.post("/api/v1/chat/smart-intelligence", async (req, res) => {
       // Multi-provider validation - use traditional analysis
       analysisResult = analyzer.analyzeValidationReport(
         responseText,
-        crossValidationResult
+        crossValidationResult,
       );
     } else {
       // Single response - use single-response analysis
       analysisResult = analyzer.analyzeSingleResponse(
         responseText,
         question,
-        metadata
+        metadata,
       );
     }
 
@@ -2130,7 +2195,7 @@ app.post("/api/v1/chat/smart-intelligence", async (req, res) => {
       {
         question,
         ...metadata,
-      }
+      },
     );
 
     // Store pattern for analytics
@@ -2151,7 +2216,7 @@ app.post("/api/v1/chat/smart-intelligence", async (req, res) => {
       {
         question,
         responseLength: responseText.length,
-      }
+      },
     );
 
     // Return comprehensive intelligence report
@@ -2224,7 +2289,7 @@ app.post("/api/v1/chat/smart-intelligence", async (req, res) => {
     console.error(
       "[SmartIntelligence] Pipeline error:",
       error.message,
-      error.stack
+      error.stack,
     );
     return res.status(500).json({
       ok: false,
@@ -2283,7 +2348,7 @@ app.get("/api/v1/smart-intelligence/analytics/export/csv", async (req, res) => {
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="validation-patterns-${new Date().toISOString().split("T")[0]}.csv"`
+      `attachment; filename="validation-patterns-${new Date().toISOString().split("T")[0]}.csv"`,
     );
     return res.send(result.data);
   } catch (error) {
@@ -2303,7 +2368,7 @@ app.get(
       res.setHeader("Content-Type", "application/json");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="validation-patterns-${new Date().toISOString().split("T")[0]}.json"`
+        `attachment; filename="validation-patterns-${new Date().toISOString().split("T")[0]}.json"`,
       );
       return res.json({
         ok: true,
@@ -2315,7 +2380,7 @@ app.get(
       console.error("[Analytics] JSON Export error:", error.message);
       return res.status(500).json({ ok: false, error: error.message });
     }
-  }
+  },
 );
 
 // Smart Intelligence Feedback endpoint - records user feedback for improvements
@@ -2562,7 +2627,7 @@ app.get("/api/v1/chat/transcripts", async (req, res) => {
     const { sessionId } = req.query || {};
     if (!sessionId) {
       const files = (await fs.promises.readdir(dir)).filter((f) =>
-        /^chat-[A-Za-z0-9_-]+\.jsonl$/.test(f)
+        /^chat-[A-Za-z0-9_-]+\.jsonl$/.test(f),
       );
       return res.json({ ok: true, files });
     }
@@ -2599,7 +2664,7 @@ app.get("/api/v1/chat/burst-stream", async (req, res) => {
     const budgetPort = Number(process.env.BUDGET_PORT || 3003);
     const qs = new URLSearchParams({ prompt, ttlSeconds: String(ttlSeconds) });
     const r = await fetch(
-      `http://127.0.0.1:${budgetPort}/api/v1/providers/burst?${qs.toString()}`
+      `http://127.0.0.1:${budgetPort}/api/v1/providers/burst?${qs.toString()}`,
     );
     const j = await r.json();
     if (!j?.ok)
@@ -2790,7 +2855,7 @@ app.post("/api/v1/feedback/submit", async (req, res) => {
     const feedbackFile = path.join(feedbackDir, `feedback-${Date.now()}.json`);
     await fs.promises.writeFile(
       feedbackFile,
-      JSON.stringify(feedbackLog, null, 2)
+      JSON.stringify(feedbackLog, null, 2),
     );
 
     // Return success
@@ -2940,7 +3005,7 @@ app.get("/api/v1/knowledge/sources", async (req, res) => {
         {
           limit,
           minAuthority,
-        }
+        },
       );
 
     res.json({
@@ -2967,7 +3032,7 @@ app.post("/api/v1/knowledge/memory/record", async (req, res) => {
     }
 
     const result = await tier1KnowledgeEnhancementEngine.recordAndLearn(
-      req.body
+      req.body,
     );
 
     res.json({
@@ -2996,7 +3061,7 @@ app.get("/api/v1/knowledge/memory/patterns", async (req, res) => {
 
     const patterns =
       await tier1KnowledgeEnhancementEngine.conversationEngine.getPatternsForTopic(
-        topic
+        topic,
       );
 
     res.json({
@@ -3031,7 +3096,7 @@ app.get("/api/v1/knowledge/weak-areas/:topic", async (req, res) => {
       {
         limit,
         minAuthority,
-      }
+      },
     );
 
     res.json({
@@ -3311,7 +3376,7 @@ serviceConfig.forEach((svc) => {
           req.originalUrl,
           req.method,
           req.headers,
-          body
+          body,
         );
 
         // Forward status and headers
@@ -3346,7 +3411,7 @@ serviceConfig.forEach((svc) => {
       } catch (error) {
         console.error(
           `[Proxy] Error forwarding to ${svc.name} (${prefix}):`,
-          error.message
+          error.message,
         );
         if (!res.headersSent) {
           res.status(502).json({
@@ -3468,7 +3533,7 @@ async function resilientProxy(
   originalUrl,
   method,
   headers,
-  body
+  body,
 ) {
   const breaker = serviceCircuitBreakers[serviceName];
 
@@ -3491,14 +3556,14 @@ async function resilientProxy(
           const response = await fetch(url, init);
           if (!response.ok && response.status >= 500) {
             const error = new Error(
-              `Service ${serviceName} returned ${response.status}`
+              `Service ${serviceName} returned ${response.status}`,
             );
             error.statusCode = response.status;
             throw error;
           }
           return response;
         },
-        { maxAttempts: 2, backoffMs: 100 }
+        { maxAttempts: 2, backoffMs: 100 },
       );
     },
     {
@@ -3509,10 +3574,10 @@ async function resilientProxy(
             ok: false,
             error: `${serviceName} service temporarily unavailable`,
           }),
-          { status: 503 }
+          { status: 503 },
         );
       },
-    }
+    },
   );
 }
 
@@ -3545,7 +3610,7 @@ app.all(
     } catch (e) {
       res.status(500).json({ ok: false, error: e.message });
     }
-  }
+  },
 );
 
 // Explicit proxy for product development (ensure all routes work)
@@ -3606,7 +3671,7 @@ app.all(
     } catch (e) {
       res.status(500).json({ ok: false, error: e.message });
     }
-  }
+  },
 );
 
 // Explicit proxy for providers arena (multi-provider collaboration)
@@ -3688,7 +3753,7 @@ app.post("/api/v1/work/request", async (req, res) => {
     const submission = workbenchOrchestrator.submitWork(
       goal,
       context || {},
-      options || {}
+      options || {},
     );
 
     const response = {
@@ -3720,7 +3785,7 @@ app.get("/api/v1/work/status", (req, res) => {
       ok: true,
       currentWork: status,
       timestamp: new Date().toISOString(),
-    })
+    }),
   );
 });
 
@@ -3736,7 +3801,7 @@ app.get("/api/v1/work/history", (req, res) => {
       history,
       count: history.length,
       timestamp: new Date().toISOString(),
-    })
+    }),
   );
 });
 
@@ -3761,7 +3826,7 @@ app.post("/api/v1/work/analyze-intent", (req, res) => {
         ok: true,
         analysis,
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
   } catch (error) {
     return res.status(500).json({
@@ -3854,7 +3919,7 @@ app.post("/api/v1/github/update-file", async (req, res) => {
     path,
     content,
     message,
-    branch || "main"
+    branch || "main",
   );
   res.json(result);
 });
@@ -3920,7 +3985,7 @@ app.put("/api/v1/github/pr/:number/merge", async (req, res) => {
   const result = await githubProvider.mergePullRequest(
     prNumber,
     message,
-    method || "squash"
+    method || "squash",
   );
   res.json(result);
 });
@@ -4055,7 +4120,7 @@ app.post("/api/v1/system/self-patch", async (req, res) => {
         file,
         content,
         message || `${action}: ${file}`,
-        branch || "main"
+        branch || "main",
       );
     }
 
@@ -4064,7 +4129,7 @@ app.post("/api/v1/system/self-patch", async (req, res) => {
       const prResult = await githubProvider.createPullRequest(
         `Self-modification: ${file}`,
         `Auto-generated patch for ${file}\n\n${message || "Self-improvement"}`,
-        branch || "main"
+        branch || "main",
       );
       result.pullRequest = prResult;
     }
@@ -4316,7 +4381,7 @@ app.get("/api/v1/system/code/list", async (req, res) => {
     const files = await fs.promises.readdir(fullPath);
     const fileList = files
       .filter(
-        (f) => f.endsWith(".js") || f.endsWith(".json") || f.endsWith(".md")
+        (f) => f.endsWith(".js") || f.endsWith(".json") || f.endsWith(".md"),
       )
       .map((f) => ({
         name: f,
@@ -4407,7 +4472,7 @@ app.get("/api/v1/system/observability", (req, res) => {
           Object.entries(serviceCircuitBreakers).map(([name, cb]) => [
             name,
             cb.getState(),
-          ])
+          ]),
         ),
       },
       timestamp: new Date().toISOString(),
@@ -4738,8 +4803,8 @@ app.post("/api/v1/capabilities/activate/one", async (req, res) => {
       .json(
         formatterIntegration.formatErrorResponse(
           new Error("component and method required"),
-          400
-        )
+          400,
+        ),
       );
   }
 
@@ -4768,8 +4833,8 @@ app.post("/api/v1/capabilities/activate/phase", async (req, res) => {
       .json(
         formatterIntegration.formatErrorResponse(
           new Error(`Unknown phase: ${phase}`),
-          400
-        )
+          400,
+        ),
       );
   }
 
@@ -4859,8 +4924,8 @@ app.delete("/api/v1/capabilities/activate/rollback", async (req, res) => {
       .json(
         formatterIntegration.formatErrorResponse(
           new Error("component and method required"),
-          400
-        )
+          400,
+        ),
       );
   }
 
@@ -4870,7 +4935,7 @@ app.delete("/api/v1/capabilities/activate/rollback", async (req, res) => {
       title: "Capability Rollback",
       message: result.message || result.reason,
       data: result,
-    })
+    }),
   );
 });
 
@@ -4885,7 +4950,7 @@ app.post("/api/v1/capabilities/activate/reset", async (req, res) => {
       title: "Capability System Reset",
       message: result.message,
       data: result,
-    })
+    }),
   );
 });
 
@@ -4986,7 +5051,7 @@ app.post("/api/v1/cache/cleanup", (req, res) => {
     console.log("[ProviderInstructions] ✓ System loaded at startup");
     console.log(
       "[ProviderInstructions] Providers:",
-      providerInstructions.getProviders().join(", ")
+      providerInstructions.getProviders().join(", "),
     );
 
     // Also initialize aggregation system
@@ -4995,7 +5060,7 @@ app.post("/api/v1/cache/cleanup", (req, res) => {
     console.log(
       "[ProviderAggregation] Strategy:",
       aggregation.instructions.getAggregationConfig().aggregationStrategy
-        .description
+        .description,
     );
   } catch (err) {
     console.error("[ProviderInstructions] Failed to load:", err.message);
