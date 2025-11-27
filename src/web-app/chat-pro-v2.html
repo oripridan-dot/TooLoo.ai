@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.359 -->
+<!-- @version 2.1.360 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -695,13 +695,16 @@
             // Wrapped format - extract from data.data
             console.log("[Chat] Using wrapped format (data.data)");
             responseData = data.data;
+            // Try multiple field names for flexibility
             if (typeof responseData.response === "string") {
               responseText = responseData.response;
+            } else if (typeof responseData.message === "string") {
+              responseText = responseData.message;
             } else if (responseData.content) {
               responseText = responseData.content;
             } else {
               console.error(
-                "[Chat] data.data exists but no response field:",
+                "[Chat] data.data exists but no response/message field:",
                 responseData,
               );
               responseText = JSON.stringify(responseData, null, 2);

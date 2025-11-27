@@ -1,4 +1,4 @@
-// @version 2.1.357
+// @version 2.1.360
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
 import { cortex, visualCortex } from "../../cortex/index.js";
@@ -217,6 +217,11 @@ router.post("/pro", async (req, res) => {
 
   const { message, stream = false, context, attachments } = req.body;
 
+  // TODO: Implement streaming support
+  if (stream) {
+    console.warn("[Chat Pro] Streaming not yet implemented, falling back to standard response");
+  }
+
   if (!message) {
     return res.status(400).json(errorResponse("Message is required"));
   }
@@ -274,11 +279,12 @@ Be helpful, accurate, and concise. Use the best tool for each task.`;
       taskType: "general",
     });
 
-    // Wrap response in expected format
+    // Wrap response in expected format (matching frontend expectations)
     const response = {
       ok: true,
       data: {
-        message: result.content,
+        response: result.content,  // Frontend expects 'response' field
+        message: result.content,   // Keep for compatibility
         provider: result.provider,
         model: result.model,
         sources: sources,
