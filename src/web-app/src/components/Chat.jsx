@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.382
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -98,6 +98,9 @@ const Chat = () => {
             >
               {msg.visual ? (
                 <VisualCard type={msg.visual.type} data={msg.visual.data} />
+              ) : msg.content && (msg.content.includes('{') || msg.content.includes('<') || msg.content.includes('function') || msg.content.includes('const ')) && msg.content.length > 50 ? (
+                // Auto-detect code content and render as visual
+                <VisualCard type="code" data={msg.content} />
               ) : (
                 <ReactMarkdown
                   components={{
