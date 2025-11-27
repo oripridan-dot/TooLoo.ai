@@ -1,5 +1,6 @@
-// @version 2.1.371
+// @version 2.1.386
 import { Router } from "express";
+import { bus } from "../../core/event-bus.js";
 import { precog } from "../../precog/index.js";
 import { cortex, visualCortex } from "../../cortex/index.js";
 import { successResponse, errorResponse } from "../utils.js";
@@ -15,13 +16,22 @@ router.post("/message", async (req, res) => {
   try {
     console.log(`[Chat] Processing (${mode}): ${message.substring(0, 50)}...`);
 
-    // Visual Request Handling
-    if (
-      message.toLowerCase().includes("generate image") ||
-      message.toLowerCase().includes("create an image") ||
-      message.toLowerCase().includes("generate a logo") ||
-      message.toLowerCase().includes("make an image")
-    ) {
+    // Detect image generation requests with expanded keywords
+    const lowerMessage = message.toLowerCase();
+    
+    // Improved image detection logic
+    const actionVerbs = ["generate", "create", "make", "show", "demonstrate", "visualize", "draw", "render", "paint"];
+    const nouns = ["image", "picture", "photo", "visual", "logo", "icon", "drawing", "illustration"];
+    
+    const directActions = ["visualize", "draw", "paint"];
+    const hasDirectAction = directActions.some(verb => lowerMessage.includes(verb));
+    const hasVerb = actionVerbs.some(verb => lowerMessage.includes(verb));
+    const hasNoun = nouns.some(noun => lowerMessage.includes(noun));
+    
+    const wantsImage = hasDirectAction || (hasVerb && hasNoun);
+    
+    if (wantsImage) {
+      console.log("[Chat] Image intent detected. Generating...");
       try {
         const imageResult = await visualCortex.imagine(message, {
           provider: "openai",
@@ -78,7 +88,7 @@ SYSTEM IDENTITY:
   * OpenAI (GPT-4, DALL-E 3)
   * Anthropic (Claude 3.5 Sonnet/Haiku)
   * Google (Gemini Pro/Flash, Imagen)
-  * Local Models (Ollama)
+
 
 CAPABILITIES:
 - "Nano Banana Studio": You control this internal visual design engine for generating images and UI assets.
@@ -216,12 +226,12 @@ router.post("/pro", async (req, res) => {
   req.setTimeout(300000);
 
   const { message, stream = false, context, attachments } = req.body;
-  const startTime = Date.now();
-  const perf = { vectorSearch: 0, generation: 0 };
 
   // TODO: Implement streaming support
   if (stream) {
-    console.warn("[Chat Pro] Streaming not yet implemented, falling back to standard response");
+    console.warn(
+      "[Chat Pro] Streaming not yet implemented, falling back to standard response",
+    );
   }
 
   if (!message) {
@@ -231,12 +241,55 @@ router.post("/pro", async (req, res) => {
   try {
     console.log(`[Chat Pro] Processing: ${message.substring(0, 50)}...`);
 
+    // Detect image generation requests
+    const lowerMessage = message.toLowerCase();
+    
+    // Improved image detection logic
+    const actionVerbs = ["generate", "create", "make", "show", "demonstrate", "visualize", "draw", "render", "paint"];
+    const nouns = ["image", "picture", "photo", "visual", "logo", "icon", "drawing", "illustration"];
+    
+    const directActions = ["visualize", "draw", "paint"];
+    const hasDirectAction = directActions.some(verb => lowerMessage.includes(verb));
+    const hasVerb = actionVerbs.some(verb => lowerMessage.includes(verb));
+    const hasNoun = nouns.some(noun => lowerMessage.includes(noun));
+    
+    const wantsImage = hasDirectAction || (hasVerb && hasNoun);
+
+    if (wantsImage) {
+      try {
+        console.log("[Chat Pro] Detected image request, generating with DALL-E 3...");
+        const imageResult = await visualCortex.imagine(message, {
+          provider: "openai",
+        });
+
+        if (imageResult.images && imageResult.images.length > 0) {
+          const img = imageResult.images[0];
+          const imgTag = `![Generated Image](data:${img.mimeType};base64,${img.data})`;
+
+          return res.json({
+            ok: true,
+            data: {
+              response: `Here is the image you requested:\n\n${imgTag}`,
+              message: `Image generated successfully`,
+              provider: "dall-e-3",
+              model: "dall-e-3",
+              sources: [],
+            },
+            timestamp: Date.now(),
+          });
+        }
+      } catch (imgError) {
+        console.error("[Chat Pro] Image generation failed:", imgError);
+        // Fall through to text response explaining the failure
+      }
+    }
+
     // Build enhanced system prompt
     let systemPrompt = `You are TooLoo.ai, the central intelligence of the Synapsys Architecture.
 
 SYSTEM IDENTITY:
 - You are an Orchestrator AI that manages a multi-provider ecosystem
-- You have access to: OpenAI (GPT-4, DALL-E 3), Anthropic (Claude), Google (Gemini), Local Models (Ollama)
+- You have access to: OpenAI (GPT-4, DALL-E 3), Anthropic (Claude), Google (Gemini), DeepSeek
 - You control: Nano Banana Studio (visual design), Precog (task routing), Cortex (cognitive core)
 
 CAPABILITIES:
@@ -254,13 +307,22 @@ Be helpful, accurate, and concise. Use the best tool for each task.`;
     let ragContext = "";
     let sources: any[] = [];
     try {
-      const searchResults = await cortex.hippocampus.vectorStore.search(message, 3);
+      const searchResults = await cortex.hippocampus.vectorStore.search(
+        message,
+        3,
+      );
       if (searchResults && searchResults.length > 0) {
         ragContext = searchResults
-          .map((result) => `[Source: ${result.doc.metadata?.source || 'Knowledge Base'}]\n${result.doc.text}`)
+          .map(
+            (result) =>
+              `[Source: ${result.doc.metadata?.source || "Knowledge Base"}]\n${result.doc.text}`,
+          )
           .join("\n\n");
         sources = searchResults.map((result) => ({
-          source: result.doc.metadata?.source || result.doc.metadata?.id || 'Knowledge Base',
+          source:
+            result.doc.metadata?.source ||
+            result.doc.metadata?.id ||
+            "Knowledge Base",
           relevance: result.score,
         }));
         systemPrompt += `\n\nRelevant Knowledge Base:\n${ragContext}`;
@@ -285,8 +347,8 @@ Be helpful, accurate, and concise. Use the best tool for each task.`;
     const response = {
       ok: true,
       data: {
-        response: result.content,  // Frontend expects 'response' field
-        message: result.content,   // Keep for compatibility
+        response: result.content, // Frontend expects 'response' field
+        message: result.content, // Keep for compatibility
         provider: result.provider,
         model: result.model,
         sources: sources,
@@ -305,6 +367,279 @@ Be helpful, accurate, and concise. Use the best tool for each task.`;
       error: error instanceof Error ? error.message : String(error),
       timestamp: Date.now(),
     });
+  }
+});
+
+// Visual Command Handlers
+router.post("/command/diagram", async (req, res) => {
+  const { description, type = "flowchart" } = req.body;
+
+  try {
+    console.log(
+      `[Chat] Generating ${type} diagram: ${description.substring(0, 50)}...`,
+    );
+
+    const diagramPrompt = `Generate a ${type} diagram using Mermaid.js syntax for: ${description}
+    Return ONLY the mermaid code block, no explanations.
+    Format: \`\`\`mermaid
+    [your diagram code]
+    \`\`\``;
+
+    const result = await precog.providers.generate({
+      prompt: diagramPrompt,
+      system:
+        "You are an expert at creating clear, concise Mermaid diagrams. Return only the mermaid code block.",
+      taskType: "creative",
+    });
+
+    // Extract mermaid code from response
+    const mermaidMatch = result.content.match(/```mermaid\n([\s\S]*?)\n```/);
+    const diagramCode = mermaidMatch ? mermaidMatch[1] : result.content;
+
+    res.json(
+      successResponse({
+        response: diagramCode,
+        visual: {
+          type: "diagram",
+          data: diagramCode,
+          altText: description,
+        },
+        provider: result.provider,
+        model: result.model,
+      }),
+    );
+  } catch (error: unknown) {
+    console.error("[Chat] Diagram generation error:", error);
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
+  }
+});
+
+router.post("/command/image", async (req, res) => {
+  const { prompt, provider = "openai", style = "realistic" } = req.body;
+
+  try {
+    console.log(`[Chat] Generating image: ${prompt.substring(0, 50)}...`);
+
+    const enhancedPrompt = `${prompt}. Style: ${style}. High quality, detailed.`;
+
+    const imageResult = await visualCortex.imagine(enhancedPrompt, {
+      provider,
+    });
+
+    if (imageResult.images && imageResult.images.length > 0) {
+      const img = imageResult.images[0];
+
+      res.json(
+        successResponse({
+          response: "Image generated successfully",
+          visual: {
+            type: "image",
+            data: img.data,
+            mimeType: img.mimeType,
+            altText: prompt,
+          },
+          provider,
+        }),
+      );
+    } else {
+      throw new Error("No images were generated");
+    }
+  } catch (error: unknown) {
+    console.error("[Chat] Image generation error:", error);
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
+  }
+});
+
+router.post("/command/component", async (req, res) => {
+  const { name, description, framework = "react" } = req.body;
+
+  try {
+    console.log(`[Chat] Generating ${framework} component: ${name}`);
+
+    const componentPrompt = `Generate a reusable ${framework} component named "${name}" for: ${description}
+    Requirements:
+    - Clean, modern code
+    - Proper type hints (if TypeScript)
+    - Responsive design
+    - Accessibility features
+    Return ONLY the component code in a \`\`\`${framework} code block.`;
+
+    const result = await precog.providers.generate({
+      prompt: componentPrompt,
+      system: `You are an expert ${framework} developer. Create production-ready components.`,
+      taskType: "code",
+    });
+
+    res.json(
+      successResponse({
+        response: result.content,
+        visual: {
+          type: "component",
+          data: JSON.stringify({ name, framework, code: result.content }),
+          altText: `${framework} component: ${name}`,
+        },
+        provider: result.provider,
+        model: result.model,
+      }),
+    );
+  } catch (error: unknown) {
+    console.error("[Chat] Component generation error:", error);
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
+  }
+});
+
+// Designer Integration Endpoint
+router.post("/design-sync", async (req, res) => {
+  const { action, componentId, definition, context } = req.body;
+
+  try {
+    console.log(`[Chat] Designer sync: ${action} ${componentId}`);
+
+    // Publish to Designer-Chat Sync Engine via event bus
+    bus.publishDesignerAction(
+      "nexus",
+      "designer:action",
+      {
+        action,
+        target: "component",
+        componentId,
+        payload: { definition },
+      } as any,
+      context,
+    );
+
+    res.json(
+      successResponse({
+        message: `Designer sync initiated: ${action}`,
+        componentId,
+      }),
+    );
+  } catch (error: unknown) {
+    console.error("[Chat] Design sync error:", error);
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
+  }
+});
+
+/**
+ * Visual-to-Code Generation Endpoint
+ * Leverages Nano Banana (Gemini 3 Pro Image Preview) or DALL-E 3
+ * to generate functional code from visual context
+ */
+router.post("/visual-to-code", async (req, res) => {
+  const {
+    visualPrompt,
+    codePrompt,
+    context,
+    outputFormat = "react",
+    provider = "gemini-nano",
+    includeImage = false,
+    temperature,
+    maxTokens,
+  } = req.body;
+
+  try {
+    console.log(`[Chat] Visual-to-code generation: ${provider}...`);
+
+    if (!visualPrompt || !codePrompt) {
+      return res
+        .status(400)
+        .json(errorResponse("visualPrompt and codePrompt are required"));
+    }
+
+    // Select provider
+    let selectedProvider;
+    if (provider === "dalle3" || provider === "openai") {
+      // Use OpenAI provider
+      const openaiProvider = new (
+        await import("../../precog/providers/openai-image.js")
+      ).OpenAIImageProvider();
+      if (!openaiProvider.isAvailable()) {
+        return res
+          .status(503)
+          .json(errorResponse("OpenAI provider unavailable"));
+      }
+      selectedProvider = openaiProvider;
+    } else {
+      // Default to Gemini (Nano Banana)
+      const geminiProvider = new (
+        await import("../../precog/providers/gemini-image.js")
+      ).GeminiImageProvider();
+      if (!geminiProvider.isAvailable()) {
+        return res
+          .status(503)
+          .json(errorResponse("Gemini provider unavailable"));
+      }
+      selectedProvider = geminiProvider;
+    }
+
+    // Generate code from visual context
+    const result = await selectedProvider.generateCodeFromContext({
+      visualPrompt,
+      codePrompt,
+      context: context || {},
+      outputFormat,
+      provider: provider as "gemini-nano" | "dalle3",
+      includeImage,
+      temperature,
+      maxTokens,
+    });
+
+    // Publish visual generation event
+    bus.publishVisual(
+      "nexus",
+      "visual:code-generated",
+      {
+        visualPrompt,
+        codePrompt,
+        provider: result.provider,
+        model: result.model,
+        codeLength: result.code.length,
+        contextAnalysis: result.contextAnalysis,
+      },
+      context,
+    );
+
+    // Format response for frontend visual rendering
+    res.json(
+      successResponse({
+        response: result.code, // Main content
+        visual: {
+          type: "code",
+          data: {
+            code: result.code,
+            language: result.language,
+            framework: result.framework,
+          },
+        },
+        imageUrl: result.imageUrl,
+        contextAnalysis: result.contextAnalysis,
+        provider: result.provider,
+        model: result.model,
+      }),
+    );
+  } catch (error: unknown) {
+    console.error("[Chat] Visual-to-code error:", error);
+    res
+      .status(500)
+      .json(
+        errorResponse(error instanceof Error ? error.message : String(error)),
+      );
   }
 });
 
