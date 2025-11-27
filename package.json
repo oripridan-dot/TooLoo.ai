@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.1.351",
+  "version": "2.1.352",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -28,6 +28,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
     "@google/genai": "^1.30.0",
+    "@tailwindcss/vite": "^4.1.17",
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
     "@types/js-yaml": "^4.0.9",
@@ -54,6 +55,7 @@
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.8.1",
     "sqlite3": "^5.1.7",
+    "tailwindcss": "^4.1.17",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "zod": "^4.1.12"

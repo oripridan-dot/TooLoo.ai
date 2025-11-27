@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.351 -->
+<!-- @version 2.1.352 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -683,33 +683,32 @@
           });
 
           const data = await response.json();
-          const responseData = data.data || data.content || data;
           
-          // Properly extract response text from various response formats
+          // Extract response text - backend returns { response, provider, sessionId, ... }
           let responseText = "";
-          if (typeof responseData === "string") {
-            responseText = responseData;
-          } else if (responseData.response) {
-            responseText = responseData.response;
-          } else if (responseData.content) {
-            responseText = responseData.content;
-          } else if (responseData.text) {
-            responseText = responseData.text;
-          } else if (responseData.message) {
-            responseText = responseData.message;
+          if (typeof data === "string") {
+            responseText = data;
+          } else if (data.response) {
+            // Primary response field from backend
+            responseText = data.response;
+          } else if (data.content) {
+            responseText = data.content;
+          } else if (data.text) {
+            responseText = data.text;
+          } else if (data.message) {
+            responseText = data.message;
+          } else if (data.data && typeof data.data === "string") {
+            responseText = data.data;
+          } else if (data.data && data.data.response) {
+            responseText = data.data.response;
           } else {
-            // If still no text found, extract from the object keys
-            const keys = Object.keys(responseData).filter(
-              k => !['provider', 'confidence', 'sources', 'data', 'meta', 'error', 'status', 'code'].includes(k)
-            );
-            if (keys.length > 0) {
-              const firstKey = keys[0];
-              const val = responseData[firstKey];
-              responseText = typeof val === 'string' ? val : JSON.stringify(val, null, 2);
-            } else {
-              responseText = "No response text found";
-            }
+            // Last resort: show entire response
+            console.error("[Chat] Unexpected response format:", data);
+            responseText = "Error: Unexpected response format - " + JSON.stringify(data, null, 2);
           }
+          
+          // Use data object for provider/sources metadata
+          const responseData = data;
 
           if (activeThoughtBubble) {
             activeThoughtBubble.classList.add("collapsed");
