@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.360 -->
+<!-- @version 2.1.362 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -837,8 +837,8 @@
                       .map(
                         (s) => `
                         <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
-                            <span class="text-cyan-400 mono">[${Math.round(s.relevance * 100)}%]</span>
-                            <span class="truncate">${s.source}</span>
+                            <span class="text-cyan-400 mono">[${Math.round((s.relevance || 0) * 100)}%]</span>
+                            <span class="truncate">${s.source || 'Unknown'}</span>
                         </div>
                     `,
                       )
@@ -995,8 +995,12 @@
           text = String(text);
         }
         try {
-          // Check if it looks like code/json
-          if (text.includes("<") || text.includes("{") || text.includes("[")) {
+          // Check if it's a code block or JSON (more specific detection)
+          const looksLikeJSON = text.trim().startsWith('{') && text.trim().endsWith('}') && text.includes(':');
+          const looksLikeArray = text.trim().startsWith('[') && text.trim().endsWith(']');
+          const hasCodeBlock = text.includes('```');
+          
+          if ((looksLikeJSON || looksLikeArray) && !text.includes('\n\n')) {
             try {
               const highlighted = hljs.highlightAuto(text).value;
               return `<div class="bg-gray-950 p-4 rounded-lg border border-white/10 my-4 overflow-x-auto"><code class="hljs">${highlighted}</code></div>`;
