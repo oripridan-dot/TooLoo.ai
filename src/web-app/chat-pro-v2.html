@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.383 -->
+<!-- @version 2.1.384 -->
 <!-- @version 2.1.367 - fixed [object Object] display -->
 <html lang="en">
   <head>
@@ -1270,6 +1270,81 @@
           document.getElementById("modal-ok").onclick = () =>
             close(hasInput ? input.value : true);
         });
+      }
+
+      // ========== IMAGE HELPER FUNCTIONS ==========
+      function openImageModal(src, alt) {
+        // Create fullscreen modal for image viewing
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm';
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        
+        modal.innerHTML = `
+          <div class="relative max-w-[90vw] max-h-[90vh]">
+            <button 
+              onclick="this.parentElement.parentElement.remove()" 
+              class="absolute -top-4 -right-4 w-10 h-10 bg-gray-800 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xl transition z-10"
+            >×</button>
+            <img 
+              src="${src}" 
+              alt="${alt}"
+              class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+            <div class="mt-4 text-center text-gray-400 text-sm">${alt || 'Generated Image'}</div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close on Escape key
+        const closeOnEscape = (e) => {
+          if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', closeOnEscape);
+          }
+        };
+        document.addEventListener('keydown', closeOnEscape);
+      }
+
+      function downloadImage(dataUrl, filename) {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename || `tooloo-generated-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      async function copyImageToClipboard(dataUrl) {
+        try {
+          // Convert data URL to blob
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          
+          await navigator.clipboard.write([
+            new ClipboardItem({ [blob.type]: blob })
+          ]);
+          
+          // Show success feedback
+          const toast = document.createElement('div');
+          toast.className = 'fixed bottom-4 right-4 z-50 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg animate-fade-in';
+          toast.textContent = '✓ Image copied to clipboard!';
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 2000);
+        } catch (err) {
+          console.error('Failed to copy image:', err);
+          // Fallback: copy the data URL as text
+          try {
+            await navigator.clipboard.writeText(dataUrl);
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 z-50 px-4 py-2 bg-yellow-500 text-black rounded-lg shadow-lg';
+            toast.textContent = '⚠ Copied as data URL (browser limitation)';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+          } catch (e) {
+            alert('Could not copy image to clipboard');
+          }
+        }
       }
     </script>
   </body>
