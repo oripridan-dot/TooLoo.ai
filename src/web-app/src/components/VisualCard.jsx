@@ -1,9 +1,171 @@
-// @version 2.1.381
-import React from "react";
-import { Info, Activity, BarChart2, CheckCircle, Layers } from "lucide-react";
+// @version 2.1.385
+import React, { useEffect, useRef, useState } from "react";
+import { Info, Activity, BarChart2, CheckCircle, Layers, Download, Copy, Maximize2 } from "lucide-react";
+
+const DiagramRenderer = ({ code }) => {
+  const mermaidRef = useRef(null);
+
+  useEffect(() => {
+    /* eslint-disable-next-line no-undef */
+    if (mermaidRef.current && typeof window !== "undefined" && window.mermaid) {
+      /* eslint-disable-next-line no-undef */
+      window.mermaid.contentLoaded();
+    }
+  }, [code]);
+
+  return (
+    <div
+      className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96"
+      ref={mermaidRef}
+    >
+      <div className="mermaid">{code}</div>
+    </div>
+  );
+};
+
+// Image Modal for fullscreen viewing
+const ImageModal = ({ src, alt, onClose }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <button 
+          onClick={onClose}
+          className="absolute -top-4 -right-4 w-10 h-10 bg-gray-800 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xl transition z-10"
+        >
+          ×
+        </button>
+        <img 
+          src={src} 
+          alt={alt}
+          className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+        />
+        <div className="mt-4 text-center text-gray-400 text-sm">{alt || 'Generated Image'}</div>
+      </div>
+    </div>
+  );
+};
 
 const VisualCard = ({ type, data }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(null);
+
   if (!data) return null;
+
+  // Handle diagram type at component level (before switch)
+  if (type === "diagram") {
+    const diagramCode = typeof data === "string" ? data : data.code;
+    return (
+      <div className="my-4 w-full max-w-2xl animate-fade-in">
+        <DiagramRenderer code={diagramCode} />
+      </div>
+    );
+  }
+
+  // Handle image type
+  if (type === "image") {
+    const imageSrc = typeof data === "string" ? data : (data.src || data.url || data.data);
+    const imageAlt = typeof data === "object" ? (data.alt || data.prompt || 'Generated Image') : 'Generated Image';
+    const mimeType = typeof data === "object" ? (data.mimeType || 'image/png') : 'image/png';
+    
+    // Build the full data URL if needed
+    const fullSrc = imageSrc.startsWith('data:') ? imageSrc : `data:${mimeType};base64,${imageSrc}`;
+    
+    const downloadImage = () => {
+      const link = document.createElement('a');
+      link.href = fullSrc;
+      link.download = `tooloo-generated-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    const copyImage = async () => {
+      try {
+        const response = await fetch(fullSrc);
+        const blob = await response.blob();
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ]);
+        setCopyFeedback('Copied!');
+        setTimeout(() => setCopyFeedback(null), 2000);
+      } catch (err) {
+        console.error('Failed to copy image:', err);
+        try {
+          await navigator.clipboard.writeText(fullSrc);
+          setCopyFeedback('Copied as URL');
+          setTimeout(() => setCopyFeedback(null), 2000);
+        } catch (e) {
+          setCopyFeedback('Failed');
+          setTimeout(() => setCopyFeedback(null), 2000);
+        }
+      }
+    };
+
+    return (
+      <div className="my-4 w-full max-w-2xl animate-fade-in">
+        <div className="rounded-xl overflow-hidden border border-cyan-500/30 bg-gradient-to-br from-gray-900 to-gray-800 shadow-xl">
+          {/* Header */}
+          <div className="p-3 border-b border-white/10 bg-white/5 flex items-center gap-2">
+            <span className="text-cyan-400">🎨</span>
+            <span className="text-sm font-medium text-white">{imageAlt}</span>
+            <span className="ml-auto text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-300">AI Generated</span>
+          </div>
+          
+          {/* Image */}
+          <div className="p-4">
+            <img 
+              src={fullSrc} 
+              alt={imageAlt}
+              className="w-full max-h-[512px] object-contain rounded-lg cursor-pointer hover:scale-[1.02] transition-transform"
+              onClick={() => setShowModal(true)}
+            />
+          </div>
+          
+          {/* Actions */}
+          <div className="px-4 pb-3 flex gap-2">
+            <button 
+              onClick={downloadImage}
+              className="flex-1 px-3 py-2 text-sm bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg transition flex items-center justify-center gap-2"
+            >
+              <Download size={16} /> Download
+            </button>
+            <button 
+              onClick={copyImage}
+              className="flex-1 px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition flex items-center justify-center gap-2"
+            >
+              <Copy size={16} /> {copyFeedback || 'Copy'}
+            </button>
+            <button 
+              onClick={() => setShowModal(true)}
+              className="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition flex items-center justify-center"
+            >
+              <Maximize2 size={16} />
+            </button>
+          </div>
+        </div>
+        
+        {/* Fullscreen Modal */}
+        {showModal && (
+          <ImageModal 
+            src={fullSrc} 
+            alt={imageAlt} 
+            onClose={() => setShowModal(false)} 
+          />
+        )}
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (type) {
@@ -133,16 +295,52 @@ const VisualCard = ({ type, data }) => {
           </div>
         );
 
+      case "diagram": {
+        /* eslint-disable-next-line no-undef */
+        const mermaidRef = useRef(null);
+        /* eslint-disable-next-line no-undef */
+        useEffect(() => {
+          if (
+            mermaidRef.current &&
+            typeof window !== "undefined" &&
+            window.mermaid
+          ) {
+            window.mermaid.contentLoaded();
+          }
+        }, [data]);
+
+        return (
+          <div
+            className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96"
+            ref={mermaidRef}
+          >
+            <div className="mermaid">
+              {typeof data === "string" ? data : data.code}
+            </div>
+          </div>
+        );
+      }
+
       case "code": {
-        const codeContent = typeof data === 'string' ? data : (data.code || data.content || JSON.stringify(data, null, 2));
+        const codeContent =
+          typeof data === "string"
+            ? data
+            : data.code || data.content || JSON.stringify(data, null, 2);
+        const copyCode = () => {
+          /* eslint-disable-next-line no-undef */
+          if (typeof window !== "undefined" && window.navigator?.clipboard) {
+            /* eslint-disable-next-line no-undef */
+            window.navigator.clipboard.writeText(codeContent);
+          }
+        };
         return (
           <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden w-full">
             <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex justify-between items-center">
               <span className="text-sm font-mono text-gray-400">
-                {data.language || data.framework || 'code'}
+                {data.language || data.framework || "code"}
               </span>
               <button
-                onClick={() => navigator.clipboard.writeText(codeContent)}
+                onClick={copyCode}
                 className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
                 title="Copy to clipboard"
               >
@@ -159,13 +357,26 @@ const VisualCard = ({ type, data }) => {
       }
 
       default: {
-        if (typeof data === 'string' && (data.includes('{') || data.includes('<') || data.includes('function') || data.includes('const '))) {
+        if (
+          typeof data === "string" &&
+          (data.includes("{") ||
+            data.includes("<") ||
+            data.includes("function") ||
+            data.includes("const "))
+        ) {
+          const copyCode = () => {
+            /* eslint-disable-next-line no-undef */
+            if (typeof window !== "undefined" && window.navigator?.clipboard) {
+              /* eslint-disable-next-line no-undef */
+              window.navigator.clipboard.writeText(data);
+            }
+          };
           return (
             <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden w-full">
               <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex justify-between items-center">
                 <span className="text-sm font-mono text-gray-400">code</span>
                 <button
-                  onClick={() => navigator.clipboard.writeText(data)}
+                  onClick={copyCode}
                   className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
                   title="Copy to clipboard"
                 >
@@ -173,12 +384,18 @@ const VisualCard = ({ type, data }) => {
                 </button>
               </div>
               <pre className="overflow-x-auto p-4 max-h-96">
-                <code className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">{data}</code>
+                <code className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">
+                  {data}
+                </code>
               </pre>
             </div>
           );
         }
-        return <div className="text-red-400 text-sm p-4 bg-red-900/20 rounded border border-red-700">Unknown visual type: {type}</div>;
+        return (
+          <div className="text-red-400 text-sm p-4 bg-red-900/20 rounded border border-red-700">
+            Unknown visual type: {type}
+          </div>
+        );
       }
     }
   };
