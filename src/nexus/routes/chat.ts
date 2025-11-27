@@ -1,4 +1,4 @@
-// @version 2.1.332
+// @version 2.1.357
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
 import { cortex, visualCortex } from "../../cortex/index.js";
@@ -208,6 +208,96 @@ router.get("/history", async (req, res) => {
 
 router.delete("/history", async (req, res) => {
   res.json(successResponse({}));
+});
+
+// Pro endpoint - Enhanced chat with advanced features
+router.post("/pro", async (req, res) => {
+  // Extend timeout for deep reasoning models
+  req.setTimeout(300000);
+
+  const { message, stream = false, context, attachments } = req.body;
+
+  if (!message) {
+    return res.status(400).json(errorResponse("Message is required"));
+  }
+
+  try {
+    console.log(`[Chat Pro] Processing: ${message.substring(0, 50)}...`);
+
+    // Build enhanced system prompt
+    let systemPrompt = `You are TooLoo.ai, the central intelligence of the Synapsys Architecture.
+
+SYSTEM IDENTITY:
+- You are an Orchestrator AI that manages a multi-provider ecosystem
+- You have access to: OpenAI (GPT-4, DALL-E 3), Anthropic (Claude), Google (Gemini), Local Models (Ollama)
+- You control: Nano Banana Studio (visual design), Precog (task routing), Cortex (cognitive core)
+
+CAPABILITIES:
+- Generate diagrams using Mermaid.js syntax in \`\`\`mermaid code blocks
+- Provide detailed technical explanations with code examples
+- Access knowledge base through RAG (Retrieval-Augmented Generation)
+- Create visual content when requested
+
+Be helpful, accurate, and concise. Use the best tool for each task.`;
+
+    // Add context if provided
+    if (context) systemPrompt += `\n\nContext:\n${context}`;
+
+    // RAG: Search Vector Store for relevant context
+    let ragContext = "";
+    let sources: any[] = [];
+    try {
+      const searchResults = await cortex.hippocampus.vectorStore.search(message, 3);
+      if (searchResults && searchResults.length > 0) {
+        ragContext = searchResults
+          .map((result) => `[Source: ${result.doc.metadata.source}]\n${result.doc.text}`)
+          .join("\n\n");
+        sources = searchResults.map((result) => ({
+          source: result.doc.metadata.source,
+          relevance: result.score,
+        }));
+        systemPrompt += `\n\nRelevant Knowledge Base:\n${ragContext}`;
+      }
+    } catch (err) {
+      console.warn("[Chat Pro] Vector search failed:", err);
+    }
+
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      systemPrompt += `\n\nAttachments:\n${JSON.stringify(attachments)}`;
+    }
+
+    // Generate response
+    const result = await precog.providers.generate({
+      prompt: message,
+      system: systemPrompt,
+      taskType: "general",
+    });
+
+    // Wrap response in expected format
+    const response = {
+      ok: true,
+      data: {
+        message: result.content,
+        provider: result.provider,
+        model: result.model,
+        sources: sources,
+        usage: {
+          total_tokens: 0, // TODO: Track actual token usage
+        },
+      },
+      timestamp: Date.now(),
+    };
+
+    res.json(response);
+  } catch (error: unknown) {
+    console.error("[Chat Pro] Error:", error);
+    res.status(500).json({
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: Date.now(),
+    });
+  }
 });
 
 export default router;
