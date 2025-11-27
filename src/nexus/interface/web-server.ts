@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.353
 // System Check endpoint: runs smoke tests for key services and returns structured results
 // (Moved below app initialization)
 
@@ -1189,6 +1189,8 @@ YOUR ROLE:
           timestamp: new Date().toISOString(),
           responseTime,
           messageCount: session.stats.messageCount + 1,
+          confidence: 90, // High confidence for orchestrated responses
+          sources: [], // TODO: Integrate RAG sources when available
         });
       } catch (orchestrationErr) {
         console.warn(
