@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.364 -->
+<!-- @version 2.1.365 -->
 <!-- @version 2.1.363-fix -->
 <html lang="en">
   <head>
@@ -997,37 +997,43 @@
       });
 
       function formatRichResponse(text) {
+        // Safety check: ensure we have a string
+        if (text === null || text === undefined) {
+          return '<p>No response</p>';
+        }
+        
         if (typeof text === "object") {
+          // Convert object to readable string
           try {
             text = JSON.stringify(text, null, 2);
-            const highlighted = hljs.highlight(text, {
-              language: "json",
-            }).value;
-            return `<div class="bg-gray-950 p-4 rounded-lg border border-white/10 my-4 overflow-x-auto"><pre><code class="hljs language-json">${highlighted}</code></pre></div>`;
           } catch (e) {
-            text = "[Complex Object]";
+            text = "[Object]";
           }
         }
+        
         if (typeof text !== "string") {
           text = String(text);
         }
+        
+        // If empty, return placeholder
+        if (!text.trim()) {
+          return '<p>Empty response</p>';
+        }
+
         try {
-          // Check if it's a code block or JSON (more specific detection)
-          const looksLikeJSON = text.trim().startsWith('{') && text.trim().endsWith('}') && text.includes(':');
-          const looksLikeArray = text.trim().startsWith('[') && text.trim().endsWith(']');
-          const hasCodeBlock = text.includes('```');
-          
-          if ((looksLikeJSON || looksLikeArray) && !text.includes('\n\n')) {
-            try {
-              const highlighted = hljs.highlightAuto(text).value;
-              return `<div class="bg-gray-950 p-4 rounded-lg border border-white/10 my-4 overflow-x-auto"><code class="hljs">${highlighted}</code></div>`;
-            } catch (e) {
-              // Fall through to markdown
-            }
-          }
-          // Sanitize and parse as markdown
-          const rawHtml = marked.parse(text || "");
+          // Simple markdown parsing - no code detection that could break things
+          const rawHtml = marked.parse(text);
           return DOMPurify.sanitize(rawHtml, {
+            ADD_TAGS: ["div", "span", "code", "pre"],
+            ADD_ATTR: ["class", "target", "rel"],
+          });
+        } catch (e) {
+          console.error("Markdown parsing error:", e);
+          // Fallback: just escape and return
+          const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<p>${escaped}</p>`;
+        }
+      }
             ADD_TAGS: ["div", "span", "code", "pre"],
             ADD_ATTR: ["class", "target", "rel"],
           });
