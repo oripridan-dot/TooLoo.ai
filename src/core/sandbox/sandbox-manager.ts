@@ -1,4 +1,4 @@
-// @version 2.2.3
+// @version 2.2.6
 import { EventEmitter } from 'events';
 import { spawn, exec } from 'child_process';
 import * as fs from 'fs/promises';
@@ -53,16 +53,28 @@ class LocalSandbox implements ISandbox {
         cwd: this.options.cwd || this.tempDir,
         env: { ...process.env, ...this.options.env },
         timeout: this.options.timeout || 30000
+      export interface ExecutionResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  duration: number;
+  ok: boolean;
+}
+// ...existing code...
       }, (error, stdout, stderr) => {
         const duration = Date.now() - startTime;
+        const exitCode = error ? (error.code as number || 1) : 0;
         resolve({
           stdout: stdout.toString(),
           stderr: stderr.toString(),
-          exitCode: error ? (error.code as number || 1) : 0,
-          duration
+          exitCode,
+          duration,
+          ok: exitCode === 0
         });
       });
     });
+  }
+// ...existing code...
   }
 
   async stop(): Promise<void> {
