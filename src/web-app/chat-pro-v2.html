@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.369 -->
+<!-- @version 2.1.374 -->
 <!-- @version 2.1.367 - fixed [object Object] display -->
 <html lang="en">
   <head>
@@ -452,6 +452,9 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      // API Configuration
+      const API_BASE = window.location.origin;
+      
       mermaid.initialize({
         startOnLoad: false,
         theme: "dark",
