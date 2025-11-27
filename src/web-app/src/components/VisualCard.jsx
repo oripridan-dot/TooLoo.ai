@@ -1,3 +1,4 @@
+// @version 2.1.381
 import React from "react";
 import { Info, Activity, BarChart2, CheckCircle, Layers } from "lucide-react";
 
@@ -132,8 +133,53 @@ const VisualCard = ({ type, data }) => {
           </div>
         );
 
-      default:
-        return <div className="text-red-400">Unknown visual type: {type}</div>;
+      case "code": {
+        const codeContent = typeof data === 'string' ? data : (data.code || data.content || JSON.stringify(data, null, 2));
+        return (
+          <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden w-full">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex justify-between items-center">
+              <span className="text-sm font-mono text-gray-400">
+                {data.language || data.framework || 'code'}
+              </span>
+              <button
+                onClick={() => navigator.clipboard.writeText(codeContent)}
+                className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                title="Copy to clipboard"
+              >
+                Copy
+              </button>
+            </div>
+            <pre className="overflow-x-auto p-4 max-h-96">
+              <code className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">
+                {codeContent}
+              </code>
+            </pre>
+          </div>
+        );
+      }
+
+      default: {
+        if (typeof data === 'string' && (data.includes('{') || data.includes('<') || data.includes('function') || data.includes('const '))) {
+          return (
+            <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden w-full">
+              <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex justify-between items-center">
+                <span className="text-sm font-mono text-gray-400">code</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(data)}
+                  className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                  title="Copy to clipboard"
+                >
+                  Copy
+                </button>
+              </div>
+              <pre className="overflow-x-auto p-4 max-h-96">
+                <code className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">{data}</code>
+              </pre>
+            </div>
+          );
+        }
+        return <div className="text-red-400 text-sm p-4 bg-red-900/20 rounded border border-red-700">Unknown visual type: {type}</div>;
+      }
     }
   };
 
