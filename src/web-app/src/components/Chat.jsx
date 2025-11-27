@@ -1,4 +1,4 @@
-// @version 2.2.42
+// @version 2.2.43
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -133,6 +133,8 @@ const Chat = () => {
         handleVisualEvent(event);
       }
     });
+
+    newSocket.on("response", (data) => {
       // Check if response contains code-like content
       const content = data.response || data.content || "";
       let visual = data.visual;
