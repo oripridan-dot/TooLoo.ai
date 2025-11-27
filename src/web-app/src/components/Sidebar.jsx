@@ -1,4 +1,4 @@
-// @version 2.2.29
+// @version 2.2.37
 import React from "react";
 
 const Sidebar = ({ setActiveComponent }) => {
@@ -88,10 +88,10 @@ const Sidebar = ({ setActiveComponent }) => {
           <li className="pt-4 mt-4 border-t border-white/5">
             <a
               href="#"
-              onClick={() => setActiveComponent("Visual Designer")}
-              className="block px-3 py-2 rounded-lg bg-cyan-900/10 text-cyan-400 font-medium border border-cyan-500/20 hover:bg-cyan-900/20 hover:border-cyan-500/40 transition-all shadow-[0_0_10px_rgba(6,182,212,0.05)]"
+              onClick={() => setActiveComponent("DeSign Studio")}
+              className="block px-3 py-2 rounded-lg bg-gradient-to-r from-pink-900/20 to-rose-900/20 text-rose-400 font-medium border border-rose-500/20 hover:bg-rose-900/30 hover:border-rose-500/40 transition-all shadow-[0_0_10px_rgba(244,63,94,0.05)]"
             >
-              <span className="mr-2">🎨</span> Visual Designer
+              <span className="mr-2">🎨</span> DeSign Studio
             </a>
           </li>
         </ul>
