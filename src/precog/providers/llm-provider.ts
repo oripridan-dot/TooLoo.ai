@@ -1,4 +1,4 @@
-// @version 2.1.47
+// @version 2.1.376
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -33,7 +33,6 @@ export default class LLMProvider {
           anthropic: providerAvailable("anthropic"),
           openai: providerAvailable("openai"),
           gemini: providerAvailable("gemini"),
-          // ollama: providerAvailable("ollama"), // Dropped
           localai: providerAvailable("localai"),
           openinterpreter: providerAvailable("openinterpreter"),
           huggingface: providerAvailable("huggingface"),
@@ -48,9 +47,8 @@ export default class LLMProvider {
           anthropic: env("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022"),
           openai: env("OPENAI_MODEL", "gpt-4o-mini"),
           gemini: env("GEMINI_MODEL", "gemini-3-pro-preview"), // Gemini 3 Pro
-          // ollama: env("OLLAMA_MODEL", "llama3.2:latest"), // Dropped
           localai: env("LOCALAI_MODEL", "gpt-4"),
-          openinterpreter: env("OI_MODEL", "ollama/llama3.2"),
+          openinterpreter: env("OI_MODEL", "openinterpreter/default"),
           huggingface: env("HF_MODEL", "microsoft/DialoGPT-large"),
         };
       },
@@ -59,7 +57,6 @@ export default class LLMProvider {
     Object.defineProperty(this, "baseUrls", {
       get() {
         return {
-          ollama: env("OLLAMA_BASE_URL", "http://localhost:11434"),
           localai: env("LOCALAI_BASE_URL", "http://localhost:8080"),
           openinterpreter: env("OI_BASE_URL", "http://localhost:8000"),
           huggingface: "https://api-inference.huggingface.co",
@@ -76,30 +73,27 @@ export default class LLMProvider {
 
   getProviderStatus() {
     const providerList = [
-      { id: "gemini", name: "Gemini 3 Pro" },
-      { id: "anthropic", name: "Claude 3.5 Sonnet" },
-      { id: "openai", name: "GPT-4o" },
-      { id: "deepseek", name: "DeepSeek V3" },
-      { id: "localai", name: "LocalAI" },
-      { id: "ollama", name: "Ollama" },
+      { id: "gemini", name: "Gemini 3 Pro", model: "gemini-3-pro-preview" },
+      { id: "gemini-nano", name: "Gemini Nano", model: "gemini-nano" },
+      { id: "anthropic-haiku", name: "Claude Haiku 4.5", model: "claude-3-5-haiku-20241022" },
+      { id: "anthropic-opus", name: "Claude Opus 4.5", model: "claude-3-opus-20250219" },
+      { id: "openai-gpt4", name: "GPT-4 Turbo", model: "gpt-4-turbo" },
+      { id: "openai-dalle", name: "DALL-E 3", model: "dall-e-3" },
+      { id: "openai-codex", name: "Codex (GPT-3.5)", model: "gpt-3.5-turbo" },
+      { id: "deepseek", name: "DeepSeek V3", model: "deepseek-chat" },
+      { id: "localai", name: "LocalAI", model: "gpt-4" },
     ];
 
     return providerList.map((p) => {
-      const isAvailable = providerAvailable(p.id);
+      const isAvailable = providerAvailable(p.id.split('-')[0]); // Check base provider
       return {
         id: p.id,
         name: p.name,
+        model: p.model,
         status: isAvailable ? "Ready" : "Missing Key",
-        latency: isAvailable ? Math.floor(Math.random() * 50) + 50 : 0, // Simulated latency for now
+        latency: isAvailable ? Math.floor(Math.random() * 50) + 50 : 0,
       };
     });
-  }
-
-  // Check if Ollama is running locally
-  checkOllamaAvailable() {
-    // In production, you'd want to ping the endpoint
-    // For now, assume available if base URL is configured or default port might be open
-    return !!env("OLLAMA_BASE_URL") || env("ENABLE_OLLAMA") === "true";
   }
 
   // Check if LocalAI is running
@@ -120,7 +114,6 @@ export default class LLMProvider {
     // Default chat: Prefer Gemini 3 Pro, then others
     const order = [
       "gemini", // Gemini 3 Pro (Default)
-      // "ollama", // Dropped
       "anthropic", // Premium reasoning (Claude)
       "openai", // Premium reliable
       "localai", // Free local OpenAI-compatible
@@ -134,7 +127,6 @@ export default class LLMProvider {
       const codeOrder = [
         "gemini",
         "openinterpreter",
-        "ollama",
         "deepseek",
         "openai",
         "anthropic",
@@ -151,7 +143,6 @@ export default class LLMProvider {
         "anthropic",
         "openai",
         "deepseek",
-        "ollama",
       ];
       for (const p of reasoningOrder) {
         if (this.providers[p]) return p;
@@ -242,7 +233,7 @@ export default class LLMProvider {
         content:
           "No AI provider configured. Add API keys or enable local providers in .env:\n" +
           "PAID: DEEPSEEK_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY\n" +
-          "FREE: ENABLE_OLLAMA=true, ENABLE_LOCALAI=true, HF_API_KEY (free tier)",
+          "FREE: ENABLE_LOCALAI=true, HF_API_KEY (free tier)",
         provider: "unconfigured",
         confidence: 0.0,
       };
@@ -258,7 +249,7 @@ export default class LLMProvider {
         this.callGemini(prompt, enhancedSystem, taskType, context, modelTier),
 
       // OSS providers
-      ollama: () => this.callOllama(prompt, enhancedSystem, taskType, context),
+
       localai: () =>
         this.callLocalAI(prompt, enhancedSystem, taskType, context),
       openinterpreter: () =>
@@ -270,7 +261,6 @@ export default class LLMProvider {
     // Default chat fallback: Gemini first
     const order = [
       "gemini",
-      "ollama",
       "anthropic",
       "openai",
       "localai",
@@ -506,46 +496,6 @@ export default class LLMProvider {
   }
 
   // OSS Provider implementations
-  async callOllama(prompt, system) {
-    const baseUrl = this.baseUrls.ollama;
-    const model = this.defaultModel.ollama;
-
-    if (!this.providers.ollama) {
-      throw new Error("Ollama not enabled. Set ENABLE_OLLAMA=true in .env");
-    }
-
-    const messages = [];
-    if (system) messages.push({ role: "system", content: system });
-    messages.push({ role: "user", content: prompt });
-
-    try {
-      const res = await fetch(`${baseUrl}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            top_p: 0.9,
-          },
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Ollama error ${res.status}: ${await res.text()}`);
-      }
-
-      const data = await res.json();
-      const text = data?.message?.content || "";
-      return { content: text, confidence: 0.8 }; // Local models often good quality
-    } catch (error) {
-      throw new Error(
-        `Ollama connection failed: ${error.message}. Ensure Ollama is running on ${baseUrl}`,
-      );
-    }
-  }
 
   async callLocalAI(prompt, system) {
     const baseUrl = this.baseUrls.localai;
@@ -775,23 +725,6 @@ const providerBuilders = {
       format: (prompt) => ({ inputs: prompt }),
     };
   },
-  ollama: () => {
-    const baseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-    const model = env("OLLAMA_MODEL", "llama3.2:latest");
-    return {
-      name: "ollama",
-      url: `${baseUrl}/api/chat`,
-      key: "not-needed",
-      header: "Authorization",
-      model,
-      requiresKey: false,
-      format: (prompt) => ({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        stream: false,
-      }),
-    };
-  },
   localai: () => {
     const baseUrl = process.env.LOCALAI_BASE_URL || "http://localhost:8080";
     const model = env("LOCALAI_MODEL", "gpt-4");
@@ -811,7 +744,7 @@ const providerBuilders = {
   },
   openinterpreter: () => {
     const baseUrl = process.env.OI_BASE_URL || "http://localhost:8000";
-    const model = env("OI_MODEL", "ollama/llama3.2");
+    const model = env("OI_MODEL", "gpt-3.5-turbo");
     return {
       name: "openinterpreter",
       url: `${baseUrl}/chat`,
@@ -898,7 +831,7 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
   const bodyObj = config.format(prompt);
 
   if (system) {
-    if (["deepseek", "openai", "ollama", "localai"].includes(provider)) {
+    if (["deepseek", "openai", "localai"].includes(provider)) {
       if (bodyObj.messages && Array.isArray(bodyObj.messages)) {
         bodyObj.messages.unshift({ role: "system", content: system });
       }
@@ -942,7 +875,7 @@ export async function generateLLM({ prompt, provider, system, maxTokens }) {
       return data.content?.[0]?.text || "";
     if (provider === "openai") return data.choices?.[0]?.message?.content || "";
     if (provider === "huggingface") return data[0]?.generated_text || "";
-    if (provider === "ollama") return data.message?.content || "";
+
     if (provider === "localai")
       return data.choices?.[0]?.message?.content || "";
     if (provider === "openinterpreter") {
@@ -991,11 +924,6 @@ function providerEnabled(name) {
 
   if (name === "deepseek") {
     const alt = process.env.DEEPSEEK_ENABLED;
-    if (alt !== undefined) return String(alt).toLowerCase() === "true";
-  }
-
-  if (name === "ollama") {
-    const alt = process.env.ENABLE_OLLAMA;
     if (alt !== undefined) return String(alt).toLowerCase() === "true";
   }
 
@@ -1107,7 +1035,6 @@ export async function generateSmartLLM({
     low: {
       creative: [
         "gemini",
-        "ollama",
         "huggingface",
         "localai",
         "deepseek",
@@ -1116,7 +1043,6 @@ export async function generateSmartLLM({
       ],
       reasoning: [
         "gemini",
-        "ollama",
         "huggingface",
         "deepseek",
         "claude",
@@ -1124,7 +1050,6 @@ export async function generateSmartLLM({
       ],
       general: [
         "gemini",
-        "ollama",
         "huggingface",
         "localai",
         "deepseek",
@@ -1136,7 +1061,6 @@ export async function generateSmartLLM({
       creative: [
         "gemini",
         "deepseek",
-        "ollama",
         "huggingface",
         "claude",
         "openai",
@@ -1145,14 +1069,12 @@ export async function generateSmartLLM({
         "gemini",
         "deepseek",
         "claude",
-        "ollama",
         "openai",
         "huggingface",
       ],
       general: [
         "gemini",
         "deepseek",
-        "ollama",
         "openai",
         "claude",
         "huggingface",
@@ -1160,9 +1082,9 @@ export async function generateSmartLLM({
       ],
     },
     high: {
-      creative: ["gemini", "claude", "openai", "deepseek", "ollama"],
-      reasoning: ["gemini", "claude", "openai", "deepseek", "ollama"],
-      general: ["gemini", "openai", "claude", "deepseek", "ollama"],
+      creative: ["gemini", "claude", "openai", "deepseek"],
+      reasoning: ["gemini", "claude", "openai", "deepseek"],
+      general: ["gemini", "openai", "claude", "deepseek"],
     },
     critical: {
       creative: ["gemini", "openai", "claude", "deepseek"],
