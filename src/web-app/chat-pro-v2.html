@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.367 -->
+<!-- @version 2.1.368 -->
 <!-- @version 2.1.367 - fixed [object Object] display -->
 <html lang="en">
   <head>
@@ -96,8 +96,8 @@
       }
     </style>
 
-    <!-- Markdown & Syntax Highlighting -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Markdown & Syntax Highlighting - pinned to v4 for stable API -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link
       rel="stylesheet"
@@ -915,13 +915,17 @@
       // Configure Marked
       const renderer = new marked.Renderer();
 
-      renderer.code = function (code, language) {
-        if (language === "mermaid") {
+      renderer.code = function (codeOrToken, language) {
+        // Handle both old API (string) and new API (token object)
+        const code = typeof codeOrToken === 'object' ? codeOrToken.text : codeOrToken;
+        const lang = typeof codeOrToken === 'object' ? codeOrToken.lang : language;
+        
+        if (lang === "mermaid") {
           return '<div class="mermaid">' + code + "</div>";
         }
 
-        const validLanguage = hljs.getLanguage(language)
-          ? language
+        const validLanguage = hljs.getLanguage(lang)
+          ? lang
           : "plaintext";
         try {
           const highlighted = hljs.highlight(code, {
@@ -943,46 +947,58 @@
         }
       };
 
-      renderer.link = function (href, title, text) {
+      renderer.link = function (hrefOrToken, title, text) {
+        // Handle both old API (strings) and new API (token object)
+        const href = typeof hrefOrToken === 'object' ? hrefOrToken.href : hrefOrToken;
+        const linkTitle = typeof hrefOrToken === 'object' ? hrefOrToken.title : title;
+        const linkText = typeof hrefOrToken === 'object' ? hrefOrToken.text : text;
         return (
           '<a href="' +
           href +
           '" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline" title="' +
-          (title || "") +
+          (linkTitle || "") +
           '">' +
-          text +
+          linkText +
           "</a>"
         );
       };
 
-      renderer.heading = function (text, level) {
+      renderer.heading = function (textOrToken, level) {
+        // Handle both old API (strings) and new API (token object)
+        const text = typeof textOrToken === 'object' ? textOrToken.text : textOrToken;
+        const headingLevel = typeof textOrToken === 'object' ? textOrToken.depth : level;
         const sizes = {
           1: "text-2xl font-bold text-white mt-6 mb-4 border-b border-white/10 pb-2",
           2: "text-xl font-bold text-white mt-5 mb-3",
           3: "text-lg font-bold text-cyan-300 mt-4 mb-2",
           4: "text-base font-bold text-gray-200 mt-3 mb-2",
         };
-        const className = sizes[level] || sizes[4];
+        const className = sizes[headingLevel] || sizes[4];
         return (
           "<h" +
-          level +
+          headingLevel +
           ' class="' +
           className +
           '">' +
           text +
           "</h" +
-          level +
+          headingLevel +
           ">"
         );
       };
 
-      renderer.paragraph = function (text) {
+      renderer.paragraph = function (textOrToken) {
+        // Handle both old API (string) and new API (token object)
+        const text = typeof textOrToken === 'object' ? textOrToken.text : textOrToken;
         return '<p class="mb-3 text-gray-300 leading-relaxed">' + text + "</p>";
       };
 
-      renderer.list = function (body, ordered, start) {
-        const type = ordered ? "ol" : "ul";
-        const className = ordered
+      renderer.list = function (bodyOrToken, ordered, start) {
+        // Handle both old API (strings) and new API (token object)
+        const body = typeof bodyOrToken === 'object' ? bodyOrToken.items.map(i => '<li>' + i.text + '</li>').join('') : bodyOrToken;
+        const isOrdered = typeof bodyOrToken === 'object' ? bodyOrToken.ordered : ordered;
+        const type = isOrdered ? "ol" : "ul";
+        const className = isOrdered
           ? "list-decimal ml-5 mb-4 text-gray-300"
           : "list-disc ml-5 mb-4 text-gray-300";
         return (
