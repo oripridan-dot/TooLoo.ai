@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @version 2.1.352 -->
+<!-- @version 2.1.354 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -683,6 +683,7 @@
           });
 
           const data = await response.json();
+          console.log("[Chat] Received response:", data);
           
           // Extract response text - backend returns { response, provider, sessionId, ... }
           let responseText = "";
