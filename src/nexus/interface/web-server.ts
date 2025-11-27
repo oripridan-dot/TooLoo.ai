@@ -1239,6 +1239,8 @@ YOUR ROLE:
           timestamp: new Date().toISOString(),
           responseTime,
           messageCount: session.stats.messageCount + 1,
+          confidence: result.confidence || 80,
+          sources: result.sources || [],
         });
       }
     } catch (providerErr) {
