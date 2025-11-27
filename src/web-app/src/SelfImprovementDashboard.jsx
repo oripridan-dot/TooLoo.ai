@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.2.39
 import { useState, useEffect } from 'react'
 import { Brain, TrendingUp, BookOpen, FileText, Target, Zap } from 'lucide-react'
 
@@ -23,12 +23,12 @@ function SelfImprovementDashboard() {
       setLearningReport(learningData.data)
 
       // Fetch pattern catalog
-      const patternsRes = await fetch('/api/v1/patterns/catalog')
+      const patternsRes = await fetch('/api/v1/learning/patterns')
       const patternsData = await patternsRes.json()
       setPatterns(patternsData.data?.patterns || [])
 
       // Fetch decisions report
-      const decisionsRes = await fetch('/api/v1/decisions/report')
+      const decisionsRes = await fetch('/api/v1/learning/decisions')
       const decisionsData = await decisionsRes.json()
       setDecisions(decisionsData.data)
 
