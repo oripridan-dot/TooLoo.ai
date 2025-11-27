@@ -1,11 +1,14 @@
-<!doctype html>
-<!-- @version 2.1.363 -->
+<!DOCTYPE html>
+<!-- @version 2.1.364 -->
+<!-- @version 2.1.363-fix -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
     <title>Tooloo Synapsys // Orchestrator</title>
-    <script src="https://cdn.tailwindcss.com?v=3.4.1"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <script>
       tailwind.config = {
         corePlugins: {
@@ -830,10 +833,17 @@
         confidence = 90,
         sources = [],
       ) {
+        // Ensure text is a string
+        if (typeof text !== 'string') {
+          console.warn('[addRichMessage] Text is not a string:', typeof text, text);
+          text = String(text);
+        }
+        
         const msg = document.createElement("div");
         msg.className = "flex gap-4 max-w-3xl mx-auto mb-6";
 
         const formattedText = formatRichResponse(text);
+        console.log('[addRichMessage] Formatted text:', formattedText.substring(0, 100));
 
         let sourcesHtml = "";
         if (sources && sources.length > 0) {
