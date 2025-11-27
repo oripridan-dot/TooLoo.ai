@@ -1,4 +1,4 @@
-// @version 2.1.360
+// @version 2.1.361
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
 import { cortex, visualCortex } from "../../cortex/index.js";
@@ -255,10 +255,10 @@ Be helpful, accurate, and concise. Use the best tool for each task.`;
       const searchResults = await cortex.hippocampus.vectorStore.search(message, 3);
       if (searchResults && searchResults.length > 0) {
         ragContext = searchResults
-          .map((result) => `[Source: ${result.doc.metadata.source}]\n${result.doc.text}`)
+          .map((result) => `[Source: ${result.doc.metadata?.source || 'Knowledge Base'}]\n${result.doc.text}`)
           .join("\n\n");
         sources = searchResults.map((result) => ({
-          source: result.doc.metadata.source,
+          source: result.doc.metadata?.source || result.doc.metadata?.id || 'Knowledge Base',
           relevance: result.score,
         }));
         systemPrompt += `\n\nRelevant Knowledge Base:\n${ragContext}`;
