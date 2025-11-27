@@ -1,4 +1,4 @@
-// @version 2.1.361
+// @version 2.1.370
 import { Router } from "express";
 import { precog } from "../../precog/index.js";
 import { cortex, visualCortex } from "../../cortex/index.js";
@@ -216,6 +216,8 @@ router.post("/pro", async (req, res) => {
   req.setTimeout(300000);
 
   const { message, stream = false, context, attachments } = req.body;
+  const startTime = Date.now();
+  const perf = { vectorSearch: 0, generation: 0 };
 
   // TODO: Implement streaming support
   if (stream) {
