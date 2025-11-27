@@ -79,7 +79,11 @@ export class ExecutionTracer {
     console.log(`[Tracer] Started trace: ${id} for goal: "${goal}"`);
   }
 
-  private endTrace(status: "completed" | "failed", result?: unknown, error?: unknown) {
+  private endTrace(
+    status: "completed" | "failed",
+    result?: unknown,
+    error?: unknown,
+  ) {
     if (!this.activeTraceId) return;
 
     const trace = this.traces.find((t) => t.id === this.activeTraceId);

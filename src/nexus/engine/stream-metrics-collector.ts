@@ -14,7 +14,7 @@ export class StreamMetricsCollector {
       streamsCompleted: 0,
       streamErrors: 0,
       totalEvents: 0,
-      startTime: Date.now()
+      startTime: Date.now(),
     };
 
     this.eventLog = [];
@@ -28,13 +28,13 @@ export class StreamMetricsCollector {
     this.metrics.activeStreams++;
     this.metrics.peakConcurrentStreams = Math.max(
       this.metrics.peakConcurrentStreams,
-      this.metrics.activeStreams
+      this.metrics.activeStreams,
     );
 
     this.logEvent({
-      type: 'stream_start',
+      type: "stream_start",
       streamId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -46,10 +46,13 @@ export class StreamMetricsCollector {
     this.metrics.streamsCompleted++;
     this.metrics.totalBytesStreamed += bytesStreamed;
 
-    const newAverage = this.metrics.streamsCompleted > 0
-      ? (this.metrics.averageStreamDuration * (this.metrics.streamsCompleted - 1) + duration) /
-        this.metrics.streamsCompleted
-      : duration;
+    const newAverage =
+      this.metrics.streamsCompleted > 0
+        ? (this.metrics.averageStreamDuration *
+            (this.metrics.streamsCompleted - 1) +
+            duration) /
+          this.metrics.streamsCompleted
+        : duration;
 
     this.metrics.averageStreamDuration = newAverage;
 
@@ -57,15 +60,15 @@ export class StreamMetricsCollector {
       streamId,
       duration,
       bytesStreamed,
-      completedAt: Date.now()
+      completedAt: Date.now(),
     });
 
     this.logEvent({
-      type: 'stream_complete',
+      type: "stream_complete",
       streamId,
       duration,
       bytesStreamed,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -77,10 +80,10 @@ export class StreamMetricsCollector {
     this.metrics.activeStreams--;
 
     this.logEvent({
-      type: 'stream_error',
+      type: "stream_error",
       streamId,
       error: error.message || String(error),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -95,7 +98,7 @@ export class StreamMetricsCollector {
       type: eventType,
       streamId,
       dataSize,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -116,17 +119,19 @@ export class StreamMetricsCollector {
    */
   getMetrics() {
     const uptime = Date.now() - this.metrics.startTime;
-    const throughput = uptime > 0
-      ? (this.metrics.totalBytesStreamed / (uptime / 1000)) / 1024 // KB/s
-      : 0;
+    const throughput =
+      uptime > 0
+        ? this.metrics.totalBytesStreamed / (uptime / 1000) / 1024 // KB/s
+        : 0;
 
     return {
       ...this.metrics,
       uptime,
       throughputKBps: throughput.toFixed(2),
-      eventRate: this.metrics.totalEvents > 0
-        ? (this.metrics.totalEvents / (uptime / 1000)).toFixed(2)
-        : 0
+      eventRate:
+        this.metrics.totalEvents > 0
+          ? (this.metrics.totalEvents / (uptime / 1000)).toFixed(2)
+          : 0,
     };
   }
 
@@ -156,7 +161,7 @@ export class StreamMetricsCollector {
       streamsCompleted: 0,
       streamErrors: 0,
       totalEvents: 0,
-      startTime: Date.now()
+      startTime: Date.now(),
     };
     this.eventLog = [];
     this.streamHistory = [];

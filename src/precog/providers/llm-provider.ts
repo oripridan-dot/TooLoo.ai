@@ -75,8 +75,16 @@ export default class LLMProvider {
     const providerList = [
       { id: "gemini", name: "Gemini 3 Pro", model: "gemini-3-pro-preview" },
       { id: "gemini-nano", name: "Gemini Nano", model: "gemini-nano" },
-      { id: "anthropic-haiku", name: "Claude Haiku 4.5", model: "claude-3-5-haiku-20241022" },
-      { id: "anthropic-opus", name: "Claude Opus 4.5", model: "claude-3-opus-20250219" },
+      {
+        id: "anthropic-haiku",
+        name: "Claude Haiku 4.5",
+        model: "claude-3-5-haiku-20241022",
+      },
+      {
+        id: "anthropic-opus",
+        name: "Claude Opus 4.5",
+        model: "claude-3-opus-20250219",
+      },
       { id: "openai-gpt4", name: "GPT-4 Turbo", model: "gpt-4-turbo" },
       { id: "openai-dalle", name: "DALL-E 3", model: "dall-e-3" },
       { id: "openai-codex", name: "Codex (GPT-3.5)", model: "gpt-3.5-turbo" },
@@ -85,7 +93,7 @@ export default class LLMProvider {
     ];
 
     return providerList.map((p) => {
-      const isAvailable = providerAvailable(p.id.split('-')[0]); // Check base provider
+      const isAvailable = providerAvailable(p.id.split("-")[0]); // Check base provider
       return {
         id: p.id,
         name: p.name,
@@ -138,12 +146,7 @@ export default class LLMProvider {
 
     // For reasoning tasks, prefer premium models
     if (taskType === "reasoning" || taskType === "analysis") {
-      const reasoningOrder = [
-        "gemini",
-        "anthropic",
-        "openai",
-        "deepseek",
-      ];
+      const reasoningOrder = ["gemini", "anthropic", "openai", "deepseek"];
       for (const p of reasoningOrder) {
         if (this.providers[p]) return p;
       }
@@ -1030,6 +1033,10 @@ export async function generateSmartLLM({
     : detectTaskType(prompt);
   const detected = det.type;
 
+  console.log(
+    `[LLMProvider] Generating with prompt: "${prompt.substring(0, 50)}..." (Task: ${taskType}, Criticality: ${criticality})`,
+  );
+
   // Criticality-based provider ordering (including OSS)
   const criticalityRouting = {
     low: {
@@ -1041,13 +1048,7 @@ export async function generateSmartLLM({
         "openai",
         "claude",
       ],
-      reasoning: [
-        "gemini",
-        "huggingface",
-        "deepseek",
-        "claude",
-        "openai",
-      ],
+      reasoning: ["gemini", "huggingface", "deepseek", "claude", "openai"],
       general: [
         "gemini",
         "huggingface",
@@ -1058,20 +1059,8 @@ export async function generateSmartLLM({
       ],
     },
     normal: {
-      creative: [
-        "gemini",
-        "deepseek",
-        "huggingface",
-        "claude",
-        "openai",
-      ],
-      reasoning: [
-        "gemini",
-        "deepseek",
-        "claude",
-        "openai",
-        "huggingface",
-      ],
+      creative: ["gemini", "deepseek", "huggingface", "claude", "openai"],
+      reasoning: ["gemini", "deepseek", "claude", "openai", "huggingface"],
       general: [
         "gemini",
         "deepseek",
@@ -1102,6 +1091,7 @@ export async function generateSmartLLM({
       tried.push({ name, available: false });
       continue;
     }
+    console.log(`[LLMProvider] Trying provider: ${name}`);
     try {
       const text = await generateLLM({
         prompt,

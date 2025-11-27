@@ -5,9 +5,9 @@
  * Handles prerequisites, error recovery, and cross-service wiring
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +22,7 @@ class CapabilityOrchestrator {
     this.successCount = 0;
     this.errorCount = 0;
     this.maxPerCycle = 2;
-    this.mode = 'safe'; // safe, moderate, aggressive
+    this.mode = "safe"; // safe, moderate, aggressive
     this.enabled = false;
   }
 
@@ -31,11 +31,13 @@ class CapabilityOrchestrator {
    */
   initialize(discoveredCapabilities) {
     this.capabilities = new Map(discoveredCapabilities);
-    console.log(`[CapabilityOrchestrator] Initialized with ${this.capabilities.size} capabilities`);
+    console.log(
+      `[CapabilityOrchestrator] Initialized with ${this.capabilities.size} capabilities`,
+    );
     return {
       initialized: true,
       capabilityCount: this.capabilities.size,
-      engines: this._groupByEngine(discoveredCapabilities)
+      engines: this._groupByEngine(discoveredCapabilities),
     };
   }
 
@@ -44,17 +46,17 @@ class CapabilityOrchestrator {
    */
   enableAutonomous(options = {}) {
     this.enabled = options.enabled !== false;
-    this.mode = options.mode || 'safe';
+    this.mode = options.mode || "safe";
     this.maxPerCycle = options.maxPerCycle || 2;
 
     const result = {
       enabled: this.enabled,
       mode: this.mode,
       maxPerCycle: this.maxPerCycle,
-      status: this.enabled ? 'ACTIVE' : 'DISABLED',
-      message: this.enabled 
+      status: this.enabled ? "ACTIVE" : "DISABLED",
+      message: this.enabled
         ? `Autonomous mode enabled (${this.mode}, max ${this.maxPerCycle}/cycle)`
-        : 'Autonomous mode disabled'
+        : "Autonomous mode disabled",
     };
 
     console.log(`[CapabilityOrchestrator] ${result.message}`);
@@ -68,7 +70,7 @@ class CapabilityOrchestrator {
     options = options || {};
     const capability = this.capabilities.get(capabilityId);
     if (!capability) {
-      return { success: false, error: 'Capability not found: ' + capabilityId };
+      return { success: false, error: "Capability not found: " + capabilityId };
     }
 
     if (this.activated.has(capabilityId)) {
@@ -78,18 +80,18 @@ class CapabilityOrchestrator {
     try {
       // Check prerequisites
       const prereqCheck = await this._checkPrerequisites(capabilityId);
-      if (!prereqCheck.passed && this.mode === 'safe') {
+      if (!prereqCheck.passed && this.mode === "safe") {
         this.errorCount++;
         return {
           success: false,
-          error: `Prerequisites not met: ${prereqCheck.missing.join(', ')}`
+          error: `Prerequisites not met: ${prereqCheck.missing.join(", ")}`,
         };
       }
 
       // Safety validation
-      if (!await this._validateSafety(capability)) {
+      if (!(await this._validateSafety(capability))) {
         this.errorCount++;
-        return { success: false, error: 'Safety validation failed' };
+        return { success: false, error: "Safety validation failed" };
       }
 
       // Activate the capability
@@ -98,19 +100,19 @@ class CapabilityOrchestrator {
         activatedAt: new Date(),
         cycle: this.cycleCount,
         mode: this.mode,
-        status: 'RUNNING'
+        status: "RUNNING",
       };
 
       this.activated.set(capabilityId, activated);
       this.successCount++;
-      
+
       // Log activation
       this.activationLog.push({
         timestamp: new Date(),
         capabilityId,
-        action: 'ACTIVATED',
+        action: "ACTIVATED",
         mode: this.mode,
-        engine: capability.engine
+        engine: capability.engine,
       });
 
       console.log(`[CapabilityOrchestrator] ✓ Activated: ${capabilityId}`);
@@ -120,12 +122,14 @@ class CapabilityOrchestrator {
         capabilityId,
         engine: capability.engine,
         methods: capability.methods?.length || 0,
-        message: `Successfully activated ${capabilityId}`
+        message: `Successfully activated ${capabilityId}`,
       };
-
     } catch (error) {
       this.errorCount++;
-      console.error(`[CapabilityOrchestrator] ✗ Failed: ${capabilityId}`, error.message);
+      console.error(
+        `[CapabilityOrchestrator] ✗ Failed: ${capabilityId}`,
+        error.message,
+      );
       return { success: false, error: error.message };
     }
   }
@@ -136,21 +140,21 @@ class CapabilityOrchestrator {
    */
   async runActivationCycle() {
     if (!this.enabled) {
-      return { success: false, message: 'Autonomous mode disabled' };
+      return { success: false, message: "Autonomous mode disabled" };
     }
 
     this.cycleCount++;
     const cycleStart = Date.now();
     const toActivate = Array.from(this.capabilities.keys())
-      .filter(id => !this.activated.has(id))
+      .filter((id) => !this.activated.has(id))
       .slice(0, this.maxPerCycle);
 
     if (toActivate.length === 0) {
       return {
         success: true,
         cycle: this.cycleCount,
-        message: 'All capabilities activated',
-        duration: Date.now() - cycleStart
+        message: "All capabilities activated",
+        duration: Date.now() - cycleStart,
       };
     }
 
@@ -163,10 +167,10 @@ class CapabilityOrchestrator {
     return {
       success: true,
       cycle: this.cycleCount,
-      activated: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
+      activated: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
       details: results,
-      duration: Date.now() - cycleStart
+      duration: Date.now() - cycleStart,
     };
   }
 
@@ -182,11 +186,13 @@ class CapabilityOrchestrator {
       totalSuccessful: this.successCount,
       totalFailed: this.errorCount,
       cycles: this.cycleCount,
-      successRate: this.capabilities.size > 0 
-        ? ((this.activated.size / this.capabilities.size) * 100).toFixed(1) + '%'
-        : '0%',
+      successRate:
+        this.capabilities.size > 0
+          ? ((this.activated.size / this.capabilities.size) * 100).toFixed(1) +
+            "%"
+          : "0%",
       engines: this._getEngineStatus(),
-      nextCycleCapabilities: this._getNextCycleCapabilities(5)
+      nextCycleCapabilities: this._getNextCycleCapabilities(5),
     };
   }
 
@@ -195,18 +201,20 @@ class CapabilityOrchestrator {
    */
   getCapabilityMap() {
     const map = {};
-    const engines = this._groupByEngine(Array.from(this.capabilities.entries()));
+    const engines = this._groupByEngine(
+      Array.from(this.capabilities.entries()),
+    );
 
     for (const [engine, caps] of Object.entries(engines)) {
       map[engine] = {
         total: caps.length,
-        activated: caps.filter(c => this.activated.has(c.id)).length,
-        capabilities: caps.map(c => ({
+        activated: caps.filter((c) => this.activated.has(c.id)).length,
+        capabilities: caps.map((c) => ({
           id: c.id,
           name: c.name,
-          status: this.activated.has(c.id) ? 'ACTIVE' : 'DORMANT',
-          methods: c.methods?.length || 0
-        }))
+          status: this.activated.has(c.id) ? "ACTIVE" : "DORMANT",
+          methods: c.methods?.length || 0,
+        })),
       };
     }
 
@@ -218,14 +226,14 @@ class CapabilityOrchestrator {
    */
   deactivateCapability(capabilityId) {
     if (!this.activated.has(capabilityId)) {
-      return { success: false, message: 'Capability not activated' };
+      return { success: false, message: "Capability not activated" };
     }
 
     this.activated.delete(capabilityId);
     this.activationLog.push({
       timestamp: new Date(),
       capabilityId,
-      action: 'DEACTIVATED'
+      action: "DEACTIVATED",
     });
 
     console.log(`[CapabilityOrchestrator] Deactivated: ${capabilityId}`);
@@ -249,7 +257,7 @@ class CapabilityOrchestrator {
     return {
       passed: missing.length === 0,
       missing,
-      required: prereqs
+      required: prereqs,
     };
   }
 
@@ -258,18 +266,25 @@ class CapabilityOrchestrator {
    */
   async _validateSafety(capability) {
     // In safe mode, check for dangerous patterns
-    if (this.mode === 'safe') {
+    if (this.mode === "safe") {
       const dangerousPatterns = [
-        'DELETE', 'DROP', 'TRUNCATE', // DB operations
-        'system(', 'exec(', 'spawn(', // Shell execution
-        'eval(', 'Function(', // Code evaluation
+        "DELETE",
+        "DROP",
+        "TRUNCATE", // DB operations
+        "system(",
+        "exec(",
+        "spawn(", // Shell execution
+        "eval(",
+        "Function(", // Code evaluation
       ];
 
       const capString = JSON.stringify(capability).toUpperCase();
-      const hasDangerous = dangerousPatterns.some(p => capString.includes(p));
+      const hasDangerous = dangerousPatterns.some((p) => capString.includes(p));
 
       if (hasDangerous) {
-        console.warn(`[CapabilityOrchestrator] Safety concern in ${capability.id}`);
+        console.warn(
+          `[CapabilityOrchestrator] Safety concern in ${capability.id}`,
+        );
         return false;
       }
     }
@@ -283,7 +298,7 @@ class CapabilityOrchestrator {
   _groupByEngine(capabilities) {
     const grouped = {};
     for (const [id, cap] of capabilities) {
-      const engine = cap.engine || 'unknown';
+      const engine = cap.engine || "unknown";
       if (!grouped[engine]) grouped[engine] = [];
       grouped[engine].push({ id, ...cap });
     }
@@ -294,15 +309,17 @@ class CapabilityOrchestrator {
    * Get engine status summary
    */
   _getEngineStatus() {
-    const engines = this._groupByEngine(Array.from(this.capabilities.entries()));
+    const engines = this._groupByEngine(
+      Array.from(this.capabilities.entries()),
+    );
     const status = {};
 
     for (const [engine, caps] of Object.entries(engines)) {
-      const activated = caps.filter(c => this.activated.has(c.id)).length;
+      const activated = caps.filter((c) => this.activated.has(c.id)).length;
       status[engine] = {
         total: caps.length,
         activated,
-        percentage: ((activated / caps.length) * 100).toFixed(1) + '%'
+        percentage: ((activated / caps.length) * 100).toFixed(1) + "%",
       };
     }
 
@@ -314,15 +331,15 @@ class CapabilityOrchestrator {
    */
   _getNextCycleCapabilities(count) {
     return Array.from(this.capabilities.keys())
-      .filter(id => !this.activated.has(id))
+      .filter((id) => !this.activated.has(id))
       .slice(0, count)
-      .map(id => {
+      .map((id) => {
         const cap = this.capabilities.get(id);
         return {
           id,
           engine: cap.engine,
-          complexity: cap.complexity || 'unknown',
-          prerequisites: cap.prerequisites?.length || 0
+          complexity: cap.complexity || "unknown",
+          prerequisites: cap.prerequisites?.length || 0,
         };
       });
   }
@@ -335,7 +352,7 @@ class CapabilityOrchestrator {
       cycleCount: this.cycleCount,
       successCount: this.successCount,
       errorCount: this.errorCount,
-      log: this.activationLog.slice(-100) // Last 100 entries
+      log: this.activationLog.slice(-100), // Last 100 entries
     };
   }
 }

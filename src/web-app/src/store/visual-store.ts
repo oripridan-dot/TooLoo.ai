@@ -13,7 +13,7 @@ export interface GeneratedImage {
 interface VisualState {
   prompt: string;
   setPrompt: (prompt: string) => void;
-  
+
   negativePrompt: string;
   setNegativePrompt: (negativePrompt: string) => void;
 
@@ -76,6 +76,6 @@ export const useVisualStore = create<VisualState>()(
         // We don't persist images in localStorage to avoid quota limits with base64
         // We could use IndexedDB but for now let's keep it simple or just persist settings
       }),
-    }
-  )
+    },
+  ),
 );

@@ -14,6 +14,7 @@ The **Dynamic Refinery Options Manager** is a sophisticated keyword analysis and
 ## Features at a Glance
 
 ### 1. Multi-Factor Keyword Weighting
+
 ```
 Weight = (Frequency 35%) + (Position 30%) + (Emphasis 35%) × Weakness Factor
 ```
@@ -24,7 +25,9 @@ Weight = (Frequency 35%) + (Position 30%) + (Emphasis 35%) × Weakness Factor
 - **Weakness Factor**: Weak words (1.3× multiplier) get higher refinement priority
 
 ### 2. Context Detection
+
 Automatically identifies prompt intent:
+
 - ⚡ **Action**: write, create, build, develop, generate
 - 🔍 **Analysis**: analyze, review, examine, evaluate, assess
 - 🎓 **Learning**: learn, understand, explain, teach, guide
@@ -32,6 +35,7 @@ Automatically identifies prompt intent:
 - 📋 **Strategy**: plan, strategy, approach, framework, process
 
 ### 3. Intelligent Refinement Mapping
+
 - 150+ weak word → strong alternative mappings
 - Context-aware suggestions (different domains need different refinements)
 - Measurable impact scores for each suggestion
@@ -39,13 +43,16 @@ Automatically identifies prompt intent:
 - Multiple alternatives per weak word
 
 ### 4. Measurable Impact Scoring
+
 Each suggestion includes:
+
 - **Impact Score**: 0-10 scale (how much this change improves clarity/specificity)
 - **Estimated Improvement**: keyword weight × impact × context factor
 - **Measurable Outcome**: Specific, quantifiable result (e.g., "+25% clarity")
 - **Difficulty Level**: How much effort to implement
 
 ### 5. Interactive UI Component
+
 - Real-time keyword highlighting with weight indicators
 - Quick wins section (easy, high-impact changes)
 - Priority-ranked recommendations
@@ -84,16 +91,17 @@ const ui = new RefineryUIComponent('refinery-results');
 
 ```javascript
 // Analyze a prompt
-const prompt = "Write a function that helps me analyze data. Make it work well.";
+const prompt =
+  "Write a function that helps me analyze data. Make it work well.";
 const analysis = engine.analyze(prompt);
 
 // Display results
 ui.render(analysis);
 
 // Access specific data
-console.log('Context:', analysis.contextType);
-console.log('Top Refinements:', analysis.recommendations);
-console.log('Overall Impact:', analysis.impactScore);
+console.log("Context:", analysis.contextType);
+console.log("Top Refinements:", analysis.recommendations);
+console.log("Overall Impact:", analysis.impactScore);
 ```
 
 ## API Reference
@@ -101,17 +109,19 @@ console.log('Overall Impact:', analysis.impactScore);
 ### RefineryEngine
 
 #### Constructor
+
 ```javascript
-new RefineryEngine(config = {})
+new RefineryEngine((config = {}));
 ```
 
 **Config Options:**
+
 ```javascript
 {
   minKeywordLength: 3,           // Minimum keyword length
   maxSuggestions: 15,            // Max suggestions to generate
   contextTypes: [                // Supported context types
-    'action', 'analysis', 'learning', 
+    'action', 'analysis', 'learning',
     'problem-solving', 'strategy', 'general'
   ]
 }
@@ -120,9 +130,11 @@ new RefineryEngine(config = {})
 #### Main Methods
 
 ##### `analyze(prompt)`
+
 Performs complete analysis and returns comprehensive results.
 
 **Returns:**
+
 ```javascript
 {
   originalPrompt: string,        // Original text
@@ -138,29 +150,35 @@ Performs complete analysis and returns comprehensive results.
 ```
 
 ##### `extractKeywords(prompt)`
+
 Extracts significant keywords, filtering stop words.
 
 **Returns:** Array of keywords with frequency and position data
 
 ##### `analyzeWeights(keywords, prompt)`
+
 Calculates multi-factor weights for each keyword.
 
 **Returns:** Array of keywords with weight scores and priority levels
 
 ##### `detectContext(prompt, weightedKeywords)`
+
 Determines prompt intent based on content analysis.
 
 **Returns:** One of: 'action', 'analysis', 'learning', 'problem-solving', 'strategy', 'general'
 
 ##### `generateRefinements(weightedKeywords, contextType, originalPrompt)`
+
 Creates specific refinement suggestions.
 
 **Returns:** Array of refinement objects with impact estimates
 
 ##### `generateRefinedPrompt(analysis, maxRefinements = 5)`
+
 Creates refined version of prompt with top suggestions applied.
 
 **Returns:**
+
 ```javascript
 {
   original: string,              // Original prompt
@@ -175,11 +193,13 @@ Creates refined version of prompt with top suggestions applied.
 ### RefineryUIComponent
 
 #### Constructor
+
 ```javascript
-new RefineryUIComponent(containerId = 'refinery-results', config = {})
+new RefineryUIComponent((containerId = "refinery-results"), (config = {}));
 ```
 
 **Config Options:**
+
 ```javascript
 {
   showDifficulty: true,          // Show difficulty badges
@@ -192,6 +212,7 @@ new RefineryUIComponent(containerId = 'refinery-results', config = {})
 #### Main Methods
 
 ##### `render(analysis)`
+
 Renders complete analysis results in the DOM.
 
 ```javascript
@@ -200,13 +221,15 @@ ui.render(analysis);
 ```
 
 ##### `highlightSuggestion(index)`
+
 Scrolls to and highlights specific recommendation.
 
 ```javascript
-ui.highlightSuggestion(0);  // Highlight top recommendation
+ui.highlightSuggestion(0); // Highlight top recommendation
 ```
 
 ##### `exportAsJSON()`
+
 Exports analysis as JSON object.
 
 ```javascript
@@ -215,6 +238,7 @@ console.log(json);
 ```
 
 ##### `exportAsCSV()`
+
 Exports recommendations as CSV string.
 
 ```javascript
@@ -234,12 +258,13 @@ const prompt = `
 `;
 
 const analysis = new RefineryEngine().analyze(prompt);
-const ui = new RefineryUIComponent('results');
+const ui = new RefineryUIComponent("results");
 
 ui.render(analysis);
 ```
 
 **What Happens:**
+
 1. Engine extracts keywords: "create", "analyze", "function", "python", etc.
 2. Calculates weights: "analyze" ranks high (appears twice, position emphasis)
 3. Detects context: "action" (create, function)
@@ -275,10 +300,10 @@ const analysis = engine.analyze(prompt);
 
 // Get easy, high-impact changes
 const quickWins = analysis.report.topRecommendations
-  .filter(r => r.difficulty === 'low' && r.priority === 'high')
+  .filter((r) => r.difficulty === "low" && r.priority === "high")
   .slice(0, 3);
 
-quickWins.forEach(win => {
+quickWins.forEach((win) => {
   console.log(`${win.originalKeyword} → ${win.suggestedWord}`);
   console.log(`  Reason: ${win.reason}`);
   console.log(`  Impact: +${win.estimatedImprovement}`);
@@ -291,12 +316,12 @@ quickWins.forEach(win => {
 const analysis = engine.analyze(prompt);
 const refined = engine.generateRefinedPrompt(analysis, 5);
 
-console.log('BEFORE:');
+console.log("BEFORE:");
 console.log(refined.original);
-console.log('\nAFTER:');
+console.log("\nAFTER:");
 console.log(refined.refined);
-console.log('\nChanges Applied:');
-refined.changes.forEach(c => {
+console.log("\nChanges Applied:");
+refined.changes.forEach((c) => {
   console.log(`  "${c.from}" → "${c.to}" (+${c.impact})`);
 });
 ```
@@ -307,16 +332,18 @@ refined.changes.forEach(c => {
 const analysis = engine.analyze(prompt);
 const report = analysis.report;
 
-console.log('Context:', report.summary.contextType);
-console.log('Opportunities:', report.summary.refinementOpportunities);
-console.log('Impact:', report.summary.potentialImpact);
-console.log('\nTop Keywords to Refine:');
-report.topKeywordsToRefine.forEach(kw => {
-  console.log(`  ${kw.word} (weight: ${kw.weight}, frequency: ${kw.frequency})`);
+console.log("Context:", report.summary.contextType);
+console.log("Opportunities:", report.summary.refinementOpportunities);
+console.log("Impact:", report.summary.potentialImpact);
+console.log("\nTop Keywords to Refine:");
+report.topKeywordsToRefine.forEach((kw) => {
+  console.log(
+    `  ${kw.word} (weight: ${kw.weight}, frequency: ${kw.frequency})`,
+  );
 });
-console.log('\nTop Recommendations:');
+console.log("\nTop Recommendations:");
 report.topRecommendations.forEach((r, idx) => {
-  console.log(`  ${idx+1}. ${r.originalKeyword} → ${r.suggestedWord}`);
+  console.log(`  ${idx + 1}. ${r.originalKeyword} → ${r.suggestedWord}`);
   console.log(`     ${r.reason} (Impact: ${r.estimatedImprovement})`);
 });
 ```
@@ -326,13 +353,15 @@ report.topRecommendations.forEach((r, idx) => {
 ### How Impact Scores Are Calculated
 
 **Formula:**
+
 ```
 Estimated Improvement = Keyword Weight × Suggestion Impact × Context Factor
 ```
 
 **Example Calculation:**
+
 ```
-Keyword: "very" 
+Keyword: "very"
   - Frequency: 2× in 50 words = 4.0/10
   - Position: Early (9/10)
   - Emphasis: High (9/10)
@@ -340,7 +369,7 @@ Keyword: "very"
 
 Suggestion: "very" → "remarkably"
   - Impact: 8/10 (strong emotional upgrade)
-  
+
 Estimated Improvement = 7.55 × 8 / 10 = 6.04 points
 ```
 
@@ -360,15 +389,15 @@ Estimated Improvement = 7.55 × 8 / 10 = 6.04 points
 const engine = new RefineryEngine();
 
 // Add custom refinements
-engine.refinementMap.set('old-word', [
+engine.refinementMap.set("old-word", [
   {
-    replacement: 'new-word',
+    replacement: "new-word",
     impact: 8,
-    category: 'descriptor',
-    reason: 'More specific and powerful',
-    difficulty: 'low',
-    measurableOutcome: '+30% clarity'
-  }
+    category: "descriptor",
+    reason: "More specific and powerful",
+    difficulty: "low",
+    measurableOutcome: "+30% clarity",
+  },
 ]);
 ```
 
@@ -376,21 +405,21 @@ engine.refinementMap.set('old-word', [
 
 ```javascript
 // Add custom context detection
-engine.contextPatterns['custom'] = {
-  keywords: ['my-keyword', 'another-keyword'],
-  focus: 'Custom focus area',
-  priority: 'custom-refinement'
+engine.contextPatterns["custom"] = {
+  keywords: ["my-keyword", "another-keyword"],
+  focus: "Custom focus area",
+  priority: "custom-refinement",
 };
 ```
 
 ### UI Customization
 
 ```javascript
-const ui = new RefineryUIComponent('refinery-results', {
-  showDifficulty: true,      // Include difficulty badges
-  showMetrics: true,         // Include metric dashboard
-  enablePreview: true,       // Show before/after
-  autoHighlight: true        // Highlight keywords
+const ui = new RefineryUIComponent("refinery-results", {
+  showDifficulty: true, // Include difficulty badges
+  showMetrics: true, // Include metric dashboard
+  enablePreview: true, // Show before/after
+  autoHighlight: true, // Highlight keywords
 });
 ```
 
@@ -403,12 +432,12 @@ The refinery engine works seamlessly with chat parsers:
 const messages = chatParser.parse(chatJSON);
 
 // 2. Extract prompts
-const userMessages = messages.filter(m => m.role === 'user');
+const userMessages = messages.filter((m) => m.role === "user");
 
 // 3. Analyze each prompt for refinement
-userMessages.forEach(msg => {
+userMessages.forEach((msg) => {
   const analysis = engine.analyze(msg.content);
-  
+
   console.log(`Prompt: ${msg.content.substring(0, 50)}...`);
   console.log(`Suggestions: ${analysis.recommendations.length}`);
   console.log(`Top: ${analysis.report.topRecommendations[0]?.suggestedWord}`);
@@ -441,61 +470,67 @@ prompts.forEach(prompt => {
 ## Troubleshooting
 
 ### No Recommendations Generated
+
 ```javascript
 const analysis = engine.analyze(prompt);
 if (analysis.recommendations.length === 0) {
   // Prompt may be too short or contain mainly strong words
-  console.log('Top keywords:', analysis.weightedKeywords.slice(0, 3));
+  console.log("Top keywords:", analysis.weightedKeywords.slice(0, 3));
 }
 ```
 
 ### Impact Scores Seem Low
+
 ```javascript
 // Check for weak words
-const weakWords = analysis.weightedKeywords.filter(kw => kw.isWeak);
-console.log('Weak words:', weakWords);
+const weakWords = analysis.weightedKeywords.filter((kw) => kw.isWeak);
+console.log("Weak words:", weakWords);
 // Weak words have higher priority for refinement
 ```
 
 ### Context Not Detected Correctly
+
 ```javascript
 const analysis = engine.analyze(prompt);
-console.log('Detected context:', analysis.contextType);
+console.log("Detected context:", analysis.contextType);
 // Check keywords to understand detection
-console.log('Key indicators:', analysis.weightedKeywords.slice(0, 3));
+console.log("Key indicators:", analysis.weightedKeywords.slice(0, 3));
 ```
 
 ## Advanced Features
 
 ### Weighted Keyword Analysis
+
 ```javascript
 const analysis = engine.analyze(prompt);
 
 // Get keywords by weight
 const importantKeywords = analysis.weightedKeywords
-  .filter(kw => kw.weight > 6)
+  .filter((kw) => kw.weight > 6)
   .sort((a, b) => b.weight - a.weight);
 
-importantKeywords.forEach(kw => {
+importantKeywords.forEach((kw) => {
   console.log(`${kw.text}: weight=${kw.weight}, frequency=${kw.frequency}`);
 });
 ```
 
 ### Priority-Based Recommendation Selection
+
 ```javascript
 const analysis = engine.analyze(prompt);
 
 // Get by priority
 const highPriority = analysis.recommendations
-  .filter(r => r.priorityLevel === 'high')
+  .filter((r) => r.priorityLevel === "high")
   .slice(0, 3);
 
 const quickWins = analysis.recommendations
-  .filter(r => r.difficulty === 'low')
+  .filter((r) => r.difficulty === "low")
   .slice(0, 5);
 ```
 
 ### Report Export
+
 ```javascript
 const analysis = engine.analyze(prompt);
 
@@ -506,11 +541,11 @@ const json = JSON.stringify(analysis.report, null, 2);
 const csv = ui.exportAsCSV();
 
 // Save to file
-const blob = new Blob([csv], { type: 'text/csv' });
+const blob = new Blob([csv], { type: "text/csv" });
 const url = URL.createObjectURL(blob);
-const link = document.createElement('a');
+const link = document.createElement("a");
 link.href = url;
-link.download = 'refinements.csv';
+link.download = "refinements.csv";
 link.click();
 ```
 

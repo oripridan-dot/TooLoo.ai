@@ -1,1 +1,0 @@
-let x: number = 42; // Corrected to use 'let' and a valid number

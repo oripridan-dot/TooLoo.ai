@@ -20,7 +20,7 @@ import { DistributedTracer } from "../../lib/distributed-tracer.js";
 // Initialize service with unified middleware (replaces 30 LOC of boilerplate)
 const svc = new ServiceFoundation(
   "budget-server",
-  process.env.BUDGET_PORT || 3003
+  process.env.BUDGET_PORT || 3003,
 );
 svc.setupMiddleware();
 svc.registerHealthEndpoint();
@@ -97,7 +97,7 @@ app.post("/api/v1/providers/policy", (req, res) => {
     if (maxConcurrency !== undefined)
       providerPolicy.maxConcurrency = Math.max(
         1,
-        Math.min(Number(maxConcurrency) || 1, 12)
+        Math.min(Number(maxConcurrency) || 1, 12),
       );
     if (criticality) providerPolicy.criticality = String(criticality);
     res.json({ ok: true, policy: providerPolicy });
@@ -153,13 +153,13 @@ async function executeBurst(
   ttlSeconds,
   criticality,
   concurrency,
-  status
+  status,
 ) {
   const systemPrompt =
     'You are TooLoo, the AI assistant for TooLoo.ai. Never introduce yourself as any other AI or company. Structure ALL responses hierarchically: Start with a clear **heading** or key point. Use **bold** for emphasis. Break into sections with sub-headings if needed. Use bullet points (- or •) for lists. Keep it lean: no filler, direct answers only. Respond in clear, concise English. Be friendly, insightful, and proactive. If a small UI tweak would improve clarity (e.g., switch to lean/detailed mode, show/hide status, start a system check), append a final fenced UI control block using the exact syntax and same-origin paths only: ```ui\n{"action":"setMode","mode":"lean"}\n``` You may also use: toggleSection {id, show}, open {url:"/path"}, priority {mode:"chat"|"background"}, startSystem, systemCheck, scrollTo {id}, setTheme {primaryColor}, setChatStyle {compact}, showHint {text}. Keep the main content clean and do not include UI JSON inside it.';
 
   const available = Object.values(status).filter(
-    (s) => s.available && s.enabled
+    (s) => s.available && s.enabled,
   ).length;
   if (available === 0) {
     return `[mock] ${prompt} — providers unavailable; enable DeepSeek/OSS to replace this cached mock.`;
@@ -173,12 +173,12 @@ async function executeBurst(
         const tasks = [];
         for (let i = 0; i < concurrency; i++) {
           tasks.push(
-            generateSmartLLM({ prompt, system: systemPrompt, criticality })
+            generateSmartLLM({ prompt, system: systemPrompt, criticality }),
           );
         }
         const results = await Promise.allSettled(tasks);
         const ok = results.find(
-          (r) => r.status === "fulfilled" && r.value?.text
+          (r) => r.status === "fulfilled" && r.value?.text,
         );
         return ok
           ? ok.value.text
@@ -188,7 +188,7 @@ async function executeBurst(
         maxAttempts: 2,
         backoffMs: 100,
         timeout: 30000,
-      }
+      },
     );
 
     // Phase 3: Record outcome for quality learning
@@ -243,13 +243,11 @@ app.post("/api/v1/providers/burst", async (req, res) => {
     if (!rateResult.acquired) {
       tracer.endSpan(traceId, querySpan, "error", { error: "rate_limited" });
       tracer.endTrace(traceId, "error", { reason: "rate_limit" });
-      return res
-        .status(429)
-        .json({
-          ok: false,
-          error: "Rate limited",
-          retryAfter: rateResult.waitTime,
-        });
+      return res.status(429).json({
+        ok: false,
+        error: "Rate limited",
+        retryAfter: rateResult.waitTime,
+      });
     }
 
     // 1. Check cache first (Phase 6A: PersistentCache)
@@ -270,12 +268,12 @@ app.post("/api/v1/providers/burst", async (req, res) => {
       async () => {
         const status = getProviderStatus();
         const available = Object.values(status).filter(
-          (s) => s.available && s.enabled
+          (s) => s.available && s.enabled,
         ).length;
         const dynamic = Math.max(1, Math.min(available * 2, 6));
         const concurrency = Math.max(
           providerPolicy.minConcurrency,
-          Math.min(providerPolicy.maxConcurrency, dynamic)
+          Math.min(providerPolicy.maxConcurrency, dynamic),
         );
 
         // 3. Execute with circuit breaker for resilience
@@ -285,25 +283,25 @@ app.post("/api/v1/providers/burst", async (req, res) => {
           {
             fallback: () =>
               `[fallback] ${prompt} — providers temporarily unavailable.`,
-          }
+          },
         );
 
         await cacheSet(prompt, text, Number(ttlSeconds) * 1000);
         return text;
       },
-      { ttlMs: Number(ttlSeconds) * 1000 }
+      { ttlMs: Number(ttlSeconds) * 1000 },
     );
 
     tracer.endSpan(traceId, deducpSpan, "success");
 
     const status = getProviderStatus();
     const available = Object.values(status).filter(
-      (s) => s.available && s.enabled
+      (s) => s.available && s.enabled,
     ).length;
     const dynamic = Math.max(1, Math.min(available * 2, 6));
     const concurrency = Math.max(
       providerPolicy.minConcurrency,
-      Math.min(providerPolicy.maxConcurrency, dynamic)
+      Math.min(providerPolicy.maxConcurrency, dynamic),
     );
 
     tracer.endSpan(traceId, querySpan, "success");
@@ -346,13 +344,11 @@ app.get("/api/v1/providers/burst", async (req, res) => {
     if (!rateResult.acquired) {
       tracer.endSpan(traceId, querySpan, "error", { error: "rate_limited" });
       tracer.endTrace(traceId, "error", { reason: "rate_limit" });
-      return res
-        .status(429)
-        .json({
-          ok: false,
-          error: "Rate limited",
-          retryAfter: rateResult.waitTime,
-        });
+      return res.status(429).json({
+        ok: false,
+        error: "Rate limited",
+        retryAfter: rateResult.waitTime,
+      });
     }
 
     // Check cache first (Phase 6A: PersistentCache)
@@ -373,12 +369,12 @@ app.get("/api/v1/providers/burst", async (req, res) => {
       async () => {
         const status = getProviderStatus();
         const available = Object.values(status).filter(
-          (s) => s.available && s.enabled
+          (s) => s.available && s.enabled,
         ).length;
         const dynamic = Math.max(1, Math.min(available * 2, 6));
         const concurrency = Math.max(
           providerPolicy.minConcurrency,
-          Math.min(providerPolicy.maxConcurrency, dynamic)
+          Math.min(providerPolicy.maxConcurrency, dynamic),
         );
 
         // Execute with circuit breaker for resilience
@@ -388,25 +384,25 @@ app.get("/api/v1/providers/burst", async (req, res) => {
           {
             fallback: () =>
               `[fallback] ${prompt} — providers temporarily unavailable.`,
-          }
+          },
         );
 
         await cacheSet(prompt, text, Number(ttlSeconds) * 1000);
         return text;
       },
-      { ttlMs: Number(ttlSeconds) * 1000 }
+      { ttlMs: Number(ttlSeconds) * 1000 },
     );
 
     tracer.endSpan(traceId, deducpSpan, "success");
 
     const status = getProviderStatus();
     const available = Object.values(status).filter(
-      (s) => s.available && s.enabled
+      (s) => s.available && s.enabled,
     ).length;
     const dynamic = Math.max(1, Math.min(available * 2, 6));
     const concurrency = Math.max(
       providerPolicy.minConcurrency,
-      Math.min(providerPolicy.maxConcurrency, dynamic)
+      Math.min(providerPolicy.maxConcurrency, dynamic),
     );
 
     tracer.endSpan(traceId, querySpan, "success");
@@ -453,12 +449,12 @@ app.get("/api/v1/providers/recommend", (req, res) => {
     const status = getProviderStatus();
     // Recommend cheapest available provider
     const available = Object.entries(status).filter(
-      ([k, v]) => v.available && v.enabled
+      ([k, v]) => v.available && v.enabled,
     );
     if (!available.length)
       return res.json({ ok: false, error: "No providers available" });
     const sorted = available.sort(
-      (a, b) => budget.getProviderCost(a[0]) - budget.getProviderCost(b[0])
+      (a, b) => budget.getProviderCost(a[0]) - budget.getProviderCost(b[0]),
     );
     res.json({
       ok: true,
@@ -515,7 +511,7 @@ app.post("/api/v1/budget/can-afford", (req, res) => {
 
     const metrics = costCalc.getMetrics(cohortId);
     const cost =
-      estimatedCost || costCalc.getProviderCost(provider || "ollama");
+      estimatedCost || costCalc.getProviderCost(provider || "anthropic");
     const canAfford = cost <= metrics.budgetRemaining;
 
     res.json({
@@ -527,7 +523,7 @@ app.post("/api/v1/budget/can-afford", (req, res) => {
       budgetUtilization: metrics.budgetUtilization,
       recommendation: canAfford
         ? "Proceed with workflow"
-        : `Budget insufficient. Consider cheaper provider: ${costCalc.findCheaperAlternative({ provider }, metrics.budgetRemaining)?.provider || "ollama"}`,
+        : `Budget insufficient. Consider cheaper provider: ${costCalc.findCheaperAlternative({ provider }, metrics.budgetRemaining)?.provider || "anthropic"}`,
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -549,13 +545,14 @@ app.post("/api/v1/budget/record-workflow", (req, res) => {
         .json({ ok: false, error: "cohortId and workflowId required" });
     }
 
-    const actualCost = cost || costCalc.getProviderCost(provider || "ollama");
+    const actualCost =
+      cost || costCalc.getProviderCost(provider || "anthropic");
     costCalc.recordWorkflow(
       cohortId,
       workflowId,
-      provider || "ollama",
+      provider || "anthropic",
       actualCost,
-      capabilityGain || 1
+      capabilityGain || 1,
     );
 
     const metrics = costCalc.getMetrics(cohortId);

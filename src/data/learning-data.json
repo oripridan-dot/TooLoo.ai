@@ -1,0 +1,116 @@
+{
+  "performanceData": [
+    [
+      "gemini",
+      {
+        "totalQueries": 10,
+        "successfulQueries": 8,
+        "totalLatency": 115904,
+        "avgLatency": 11590.4,
+        "domainSuccess": {
+          "general": {
+            "success": 7,
+            "total": 9
+          },
+          "design": {
+            "success": 1,
+            "total": 1
+          }
+        }
+      }
+    ]
+  ],
+  "feedbackHistory": [
+    {
+      "query": "can you show advanced visuals now?",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 2098,
+      "userRating": null,
+      "timestamp": "2025-11-27T12:53:49.098Z"
+    },
+    {
+      "query": "a Sankey diagram showing the flow of users through a website,\" or \"a 3D scatter plot visualizing a dataset.\"",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 1535,
+      "userRating": null,
+      "timestamp": "2025-11-27T12:54:11.868Z"
+    },
+    {
+      "query": "make me an example of every visual capability you have\nthe context is tooloo.ai",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 3344,
+      "userRating": null,
+      "timestamp": "2025-11-27T12:55:21.014Z"
+    },
+    {
+      "query": "\"Create an image depicting the TooLoo.ai logo interacting with the logos of OpenAI, Anthropic, and Google, symbolizing the multi-provider ecosystem.\"",
+      "domain": "general",
+      "provider": "gemini",
+      "success": false,
+      "latency": 7101,
+      "userRating": null,
+      "timestamp": "2025-11-27T12:55:56.108Z"
+    },
+    {
+      "query": "how can we make this chat the most amazing ai chat ever was?",
+      "domain": "general",
+      "provider": "gemini",
+      "success": false,
+      "latency": 11590,
+      "userRating": null,
+      "timestamp": "2025-11-27T12:56:43.515Z"
+    },
+    {
+      "query": "what do you need in order to be able to execute tasks like the above?",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 6816,
+      "userRating": null,
+      "timestamp": "2025-11-27T12:58:55.862Z"
+    },
+    {
+      "query": "don't you have all of those capabilities?",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 1685,
+      "userRating": null,
+      "timestamp": "2025-11-27T13:00:51.544Z"
+    },
+    {
+      "query": "so can you execute all of the above suggestions?",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 2308,
+      "userRating": null,
+      "timestamp": "2025-11-27T13:01:29.181Z"
+    },
+    {
+      "query": "Create a plan for a specific task: \"Create a plan to analyze a project using the SemanticParser and then verify the results using the Verifier.\"\nGenerate a diagram of a system component: \"Generate a M",
+      "domain": "general",
+      "provider": "gemini",
+      "success": true,
+      "latency": 33196,
+      "userRating": null,
+      "timestamp": "2025-11-27T13:02:47.897Z"
+    },
+    {
+      "query": "i want to make this chat be based on imagry and vibrant elements\ni want the responses to be able to move, demonstrate with motion picture and deliver an amaizing experience, that's why we have the des",
+      "domain": "design",
+      "provider": "gemini",
+      "success": true,
+      "latency": 46231,
+      "userRating": null,
+      "timestamp": "2025-11-27T13:13:07.484Z"
+    }
+  ],
+  "lastUpdated": "2025-11-27T13:13:07.485Z"
+}

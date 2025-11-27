@@ -14,7 +14,7 @@ export default class ResponseAggregator {
       providersUsed: [],
       timestamp: null,
       taskType: null,
-      criticality: null
+      criticality: null,
     };
   }
 
@@ -25,16 +25,19 @@ export default class ResponseAggregator {
    */
   addResponse(text, metadata = {}) {
     if (!text || !String(text).trim()) return;
-    
+
     this.responses.push({
       text: String(text).trim(),
-      provider: metadata.provider || 'unknown',
+      provider: metadata.provider || "unknown",
       confidence: metadata.confidence || 0.5,
-      taskType: metadata.taskType || 'general',
-      timestamp: metadata.timestamp || Date.now()
+      taskType: metadata.taskType || "general",
+      timestamp: metadata.timestamp || Date.now(),
     });
 
-    if (metadata.provider && !this.metadata.providersUsed.includes(metadata.provider)) {
+    if (
+      metadata.provider &&
+      !this.metadata.providersUsed.includes(metadata.provider)
+    ) {
       this.metadata.providersUsed.push(metadata.provider);
     }
   }
@@ -48,16 +51,18 @@ export default class ResponseAggregator {
 
     // Split by sentences (simple heuristic)
     const sentences = text
-      .replace(/\n+/g, ' ')
+      .replace(/\n+/g, " ")
       .split(/(?<=[.!?])\s+/)
-      .filter(s => s.trim().length > 10)
+      .filter((s) => s.trim().length > 10)
       .slice(0, maxBullets);
 
     // Clean and format as bullets
-    return sentences.map(s => {
-      const cleaned = s.replace(/[.!?]$/, '').trim();
-      return cleaned.length > 0 ? `• ${cleaned}` : null;
-    }).filter(Boolean);
+    return sentences
+      .map((s) => {
+        const cleaned = s.replace(/[.!?]$/, "").trim();
+        return cleaned.length > 0 ? `• ${cleaned}` : null;
+      })
+      .filter(Boolean);
   }
 
   /**
@@ -68,16 +73,16 @@ export default class ResponseAggregator {
     if (this.responses.length === 0) return [];
 
     const allBullets = [];
-    
+
     // Extract bullets from each response
     this.responses.forEach((resp, idx) => {
       const bullets = this.extractBullets(resp.text, 3);
-      bullets.forEach(bullet => {
+      bullets.forEach((bullet) => {
         allBullets.push({
           text: bullet,
           provider: resp.provider,
           confidence: resp.confidence,
-          index: idx
+          index: idx,
         });
       });
     });
@@ -88,7 +93,7 @@ export default class ResponseAggregator {
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, maxBullets);
 
-    return sorted.map(b => b.text);
+    return sorted.map((b) => b.text);
   }
 
   /**
@@ -115,8 +120,8 @@ export default class ResponseAggregator {
   normalizeBullet(text) {
     return text
       .toLowerCase()
-      .replace(/^•\s*/, '')
-      .replace(/[.!?,;:]/g, '')
+      .replace(/^•\s*/, "")
+      .replace(/[.!?,;:]/g, "")
       .trim();
   }
 
@@ -127,11 +132,11 @@ export default class ResponseAggregator {
   generateAggregatedResponse() {
     if (this.responses.length === 0) {
       return {
-        summary: 'No responses received.',
+        summary: "No responses received.",
         bullets: [],
         suggestions: [],
         providers: [],
-        confidence: 0
+        confidence: 0,
       };
     }
 
@@ -142,7 +147,9 @@ export default class ResponseAggregator {
     const suggestions = this.extractSuggestions();
 
     // Calculate average confidence
-    const avgConfidence = this.responses.reduce((sum, r) => sum + r.confidence, 0) / this.responses.length;
+    const avgConfidence =
+      this.responses.reduce((sum, r) => sum + r.confidence, 0) /
+      this.responses.length;
 
     // Build summary narrative
     const summary = this.buildSummaryNarrative(bullets);
@@ -154,7 +161,7 @@ export default class ResponseAggregator {
       providers: this.metadata.providersUsed,
       responseCount: this.responses.length,
       confidence: Math.round(avgConfidence * 100),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -162,13 +169,14 @@ export default class ResponseAggregator {
    * Build a narrative summary from bullets
    */
   buildSummaryNarrative(bullets) {
-    if (bullets.length === 0) return 'Unable to generate summary from responses.';
+    if (bullets.length === 0)
+      return "Unable to generate summary from responses.";
 
     const bulletTexts = bullets
-      .map(b => b.replace(/^•\s*/, '').replace(/[.!?]$/, ''))
+      .map((b) => b.replace(/^•\s*/, "").replace(/[.!?]$/, ""))
       .slice(0, 3);
 
-    return `Key insights: ${bulletTexts.join('; ')}${bulletTexts.length > 0 ? '.' : ''}`;
+    return `Key insights: ${bulletTexts.join("; ")}${bulletTexts.length > 0 ? "." : ""}`;
   }
 
   /**
@@ -179,19 +187,22 @@ export default class ResponseAggregator {
     const suggestionPatterns = [
       /(?:recommend|suggest|should|consider|try|attempt|implement|use)[\s:]([^.!?]+)/gi,
       /(?:best practice|tip:|key:|insight:)[\s]([^.!?]+)/gi,
-      /(?:next step|action|improve)[\s:]([^.!?]+)/gi
+      /(?:next step|action|improve)[\s:]([^.!?]+)/gi,
     ];
 
     this.responses.forEach((resp) => {
-      suggestionPatterns.forEach(pattern => {
+      suggestionPatterns.forEach((pattern) => {
         let match;
-        while ((match = pattern.exec(resp.text)) && suggestions.length < maxSuggestions) {
+        while (
+          (match = pattern.exec(resp.text)) &&
+          suggestions.length < maxSuggestions
+        ) {
           const text = match[1].trim();
           if (text.length > 5) {
             suggestions.push({
               text: `• ${text}`,
               provider: resp.provider,
-              confidence: resp.confidence
+              confidence: resp.confidence,
             });
           }
         }
@@ -203,7 +214,7 @@ export default class ResponseAggregator {
     return unique
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, maxSuggestions)
-      .map(s => s.text);
+      .map((s) => s.text);
   }
 
   /**
@@ -215,7 +226,7 @@ export default class ResponseAggregator {
       providersUsed: [],
       timestamp: null,
       taskType: null,
-      criticality: null
+      criticality: null,
     };
   }
 
@@ -225,13 +236,13 @@ export default class ResponseAggregator {
   getDetailedReport() {
     return {
       aggregated: this.generateAggregatedResponse(),
-      responses: this.responses.map(r => ({
+      responses: this.responses.map((r) => ({
         provider: r.provider,
         confidence: r.confidence,
-        preview: r.text.substring(0, 100) + (r.text.length > 100 ? '...' : '')
+        preview: r.text.substring(0, 100) + (r.text.length > 100 ? "..." : ""),
       })),
       metadata: this.metadata,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
     };
   }
 
@@ -242,16 +253,16 @@ export default class ResponseAggregator {
     const {
       includeMetadata = true,
       bulletFormat = true,
-      maxBullets = 8
+      maxBullets = 8,
     } = options;
 
     const agg = this.generateAggregatedResponse();
 
-    let output = '';
+    let output = "";
 
     if (bulletFormat) {
-      output += '## Key Insights\n';
-      agg.bullets.slice(0, maxBullets).forEach(bullet => {
+      output += "## Key Insights\n";
+      agg.bullets.slice(0, maxBullets).forEach((bullet) => {
         output += `${bullet}\n`;
       });
     } else {
@@ -259,15 +270,15 @@ export default class ResponseAggregator {
     }
 
     if (agg.suggestions.length > 0) {
-      output += '\n## Recommendations\n';
-      agg.suggestions.forEach(sugg => {
+      output += "\n## Recommendations\n";
+      agg.suggestions.forEach((sugg) => {
         output += `${sugg}\n`;
       });
     }
 
     if (includeMetadata) {
-      output += '\n---\n';
-      output += `**Providers**: ${agg.providers.join(', ')}\n`;
+      output += "\n---\n";
+      output += `**Providers**: ${agg.providers.join(", ")}\n`;
       output += `**Confidence**: ${agg.confidence}%\n`;
       output += `**Responses Aggregated**: ${agg.responseCount}\n`;
     }

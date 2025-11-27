@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import 'dotenv/config';
+import { z } from "zod";
+import "dotenv/config";
 
 const envSchema = z.object({
   // AI Providers
@@ -10,12 +10,11 @@ const envSchema = z.object({
   HF_API_KEY: z.string().optional(),
 
   // Models
-  DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
-  ANTHROPIC_MODEL: z.string().default('claude-3-5-haiku-20241022'),
-  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
-  GEMINI_MODEL: z.string().default('gemini-2.0-pro-exp-02-05'),
-  OLLAMA_MODEL: z.string().default('llama3.2:latest'),
-  LOCALAI_MODEL: z.string().default('gpt-4'),
+  DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
+  ANTHROPIC_MODEL: z.string().default("claude-3-5-haiku-20241022"),
+  OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+  GEMINI_MODEL: z.string().default("gemini-2.0-pro-exp-02-05"),
+  LOCALAI_MODEL: z.string().default("gpt-4"),
 
   // Ports
   WEB_PORT: z.coerce.number().default(3000),
@@ -32,9 +31,15 @@ const envSchema = z.object({
   ORCH_CTRL_PORT: z.coerce.number().default(3123),
 
   // System
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+
+  // Sandbox
+  SANDBOX_MODE: z.enum(["local", "docker"]).default("local"),
+  SANDBOX_DOCKER_IMAGE: z.string().default("node:18-alpine"),
+
   // GitHub
   GITHUB_TOKEN: z.string().optional(),
   GITHUB_REPO: z.string().optional(),
@@ -46,7 +51,10 @@ export type Config = z.infer<typeof envSchema>;
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
-  console.error('❌ Invalid environment variables:', result.error.flatten().fieldErrors);
+  console.error(
+    "❌ Invalid environment variables:",
+    result.error.flatten().fieldErrors,
+  );
   // We don't throw here to allow the system to start in a degraded state or for tests to mock it later
   // But in a strict production env, we might want to exit.
 }

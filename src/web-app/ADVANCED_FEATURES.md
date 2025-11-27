@@ -3,6 +3,7 @@
 ## Advanced Segmentation Visualization
 
 ### Segment Types (Automatic Classification)
+
 ```
 🎯 DECISION - When user discusses choices, tradeoffs
 🔄 REFINEMENT - Iterative improvements to ideas
@@ -14,6 +15,7 @@
 ```
 
 ### Visual Indicators
+
 ```
 Each segment shows:
 ├─ Icon + Title
@@ -30,6 +32,7 @@ Each segment shows:
 ### Three Levels of Abstraction
 
 #### 1. Message Level (Expanded)
+
 ```
 ┌──────────────────────────────────────┐
 │ User: "What's the best approach?"    │
@@ -44,6 +47,7 @@ Each segment shows:
 ```
 
 #### 2. Segment Level (Rolled Up)
+
 ```
 ┌──────────────────────────────────────┐
 │ 🎯 DECISION: Career Path Analysis    │
@@ -60,6 +64,7 @@ Each segment shows:
 ```
 
 #### 3. Conversation Level (Macro View)
+
 ```
 ┌──────────────────────────────────────────────────┐
 │ Full Conversation Overview                        │
@@ -85,25 +90,27 @@ Each segment shows:
 ### Context-Aware Recommendations
 
 #### Real-time Triggers
+
 ```
 When user asks about decisions:
   → Show "Decision Framework" hint
   → Track decision velocity
-  
+
 When user discovers something new:
   → Show "Learning Reinforcement" tip
   → Add to knowledge base
-  
+
 When user faces uncertainty:
   → Show "Risk Mapping" suggestion
   → Link to past similar situations
-  
+
 When user completes segment:
   → Show progress toward learning goal
   → Suggest next learning target
 ```
 
 ### Coaching Hint Format
+
 ```
 ┌─────────────────────────────────────┐
 │ 💡 OBSERVATION: You switched topics │
@@ -148,6 +155,7 @@ Main Thread (Collapsed View)
 ```
 
 ### Thread Navigation
+
 ```
 // Click segment to expand all threads
 // Click [+] to add new reply thread
@@ -172,6 +180,7 @@ Top Bar (Minimal):
 ```
 
 ### Sidebar Tracking
+
 ```
 Per-Segment Tracker:
 ├─ 🎯 DECISION
@@ -194,6 +203,7 @@ Per-Segment Tracker:
 ## Enhanced Chat Features
 
 ### Code Block Rendering
+
 ```
 Messages with code get special formatting:
 ┌─────────────────────────────────┐
@@ -204,6 +214,7 @@ Messages with code get special formatting:
 ```
 
 ### Message Actions
+
 ```
 Hover over any message to reveal:
 ├─ 👍 React (emoji picker)
@@ -214,6 +225,7 @@ Hover over any message to reveal:
 ```
 
 ### Multi-turn Input
+
 ```
 If message is too long:
 ├─ Shift+Enter for new line
@@ -228,6 +240,7 @@ If message is too long:
 ## Mobile Enhancements
 
 ### Tablet (768px - 1024px)
+
 ```
 Layout: Chat takes 75%, Sidebar takes 25%
 OR
@@ -236,6 +249,7 @@ Layout: Stack vertically with tab switcher
 ```
 
 ### Phone (< 768px)
+
 ```
 Primary: Chat full-width
 ├─ Swipe left for segments
@@ -252,6 +266,7 @@ Bottom Navigation:
 ## Accessibility Enhancements
 
 ### Screen Reader Support
+
 ```
 <div role="chat" aria-label="Conversation">
   <div role="article" aria-label="Segment 1 of 5">
@@ -265,6 +280,7 @@ Bottom Navigation:
 ```
 
 ### Keyboard Navigation
+
 ```
 Global:
   Cmd/Ctrl + / = Help/shortcuts
@@ -285,13 +301,14 @@ Coaching Panel:
 ```
 
 ### Focus Management
+
 ```
 After sending message:
   → Focus returns to input field
-  
+
 After selecting segment:
   → Focus moves to segment detail
-  
+
 After opening modal:
   → Focus traps within modal
   → Escape closes modal
@@ -302,13 +319,16 @@ After opening modal:
 ## Performance Optimizations
 
 ### Virtual Scrolling
+
 For conversations with 100+ messages:
+
 ```javascript
 // Only render visible messages + buffer (20 above/below)
 // Rest are lazy-loaded on scroll
 ```
 
 ### Segment Caching
+
 ```
 // Cache last 50 segments in localStorage
 // Reload from API only when > 30 min old
@@ -316,6 +336,7 @@ For conversations with 100+ messages:
 ```
 
 ### Lazy-load Coaching Panel
+
 ```
 // Don't fetch coaching until panel is visible
 // Use Intersection Observer
@@ -327,19 +348,21 @@ For conversations with 100+ messages:
 ## Color & Theme System
 
 ### Light Mode Support
+
 ```css
 @media (prefers-color-scheme: light) {
   :root {
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #F8F9FA;
-    --text-primary: #0F1117;
-    --accent: #0969DA;
-    --accent-dark: #033B9B;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --text-primary: #0f1117;
+    --accent: #0969da;
+    --accent-dark: #033b9b;
   }
 }
 ```
 
 ### Custom Theme Support (Future)
+
 ```
 Allow users to choose:
 ├─ Accent color (blue, purple, teal)
@@ -353,6 +376,7 @@ Allow users to choose:
 ## Analytics Integration Points
 
 ### Events to Track
+
 ```
 // Chat actions
 - Message sent (length, segment, confidence)
@@ -374,17 +398,18 @@ Allow users to choose:
 ```
 
 ### Tracking Implementation
+
 ```javascript
-trackEvent('message_sent', {
+trackEvent("message_sent", {
   length: msg.length,
   segment_type: currentSegment.type,
-  confidence: coaching.confidence
+  confidence: coaching.confidence,
 });
 
-trackEvent('segment_viewed', {
+trackEvent("segment_viewed", {
   segment_id: seg.id,
   duration_ms: Date.now() - segmentStart,
-  messages: seg.messageCount
+  messages: seg.messageCount,
 });
 ```
 
@@ -393,24 +418,28 @@ trackEvent('segment_viewed', {
 ## Version Roadmap
 
 ### v1.0 (Current)
+
 ✅ Modern chat interface  
 ✅ Real-time segmentation  
 ✅ Coaching sidebar  
-✅ Mobile responsive  
+✅ Mobile responsive
 
 ### v1.1 (Next)
+
 - Thread support
 - Message reactions
 - Copy/pin actions
 - Expanded coaching
 
 ### v1.2 (Planned)
+
 - Dark/light theme toggle
 - Custom density
 - Advanced search
 - Export conversations
 
 ### v2.0 (Future)
+
 - Collaborative mode
 - @mentions
 - Shared highlights

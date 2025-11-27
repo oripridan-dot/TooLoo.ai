@@ -1,9 +1,9 @@
 // @version 2.1.28
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import ProviderSelector from '../lib/provider-selector.js';
-import BudgetManager from '../lib/budget-manager.js';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import ProviderSelector from "../lib/provider-selector.js";
+import BudgetManager from "../lib/budget-manager.js";
 
 const app = express();
 const PORT = process.env.PROVIDER_PORT || 3200;
@@ -16,7 +16,7 @@ app.use(express.json());
 // Request logging
 app.use((req, res, next) => {
   const start = Date.now();
-  res.on('finish', () => {
+  res.on("finish", () => {
     const duration = Date.now() - start;
     console.log(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
   });
@@ -38,35 +38,41 @@ async function initializeServices(bus) {
 
   // Subscribe to training events
   if (eventBus) {
-    await eventBus.subscribe('training.started', async (event) => {
-      console.log('[Provider Service] Received training.started event:', event.type);
+    await eventBus.subscribe("training.started", async (event) => {
+      console.log(
+        "[Provider Service] Received training.started event:",
+        event.type,
+      );
       // Could trigger provider selection here if needed
     });
 
-    await eventBus.subscribe('training.completed', async (event) => {
-      console.log('[Provider Service] Received training.completed event:', event.type);
+    await eventBus.subscribe("training.completed", async (event) => {
+      console.log(
+        "[Provider Service] Received training.completed event:",
+        event.type,
+      );
     });
   }
 
-  console.log('[Provider Service] Services initialized');
+  console.log("[Provider Service] Services initialized");
 }
 
 /**
  * GET /health - Service health check
  */
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'provider', uptime: process.uptime() });
+app.get("/health", (req, res) => {
+  res.json({ ok: true, service: "provider", uptime: process.uptime() });
 });
 
 /**
  * POST /api/v1/providers/select
  * Select best provider for a query
  */
-app.post('/api/v1/providers/select', async (req, res) => {
+app.post("/api/v1/providers/select", async (req, res) => {
   try {
     const {
-      query = '',
-      focusArea = 'general',
+      query = "",
+      focusArea = "general",
       estimatedTokens = 500,
       preferFree = false,
       highQuality = false,
@@ -84,7 +90,7 @@ app.post('/api/v1/providers/select', async (req, res) => {
     // Check budget
     const canAfford = budgetManager.canAfford(
       selection.providerId,
-      selection.estimatedCost
+      selection.estimatedCost,
     );
 
     if (!canAfford) {
@@ -121,7 +127,7 @@ app.post('/api/v1/providers/select', async (req, res) => {
       budgetStatus: budgetManager.getBudgetForProvider(selection.providerId),
     });
   } catch (error) {
-    console.error('Provider selection error:', error);
+    console.error("Provider selection error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -133,7 +139,7 @@ app.post('/api/v1/providers/select', async (req, res) => {
  * GET /api/v1/providers/status
  * Get status of all providers
  */
-app.get('/api/v1/providers/status', (req, res) => {
+app.get("/api/v1/providers/status", (req, res) => {
   try {
     const status = providerSelector.getProviderStatus();
     res.json({
@@ -142,7 +148,7 @@ app.get('/api/v1/providers/status', (req, res) => {
       providers: status,
     });
   } catch (error) {
-    console.error('Status error:', error);
+    console.error("Status error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -154,7 +160,7 @@ app.get('/api/v1/providers/status', (req, res) => {
  * GET /api/v1/providers/costs
  * Get cost summary by provider
  */
-app.get('/api/v1/providers/costs', (req, res) => {
+app.get("/api/v1/providers/costs", (req, res) => {
   try {
     const summary = providerSelector.getCostSummary();
     res.json({
@@ -163,7 +169,7 @@ app.get('/api/v1/providers/costs', (req, res) => {
       costs: summary,
     });
   } catch (error) {
-    console.error('Cost summary error:', error);
+    console.error("Cost summary error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -175,18 +181,22 @@ app.get('/api/v1/providers/costs', (req, res) => {
  * POST /api/v1/budget/check
  * Check if budget can afford a cost
  */
-app.post('/api/v1/budget/check', (req, res) => {
+app.post("/api/v1/budget/check", (req, res) => {
   try {
     const { providerId, estimatedCost, useBurst = false } = req.body;
 
     if (!providerId || estimatedCost === undefined) {
       return res.status(400).json({
         success: false,
-        error: 'providerId and estimatedCost required',
+        error: "providerId and estimatedCost required",
       });
     }
 
-    const canAfford = budgetManager.canAfford(providerId, estimatedCost, useBurst);
+    const canAfford = budgetManager.canAfford(
+      providerId,
+      estimatedCost,
+      useBurst,
+    );
     const budgetStatus = budgetManager.getBudgetForProvider(providerId);
 
     res.json({
@@ -197,7 +207,7 @@ app.post('/api/v1/budget/check', (req, res) => {
       budgetStatus,
     });
   } catch (error) {
-    console.error('Budget check error:', error);
+    console.error("Budget check error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -209,18 +219,22 @@ app.post('/api/v1/budget/check', (req, res) => {
  * POST /api/v1/budget/record-cost
  * Record actual cost for a provider
  */
-app.post('/api/v1/budget/record-cost', async (req, res) => {
+app.post("/api/v1/budget/record-cost", async (req, res) => {
   try {
     const { providerId, actualCost, metadata = {} } = req.body;
 
     if (!providerId || actualCost === undefined) {
       return res.status(400).json({
         success: false,
-        error: 'providerId and actualCost required',
+        error: "providerId and actualCost required",
       });
     }
 
-    const result = await budgetManager.recordCost(providerId, actualCost, metadata);
+    const result = await budgetManager.recordCost(
+      providerId,
+      actualCost,
+      metadata,
+    );
 
     res.json({
       success: true,
@@ -229,7 +243,7 @@ app.post('/api/v1/budget/record-cost', async (req, res) => {
       budgetStatus: result.budgetStatus,
     });
   } catch (error) {
-    console.error('Record cost error:', error);
+    console.error("Record cost error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -241,7 +255,7 @@ app.post('/api/v1/budget/record-cost', async (req, res) => {
  * GET /api/v1/budget/status
  * Get budget consumption report
  */
-app.get('/api/v1/budget/status', (req, res) => {
+app.get("/api/v1/budget/status", (req, res) => {
   try {
     const status = budgetManager.getBudgetStatus();
     const summary = budgetManager.getSpendingSummary();
@@ -253,7 +267,7 @@ app.get('/api/v1/budget/status', (req, res) => {
       summary,
     });
   } catch (error) {
-    console.error('Budget status error:', error);
+    console.error("Budget status error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -265,7 +279,7 @@ app.get('/api/v1/budget/status', (req, res) => {
  * GET /api/v1/providers/selections
  * Get provider selection statistics
  */
-app.get('/api/v1/providers/selections', (req, res) => {
+app.get("/api/v1/providers/selections", (req, res) => {
   try {
     const stats = providerSelector.getSelectionStats();
     res.json({
@@ -274,7 +288,7 @@ app.get('/api/v1/providers/selections', (req, res) => {
       selections: stats,
     });
   } catch (error) {
-    console.error('Selections error:', error);
+    console.error("Selections error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -286,9 +300,9 @@ app.get('/api/v1/providers/selections', (req, res) => {
  * GET /api/v1/budget/alerts
  * Get recent budget alerts
  */
-app.get('/api/v1/budget/alerts', (req, res) => {
+app.get("/api/v1/budget/alerts", (req, res) => {
   try {
-    const limit = parseInt(req.query.limit || '10', 10);
+    const limit = parseInt(req.query.limit || "10", 10);
     const alerts = budgetManager.getAlerts(limit);
 
     res.json({
@@ -297,7 +311,7 @@ app.get('/api/v1/budget/alerts', (req, res) => {
       alerts,
     });
   } catch (error) {
-    console.error('Alerts error:', error);
+    console.error("Alerts error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -309,13 +323,15 @@ app.get('/api/v1/budget/alerts', (req, res) => {
  * GET /api/v1/providers/health
  * Service health check
  */
-app.get('/api/v1/providers/health', (req, res) => {
+app.get("/api/v1/providers/health", (req, res) => {
   const status = providerSelector.getProviderStatus();
-  const availableCount = Object.values(status).filter((p) => p.available).length;
+  const availableCount = Object.values(status).filter(
+    (p) => p.available,
+  ).length;
 
   res.json({
-    status: 'healthy',
-    service: 'provider-service',
+    status: "healthy",
+    service: "provider-service",
     port: PORT,
     timestamp: Date.now(),
     providers: {
@@ -329,22 +345,22 @@ app.get('/api/v1/providers/health', (req, res) => {
  * GET /api/v1/system/info
  * System information
  */
-app.get('/api/v1/system/info', (req, res) => {
+app.get("/api/v1/system/info", (req, res) => {
   res.json({
-    service: 'provider-service',
+    service: "provider-service",
     port: PORT,
-    version: '1.0.0',
+    version: "1.0.0",
     endpoints: [
-      'POST /api/v1/providers/select - Select best provider',
-      'GET /api/v1/providers/status - Provider status',
-      'GET /api/v1/providers/costs - Cost summary',
-      'GET /api/v1/providers/selections - Selection stats',
-      'POST /api/v1/budget/check - Check budget availability',
-      'POST /api/v1/budget/record-cost - Record actual cost',
-      'GET /api/v1/budget/status - Budget status report',
-      'GET /api/v1/budget/alerts - Recent alerts',
-      'GET /api/v1/providers/health - Service health',
-      'GET /api/v1/system/info - This endpoint',
+      "POST /api/v1/providers/select - Select best provider",
+      "GET /api/v1/providers/status - Provider status",
+      "GET /api/v1/providers/costs - Cost summary",
+      "GET /api/v1/providers/selections - Selection stats",
+      "POST /api/v1/budget/check - Check budget availability",
+      "POST /api/v1/budget/record-cost - Record actual cost",
+      "GET /api/v1/budget/status - Budget status report",
+      "GET /api/v1/budget/alerts - Recent alerts",
+      "GET /api/v1/providers/health - Service health",
+      "GET /api/v1/system/info - This endpoint",
     ],
   });
 });
@@ -353,10 +369,10 @@ app.get('/api/v1/system/info', (req, res) => {
  * Error handler
  */
 app.use((err, req, res) => {
-  console.error('Unhandled error:', err);
+  console.error("Unhandled error:", err);
   res.status(500).json({
     success: false,
-    error: 'Internal server error',
+    error: "Internal server error",
     message: err.message,
   });
 });
@@ -375,21 +391,21 @@ function start(bus) {
 
         // Graceful shutdown
         const shutdown = async () => {
-          console.log('[Provider Service] Shutting down gracefully...');
+          console.log("[Provider Service] Shutting down gracefully...");
           server.close(() => {
-            console.log('[Provider Service] Closed');
+            console.log("[Provider Service] Closed");
             process.exit(0);
           });
 
           // Force exit after 5 seconds
           setTimeout(() => {
-            console.error('[Provider Service] Forced exit after timeout');
+            console.error("[Provider Service] Forced exit after timeout");
             process.exit(1);
           }, 5000);
         };
 
-        process.on('SIGTERM', shutdown);
-        process.on('SIGINT', shutdown);
+        process.on("SIGTERM", shutdown);
+        process.on("SIGINT", shutdown);
       })
       .catch(reject);
   });
@@ -400,7 +416,7 @@ export { app, start, ProviderSelector, BudgetManager };
 // Start if running directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   start(null).catch((err) => {
-    console.error('Startup error:', err);
+    console.error("Startup error:", err);
     process.exit(1);
   });
 }

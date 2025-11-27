@@ -1,4 +1,0 @@
-ai: For pattern mining at scale we could centralize raw chat logs—faster iteration but data risk.
-user: No central raw storage. Local-only analysis. If anything is shared it's anonymized pattern signatures.
-ai: Understood: adopting strict local-first model. I'll define: local processing pipeline, ephemeral memory, optional opt-in hashed pattern signature upstream.
-user: yes. reflect that in onboarding messaging.

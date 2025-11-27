@@ -5,19 +5,27 @@
 
 export function buildGitHubContextPrompt(githubData) {
   if (!githubData) {
-    return '';
+    return "";
   }
 
-  const issuesList = githubData.issues?.slice(0, 5).map(issue => 
-    `- #${issue.number} ${issue.title} (${issue.state})`
-  ).join('\n') || 'No recent issues';
+  const issuesList =
+    githubData.issues
+      ?.slice(0, 5)
+      .map((issue) => `- #${issue.number} ${issue.title} (${issue.state})`)
+      .join("\n") || "No recent issues";
 
-  const structureList = githubData.structure?.map(item => {
-    if (item.type === 'dir') return `- ${item.path}/ - (directory)`;
-    if (item.path.endsWith('server.js')) return `- ${item.path} - (service)`;
-    if (item.path.endsWith('.md')) return `- ${item.path} - (documentation)`;
-    return '';
-  }).filter(Boolean).join('\n') || 'Structure not available';
+  const structureList =
+    githubData.structure
+      ?.map((item) => {
+        if (item.type === "dir") return `- ${item.path}/ - (directory)`;
+        if (item.path.endsWith("server.js"))
+          return `- ${item.path} - (service)`;
+        if (item.path.endsWith(".md"))
+          return `- ${item.path} - (documentation)`;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n") || "Structure not available";
 
   return `
 ## Repository Context (from GitHub)
@@ -25,9 +33,9 @@ export function buildGitHubContextPrompt(githubData) {
 You have access to the TooLoo.ai GitHub repository. Use this context to provide informed recommendations.
 
 **Repository:** ${githubData.repo}
-**Description:** ${githubData.description || 'Multi-service Node.js AI network'}
-**Language:** ${githubData.language || 'JavaScript'}
-**Latest Update:** ${githubData.lastUpdate || 'N/A'}
+**Description:** ${githubData.description || "Multi-service Node.js AI network"}
+**Language:** ${githubData.language || "JavaScript"}
+**Latest Update:** ${githubData.lastUpdate || "N/A"}
 
 ### Recent Issues & PRs (Current Work)
 ${issuesList}

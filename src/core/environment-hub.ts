@@ -6,13 +6,17 @@ class EnvironmentHub {
   }
   registerComponent(name, instance, capabilities = []) {
     this.components.set(name, { instance, capabilities });
-    console.log(`🔗 Registered component: ${name} (${capabilities.join(', ')})`);
+    console.log(
+      `🔗 Registered component: ${name} (${capabilities.join(", ")})`,
+    );
   }
   getComponent(name) {
     return this.components.get(name)?.instance;
   }
   listComponents() {
-    return Array.from(this.components.entries()).map(([name, { capabilities }]) => ({ name, capabilities }));
+    return Array.from(this.components.entries()).map(
+      ([name, { capabilities }]) => ({ name, capabilities }),
+    );
   }
 }
 

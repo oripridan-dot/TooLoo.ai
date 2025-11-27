@@ -1,9 +1,0 @@
-{
-  "products": ["NovaPlatform", "iPhone", "GoogleSearch", "Tesla"],
-  "integrationThreshold": 0.85,
-  "noveltyThreshold": 0.15,
-  "cycleIntervalMinutes": 60,
-  "maxCycles": 2,
-  "forceIntegration": true,
-  "watchMode": false
-}

@@ -4,8 +4,9 @@ import axios from "axios";
 
 const API_URL = "http://localhost:4000/api/v1";
 
-export const systemCommand = new Command("system")
-  .description("System management and introspection");
+export const systemCommand = new Command("system").description(
+  "System management and introspection",
+);
 
 systemCommand
   .command("introspect")

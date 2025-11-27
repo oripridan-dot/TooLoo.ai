@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 // Initialize service with unified middleware (replaces 40 LOC of boilerplate)
 const svc = new ServiceFoundation(
   "training-server",
-  process.env.TRAINING_PORT || 3001
+  process.env.TRAINING_PORT || 3001,
 );
 svc.setupMiddleware();
 svc.registerHealthEndpoint();
@@ -44,7 +44,7 @@ svc.environmentHub.registerComponent("tracer", tracer, [
 const sourcesStateFile = path.join(
   process.cwd(),
   "data",
-  "sources-github-state.json"
+  "sources-github-state.json",
 );
 function loadSourcesState() {
   try {
@@ -70,7 +70,7 @@ app.use((req, res, next) => {
       "img-src 'self' data: blob:; " +
       "font-src 'self'; " +
       "connect-src 'self'; " +
-      "media-src 'self';"
+      "media-src 'self';",
   );
   next();
 });
@@ -484,7 +484,7 @@ app.post("/api/v1/training/force-masteries", async (req, res) => {
   try {
     const body = req.body || {};
     const threshold = Number(
-      body.threshold || trainingCamp.selection?.targetThreshold || 80
+      body.threshold || trainingCamp.selection?.targetThreshold || 80,
     );
     const result = await trainingCamp.forceMasteries(threshold);
     res.json({ ok: true, ...result, overview: trainingCamp.getOverviewData() });
@@ -498,7 +498,7 @@ app.get("/api/v1/training/force-masteries", async (req, res) => {
   try {
     const q = req.query || {};
     const threshold = Number(
-      q.threshold || trainingCamp.selection?.targetThreshold || 80
+      q.threshold || trainingCamp.selection?.targetThreshold || 80,
     );
     const result = await trainingCamp.forceMasteries(threshold);
     res.json({ ok: true, ...result, overview: trainingCamp.getOverviewData() });
@@ -561,7 +561,7 @@ app.post("/api/v1/training/hyper-speed/micro-batch", async (req, res) => {
         type: "object",
         properties: ["ok", "domains", "questionsProcessed"],
       },
-    }
+    },
   );
 
   if (validatedResult.ok) {
@@ -772,7 +772,7 @@ app.post("/api/v1/challenges/start", async (req, res) => {
     const result = await trainingCamp.startChallenge(
       userId,
       skill,
-      difficulty || "medium"
+      difficulty || "medium",
     );
 
     res.status(201).json({
@@ -929,7 +929,7 @@ app.get("/api/v1/feedback/provider/:provider", (req, res) => {
     const { provider } = req.params;
 
     const providerFeedback = feedbackStore.feedback.filter(
-      (f) => f.provider === provider
+      (f) => f.provider === provider,
     );
     const avg = (arr) =>
       arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
@@ -1069,7 +1069,7 @@ app.get("/api/v1/personalization/profile/:userId", (req, res) => {
   try {
     const { userId } = req.params;
     const userInteractions = feedbackStore.interactions.filter(
-      (i) => i.userId === userId
+      (i) => i.userId === userId,
     );
 
     const profile = {
@@ -1095,7 +1095,7 @@ app.post("/api/v1/personalization/recommendations", (req, res) => {
   try {
     const { userId, currentQuery = "", context = {} } = req.body;
     const userInteractions = feedbackStore.interactions.filter(
-      (i) => i.userId === userId
+      (i) => i.userId === userId,
     );
 
     const recommendations = {
@@ -1149,7 +1149,7 @@ process.on("uncaughtException", (err) => {
   try {
     require("fs").appendFileSync(
       "training-server.log",
-      `Uncaught Exception: ${err.stack || err}\n`
+      `Uncaught Exception: ${err.stack || err}\n`,
     );
   } catch (e) {}
 });
@@ -1158,7 +1158,7 @@ process.on("unhandledRejection", (reason, promise) => {
   try {
     require("fs").appendFileSync(
       "training-server.log",
-      `Unhandled Rejection: ${reason}\n`
+      `Unhandled Rejection: ${reason}\n`,
     );
   } catch (e) {}
 });
@@ -1185,7 +1185,7 @@ app.post("/api/v1/optimization/plan", async (req, res) => {
       // In a real implementation, call Budget Service for summarization
       // const summary = await apiCall(BUDGET_PORT, '/api/v1/budget/summarize', { context });
       console.log(
-        `Context length ${contextLength} exceeds limit ${limit}. Triggering summarization.`
+        `Context length ${contextLength} exceeds limit ${limit}. Triggering summarization.`,
       );
       // For now, we just truncate or log
     }

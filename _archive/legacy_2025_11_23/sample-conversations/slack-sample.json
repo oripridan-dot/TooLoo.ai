@@ -1,5 +1,0 @@
-{"type":"message","user":"U1234","text":"Quick question - do we have approval to move forward with the database migration?","ts":"1728385200.123456","user_profile":{"display_name":"Chris"}}
-{"type":"message","user":"U5678","text":"I think we need to check with the security team first. This affects user data, right?","ts":"1728385320.234567","user_profile":{"display_name":"Dana"}}
-{"type":"message","user":"U1234","text":"Yes, it involves user data. Should I set up a meeting with security or just send them the details?","ts":"1728385440.345678","user_profile":{"display_name":"Chris"}}
-{"type":"message","user":"U5678","text":"Let's do a quick meeting. I prefer face-to-face for these kinds of discussions.","ts":"1728385560.456789","user_profile":{"display_name":"Dana"}}
-{"type":"message","user":"U1234","text":"Perfect! I'll schedule something for this week. Want me to include the full technical specs?","ts":"1728385680.567890","user_profile":{"display_name":"Chris"}}

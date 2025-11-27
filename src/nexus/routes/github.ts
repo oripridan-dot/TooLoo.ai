@@ -43,7 +43,7 @@ router.get("/health", async (req, res) => {
 router.get("/info", async (req, res) => {
   try {
     const { stdout } = await execCommand(
-      "gh repo view --json name,owner,description,url,defaultBranchRef"
+      "gh repo view --json name,owner,description,url,defaultBranchRef",
     );
     res.json({ ok: true, info: JSON.parse(stdout) });
   } catch (error: unknown) {
@@ -56,7 +56,7 @@ router.get("/issues", async (req, res) => {
   try {
     const limit = req.query.limit || 10;
     const { stdout } = await execCommand(
-      `gh issue list --limit ${limit} --json number,title,state,url,createdAt,updatedAt`
+      `gh issue list --limit ${limit} --json number,title,state,url,createdAt,updatedAt`,
     );
     res.json({ ok: true, issues: JSON.parse(stdout) });
   } catch (error: unknown) {
@@ -182,7 +182,7 @@ router.post("/update-file", async (req, res) => {
       const targetBranch = branch || "main";
       // Check if we need to switch branch
       const { stdout: currentBranch } = await execCommand(
-        "git branch --show-current"
+        "git branch --show-current",
       );
 
       if (currentBranch !== targetBranch) {
@@ -234,7 +234,7 @@ router.post("/create-pr", async (req, res) => {
     const baseArg = base ? `--base ${base}` : "";
     const headArg = head ? `--head ${head}` : "";
     const { stdout } = await execCommand(
-      `gh pr create --title "${title}" --body "${body}" ${baseArg} ${headArg}`
+      `gh pr create --title "${title}" --body "${body}" ${baseArg} ${headArg}`,
     );
     res.json({ ok: true, url: stdout });
   } catch (error: unknown) {
@@ -254,7 +254,7 @@ router.post("/create-issue", async (req, res) => {
   try {
     const labelsArg = labels ? `--label "${labels.join('","')}"` : "";
     const { stdout } = await execCommand(
-      `gh issue create --title "${title}" --body "${body}" ${labelsArg}`
+      `gh issue create --title "${title}" --body "${body}" ${labelsArg}`,
     );
     res.json({ ok: true, url: stdout });
   } catch (error: unknown) {
@@ -287,7 +287,7 @@ router.put("/pr/:number/merge", async (req, res) => {
   try {
     const methodArg = method ? `--${method}` : "--merge";
     const { stdout } = await execCommand(
-      `gh pr merge ${number} ${methodArg} --auto`
+      `gh pr merge ${number} ${methodArg} --auto`,
     );
     res.json({ ok: true, message: "PR merged" });
   } catch (error: unknown) {
@@ -306,7 +306,7 @@ router.post("/comment", async (req, res) => {
 
   try {
     const { stdout } = await execCommand(
-      `gh issue comment ${issueNumber} --body "${body}"`
+      `gh issue comment ${issueNumber} --body "${body}"`,
     );
     res.json({ ok: true, url: stdout });
   } catch (error: unknown) {

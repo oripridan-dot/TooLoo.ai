@@ -1,5 +1,5 @@
-// @version 2.1.28
 #!/usr/bin/env node
+// @version 2.1.28
 
 /**
  * Capability Integration Server (Port 3009)
@@ -112,7 +112,7 @@ pluginManager.loadPlugins();
 // Initialize service with unified middleware (replaces 25 LOC of boilerplate)
 const svc = new ServiceFoundation(
   "capabilities-server",
-  process.env.CAPABILITIES_PORT || 3009
+  process.env.CAPABILITIES_PORT || 3009,
 );
 svc.setupMiddleware();
 svc.registerHealthEndpoint();
@@ -147,7 +147,7 @@ async function initDb() {
     db = new sqlite(path.join(DATA_DIR, "capabilities.db"));
     db.pragma("journal_mode = WAL");
     db.prepare(
-      "CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)"
+      "CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)",
     ).run();
   } catch (e) {
     console.warn("SQLite init failed, falling back to JSON:", e.message);
@@ -169,7 +169,7 @@ function dbSet(key, val) {
   if (!DB_MODE || !db) return;
   try {
     db.prepare(
-      "INSERT INTO kv(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v"
+      "INSERT INTO kv(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
     ).run(key, val);
   } catch (e) {
     /* ignore */
@@ -593,16 +593,16 @@ function normalizeActivationStatus() {
   });
   // Recompute totals from components
   const totalDiscovered = Object.values(
-    activationStatus.componentStatus
+    activationStatus.componentStatus,
   ).reduce((s, c) => s + (c.discovered || 0), 0);
   const totalActivated = Object.values(activationStatus.componentStatus).reduce(
     (s, c) => s + (c.activated || 0),
-    0
+    0,
   );
   activationStatus.totalDiscovered = totalDiscovered;
   activationStatus.totalActivated = Math.max(
     0,
-    Math.min(totalActivated, totalDiscovered)
+    Math.min(totalActivated, totalDiscovered),
   );
 }
 
@@ -666,7 +666,7 @@ function simulateMethodActivation(component, method, mode = "safe") {
   const success = Math.random() < config.successRate;
   const latency =
     Math.floor(
-      Math.random() * (config.latencyRange[1] - config.latencyRange[0])
+      Math.random() * (config.latencyRange[1] - config.latencyRange[0]),
     ) + config.latencyRange[0];
 
   return new Promise((resolve) => {
@@ -696,7 +696,7 @@ function simulateMethodActivation(component, method, mode = "safe") {
         const failures = existing.failures + 1;
         const modeIndex = Math.min(
           existing.modeIndex + 1,
-          RETRY_MODES.length - 1
+          RETRY_MODES.length - 1,
         );
         const nextAt =
           Date.now() + RETRY_BASE_MS * Math.pow(2, Math.min(failures, 5));
@@ -752,7 +752,7 @@ function pickNextTargets(maxTotal, maxPerComponent) {
     .sort(
       (a, b) =>
         PRIORITY_SCORE[b.priority] - PRIORITY_SCORE[a.priority] ||
-        RISK_SCORE[b.risk] - RISK_SCORE[a.risk]
+        RISK_SCORE[b.risk] - RISK_SCORE[a.risk],
     );
 
   const selection = {};
@@ -785,7 +785,7 @@ async function runAutoCycle() {
   }
   const cluster = pickNextTargets(
     autoState.maxPerCycle,
-    autoState.maxPerComponent
+    autoState.maxPerComponent,
   );
   const sequencing = autoState.sequencing;
   const mode = autoState.mode;
@@ -820,7 +820,7 @@ async function runAutoCycle() {
     if (!cluster[comp] || cluster[comp].length === 0) continue;
     const methods = cluster[comp];
     const results = await Promise.all(
-      methods.map((m) => simulateMethodActivation(comp, m, effectiveMode))
+      methods.map((m) => simulateMethodActivation(comp, m, effectiveMode)),
     );
     const succ = results.filter((r) => r.success).length;
     const fail = results.length - succ;
@@ -829,7 +829,7 @@ async function runAutoCycle() {
       successful: succ,
       failed: fail,
       averageLatency: Math.round(
-        results.reduce((s, r) => s + r.latency, 0) / results.length
+        results.reduce((s, r) => s + r.latency, 0) / results.length,
       ),
     };
     cycleResults.attempted += results.length;
@@ -874,7 +874,7 @@ setInterval(async () => {
   try {
     const now = Date.now();
     const due = Array.from(retryQueue.entries()).filter(
-      ([, v]) => v.nextAt <= now
+      ([, v]) => v.nextAt <= now,
     );
     for (const [key, v] of due) {
       const [component, method] = key.split(".", 2);
@@ -908,7 +908,7 @@ app.get("/api/v1/capabilities/discovered", (req, res) => {
       riskLevel: info.riskLevel,
       impact: info.impact,
       activationStatus: activationStatus.componentStatus[component],
-    })
+    }),
   );
 
   res.json({
@@ -946,7 +946,7 @@ app.get("/api/v1/capabilities/status", (req, res) => {
                 (activationStatus.activationHistory.filter((a) => a.success)
                   .length /
                   activationStatus.activationHistory.length) *
-                  100
+                  100,
               )
             : 0,
       },
@@ -1027,7 +1027,7 @@ app.post("/api/v1/capabilities/reset", async (req, res) => {
         ) {
           await fs.promises.copyFile(
             STATE_FILE,
-            path.join(DATA_DIR, `capabilities-state.backup-${ts}.json`)
+            path.join(DATA_DIR, `capabilities-state.backup-${ts}.json`),
           );
         }
       }
@@ -1054,7 +1054,7 @@ app.post("/api/v1/capabilities/reset", async (req, res) => {
     });
     activationStatus.totalActivated = 0;
     activationStatus.totalDiscovered = Object.values(
-      activationStatus.componentStatus
+      activationStatus.componentStatus,
     ).reduce((s, c) => s + (c.discovered || 0), 0);
     // Reset retry queue and auto indices
     retryQueue.clear();
@@ -1100,12 +1100,12 @@ app.post("/api/v1/capabilities/sprint", async (req, res) => {
       });
     const tasks = [];
     for (const [component, compStatus] of Object.entries(
-      activationStatus.componentStatus
+      activationStatus.componentStatus,
     )) {
       if (compStatus.pending <= 0) continue;
       const methods = DISCOVERED_CAPABILITIES[component].methods.slice(
         0,
-        compStatus.pending
+        compStatus.pending,
       );
       methods.forEach((m) => tasks.push({ component, method: m }));
     }
@@ -1215,7 +1215,7 @@ app.post("/api/v1/capabilities/activate", async (req, res) => {
     for (let i = 0; i < targetMethods.length; i += batchSize) {
       const batch = targetMethods.slice(i, i + batchSize);
       const batchResults = await Promise.all(
-        batch.map((method) => simulateMethodActivation(component, method))
+        batch.map((method) => simulateMethodActivation(component, method)),
       );
       results.push(...batchResults);
     }
@@ -1339,27 +1339,27 @@ app.post("/api/v1/capabilities/analyze", async (req, res) => {
       methodCount: info.methodCount,
       categories: {
         initialization: info.methods.filter(
-          (m) => m.includes("initialize") || m.includes("load")
+          (m) => m.includes("initialize") || m.includes("load"),
         ).length,
         computation: info.methods.filter(
           (m) =>
             m.includes("calculate") ||
             m.includes("analyze") ||
-            m.includes("generate")
+            m.includes("generate"),
         ).length,
         persistence: info.methods.filter(
           (m) =>
-            m.includes("save") || m.includes("update") || m.includes("record")
+            m.includes("save") || m.includes("update") || m.includes("record"),
         ).length,
         retrieval: info.methods.filter(
           (m) =>
-            m.includes("get") || m.includes("find") || m.includes("extract")
+            m.includes("get") || m.includes("find") || m.includes("extract"),
         ).length,
         prediction: info.methods.filter(
           (m) =>
             m.includes("predict") ||
             m.includes("recommend") ||
-            m.includes("suggest")
+            m.includes("suggest"),
         ).length,
       },
       riskAssessment: {
@@ -1499,8 +1499,8 @@ app.post("/api/v1/capabilities/batch-activate", async (req, res) => {
 
       const componentResults = await Promise.all(
         methods.map((method) =>
-          simulateMethodActivation(component, method, mode)
-        )
+          simulateMethodActivation(component, method, mode),
+        ),
       );
 
       const successCount = componentResults.filter((r) => r.success).length;
@@ -1514,7 +1514,7 @@ app.post("/api/v1/capabilities/batch-activate", async (req, res) => {
         results: componentResults,
         averageLatency: Math.round(
           componentResults.reduce((sum, r) => sum + r.latency, 0) /
-            methods.length
+            methods.length,
         ),
       };
 
@@ -1522,7 +1522,7 @@ app.post("/api/v1/capabilities/batch-activate", async (req, res) => {
       const performanceMultiplier =
         mode === "production" ? 1.5 : mode === "aggressive" ? 1.8 : 1.2;
       batchResults.performanceGains[component] = Math.round(
-        successCount * performanceMultiplier
+        successCount * performanceMultiplier,
       );
 
       batchResults.activationSequence.push({
@@ -1551,13 +1551,13 @@ app.post("/api/v1/capabilities/batch-activate", async (req, res) => {
     // Calculate overall performance impact
     const totalGain = Object.values(batchResults.performanceGains).reduce(
       (sum, gain) => sum + gain,
-      0
+      0,
     );
     batchResults.overallPerformanceGain = Math.round(
-      totalGain / Object.keys(batchResults.components).length
+      totalGain / Object.keys(batchResults.components).length,
     );
     batchResults.successRate = Math.round(
-      (batchResults.successful / batchResults.totalMethods) * 100
+      (batchResults.successful / batchResults.totalMethods) * 100,
     );
 
     res.json({ ok: true, batch: batchResults });
@@ -1576,8 +1576,8 @@ app.post("/api/v1/capabilities/demo-activate", async (req, res) => {
       const sampleMethods = info.methods.slice(0, 2); // 2 methods per component
       const results = await Promise.all(
         sampleMethods.map((method) =>
-          simulateMethodActivation(component, method)
-        )
+          simulateMethodActivation(component, method),
+        ),
       );
       demoResults.push({ component, results });
     }
@@ -1588,7 +1588,7 @@ app.post("/api/v1/capabilities/demo-activate", async (req, res) => {
         message: "Demo activation completed across all components",
         activated: demoResults.reduce(
           (sum, r) => sum + r.results.filter((res) => res.success).length,
-          0
+          0,
         ),
         components: demoResults.length,
         impact: calculatePerformanceImpact(),
@@ -1715,7 +1715,7 @@ app.get("/api/v1/capabilities/insights", (req, res) => {
     const totalCapabilities = Object.keys(status).length;
     const activeCount = Object.values(status).filter((c) => c.enabled).length;
     const healthyCount = Object.values(status).filter(
-      (c) => c.health === "active" || c.health === "healthy"
+      (c) => c.health === "active" || c.health === "healthy",
     ).length;
 
     res.json({
@@ -1776,7 +1776,7 @@ app.post("/api/v1/events/publish", (req, res) => {
 svc.start();
 console.log("⚡ Ready to activate 242 discovered methods across 6 components");
 console.log(
-  "🎯 Capabilities Manager Endpoints: activate, deactivate, status, list, insights"
+  "🎯 Capabilities Manager Endpoints: activate, deactivate, status, list, insights",
 );
 console.log(DB_MODE ? "💾 SQLite persistence: ON" : "💾 JSON persistence: ON");
 

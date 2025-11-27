@@ -1,5 +1,0 @@
-user: Onboarding should deliver value in under a minute. Outline it.
-ai: Proposed 60s pipeline: (0-10s) drag & drop recent chat → (10-25s) local parse + segment progress bar → (25-40s) highlight 3 detected micro patterns → (40-55s) generate draft cognitive snapshot → (55-60s) present 'Next Action' card.
-user: good. add explicit privacy reassurance copy early.
-ai: Inserted at 6s: 'All processing stays on your device. Optional anonymous pattern sharing later.'
-user: approved.

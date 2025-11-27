@@ -9,7 +9,7 @@ export class PrefrontalCortex {
 
   constructor(
     private bus: EventBus,
-    private workspaceRoot: string
+    private workspaceRoot: string,
   ) {
     this.planner = new Planner(bus);
     this.executive = new Executive(bus);
@@ -62,7 +62,9 @@ export class PrefrontalCortex {
       try {
         await this.executive.execute(plan);
       } catch (err: any) {
-        console.error(`[PrefrontalCortex] Execution error (Replan): ${err.message}`);
+        console.error(
+          `[PrefrontalCortex] Execution error (Replan): ${err.message}`,
+        );
       }
     });
   }

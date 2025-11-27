@@ -3,10 +3,7 @@
     "id": "question-answer-sequence",
     "description": "Direct question followed by answer pattern",
     "category": "communication",
-    "indicators": [
-      "question-mark",
-      "response-without-question"
-    ],
+    "indicators": ["question-mark", "response-without-question"],
     "confidence": 4.568627450980392,
     "occurrences": 466,
     "conversationCoverage": 101,
@@ -19,9 +16,7 @@
     "id": "clarification-seeking",
     "description": "Active seeking of clarification or understanding",
     "category": "communication",
-    "indicators": [
-      "clarification-requests"
-    ],
+    "indicators": ["clarification-requests"],
     "confidence": 0.7647058823529411,
     "occurrences": 78,
     "conversationCoverage": 78,
@@ -34,9 +29,7 @@
     "id": "agreement-expression",
     "description": "Explicit agreement or confirmation",
     "category": "consensus",
-    "indicators": [
-      "agreement-words"
-    ],
+    "indicators": ["agreement-words"],
     "confidence": 0.5490196078431373,
     "occurrences": 56,
     "conversationCoverage": 40,
@@ -49,9 +42,7 @@
     "id": "option-evaluation",
     "description": "Systematic evaluation of multiple options",
     "category": "decision-making",
-    "indicators": [
-      "option-references"
-    ],
+    "indicators": ["option-references"],
     "confidence": 0.19607843137254902,
     "occurrences": 20,
     "conversationCoverage": 20,
@@ -64,9 +55,7 @@
     "id": "decision-announcement",
     "description": "Clear announcement of final decision",
     "category": "decision-making",
-    "indicators": [
-      "decision-statements"
-    ],
+    "indicators": ["decision-statements"],
     "confidence": 0.19607843137254902,
     "occurrences": 20,
     "conversationCoverage": 20,

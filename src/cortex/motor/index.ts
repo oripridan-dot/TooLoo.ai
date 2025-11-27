@@ -10,7 +10,7 @@ export class MotorCortex {
 
   constructor(
     private bus: EventBus,
-    private workspaceRoot: string
+    private workspaceRoot: string,
   ) {
     this.executor = new Executor(workspaceRoot);
   }
@@ -31,12 +31,12 @@ export class MotorCortex {
     this.bus.on("motor:execute", async (event: SynapsysEvent) => {
       const payload = event.payload;
       console.log(
-        `[MotorCortex] Received execution request: ${payload.command}`
+        `[MotorCortex] Received execution request: ${payload.command}`,
       );
 
       const result = await this.executor.runCommand(
         payload.command,
-        payload.cwd
+        payload.cwd,
       );
 
       this.bus.publish("cortex", "motor:result", {

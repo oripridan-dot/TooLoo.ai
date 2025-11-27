@@ -1,5 +1,5 @@
-// @version 2.1.28
 #!/usr/bin/env node
+// @version 2.1.28
 
 /**
  * Advanced Reporting Server (Port 3008)
@@ -38,7 +38,7 @@ import { setupScorecardRoutes } from "../../legacy_migration/servers/provider-sc
 // Initialize service with unified middleware (replaces 25 LOC of boilerplate)
 const svc = new ServiceFoundation(
   "reports-server",
-  process.env.REPORTS_PORT || 3008
+  process.env.REPORTS_PORT || 3008,
 );
 svc.setupMiddleware();
 svc.registerHealthEndpoint();
@@ -77,7 +77,7 @@ eventBus.subscribe("learning.*", (event) => {
     metricsCollector.trackProgress(
       event.userId,
       "assessment_score",
-      event.metadata.score
+      event.metadata.score,
     );
   }
 });
@@ -152,9 +152,9 @@ async function fetchService(service, endpoint) {
         fallback: () =>
           new Response(
             JSON.stringify({ ok: false, error: "Service unavailable" }),
-            { status: 503 }
+            { status: 503 },
           ),
-      }
+      },
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
@@ -180,7 +180,7 @@ async function loadPeerProfiles() {
     process.cwd(),
     "data",
     "benchmarks",
-    "peers.json"
+    "peers.json",
   );
   try {
     const raw = await fs.readFile(peersPath, "utf-8");
@@ -226,7 +226,7 @@ async function loadPeerProfiles() {
           reasoning: 0.95, // State of the art
           coding: 0.92, // State of the art
           speed: 0.85,
-          toolUse: 0.90,
+          toolUse: 0.9,
           memory: 0.85,
         },
       ],
@@ -252,7 +252,7 @@ function computeSelfMetrics({ training, meta, budget }) {
   const speed = clamp01(as * 0.5 + lv * 0.5);
   // Tool use proxy: usage of services (budget, coach, segmentation, etc.). If budget present, give base.
   const toolUse = clamp01(
-    0.6 + (meta?.activityLog?.length ? 0.2 : 0) + (budget ? 0.2 : 0)
+    0.6 + (meta?.activityLog?.length ? 0.2 : 0) + (budget ? 0.2 : 0),
   );
   // Memory proxy: retention metric or average of retention/transfer
   const memory = clamp01(retention * 0.6 + transfer * 0.4);
@@ -304,49 +304,49 @@ function suggestActions(gaps) {
       "high",
       "reasoning",
       "Run meta-learning run-all and tune strategies; add adversarial test cases to training camp",
-      "+15% reasoning"
+      "+15% reasoning",
     );
   if (gaps.coding > 0.05)
     add(
       "high",
       "coding",
       "Expand artifact generators with stricter quality gates and add code self-checks",
-      "+10% coding"
+      "+10% coding",
     );
   if (gaps.speed > 0.05)
     add(
       "medium",
       "speed",
       "Enable provider burst with higher concurrency and cache hot prompts",
-      "+10% speed"
+      "+10% speed",
     );
   if (gaps.toolUse > 0.05)
     add(
       "medium",
       "tool-use",
       "Increase Auto-Coach micro-batches and integrate segmentation insights into workflows",
-      "+8% tool use"
+      "+8% tool use",
     );
   if (gaps.memory > 0.05)
     add(
       "medium",
       "memory",
       "Persist more cross-session signals and enable retention boosters in meta-learning",
-      "+8% memory"
+      "+8% memory",
     );
   if (gaps.costPerCall > 0.001)
     add(
       "high",
       "cost",
       "Default to cheapest available provider and raise TTL cache window for repeated prompts",
-      "-30% cost"
+      "-30% cost",
     );
   if (actions.length === 0)
     add(
       "low",
       "maintenance",
       "Maintain current settings; monitor performance weekly",
-      "stability"
+      "stability",
     );
   return actions;
 }
@@ -365,7 +365,7 @@ function generateInsights(data) {
       data.training.domains.reduce((sum, d) => sum + (d.mastery || 0), 0) /
       data.training.domains.length;
     const masteredDomains = data.training.domains.filter(
-      (d) => (d.mastery || 0) >= 80
+      (d) => (d.mastery || 0) >= 80,
     ).length;
 
     insights.push({
@@ -383,11 +383,11 @@ function generateInsights(data) {
   if (data.meta?.metrics) {
     const lvGain = calculateGrowthRate(
       data.meta.metrics.baseline.learningVelocity,
-      data.meta.metrics.current.learningVelocity
+      data.meta.metrics.current.learningVelocity,
     );
     const asGain = calculateGrowthRate(
       data.meta.metrics.baseline.adaptationSpeed,
-      data.meta.metrics.current.adaptationSpeed
+      data.meta.metrics.current.adaptationSpeed,
     );
 
     insights.push({
@@ -402,7 +402,7 @@ function generateInsights(data) {
   // Segmentation insights
   if (data.segmentation?.components) {
     const activeComponents = Object.values(data.segmentation.components).filter(
-      (c) => c === "active"
+      (c) => c === "active",
     ).length;
 
     insights.push({
@@ -458,7 +458,7 @@ app.get("/api/v1/reports/comprehensive", async (req, res) => {
           methods:
             capabilities.learningTargets?.reduce(
               (sum, target) => sum + (target.methods?.length || 0),
-              0
+              0,
             ) || 0,
         }
       : null;
@@ -582,7 +582,7 @@ app.get("/api/v1/reports/ai-comparison/latest", async (req, res) => {
     const outDir = path.join(process.cwd(), "data", "reports");
     await ensureDir(outDir);
     const files = (await fs.readdir(outDir)).filter(
-      (f) => f.startsWith("ai-comparison-") && f.endsWith(".json")
+      (f) => f.startsWith("ai-comparison-") && f.endsWith(".json"),
     );
     if (!files.length)
       return res.json({ ok: true, note: "No comparison reports found" });
@@ -609,11 +609,11 @@ app.get("/api/v1/reports/delta", async (req, res) => {
       });
     const prevRaw = await fs.readFile(
       path.join(outDir, files[files.length - 2]),
-      "utf-8"
+      "utf-8",
     );
     const currRaw = await fs.readFile(
       path.join(outDir, files[files.length - 1]),
-      "utf-8"
+      "utf-8",
     );
     const prev = JSON.parse(prevRaw);
     const curr = JSON.parse(currRaw);
@@ -622,7 +622,7 @@ app.get("/api/v1/reports/delta", async (req, res) => {
       metrics.map((k) => [
         k,
         Number(((curr.self?.[k] || 0) - (prev.self?.[k] || 0)).toFixed(4)),
-      ])
+      ]),
     );
     const avgMasteryDelta =
       (curr.self?.avgMastery || 0) - (prev.self?.avgMastery || 0);
@@ -675,7 +675,7 @@ app.post("/api/v1/reports/ai-external-critique", async (req, res) => {
       Array.isArray(training?.domains) && training.domains.length > 0
         ? Math.round(
             training.domains.reduce((s, d) => s + (d.mastery || 0), 0) /
-              training.domains.length
+              training.domains.length,
           )
         : 0;
     const metaSummary = meta?.metrics?.current
@@ -709,7 +709,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
     // If no providers configured, return early with guidance
     const providerStatus = getProviderStatus();
     const anyAvailable = Object.values(providerStatus).some(
-      (s) => s.available && s.enabled
+      (s) => s.available && s.enabled,
     );
     const critiques = [];
     const roundsClamped = Math.max(1, Math.min(5, Number(rounds) || 1));
@@ -718,7 +718,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
       return Promise.race([
         promise,
         new Promise((_, rej) =>
-          setTimeout(() => rej(new Error("timeout")), ms)
+          setTimeout(() => rej(new Error("timeout")), ms),
         ),
       ]);
     }
@@ -740,7 +740,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
               taskType: "analysis",
               criticality: level,
             }),
-            timeoutMs
+            timeoutMs,
           );
           critiques.push({
             ok: true,
@@ -760,7 +760,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
           const url = `${SERVICES.budget}/api/v1/providers/burst`;
           const r = await fetch(
             url +
-              `?prompt=${encodeURIComponent(systemSummary.slice(0, 200))}&ttlSeconds=30&criticality=${encodeURIComponent(level)}`
+              `?prompt=${encodeURIComponent(systemSummary.slice(0, 200))}&ttlSeconds=30&criticality=${encodeURIComponent(level)}`,
           );
           const j = await r.json();
           const text = j?.text || "[mock] critique unavailable";
@@ -782,15 +782,15 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
     await ensureDir(outDir);
     const rawPath = path.join(
       outDir,
-      `ai-external-critiques-${Date.now()}.json`
+      `ai-external-critiques-${Date.now()}.json`,
     );
     await fs.writeFile(
       rawPath,
       JSON.stringify(
         { generated: new Date().toISOString(), critiques },
         null,
-        2
-      )
+        2,
+      ),
     );
 
     res.json({
@@ -847,7 +847,7 @@ app.get("/api/v1/reports/ai-external-critique/run", async (req, res) => {
       Array.isArray(training?.domains) && training.domains.length > 0
         ? Math.round(
             training.domains.reduce((s, d) => s + (d.mastery || 0), 0) /
-              training.domains.length
+              training.domains.length,
           )
         : 0;
     const metaSummary = meta?.metrics?.current
@@ -880,7 +880,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
 
     const providerStatus = getProviderStatus();
     const anyAvailable = Object.values(providerStatus).some(
-      (s) => s.available && s.enabled
+      (s) => s.available && s.enabled,
     );
     const critiques = [];
     const roundsClamped = Math.max(1, Math.min(5, Number(rounds) || 1));
@@ -889,7 +889,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
       return Promise.race([
         promise,
         new Promise((_, rej) =>
-          setTimeout(() => rej(new Error("timeout")), ms)
+          setTimeout(() => rej(new Error("timeout")), ms),
         ),
       ]);
     }
@@ -912,7 +912,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
               taskType: "analysis",
               criticality: level,
             }),
-            timeoutMs
+            timeoutMs,
           );
           critiques.push({
             ok: true,
@@ -931,7 +931,7 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
           const url = `${SERVICES.budget}/api/v1/providers/burst`;
           const r = await fetch(
             url +
-              `?prompt=${encodeURIComponent(systemSummary.slice(0, 200))}&ttlSeconds=30&criticality=${encodeURIComponent(level)}`
+              `?prompt=${encodeURIComponent(systemSummary.slice(0, 200))}&ttlSeconds=30&criticality=${encodeURIComponent(level)}`,
           );
           const j = await r.json();
           const text = j?.text || "[mock] critique unavailable";
@@ -952,15 +952,15 @@ Answer format (JSON): { gaps:[{area, gap, severity}], actions:[{priority, area, 
     await ensureDir(outDir);
     const rawPath = path.join(
       outDir,
-      `ai-external-critiques-${Date.now()}.json`
+      `ai-external-critiques-${Date.now()}.json`,
     );
     await fs.writeFile(
       rawPath,
       JSON.stringify(
         { generated: new Date().toISOString(), critiques },
         null,
-        2
-      )
+        2,
+      ),
     );
 
     res.json({
@@ -985,7 +985,7 @@ app.get("/api/v1/reports/ai-external-critique/latest", async (req, res) => {
     const outDir = path.join(process.cwd(), "data", "reports");
     await ensureDir(outDir);
     const files = (await fs.readdir(outDir)).filter(
-      (f) => f.startsWith("ai-external-critiques-") && f.endsWith(".json")
+      (f) => f.startsWith("ai-external-critiques-") && f.endsWith(".json"),
     );
     if (!files.length)
       return res.json({ ok: true, note: "No external critiques found" });
@@ -1002,7 +1002,7 @@ app.get("/api/v1/reports/performance", async (req, res) => {
   try {
     const recentWindow = Math.max(
       1,
-      Math.min(1000, Number(req.query.recentWindow || 50))
+      Math.min(1000, Number(req.query.recentWindow || 50)),
     );
     const component =
       typeof req.query.component === "string" ? req.query.component : "all";
@@ -1102,7 +1102,7 @@ app.get("/api/v1/reports/evolution", async (req, res) => {
     // Training milestones
     if (training?.data?.domains) {
       const completedDomains = training.data.domains.filter(
-        (d) => (d.mastery || 0) >= 80
+        (d) => (d.mastery || 0) >= 80,
       );
       timeline.push({
         phase: "Training Mastery",
@@ -1113,12 +1113,12 @@ app.get("/api/v1/reports/evolution", async (req, res) => {
           averageMastery: Math.round(
             training.data.domains.reduce(
               (sum, d) => sum + (d.mastery || 0),
-              0
-            ) / training.data.domains.length
+              0,
+            ) / training.data.domains.length,
           ),
           totalAttempts: training.data.domains.reduce(
             (sum, d) => sum + (d.attempts || 0),
-            0
+            0,
           ),
         },
       });
@@ -1280,8 +1280,8 @@ app.get("/api/v1/reports/dashboard", async (req, res) => {
           ? Math.round(
               training.data.domains.reduce(
                 (sum, d) => sum + (d.mastery || 0),
-                0
-              ) / training.data.domains.length
+                0,
+              ) / training.data.domains.length,
             )
           : 0,
         learningVelocity: meta?.report?.metrics?.current?.learningVelocity || 0,
@@ -1321,7 +1321,7 @@ app.get("/api/v1/reports/critiques/analysis", async (req, res) => {
     await ensureDir(outDir);
     const all = (await fs.readdir(outDir))
       .filter(
-        (f) => f.startsWith("ai-external-critiques-") && f.endsWith(".json")
+        (f) => f.startsWith("ai-external-critiques-") && f.endsWith(".json"),
       )
       .sort();
     const latestFiles = all.slice(-10);
@@ -1411,7 +1411,7 @@ app.get("/api/v1/reports/critiques/analysis", async (req, res) => {
       ok: true,
       analysis: {
         gapsByArea: Object.values(gapsByArea).sort(
-          (a, b) => b.avgSeverity - a.avgSeverity
+          (a, b) => b.avgSeverity - a.avgSeverity,
         ),
         actionsByPriority,
         providerStats,
@@ -1420,15 +1420,15 @@ app.get("/api/v1/reports/critiques/analysis", async (req, res) => {
           totalCritiques: critiques.length,
           totalGaps: Object.values(gapsByArea).reduce(
             (sum, area) => sum + area.count,
-            0
+            0,
           ),
           totalActions: Object.values(actionsByPriority).reduce(
             (sum, arr) => sum + arr.length,
-            0
+            0,
           ),
           topArea:
             Object.values(gapsByArea).sort(
-              (a, b) => b.avgSeverity - a.avgSeverity
+              (a, b) => b.avgSeverity - a.avgSeverity,
             )[0]?.area || "N/A",
         },
       },
@@ -1453,14 +1453,14 @@ app.get("/api/v1/reports/budget-dashboard/:cohortId", async (req, res) => {
     // Fetch budget metrics from budget-server if available
     const budgetMetrics = await fetchService(
       "budget",
-      `/api/v1/budget/metrics/${cohortId}`
+      `/api/v1/budget/metrics/${cohortId}`,
     );
     const metrics = budgetMetrics?.metrics || costCalc.getMetrics(cohortId);
 
     // Get policy
     const policy = await fetchService(
       "budget",
-      `/api/v1/budget/policy/${cohortId}`
+      `/api/v1/budget/policy/${cohortId}`,
     );
 
     res.json({
@@ -1548,18 +1548,18 @@ app.get("/api/v1/reports/cost-efficiency", async (req, res) => {
         totalCohorts: Object.keys(data.cohortMetrics).length,
         totalSpent: Object.values(data.cohortMetrics).reduce(
           (sum, m) => sum + m.totalSpent,
-          0
+          0,
         ),
         totalCapabilitiesActivated: Object.values(data.cohortMetrics).reduce(
           (sum, m) => sum + m.capabilitiesActivated,
-          0
+          0,
         ),
         avgCostPerCapability:
           Object.values(data.cohortMetrics).length > 0
             ? (
                 Object.values(data.cohortMetrics).reduce(
                   (sum, m) => sum + (m.costPerCapability || 0),
-                  0
+                  0,
                 ) / Object.values(data.cohortMetrics).length
               ).toFixed(2)
             : 0,
@@ -1586,7 +1586,7 @@ app.post("/api/v1/reports/analyze", async (req, res) => {
 
     // Generate report
     const report = AnalyticsEngine.generateReport(
-      Object.keys(AnalyticsEngine.metrics)
+      Object.keys(AnalyticsEngine.metrics),
     );
 
     res.json({
@@ -1636,7 +1636,7 @@ app.post("/api/v1/reports/anomalies", async (req, res) => {
       anomalies,
       totalAnomalies: Object.values(anomalies).reduce(
         (sum, arr) => sum + arr.length,
-        0
+        0,
       ),
       timestamp: new Date().toISOString(),
     });
@@ -1730,8 +1730,8 @@ app.post("/api/v1/present/batch", async (req, res) => {
             providerResponses: p.providerResponses || {},
             userContext: p.userContext || {},
           })
-          .catch((err) => ({ error: err.message, failed: true }))
-      )
+          .catch((err) => ({ error: err.message, failed: true })),
+      ),
     );
 
     const processingTime = Date.now() - startTime;
@@ -1792,7 +1792,7 @@ app.get("/api/v1/metrics/user/:userId", (req, res) => {
 
     const metrics = presentationEngine.metricsCollector?.getUserMetrics(
       userId,
-      timeframe || "all"
+      timeframe || "all",
     );
 
     if (!metrics) {
@@ -1864,7 +1864,7 @@ app.get("/api/v1/metrics/trend/:userId", (req, res) => {
     const trend = presentationEngine.metricsCollector?.getMetricsTrend(
       userId,
       metric || "sessions",
-      parseInt(days) || 30
+      parseInt(days) || 30,
     );
 
     res.json({ userId, trend: trend || {} });
@@ -1881,7 +1881,7 @@ app.get("/api/v1/metrics/global", (req, res) => {
   try {
     const { timeframe } = req.query;
     const metrics = presentationEngine.metricsCollector?.getGlobalMetrics(
-      timeframe || "week"
+      timeframe || "week",
     );
 
     res.json({ globalMetrics: metrics || {} });
@@ -1898,7 +1898,7 @@ app.get("/api/v1/metrics/top-performers", (req, res) => {
   try {
     const { limit } = req.query;
     const performers = presentationEngine.metricsCollector?.getTopPerformers(
-      parseInt(limit) || 10
+      parseInt(limit) || 10,
     );
 
     res.json({ topPerformers: performers || [] });
@@ -1992,7 +1992,7 @@ app.get("/api/v1/badges/check-eligibility/:userId", (req, res) => {
     const eligible = presentationEngine.badgeSystem?.checkEligibility(
       userId,
       metrics,
-      engagementScore
+      engagementScore,
     );
 
     res.json({ userId, eligibleBadges: eligible || [] });
@@ -2009,7 +2009,7 @@ app.get("/api/v1/badges/most-awarded", (req, res) => {
   try {
     const { limit } = req.query;
     const badges = presentationEngine.badgeSystem?.getMostAwardedBadges(
-      parseInt(limit) || 5
+      parseInt(limit) || 5,
     );
 
     res.json({ mostAwarded: badges || [] });
@@ -2026,7 +2026,7 @@ app.get("/api/v1/badges/leaderboard", (req, res) => {
   try {
     const { limit } = req.query;
     const leaderboard = presentationEngine.badgeSystem?.getGlobalLeaderboard(
-      parseInt(limit) || 10
+      parseInt(limit) || 10,
     );
 
     res.json({ leaderboard: leaderboard || [] });
@@ -2117,7 +2117,7 @@ app.get("/api/v1/system/observability", (req, res) => {
           Object.entries(serviceBreakers).map(([name, cb]) => [
             name,
             cb.getState(),
-          ])
+          ]),
         ),
       },
       timestamp: new Date().toISOString(),

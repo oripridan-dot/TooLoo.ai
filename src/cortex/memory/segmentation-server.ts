@@ -1,5 +1,5 @@
-// @version 2.1.28
 #!/usr/bin/env node
+// @version 2.1.28
 
 /**
  * Segmentation Server (Port 3007)
@@ -24,7 +24,7 @@ import { DistributedTracer } from "../../lib/distributed-tracer.js";
 // Initialize service with unified middleware (replaces 25 LOC of boilerplate)
 const svc = new ServiceFoundation(
   "segmentation-server",
-  process.env.SEGMENTATION_PORT || 3007
+  process.env.SEGMENTATION_PORT || 3007,
 );
 svc.setupMiddleware();
 svc.registerHealthEndpoint();

@@ -4,8 +4,36 @@ import { bus } from "../../core/event-bus.js";
 import { precog } from "../../precog/index.js";
 import { cortex, visualCortex } from "../../cortex/index.js";
 import { successResponse, errorResponse } from "../utils.js";
+import fs from "fs/promises";
+import path from "path";
 
 const router = Router();
+const HISTORY_FILE = path.join(process.cwd(), "data", "chat-history.json");
+
+// Helper to load history
+async function loadHistory() {
+  try {
+    const data = await fs.readFile(HISTORY_FILE, "utf-8");
+    return JSON.parse(data);
+  } catch (e) {
+    return [];
+  }
+}
+
+// Helper to save message
+async function saveMessage(msg: any) {
+  try {
+    const history = await loadHistory();
+    history.push(msg);
+    // Keep last 1000 messages to prevent infinite growth
+    if (history.length > 1000) {
+      history.splice(0, history.length - 1000);
+    }
+    await fs.writeFile(HISTORY_FILE, JSON.stringify(history, null, 2));
+  } catch (err) {
+    console.error("[Chat] Failed to save history:", err);
+  }
+}
 
 router.post("/message", async (req, res) => {
   // Extend timeout for deep reasoning models (Gemini 3 Pro)
@@ -13,23 +41,52 @@ router.post("/message", async (req, res) => {
 
   const { message, mode = "quick", context, attachments } = req.body;
 
+  // Save User Message
+  await saveMessage({
+    id: Date.now().toString(),
+    type: "user",
+    content: message,
+    timestamp: new Date().toISOString(),
+  });
+
   try {
     console.log(`[Chat] Processing (${mode}): ${message.substring(0, 50)}...`);
 
     // Detect image generation requests with expanded keywords
     const lowerMessage = message.toLowerCase();
-    
+
     // Improved image detection logic
-    const actionVerbs = ["generate", "create", "make", "show", "demonstrate", "visualize", "draw", "render", "paint"];
-    const nouns = ["image", "picture", "photo", "visual", "logo", "icon", "drawing", "illustration"];
-    
+    const actionVerbs = [
+      "generate",
+      "create",
+      "make",
+      "show",
+      "demonstrate",
+      "visualize",
+      "draw",
+      "render",
+      "paint",
+    ];
+    const nouns = [
+      "image",
+      "picture",
+      "photo",
+      "visual",
+      "logo",
+      "icon",
+      "drawing",
+      "illustration",
+    ];
+
     const directActions = ["visualize", "draw", "paint"];
-    const hasDirectAction = directActions.some(verb => lowerMessage.includes(verb));
-    const hasVerb = actionVerbs.some(verb => lowerMessage.includes(verb));
-    const hasNoun = nouns.some(noun => lowerMessage.includes(noun));
-    
+    const hasDirectAction = directActions.some((verb) =>
+      lowerMessage.includes(verb),
+    );
+    const hasVerb = actionVerbs.some((verb) => lowerMessage.includes(verb));
+    const hasNoun = nouns.some((noun) => lowerMessage.includes(noun));
+
     const wantsImage = hasDirectAction || (hasVerb && hasNoun);
-    
+
     if (wantsImage) {
       console.log("[Chat] Image intent detected. Generating...");
       try {
@@ -40,10 +97,21 @@ router.post("/message", async (req, res) => {
         if (imageResult.images && imageResult.images.length > 0) {
           const img = imageResult.images[0];
           const imgTag = `![Generated Image](data:${img.mimeType};base64,${img.data})`;
+          const responseText = `Here is the image you requested:\n\n${imgTag}`;
+
+          // Save Assistant Response (Image)
+          await saveMessage({
+            id: Date.now().toString(),
+            type: "assistant",
+            content: responseText,
+            provider: "dall-e-3",
+            model: "dall-e-3",
+            timestamp: new Date().toISOString(),
+          });
 
           res.json(
             successResponse({
-              response: `Here is the image you requested:\n\n${imgTag}`,
+              response: responseText,
               provider: "dall-e-3",
               model: "dall-e-3",
             }),
@@ -137,6 +205,16 @@ Your goal is to use these tools to serve the user. Never claim to be isolated or
       taskType: taskType,
     });
 
+    // Save Assistant Response
+    await saveMessage({
+      id: Date.now().toString(),
+      type: "assistant",
+      content: result.content,
+      provider: result.provider,
+      model: result.model,
+      timestamp: new Date().toISOString(),
+    });
+
     res.json(
       successResponse({
         response: result.content,
@@ -212,12 +290,17 @@ router.post("/synthesis", async (req, res) => {
 });
 
 router.get("/history", async (req, res) => {
-  // Return empty history for now
-  res.json(successResponse({ history: [] }));
+  const history = await loadHistory();
+  res.json(successResponse({ history }));
 });
 
 router.delete("/history", async (req, res) => {
-  res.json(successResponse({}));
+  try {
+    await fs.writeFile(HISTORY_FILE, JSON.stringify([], null, 2));
+    res.json(successResponse({}));
+  } catch (err) {
+    res.status(500).json(errorResponse("Failed to clear history"));
+  }
 });
 
 // Pro endpoint - Enhanced chat with advanced features
@@ -243,21 +326,44 @@ router.post("/pro", async (req, res) => {
 
     // Detect image generation requests
     const lowerMessage = message.toLowerCase();
-    
+
     // Improved image detection logic
-    const actionVerbs = ["generate", "create", "make", "show", "demonstrate", "visualize", "draw", "render", "paint"];
-    const nouns = ["image", "picture", "photo", "visual", "logo", "icon", "drawing", "illustration"];
-    
+    const actionVerbs = [
+      "generate",
+      "create",
+      "make",
+      "show",
+      "demonstrate",
+      "visualize",
+      "draw",
+      "render",
+      "paint",
+    ];
+    const nouns = [
+      "image",
+      "picture",
+      "photo",
+      "visual",
+      "logo",
+      "icon",
+      "drawing",
+      "illustration",
+    ];
+
     const directActions = ["visualize", "draw", "paint"];
-    const hasDirectAction = directActions.some(verb => lowerMessage.includes(verb));
-    const hasVerb = actionVerbs.some(verb => lowerMessage.includes(verb));
-    const hasNoun = nouns.some(noun => lowerMessage.includes(noun));
-    
+    const hasDirectAction = directActions.some((verb) =>
+      lowerMessage.includes(verb),
+    );
+    const hasVerb = actionVerbs.some((verb) => lowerMessage.includes(verb));
+    const hasNoun = nouns.some((noun) => lowerMessage.includes(noun));
+
     const wantsImage = hasDirectAction || (hasVerb && hasNoun);
 
     if (wantsImage) {
       try {
-        console.log("[Chat Pro] Detected image request, generating with DALL-E 3...");
+        console.log(
+          "[Chat Pro] Detected image request, generating with DALL-E 3...",
+        );
         const imageResult = await visualCortex.imagine(message, {
           provider: "openai",
         });

@@ -1,10 +1,13 @@
-// @version 2.2.4
+// @version 2.2.8
 import { Plan, PlanStep } from "../../cortex/planning/planner.js";
 import { Reflector } from "../../cortex/planning/reflector.js";
 import { SandboxManager } from "../../core/sandbox/sandbox-manager.js";
 import { ArtifactLedger } from "./artifact-ledger.js";
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { config } from "../../core/config.js";
+import { bus } from "../../core/event-bus.js";
+import { OpenAIImageProvider } from "../../precog/providers/openai-image.js";
+import * as fs from "fs/promises";
+import * as path from "path";
 
 export class ExecutionEngine {
   private sandboxManager: SandboxManager;
@@ -19,24 +22,44 @@ export class ExecutionEngine {
 
   async executePlan(plan: Plan): Promise<void> {
     console.log(`[ExecutionEngine] Starting execution of plan: ${plan.id}`);
+
+    bus.publish("nexus", "planning:plan:start", { plan });
+
     plan.status = "in-progress";
 
     // Create a sandbox for this plan execution
     const sandbox = await this.sandboxManager.createSandbox({
       id: plan.id,
-      cwd: process.cwd() // For local sandbox, we use CWD, but be careful!
+      cwd: process.cwd(), // For local sandbox, we use CWD, but be careful!
+      mode: config.SANDBOX_MODE,
     });
 
     try {
       for (let i = 0; i < plan.steps.length; i++) {
         const step = plan.steps[i];
-        console.log(`[ExecutionEngine] Executing step ${i + 1}/${plan.steps.length}: ${step.description}`);
+        console.log(
+          `[ExecutionEngine] Executing step ${i + 1}/${plan.steps.length}: ${step.description}`,
+        );
+
+        bus.publish("nexus", "planning:step:start", {
+          planId: plan.id,
+          step,
+          index: i,
+          total: plan.steps.length,
+        });
+
         step.status = "running";
 
         try {
           const result = await this.executeStep(step, sandbox);
           step.result = result;
           step.status = "completed";
+
+          bus.publish("nexus", "planning:step:complete", {
+            planId: plan.id,
+            step,
+            result,
+          });
 
           // Register artifact if applicable
           if (step.type === "file:write") {
@@ -45,36 +68,49 @@ export class ExecutionEngine {
               title: path.basename(step.payload.path),
               content: step.payload.content,
               description: step.description,
-              relatedTaskId: step.id
+              relatedTaskId: step.id,
             });
           } else if (step.type === "code:execute" || step.type === "command") {
-             // Register output as artifact
-             await this.ledger.registerArtifact({
-               type: "data",
-               title: `Output of ${step.description}`,
-               content: result.stdout || result.stderr,
-               description: `Execution output for step ${step.id}`,
-               relatedTaskId: step.id
-             });
+            // Register output as artifact
+            await this.ledger.registerArtifact({
+              type: "data",
+              title: `Output of ${step.description}`,
+              content: result.stdout || result.stderr,
+              description: `Execution output for step ${step.id}`,
+              relatedTaskId: step.id,
+            });
           }
 
           // Reflect on success
           const reflection = await this.reflector.reflect(step, result, plan);
           if (reflection.action === "RETRY" || reflection.action === "REPLAN") {
-             // Handle dynamic replanning (simplified for now)
-             console.warn(`[ExecutionEngine] Reflector suggested ${reflection.action}, but dynamic replanning is not fully implemented yet.`);
+            // Handle dynamic replanning (simplified for now)
+            console.warn(
+              `[ExecutionEngine] Reflector suggested ${reflection.action}, but dynamic replanning is not fully implemented yet.`,
+            );
           }
-
         } catch (error: any) {
           console.error(`[ExecutionEngine] Step failed: ${error.message}`);
           step.status = "failed";
           step.result = { error: error.message };
           plan.status = "failed";
-          
+
+          bus.publish("nexus", "planning:step:failed", {
+            planId: plan.id,
+            step,
+            error: error.message,
+          });
+
           // Reflect on failure
-          const reflection = await this.reflector.reflect(step, { error: error.message, ok: false }, plan);
-          console.log(`[ExecutionEngine] Reflector analysis: ${JSON.stringify(reflection)}`);
-          
+          const reflection = await this.reflector.reflect(
+            step,
+            { error: error.message, ok: false },
+            plan,
+          );
+          console.log(
+            `[ExecutionEngine] Reflector analysis: ${JSON.stringify(reflection)}`,
+          );
+
           throw error; // Stop execution
         }
       }
@@ -82,6 +118,13 @@ export class ExecutionEngine {
       plan.status = "completed";
       console.log(`[ExecutionEngine] Plan completed successfully.`);
 
+      bus.publish("nexus", "planning:plan:complete", { plan });
+    } catch (error: any) {
+      bus.publish("nexus", "planning:plan:failed", {
+        plan,
+        error: error.message,
+      });
+      throw error;
     } finally {
       await this.sandboxManager.terminateAll();
     }
@@ -91,32 +134,61 @@ export class ExecutionEngine {
     switch (step.type) {
       case "command":
         return sandbox.exec(step.payload.command);
-      
+
       case "file:write":
         await fs.mkdir(path.dirname(step.payload.path), { recursive: true });
         await fs.writeFile(step.payload.path, step.payload.content);
         return { ok: true };
 
-      case "file:read":
-        const content = await fs.readFile(step.payload.path, 'utf-8');
+      case "file:read": {
+        const content = await fs.readFile(step.payload.path, "utf-8");
         return { ok: true, content };
+      }
 
-      case "code:execute":
+      case "code:execute": {
         const lang = step.payload.language;
         const code = step.payload.code;
-        const scriptPath = path.join("temp", `script-${step.id}.${lang === 'python' ? 'py' : 'js'}`);
-        
+        const scriptPath = path.join(
+          "temp",
+          `script-${step.id}.${lang === "python" ? "py" : "js"}`,
+        );
+
         // Write script to temp file
         await fs.mkdir(path.dirname(scriptPath), { recursive: true });
         await fs.writeFile(scriptPath, code);
 
         // Execute script
         let cmd = "";
-        if (lang === 'python') cmd = `python3 ${scriptPath}`;
-        else if (lang === 'javascript' || lang === 'typescript') cmd = `node ${scriptPath}`;
+        if (lang === "python") cmd = `python3 ${scriptPath}`;
+        else if (lang === "javascript" || lang === "typescript")
+          cmd = `node ${scriptPath}`;
         else throw new Error(`Unsupported language: ${lang}`);
 
         return sandbox.exec(cmd);
+      }
+
+      case "image:generate": {
+        const provider = new OpenAIImageProvider();
+        if (!provider.isAvailable()) {
+          throw new Error(
+            "OpenAI Image Provider is not available (missing API key).",
+          );
+        }
+        const imageUrl = await provider.generateImage(step.payload.prompt);
+
+        // Broadcast the visual immediately so it appears in chat
+        bus.publishVisual(
+          "nexus",
+          "visual:generated",
+          { url: imageUrl },
+          {
+            type: "image",
+            data: imageUrl,
+          },
+        );
+
+        return { ok: true, imageUrl };
+      }
 
       default:
         throw new Error(`Unknown step type: ${(step as any).type}`);

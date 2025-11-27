@@ -1,9 +1,0 @@
-{
-  "conversation_id": "sample1",
-  "patterns": [
-    { "name": "Strategic Problem Framing" },
-    { "name": "Decision Compression" },
-    { "name": "Momentum Closure" },
-    { "name": "Risk Surfacing Discipline" }
-  ]
-}

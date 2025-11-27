@@ -2,20 +2,20 @@
 /**
  * ERROR BOUNDARY HANDLER
  * ======================
- * 
+ *
  * Comprehensive error handling for Workbench system
  * Provides graceful fallbacks and detailed error reporting
  */
 
 export class ErrorBoundary {
   static ERROR_CODES = {
-    SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
-    TIMEOUT: 'TIMEOUT',
-    INVALID_INPUT: 'INVALID_INPUT',
-    ORCHESTRATION_FAILED: 'ORCHESTRATION_FAILED',
-    GITHUB_ERROR: 'GITHUB_ERROR',
-    SYNTHESIS_ERROR: 'SYNTHESIS_ERROR',
-    UNKNOWN: 'UNKNOWN'
+    SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
+    TIMEOUT: "TIMEOUT",
+    INVALID_INPUT: "INVALID_INPUT",
+    ORCHESTRATION_FAILED: "ORCHESTRATION_FAILED",
+    GITHUB_ERROR: "GITHUB_ERROR",
+    SYNTHESIS_ERROR: "SYNTHESIS_ERROR",
+    UNKNOWN: "UNKNOWN",
   };
 
   /**
@@ -27,15 +27,18 @@ export class ErrorBoundary {
       timestamp: Date.now(),
       message: error.message,
       code: this.classifyError(error),
-      fallback: fallback ? 'using default response' : 'no fallback available'
+      fallback: fallback ? "using default response" : "no fallback available",
     };
 
-    console.error(`[ErrorBoundary] Service Error in ${serviceName}:`, errorReport);
+    console.error(
+      `[ErrorBoundary] Service Error in ${serviceName}:`,
+      errorReport,
+    );
 
     return {
       ok: false,
       error: errorReport,
-      fallback
+      fallback,
     };
   }
 
@@ -45,18 +48,18 @@ export class ErrorBoundary {
   static classifyError(error) {
     if (!error) return this.ERROR_CODES.UNKNOWN;
 
-    const message = error.message?.toLowerCase() || '';
+    const message = error.message?.toLowerCase() || "";
 
-    if (message.includes('econnrefused') || message.includes('unavailable')) {
+    if (message.includes("econnrefused") || message.includes("unavailable")) {
       return this.ERROR_CODES.SERVICE_UNAVAILABLE;
     }
-    if (message.includes('timeout') || message.includes('econnaborted')) {
+    if (message.includes("timeout") || message.includes("econnaborted")) {
       return this.ERROR_CODES.TIMEOUT;
     }
-    if (message.includes('invalid') || message.includes('malformed')) {
+    if (message.includes("invalid") || message.includes("malformed")) {
       return this.ERROR_CODES.INVALID_INPUT;
     }
-    if (message.includes('github')) {
+    if (message.includes("github")) {
       return this.ERROR_CODES.GITHUB_ERROR;
     }
 
@@ -73,15 +76,15 @@ export class ErrorBoundary {
         intent,
         goal,
         timestamp: new Date().toISOString(),
-        note: 'Generated as fallback due to service unavailability'
+        note: "Generated as fallback due to service unavailability",
       },
       recommendations: [
-        'Check service health: GET /api/v1/work/status',
-        'Retry the request',
-        'Check system logs for details'
+        "Check service health: GET /api/v1/work/status",
+        "Retry the request",
+        "Check system logs for details",
       ],
       artifacts: [],
-      warning: 'This is a fallback response. Some services may be unavailable.'
+      warning: "This is a fallback response. Some services may be unavailable.",
     };
   }
 
@@ -92,15 +95,15 @@ export class ErrorBoundary {
     try {
       return await fn();
     } catch (error) {
-      console.error('[ErrorBoundary] Uncaught error:', error);
+      console.error("[ErrorBoundary] Uncaught error:", error);
       return {
         ok: false,
         error: {
           message: error.message,
           code: this.classifyError(error),
           context,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       };
     }
   }
@@ -118,7 +121,7 @@ export class ErrorBoundary {
         lastError = error;
         if (attempt < maxAttempts) {
           const delay = baseDelay * Math.pow(2, attempt - 1);
-          await new Promise(r => setTimeout(r, delay));
+          await new Promise((r) => setTimeout(r, delay));
         }
       }
     }
@@ -135,7 +138,10 @@ export class ErrorBoundary {
     for (const [field, rules] of Object.entries(schema)) {
       const value = input[field];
 
-      if (rules.required && (value === undefined || value === null || value === '')) {
+      if (
+        rules.required &&
+        (value === undefined || value === null || value === "")
+      ) {
         errors.push(`${field} is required`);
       }
 
@@ -148,13 +154,13 @@ export class ErrorBoundary {
       }
 
       if (rules.enum && value && !rules.enum.includes(value)) {
-        errors.push(`${field} must be one of: ${rules.enum.join(', ')}`);
+        errors.push(`${field} must be one of: ${rules.enum.join(", ")}`);
       }
     }
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -169,8 +175,8 @@ export class ErrorBoundary {
         message,
         details,
         timestamp: new Date().toISOString(),
-        traceId: Math.random().toString(36).substr(2, 9)
-      }
+        traceId: Math.random().toString(36).substr(2, 9),
+      },
     };
   }
 
@@ -184,12 +190,12 @@ export class ErrorBoundary {
       error: {
         message: error.message,
         stack: error.stack,
-        code: this.classifyError(error)
+        code: this.classifyError(error),
       },
-      metadata
+      metadata,
     };
 
-    console.error('[ErrorBoundary]', JSON.stringify(logEntry, null, 2));
+    console.error("[ErrorBoundary]", JSON.stringify(logEntry, null, 2));
     return logEntry;
   }
 
@@ -200,7 +206,7 @@ export class ErrorBoundary {
     try {
       return JSON.parse(jsonString);
     } catch (e) {
-      console.warn('[ErrorBoundary] JSON parse failed, using fallback');
+      console.warn("[ErrorBoundary] JSON parse failed, using fallback");
       return fallback;
     }
   }
@@ -212,8 +218,11 @@ export class ErrorBoundary {
     return Promise.race([
       promise,
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms)
-      )
+        setTimeout(
+          () => reject(new Error(`Operation timed out after ${ms}ms`)),
+          ms,
+        ),
+      ),
     ]);
   }
 }

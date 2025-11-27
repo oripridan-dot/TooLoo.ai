@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import metricsCollector from "../../core/metrics-collector.js";
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -65,18 +66,10 @@ router.get("/awareness", (req, res) => {
 
 // System Introspection
 router.get("/introspect", (req, res) => {
-  const memoryUsage = process.memoryUsage();
+  const metrics = metricsCollector.getProcessMetrics();
   res.json(
     successResponse({
-      process: {
-        pid: process.pid,
-        uptime: process.uptime(),
-        memory: {
-          rss: Math.round(memoryUsage.rss / 1024 / 1024) + "MB",
-          heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + "MB",
-          heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + "MB",
-        },
-      },
+      process: metrics,
       modules: {
         cortex: { status: "loaded", role: "Cognitive Core" },
         precog: { status: "loaded", role: "Predictive Intelligence" },

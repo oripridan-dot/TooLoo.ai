@@ -2,7 +2,8 @@
 import { bus, SynapsysEvent } from "../../core/event-bus.js";
 import { precog } from "../../precog/index.js";
 import { ImageGenerationResponse } from "../../precog/providers/types.js";
-import { contextResonance } from "../index.js";
+// import { contextResonance } from "../index.js"; // Removed circular dependency
+import { visualValidator } from "./validator.js";
 
 export interface VisualOptions {
   provider?: "gemini" | "openai";
@@ -54,24 +55,29 @@ export class VisualCortex {
 
     // 0. Context Resonance
     let contextInfo = "";
-    if (options.useContext !== false && contextResonance) {
+    if (options.useContext !== false) {
       try {
-        const memories = contextResonance.retrieveResonantMemory(
-          {
-            currentTask: prompt,
-            recentTopics: [],
-            activeFiles: [],
-          },
-          3,
-        );
+        // Lazy import to avoid circular dependency
+        const { contextResonance } = await import("../index.js");
 
-        if (memories.length > 0) {
-          contextInfo =
-            "\n\nRelevant Context:\n" +
-            memories.map((m) => `- ${m.memory.content}`).join("\n");
-          console.log(
-            `[VisualCortex] Resonated with ${memories.length} memories.`,
+        if (contextResonance) {
+          const memories = contextResonance.retrieveResonantMemory(
+            {
+              currentTask: prompt,
+              recentTopics: [],
+              activeFiles: [],
+            },
+            3,
           );
+
+          if (memories.length > 0) {
+            contextInfo =
+              "\n\nRelevant Context:\n" +
+              memories.map((m: any) => `- ${m.memory.content}`).join("\n");
+            console.log(
+              `[VisualCortex] Resonated with ${memories.length} memories.`,
+            );
+          }
         }
       } catch (e) {
         console.warn("[VisualCortex] Context resonance failed:", e);
@@ -139,34 +145,67 @@ export class VisualCortex {
   ): Promise<any> {
     console.log(`[VisualCortex] Designing ${type}: ${prompt}`);
 
-    // In a real implementation, this would call a DesignProvider
-    // For now, we'll use the text generator to create a JSON structure
-
     const designPrompt = `You are a UI/UX Design Engine. Generate a ${type} for: "${prompt}".
     Return ONLY valid JSON.
     ${type === "layout" ? 'Format: { structure: [], description: "" }' : ""}
     ${type === "palette" ? 'Format: { primary: "", secondary: "", accent: "", background: "", text: "" }' : ""}
-    ${type === "component" ? 'Format: { code: "", language: "jsx", framework: "react" }' : ""}
+    ${type === "component" ? 'Format: { type: "div", props: { className: "..." }, children: [] } (React JSON representation)' : ""}
     `;
 
-    const response = await precog.providers.generate({
-      prompt: designPrompt,
-      taskType: "creative",
-    });
+    let attempts = 0;
+    const maxAttempts = 2;
 
-    try {
-      // Extract JSON from response
-      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+    while (attempts < maxAttempts) {
+      attempts++;
+      const response = await precog.providers.generate({
+        prompt:
+          attempts > 1
+            ? `${designPrompt}\n\nPrevious attempt failed validation. Please ensure valid JSON.`
+            : designPrompt,
+        taskType: "creative",
+      });
+
+      try {
+        // Extract JSON from response
+        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const data = JSON.parse(jsonMatch[0]);
+
+          // Validate
+          if (type === "component") {
+            const validation = await visualValidator.validate({
+              type: "component",
+              data: jsonMatch[0],
+            });
+            if (!validation.isValid) {
+              console.warn(
+                `[VisualCortex] Validation failed (Attempt ${attempts}):`,
+                validation.issues,
+              );
+              if (attempts === maxAttempts) {
+                return {
+                  error: "Validation failed",
+                  issues: validation.issues,
+                  data,
+                };
+              }
+              continue; // Retry
+            }
+          }
+
+          return data;
+        }
+      } catch (e) {
+        console.warn(
+          `[VisualCortex] Design generation failed (Attempt ${attempts}):`,
+          e,
+        );
       }
-      return {
-        error: "Failed to parse design response",
-        raw: response.content,
-      };
-    } catch (e) {
-      return { error: "Design generation failed", details: e };
     }
+
+    return {
+      error: "Failed to generate valid design after retries",
+    };
   }
 }
 

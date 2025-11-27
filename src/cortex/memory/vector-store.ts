@@ -1,7 +1,12 @@
-// @version 2.1.289
+// @version 2.1.386
 import fs from "fs-extra";
 import * as path from "path";
 import { precog } from "../../precog/index.js";
+
+// Memory limits to prevent disk/memory bloat
+const MAX_DOCUMENTS = 3000; // Prune when exceeding this
+const PRUNE_TARGET = 2000; // Keep this many after pruning
+const MAX_FILE_SIZE_MB = 100; // Max file size in MB
 
 // Simple in-memory vector store with cosine similarity
 // In a real production environment, this would be replaced by HNSW or a dedicated vector DB
@@ -26,11 +31,33 @@ export class VectorStore {
   async initialize() {
     if (this.isInitialized) return;
 
+    // Clean up orphaned temp files on startup
+    await this.cleanupTempFiles();
+
     try {
       await fs.ensureFile(this.filePath);
-      const content = await fs.readFile(this.filePath, "utf-8");
-      if (content.trim()) {
-        this.documents = JSON.parse(content);
+      const stats = await fs.stat(this.filePath);
+      const sizeMB = stats.size / (1024 * 1024);
+
+      if (sizeMB > MAX_FILE_SIZE_MB) {
+        console.warn(
+          `[VectorStore] File too large (${sizeMB.toFixed(1)}MB), resetting...`,
+        );
+        this.documents = [];
+        await this.save();
+      } else {
+        const content = await fs.readFile(this.filePath, "utf-8");
+        if (content.trim()) {
+          this.documents = JSON.parse(content);
+
+          // Prune on load if needed
+          if (this.documents.length > MAX_DOCUMENTS) {
+            console.log(
+              `[VectorStore] Pruning ${this.documents.length} → ${PRUNE_TARGET} documents...`,
+            );
+            await this.prune();
+          }
+        }
       }
     } catch (error) {
       console.warn(
@@ -43,6 +70,32 @@ export class VectorStore {
     console.log(
       `[VectorStore] Initialized with ${this.documents.length} documents.`,
     );
+  }
+
+  private async cleanupTempFiles() {
+    const memoryDir = path.dirname(this.filePath);
+    try {
+      const files = await fs.readdir(memoryDir);
+      const tempFiles = files.filter((f) => f.includes(".tmp-"));
+      for (const tempFile of tempFiles) {
+        await fs.unlink(path.join(memoryDir, tempFile)).catch(() => {});
+      }
+      if (tempFiles.length > 0) {
+        console.log(
+          `[VectorStore] Cleaned up ${tempFiles.length} orphaned temp files.`,
+        );
+      }
+    } catch (e) {
+      // Directory might not exist yet
+    }
+  }
+
+  private async prune() {
+    // Keep most recent documents
+    this.documents.sort((a, b) => b.createdAt - a.createdAt);
+    this.documents = this.documents.slice(0, PRUNE_TARGET);
+    await this.save();
+    console.log(`[VectorStore] Pruned to ${this.documents.length} documents.`);
   }
 
   async add(text: string, metadata: any = {}) {
@@ -95,11 +148,12 @@ export class VectorStore {
       }
     }
 
-    // Monitor size
-    if (this.documents.length > 5000) {
+    // Monitor size and auto-prune
+    if (this.documents.length > MAX_DOCUMENTS) {
       console.warn(
-        "[VectorStore] Warning: Vector store size exceeding 5000 documents. Consider pruning.",
+        `[VectorStore] Document limit exceeded (${this.documents.length}/${MAX_DOCUMENTS}). Auto-pruning...`,
       );
+      await this.prune();
     }
 
     this.scheduleSave();

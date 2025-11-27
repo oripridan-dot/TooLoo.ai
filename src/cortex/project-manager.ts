@@ -50,7 +50,10 @@ export class ProjectManager {
   }
 
   private async save() {
-    await smartFS.writeSafe(this.dataPath, JSON.stringify(this.projects, null, 2));
+    await smartFS.writeSafe(
+      this.dataPath,
+      JSON.stringify(this.projects, null, 2),
+    );
   }
 
   async listProjects() {

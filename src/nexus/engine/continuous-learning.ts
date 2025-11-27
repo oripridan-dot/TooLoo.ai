@@ -4,9 +4,9 @@
  * Tracks provider performance and implements meta-learning for continuous improvement
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,7 +15,7 @@ export default class ContinuousLearning {
   constructor() {
     this.performanceData = new Map(); // provider -> { totalQueries, successfulQueries, avgLatency, domainSuccess: { domain: { success: count, total: count } } }
     this.feedbackHistory = []; // Array of { query, domain, provider, success, latency, timestamp, userRating? }
-    this.dataFile = path.join(__dirname, '../../data/learning-data.json');
+    this.dataFile = path.join(__dirname, "../../data/learning-data.json");
 
     this.loadData();
   }
@@ -26,12 +26,12 @@ export default class ContinuousLearning {
   loadData() {
     try {
       if (fs.existsSync(this.dataFile)) {
-        const data = JSON.parse(fs.readFileSync(this.dataFile, 'utf8'));
+        const data = JSON.parse(fs.readFileSync(this.dataFile, "utf8"));
         this.performanceData = new Map(data.performanceData || []);
         this.feedbackHistory = data.feedbackHistory || [];
       }
     } catch (error) {
-      console.warn('Failed to load learning data:', error.message);
+      console.warn("Failed to load learning data:", error.message);
     }
   }
 
@@ -43,11 +43,11 @@ export default class ContinuousLearning {
       const data = {
         performanceData: Array.from(this.performanceData.entries()),
         feedbackHistory: this.feedbackHistory.slice(-1000), // Keep last 1000 entries
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
       fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
     } catch (error) {
-      console.warn('Failed to save learning data:', error.message);
+      console.warn("Failed to save learning data:", error.message);
     }
   }
 
@@ -60,7 +60,14 @@ export default class ContinuousLearning {
    * @param {number} latency - Response time in milliseconds
    * @param {number} userRating - Optional user rating (1-5)
    */
-  recordInteraction(query, domain, provider, success, latency, userRating = null) {
+  recordInteraction(
+    query,
+    domain,
+    provider,
+    success,
+    latency,
+    userRating = null,
+  ) {
     const timestamp = new Date().toISOString();
 
     // Initialize provider data if needed
@@ -70,7 +77,7 @@ export default class ContinuousLearning {
         successfulQueries: 0,
         totalLatency: 0,
         avgLatency: 0,
-        domainSuccess: {}
+        domainSuccess: {},
       });
     }
 
@@ -80,7 +87,8 @@ export default class ContinuousLearning {
     providerData.totalQueries += 1;
     if (success) providerData.successfulQueries += 1;
     providerData.totalLatency += latency;
-    providerData.avgLatency = providerData.totalLatency / providerData.totalQueries;
+    providerData.avgLatency =
+      providerData.totalLatency / providerData.totalQueries;
 
     // Update domain-specific metrics
     if (!providerData.domainSuccess[domain]) {
@@ -97,7 +105,7 @@ export default class ContinuousLearning {
       success,
       latency,
       userRating,
-      timestamp
+      timestamp,
     });
 
     // Save periodically (every 10 interactions)
@@ -151,7 +159,8 @@ export default class ContinuousLearning {
 
     for (const provider of availableProviders) {
       const successRate = this.getDomainSuccessRate(provider, domain);
-      const totalQueries = this.performanceData.get(provider)?.totalQueries || 0;
+      const totalQueries =
+        this.performanceData.get(provider)?.totalQueries || 0;
 
       // Weight by both success rate and experience (total queries)
       const experienceWeight = Math.min(totalQueries / 100, 1); // Cap at 100 queries
@@ -175,28 +184,35 @@ export default class ContinuousLearning {
       totalInteractions: this.feedbackHistory.length,
       providerRankings: {},
       domainSpecializations: {},
-      recommendations: []
+      recommendations: [],
     };
 
     // Calculate provider rankings
     const providers = Array.from(this.performanceData.keys());
-    providers.forEach(provider => {
+    providers.forEach((provider) => {
       const data = this.performanceData.get(provider);
-      const successRate = data.totalQueries > 0 ? data.successfulQueries / data.totalQueries : 0;
+      const successRate =
+        data.totalQueries > 0 ? data.successfulQueries / data.totalQueries : 0;
       insights.providerRankings[provider] = {
         successRate,
         totalQueries: data.totalQueries,
-        avgLatency: data.avgLatency
+        avgLatency: data.avgLatency,
       };
     });
 
     // Find domain specializations
-    const domains = ['engineering', 'design', 'business', 'research', 'creative'];
-    domains.forEach(domain => {
+    const domains = [
+      "engineering",
+      "design",
+      "business",
+      "research",
+      "creative",
+    ];
+    domains.forEach((domain) => {
       let bestProvider = null;
       let bestRate = 0;
 
-      providers.forEach(provider => {
+      providers.forEach((provider) => {
         const rate = this.getDomainSuccessRate(provider, domain);
         if (rate > bestRate) {
           bestRate = rate;
@@ -204,10 +220,11 @@ export default class ContinuousLearning {
         }
       });
 
-      if (bestProvider && bestRate > 0.6) { // Only report strong specializations
+      if (bestProvider && bestRate > 0.6) {
+        // Only report strong specializations
         insights.domainSpecializations[domain] = {
           bestProvider,
-          successRate: bestRate
+          successRate: bestRate,
         };
       }
     });
@@ -220,15 +237,19 @@ export default class ContinuousLearning {
     });
 
     if (sortedProviders.length > 1) {
-      insights.recommendations.push(`Top performing provider: ${sortedProviders[0]} (${(insights.providerRankings[sortedProviders[0]].successRate * 100).toFixed(1)}% success rate)`);
+      insights.recommendations.push(
+        `Top performing provider: ${sortedProviders[0]} (${(insights.providerRankings[sortedProviders[0]].successRate * 100).toFixed(1)}% success rate)`,
+      );
     }
 
     // Check for underperforming providers
-    providers.forEach(provider => {
+    providers.forEach((provider) => {
       const rate = insights.providerRankings[provider].successRate;
       const queries = insights.providerRankings[provider].totalQueries;
       if (queries > 10 && rate < 0.5) {
-        insights.recommendations.push(`Consider reducing usage of ${provider} (${(rate * 100).toFixed(1)}% success rate)`);
+        insights.recommendations.push(
+          `Consider reducing usage of ${provider} (${(rate * 100).toFixed(1)}% success rate)`,
+        );
       }
     });
 

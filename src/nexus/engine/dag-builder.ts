@@ -1,19 +1,19 @@
 // @version 2.1.28
 /**
  * DAG Builder Engine
- * 
+ *
  * Decomposes high-level intents into structured task graphs.
  * - Parse intent complexity & scope
  * - Generate subtasks with dependencies
  * - Map tasks to optimal stations (builders, testers, designers, etc.)
  * - Track SLAs, Definition of Done, validators
  * - Create visual DAG for UI display
- * 
+ *
  * Input: Intent Packet + Execution Plan
  * Output: Task DAG with full metadata for parallel execution
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 export class DAGBuilder {
   constructor(options = {}) {
@@ -22,7 +22,7 @@ export class DAGBuilder {
       maxTasksPerLevel: options.maxTasksPerLevel || 8,
       defaultTimeoutMs: options.defaultTimeoutMs || 300000, // 5 min per task
       defaultConfidenceThreshold: options.defaultConfidenceThreshold || 0.82,
-      ...options
+      ...options,
     };
 
     this.dags = new Map(); // dagId -> DAG object
@@ -30,19 +30,40 @@ export class DAGBuilder {
       totalDAGs: 0,
       totalTasks: 0,
       avgTasksPerDAG: 0,
-      avgDepth: 0
+      avgDepth: 0,
     };
 
     // Station profiles (worker pools with specialized skills)
     this.stations = {
-      planner: { skills: ['planning', 'analysis', 'specification'], maxConcurrent: 2 },
-      researcher: { skills: ['research', 'retrieval', 'synthesis'], maxConcurrent: 3 },
-      designer: { skills: ['design', 'ux', 'layout', 'visual'], maxConcurrent: 3 },
-      builder: { skills: ['coding', 'implementation', 'scripting'], maxConcurrent: 4 },
-      tester: { skills: ['testing', 'validation', 'qa'], maxConcurrent: 2 },
-      writer: { skills: ['documentation', 'content', 'writing'], maxConcurrent: 2 },
-      optimizer: { skills: ['optimization', 'performance', 'refinement'], maxConcurrent: 2 },
-      auditor: { skills: ['security', 'compliance', 'review'], maxConcurrent: 2 }
+      planner: {
+        skills: ["planning", "analysis", "specification"],
+        maxConcurrent: 2,
+      },
+      researcher: {
+        skills: ["research", "retrieval", "synthesis"],
+        maxConcurrent: 3,
+      },
+      designer: {
+        skills: ["design", "ux", "layout", "visual"],
+        maxConcurrent: 3,
+      },
+      builder: {
+        skills: ["coding", "implementation", "scripting"],
+        maxConcurrent: 4,
+      },
+      tester: { skills: ["testing", "validation", "qa"], maxConcurrent: 2 },
+      writer: {
+        skills: ["documentation", "content", "writing"],
+        maxConcurrent: 2,
+      },
+      optimizer: {
+        skills: ["optimization", "performance", "refinement"],
+        maxConcurrent: 2,
+      },
+      auditor: {
+        skills: ["security", "compliance", "review"],
+        maxConcurrent: 2,
+      },
     };
   }
 
@@ -55,7 +76,7 @@ export class DAGBuilder {
       id: dagId,
       intentId: intent.id,
       createdAt: new Date().toISOString(),
-      status: 'planning',
+      status: "planning",
       nodes: [],
       edges: [], // [{ from: nodeId, to: nodeId }]
       metrics: {
@@ -64,8 +85,8 @@ export class DAGBuilder {
         depth: 0,
         criticalPath: 0,
         estimatedTimeMs: 0,
-        estimatedCostUsd: 0
-      }
+        estimatedCostUsd: 0,
+      },
     };
 
     // Phase 1: Decompose intent into top-level tasks
@@ -80,7 +101,7 @@ export class DAGBuilder {
         title: task.title,
         description: task.description,
         type: task.type, // 'plan', 'research', 'design', 'build', 'test', 'document', 'optimize', 'audit'
-        priority: task.priority || 'normal',
+        priority: task.priority || "normal",
         estimatedTimeMs: task.estimatedTimeMs || 60000,
         estimatedCostUsd: task.estimatedCostUsd || 0.01,
         station: this.assignStation(task.type),
@@ -91,18 +112,18 @@ export class DAGBuilder {
         confidenceThreshold: this.config.defaultConfidenceThreshold,
         retryCount: 0,
         maxRetries: 2,
-        status: 'pending',
+        status: "pending",
         artifacts: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
 
       // Create edges based on dependencies
-      task.dependencies.forEach(depIndex => {
+      task.dependencies.forEach((depIndex) => {
         if (depIndex < idx) {
           dag.edges.push({
             from: dag.nodes[depIndex].id,
             to: nodeId,
-            type: 'dependency'
+            type: "dependency",
           });
         }
       });
@@ -113,8 +134,14 @@ export class DAGBuilder {
     dag.metrics.totalEdges = dag.edges.length;
     dag.metrics.depth = this.calculateDepth(dag);
     dag.metrics.criticalPath = this.calculateCriticalPath(dag);
-    dag.metrics.estimatedTimeMs = dag.nodes.reduce((sum, n) => sum + n.estimatedTimeMs, 0);
-    dag.metrics.estimatedCostUsd = dag.nodes.reduce((sum, n) => sum + n.estimatedCostUsd, 0);
+    dag.metrics.estimatedTimeMs = dag.nodes.reduce(
+      (sum, n) => sum + n.estimatedTimeMs,
+      0,
+    );
+    dag.metrics.estimatedCostUsd = dag.nodes.reduce(
+      (sum, n) => sum + n.estimatedCostUsd,
+      0,
+    );
 
     // Store DAG
     this.dags.set(dagId, dag);
@@ -139,49 +166,53 @@ export class DAGBuilder {
 
     // Always start with planning/analysis
     tasks.push({
-      title: 'Analyze Requirements',
-      description: 'Parse requirements and identify scope',
-      type: 'plan',
-      priority: 'high',
+      title: "Analyze Requirements",
+      description: "Parse requirements and identify scope",
+      type: "plan",
+      priority: "high",
       estimatedTimeMs: 45000,
       estimatedCostUsd: 0.005,
-      dependencies: []
+      dependencies: [],
     });
 
     // Detect research need
     if (/research|analyze|compare|evaluate|survey/i.test(prompt)) {
       tasks.push({
-        title: 'Research & Synthesis',
-        description: 'Gather information and synthesize findings',
-        type: 'research',
-        priority: 'high',
+        title: "Research & Synthesis",
+        description: "Gather information and synthesize findings",
+        type: "research",
+        priority: "high",
         estimatedTimeMs: 120000,
         estimatedCostUsd: 0.02,
-        dependencies: [0]
+        dependencies: [0],
       });
     }
 
     // Detect design need
     if (/design|layout|ui|ux|mockup|prototype|wireframe/i.test(prompt)) {
       tasks.push({
-        title: 'Design & UX',
-        description: 'Create design mockups or wireframes',
-        type: 'design',
-        priority: 'high',
+        title: "Design & UX",
+        description: "Create design mockups or wireframes",
+        type: "design",
+        priority: "high",
         estimatedTimeMs: 90000,
         estimatedCostUsd: 0.015,
-        dependencies: [0]
+        dependencies: [0],
       });
     }
 
     // Detect build/code need
-    if (/build|code|implement|create|write|develop|script|api|server|database|frontend/i.test(prompt)) {
+    if (
+      /build|code|implement|create|write|develop|script|api|server|database|frontend/i.test(
+        prompt,
+      )
+    ) {
       const buildIdx = tasks.length;
       tasks.push({
-        title: 'Implementation',
-        description: 'Write and implement code/features',
-        type: 'build',
-        priority: 'high',
+        title: "Implementation",
+        description: "Write and implement code/features",
+        type: "build",
+        priority: "high",
         estimatedTimeMs: 150000,
         estimatedCostUsd: 0.025,
         dependencies: [0], // Depends on planning
@@ -189,60 +220,60 @@ export class DAGBuilder {
           compilesWithoutErrors: true,
           passesLinting: true,
           hasBasicTests: true,
-          isDocumented: false
+          isDocumented: false,
         },
-        validators: ['lint', 'tests', 'type-check']
+        validators: ["lint", "tests", "type-check"],
       });
 
       // Add testing after build
       tasks.push({
-        title: 'Testing & Validation',
-        description: 'Run tests and validate implementation',
-        type: 'test',
-        priority: 'high',
+        title: "Testing & Validation",
+        description: "Run tests and validate implementation",
+        type: "test",
+        priority: "high",
         estimatedTimeMs: 60000,
         estimatedCostUsd: 0.01,
-        dependencies: [buildIdx]
+        dependencies: [buildIdx],
       });
     }
 
     // Detect documentation need
     if (/document|readme|guide|tutorial|explain|write up/i.test(prompt)) {
       tasks.push({
-        title: 'Documentation',
-        description: 'Write comprehensive documentation',
-        type: 'write',
-        priority: 'normal',
+        title: "Documentation",
+        description: "Write comprehensive documentation",
+        type: "write",
+        priority: "normal",
         estimatedTimeMs: 75000,
         estimatedCostUsd: 0.01,
-        dependencies: [0]
+        dependencies: [0],
       });
     }
 
     // Detect optimization need
     if (/optimize|improve|refactor|clean up|performance/i.test(prompt)) {
-      const buildIdx = tasks.findIndex(t => t.type === 'build');
+      const buildIdx = tasks.findIndex((t) => t.type === "build");
       tasks.push({
-        title: 'Optimization & Refinement',
-        description: 'Optimize performance and code quality',
-        type: 'optimize',
-        priority: 'normal',
+        title: "Optimization & Refinement",
+        description: "Optimize performance and code quality",
+        type: "optimize",
+        priority: "normal",
         estimatedTimeMs: 60000,
         estimatedCostUsd: 0.01,
-        dependencies: buildIdx >= 0 ? [buildIdx] : [0]
+        dependencies: buildIdx >= 0 ? [buildIdx] : [0],
       });
     }
 
     // Always include security/audit review for substantial work
     if (tasks.length > 2) {
       tasks.push({
-        title: 'Security & Compliance Review',
-        description: 'Audit for security and best practices',
-        type: 'audit',
-        priority: 'normal',
+        title: "Security & Compliance Review",
+        description: "Audit for security and best practices",
+        type: "audit",
+        priority: "normal",
         estimatedTimeMs: 45000,
         estimatedCostUsd: 0.01,
-        dependencies: [] // Run in parallel
+        dependencies: [], // Run in parallel
       });
     }
 
@@ -254,16 +285,16 @@ export class DAGBuilder {
    */
   assignStation(taskType) {
     const mapping = {
-      plan: 'planner',
-      research: 'researcher',
-      design: 'designer',
-      build: 'builder',
-      test: 'tester',
-      write: 'writer',
-      optimize: 'optimizer',
-      audit: 'auditor'
+      plan: "planner",
+      research: "researcher",
+      design: "designer",
+      build: "builder",
+      test: "tester",
+      write: "writer",
+      optimize: "optimizer",
+      audit: "auditor",
     };
-    return mapping[taskType] || 'planner';
+    return mapping[taskType] || "planner";
   }
 
   /**
@@ -278,14 +309,14 @@ export class DAGBuilder {
     const calculateNodeDepth = (nodeId) => {
       if (depths.has(nodeId)) return depths.get(nodeId);
 
-      const node = dag.nodes.find(n => n.id === nodeId);
+      const node = dag.nodes.find((n) => n.id === nodeId);
       if (!node || node.dependencies.length === 0) {
         depths.set(nodeId, 1);
         return 1;
       }
 
       const depIndices = node.dependencies;
-      const depDepths = depIndices.map(idx => {
+      const depDepths = depIndices.map((idx) => {
         if (idx < dag.nodes.length) {
           return calculateNodeDepth(dag.nodes[idx].id);
         }
@@ -298,7 +329,7 @@ export class DAGBuilder {
     };
 
     let maxDepth = 0;
-    dag.nodes.forEach(node => {
+    dag.nodes.forEach((node) => {
       maxDepth = Math.max(maxDepth, calculateNodeDepth(node.id));
     });
 
@@ -315,7 +346,7 @@ export class DAGBuilder {
     const findLongestPath = (nodeId, visited = new Set()) => {
       if (visited.has(nodeId)) return 0;
 
-      const node = dag.nodes.find(n => n.id === nodeId);
+      const node = dag.nodes.find((n) => n.id === nodeId);
       if (!node) return 0;
 
       visited.add(nodeId);
@@ -323,11 +354,15 @@ export class DAGBuilder {
 
       // Find dependent nodes
       const dependents = dag.edges
-        .filter(e => e.from === nodeId)
-        .map(e => e.to);
+        .filter((e) => e.from === nodeId)
+        .map((e) => e.to);
 
       if (dependents.length > 0) {
-        const longestDep = Math.max(...dependents.map(depId => findLongestPath(depId, new Set(visited))));
+        const longestDep = Math.max(
+          ...dependents.map((depId) =>
+            findLongestPath(depId, new Set(visited)),
+          ),
+        );
         maxPath += longestDep;
       }
 
@@ -335,9 +370,9 @@ export class DAGBuilder {
     };
 
     // Start from root nodes (no dependencies)
-    const rootNodes = dag.nodes.filter(n => n.dependencies.length === 0);
+    const rootNodes = dag.nodes.filter((n) => n.dependencies.length === 0);
     if (rootNodes.length > 0) {
-      totalMs = Math.max(...rootNodes.map(n => findLongestPath(n.id)));
+      totalMs = Math.max(...rootNodes.map((n) => findLongestPath(n.id)));
     }
 
     return totalMs;
@@ -360,9 +395,9 @@ export class DAGBuilder {
 
       visiting.add(nodeId);
 
-      const node = dag.nodes.find(n => n.id === nodeId);
+      const node = dag.nodes.find((n) => n.id === nodeId);
       if (node) {
-        node.dependencies.forEach(depIdx => {
+        node.dependencies.forEach((depIdx) => {
           if (depIdx < dag.nodes.length) {
             visit(dag.nodes[depIdx].id);
           }
@@ -374,7 +409,7 @@ export class DAGBuilder {
       order.push(nodeId);
     };
 
-    dag.nodes.forEach(node => visit(node.id));
+    dag.nodes.forEach((node) => visit(node.id));
     return order;
   }
 
@@ -388,11 +423,13 @@ export class DAGBuilder {
     while (completed.size < dag.nodes.length) {
       const batch = [];
 
-      dag.nodes.forEach(node => {
+      dag.nodes.forEach((node) => {
         if (!completed.has(node.id)) {
           // Check if all dependencies are completed
-          const depsComplete = node.dependencies.every(depIdx => {
-            return depIdx < dag.nodes.length && completed.has(dag.nodes[depIdx].id);
+          const depsComplete = node.dependencies.every((depIdx) => {
+            return (
+              depIdx < dag.nodes.length && completed.has(dag.nodes[depIdx].id)
+            );
           });
 
           if (depsComplete) {
@@ -402,12 +439,14 @@ export class DAGBuilder {
       });
 
       if (batch.length === 0) {
-        console.warn('[DAG] No executable tasks found; possible circular dependency');
+        console.warn(
+          "[DAG] No executable tasks found; possible circular dependency",
+        );
         break;
       }
 
       batches.push(batch);
-      batch.forEach(nodeId => completed.add(nodeId));
+      batch.forEach((nodeId) => completed.add(nodeId));
     }
 
     return batches;
@@ -427,10 +466,10 @@ export class DAGBuilder {
     let results = Array.from(this.dags.values());
 
     if (filter.intentId) {
-      results = results.filter(d => d.intentId === filter.intentId);
+      results = results.filter((d) => d.intentId === filter.intentId);
     }
     if (filter.status) {
-      results = results.filter(d => d.status === filter.status);
+      results = results.filter((d) => d.status === filter.status);
     }
 
     return results;
@@ -443,7 +482,7 @@ export class DAGBuilder {
     const dag = this.dags.get(dagId);
     if (!dag) throw new Error(`DAG ${dagId} not found`);
 
-    const node = dag.nodes.find(n => n.id === nodeId);
+    const node = dag.nodes.find((n) => n.id === nodeId);
     if (!node) throw new Error(`Node ${nodeId} not found`);
 
     node.status = newStatus;
@@ -452,9 +491,13 @@ export class DAGBuilder {
     if (data.confidence) node.confidence = data.confidence;
 
     // Update DAG status if all nodes complete
-    const allComplete = dag.nodes.every(n => ['complete', 'failed', 'skipped'].includes(n.status));
+    const allComplete = dag.nodes.every((n) =>
+      ["complete", "failed", "skipped"].includes(n.status),
+    );
     if (allComplete) {
-      dag.status = dag.nodes.some(n => n.status === 'failed') ? 'failed' : 'complete';
+      dag.status = dag.nodes.some((n) => n.status === "failed")
+        ? "failed"
+        : "complete";
     }
 
     return node;

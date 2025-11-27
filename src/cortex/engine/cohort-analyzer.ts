@@ -2,19 +2,25 @@
 /**
  * Cohort Analyzer Engine
  * Phase 2: Cohort Discovery & Trait Extraction
- * 
+ *
  * Clusters users into cohorts based on behavioral traits extracted from
  * conversation segmentation. Enables per-cohort optimization in Phase 2 Sprint 2+.
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const COHORTS_PATH = path.join(__dirname, '..', 'data', 'segmentation', 'cohorts.json');
+const COHORTS_PATH = path.join(
+  __dirname,
+  "..",
+  "data",
+  "segmentation",
+  "cohorts.json",
+);
 const MIN_COHORT_SIZE = 2;
 const TRAIT_WEIGHTS = {
   learningVelocity: 0.25,
@@ -29,17 +35,17 @@ const TRAIT_WEIGHTS = {
  */
 async function loadCohorts() {
   try {
-    const data = await fs.readFile(COHORTS_PATH, 'utf8');
+    const data = await fs.readFile(COHORTS_PATH, "utf8");
     return JSON.parse(data);
   } catch (err) {
-    console.warn('[cohort-analyzer] No cohorts file found, initializing empty');
+    console.warn("[cohort-analyzer] No cohorts file found, initializing empty");
     return {
       metadata: {
-        version: '2.0',
+        version: "2.0",
         createdAt: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
         totalCohorts: 0,
-        discoveryMethod: 'trait-clustering',
+        discoveryMethod: "trait-clustering",
       },
       cohorts: [],
     };
@@ -51,12 +57,12 @@ async function loadCohorts() {
  */
 async function saveCohorts(cohortData) {
   try {
-    const tmpPath = COHORTS_PATH + '.tmp';
-    await fs.writeFile(tmpPath, JSON.stringify(cohortData, null, 2), 'utf8');
+    const tmpPath = COHORTS_PATH + ".tmp";
+    await fs.writeFile(tmpPath, JSON.stringify(cohortData, null, 2), "utf8");
     await fs.rename(tmpPath, COHORTS_PATH);
     return true;
   } catch (err) {
-    console.error('[cohort-analyzer] Failed to save cohorts:', err.message);
+    console.error("[cohort-analyzer] Failed to save cohorts:", err.message);
     return false;
   }
 }
@@ -80,7 +86,7 @@ async function extractUserTraits(userId, conversationHistory) {
 
   // Learning Velocity: Growth rate of capability adoption
   const capabilityProgression = conversationHistory.filter(
-    (c) => c.type === 'training' || c.type === 'workflow'
+    (c) => c.type === "training" || c.type === "workflow",
   );
   traits.learningVelocity = Math.min(1, capabilityProgression.length / 50); // Normalize to 50 conversations
 
@@ -93,7 +99,9 @@ async function extractUserTraits(userId, conversationHistory) {
   });
   const domainValues = Object.values(domains);
   traits.domainAffinity =
-    domainValues.length > 0 ? Math.max(...domainValues) / conversationHistory.length : 0;
+    domainValues.length > 0
+      ? Math.max(...domainValues) / conversationHistory.length
+      : 0;
 
   // Interaction Frequency: Regularity of engagement
   // (Simplified: frequency relative to time window)
@@ -101,16 +109,18 @@ async function extractUserTraits(userId, conversationHistory) {
 
   // Feedback Responsiveness: Rate of acting on suggestions
   const feedbackActions = conversationHistory.filter(
-    (c) => c.type === 'feedback' && c.actionTaken === true
+    (c) => c.type === "feedback" && c.actionTaken === true,
   );
   traits.feedbackResponsiveness =
-    conversationHistory.length > 0 ? feedbackActions.length / conversationHistory.length : 0;
+    conversationHistory.length > 0
+      ? feedbackActions.length / conversationHistory.length
+      : 0;
 
   // Retention Strength: Reuse of previously learned capabilities
   const previousCapabilities = new Set();
   let reusedCapabilities = 0;
   conversationHistory.forEach((c) => {
-    if (c.type === 'training' && c.capabilityId) {
+    if (c.type === "training" && c.capabilityId) {
       if (previousCapabilities.has(c.capabilityId)) {
         reusedCapabilities++;
       }
@@ -118,7 +128,9 @@ async function extractUserTraits(userId, conversationHistory) {
     }
   });
   traits.retentionStrength =
-    previousCapabilities.size > 0 ? reusedCapabilities / previousCapabilities.size : 0;
+    previousCapabilities.size > 0
+      ? reusedCapabilities / previousCapabilities.size
+      : 0;
 
   return traits;
 }
@@ -142,7 +154,7 @@ async function clusterUsersByTraits(userTraitsMap, targetCohorts = 4) {
   const users = Object.entries(userTraitsMap);
   if (users.length < MIN_COHORT_SIZE) {
     console.warn(
-      `[cohort-analyzer] Insufficient users (${users.length}) for clustering, need ${MIN_COHORT_SIZE}`
+      `[cohort-analyzer] Insufficient users (${users.length}) for clustering, need ${MIN_COHORT_SIZE}`,
     );
     return [];
   }
@@ -156,7 +168,9 @@ async function clusterUsersByTraits(userTraitsMap, targetCohorts = 4) {
   centroids.push(users[Math.floor(Math.random() * users.length)][1]);
   for (let i = 1; i < k; i++) {
     const distances = users.map(([, traits]) => {
-      const minDist = Math.min(...centroids.map((c) => traitDistance(traits, c)));
+      const minDist = Math.min(
+        ...centroids.map((c) => traitDistance(traits, c)),
+      );
       return minDist * minDist;
     });
     const totalDist = distances.reduce((a, b) => a + b, 0);
@@ -198,7 +212,8 @@ async function clusterUsersByTraits(userTraitsMap, targetCohorts = 4) {
       const avgTraits = {};
       Object.keys(TRAIT_WEIGHTS).forEach((key) => {
         avgTraits[key] =
-          cluster.reduce((sum, [, traits]) => sum + (traits[key] || 0), 0) / cluster.length;
+          cluster.reduce((sum, [, traits]) => sum + (traits[key] || 0), 0) /
+          cluster.length;
       });
       return avgTraits;
     });
@@ -225,16 +240,18 @@ function generateCohortMetadata(clusterUsers, cohortId) {
   const traits = clusterUsers.map(([, t]) => t);
   const avgTraits = {};
   Object.keys(TRAIT_WEIGHTS).forEach((key) => {
-    avgTraits[key] = traits.reduce((sum, t) => sum + (t[key] || 0), 0) / traits.length;
+    avgTraits[key] =
+      traits.reduce((sum, t) => sum + (t[key] || 0), 0) / traits.length;
   });
 
   // Determine cohort archetype based on dominant traits
-  let archetype = 'Generalist';
+  let archetype = "Generalist";
   const sorted = Object.entries(avgTraits).sort((a, b) => b[1] - a[1]);
-  if (sorted[0][0] === 'learningVelocity') archetype = 'Fast Learner';
-  else if (sorted[0][0] === 'domainAffinity') archetype = 'Specialist';
-  else if (sorted[0][0] === 'interactionFrequency') archetype = 'Power User';
-  else if (sorted[0][0] === 'retentionStrength') archetype = 'Long-term Retainer';
+  if (sorted[0][0] === "learningVelocity") archetype = "Fast Learner";
+  else if (sorted[0][0] === "domainAffinity") archetype = "Specialist";
+  else if (sorted[0][0] === "interactionFrequency") archetype = "Power User";
+  else if (sorted[0][0] === "retentionStrength")
+    archetype = "Long-term Retainer";
 
   return {
     id: cohortId,
@@ -252,7 +269,7 @@ function generateCohortMetadata(clusterUsers, cohortId) {
  * Input: { userId: [ conversations ] }
  */
 async function discoverCohorts(userConversationMap) {
-  console.log('[cohort-analyzer] Starting cohort discovery...');
+  console.log("[cohort-analyzer] Starting cohort discovery...");
 
   // Extract traits for all users
   const userTraitsMap = {};
@@ -260,7 +277,9 @@ async function discoverCohorts(userConversationMap) {
     userTraitsMap[userId] = await extractUserTraits(userId, conversations);
   }
 
-  console.log(`[cohort-analyzer] Extracted traits for ${Object.keys(userTraitsMap).length} users`);
+  console.log(
+    `[cohort-analyzer] Extracted traits for ${Object.keys(userTraitsMap).length} users`,
+  );
 
   // Cluster by traits
   const clusters = await clusterUsersByTraits(userTraitsMap);
@@ -268,7 +287,7 @@ async function discoverCohorts(userConversationMap) {
 
   // Generate cohort metadata
   const cohorts = clusters.map((cluster, idx) =>
-    generateCohortMetadata(cluster, `cohort-${Date.now()}-${idx}`)
+    generateCohortMetadata(cluster, `cohort-${Date.now()}-${idx}`),
   );
 
   // Persist to storage
@@ -279,7 +298,7 @@ async function discoverCohorts(userConversationMap) {
 
   const saved = await saveCohorts(cohortData);
   if (saved) {
-    console.log('[cohort-analyzer] Cohorts persisted successfully');
+    console.log("[cohort-analyzer] Cohorts persisted successfully");
   }
 
   return cohorts;

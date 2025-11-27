@@ -48,6 +48,7 @@ A sophisticated **keyword refinement engine** that transforms passive prompt sco
 ## 🎯 Key Features
 
 ### Multi-Factor Keyword Weighting
+
 ```
 Weight = (Frequency 35%) + (Position 30%) + (Emphasis 35%) × Weakness Factor
 ```
@@ -58,6 +59,7 @@ Weight = (Frequency 35%) + (Position 30%) + (Emphasis 35%) × Weakness Factor
 - **Prioritizes weak words** (1.3× multiplier for refinement priority)
 
 ### Context-Aware Suggestions
+
 - ⚡ **Action**: Strengthen action verbs (write → compose, create → develop)
 - 🔍 **Analysis**: Improve analytical precision (look → examine, thing → element)
 - 🎓 **Learning**: Enhance clarity (really → genuinely, very → extremely)
@@ -65,7 +67,9 @@ Weight = (Frequency 35%) + (Position 30%) + (Emphasis 35%) × Weakness Factor
 - 📋 **Strategy**: Structure thinking (plan → blueprint, way → method)
 
 ### Measurable Impact Scoring
+
 Each suggestion includes:
+
 - **Impact Score** (0-10): How much this change improves clarity
 - **Estimated Improvement**: Keyword weight × impact × context factor
 - **Measurable Outcome**: Specific results (e.g., "+25% clarity")
@@ -83,10 +87,11 @@ Each suggestion includes:
 ## 📈 Impact Examples
 
 ### Example 1: Weak Descriptors
+
 ```
 Before: "Write a good function that works really well"
 After:  "Write an excellent function that operates effectively"
-Changes: 
+Changes:
   - good → excellent (+8 impact, 25% quality bump)
   - really → exceptionally (+7 impact, 20% strength boost)
   - works well → operates effectively (+9 impact, 30% precision)
@@ -94,6 +99,7 @@ Estimated Total Improvement: +6.8 points
 ```
 
 ### Example 2: Generic Nouns
+
 ```
 Before: "Handle the different types of things in the data"
 After:  "Process the diverse formats in the dataset"
@@ -104,6 +110,7 @@ Estimated Total Improvement: +5.3 points
 ```
 
 ### Example 3: Problem-Solving Context
+
 ```
 Before: "I have a bad issue where the thing doesn't work"
 After:  "I have a critical issue where the component fails"
@@ -119,7 +126,7 @@ Estimated Total Improvement: +7.1 points
 ```javascript
 const engine = new RefineryEngine();
 const analysis = engine.analyze(userPrompt);
-ui.render(analysis);  // Displays all results
+ui.render(analysis); // Displays all results
 ```
 
 ## 📊 Output Structure
@@ -147,27 +154,30 @@ analysis = {
 ## 🔧 Integration Points
 
 ### With Chat Parser
+
 ```javascript
 // Parse chat export → extract prompts → analyze with refinery
 const messages = chatParser.parse(chatJSON);
-const prompts = messages.filter(m => m.role === 'user');
-prompts.forEach(p => {
+const prompts = messages.filter((m) => m.role === "user");
+prompts.forEach((p) => {
   const analysis = engine.analyze(p.content);
   // Store refinement suggestions
 });
 ```
 
 ### With Scanner UI
+
 ```html
 <!-- Add to scanner-ui.html -->
 <div id="refinery-results"></div>
 
 <script>
-  ui.render(analysis);  // Renders all 6 sections
+  ui.render(analysis); // Renders all 6 sections
 </script>
 ```
 
 ### Export Options
+
 ```javascript
 // JSON export
 const json = ui.exportAsJSON();
@@ -182,13 +192,15 @@ const text = engine.generateReport(analysis);
 ## ✨ Advanced Features
 
 ### Extract Quick Wins
+
 ```javascript
 const wins = analysis.report.topRecommendations
-  .filter(r => r.difficulty === 'low' && r.priority === 'high')
+  .filter((r) => r.difficulty === "low" && r.priority === "high")
   .slice(0, 3);
 ```
 
 ### Generate Refined Prompt
+
 ```javascript
 const refined = engine.generateRefinedPrompt(analysis, 5);
 // refined.refined = new prompt with top 5 changes applied
@@ -197,6 +209,7 @@ const refined = engine.generateRefinedPrompt(analysis, 5);
 ```
 
 ### Batch Processing
+
 ```javascript
 const engine = new RefineryEngine();
 const prompts = [...];
@@ -241,12 +254,12 @@ const results = prompts.map(p => engine.analyze(p));
 
 ## 📊 Performance
 
-| Operation | Time | Memory |
-|-----------|------|--------|
-| analyze() | 40-60ms | ~500KB |
-| render() | 200-500ms | ~1MB |
-| export() | 10-20ms | varies |
-| batch (100 prompts) | 3-5 sec | ~5MB |
+| Operation           | Time      | Memory |
+| ------------------- | --------- | ------ |
+| analyze()           | 40-60ms   | ~500KB |
+| render()            | 200-500ms | ~1MB   |
+| export()            | 10-20ms   | varies |
+| batch (100 prompts) | 3-5 sec   | ~5MB   |
 
 ## 🔑 Key Capabilities
 
@@ -264,6 +277,7 @@ const results = prompts.map(p => engine.analyze(p));
 ## 🎯 Next Steps
 
 1. **Integrate with scanner-ui.html**
+
    ```html
    <script src="refinery-engine.js"></script>
    <script src="refinery-ui-component.js"></script>
@@ -310,6 +324,7 @@ Total: 90 KB of production-ready code + documentation
 ## 🚀 Ready to Deploy
 
 All components are:
+
 - ✅ Production-ready
 - ✅ Fully tested with examples
 - ✅ Comprehensively documented

@@ -16,7 +16,7 @@ export default class CachingEngine {
       sets: 0,
       deletes: 0,
       expirations: 0,
-      avgHitRate: 0
+      avgHitRate: 0,
     };
   }
 
@@ -25,7 +25,7 @@ export default class CachingEngine {
    */
   generateKey(type, input) {
     // Create a deterministic key based on type and input
-    const inputStr = typeof input === 'string' ? input : JSON.stringify(input);
+    const inputStr = typeof input === "string" ? input : JSON.stringify(input);
     const hash = this.simpleHash(inputStr);
     return `${type}:${hash}`;
   }
@@ -37,7 +37,7 @@ export default class CachingEngine {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(16);
@@ -47,13 +47,13 @@ export default class CachingEngine {
    * Set value in cache with metadata
    */
   set(key, value, ttl = null) {
-    const expiry = Date.now() + ((ttl || this.ttl) * 1000);
+    const expiry = Date.now() + (ttl || this.ttl) * 1000;
     this.cache.set(key, value);
     this.metadata.set(key, {
       createdAt: Date.now(),
       expiresAt: expiry,
       accessCount: 0,
-      lastAccessedAt: null
+      lastAccessedAt: null,
     });
     this.stats.sets++;
     return { success: true, key };
@@ -132,8 +132,8 @@ export default class CachingEngine {
    * Convert pattern to regex
    */
   patternToRegex(pattern) {
-    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-    const regex = escaped.replace(/\*/g, '.*');
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+    const regex = escaped.replace(/\*/g, ".*");
     return new RegExp(`^${regex}$`);
   }
 
@@ -142,9 +142,13 @@ export default class CachingEngine {
    */
   getStats() {
     const totalRequests = this.hits + this.misses;
-    const hitRate = totalRequests > 0 ? (this.hits / totalRequests * 100).toFixed(2) : 0;
-    const avgAccessCount = Array.from(this.metadata.values())
-      .reduce((sum, meta) => sum + meta.accessCount, 0) / Math.max(1, this.metadata.size);
+    const hitRate =
+      totalRequests > 0 ? ((this.hits / totalRequests) * 100).toFixed(2) : 0;
+    const avgAccessCount =
+      Array.from(this.metadata.values()).reduce(
+        (sum, meta) => sum + meta.accessCount,
+        0,
+      ) / Math.max(1, this.metadata.size);
 
     return {
       totalEntries: this.cache.size,
@@ -158,7 +162,7 @@ export default class CachingEngine {
       expirations: this.stats.expirations,
       avgAccessCount: avgAccessCount.toFixed(2),
       oldestEntry: this.getOldestEntry(),
-      newestEntry: this.getNewestEntry()
+      newestEntry: this.getNewestEntry(),
     };
   }
 
@@ -237,7 +241,7 @@ export default class CachingEngine {
       sets: 0,
       deletes: 0,
       expirations: 0,
-      avgHitRate: 0
+      avgHitRate: 0,
     };
     return { success: true };
   }
@@ -273,7 +277,7 @@ export default class CachingEngine {
         createdAt: new Date(meta.createdAt).toISOString(),
         expiresAt: new Date(meta.expiresAt).toISOString(),
         accessCount: meta.accessCount,
-        isExpired: Date.now() > meta.expiresAt
+        isExpired: Date.now() > meta.expiresAt,
       });
     }
     return entries.sort((a, b) => b.accessCount - a.accessCount);

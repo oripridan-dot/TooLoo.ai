@@ -1,14 +1,14 @@
-// @version 2.1.375
+// @version 2.2.32
 /**
  * Service Foundation - Unified service wrapper
  * Provides common functionality: health checks, status endpoints, middleware setup
  * Used by all microservices: web-server, training-server, segmentation-server, etc.
  */
 
-import express, { Express, Request, Response } from 'express';
-import cors from 'cors';
-import { EventEmitter } from 'events';
-import { EnvironmentHub } from '../core/environment-hub.js';
+import express, { Express, Request, Response } from "express";
+import cors from "cors";
+import { EventEmitter } from "events";
+import { EnvironmentHub } from "../core/environment-hub.js";
 
 interface ServiceOptions {
   corsEnabled?: boolean;
@@ -20,7 +20,10 @@ interface ServiceMetrics {
   errors: number;
   totalLatency: number;
   startTime: number;
-  endpoints: Record<string, { count: number; totalLatency: number; errors: number }>;
+  endpoints: Record<
+    string,
+    { count: number; totalLatency: number; errors: number }
+  >;
 }
 
 export class ServiceFoundation extends EventEmitter {
@@ -32,7 +35,11 @@ export class ServiceFoundation extends EventEmitter {
   private metrics: ServiceMetrics;
   private dependencyHealth: Map<string, boolean> = new Map();
 
-  constructor(serviceName: string, port?: number | string, options: ServiceOptions = {}) {
+  constructor(
+    serviceName: string,
+    port?: number | string,
+    options: ServiceOptions = {},
+  ) {
     super();
     this.serviceName = serviceName;
     this.port = parseInt(String(port || 3000), 10);
@@ -48,7 +55,9 @@ export class ServiceFoundation extends EventEmitter {
     };
 
     if (options.verbose) {
-      console.log(`[ServiceFoundation] Initializing ${serviceName} on port ${this.port}`);
+      console.log(
+        `[ServiceFoundation] Initializing ${serviceName} on port ${this.port}`,
+      );
     }
   }
 
@@ -62,8 +71,8 @@ export class ServiceFoundation extends EventEmitter {
     }
 
     // JSON body parser
-    this.app.use(express.json({ limit: '100mb' }));
-    this.app.use(express.urlencoded({ limit: '100mb', extended: true }));
+    this.app.use(express.json({ limit: "100mb" }));
+    this.app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
     // Request logging middleware
     this.app.use((req: Request, res: Response, next) => {
@@ -82,14 +91,19 @@ export class ServiceFoundation extends EventEmitter {
           this.metrics.endpoints = {};
         }
         if (!this.metrics.endpoints[endpoint]) {
-          this.metrics.endpoints[endpoint] = { count: 0, totalLatency: 0, errors: 0 };
+          this.metrics.endpoints[endpoint] = {
+            count: 0,
+            totalLatency: 0,
+            errors: 0,
+          };
         }
         this.metrics.endpoints[endpoint].count += 1;
         this.metrics.endpoints[endpoint].totalLatency += latency;
 
         if (res.statusCode >= 400) {
           this.metrics.errors = (this.metrics.errors || 0) + 1;
-          this.metrics.endpoints[endpoint].errors = (this.metrics.endpoints[endpoint].errors || 0) + 1;
+          this.metrics.endpoints[endpoint].errors =
+            (this.metrics.endpoints[endpoint].errors || 0) + 1;
         }
 
         return originalSend.call(this, data);
@@ -103,16 +117,16 @@ export class ServiceFoundation extends EventEmitter {
    * Register /health endpoint with basic health check
    */
   registerHealthEndpoint(): void {
-    this.app.get('/health', (req: Request, res: Response) => {
+    this.app.get("/health", (req: Request, res: Response) => {
       res.json({
-        status: 'ok',
+        status: "ok",
         service: this.serviceName,
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
       });
     });
 
-    this.app.get('/api/v1/health', (req: Request, res: Response) => {
+    this.app.get("/api/v1/health", (req: Request, res: Response) => {
       res.json({
         ok: true,
         service: this.serviceName,
@@ -126,10 +140,12 @@ export class ServiceFoundation extends EventEmitter {
    * Register /status endpoint with detailed service info
    */
   registerStatusEndpoint(): void {
-    this.app.get('/status', (req: Request, res: Response) => {
+    this.app.get("/status", (req: Request, res: Response) => {
       const uptime = Date.now() - this.metrics.startTime;
       const avgLatency =
-        this.metrics.requests > 0 ? Math.round(this.metrics.totalLatency / this.metrics.requests) : 0;
+        this.metrics.requests > 0
+          ? Math.round(this.metrics.totalLatency / this.metrics.requests)
+          : 0;
 
       // Top endpoints
       const endpointStats = Object.entries(this.metrics.endpoints)
@@ -137,7 +153,10 @@ export class ServiceFoundation extends EventEmitter {
           endpoint: name,
           requests: stats.count,
           avgLatency: Math.round(stats.totalLatency / stats.count),
-          errorRate: stats.count > 0 ? ((stats.errors / stats.count) * 100).toFixed(1) : '0',
+          errorRate:
+            stats.count > 0
+              ? ((stats.errors / stats.count) * 100).toFixed(1)
+              : "0",
         }))
         .sort((a, b) => b.requests - a.requests)
         .slice(0, 10);
@@ -145,13 +164,16 @@ export class ServiceFoundation extends EventEmitter {
       res.json({
         ok: true,
         service: this.serviceName,
-        version: process.env.VERSION || '2.1.373',
+        version: process.env.VERSION || "2.1.373",
         uptime,
         ready: this.isReady,
         metrics: {
           totalRequests: this.metrics.requests,
           totalErrors: this.metrics.errors,
-          errorRate: this.metrics.requests > 0 ? ((this.metrics.errors / this.metrics.requests) * 100).toFixed(2) : '0',
+          errorRate:
+            this.metrics.requests > 0
+              ? ((this.metrics.errors / this.metrics.requests) * 100).toFixed(2)
+              : "0",
           avgLatency,
           topEndpoints: endpointStats,
         },
@@ -159,17 +181,19 @@ export class ServiceFoundation extends EventEmitter {
       });
     });
 
-    this.app.get('/api/v1/status', (req: Request, res: Response) => {
+    this.app.get("/api/v1/status", (req: Request, res: Response) => {
       const uptime = Date.now() - this.metrics.startTime;
       const avgLatency =
-        this.metrics.requests > 0 ? Math.round(this.metrics.totalLatency / this.metrics.requests) : 0;
+        this.metrics.requests > 0
+          ? Math.round(this.metrics.totalLatency / this.metrics.requests)
+          : 0;
 
       res.json({
         ok: true,
         data: {
           service: this.serviceName,
-          version: process.env.VERSION || '2.1.373',
-          architecture: 'Synapsys 2.1',
+          version: process.env.VERSION || "2.1.373",
+          architecture: "Synapsys 2.1",
           uptime,
           ready: this.isReady,
           metrics: {
@@ -177,25 +201,33 @@ export class ServiceFoundation extends EventEmitter {
             totalErrors: this.metrics.errors,
             errorRate:
               this.metrics.requests > 0
-                ? ((this.metrics.errors / this.metrics.requests) * 100).toFixed(2)
-                : '0',
+                ? ((this.metrics.errors / this.metrics.requests) * 100).toFixed(
+                    2,
+                  )
+                : "0",
             avgLatency,
           },
         },
       });
     });
 
-    this.app.get('/api/v1/system/status', (req: Request, res: Response) => {
+    this.app.get("/api/v1/system/status", (req: Request, res: Response) => {
       const uptime = Date.now() - this.metrics.startTime;
+      const memory = process.memoryUsage();
 
       res.json({
         ok: true,
         data: {
-          version: process.env.VERSION || '2.1.373',
-          architecture: 'Synapsys 2.1',
+          version: process.env.VERSION || "2.1.373",
+          architecture: "Synapsys 2.1",
           service: this.serviceName,
           uptime,
           ready: this.isReady,
+          memory: {
+            heapUsed: memory.heapUsed,
+            heapTotal: memory.heapTotal,
+            rss: memory.rss,
+          },
         },
       });
     });
@@ -204,14 +236,14 @@ export class ServiceFoundation extends EventEmitter {
   /**
    * Unified error handler
    */
-  errorHandler(err: any, req: Request, res: Response, next: any): void {
+  errorHandler(err: any, req: Request, res: Response, _next: any): void {
     console.error(`[${this.serviceName}] Error:`, err);
 
     this.metrics.errors += 1;
 
     res.status(err.status || 500).json({
       ok: false,
-      error: err.message || 'Internal server error',
+      error: err.message || "Internal server error",
       service: this.serviceName,
     });
   }
@@ -231,7 +263,9 @@ export class ServiceFoundation extends EventEmitter {
     // Check dependencies
     const depsHealthy = await this.checkDependencies();
     if (!depsHealthy) {
-      console.warn(`[${this.serviceName}] Some dependencies are unhealthy, starting in degraded mode`);
+      console.warn(
+        `[${this.serviceName}] Some dependencies are unhealthy, starting in degraded mode`,
+      );
     }
 
     this.isReady = true;
@@ -239,7 +273,7 @@ export class ServiceFoundation extends EventEmitter {
     return new Promise((resolve) => {
       this.app.listen(this.port, () => {
         console.log(`[${this.serviceName}] Listening on port ${this.port}`);
-        this.emit('ready');
+        this.emit("ready");
         resolve();
       });
     });
@@ -250,7 +284,7 @@ export class ServiceFoundation extends EventEmitter {
    */
   async stop(): Promise<void> {
     this.isReady = false;
-    this.emit('shutdown');
+    this.emit("shutdown");
   }
 
   /**
@@ -258,7 +292,7 @@ export class ServiceFoundation extends EventEmitter {
    */
   getCorsOptions() {
     return {
-      origin: process.env.CORS_ORIGIN || '*',
+      origin: process.env.CORS_ORIGIN || "*",
       credentials: true,
       optionsSuccessStatus: 200,
     };

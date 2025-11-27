@@ -12,7 +12,7 @@ export default class AnalyticsEngine {
   }
 
   async init() {
-    return { ok: true, engine: 'analytics-engine', status: 'ready' };
+    return { ok: true, engine: "analytics-engine", status: "ready" };
   }
 
   async recordEvent(event) {
@@ -30,16 +30,16 @@ export default class AnalyticsEngine {
       type,
       report: {
         generatedAt: new Date().toISOString(),
-        data: []
-      }
+        data: [],
+      },
     };
   }
 
   getStatus() {
     return {
-      engine: 'analytics-engine',
+      engine: "analytics-engine",
       eventsRecorded: this.events.length,
-      domains: Object.keys(this.metrics).length
+      domains: Object.keys(this.metrics).length,
     };
   }
 }

@@ -12,15 +12,15 @@
 export function computeTraitVector(patternCandidates, options = {}) {
   // Pattern-to-trait mapping per spec (expanded for better coverage)
   const patternMapping = {
-    'decision-shorthand-affirm': ['decisionCompression'],
-    'option-framing-request': ['decisionCompression', 'structureExpectation'],
-    'risk-surfacing': ['riskDiscipline', 'structureExpectation'],
-    'scope-compression': ['riskDiscipline', 'structureExpectation'],
-    'local-first-principle': ['trustPriority'],
-    'deliverable-framing-quad': ['structureExpectation'],
-    'next-step-authorization': ['decisionCompression'],
-    'pivot-trigger-question': ['riskDiscipline', 'decisionCompression'],
-    'pattern-mining-invoke': ['structureExpectation', 'riskDiscipline']
+    "decision-shorthand-affirm": ["decisionCompression"],
+    "option-framing-request": ["decisionCompression", "structureExpectation"],
+    "risk-surfacing": ["riskDiscipline", "structureExpectation"],
+    "scope-compression": ["riskDiscipline", "structureExpectation"],
+    "local-first-principle": ["trustPriority"],
+    "deliverable-framing-quad": ["structureExpectation"],
+    "next-step-authorization": ["decisionCompression"],
+    "pivot-trigger-question": ["riskDiscipline", "decisionCompression"],
+    "pattern-mining-invoke": ["structureExpectation", "riskDiscipline"],
   };
 
   // Initialize trait accumulators
@@ -28,18 +28,21 @@ export function computeTraitVector(patternCandidates, options = {}) {
     decisionCompression: { total: 0, count: 0 },
     riskDiscipline: { total: 0, count: 0 },
     trustPriority: { total: 0, count: 0 },
-    structureExpectation: { total: 0, count: 0 }
+    structureExpectation: { total: 0, count: 0 },
   };
 
   // Aggregate pattern contributions to traits
   for (const pattern of patternCandidates) {
     const patternId = pattern.patterns[0]; // Single pattern per window
     const mappedTraits = patternMapping[patternId] || [];
-    
+
     for (const traitName of mappedTraits) {
       if (traits[traitName]) {
         // Enhanced weighting: stronger confidence factor, linear frequency scaling
-        const weight = (pattern.features.confidence * 1.5) * (1 + pattern.features.frequency * 0.3);
+        const weight =
+          pattern.features.confidence *
+          1.5 *
+          (1 + pattern.features.frequency * 0.3);
         traits[traitName].total += weight;
         traits[traitName].count += 1;
       }
@@ -72,6 +75,6 @@ export function formatTraitVector(traitVector) {
     formatted[trait] = Math.round(value * 100) / 100; // Round to 2 decimals
   }
   formatted.timestamp = new Date().toISOString();
-  formatted.version = '1.0.0';
+  formatted.version = "1.0.0";
   return formatted;
 }

@@ -8,12 +8,22 @@
 export default class ReasoningVerificationEngine {
   constructor() {
     this.logicalFallacies = [
-      'ad_hominem', 'straw_man', 'circular_reasoning', 'appeal_to_authority',
-      'false_dilemma', 'hasty_generalization', 'post_hoc', 'slippery_slope'
+      "ad_hominem",
+      "straw_man",
+      "circular_reasoning",
+      "appeal_to_authority",
+      "false_dilemma",
+      "hasty_generalization",
+      "post_hoc",
+      "slippery_slope",
     ];
 
     this.premiseTypes = [
-      'factual', 'definitional', 'normative', 'conditional', 'empirical'
+      "factual",
+      "definitional",
+      "normative",
+      "conditional",
+      "empirical",
     ];
   }
 
@@ -21,10 +31,10 @@ export default class ReasoningVerificationEngine {
    * Comprehensive reasoning verification
    */
   verifyReasoning(reasoning, premises = []) {
-    if (!reasoning || typeof reasoning !== 'string') {
+    if (!reasoning || typeof reasoning !== "string") {
       return {
         success: false,
-        error: 'Invalid reasoning input'
+        error: "Invalid reasoning input",
       };
     }
 
@@ -37,7 +47,7 @@ export default class ReasoningVerificationEngine {
       circularDependencies: this.checkCircularDependencies(reasoning, premises),
       consistency: this.checkConsistency(reasoning, premises),
       strength: this.assessReasoningStrength(reasoning, premises),
-      suggestions: []
+      suggestions: [],
     };
 
     // Generate suggestions based on analysis
@@ -45,7 +55,7 @@ export default class ReasoningVerificationEngine {
 
     return {
       success: true,
-      ...analysis
+      ...analysis,
     };
   }
 
@@ -54,19 +64,30 @@ export default class ReasoningVerificationEngine {
    */
   extractLogicalChain(reasoning) {
     const steps = [];
-    
+
     // Look for logical connectors
-    const connectors = ['therefore', 'because', 'since', 'if', 'then', 'thus', 'hence', 'so'];
-    const sentences = reasoning.split(/[.!?]+/).filter(s => s.trim());
+    const connectors = [
+      "therefore",
+      "because",
+      "since",
+      "if",
+      "then",
+      "thus",
+      "hence",
+      "so",
+    ];
+    const sentences = reasoning.split(/[.!?]+/).filter((s) => s.trim());
 
     for (const sentence of sentences) {
-      const connectorFound = connectors.find(c => sentence.toLowerCase().includes(c));
-      
+      const connectorFound = connectors.find((c) =>
+        sentence.toLowerCase().includes(c),
+      );
+
       steps.push({
         statement: sentence.trim(),
-        connector: connectorFound || 'premise',
+        connector: connectorFound || "premise",
         type: this.classifyStatement(sentence),
-        logicalValue: this.assessLogicalValue(sentence)
+        logicalValue: this.assessLogicalValue(sentence),
       });
     }
 
@@ -79,27 +100,28 @@ export default class ReasoningVerificationEngine {
   classifyStatement(statement) {
     const lower = statement.toLowerCase();
 
-    if (/^if\s|^assuming\s|^suppose\s/.test(lower)) return 'conditional';
-    if (/\bthen\b|\bimplies\b|\bthus\b|\btherefore\b|\bso\b/.test(lower)) return 'conclusion';
-    if (/\bbecause\b|\bsince\b|\bas\s/.test(lower)) return 'justification';
-    if (/^\w+\s(is|are|was|were)/.test(lower)) return 'definition';
-    if (/\bshould\b|\bmust\b|\bought\b/.test(lower)) return 'normative';
-    
-    return 'factual';
+    if (/^if\s|^assuming\s|^suppose\s/.test(lower)) return "conditional";
+    if (/\bthen\b|\bimplies\b|\bthus\b|\btherefore\b|\bso\b/.test(lower))
+      return "conclusion";
+    if (/\bbecause\b|\bsince\b|\bas\s/.test(lower)) return "justification";
+    if (/^\w+\s(is|are|was|were)/.test(lower)) return "definition";
+    if (/\bshould\b|\bmust\b|\bought\b/.test(lower)) return "normative";
+
+    return "factual";
   }
 
   /**
    * Assess logical value of statement
    */
   assessLogicalValue(statement) {
-    const affirmative = statement.includes('is') || statement.includes('are');
-    const negative = statement.includes('not') || statement.includes('no');
+    const affirmative = statement.includes("is") || statement.includes("are");
+    const negative = statement.includes("not") || statement.includes("no");
 
     return {
       affirmative,
       negative,
       modal: this.extractModality(statement),
-      confidence: this.estimateConfidence(statement)
+      confidence: this.estimateConfidence(statement),
     };
   }
 
@@ -109,12 +131,13 @@ export default class ReasoningVerificationEngine {
   extractModality(statement) {
     const lower = statement.toLowerCase();
 
-    if (/\bmust\b|\brequires\b|\bnecessary\b/.test(lower)) return 'necessity';
-    if (/\bcan\b|\bmay\b|\bpossible\b|\bcould\b/.test(lower)) return 'possibility';
-    if (/\bshould\b|\bought\b|\brecommend\b/.test(lower)) return 'obligation';
-    if (/\bis\b|\bare\b/.test(lower)) return 'assertion';
+    if (/\bmust\b|\brequires\b|\bnecessary\b/.test(lower)) return "necessity";
+    if (/\bcan\b|\bmay\b|\bpossible\b|\bcould\b/.test(lower))
+      return "possibility";
+    if (/\bshould\b|\bought\b|\brecommend\b/.test(lower)) return "obligation";
+    if (/\bis\b|\bare\b/.test(lower)) return "assertion";
 
-    return 'uncertain';
+    return "uncertain";
   }
 
   /**
@@ -122,11 +145,20 @@ export default class ReasoningVerificationEngine {
    */
   estimateConfidence(statement) {
     const lower = statement.toLowerCase();
-    const hedges = ['may', 'might', 'could', 'perhaps', 'seems', 'appears', 'somewhat', 'relatively'];
-    const hedgeCount = hedges.filter(h => lower.includes(h)).length;
+    const hedges = [
+      "may",
+      "might",
+      "could",
+      "perhaps",
+      "seems",
+      "appears",
+      "somewhat",
+      "relatively",
+    ];
+    const hedgeCount = hedges.filter((h) => lower.includes(h)).length;
 
     // More hedges = lower confidence
-    return Math.max(0.5, 1 - (hedgeCount * 0.1));
+    return Math.max(0.5, 1 - hedgeCount * 0.1);
   }
 
   /**
@@ -137,7 +169,7 @@ export default class ReasoningVerificationEngine {
       return {
         valid: true,
         count: 0,
-        premises: []
+        premises: [],
       };
     }
 
@@ -149,18 +181,18 @@ export default class ReasoningVerificationEngine {
         plausibility: this.assessPlausibility(premise),
         supportingEvidence: this.evaluateEvidenceSupport(premise),
         isCircular: this.checkPremiseCircularity(premise),
-        status: 'valid' // Will be updated if issues found
+        status: "valid", // Will be updated if issues found
       };
     });
 
     // Check for circular references
-    const circularPremises = validatedPremises.filter(p => p.isCircular);
+    const circularPremises = validatedPremises.filter((p) => p.isCircular);
 
     return {
       valid: circularPremises.length === 0,
       count: premises.length,
       premises: validatedPremises,
-      circularPremisesFound: circularPremises
+      circularPremisesFound: circularPremises,
     };
   }
 
@@ -170,12 +202,14 @@ export default class ReasoningVerificationEngine {
   classifyPremise(premise) {
     const lower = premise.toLowerCase();
 
-    if (/\d+%|\d+ (of|out of)|\bdata\b|\bstudies\b|\bevidence\b/.test(lower)) return 'empirical';
-    if (/\sis\s(defined|a|an)/.test(lower)) return 'definitional';
-    if (/\bshould\b|\boug ht\b|\bmust\b|\bwrong\b|\bright\b/.test(lower)) return 'normative';
-    if (/\bif\b|\bthen\b|\bimplies\b/.test(lower)) return 'conditional';
+    if (/\d+%|\d+ (of|out of)|\bdata\b|\bstudies\b|\bevidence\b/.test(lower))
+      return "empirical";
+    if (/\sis\s(defined|a|an)/.test(lower)) return "definitional";
+    if (/\bshould\b|\boug ht\b|\bmust\b|\bwrong\b|\bright\b/.test(lower))
+      return "normative";
+    if (/\bif\b|\bthen\b|\bimplies\b/.test(lower)) return "conditional";
 
-    return 'factual';
+    return "factual";
   }
 
   /**
@@ -203,18 +237,24 @@ export default class ReasoningVerificationEngine {
     const lower = premise.toLowerCase();
 
     const evidenceMarkers = {
-      strong: ['studies show', 'data indicates', 'research proves', 'evidence shows', 'documented'],
-      moderate: ['suggests', 'indicates', 'appears', 'seems', 'typical'],
-      weak: ['might', 'could', 'possibly', 'perhaps', 'arguably']
+      strong: [
+        "studies show",
+        "data indicates",
+        "research proves",
+        "evidence shows",
+        "documented",
+      ],
+      moderate: ["suggests", "indicates", "appears", "seems", "typical"],
+      weak: ["might", "could", "possibly", "perhaps", "arguably"],
     };
 
     for (const [level, markers] of Object.entries(evidenceMarkers)) {
-      if (markers.some(m => lower.includes(m))) {
+      if (markers.some((m) => lower.includes(m))) {
         return level;
       }
     }
 
-    return 'unknown';
+    return "unknown";
   }
 
   /**
@@ -223,7 +263,9 @@ export default class ReasoningVerificationEngine {
   checkPremiseCircularity(premise) {
     // Simple check: does the premise mention itself or require itself to be proven?
     // This is a basic implementation - more complex cases need deeper analysis
-    return /\b(because\s+[^.]*\b\w+ \1|by virtue of being [^.]*\1)/i.test(premise);
+    return /\b(because\s+[^.]*\b\w+ \1|by virtue of being [^.]*\1)/i.test(
+      premise,
+    );
   }
 
   /**
@@ -236,55 +278,67 @@ export default class ReasoningVerificationEngine {
     // Ad Hominem
     if (/\b(is wrong because|is stupid|is biased)\b/.test(lower)) {
       detected.push({
-        fallacy: 'ad_hominem',
-        severity: 'high',
-        message: 'Argument attacks person rather than idea'
+        fallacy: "ad_hominem",
+        severity: "high",
+        message: "Argument attacks person rather than idea",
       });
     }
 
     // Straw Man
-    if (/\b(they say|the other side argues)\s+[^.]*\b(obviously|clearly|ridiculous)\b/.test(lower)) {
+    if (
+      /\b(they say|the other side argues)\s+[^.]*\b(obviously|clearly|ridiculous)\b/.test(
+        lower,
+      )
+    ) {
       detected.push({
-        fallacy: 'straw_man',
-        severity: 'high',
-        message: 'Argument misrepresents opposing view'
+        fallacy: "straw_man",
+        severity: "high",
+        message: "Argument misrepresents opposing view",
       });
     }
 
     // Circular Reasoning
-    if (/\b(\w+) is true because \w+ is true\b/.test(lower) || 
-        /\b(\w+) is true because \1 is true\b/.test(lower)) {
+    if (
+      /\b(\w+) is true because \w+ is true\b/.test(lower) ||
+      /\b(\w+) is true because \1 is true\b/.test(lower)
+    ) {
       detected.push({
-        fallacy: 'circular_reasoning',
-        severity: 'critical',
-        message: 'Reasoning is circular'
+        fallacy: "circular_reasoning",
+        severity: "critical",
+        message: "Reasoning is circular",
       });
     }
 
     // Appeal to Authority
-    if (/\b(experts say|studies show|research proves)\b/.test(lower) && !this.hasEvidenceSupport(reasoning)) {
+    if (
+      /\b(experts say|studies show|research proves)\b/.test(lower) &&
+      !this.hasEvidenceSupport(reasoning)
+    ) {
       detected.push({
-        fallacy: 'appeal_to_authority',
-        severity: 'medium',
-        message: 'Appeals to authority without specific evidence'
+        fallacy: "appeal_to_authority",
+        severity: "medium",
+        message: "Appeals to authority without specific evidence",
       });
     }
 
     // False Dilemma
     if (/\b(either|or|must choose between)\b.*\b(or)\b/.test(lower)) {
       detected.push({
-        fallacy: 'false_dilemma',
-        severity: 'medium',
-        message: 'Presents false choice between limited options'
+        fallacy: "false_dilemma",
+        severity: "medium",
+        message: "Presents false choice between limited options",
       });
     }
 
     // Hasty Generalization
-    if (/\b(all|always|never|everyone|nobody)\b/.test(lower) && reasoning.length < 100) {
+    if (
+      /\b(all|always|never|everyone|nobody)\b/.test(lower) &&
+      reasoning.length < 100
+    ) {
       detected.push({
-        fallacy: 'hasty_generalization',
-        severity: 'medium',
-        message: 'Generalizes without sufficient evidence'
+        fallacy: "hasty_generalization",
+        severity: "medium",
+        message: "Generalizes without sufficient evidence",
       });
     }
 
@@ -326,7 +380,9 @@ export default class ReasoningVerificationEngine {
     for (let i = 0; i < premises.length; i++) {
       if (!visited.has(i)) {
         if (hasCycle(i)) {
-          circularDeps.push(`Circular dependency detected involving premise ${i}`);
+          circularDeps.push(
+            `Circular dependency detected involving premise ${i}`,
+          );
         }
       }
     }
@@ -334,7 +390,7 @@ export default class ReasoningVerificationEngine {
     return {
       hasCycles: circularDeps.length > 0,
       cycles: circularDeps,
-      dependencyMap: dependencies
+      dependencyMap: dependencies,
     };
   }
 
@@ -348,7 +404,7 @@ export default class ReasoningVerificationEngine {
       if (allPremises[i] !== premise) {
         // Simple check: if premise mentions key concepts from another premise
         const keywords = this.extractKeywords(premise);
-        if (keywords.some(kw => allPremises[i].toLowerCase().includes(kw))) {
+        if (keywords.some((kw) => allPremises[i].toLowerCase().includes(kw))) {
           dependencies.push(i);
         }
       }
@@ -364,7 +420,7 @@ export default class ReasoningVerificationEngine {
     return text
       .toLowerCase()
       .split(/\s+/)
-      .filter(w => w.length > 4 && !this.isCommonWord(w))
+      .filter((w) => w.length > 4 && !this.isCommonWord(w))
       .slice(0, 5);
   }
 
@@ -372,7 +428,17 @@ export default class ReasoningVerificationEngine {
    * Check if word is common
    */
   isCommonWord(word) {
-    const common = ['the', 'that', 'this', 'which', 'where', 'when', 'what', 'because', 'since'];
+    const common = [
+      "the",
+      "that",
+      "this",
+      "which",
+      "where",
+      "when",
+      "what",
+      "because",
+      "since",
+    ];
     return common.includes(word);
   }
 
@@ -380,7 +446,7 @@ export default class ReasoningVerificationEngine {
    * Check consistency of reasoning
    */
   checkConsistency(reasoning, premises) {
-    const statements = reasoning.split(/[.!?]+/).filter(s => s.trim());
+    const statements = reasoning.split(/[.!?]+/).filter((s) => s.trim());
     const contradictions = [];
 
     for (let i = 0; i < statements.length - 1; i++) {
@@ -389,7 +455,7 @@ export default class ReasoningVerificationEngine {
           contradictions.push({
             statement1: statements[i].trim(),
             statement2: statements[j].trim(),
-            severity: 'high'
+            severity: "high",
           });
         }
       }
@@ -398,7 +464,7 @@ export default class ReasoningVerificationEngine {
     return {
       consistent: contradictions.length === 0,
       contradictions,
-      consistencyScore: Math.max(0, 1 - (contradictions.length * 0.2))
+      consistencyScore: Math.max(0, 1 - contradictions.length * 0.2),
     };
   }
 
@@ -437,7 +503,9 @@ export default class ReasoningVerificationEngine {
     strengthScore -= (1 - consistency.consistencyScore) * 0.1;
 
     // Deduct for weak premises
-    const weakPremises = validation.premises.filter(p => p.plausibility < 0.6).length;
+    const weakPremises = validation.premises.filter(
+      (p) => p.plausibility < 0.6,
+    ).length;
     strengthScore -= weakPremises * 0.1;
 
     // Bonus for clear logical chain
@@ -449,7 +517,9 @@ export default class ReasoningVerificationEngine {
       fallacyCount: fallacies.length,
       inconsistencies: consistency.contradictions.length,
       weakPremises: weakPremises,
-      assessment: this.categorizeStrength(Math.max(0, Math.min(1, strengthScore)))
+      assessment: this.categorizeStrength(
+        Math.max(0, Math.min(1, strengthScore)),
+      ),
     };
   }
 
@@ -457,17 +527,19 @@ export default class ReasoningVerificationEngine {
    * Categorize reasoning strength
    */
   categorizeStrength(score) {
-    if (score >= 0.8) return 'strong';
-    if (score >= 0.6) return 'moderate';
-    if (score >= 0.4) return 'weak';
-    return 'very_weak';
+    if (score >= 0.8) return "strong";
+    if (score >= 0.6) return "moderate";
+    if (score >= 0.4) return "weak";
+    return "very_weak";
   }
 
   /**
    * Check if reasoning has evidence support
    */
   hasEvidenceSupport(reasoning) {
-    return /\b(data|studies?|research|evidence|statistics)\b/.test(reasoning.toLowerCase());
+    return /\b(data|studies?|research|evidence|statistics)\b/.test(
+      reasoning.toLowerCase(),
+    );
   }
 
   /**
@@ -479,40 +551,42 @@ export default class ReasoningVerificationEngine {
     // Fallacy suggestions
     if (analysis.fallacyDetection.length > 0) {
       suggestions.push({
-        category: 'logical_fallacy',
-        priority: 'high',
+        category: "logical_fallacy",
+        priority: "high",
         message: `Remove or address ${analysis.fallacyDetection.length} logical fallacies`,
-        details: analysis.fallacyDetection.map(f => f.message)
+        details: analysis.fallacyDetection.map((f) => f.message),
       });
     }
 
     // Consistency suggestions
     if (!analysis.consistency.consistent) {
       suggestions.push({
-        category: 'consistency',
-        priority: 'high',
-        message: 'Resolve contradictions in reasoning',
-        count: analysis.consistency.contradictions.length
+        category: "consistency",
+        priority: "high",
+        message: "Resolve contradictions in reasoning",
+        count: analysis.consistency.contradictions.length,
       });
     }
 
     // Circular dependency suggestions
     if (analysis.circularDependencies.hasCycles) {
       suggestions.push({
-        category: 'circular_reasoning',
-        priority: 'critical',
-        message: 'Remove circular dependencies',
-        cycles: analysis.circularDependencies.cycles
+        category: "circular_reasoning",
+        priority: "critical",
+        message: "Remove circular dependencies",
+        cycles: analysis.circularDependencies.cycles,
       });
     }
 
     // Premise strength suggestions
-    const weakPremises = analysis.premiseValidation.premises.filter(p => p.plausibility < 0.6);
+    const weakPremises = analysis.premiseValidation.premises.filter(
+      (p) => p.plausibility < 0.6,
+    );
     if (weakPremises.length > 0) {
       suggestions.push({
-        category: 'premise_strength',
-        priority: 'medium',
-        message: `Strengthen ${weakPremises.length} weak premises with evidence`
+        category: "premise_strength",
+        priority: "medium",
+        message: `Strengthen ${weakPremises.length} weak premises with evidence`,
       });
     }
 

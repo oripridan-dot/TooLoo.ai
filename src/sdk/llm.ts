@@ -34,14 +34,16 @@ export class LLMSDK {
       taskType: options.taskType,
       criticality: options.criticality,
       maxTokens: options.maxTokens,
-      context: options.context
+      context: options.context,
     });
 
     return {
       content: result.text || result.content,
       provider: result.providerUsed || result.provider,
-      confidence: result.providerBadge?.percent ? result.providerBadge.percent / 100 : (result.confidence || 0.7),
-      latency: result.latency
+      confidence: result.providerBadge?.percent
+        ? result.providerBadge.percent / 100
+        : result.confidence || 0.7,
+      latency: result.latency,
     };
   }
 
@@ -53,7 +55,7 @@ export class LLMSDK {
       prompt: `Generate ${language} code for: ${prompt}`,
       system: `You are an expert ${language} developer. Return ONLY the code, no markdown, no explanations.`,
       taskType: "code",
-      criticality: "high"
+      criticality: "high",
     });
   }
 }

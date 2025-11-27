@@ -68,7 +68,7 @@ Your task:
 1. Analyze the responses for consensus and unique insights.
 2. Synthesize a single, superior response that combines the best parts of all answers.
 3. Resolve any contradictions based on your knowledge.
-4. Maintain the TooLoo.ai persona (helpful, concise, structured).
+4. Maintain the TooLoo.ai persona (helpful, concise but generous, structured).
 5. ${styleInstruction}
 
 Return ONLY the synthesized response.

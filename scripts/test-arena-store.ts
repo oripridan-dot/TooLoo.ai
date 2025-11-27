@@ -18,7 +18,7 @@ async function testArenaStore() {
     id: "test_1",
     eventType: "query",
     query: "Test Query",
-    providers: ["ollama"],
+    providers: ["anthropic"],
     source: "test",
     timestamp: new Date().toISOString(),
   };

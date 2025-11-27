@@ -91,15 +91,19 @@ export class Orchestrator {
         this.state.planQueue.push(item);
         console.log(`[Cortex] Added to plan queue: ${item}`);
       } else if (action === "add_batch" && items) {
-          // Parallel Execution Logic
-          console.log(`[Cortex] Received batch of ${items.length} tasks. Executing in parallel...`);
-          await Promise.all(items.map(async (task: string) => {
-              console.log(`[Cortex] Starting parallel task: ${task}`);
-              // Simulate task execution
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              console.log(`[Cortex] Completed parallel task: ${task}`);
-          }));
-          this.state.planQueue.push(...items); // Keep in queue for history
+        // Parallel Execution Logic
+        console.log(
+          `[Cortex] Received batch of ${items.length} tasks. Executing in parallel...`,
+        );
+        await Promise.all(
+          items.map(async (task: string) => {
+            console.log(`[Cortex] Starting parallel task: ${task}`);
+            // Simulate task execution
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            console.log(`[Cortex] Completed parallel task: ${task}`);
+          }),
+        );
+        this.state.planQueue.push(...items); // Keep in queue for history
       } else if (action === "clear") {
         this.state.planQueue = [];
         console.log("[Cortex] Plan queue cleared.");
@@ -229,14 +233,17 @@ export class Orchestrator {
       // Simple heuristic: check if goal contains a file path
       const fileMatch = nextGoal.match(/[\w-]+\.ts/);
       if (fileMatch) {
-          try {
-              contextBundle = await smartFS.getGoldenPlate(fileMatch[0]);
-          } catch {
-              // Ignore
-          }
+        try {
+          contextBundle = await smartFS.getGoldenPlate(fileMatch[0]);
+        } catch {
+          // Ignore
+        }
       }
 
-      bus.publish("cortex", "planning:intent", { goal: nextGoal, context: contextBundle });
+      bus.publish("cortex", "planning:intent", {
+        goal: nextGoal,
+        context: contextBundle,
+      });
     }
   }
 }

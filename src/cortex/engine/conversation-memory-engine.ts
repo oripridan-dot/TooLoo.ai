@@ -2,21 +2,21 @@
 /**
  * Conversation Memory Engine (Phase 7)
  * Infinite-depth memory that never gets slow or confused
- * 
+ *
  * Architecture:
  * - Recent tier: Last 20 messages (full verbatim) - O(1) retrieval
  * - Compressed tier: Summary snapshots every 10 messages - O(1) retrieval
  * - Archive tier: Searchable full history - O(log N) retrieval
- * 
+ *
  * Result: Conversations stay fast and coherent even at 1000+ messages
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MEMORY_DIR = path.join(__dirname, '../data/memory');
+const MEMORY_DIR = path.join(__dirname, "../data/memory");
 const CHECKPOINT_INTERVAL = 10; // Create summary every N messages
 const RECENT_WINDOW = 20; // Keep last 20 messages in "hot" memory
 const COMPRESSION_RATIO = 5; // Summarize ~5 messages into 1
@@ -54,14 +54,14 @@ class MemoryTier {
  */
 export default class ConversationMemoryEngine {
   constructor(options = {}) {
-    this.sessionId = options.sessionId || 'default';
-    this.userId = options.userId || 'anonymous';
-    
+    this.sessionId = options.sessionId || "default";
+    this.userId = options.userId || "anonymous";
+
     // Tiered memory structure
-    this.recent = new MemoryTier('recent', RECENT_WINDOW);
-    this.compressed = new MemoryTier('compressed', 100); // ~500 original messages
+    this.recent = new MemoryTier("recent", RECENT_WINDOW);
+    this.compressed = new MemoryTier("compressed", 100); // ~500 original messages
     this.archive = []; // Full history for search
-    
+
     // Memory metadata
     this.checkpoints = []; // Compression snapshots
     this.metadata = {
@@ -70,9 +70,9 @@ export default class ConversationMemoryEngine {
       updatedAt: Date.now(),
       topics: new Set(),
       sentiment: null,
-      complexity: 'low'
+      complexity: "low",
     };
-    
+
     // Relevance scoring cache
     this.topicWeights = new Map();
     this.entityMentions = new Map();
@@ -92,15 +92,18 @@ export default class ConversationMemoryEngine {
         model: metadata.model || null,
         provider: metadata.provider || null,
         confidence: metadata.confidence || null,
-        ...metadata
-      }
+        ...metadata,
+      },
     };
 
     // Add to recent tier
     const recentOverflow = this.recent.add(message);
 
     // If recent tier overflowed, handle compression
-    if (recentOverflow && this.metadata.totalMessages % CHECKPOINT_INTERVAL === 0) {
+    if (
+      recentOverflow &&
+      this.metadata.totalMessages % CHECKPOINT_INTERVAL === 0
+    ) {
       this._checkpointAndCompress();
     }
 
@@ -112,7 +115,7 @@ export default class ConversationMemoryEngine {
     // Archive for search
     this.archive.push({
       ...message,
-      position: this.metadata.totalMessages - 1
+      position: this.metadata.totalMessages - 1,
     });
 
     return message;
@@ -137,11 +140,11 @@ export default class ConversationMemoryEngine {
     }
 
     // Format for LLM consumption
-    return history.map(msg => ({
+    return history.map((msg) => ({
       role: msg.role,
       content: msg.content,
       timestamp: msg.timestamp,
-      isCompressed: msg.isCompressed || false
+      isCompressed: msg.isCompressed || false,
     }));
   }
 
@@ -151,27 +154,27 @@ export default class ConversationMemoryEngine {
    */
   getContextInjection(options = {}) {
     const maxTokens = options.maxTokens || 1000;
-    const style = options.style || 'balanced'; // 'recent' | 'relevant' | 'balanced'
+    const style = options.style || "balanced"; // 'recent' | 'relevant' | 'balanced'
 
     let contextMessages = [];
 
-    if (style === 'recent' || style === 'balanced') {
+    if (style === "recent" || style === "balanced") {
       // Get last 10 messages as recency anchor
       contextMessages = this.recent.getAll().slice(-10);
     }
 
-    if (style === 'relevant' || style === 'balanced') {
+    if (style === "relevant" || style === "balanced") {
       // Get topically relevant messages from compressed tier
       const relevant = this._getRelevantCompressed(5);
       contextMessages = this._deduplicateMessages(contextMessages, relevant);
     }
 
     // Build injection text
-    let injection = '';
+    let injection = "";
 
     // Topic awareness
     if (this.metadata.topics.size > 0) {
-      const topics = Array.from(this.metadata.topics).slice(0, 5).join(', ');
+      const topics = Array.from(this.metadata.topics).slice(0, 5).join(", ");
       injection += `Topics in this conversation: ${topics}\n`;
     }
 
@@ -183,7 +186,10 @@ export default class ConversationMemoryEngine {
 
     // Recent message summary (for continuity)
     if (this.recent.length > 0) {
-      const lastUser = this.recent.getAll().filter(m => m.role === 'user').pop();
+      const lastUser = this.recent
+        .getAll()
+        .filter((m) => m.role === "user")
+        .pop();
       if (lastUser) {
         const summary = this._summarizeMessage(lastUser.content, 100);
         injection += `Last user message: ${summary}\n`;
@@ -193,7 +199,9 @@ export default class ConversationMemoryEngine {
     return {
       injection,
       contextMessages,
-      totalTokens: this._estimateTokens(injection + contextMessages.map(m => m.content).join(' '))
+      totalTokens: this._estimateTokens(
+        injection + contextMessages.map((m) => m.content).join(" "),
+      ),
     };
   }
 
@@ -209,21 +217,23 @@ export default class ConversationMemoryEngine {
 
     const results = searchSpace
       .map((msg, idx) => {
-        const contentMatch = msg.content.toLowerCase().includes(queryLower) ? 1 : 0;
-        const recency = 1 - (idx / Math.max(searchSpace.length, 1)); // Boost recent matches
+        const contentMatch = msg.content.toLowerCase().includes(queryLower)
+          ? 1
+          : 0;
+        const recency = 1 - idx / Math.max(searchSpace.length, 1); // Boost recent matches
         const relevance = contentMatch * (1 + recency * 0.5);
 
         return {
           message: msg,
           relevance,
-          position: msg.position || idx
+          position: msg.position || idx,
         };
       })
-      .filter(r => r.relevance > 0)
+      .filter((r) => r.relevance > 0)
       .sort((a, b) => b.relevance - a.relevance)
       .slice(0, maxResults);
 
-    return results.map(r => r.message);
+    return results.map((r) => r.message);
   }
 
   /**
@@ -241,36 +251,36 @@ export default class ConversationMemoryEngine {
       memory: {
         recentBytes: this._estimateSize(this.recent.getAll()),
         compressedBytes: this._estimateSize(this.compressed.getAll()),
-        archiveBytes: this._estimateSize(this.archive)
-      }
+        archiveBytes: this._estimateSize(this.archive),
+      },
     };
   }
 
   /**
    * Export conversation for analysis/archival
    */
-  exportConversation(format = 'json') {
+  exportConversation(format = "json") {
     const full = this._getFullHistory();
 
-    if (format === 'json') {
+    if (format === "json") {
       return {
         sessionId: this.sessionId,
         metadata: {
           ...this.metadata,
-          topics: Array.from(this.metadata.topics)
+          topics: Array.from(this.metadata.topics),
         },
         messages: full,
-        stats: this.getMemoryStats()
+        stats: this.getMemoryStats(),
       };
     }
 
-    if (format === 'markdown') {
+    if (format === "markdown") {
       let md = `# Conversation Export\n\n`;
       md += `**Session:** ${this.sessionId}\n`;
       md += `**Messages:** ${this.metadata.totalMessages}\n`;
-      md += `**Topics:** ${Array.from(this.metadata.topics).join(', ')}\n\n`;
+      md += `**Topics:** ${Array.from(this.metadata.topics).join(", ")}\n\n`;
 
-      full.forEach(msg => {
+      full.forEach((msg) => {
         const role = msg.role.toUpperCase();
         const timestamp = new Date(msg.timestamp).toLocaleTimeString();
         md += `**${role}** _(${timestamp})_\n${msg.content}\n\n`;
@@ -288,11 +298,11 @@ export default class ConversationMemoryEngine {
   async saveToFile(filepath) {
     try {
       await fs.mkdir(path.dirname(filepath), { recursive: true });
-      const data = this.exportConversation('json');
-      await fs.writeFile(filepath, JSON.stringify(data, null, 2), 'utf8');
+      const data = this.exportConversation("json");
+      await fs.writeFile(filepath, JSON.stringify(data, null, 2), "utf8");
       return true;
     } catch (err) {
-      console.error('[ConversationMemory] Save failed:', err.message);
+      console.error("[ConversationMemory] Save failed:", err.message);
       return false;
     }
   }
@@ -302,19 +312,22 @@ export default class ConversationMemoryEngine {
    */
   async loadFromFile(filepath) {
     try {
-      const data = await fs.readFile(filepath, 'utf8');
+      const data = await fs.readFile(filepath, "utf8");
       const loaded = JSON.parse(data);
 
       // Restore state
       this.sessionId = loaded.sessionId;
       this.metadata = {
         ...loaded.metadata,
-        topics: new Set(loaded.metadata.topics || [])
+        topics: new Set(loaded.metadata.topics || []),
       };
 
       // Rebuild tiers from archived messages
-      loaded.messages.forEach(msg => {
-        if (loaded.messages.indexOf(msg) >= Math.max(0, loaded.messages.length - RECENT_WINDOW)) {
+      loaded.messages.forEach((msg) => {
+        if (
+          loaded.messages.indexOf(msg) >=
+          Math.max(0, loaded.messages.length - RECENT_WINDOW)
+        ) {
           this.recent.add(msg);
         } else if (msg.isCompressed) {
           this.compressed.add(msg);
@@ -324,7 +337,7 @@ export default class ConversationMemoryEngine {
 
       return true;
     } catch (err) {
-      console.error('[ConversationMemory] Load failed:', err.message);
+      console.error("[ConversationMemory] Load failed:", err.message);
       return false;
     }
   }
@@ -363,7 +376,7 @@ export default class ConversationMemoryEngine {
       timestamp: Date.now(),
       messageCount: messages.length,
       isCompressed: true,
-      content: summary // For display in context
+      content: summary, // For display in context
     };
 
     this.compressed.add(compressed);
@@ -374,25 +387,31 @@ export default class ConversationMemoryEngine {
    * Compress multiple messages into a brief summary
    */
   _compressMessages(messages) {
-    if (messages.length === 0) return '';
+    if (messages.length === 0) return "";
 
     // Extract key points from messages
-    const userMessages = messages.filter(m => m.role === 'user');
-    const assistantMessages = messages.filter(m => m.role === 'assistant');
+    const userMessages = messages.filter((m) => m.role === "user");
+    const assistantMessages = messages.filter((m) => m.role === "assistant");
 
     let summary = [];
 
     if (userMessages.length > 0) {
       const lastQuestion = userMessages[userMessages.length - 1].content;
-      summary.push(`User asked about: ${this._summarizeMessage(lastQuestion, 80)}`);
+      summary.push(
+        `User asked about: ${this._summarizeMessage(lastQuestion, 80)}`,
+      );
     }
 
     if (assistantMessages.length > 0) {
-      const responses = assistantMessages.map(m => this._extractKeywords(m.content, 3)).flat();
-      summary.push(`Key topics covered: ${[...new Set(responses)].slice(0, 5).join(', ')}`);
+      const responses = assistantMessages
+        .map((m) => this._extractKeywords(m.content, 3))
+        .flat();
+      summary.push(
+        `Key topics covered: ${[...new Set(responses)].slice(0, 5).join(", ")}`,
+      );
     }
 
-    return summary.join(' | ');
+    return summary.join(" | ");
   }
 
   /**
@@ -405,9 +424,9 @@ export default class ConversationMemoryEngine {
     const currentTopics = Array.from(this.metadata.topics);
 
     // Score compressed messages by topic overlap
-    const scored = messages.map(msg => {
-      const overlap = currentTopics.filter(t => 
-        msg.content?.toLowerCase().includes(t.toLowerCase())
+    const scored = messages.map((msg) => {
+      const overlap = currentTopics.filter((t) =>
+        msg.content?.toLowerCase().includes(t.toLowerCase()),
       ).length;
       return { msg, score: overlap };
     });
@@ -415,7 +434,7 @@ export default class ConversationMemoryEngine {
     return scored
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(s => s.msg);
+      .map((s) => s.msg);
   }
 
   /**
@@ -423,10 +442,22 @@ export default class ConversationMemoryEngine {
    */
   _extractMetadataFromMessage(content) {
     // Extract topics (simple keyword detection)
-    const topicKeywords = ['learning', 'training', 'coaching', 'memory', 'session', 'conversation',
-                          'system', 'architecture', 'database', 'api', 'streaming', 'performance'];
-    
-    topicKeywords.forEach(keyword => {
+    const topicKeywords = [
+      "learning",
+      "training",
+      "coaching",
+      "memory",
+      "session",
+      "conversation",
+      "system",
+      "architecture",
+      "database",
+      "api",
+      "streaming",
+      "performance",
+    ];
+
+    topicKeywords.forEach((keyword) => {
       if (content.toLowerCase().includes(keyword)) {
         this.metadata.topics.add(keyword);
       }
@@ -434,14 +465,14 @@ export default class ConversationMemoryEngine {
 
     // Detect complexity changes
     if (content.length > 500) {
-      this.metadata.complexity = 'high';
+      this.metadata.complexity = "high";
     } else if (content.length > 200) {
-      this.metadata.complexity = 'medium';
+      this.metadata.complexity = "medium";
     }
 
     // Track entity mentions for relevance
     const words = content.toLowerCase().split(/\s+/);
-    words.forEach(word => {
+    words.forEach((word) => {
       if (word.length > 3) {
         this.entityMentions.set(word, (this.entityMentions.get(word) || 0) + 1);
       }
@@ -453,25 +484,26 @@ export default class ConversationMemoryEngine {
    */
   _summarizeMessage(content, maxLength = 100) {
     if (content.length <= maxLength) return content;
-    
+
     const sentences = content.match(/[^.!?]+[.!?]+/g) || [content];
-    let summary = '';
-    
+    let summary = "";
+
     for (const sentence of sentences) {
       if ((summary + sentence).length > maxLength) break;
       summary += sentence;
     }
-    
-    return (summary.trim() || content.slice(0, maxLength)) + '...';
+
+    return (summary.trim() || content.slice(0, maxLength)) + "...";
   }
 
   /**
    * Extract keywords from text
    */
   _extractKeywords(text, count = 5) {
-    const words = text.toLowerCase()
+    const words = text
+      .toLowerCase()
       .split(/\s+/)
-      .filter(w => w.length > 4)
+      .filter((w) => w.length > 4)
       .slice(0, count);
     return words;
   }
@@ -480,8 +512,8 @@ export default class ConversationMemoryEngine {
    * Deduplicate messages from multiple sources
    */
   _deduplicateMessages(array1, array2) {
-    const ids = new Set(array1.map(m => m.id));
-    return array1.concat(array2.filter(m => !ids.has(m.id)));
+    const ids = new Set(array1.map((m) => m.id));
+    return array1.concat(array2.filter((m) => !ids.has(m.id)));
   }
 
   /**
@@ -503,9 +535,7 @@ export default class ConversationMemoryEngine {
    * Estimate total tokens in archive
    */
   _estimateArchiveTokens() {
-    return this._estimateTokens(
-      this.archive.map(m => m.content).join(' ')
-    );
+    return this._estimateTokens(this.archive.map((m) => m.content).join(" "));
   }
 
   /**
@@ -513,8 +543,8 @@ export default class ConversationMemoryEngine {
    */
   _estimateSize(messages) {
     let bytes = 0;
-    messages.forEach(msg => {
-      bytes += (msg.content || '').length * 2; // UTF-8 rough estimate
+    messages.forEach((msg) => {
+      bytes += (msg.content || "").length * 2; // UTF-8 rough estimate
       bytes += 100; // Metadata overhead
     });
     return bytes;

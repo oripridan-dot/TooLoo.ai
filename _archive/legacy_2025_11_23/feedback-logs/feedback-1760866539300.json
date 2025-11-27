@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-10-19T09:35:39.300Z",
-  "type": "demo",
-  "subject": "Thinking Pattern Analysis",
-  "description": "Manager: How would you approach this scaling problem?\n\nEngineer: First I'd understand the bottleneck - is it CPU, memory, or I/O? I'd profile in production, then look at three angles: optimize the current architecture, add caching, or redesign. \n\nManager: What if optimization takes too long?\n\nEngineer: I'd prioritize by impact. Get 80% gains first, then iterate. Quick wins with caching might buy us time while we design the real solution. I prefer incremental improvements you can measure.",
-  "email": "demo@tooloo.ai",
-  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
-}

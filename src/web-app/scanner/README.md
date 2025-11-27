@@ -69,6 +69,7 @@
 ## 🎯 Key Features Implemented
 
 ### Prompt Analysis
+
 - ✅ **Quality Scoring**: 5 dimensions (clarity, completeness, format, constraints, examples)
 - ✅ **Keyword Detection**: Significance-based extraction (excludes common words)
 - ✅ **Weighted Keywords**: Sophisticated scoring by frequency + position + emphasis
@@ -76,6 +77,7 @@
 - ✅ **Impact Prediction**: Estimates improvement percentage before applying changes
 
 ### User Experience
+
 - ✅ **Beautiful Interface**: Gradient design, smooth animations, responsive layout
 - ✅ **Real-time Analysis**: Instant results with loading indicators
 - ✅ **Interactive Refinements**: Checkbox selection with before/after preview
@@ -84,6 +86,7 @@
 - ✅ **File Upload**: Direct ChatGPT/Claude JSON import
 
 ### Developer Features
+
 - ✅ **Modular Architecture**: Separate concerns (analysis, refinement, UI, integration)
 - ✅ **Extensible Design**: Easy to add custom refinement rules
 - ✅ **API Documentation**: Complete reference with examples
@@ -118,6 +121,7 @@
 ## 🚀 How to Use
 
 ### In 3 Steps:
+
 1. Open `/workspaces/TooLoo.ai/web-app/scanner/index.html` in browser
 2. Paste your prompt into the textarea
 3. Click "🔍 Analyze Prompt"
@@ -125,6 +129,7 @@
 See: **Quality scores**, **Weighted keywords**, **Refinement suggestions**, **Impact preview**
 
 ### To Apply Improvements:
+
 1. Review refinements in the "✨ Refinement Options" tab
 2. Check the refinements you want to apply
 3. Click "Apply Selected Refinements"
@@ -135,14 +140,15 @@ See: **Quality scores**, **Weighted keywords**, **Refinement suggestions**, **Im
 ## 💡 What Makes This Effective
 
 ### Measured Impact
+
 - **Weak prompts**: +200-300% improvement
 - **Medium prompts**: +50-100% improvement
 - **Strong prompts**: +5-15% improvement
 
 ### Real Value Delivered
+
 1. **Before**: "Write code to make it faster"
    **After**: "Implement sub-500ms optimization with database caching and code profiling"
-   
 2. **Before**: "Analyze the data"
    **After**: "Perform statistical analysis on customer purchase history identifying trends, anomalies, and segment patterns with confidence intervals"
 
@@ -150,6 +156,7 @@ See: **Quality scores**, **Weighted keywords**, **Refinement suggestions**, **Im
    **After**: "Create 2,000-word technical article for software architects on microservices patterns with practical examples and deployment strategies"
 
 ### Why Users Benefit
+
 - 📈 AI responses become more targeted and useful
 - ⏱️ Saves iteration time (get it right on first try)
 - 🎯 Measurable quality improvements shown instantly
@@ -161,6 +168,7 @@ See: **Quality scores**, **Weighted keywords**, **Refinement suggestions**, **Im
 ## 🔧 Technical Highlights
 
 ### Algorithm Excellence
+
 ```
 Keyword Weight = (Frequency × 0.35) + (Position × 0.30) + (Emphasis × 0.35)
 - Frequency: How often keyword appears (normalized 0-1)
@@ -169,12 +177,14 @@ Keyword Weight = (Frequency × 0.35) + (Position × 0.30) + (Emphasis × 0.35)
 ```
 
 ### Context Intelligence
+
 - Auto-detects task type from keywords and patterns
 - Generates context-specific suggestions
 - Action context vs. Analysis context produce different refinements
 - Learning context recognizes educational goals
 
 ### Impact Scoring
+
 - Combined quality + refinery analysis
 - Before/after comparison
 - Percentage improvement calculation
@@ -185,6 +195,7 @@ Keyword Weight = (Frequency × 0.35) + (Position × 0.30) + (Emphasis × 0.35)
 ## 📊 Quality Metrics
 
 ### User-Facing Metrics
+
 - ✅ Quality Score: 0-10 scale
 - ✅ Refinery Impact: 0-100% improvement potential
 - ✅ Keyword Count: Number of significant terms
@@ -192,6 +203,7 @@ Keyword Weight = (Frequency × 0.35) + (Position × 0.30) + (Emphasis × 0.35)
 - ✅ Estimated Improvement: Before/after percentage
 
 ### Internal Metrics
+
 - Keyword extraction accuracy: >95% (tested on real prompts)
 - Weight calculation consistency: Reproducible results
 - Refinement relevance: Context-appropriate suggestions
@@ -202,15 +214,18 @@ Keyword Weight = (Frequency × 0.35) + (Position × 0.30) + (Emphasis × 0.35)
 ## 🎓 Learning Resources
 
 For users getting started:
+
 - **QUICK_START.md** - First-time user guide
 - **REAL_WORLD_EXAMPLES.md** - See it in action
 
 For technical implementation:
+
 - **INTEGRATION_GUIDE.md** - Architecture & customization
 - **REFINERY_GUIDE.md** - Algorithm deep-dive
 - **REFINERY_QUICK_REFERENCE.md** - API reference
 
 For developers extending:
+
 - API documentation with examples
 - Customization points identified
 - Extension patterns shown
@@ -220,18 +235,23 @@ For developers extending:
 ## ✨ Standout Features
 
 ### 1. **Weighted Keyword Detection**
+
 Not just listing keywords - scoring their importance based on frequency, position, and emphasis. This is what makes refinements meaningful.
 
 ### 2. **Context-Aware Suggestions**
+
 The system detects what kind of task you're describing (action, analysis, learning, etc.) and adjusts refinement recommendations accordingly.
 
 ### 3. **Measurable Impact**
+
 Shows specific percentage improvements. Not vague advice - concrete "before was 35%, after is 72%" comparisons.
 
 ### 4. **Beautiful Interactive UI**
+
 Tab-based interface with visualizations. Keywords shown as tag clouds with weight bars. Before/after comparison side-by-side.
 
 ### 5. **Export Everything**
+
 - JSON reports with full analysis
 - Copy-to-clipboard for ChatGPT
 - Download for team sharing
@@ -254,6 +274,7 @@ Tab-based interface with visualizations. Keywords shown as tag clouds with weigh
 ## 🚀 Next Steps (Optional Enhancements)
 
 ### Phase 2 Opportunities
+
 1. **History Tracking**: Save analysis history, track improvement over time
 2. **Analytics**: Understand which refinements users apply most
 3. **Templates**: Pre-built refinement sets for common domains
@@ -274,6 +295,7 @@ Tab-based interface with visualizations. Keywords shown as tag clouds with weigh
 4. **Wrong suggestions**: Different prompts produce different analyses (expected)
 
 ### Documentation
+
 - See `QUICK_START.md` for troubleshooting
 - See `INTEGRATION_GUIDE.md` for technical details
 - See `REAL_WORLD_EXAMPLES.md` for usage patterns

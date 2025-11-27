@@ -168,12 +168,12 @@ export class WorkbenchOrchestrator {
 
       // Stage 4: Execute Services in Parallel
       this.log(
-        `⚡ Stage 4: Executing ${pipeline.services.length} services in parallel...`
+        `⚡ Stage 4: Executing ${pipeline.services.length} services in parallel...`,
       );
       const serviceResults = await this.executeServices(
         pipeline,
         goal,
-        context
+        context,
       );
       this.recordStage("service_execution", serviceResults);
       await this.delay(500);
@@ -255,12 +255,12 @@ export class WorkbenchOrchestrator {
       const analysis = JSON.parse(jsonStr);
 
       this.log(
-        `  Intent: ${analysis.type} (confidence: ${analysis.confidence})`
+        `  Intent: ${analysis.type} (confidence: ${analysis.confidence})`,
       );
       return { ...analysis, goal, context };
     } catch (error) {
       this.log(
-        `  ⚠️ LLM Analysis failed, falling back to regex: ${error.message}`
+        `  ⚠️ LLM Analysis failed, falling back to regex: ${error.message}`,
       );
       return this.analyzeIntentFallback(goal, context);
     }
@@ -288,7 +288,7 @@ export class WorkbenchOrchestrator {
     const intentConfig = this.intentPatterns[intentType];
 
     this.log(
-      `  Intent (Fallback): ${intentType} (confidence: ${topIntent[1]}/100)`
+      `  Intent (Fallback): ${intentType} (confidence: ${topIntent[1]}/100)`,
     );
 
     return {
@@ -332,7 +332,7 @@ export class WorkbenchOrchestrator {
 
     this.log(`  Services: ${pipeline.services.join(", ")}`);
     this.log(
-      `  Execution Order: ${pipeline.executionOrder.map((phase) => `[${phase.join(",")}]`).join(" → ")}`
+      `  Execution Order: ${pipeline.executionOrder.map((phase) => `[${phase.join(",")}]`).join(" → ")}`,
     );
 
     return pipeline;
@@ -347,7 +347,7 @@ export class WorkbenchOrchestrator {
 
     // Phase 1: Independent services (can run in parallel)
     const phase1 = services.filter(
-      (s) => strategy.parallel.includes(s) && !processed.has(s)
+      (s) => strategy.parallel.includes(s) && !processed.has(s),
     );
     if (phase1.length > 0) {
       order.push(phase1);
@@ -356,7 +356,7 @@ export class WorkbenchOrchestrator {
 
     // Phase 2: Dependent services (can run in parallel after phase 1)
     const phase2 = services.filter(
-      (s) => strategy.sequential.includes(s) && !processed.has(s)
+      (s) => strategy.sequential.includes(s) && !processed.has(s),
     );
     if (phase2.length > 0) {
       order.push(phase2);
@@ -365,7 +365,7 @@ export class WorkbenchOrchestrator {
 
     // Phase 3: Aggregation services
     const phase3 = services.filter(
-      (s) => strategy.final.includes(s) && !processed.has(s)
+      (s) => strategy.final.includes(s) && !processed.has(s),
     );
     if (phase3.length > 0) {
       order.push(phase3);
@@ -391,7 +391,7 @@ export class WorkbenchOrchestrator {
           `${this.baseUrl}${this.services[service].path}/health`,
           {
             timeout: 5000,
-          }
+          },
         );
         const status = response.ok ? "healthy" : "degraded";
         this.services[service].status = status;
@@ -431,7 +431,7 @@ export class WorkbenchOrchestrator {
             service,
             goal,
             context,
-            results
+            results,
           );
           results[service] = result;
           return { service, status: "success" };
@@ -444,10 +444,10 @@ export class WorkbenchOrchestrator {
 
       const phaseResults = await Promise.all(phasePromises);
       const successful = phaseResults.filter(
-        (r) => r.status === "success"
+        (r) => r.status === "success",
       ).length;
       this.log(
-        `  Phase complete: ${successful}/${phase.length} services successful`
+        `  Phase complete: ${successful}/${phase.length} services successful`,
       );
     }
 
@@ -466,7 +466,7 @@ export class WorkbenchOrchestrator {
       service,
       goal,
       context,
-      previousResults
+      previousResults,
     );
 
     const response = await fetch(`${endpoint}/analyze`, {
@@ -612,7 +612,7 @@ export class WorkbenchOrchestrator {
         ...(aiSynthesis.keyInsights || []).map((i) => ({
           source: "ai-synthesis",
           insights: [i],
-        }))
+        })),
       );
       synthesis.recommendations = [
         ...new Set([
@@ -626,7 +626,7 @@ export class WorkbenchOrchestrator {
       synthesis.actionable = this.generateActionableSummary(synthesis);
     } catch (error) {
       this.log(
-        `  ⚠️ LLM Synthesis failed, using basic aggregation: ${error.message}`
+        `  ⚠️ LLM Synthesis failed, using basic aggregation: ${error.message}`,
       );
       synthesis.actionable = this.generateActionableSummary(synthesis);
     }
@@ -654,7 +654,7 @@ export class WorkbenchOrchestrator {
     // Next actions
     if (synthesis.nextSteps.length > 0) {
       summaryParts.push(
-        `Action items: ${synthesis.nextSteps.slice(0, 3).join("; ")}`
+        `Action items: ${synthesis.nextSteps.slice(0, 3).join("; ")}`,
       );
     }
 
@@ -686,7 +686,7 @@ export class WorkbenchOrchestrator {
       try {
         const prResult = await this.createPullRequest(
           output.githubInfo,
-          synthesized
+          synthesized,
         );
         output.pullRequest = prResult;
       } catch (error) {
@@ -717,7 +717,7 @@ export class WorkbenchOrchestrator {
             content,
             message,
           }),
-        }
+        },
       );
 
       if (response.ok) {

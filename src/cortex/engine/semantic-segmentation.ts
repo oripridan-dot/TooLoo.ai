@@ -83,7 +83,7 @@ Provide your analysis in JSON format with these exact keys: intent, phase, goalE
     } catch (error) {
       console.warn(
         "Semantic analysis failed, falling back to basic segmentation:",
-        error.message
+        error.message,
       );
       return this.fallbackAnalysis(messages);
     }
@@ -126,17 +126,17 @@ Provide your analysis in JSON format with these exact keys: intent, phase, goalE
         emotionalState: this.extractFromText(
           response,
           "EMOTIONAL STATE",
-          "emotionalState"
+          "emotionalState",
         ),
         urgencyLevel: this.extractFromText(
           response,
           "URGENCY LEVEL",
-          "urgencyLevel"
+          "urgencyLevel",
         ),
         domainExpertise: this.extractFromText(
           response,
           "DOMAIN EXPERTISE",
-          "domainExpertise"
+          "domainExpertise",
         ),
       };
     } catch (error) {
@@ -167,7 +167,7 @@ Provide your analysis in JSON format with these exact keys: intent, phase, goalE
   extractListFromText(text, section) {
     const sectionRegex = new RegExp(
       `${section}[:\\s]*([\\s\\S]*?)(?=\\n\\n|$)`,
-      "i"
+      "i",
     );
     const sectionMatch = text.match(sectionRegex);
     if (!sectionMatch) return [];
@@ -206,7 +206,7 @@ Provide your analysis in JSON format with these exact keys: intent, phase, goalE
         currentSegment,
         message,
         analysis,
-        i
+        i,
       );
 
       if (shouldSplit && currentSegment.messages.length > 0) {
@@ -258,7 +258,7 @@ Provide your analysis in JSON format with these exact keys: intent, phase, goalE
       return analysis.contextShifts.some((shift) =>
         messageContent
           .toLowerCase()
-          .includes(shift.toLowerCase().substring(0, 20))
+          .includes(shift.toLowerCase().substring(0, 20)),
       );
     }
 

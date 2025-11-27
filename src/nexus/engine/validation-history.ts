@@ -1,11 +1,15 @@
 // @version 2.1.28
 // Validation History & Learning Engine for TooLoo.ai
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 class ValidationHistory {
   constructor() {
-    this.historyFile = path.join(process.cwd(), 'logs', 'validation-history.json');
+    this.historyFile = path.join(
+      process.cwd(),
+      "logs",
+      "validation-history.json",
+    );
     this.history = this.loadHistory();
     this.patterns = new Map(); // Learning patterns from validation outcomes
   }
@@ -13,11 +17,11 @@ class ValidationHistory {
   loadHistory() {
     try {
       if (fs.existsSync(this.historyFile)) {
-        const data = fs.readFileSync(this.historyFile, 'utf8');
+        const data = fs.readFileSync(this.historyFile, "utf8");
         return JSON.parse(data);
       }
     } catch (error) {
-      console.warn('Could not load validation history:', error.message);
+      console.warn("Could not load validation history:", error.message);
     }
     return [];
   }
@@ -30,7 +34,7 @@ class ValidationHistory {
       }
       fs.writeFileSync(this.historyFile, JSON.stringify(this.history, null, 2));
     } catch (error) {
-      console.warn('Could not save validation history:', error.message);
+      console.warn("Could not save validation history:", error.message);
     }
   }
 
@@ -44,31 +48,31 @@ class ValidationHistory {
     agreement,
     validationReason,
     validationMode,
-    timestamp = new Date().toISOString()
+    timestamp = new Date().toISOString(),
   }) {
     const record = {
       id: this.generateId(),
       timestamp,
-      prompt: prompt.slice(0, 100) + (prompt.length > 100 ? '...' : ''), // Truncate for privacy
+      prompt: prompt.slice(0, 100) + (prompt.length > 100 ? "..." : ""), // Truncate for privacy
       taskType,
       criticality,
       primary: {
         provider: primaryProvider,
-        confidence: primaryConfidence
+        confidence: primaryConfidence,
       },
       validator: {
         provider: validatorProvider,
-        agreement
+        agreement,
       },
       validation: {
         reason: validationReason,
         mode: validationMode,
-        effective: agreement > 70 // Consider validation effective if high agreement
-      }
+        effective: agreement > 70, // Consider validation effective if high agreement
+      },
     };
 
     this.history.push(record);
-    
+
     // Keep only last 1000 records
     if (this.history.length > 1000) {
       this.history = this.history.slice(-1000);
@@ -76,28 +80,31 @@ class ValidationHistory {
 
     this.updatePatterns(record);
     this.saveHistory();
-    
+
     return record;
   }
 
   updatePatterns(record) {
     // Learn patterns from validation outcomes
     const key = `${record.taskType}_${record.primary.provider}_${record.validator.provider}`;
-    
+
     if (!this.patterns.has(key)) {
       this.patterns.set(key, {
         count: 0,
         totalAgreement: 0,
         effectiveValidations: 0,
-        avgConfidence: 0
+        avgConfidence: 0,
       });
     }
 
     const pattern = this.patterns.get(key);
     pattern.count++;
     pattern.totalAgreement += record.validator.agreement;
-    pattern.avgConfidence = ((pattern.avgConfidence * (pattern.count - 1)) + record.primary.confidence) / pattern.count;
-    
+    pattern.avgConfidence =
+      (pattern.avgConfidence * (pattern.count - 1) +
+        record.primary.confidence) /
+      pattern.count;
+
     if (record.validation.effective) {
       pattern.effectiveValidations++;
     }
@@ -112,7 +119,7 @@ class ValidationHistory {
       shouldValidate: false,
       recommendedValidator: null,
       expectedAgreement: 0,
-      confidence: 'low'
+      confidence: "low",
     };
 
     // Find best validator for this combination
@@ -120,8 +127,8 @@ class ValidationHistory {
     let bestScore = 0;
 
     for (const [key, pattern] of this.patterns.entries()) {
-      const [type, primary, validator] = key.split('_');
-      
+      const [type, primary, validator] = key.split("_");
+
       if (type === taskType && primary === primaryProvider) {
         const effectivenessRate = pattern.effectiveValidations / pattern.count;
         const avgAgreement = pattern.totalAgreement / pattern.count;
@@ -138,17 +145,22 @@ class ValidationHistory {
     // Determine if validation is recommended
     recommendations.shouldValidate = confidence < 80 || bestScore > 0.5;
     recommendations.recommendedValidator = bestValidator;
-    recommendations.confidence = bestScore > 0.7 ? 'high' : bestScore > 0.4 ? 'medium' : 'low';
+    recommendations.confidence =
+      bestScore > 0.7 ? "high" : bestScore > 0.4 ? "medium" : "low";
 
     return recommendations;
   }
 
   getStats() {
     const totalValidations = this.history.length;
-    const effectiveValidations = this.history.filter(r => r.validation.effective).length;
-    const avgAgreement = this.history.length > 0 
-      ? this.history.reduce((sum, r) => sum + r.validator.agreement, 0) / this.history.length 
-      : 0;
+    const effectiveValidations = this.history.filter(
+      (r) => r.validation.effective,
+    ).length;
+    const avgAgreement =
+      this.history.length > 0
+        ? this.history.reduce((sum, r) => sum + r.validator.agreement, 0) /
+          this.history.length
+        : 0;
 
     const validationsByReason = this.history.reduce((acc, r) => {
       acc[r.validation.reason] = (acc[r.validation.reason] || 0) + 1;
@@ -164,13 +176,16 @@ class ValidationHistory {
     return {
       totalValidations,
       effectiveValidations,
-      effectivenessRate: totalValidations > 0 ? Math.round((effectiveValidations / totalValidations) * 100) : 0,
+      effectivenessRate:
+        totalValidations > 0
+          ? Math.round((effectiveValidations / totalValidations) * 100)
+          : 0,
       avgAgreement: Math.round(avgAgreement),
       validationsByReason,
       topProviderPairs: Object.entries(providerPairs)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
-        .map(([pair, count]) => ({ pair, count }))
+        .map(([pair, count]) => ({ pair, count })),
     };
   }
 

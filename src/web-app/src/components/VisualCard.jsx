@@ -1,6 +1,15 @@
 // @version 2.1.385
 import React, { useEffect, useRef, useState } from "react";
-import { Info, Activity, BarChart2, CheckCircle, Layers, Download, Copy, Maximize2 } from "lucide-react";
+import {
+  Info,
+  Activity,
+  BarChart2,
+  CheckCircle,
+  Layers,
+  Download,
+  Copy,
+  Maximize2,
+} from "lucide-react";
 
 const DiagramRenderer = ({ code }) => {
   const mermaidRef = useRef(null);
@@ -27,30 +36,37 @@ const DiagramRenderer = ({ code }) => {
 const ImageModal = ({ src, alt, onClose }) => {
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    /* eslint-disable-next-line no-undef */
+    document.addEventListener("keydown", handleEscape);
+    /* eslint-disable-next-line no-undef */
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-        <button 
+      <div
+        className="relative max-w-[90vw] max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
           onClick={onClose}
           className="absolute -top-4 -right-4 w-10 h-10 bg-gray-800 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xl transition z-10"
         >
           ×
         </button>
-        <img 
-          src={src} 
+        <img
+          src={src}
           alt={alt}
           className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
         />
-        <div className="mt-4 text-center text-gray-400 text-sm">{alt || 'Generated Image'}</div>
+        <div className="mt-4 text-center text-gray-400 text-sm">
+          {alt || "Generated Image"}
+        </div>
       </div>
     </div>
   );
@@ -74,19 +90,29 @@ const VisualCard = ({ type, data }) => {
 
   // Handle image type
   if (type === "image") {
-    const imageSrc = typeof data === "string" ? data : (data.src || data.url || data.data);
-    const imageAlt = typeof data === "object" ? (data.alt || data.prompt || 'Generated Image') : 'Generated Image';
-    const mimeType = typeof data === "object" ? (data.mimeType || 'image/png') : 'image/png';
-    
+    const imageSrc =
+      typeof data === "string" ? data : data.src || data.url || data.data;
+    const imageAlt =
+      typeof data === "object"
+        ? data.alt || data.prompt || "Generated Image"
+        : "Generated Image";
+    const mimeType =
+      typeof data === "object" ? data.mimeType || "image/png" : "image/png";
+
     // Build the full data URL if needed
-    const fullSrc = imageSrc.startsWith('data:') ? imageSrc : `data:${mimeType};base64,${imageSrc}`;
-    
+    const fullSrc = imageSrc.startsWith("data:")
+      ? imageSrc
+      : `data:${mimeType};base64,${imageSrc}`;
+
     const downloadImage = () => {
-      const link = document.createElement('a');
+      /* eslint-disable-next-line no-undef */
+      const link = document.createElement("a");
       link.href = fullSrc;
       link.download = `tooloo-generated-${Date.now()}.png`;
+      /* eslint-disable-next-line no-undef */
       document.body.appendChild(link);
       link.click();
+      /* eslint-disable-next-line no-undef */
       document.body.removeChild(link);
     };
 
@@ -94,19 +120,22 @@ const VisualCard = ({ type, data }) => {
       try {
         const response = await fetch(fullSrc);
         const blob = await response.blob();
+        /* eslint-disable-next-line no-undef */
         await navigator.clipboard.write([
-          new ClipboardItem({ [blob.type]: blob })
+          /* eslint-disable-next-line no-undef */
+          new ClipboardItem({ [blob.type]: blob }),
         ]);
-        setCopyFeedback('Copied!');
+        setCopyFeedback("Copied!");
         setTimeout(() => setCopyFeedback(null), 2000);
       } catch (err) {
-        console.error('Failed to copy image:', err);
+        console.error("Failed to copy image:", err);
         try {
+          /* eslint-disable-next-line no-undef */
           await navigator.clipboard.writeText(fullSrc);
-          setCopyFeedback('Copied as URL');
+          setCopyFeedback("Copied as URL");
           setTimeout(() => setCopyFeedback(null), 2000);
-        } catch (e) {
-          setCopyFeedback('Failed');
+        } catch {
+          setCopyFeedback("Failed");
           setTimeout(() => setCopyFeedback(null), 2000);
         }
       }
@@ -119,34 +148,36 @@ const VisualCard = ({ type, data }) => {
           <div className="p-3 border-b border-white/10 bg-white/5 flex items-center gap-2">
             <span className="text-cyan-400">🎨</span>
             <span className="text-sm font-medium text-white">{imageAlt}</span>
-            <span className="ml-auto text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-300">AI Generated</span>
+            <span className="ml-auto text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-300">
+              AI Generated
+            </span>
           </div>
-          
+
           {/* Image */}
           <div className="p-4">
-            <img 
-              src={fullSrc} 
+            <img
+              src={fullSrc}
               alt={imageAlt}
               className="w-full max-h-[512px] object-contain rounded-lg cursor-pointer hover:scale-[1.02] transition-transform"
               onClick={() => setShowModal(true)}
             />
           </div>
-          
+
           {/* Actions */}
           <div className="px-4 pb-3 flex gap-2">
-            <button 
+            <button
               onClick={downloadImage}
               className="flex-1 px-3 py-2 text-sm bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg transition flex items-center justify-center gap-2"
             >
               <Download size={16} /> Download
             </button>
-            <button 
+            <button
               onClick={copyImage}
               className="flex-1 px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition flex items-center justify-center gap-2"
             >
-              <Copy size={16} /> {copyFeedback || 'Copy'}
+              <Copy size={16} /> {copyFeedback || "Copy"}
             </button>
-            <button 
+            <button
               onClick={() => setShowModal(true)}
               className="px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition flex items-center justify-center"
             >
@@ -154,13 +185,13 @@ const VisualCard = ({ type, data }) => {
             </button>
           </div>
         </div>
-        
+
         {/* Fullscreen Modal */}
         {showModal && (
-          <ImageModal 
-            src={fullSrc} 
-            alt={imageAlt} 
-            onClose={() => setShowModal(false)} 
+          <ImageModal
+            src={fullSrc}
+            alt={imageAlt}
+            onClose={() => setShowModal(false)}
           />
         )}
       </div>
@@ -302,9 +333,12 @@ const VisualCard = ({ type, data }) => {
         useEffect(() => {
           if (
             mermaidRef.current &&
+            /* eslint-disable-next-line no-undef */
             typeof window !== "undefined" &&
+            /* eslint-disable-next-line no-undef */
             window.mermaid
           ) {
+            /* eslint-disable-next-line no-undef */
             window.mermaid.contentLoaded();
           }
         }, [data]);

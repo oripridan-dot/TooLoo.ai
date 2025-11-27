@@ -15,11 +15,11 @@ export class ScreenCaptureService {
   }
 
   async startCapture() {
-    return { ok: true, status: 'capturing', maxFrames: this.maxFrames };
+    return { ok: true, status: "capturing", maxFrames: this.maxFrames };
   }
 
   async stopCapture() {
-    return { ok: true, status: 'stopped', framesCaptured: this.frames.length };
+    return { ok: true, status: "stopped", framesCaptured: this.frames.length };
   }
 
   async getFrames() {
@@ -32,11 +32,11 @@ export class ScreenCaptureService {
 
   getStatus() {
     return {
-      service: 'screen-capture',
+      service: "screen-capture",
       frames: this.frames.length,
       enabled: true,
       ocrEnabled: this.enableOCR,
-      taggingEnabled: this.enableTagging
+      taggingEnabled: this.enableTagging,
     };
   }
 }

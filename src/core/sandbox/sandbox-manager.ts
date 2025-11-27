@@ -1,8 +1,11 @@
 // @version 2.2.7
-import { EventEmitter } from 'events';
-import { spawn, exec } from 'child_process';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { EventEmitter } from "events";
+import { spawn, exec } from "child_process";
+import * as fs from "fs/promises";
+import * as path from "path";
+
+import { DockerSandbox } from "./docker-sandbox.js";
+import { config } from "../config.js";
 
 export interface ExecutionResult {
   stdout: string;
@@ -17,6 +20,7 @@ export interface SandboxOptions {
   timeout?: number;
   env?: Record<string, string>;
   cwd?: string;
+  mode?: "local" | "docker";
 }
 
 export interface ISandbox {
@@ -36,7 +40,7 @@ class LocalSandbox implements ISandbox {
   constructor(options: SandboxOptions) {
     this.id = options.id;
     this.options = options;
-    this.tempDir = path.join(process.cwd(), 'temp', 'sandbox', this.id);
+    this.tempDir = path.join(process.cwd(), "temp", "sandbox", this.id);
   }
 
   async start(): Promise<void> {
@@ -48,23 +52,27 @@ class LocalSandbox implements ISandbox {
     if (!this.running) throw new Error("Sandbox not running");
 
     const startTime = Date.now();
-    
+
     return new Promise((resolve) => {
-      const child = exec(command, {
-        cwd: this.options.cwd || this.tempDir,
-        env: { ...process.env, ...this.options.env },
-        timeout: this.options.timeout || 30000
-      }, (error, stdout, stderr) => {
-        const duration = Date.now() - startTime;
-        const exitCode = error ? (error.code as number || 1) : 0;
-        resolve({
-          stdout: stdout.toString(),
-          stderr: stderr.toString(),
-          exitCode,
-          duration,
-          ok: exitCode === 0
-        });
-      });
+      const child = exec(
+        command,
+        {
+          cwd: this.options.cwd || this.tempDir,
+          env: { ...process.env, ...this.options.env },
+          timeout: this.options.timeout || 30000,
+        },
+        (error, stdout, stderr) => {
+          const duration = Date.now() - startTime;
+          const exitCode = error ? (error.code as number) || 1 : 0;
+          resolve({
+            stdout: stdout.toString(),
+            stderr: stderr.toString(),
+            exitCode,
+            duration,
+            ok: exitCode === 0,
+          });
+        },
+      );
     });
   }
 
@@ -87,8 +95,15 @@ export class SandboxManager extends EventEmitter {
   }
 
   async createSandbox(options: SandboxOptions): Promise<ISandbox> {
-    // Fallback to LocalSandbox since Docker is not available
-    const sandbox = new LocalSandbox(options);
+    let sandbox: ISandbox;
+    const mode = options.mode || config.SANDBOX_MODE;
+
+    if (mode === "docker") {
+      sandbox = new DockerSandbox(options);
+    } else {
+      sandbox = new LocalSandbox(options);
+    }
+
     await sandbox.start();
     this.sandboxes.set(options.id, sandbox);
     return sandbox;

@@ -217,19 +217,19 @@ export default class MetaLearningEngine {
       // Use real metrics, but cap at max of (current, real) to never go backwards
       this.metrics.current.learningVelocity = Math.max(
         this.metrics.current.learningVelocity || 0,
-        realMetrics.learningVelocity
+        realMetrics.learningVelocity,
       );
       this.metrics.current.knowledgeRetention = Math.max(
         this.metrics.current.knowledgeRetention || 0,
-        realMetrics.knowledgeRetention
+        realMetrics.knowledgeRetention,
       );
       this.metrics.current.transferEfficiency = Math.max(
         this.metrics.current.transferEfficiency || 0,
-        realMetrics.transferEfficiency
+        realMetrics.transferEfficiency,
       );
       this.metrics.current.adaptationSpeed = Math.max(
         this.metrics.current.adaptationSpeed || 0,
-        realMetrics.adaptationSpeed
+        realMetrics.adaptationSpeed,
       );
 
       findings.push({ type: "real_metrics_integrated", metrics: realMetrics });
@@ -243,10 +243,10 @@ export default class MetaLearningEngine {
         // Highlight hidden capabilities for learning
         const recent = this.selfDiscovery.getRecentDiscoveries(5) || [];
         const hidden = recent.flatMap(
-          (d) => d?.details?.hiddenCapabilities || []
+          (d) => d?.details?.hiddenCapabilities || [],
         );
         const learningTargets = hidden.filter((h) =>
-          /learning|evolution|prediction|intelligence/i.test(JSON.stringify(h))
+          /learning|evolution|prediction|intelligence/i.test(JSON.stringify(h)),
         );
         findings.push({
           type: "hidden_capabilities",
@@ -270,15 +270,15 @@ export default class MetaLearningEngine {
       // Best-effort sample metrics from other engines
       const adaptationSpeed = Math.max(
         0.2,
-        this.metrics.current.adaptationSpeed || 0.3
+        this.metrics.current.adaptationSpeed || 0.3,
       );
       const knowledgeRetention = Math.max(
         0.3,
-        this.metrics.current.knowledgeRetention || 0.4
+        this.metrics.current.knowledgeRetention || 0.4,
       );
       const transferEfficiency = Math.max(
         0.25,
-        this.metrics.current.transferEfficiency || 0.35
+        this.metrics.current.transferEfficiency || 0.35,
       );
 
       this.metrics.current = {
@@ -436,15 +436,15 @@ export default class MetaLearningEngine {
 
     this.metrics.current.learningVelocity = Math.min(
       1.0,
-      (this.metrics.current.learningVelocity || 0) + lvGain
+      (this.metrics.current.learningVelocity || 0) + lvGain,
     );
     this.metrics.current.knowledgeRetention = Math.min(
       1.0,
-      (this.metrics.current.knowledgeRetention || 0) + krGain
+      (this.metrics.current.knowledgeRetention || 0) + krGain,
     );
     this.metrics.current.transferEfficiency = Math.min(
       1.0,
-      (this.metrics.current.transferEfficiency || 0) + teGain
+      (this.metrics.current.transferEfficiency || 0) + teGain,
     );
 
     results.push({ integrations, improvements: { lvGain, krGain, teGain } });
@@ -466,16 +466,16 @@ export default class MetaLearningEngine {
       Math.min(
         1,
         (this.metrics.current.knowledgeRetention || 0) +
-          Number(retentionDelta || 0)
-      )
+          Number(retentionDelta || 0),
+      ),
     );
     const te = Math.max(
       0,
       Math.min(
         1,
         (this.metrics.current.transferEfficiency || 0) +
-          Number(transferDelta || 0)
-      )
+          Number(transferDelta || 0),
+      ),
     );
     const before = {
       kr: this.metrics.current.knowledgeRetention || 0,
@@ -519,7 +519,7 @@ export default class MetaLearningEngine {
 
   getReport() {
     const completed = Object.values(this.phases).filter(
-      (p) => p.status === "completed"
+      (p) => p.status === "completed",
     ).length;
     return {
       started: this.started,
@@ -679,7 +679,7 @@ export default class MetaLearningEngine {
     const meanY = sumY / n;
     const ssRes = y.reduce(
       (sum, yi, i) => sum + Math.pow(yi - (m * x[i] + b), 2),
-      0
+      0,
     );
     const ssTot = y.reduce((sum, yi) => sum + Math.pow(yi - meanY, 2), 0);
     const r2 = 1 - ssRes / (ssTot || 1);
@@ -858,19 +858,19 @@ export default class MetaLearningEngine {
 
       this.metrics.current.learningVelocity = Math.min(
         1.0,
-        (this.metrics.current.learningVelocity || 0) + lvBoost
+        (this.metrics.current.learningVelocity || 0) + lvBoost,
       );
       this.metrics.current.adaptationSpeed = Math.min(
         1.0,
-        (this.metrics.current.adaptationSpeed || 0) + asBoost
+        (this.metrics.current.adaptationSpeed || 0) + asBoost,
       );
       this.metrics.current.knowledgeRetention = Math.min(
         1.0,
-        (this.metrics.current.knowledgeRetention || 0) + krBoost
+        (this.metrics.current.knowledgeRetention || 0) + krBoost,
       );
       this.metrics.current.transferEfficiency = Math.min(
         1.0,
-        (this.metrics.current.transferEfficiency || 0) + teBoost
+        (this.metrics.current.transferEfficiency || 0) + teBoost,
       );
 
       result.actions.push(
@@ -893,7 +893,7 @@ export default class MetaLearningEngine {
           action: "boost_transfer",
           delta: teBoost,
           newValue: this.metrics.current.transferEfficiency,
-        }
+        },
       );
 
       this.metrics.improvements.push({
@@ -926,23 +926,23 @@ export default class MetaLearningEngine {
 
     const trends = {
       learningVelocity: getMetricTrend(
-        (i) => i.metric && i.metric.includes("learning")
+        (i) => i.metric && i.metric.includes("learning"),
       ),
       adaptationSpeed: getMetricTrend(
-        (i) => i.metric && i.metric.includes("adaptation")
+        (i) => i.metric && i.metric.includes("adaptation"),
       ),
       knowledgeRetention: getMetricTrend(
-        (i) => i.metric && i.metric.includes("retention")
+        (i) => i.metric && i.metric.includes("retention"),
       ),
       transferEfficiency: getMetricTrend(
-        (i) => i.metric && i.metric.includes("transfer")
+        (i) => i.metric && i.metric.includes("transfer"),
       ),
     };
 
     // Apply per-metric strategies
     const strategyResults = this.perMetricStrategies.applyStrategies(
       this.metrics.current,
-      trends
+      trends,
     );
 
     const result = {
@@ -996,7 +996,7 @@ export default class MetaLearningEngine {
     try {
       const trainingPort = process.env.TRAINING_PORT || 3001;
       const response = await fetch(
-        `http://127.0.0.1:${trainingPort}/api/v1/training/overview`
+        `http://127.0.0.1:${trainingPort}/api/v1/training/overview`,
       );
 
       if (!response.ok) {
@@ -1029,7 +1029,7 @@ export default class MetaLearningEngine {
         knowledgeRetention: Math.max(0, Math.min(1.0, successRate)),
         transferEfficiency: Math.max(
           0,
-          Math.min(1.0, successRate * 0.9 || 0.35)
+          Math.min(1.0, successRate * 0.9 || 0.35),
         ),
       };
 
@@ -1054,19 +1054,19 @@ export default class MetaLearningEngine {
       // Use real metrics, but cap at max of (current, real) to never go backwards
       this.metrics.current.learningVelocity = Math.max(
         this.metrics.current.learningVelocity || 0,
-        realMetrics.learningVelocity
+        realMetrics.learningVelocity,
       );
       this.metrics.current.knowledgeRetention = Math.max(
         this.metrics.current.knowledgeRetention || 0,
-        realMetrics.knowledgeRetention
+        realMetrics.knowledgeRetention,
       );
       this.metrics.current.transferEfficiency = Math.max(
         this.metrics.current.transferEfficiency || 0,
-        realMetrics.transferEfficiency
+        realMetrics.transferEfficiency,
       );
       this.metrics.current.adaptationSpeed = Math.max(
         this.metrics.current.adaptationSpeed || 0,
-        realMetrics.adaptationSpeed
+        realMetrics.adaptationSpeed,
       );
 
       findings.push({ type: "real_metrics_integrated", metrics: realMetrics });

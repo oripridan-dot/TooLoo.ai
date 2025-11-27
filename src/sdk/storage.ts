@@ -31,7 +31,9 @@ export class StorageSDK {
    * Update an existing artifact.
    */
   async updateArtifact(id: string, content: any, changeDescription: string) {
-    return this.ledger.updateArtifact(id, content, { changes: changeDescription });
+    return this.ledger.updateArtifact(id, content, {
+      changes: changeDescription,
+    });
   }
 
   /**

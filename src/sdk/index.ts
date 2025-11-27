@@ -10,7 +10,7 @@ import { visual } from "./visual.js";
 export const tooloo = {
   llm,
   storage,
-  visual
+  visual,
 };
 
 export default tooloo;

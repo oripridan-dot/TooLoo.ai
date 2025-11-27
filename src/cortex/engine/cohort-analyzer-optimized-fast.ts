@@ -7,29 +7,29 @@
  * - Target: <50ms for 1K learners (vs 284ms current)
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import {
   calculateOptimizedVelocity,
   analyzeVelocityTrend,
   classifyLearnerSpeed,
-  calculateOptimizedROIMultiplier
-} from './optimization-learning-velocity.js';
+  calculateOptimizedROIMultiplier,
+} from "./optimization-learning-velocity.js";
 import {
   calculateDomainEntropy,
   calculateDomainConcentration,
   classifyDomainAffinityType,
   analyzeCrossDomainTransfer,
-  calculateDomainAffinityROI
-} from './optimization-domain-affinity.js';
+  calculateDomainAffinityROI,
+} from "./optimization-domain-affinity.js";
 import {
   calculateRecencyWeightedReuse,
   analyzeCapabilityHalfLife,
   analyzeLongTermEngagement,
   calculateChurnRisk,
-  calculateRetentionROI
-} from './optimization-retention-strength.js';
+  calculateRetentionROI,
+} from "./optimization-retention-strength.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,7 +43,7 @@ class TraitIndexCache {
       hits: 0,
       misses: 0,
       computations: 0,
-      cacheSizeBytes: 0
+      cacheSizeBytes: 0,
     };
   }
 
@@ -111,7 +111,7 @@ class SpatialGrid {
 
   getNearby(traits, radius = 1) {
     const hash = this.hashPosition(traits);
-    const [cx, cy, cz] = hash.split(',').map(Number);
+    const [cx, cy, cz] = hash.split(",").map(Number);
     const nearby = [];
 
     for (let x = cx - radius; x <= cx + radius; x++) {
@@ -164,7 +164,7 @@ async function extractUserTraitsOptimizedCached(userId, conversations, cache) {
     engagement,
     domainEntropy,
     halfLife,
-    churnRisk
+    churnRisk,
   };
 
   cache.set(userId, conversations, traits);
@@ -175,15 +175,25 @@ async function extractUserTraitsOptimizedCached(userId, conversations, cache) {
  * Fast trait distance with precomputed weights
  */
 function traitDistanceFast(traits1, traits2) {
-  const w = { v: 0.30, a: 0.25, f: 0.15, r: 0.15, ret: 0.15 };
-  
+  const w = { v: 0.3, a: 0.25, f: 0.15, r: 0.15, ret: 0.15 };
+
   let distance = 0;
-  distance += w.v * Math.pow(traits1.learningVelocity - traits2.learningVelocity, 2);
-  distance += w.a * Math.pow(traits1.domainAffinity - traits2.domainAffinity, 2);
-  distance += w.f * Math.pow(traits1.interactionFrequency - traits2.interactionFrequency, 2);
-  distance += w.r * Math.pow(traits1.feedbackResponsiveness - traits2.feedbackResponsiveness, 2);
-  distance += w.ret * Math.pow(traits1.retentionStrength - traits2.retentionStrength, 2);
-  
+  distance +=
+    w.v * Math.pow(traits1.learningVelocity - traits2.learningVelocity, 2);
+  distance +=
+    w.a * Math.pow(traits1.domainAffinity - traits2.domainAffinity, 2);
+  distance +=
+    w.f *
+    Math.pow(traits1.interactionFrequency - traits2.interactionFrequency, 2);
+  distance +=
+    w.r *
+    Math.pow(
+      traits1.feedbackResponsiveness - traits2.feedbackResponsiveness,
+      2,
+    );
+  distance +=
+    w.ret * Math.pow(traits1.retentionStrength - traits2.retentionStrength, 2);
+
   return Math.sqrt(distance);
 }
 
@@ -215,10 +225,14 @@ function clusterUsersByTraitsOptimizedFast(userTraitsArray, k = null) {
     let maxDistance = 0;
     let nextCentroid = userTraitsArray[0];
 
-    for (let j = 0; j < n; j += Math.max(1, Math.floor(n / 100))) {  // Sample every 1% to speed up
+    for (let j = 0; j < n; j += Math.max(1, Math.floor(n / 100))) {
+      // Sample every 1% to speed up
       let minDist = Infinity;
       for (const centroid of centroids) {
-        minDist = Math.min(minDist, traitDistanceFast(userTraitsArray[j], centroid));
+        minDist = Math.min(
+          minDist,
+          traitDistanceFast(userTraitsArray[j], centroid),
+        );
       }
       if (minDist > maxDistance) {
         maxDistance = minDist;
@@ -259,14 +273,16 @@ function clusterUsersByTraitsOptimizedFast(userTraitsArray, k = null) {
         domainAffinity: 0,
         interactionFrequency: 0,
         feedbackResponsiveness: 0,
-        retentionStrength: 0
+        retentionStrength: 0,
       };
 
       for (const idx of cluster) {
         avgTraits.learningVelocity += userTraitsArray[idx].learningVelocity;
         avgTraits.domainAffinity += userTraitsArray[idx].domainAffinity;
-        avgTraits.interactionFrequency += userTraitsArray[idx].interactionFrequency;
-        avgTraits.feedbackResponsiveness += userTraitsArray[idx].feedbackResponsiveness;
+        avgTraits.interactionFrequency +=
+          userTraitsArray[idx].interactionFrequency;
+        avgTraits.feedbackResponsiveness +=
+          userTraitsArray[idx].feedbackResponsiveness;
         avgTraits.retentionStrength += userTraitsArray[idx].retentionStrength;
       }
 
@@ -284,7 +300,9 @@ function clusterUsersByTraitsOptimizedFast(userTraitsArray, k = null) {
   }
 
   // Convert cluster indices back to userId format
-  return clusters.map(cluster => cluster.map(idx => [idx, userTraitsArray[idx]]));
+  return clusters.map((cluster) =>
+    cluster.map((idx) => [idx, userTraitsArray[idx]]),
+  );
 }
 
 /**
@@ -292,15 +310,20 @@ function clusterUsersByTraitsOptimizedFast(userTraitsArray, k = null) {
  */
 function assignOptimizedArchetypeFast(traits) {
   const scores = {
-    'Fast Learner': traits.learningVelocity * 0.8 + traits.feedbackResponsiveness * 0.2,
-    'Specialist': traits.domainAffinity * 0.7 + (1 - traits.interactionFrequency) * 0.3,
-    'Power User': traits.interactionFrequency * 0.6 + traits.learningVelocity * 0.4,
-    'Long-term Retainer': traits.retentionStrength * 0.7 + traits.interactionFrequency * 0.3,
-    'Generalist': (1 - traits.domainAffinity) * 0.8 + traits.interactionFrequency * 0.2
+    "Fast Learner":
+      traits.learningVelocity * 0.8 + traits.feedbackResponsiveness * 0.2,
+    Specialist:
+      traits.domainAffinity * 0.7 + (1 - traits.interactionFrequency) * 0.3,
+    "Power User":
+      traits.interactionFrequency * 0.6 + traits.learningVelocity * 0.4,
+    "Long-term Retainer":
+      traits.retentionStrength * 0.7 + traits.interactionFrequency * 0.3,
+    Generalist:
+      (1 - traits.domainAffinity) * 0.8 + traits.interactionFrequency * 0.2,
   };
 
   let maxScore = -Infinity;
-  let archetype = 'Generalist';
+  let archetype = "Generalist";
 
   for (const [name, score] of Object.entries(scores)) {
     if (score > maxScore) {
@@ -323,7 +346,11 @@ export async function discoverCohortsOptimizedFast(userConversationMap) {
   // Extract traits with caching
   let idx = 0;
   for (const [userId, conversations] of Object.entries(userConversationMap)) {
-    const traits = await extractUserTraitsOptimizedCached(userId, conversations, cache);
+    const traits = await extractUserTraitsOptimizedCached(
+      userId,
+      conversations,
+      cache,
+    );
     userTraitsArray.push(traits);
     userIdMap[idx] = userId;
     idx++;
@@ -335,11 +362,11 @@ export async function discoverCohortsOptimizedFast(userConversationMap) {
   // Generate cohort metadata
   const cohorts = [];
   const ARCHETYPE_BASELINES = {
-    'Fast Learner': { roi: 1.92, bonus: 0.0 },
-    'Specialist': { roi: 1.68, bonus: 0.0 },
-    'Power User': { roi: 1.47, bonus: 0.0 },
-    'Long-term Retainer': { roi: 1.65, bonus: 0.0 },
-    'Generalist': { roi: 1.05, bonus: 0.0 }
+    "Fast Learner": { roi: 1.92, bonus: 0.0 },
+    Specialist: { roi: 1.68, bonus: 0.0 },
+    "Power User": { roi: 1.47, bonus: 0.0 },
+    "Long-term Retainer": { roi: 1.65, bonus: 0.0 },
+    Generalist: { roi: 1.05, bonus: 0.0 },
   };
 
   for (let i = 0; i < clusters.length; i++) {
@@ -352,7 +379,7 @@ export async function discoverCohortsOptimizedFast(userConversationMap) {
       domainAffinity: 0,
       interactionFrequency: 0,
       feedbackResponsiveness: 0,
-      retentionStrength: 0
+      retentionStrength: 0,
     };
 
     const userIds = [];
@@ -383,9 +410,16 @@ export async function discoverCohortsOptimizedFast(userConversationMap) {
       size: len,
       avgTraits,
       userIds,
-      roi: { baseline: baseline.roi, optimized: Math.round(roi * 1000) / 1000, improvement: '5%' },
+      roi: {
+        baseline: baseline.roi,
+        optimized: Math.round(roi * 1000) / 1000,
+        improvement: "5%",
+      },
       created: new Date().toISOString(),
-      confidence: Math.round(Math.min(...cluster.map(c => c[1].learningVelocity || 0)) * 100) + '%'
+      confidence:
+        Math.round(
+          Math.min(...cluster.map((c) => c[1].learningVelocity || 0)) * 100,
+        ) + "%",
     });
   }
 
@@ -394,10 +428,15 @@ export async function discoverCohortsOptimizedFast(userConversationMap) {
     metadata: {
       totalCohorts: cohorts.length,
       lastUpdated: new Date().toISOString(),
-      algorithm: 'v2-optimized-fast',
-      cacheHitRate: cache.hitRate().toFixed(1) + '%',
-      improvements: ['trait-caching', 'spatial-hashing', 'batched-updates', 'reduced-iterations']
-    }
+      algorithm: "v2-optimized-fast",
+      cacheHitRate: cache.hitRate().toFixed(1) + "%",
+      improvements: [
+        "trait-caching",
+        "spatial-hashing",
+        "batched-updates",
+        "reduced-iterations",
+      ],
+    },
   };
 }
 

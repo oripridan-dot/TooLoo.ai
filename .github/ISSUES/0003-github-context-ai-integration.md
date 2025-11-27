@@ -10,7 +10,7 @@ What's broken:
 - Users cannot get AI-generated insights about their repository
 
 Requirements:
-1. POST `/api/v1/github/ask` must call a provider (fallback chain: Ollama → Claude → OpenAI → Gemini → DeepSeek)
+1. POST `/api/v1/github/ask` must call a provider (fallback chain: Claude → OpenAI → Gemini → DeepSeek → LocalAI)
 2. Send systemPrompt + question to selected provider
 3. Stream or batch return actual AI-generated analysis
 4. Include timeout handling (30s max)

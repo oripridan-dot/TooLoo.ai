@@ -1,11 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <!-- @version 2.1.384 -->
 <!-- @version 2.1.367 - fixed [object Object] display -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
     <meta http-equiv="Pragma" content="no-cache" />
     <title>Tooloo Synapsys // Orchestrator</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
@@ -13,8 +16,8 @@
       tailwind.config = {
         corePlugins: {
           preflight: true,
-        }
-      }
+        },
+      };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <link
@@ -454,7 +457,7 @@
     <script>
       // API Configuration
       const API_BASE = window.location.origin;
-      
+
       mermaid.initialize({
         startOnLoad: false,
         theme: "dark",
@@ -492,7 +495,9 @@
           const now = Date.now();
           if (PERF.messageStart) {
             const elapsed = now - PERF.messageStart;
-            console.log(`[PERF] ${label}: ${elapsed}ms total, +${now - (PERF[stage] || PERF.messageStart)}ms`);
+            console.log(
+              `[PERF] ${label}: ${elapsed}ms total, +${now - (PERF[stage] || PERF.messageStart)}ms`,
+            );
             PERF[stage] = now;
           }
         },
@@ -865,53 +870,66 @@
         sources = [],
       ) {
         // Ensure text is a string
-        if (typeof text !== 'string') {
-          console.warn('[addRichMessage] Text is not a string:', typeof text, text);
+        if (typeof text !== "string") {
+          console.warn(
+            "[addRichMessage] Text is not a string:",
+            typeof text,
+            text,
+          );
           text = String(text);
         }
-        
+
         const msg = document.createElement("div");
         msg.className = "flex gap-4 max-w-3xl mx-auto mb-6";
 
         const formattedText = formatRichResponse(text);
-        console.log('[addRichMessage] Formatted text:', formattedText.substring(0, 100));
+        console.log(
+          "[addRichMessage] Formatted text:",
+          formattedText.substring(0, 100),
+        );
 
         let sourcesHtml = "";
         if (sources && sources.length > 0) {
           // Group sources by relevance tier
-          const high = sources.filter(s => s.relevance >= 0.7);
-          const medium = sources.filter(s => s.relevance >= 0.5 && s.relevance < 0.7);
-          const low = sources.filter(s => s.relevance < 0.5);
-          
+          const high = sources.filter((s) => s.relevance >= 0.7);
+          const medium = sources.filter(
+            (s) => s.relevance >= 0.5 && s.relevance < 0.7,
+          );
+          const low = sources.filter((s) => s.relevance < 0.5);
+
           const getSourceType = (source) => {
-            if (source.includes('Code') || source.includes('src/')) return '🔧';
-            if (source.includes('Doc') || source.includes('README')) return '📚';
-            if (source.includes('Config') || source.includes('config')) return '⚙️';
-            if (source.includes('Test') || source.includes('test')) return '✅';
-            return '📖';
+            if (source.includes("Code") || source.includes("src/")) return "🔧";
+            if (source.includes("Doc") || source.includes("README"))
+              return "📚";
+            if (source.includes("Config") || source.includes("config"))
+              return "⚙️";
+            if (source.includes("Test") || source.includes("test")) return "✅";
+            return "📖";
           };
-          
+
           const getSourceColor = (relevance) => {
-            if (relevance >= 0.7) return 'bg-cyan-500/20 border-cyan-500 text-cyan-300';
-            if (relevance >= 0.5) return 'bg-blue-500/20 border-blue-500 text-blue-300';
-            return 'bg-gray-700/20 border-gray-600 text-gray-400';
+            if (relevance >= 0.7)
+              return "bg-cyan-500/20 border-cyan-500 text-cyan-300";
+            if (relevance >= 0.5)
+              return "bg-blue-500/20 border-blue-500 text-blue-300";
+            return "bg-gray-700/20 border-gray-600 text-gray-400";
           };
-          
+
           const renderSourceBadge = (s) => `
             <div class="flex items-center gap-2 px-2 py-1.5 rounded border text-xs ${getSourceColor(s.relevance)} transition hover:brightness-110 cursor-help" title="${s.source}">
               <span>${getSourceType(s.source)}</span>
               <span class="font-mono">[${Math.round(s.relevance * 100)}%]</span>
-              <span class="truncate">${s.source.split('/').pop() || s.source}</span>
+              <span class="truncate">${s.source.split("/").pop() || s.source}</span>
             </div>
           `;
-          
+
           sourcesHtml = `
             <div class="mt-4 pt-4 border-t border-white/10">
               <div class="text-[10px] uppercase text-gray-500 font-bold mb-3">📌 Knowledge Sources</div>
               <div class="space-y-2">
-                ${high.length > 0 ? `<div class="text-[9px] text-cyan-400 font-bold">High Relevance</div><div class="flex flex-wrap gap-1">${high.map(renderSourceBadge).join('')}</div>` : ''}
-                ${medium.length > 0 ? `<div class="text-[9px] text-blue-400 font-bold mt-2">Medium Relevance</div><div class="flex flex-wrap gap-1">${medium.map(renderSourceBadge).join('')}</div>` : ''}
-                ${low.length > 0 ? `<div class="text-[9px] text-gray-400 font-bold mt-2">Lower Relevance</div><div class="flex flex-wrap gap-1">${low.map(renderSourceBadge).join('')}</div>` : ''}
+                ${high.length > 0 ? `<div class="text-[9px] text-cyan-400 font-bold">High Relevance</div><div class="flex flex-wrap gap-1">${high.map(renderSourceBadge).join("")}</div>` : ""}
+                ${medium.length > 0 ? `<div class="text-[9px] text-blue-400 font-bold mt-2">Medium Relevance</div><div class="flex flex-wrap gap-1">${medium.map(renderSourceBadge).join("")}</div>` : ""}
+                ${low.length > 0 ? `<div class="text-[9px] text-gray-400 font-bold mt-2">Lower Relevance</div><div class="flex flex-wrap gap-1">${low.map(renderSourceBadge).join("")}</div>` : ""}
               </div>
             </div>
           `;
@@ -970,16 +988,16 @@
 
       renderer.code = function (codeOrToken, language) {
         // Handle both old API (string) and new API (token object)
-        const code = typeof codeOrToken === 'object' ? codeOrToken.text : codeOrToken;
-        const lang = typeof codeOrToken === 'object' ? codeOrToken.lang : language;
-        
+        const code =
+          typeof codeOrToken === "object" ? codeOrToken.text : codeOrToken;
+        const lang =
+          typeof codeOrToken === "object" ? codeOrToken.lang : language;
+
         if (lang === "mermaid") {
           return '<div class="mermaid">' + code + "</div>";
         }
 
-        const validLanguage = hljs.getLanguage(lang)
-          ? lang
-          : "plaintext";
+        const validLanguage = hljs.getLanguage(lang) ? lang : "plaintext";
         try {
           const highlighted = hljs.highlight(code, {
             language: validLanguage,
@@ -990,23 +1008,30 @@
             validLanguage +
             '">' +
             highlighted +
-            "</code>" + copyBtn + "</div>"
+            "</code>" +
+            copyBtn +
+            "</div>"
           );
         } catch (e) {
           const copyBtn = `<button class="copy-btn absolute top-2 right-2 px-2 py-1 text-xs bg-gray-800 hover:bg-cyan-600 text-gray-300 rounded transition" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('code').innerText); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000);">Copy</button>`;
           return (
             '<div class="relative bg-gray-950 p-4 rounded-lg border border-white/10 my-4 overflow-x-auto" style="position: relative;"><code>' +
             code +
-            "</code>" + copyBtn + "</div>"
+            "</code>" +
+            copyBtn +
+            "</div>"
           );
         }
       };
 
       renderer.link = function (hrefOrToken, title, text) {
         // Handle both old API (strings) and new API (token object)
-        const href = typeof hrefOrToken === 'object' ? hrefOrToken.href : hrefOrToken;
-        const linkTitle = typeof hrefOrToken === 'object' ? hrefOrToken.title : title;
-        const linkText = typeof hrefOrToken === 'object' ? hrefOrToken.text : text;
+        const href =
+          typeof hrefOrToken === "object" ? hrefOrToken.href : hrefOrToken;
+        const linkTitle =
+          typeof hrefOrToken === "object" ? hrefOrToken.title : title;
+        const linkText =
+          typeof hrefOrToken === "object" ? hrefOrToken.text : text;
         return (
           '<a href="' +
           href +
@@ -1020,8 +1045,10 @@
 
       renderer.heading = function (textOrToken, level) {
         // Handle both old API (strings) and new API (token object)
-        const text = typeof textOrToken === 'object' ? textOrToken.text : textOrToken;
-        const headingLevel = typeof textOrToken === 'object' ? textOrToken.depth : level;
+        const text =
+          typeof textOrToken === "object" ? textOrToken.text : textOrToken;
+        const headingLevel =
+          typeof textOrToken === "object" ? textOrToken.depth : level;
         const sizes = {
           1: "text-2xl font-bold text-white mt-6 mb-4 border-b border-white/10 pb-2",
           2: "text-xl font-bold text-white mt-5 mb-3",
@@ -1044,36 +1071,40 @@
 
       renderer.paragraph = function (textOrToken) {
         // Handle both old API (string) and new API (token object)
-        const text = typeof textOrToken === 'object' ? textOrToken.text : textOrToken;
+        const text =
+          typeof textOrToken === "object" ? textOrToken.text : textOrToken;
         return '<p class="mb-3 text-gray-300 leading-relaxed">' + text + "</p>";
       };
 
       // IMAGE RENDERER - Handles generated images from TooLoo
       renderer.image = function (hrefOrToken, title, text) {
         // Handle both old API (strings) and new API (token object)
-        const href = typeof hrefOrToken === 'object' ? hrefOrToken.href : hrefOrToken;
-        const imgTitle = typeof hrefOrToken === 'object' ? hrefOrToken.title : title;
-        const imgText = typeof hrefOrToken === 'object' ? hrefOrToken.text : text;
-        
+        const href =
+          typeof hrefOrToken === "object" ? hrefOrToken.href : hrefOrToken;
+        const imgTitle =
+          typeof hrefOrToken === "object" ? hrefOrToken.title : title;
+        const imgText =
+          typeof hrefOrToken === "object" ? hrefOrToken.text : text;
+
         // Check if it's a base64 data URL (generated image)
-        const isGenerated = href && href.startsWith('data:image');
-        
+        const isGenerated = href && href.startsWith("data:image");
+
         if (isGenerated) {
           // Rich card layout for generated images
           return `
             <div class="generated-image-card my-4 rounded-xl overflow-hidden border border-cyan-500/30 bg-gradient-to-br from-gray-900 to-gray-800 shadow-xl">
               <div class="p-3 border-b border-white/10 bg-white/5 flex items-center gap-2">
                 <span class="text-cyan-400">🎨</span>
-                <span class="text-sm font-medium text-white">${imgText || 'Generated Image'}</span>
+                <span class="text-sm font-medium text-white">${imgText || "Generated Image"}</span>
                 <span class="ml-auto text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-300">AI Generated</span>
               </div>
               <div class="p-4">
                 <img 
                   src="${href}" 
-                  alt="${imgText || 'Generated Image'}"
-                  title="${imgTitle || imgText || 'Click to view full size'}"
+                  alt="${imgText || "Generated Image"}"
+                  title="${imgTitle || imgText || "Click to view full size"}"
                   class="w-full max-h-[512px] object-contain rounded-lg cursor-pointer hover:scale-[1.02] transition-transform"
-                  onclick="openImageModal(this.src, '${(imgText || '').replace(/'/g, "\\'")}');"
+                  onclick="openImageModal(this.src, '${(imgText || "").replace(/'/g, "\\'")}');"
                 />
               </div>
               <div class="px-4 pb-3 flex gap-2">
@@ -1093,13 +1124,13 @@
             </div>
           `;
         }
-        
+
         // Regular image (external URL)
         return `
           <img 
             src="${href}" 
-            alt="${imgText || ''}"
-            title="${imgTitle || ''}"
+            alt="${imgText || ""}"
+            title="${imgTitle || ""}"
             class="max-w-full h-auto rounded-lg my-4 border border-white/10"
           />
         `;
@@ -1107,8 +1138,12 @@
 
       renderer.list = function (bodyOrToken, ordered, start) {
         // Handle both old API (strings) and new API (token object)
-        const body = typeof bodyOrToken === 'object' ? bodyOrToken.items.map(i => '<li>' + i.text + '</li>').join('') : bodyOrToken;
-        const isOrdered = typeof bodyOrToken === 'object' ? bodyOrToken.ordered : ordered;
+        const body =
+          typeof bodyOrToken === "object"
+            ? bodyOrToken.items.map((i) => "<li>" + i.text + "</li>").join("")
+            : bodyOrToken;
+        const isOrdered =
+          typeof bodyOrToken === "object" ? bodyOrToken.ordered : ordered;
         const type = isOrdered ? "ol" : "ul";
         const className = isOrdered
           ? "list-decimal ml-5 mb-4 text-gray-300"
@@ -1127,9 +1162,9 @@
       function formatRichResponse(text) {
         // Safety check: ensure we have a string
         if (text === null || text === undefined) {
-          return '<p>No response</p>';
+          return "<p>No response</p>";
         }
-        
+
         if (typeof text === "object") {
           // Convert object to readable string
           try {
@@ -1138,14 +1173,14 @@
             text = "[Object]";
           }
         }
-        
+
         if (typeof text !== "string") {
           text = String(text);
         }
-        
+
         // If empty, return placeholder
         if (!text.trim()) {
-          return '<p>Empty response</p>';
+          return "<p>Empty response</p>";
         }
 
         try {
@@ -1158,7 +1193,7 @@
         } catch (e) {
           console.error("Markdown parsing error:", e);
           // Fallback: just escape and return
-          const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const escaped = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
           return `<p>${escaped}</p>`;
         }
       }
@@ -1275,10 +1310,13 @@
       // ========== IMAGE HELPER FUNCTIONS ==========
       function openImageModal(src, alt) {
         // Create fullscreen modal for image viewing
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm';
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        
+        const modal = document.createElement("div");
+        modal.className =
+          "fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm";
+        modal.onclick = (e) => {
+          if (e.target === modal) modal.remove();
+        };
+
         modal.innerHTML = `
           <div class="relative max-w-[90vw] max-h-[90vh]">
             <button 
@@ -1290,24 +1328,24 @@
               alt="${alt}"
               class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
             />
-            <div class="mt-4 text-center text-gray-400 text-sm">${alt || 'Generated Image'}</div>
+            <div class="mt-4 text-center text-gray-400 text-sm">${alt || "Generated Image"}</div>
           </div>
         `;
-        
+
         document.body.appendChild(modal);
-        
+
         // Close on Escape key
         const closeOnEscape = (e) => {
-          if (e.key === 'Escape') {
+          if (e.key === "Escape") {
             modal.remove();
-            document.removeEventListener('keydown', closeOnEscape);
+            document.removeEventListener("keydown", closeOnEscape);
           }
         };
-        document.addEventListener('keydown', closeOnEscape);
+        document.addEventListener("keydown", closeOnEscape);
       }
 
       function downloadImage(dataUrl, filename) {
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = dataUrl;
         link.download = filename || `tooloo-generated-${Date.now()}.png`;
         document.body.appendChild(link);
@@ -1320,29 +1358,31 @@
           // Convert data URL to blob
           const response = await fetch(dataUrl);
           const blob = await response.blob();
-          
+
           await navigator.clipboard.write([
-            new ClipboardItem({ [blob.type]: blob })
+            new ClipboardItem({ [blob.type]: blob }),
           ]);
-          
+
           // Show success feedback
-          const toast = document.createElement('div');
-          toast.className = 'fixed bottom-4 right-4 z-50 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg animate-fade-in';
-          toast.textContent = '✓ Image copied to clipboard!';
+          const toast = document.createElement("div");
+          toast.className =
+            "fixed bottom-4 right-4 z-50 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg animate-fade-in";
+          toast.textContent = "✓ Image copied to clipboard!";
           document.body.appendChild(toast);
           setTimeout(() => toast.remove(), 2000);
         } catch (err) {
-          console.error('Failed to copy image:', err);
+          console.error("Failed to copy image:", err);
           // Fallback: copy the data URL as text
           try {
             await navigator.clipboard.writeText(dataUrl);
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 z-50 px-4 py-2 bg-yellow-500 text-black rounded-lg shadow-lg';
-            toast.textContent = '⚠ Copied as data URL (browser limitation)';
+            const toast = document.createElement("div");
+            toast.className =
+              "fixed bottom-4 right-4 z-50 px-4 py-2 bg-yellow-500 text-black rounded-lg shadow-lg";
+            toast.textContent = "⚠ Copied as data URL (browser limitation)";
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2000);
           } catch (e) {
-            alert('Could not copy image to clipboard');
+            alert("Could not copy image to clipboard");
           }
         }
       }

@@ -6,7 +6,7 @@
  */
 
 export interface VisualData {
-  type: "info" | "process" | "comparison" | "data";
+  type: "info" | "process" | "comparison" | "data" | "diagram" | "code";
   data: any;
 }
 
@@ -18,6 +18,20 @@ export class ResponseVisualizer {
   public analyzeResponse(content: string, intent?: string): VisualData | null {
     if (!content || content.length < 50) {
       return null; // Too short for visualization
+    }
+
+    // FIRST: Check for mermaid diagrams (most important, highest priority)
+    const mermaidMatch = content.match(/```mermaid\n([\s\S]*?)\n```/);
+    if (mermaidMatch && mermaidMatch[1]) {
+      console.log("[ResponseVisualizer] Detected mermaid diagram");
+      return this.buildDiagramVisual(mermaidMatch[1]);
+    }
+
+    // Check for code blocks (secondary priority)
+    const codeMatch = content.match(/```(\w+)?\n([\s\S]*?)\n```/);
+    if (codeMatch && codeMatch[2] && codeMatch[2].length > 20) {
+      console.log("[ResponseVisualizer] Detected code block");
+      return this.buildCodeVisual(codeMatch[2], codeMatch[1] || "text");
     }
 
     // Detect visual intent from keywords
@@ -221,6 +235,25 @@ export class ResponseVisualizer {
       data: {
         title: this.extractTitle(content, "Metrics"),
         metrics: metrics.slice(0, 5),
+      },
+    };
+  }
+
+  private buildDiagramVisual(diagramCode: string): VisualData {
+    return {
+      type: "diagram",
+      data: {
+        code: diagramCode.trim(),
+      },
+    };
+  }
+
+  private buildCodeVisual(code: string, language: string): VisualData {
+    return {
+      type: "code",
+      data: {
+        code: code.trim(),
+        language: language || "text",
       },
     };
   }

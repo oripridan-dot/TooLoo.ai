@@ -32,7 +32,7 @@ Port 4000  → Nexus (src/nexus/index.ts)
 
 ## Providers & Policy
 - Claude Haiku **4.5 preview** (`claude-3-5-haiku-20241022`) is the default Anthropic model
-- Provider priority: Ollama → Anthropic → OpenAI → Gemini → DeepSeek → LocalAI/HF
+- Provider priority: Anthropic → OpenAI → Gemini → DeepSeek → LocalAI/HF
 - Query status at `http://127.0.0.1:3003/api/v1/providers/status`
 
 ## Branching Expectations

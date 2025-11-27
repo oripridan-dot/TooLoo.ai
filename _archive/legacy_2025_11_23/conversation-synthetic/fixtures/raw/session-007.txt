@@ -1,3 +1,0 @@
-user: When you report progress use that clean structure.
-ai: Sample framing: Outcome: synthetic pack skeleton created. Tested: schema validated. Impact: enables scoring calibration. Next: populate remaining scenarios. Accept?
-user: Yes that's the format. Keep it always.

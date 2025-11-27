@@ -53,11 +53,9 @@ router.post("/process", async (req, res) => {
   const { id, operations } = req.body;
 
   if (!id || !operations || !Array.isArray(operations)) {
-    return res
-      .status(400)
-      .json({
-        error: "Invalid request. 'id' and 'operations' array required.",
-      });
+    return res.status(400).json({
+      error: "Invalid request. 'id' and 'operations' array required.",
+    });
   }
 
   const inputPath = path.join(ASSETS_DIR, id);

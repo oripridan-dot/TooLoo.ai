@@ -361,7 +361,7 @@ export class CapabilitiesService {
           riskLevel: info.riskLevel,
           impact: info.impact,
           activationStatus: this.activationStatus.componentStatus[component],
-        })
+        }),
       );
 
       bus.publish("cortex", "cortex:response", {
@@ -423,8 +423,8 @@ export class CapabilitiesService {
         const batch = targetMethods.slice(i, i + batchSize);
         const batchResults = await Promise.all(
           batch.map((method: string) =>
-            this.simulateMethodActivation(component, method)
-          )
+            this.simulateMethodActivation(component, method),
+          ),
         );
         results.push(...batchResults);
       }
@@ -467,7 +467,7 @@ export class CapabilitiesService {
   private simulateMethodActivation(
     component: string,
     method: string,
-    mode = "safe"
+    mode = "safe",
   ) {
     const modeConfig: any = {
       safe: {
@@ -491,7 +491,7 @@ export class CapabilitiesService {
     const success = Math.random() < config.successRate;
     const latency =
       Math.floor(
-        Math.random() * (config.latencyRange[1] - config.latencyRange[0])
+        Math.random() * (config.latencyRange[1] - config.latencyRange[0]),
       ) + config.latencyRange[0];
 
     return new Promise<any>((resolve) => {

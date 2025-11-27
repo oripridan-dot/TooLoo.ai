@@ -20,23 +20,23 @@ ui.render(analysis);
 
 ### RefineryEngine
 
-| Method | Input | Output | Time |
-|--------|-------|--------|------|
-| `analyze()` | string prompt | analysis object | <50ms |
-| `extractKeywords()` | string prompt | keyword array | <10ms |
-| `analyzeWeights()` | keywords, prompt | weighted array | <20ms |
-| `detectContext()` | prompt, keywords | context string | <5ms |
-| `generateRefinements()` | keywords, context, prompt | refinements | <30ms |
-| `generateRefinedPrompt()` | analysis, max | refined object | <10ms |
+| Method                    | Input                     | Output          | Time  |
+| ------------------------- | ------------------------- | --------------- | ----- |
+| `analyze()`               | string prompt             | analysis object | <50ms |
+| `extractKeywords()`       | string prompt             | keyword array   | <10ms |
+| `analyzeWeights()`        | keywords, prompt          | weighted array  | <20ms |
+| `detectContext()`         | prompt, keywords          | context string  | <5ms  |
+| `generateRefinements()`   | keywords, context, prompt | refinements     | <30ms |
+| `generateRefinedPrompt()` | analysis, max             | refined object  | <10ms |
 
 ### RefineryUIComponent
 
-| Method | Does |
-|--------|------|
-| `render()` | Renders full UI with all sections |
+| Method                  | Does                               |
+| ----------------------- | ---------------------------------- |
+| `render()`              | Renders full UI with all sections  |
 | `highlightSuggestion()` | Scrolls to & highlights suggestion |
-| `exportAsJSON()` | Returns JSON analysis |
-| `exportAsCSV()` | Returns CSV of recommendations |
+| `exportAsJSON()`        | Returns JSON analysis              |
+| `exportAsCSV()`         | Returns CSV of recommendations     |
 
 ## Analysis Output Structure
 
@@ -47,8 +47,8 @@ ui.render(analysis);
     { text: "word", frequency: 2, positions: [5, 45], isWeak: false }
   ],
   weightedKeywords: [
-    { 
-      text: "word", 
+    {
+      text: "word",
       weight: 7.5,
       frequencyScore: 4.2,
       positionScore: 9,
@@ -87,34 +87,39 @@ ui.render(analysis);
 ## Common Usage Patterns
 
 ### Quick Analysis
+
 ```javascript
 const engine = new RefineryEngine();
 const quick = engine.analyze(prompt);
-console.log('Top suggestion:', quick.recommendations[0].suggestedWord);
+console.log("Top suggestion:", quick.recommendations[0].suggestedWord);
 ```
 
 ### Extract Weak Words
+
 ```javascript
-const weak = analysis.weightedKeywords.filter(kw => kw.isWeak);
-weak.forEach(w => console.log(w.text));
+const weak = analysis.weightedKeywords.filter((kw) => kw.isWeak);
+weak.forEach((w) => console.log(w.text));
 ```
 
 ### Get Quick Wins
+
 ```javascript
 const wins = analysis.report.topRecommendations
-  .filter(r => r.difficulty === 'low')
+  .filter((r) => r.difficulty === "low")
   .slice(0, 3);
 ```
 
 ### Generate Refined Version
+
 ```javascript
 const refined = engine.generateRefinedPrompt(analysis, 5);
-console.log('Original:', refined.original);
-console.log('Refined:', refined.refined);
-console.log('Changes:', refined.changes.length);
+console.log("Original:", refined.original);
+console.log("Refined:", refined.refined);
+console.log("Changes:", refined.changes.length);
 ```
 
 ### Export Analysis
+
 ```javascript
 // JSON
 const json = JSON.stringify(analysis);
@@ -138,70 +143,68 @@ const text = analysis.report;
 
 ## Context Types
 
-| Type | Keywords | Focus |
-|------|----------|-------|
-| action | write, create, build, develop | Strong action verbs |
-| analysis | analyze, review, examine, evaluate | Analytical precision |
-| learning | learn, understand, explain, teach | Clarity & pedagogy |
-| problem-solving | fix, debug, solve, improve | Solution language |
-| strategy | plan, strategy, framework, process | Structure |
-| general | any | General clarity |
+| Type            | Keywords                           | Focus                |
+| --------------- | ---------------------------------- | -------------------- |
+| action          | write, create, build, develop      | Strong action verbs  |
+| analysis        | analyze, review, examine, evaluate | Analytical precision |
+| learning        | learn, understand, explain, teach  | Clarity & pedagogy   |
+| problem-solving | fix, debug, solve, improve         | Solution language    |
+| strategy        | plan, strategy, framework, process | Structure            |
+| general         | any                                | General clarity      |
 
 ## Common Weak Words & Replacements
 
-| Weak | Strong | Impact | Difficulty |
-|------|--------|--------|-----------|
-| good | excellent, effective | 8 | low |
-| bad | suboptimal, ineffective | 8 | low |
-| thing | component, element | 7 | low |
-| help | assist, enable | 8 | low |
-| very | extremely, remarkably | 7 | low |
-| really | genuinely, truly | 8 | low |
-| just | simply, only | 7 | low |
-| make | create, generate | 8 | low |
-| use | leverage, utilize | 8 | low |
-| get | obtain, retrieve | 7 | low |
-| way | method, approach | 8 | low |
-| stuff | content, materials | 9 | low |
-| nice | elegant, refined | 8 | low |
-| show | demonstrate, illustrate | 8 | low |
-| part | section, component | 7 | low |
+| Weak   | Strong                  | Impact | Difficulty |
+| ------ | ----------------------- | ------ | ---------- |
+| good   | excellent, effective    | 8      | low        |
+| bad    | suboptimal, ineffective | 8      | low        |
+| thing  | component, element      | 7      | low        |
+| help   | assist, enable          | 8      | low        |
+| very   | extremely, remarkably   | 7      | low        |
+| really | genuinely, truly        | 8      | low        |
+| just   | simply, only            | 7      | low        |
+| make   | create, generate        | 8      | low        |
+| use    | leverage, utilize       | 8      | low        |
+| get    | obtain, retrieve        | 7      | low        |
+| way    | method, approach        | 8      | low        |
+| stuff  | content, materials      | 9      | low        |
+| nice   | elegant, refined        | 8      | low        |
+| show   | demonstrate, illustrate | 8      | low        |
+| part   | section, component      | 7      | low        |
 
 ## UI Component Sections
 
 ```html
 <div id="refinery-results">
   <!-- Auto-generated by ui.render() -->
-  
+
   <!-- 1. Summary Card -->
   <div class="refinery-card refinery-summary">
     Context badge, opportunities, impact
   </div>
-  
+
   <!-- 2. Metrics Dashboard -->
   <div class="refinery-dashboard">
     Avg Impact, Refinements, Keywords, Weak Words
   </div>
-  
+
   <!-- 3. Quick Wins -->
   <div class="refinery-card refinery-quick-wins">
     Easy, high-impact changes (filtered)
   </div>
-  
+
   <!-- 4. Recommendations -->
   <div class="refinery-card refinery-recommendations">
     Full ranked list (top 10)
   </div>
-  
+
   <!-- 5. Before/After -->
   <div class="refinery-card refinery-comparison">
     Side-by-side comparison with changes highlighted
   </div>
-  
+
   <!-- 6. Guide -->
-  <div class="refinery-card refinery-guide">
-    3-phase implementation plan
-  </div>
+  <div class="refinery-card refinery-guide">3-phase implementation plan</div>
 </div>
 ```
 
@@ -247,9 +250,9 @@ export()              10-20ms   varies
 <script src="refinery-ui-component.js"></script>
 <script>
   function run() {
-    const text = document.getElementById('prompt').value;
+    const text = document.getElementById("prompt").value;
     const engine = new RefineryEngine();
-    const ui = new RefineryUIComponent('results');
+    const ui = new RefineryUIComponent("results");
     const analysis = engine.analyze(text);
     ui.render(analysis);
   }
@@ -260,26 +263,30 @@ export()              10-20ms   varies
 
 ```javascript
 // Check context detection
-console.log('Context:', analysis.contextType);
+console.log("Context:", analysis.contextType);
 
 // Check keywords extracted
-console.log('Keywords:', analysis.keywords.slice(0, 5));
+console.log("Keywords:", analysis.keywords.slice(0, 5));
 
 // Check weights calculated
-console.log('Top by weight:', analysis.weightedKeywords.slice(0, 3));
+console.log("Top by weight:", analysis.weightedKeywords.slice(0, 3));
 
 // Check refinements found
-console.log('Suggestions:', analysis.recommendations.length);
+console.log("Suggestions:", analysis.recommendations.length);
 
 // Check impact score
-console.log('Overall impact:', analysis.impactScore);
+console.log("Overall impact:", analysis.impactScore);
 
 // Check focus area
-console.log('Focus:', analysis.focusArea);
+console.log("Focus:", analysis.focusArea);
 
 // Check weak words identified
-const weak = analysis.weightedKeywords.filter(kw => kw.isWeak);
-console.log('Weak words:', weak.length, weak.map(w => w.text));
+const weak = analysis.weightedKeywords.filter((kw) => kw.isWeak);
+console.log(
+  "Weak words:",
+  weak.length,
+  weak.map((w) => w.text),
+);
 ```
 
 ## Integration Checklist
@@ -318,6 +325,7 @@ console.log('Weak words:', weak.length, weak.map(w => w.text));
 ---
 
 **Quick Links:**
+
 - Full Guide: `REFINERY_GUIDE.md`
 - API Docs: `refinery-engine.js` (JSDoc comments)
 - Examples: `refinery-integration-example.js`

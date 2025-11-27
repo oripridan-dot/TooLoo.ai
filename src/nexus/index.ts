@@ -70,15 +70,20 @@ export function createNexusApp() {
     res.json({ ok: true, message: "System stop initiated" });
   });
 
-  // Static Files (Web App)
-  const webAppPath = path.join(process.cwd(), "src", "web-app");
-  app.use(express.static(webAppPath));
-  console.log(`[Nexus] Serving static files from: ${webAppPath}`);
-
   // Serve React App Build
   const distPath = path.join(process.cwd(), "src", "web-app", "dist");
   app.use("/app", express.static(distPath));
   console.log(`[Nexus] Serving React app from: ${distPath}`);
+
+  // Redirect root to /app
+  app.get("/", (req, res) => {
+    res.redirect("/app");
+  });
+
+  // Static Files (Web App)
+  const webAppPath = path.join(process.cwd(), "src", "web-app");
+  app.use(express.static(webAppPath));
+  console.log(`[Nexus] Serving static files from: ${webAppPath}`);
 
   // Health Check
   app.get("/health", (req, res) => {
@@ -88,7 +93,7 @@ export function createNexusApp() {
   return app;
 }
 
-export function startNexus(port?: number) {
+export function startNexus(port?: number): Promise<void> {
   const PORT = port || Number(process.env.PORT) || 4000;
 
   // Initialize Auto-Architect
@@ -110,8 +115,11 @@ export function startNexus(port?: number) {
   // Initialize Socket Server
   new SocketServer(httpServer);
 
-  httpServer.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Nexus] Web Server running on port ${PORT}`);
-    bus.publish("nexus", "nexus:started", { port: PORT });
+  return new Promise((resolve) => {
+    httpServer.listen(PORT, "0.0.0.0", () => {
+      console.log(`[Nexus] Web Server running on port ${PORT}`);
+      bus.publish("nexus", "nexus:started", { port: PORT });
+      resolve();
+    });
   });
 }

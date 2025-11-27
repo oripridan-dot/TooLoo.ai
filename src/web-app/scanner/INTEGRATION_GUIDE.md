@@ -3,6 +3,7 @@
 ## Overview
 
 The **AI Chat Scanner** is a complete prompt analysis and refinement system that:
+
 1. **Analyzes** ChatGPT/Claude prompts for quality (clarity, completeness, format, constraints, examples)
 2. **Detects** weighted keywords using a sophisticated scoring algorithm
 3. **Suggests** context-aware refinements for maximum impact
@@ -41,8 +42,10 @@ UI Rendering (index.html + refinery-ui.js)
 ### Core Files
 
 #### `index.html` - Main Interface
+
 **Purpose**: Beautiful, interactive UI for the scanner
 **Features**:
+
 - Prompt input with file upload (ChatGPT JSON exports)
 - Real-time analysis with loading indicator
 - 4-tab interface: Keywords | Refinements | Impact | Comparison
@@ -50,14 +53,17 @@ UI Rendering (index.html + refinery-ui.js)
 - Export functionality (JSON, copy to clipboard)
 
 **Usage**:
+
 ```bash
 # Open in browser
 open /workspaces/TooLoo.ai/web-app/scanner/index.html
 ```
 
 #### `prompt-analyzer.js` - Quality Scoring
+
 **Purpose**: Scores prompts on 5 key dimensions
 **Dimensions**:
+
 - **Clarity** (0-2): How clear is the intent?
 - **Completeness** (0-2): Does it have all needed info?
 - **Format** (0-2): Is the format specified?
@@ -65,6 +71,7 @@ open /workspaces/TooLoo.ai/web-app/scanner/index.html
 - **Examples** (0-2): Are examples provided?
 
 **API**:
+
 ```javascript
 const analyzer = new PromptAnalyzer();
 const score = analyzer.analyze("Your prompt here");
@@ -72,10 +79,12 @@ const score = analyzer.analyze("Your prompt here");
 ```
 
 #### `refinery-engine.js` - Keyword Detection & Refinement
+
 **Purpose**: Detects weighted keywords and suggests replacements
 **Main Method**: `analyze(prompt)`
 
 **Algorithm**:
+
 1. Extract significant keywords (excludes common words, 3+ characters)
 2. Weight each keyword by:
    - **Frequency**: How often it appears (35% weight)
@@ -85,6 +94,7 @@ const score = analyzer.analyze("Your prompt here");
 4. Generate context-specific refinement suggestions
 
 **Returns**:
+
 ```javascript
 {
   weightedKeywords: [
@@ -106,14 +116,17 @@ const score = analyzer.analyze("Your prompt here");
 ```
 
 #### `refinery-ui.js` - Interactive Visualization
+
 **Purpose**: Displays refinery results with beautiful UI
 **Components**:
+
 - Keyword tag cloud with weight indicators
 - Refinement cards with before/after words
 - Impact visualization (before/after scores)
 - Side-by-side prompt comparison
 
 #### `scanner-refinery-integration.js` - Orchestration Layer
+
 **Purpose**: Combines quality + refinery analyses, generates recommendations
 **Key Classes**: `ScannerWithRefinery`
 
@@ -124,7 +137,7 @@ const score = analyzer.analyze("Your prompt here");
 ```javascript
 const scanner = new ScannerWithRefinery();
 const analysis = await scanner.analyzePromptWithRefinery(
-  "Write me a blog post"
+  "Write me a blog post",
 );
 
 // Access results:
@@ -141,7 +154,7 @@ const selected = ["write", "blog", "post"];
 const result = scanner.applyRefinements(
   originalPrompt,
   refineryAnalysis,
-  selected
+  selected,
 );
 
 console.log(result.improved); // Refined prompt
@@ -154,7 +167,7 @@ console.log(result.appliedRefinements); // What was changed
 const conversation = [
   { role: "user", content: "First prompt" },
   { role: "assistant", content: "..." },
-  { role: "user", content: "Second prompt" }
+  { role: "user", content: "Second prompt" },
 ];
 
 const results = await scanner.processConversation(conversation);
@@ -167,7 +180,7 @@ const results = await scanner.processConversation(conversation);
 const report = scanner.exportCombinedReport(
   originalPrompt,
   qualityAnalysis,
-  refineryAnalysis
+  refineryAnalysis,
 );
 
 // report includes:
@@ -216,6 +229,7 @@ Weight = (Frequency × 0.35) + (Position × 0.30) + (Emphasis × 0.35)
 The engine detects **context type** and suggests appropriate refinements:
 
 #### Action Context
+
 ```
 Original: "Do the analysis"
 Refined: "Conduct the comprehensive analysis"
@@ -223,6 +237,7 @@ Reason: More decisive language for action prompts
 ```
 
 #### Analysis Context
+
 ```
 Original: "Look at the data"
 Refined: "Examine the quantitative data"
@@ -230,6 +245,7 @@ Reason: More precise for analytical work
 ```
 
 #### Learning Context
+
 ```
 Original: "Tell me about"
 Refined: "Explain the fundamental principles of"
@@ -237,6 +253,7 @@ Reason: More structured for learning
 ```
 
 #### Problem-Solving Context
+
 ```
 Original: "Fix the issue"
 Refined: "Resolve the critical technical issue"
@@ -244,6 +261,7 @@ Reason: More specific problem definition
 ```
 
 #### Strategy Context
+
 ```
 Original: "Make a plan"
 Refined: "Develop a strategic roadmap"
@@ -261,6 +279,7 @@ Improvement:   +60%
 ```
 
 Calculated by:
+
 1. Quality refinements potential: +30%
 2. Keyword refinements potential: Up to +50% (based on impactScore)
 3. Combined: Min(1.0, beforeScore/10 + combined_gain)
@@ -290,33 +309,42 @@ npm run dev
 ## Testing the System
 
 ### Test Prompt 1: Weak Prompt
+
 ```
 Write a blog post
 ```
+
 **Expected**:
+
 - Low quality score (3-4/10)
 - Few keywords (too short)
 - Many refinement opportunities
 - High improvement potential
 
 ### Test Prompt 2: Good Prompt
+
 ```
-Create a detailed technical blog post for software engineers about microservices architecture. 
-Include: introduction (200 words), 4 sections (300 words each), practical code examples, 
-and conclusion with actionable takeaways. Avoid: marketing hype, oversimplification, 
+Create a detailed technical blog post for software engineers about microservices architecture.
+Include: introduction (200 words), 4 sections (300 words each), practical code examples,
+and conclusion with actionable takeaways. Avoid: marketing hype, oversimplification,
 and non-technical jargon.
 ```
+
 **Expected**:
+
 - High quality score (7-8/10)
 - Rich keyword set (15+ terms)
 - Few high-impact refinements
 - Smaller improvement potential
 
 ### Test Prompt 3: Vague Prompt
+
 ```
 Do something useful with the information to make it better and more clear for people
 ```
+
 **Expected**:
+
 - Medium quality score (4-5/10)
 - Many vague keywords
 - High refinement count
@@ -325,19 +353,23 @@ Do something useful with the information to make it better and more clear for pe
 ## Customization Points
 
 ### 1. Adjust Keyword Weighting
+
 In `refinery-engine.js`, modify weights in `analyzeWeights()`:
+
 ```javascript
 // Current: frequency 35%, position 30%, emphasis 35%
 // Try: frequency 40%, position 25%, emphasis 35%
 ```
 
 ### 2. Add New Refinement Rules
+
 In `refinery-engine.js`, extend `generateRefinements()`:
+
 ```javascript
 // Add context-specific patterns
 generateRefinements(weightedKeywords, contextType, prompt) {
   const refinements = [...]; // existing
-  
+
   // Add custom rule: detect passive voice
   if (prompt.includes(" is ") && prompt.includes(" by ")) {
     refinements.push({
@@ -351,10 +383,13 @@ generateRefinements(weightedKeywords, contextType, prompt) {
 ```
 
 ### 3. Change Quality Dimensions
+
 In `prompt-analyzer.js`, modify the 5 dimensions or scoring ranges.
 
 ### 4. Customize UI Styling
+
 In `index.html`, modify CSS variables:
+
 ```css
 --primary-color: #667eea; /* Change gradient start */
 --secondary-color: #764ba2; /* Change gradient end */
@@ -363,6 +398,7 @@ In `index.html`, modify CSS variables:
 ## Success Metrics
 
 ### For Users
+
 - ✅ Sees quality score immediately
 - ✅ Understands which keywords are "weighted"
 - ✅ Sees specific refinement suggestions with reasons
@@ -370,6 +406,7 @@ In `index.html`, modify CSS variables:
 - ✅ Knows estimated impact improvement
 
 ### For the App
+
 - 📊 Measurable improvement shown (before/after %)
 - 📊 Action-oriented refinements (not generic advice)
 - 📊 Context-aware suggestions (differs by prompt type)
@@ -379,18 +416,22 @@ In `index.html`, modify CSS variables:
 ## Troubleshooting
 
 ### Issue: "No keywords detected"
+
 **Cause**: Prompt too short or all words are common
 **Fix**: Try a longer, more descriptive prompt
 
 ### Issue: "No refinements available"
+
 **Cause**: Prompt already very well-written
 **Fix**: This is actually a success! System correctly identified good prompts
 
 ### Issue: Keywords don't seem important
+
 **Cause**: Weighting algorithm may need tuning for your use case
 **Fix**: Adjust frequency/position/emphasis weights in `refinery-engine.js`
 
 ### Issue: Refinements are too aggressive
+
 **Cause**: Impact threshold may be too low
 **Fix**: In `scanner-refinery-integration.js`, increase the impact threshold from 0.4
 

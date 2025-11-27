@@ -16,7 +16,7 @@ export class SensoryCortex {
 
   constructor(
     private bus: EventBus,
-    private workspaceRoot: string
+    private workspaceRoot: string,
   ) {
     this.watcher = new FileWatcher(bus, workspaceRoot);
     this.parser = new SemanticParser(bus, workspaceRoot);
@@ -45,13 +45,13 @@ export class SensoryCortex {
     this.bus.on("sensory:focus", (event: SynapsysEvent) => {
       // TODO: Implement dynamic watch path updates
       console.log(
-        `[SensoryCortex] Focus request received: ${JSON.stringify(event.payload)}`
+        `[SensoryCortex] Focus request received: ${JSON.stringify(event.payload)}`,
       );
     });
 
     // Listen for project re-analysis request
     this.bus.on("sensory:analyze_project", async () => {
-        await this.parser.analyzeProject();
+      await this.parser.analyzeProject();
     });
 
     // Listen for motor output to "see" what the hands are doing
@@ -64,7 +64,7 @@ export class SensoryCortex {
     // This is where we "read" the terminal output
     if (!result.ok) {
       console.log(
-        `[SensoryCortex] Observed execution failure: ${result.stderr}`
+        `[SensoryCortex] Observed execution failure: ${result.stderr}`,
       );
       this.bus.publish("cortex", "sensory:observation:error", {
         source: "motor",
@@ -76,7 +76,7 @@ export class SensoryCortex {
         // Simple heuristic: if it's short, log it. If it's long, maybe summarize?
         // For now, just acknowledge.
         console.log(
-          `[SensoryCortex] Observed execution output (${result.stdout.length} chars)`
+          `[SensoryCortex] Observed execution output (${result.stdout.length} chars)`,
         );
       }
     }

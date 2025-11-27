@@ -25,14 +25,14 @@ export class Reflector {
     step: PlanStep,
     result: any,
     plan: Plan,
-    verification?: { ok: boolean; errors: string[] }
+    verification?: { ok: boolean; errors: string[] },
   ): Promise<ReflectionResult> {
     console.log(`[Reflector] Analyzing step: "${step.description}"`);
 
     // If verification failed, we treat it as a failure or partial success that needs correction
     if (verification && !verification.ok) {
-        console.log(`[Reflector] Verification failed. Analyzing errors...`);
-        return this.analyzeVerificationFailure(step, result, verification, plan);
+      console.log(`[Reflector] Verification failed. Analyzing errors...`);
+      return this.analyzeVerificationFailure(step, result, verification, plan);
     }
 
     // If the step failed at the system level (e.g. command not found), we likely need to retry or replan
@@ -49,9 +49,9 @@ export class Reflector {
     step: PlanStep,
     result: any,
     verification: { ok: boolean; errors: string[] },
-    plan: Plan
+    plan: Plan,
   ): Promise<ReflectionResult> {
-      const systemPrompt = `You are the Reflector module.
+    const systemPrompt = `You are the Reflector module.
 The step executed, but the generated code failed verification (Lint/Type checks).
 
 CONTEXT:
@@ -95,14 +95,17 @@ Return ONLY a JSON object:
           : undefined,
       };
     } catch (error) {
-        return { action: "REPLAN", critique: "Failed to fix verification errors." };
+      return {
+        action: "REPLAN",
+        critique: "Failed to fix verification errors.",
+      };
     }
   }
 
   private async analyzeFailure(
     step: PlanStep,
     result: any,
-    plan: Plan
+    plan: Plan,
   ): Promise<ReflectionResult> {
     const systemPrompt = `You are the Reflector module of an autonomous AI. 
 A step in the execution plan has failed. Your job is to analyze the error and decide what to do.
@@ -160,15 +163,15 @@ Return ONLY a JSON object:
   private async analyzeSuccess(
     step: PlanStep,
     result: any,
-    plan: Plan
+    plan: Plan,
   ): Promise<ReflectionResult> {
-    // For simple commands, we might skip deep reflection to save tokens, 
+    // For simple commands, we might skip deep reflection to save tokens,
     // but for "Bespoke" mode, we reflect on everything important.
-    
+
     // If it's a simple file read or write that succeeded, we usually continue.
     // But if it's a command output, we should check if it actually did what we wanted.
     if (step.type === "file:write" || step.type === "file:read") {
-        return { action: "CONTINUE", critique: "File operation successful." };
+      return { action: "CONTINUE", critique: "File operation successful." };
     }
 
     const systemPrompt = `You are the Reflector module. 
@@ -191,7 +194,7 @@ Return ONLY a JSON object:
 `;
 
     try {
-       const response = await this.llmProvider.generateSmartLLM({
+      const response = await this.llmProvider.generateSmartLLM({
         prompt: `Analyze success for step: ${step.description}`,
         system: systemPrompt,
         taskType: "reasoning",
@@ -208,8 +211,11 @@ Return ONLY a JSON object:
         critique: parsed.critique,
       };
     } catch (error) {
-        // If we can't reflect, assume success if the system reported success
-        return { action: "CONTINUE", critique: "Reflection failed, assuming success." };
+      // If we can't reflect, assume success if the system reported success
+      return {
+        action: "CONTINUE",
+        critique: "Reflection failed, assuming success.",
+      };
     }
   }
 }

@@ -89,27 +89,16 @@ export class SocketServer {
     });
 
     // List of event types to forward to all clients (status updates, etc.)
-    const broadcastEvents = [
-      "cortex:tool:call",
-      "cortex:tool:result",
-      "planning:plan:created",
-      "planning:plan:updated",
-      "planning:plan:completed",
-      "planning:plan:failed",
-      "planning:replan:request",
-      "planning:paused",
-      "planning:resumed",
-      "planning:awaiting_approval",
-      "motor:execute",
-      "motor:file:write",
-      "motor:file:read",
-      "sensory:observation:error",
-      "arena:event",
-    ];
+    // Synapsys V3: Replaced hardcoded list with Pattern-Based Bridge
+    // This allows the UI to see all relevant "thought" processes in real-time.
 
-    // Broadcast other events to all connected clients
+    // Broadcast events to all connected clients based on pattern
     bus.on("*", (event: SynapsysEvent) => {
-      if (broadcastEvents.includes(event.type)) {
+      // Forward all Cortex, Visual, System, and Planning events automatically
+      // This is the "Nervous System" of Synapsys V3
+      if (
+        /^(cortex|visual|system|planning|motor|sensory|arena):/.test(event.type)
+      ) {
         this.io.emit("synapsys:event", event);
       }
     });

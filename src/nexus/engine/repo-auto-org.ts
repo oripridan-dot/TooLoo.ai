@@ -1,7 +1,7 @@
 // @version 2.1.28
 /**
  * Repository Auto-Organization Engine (Phase 2e)
- * 
+ *
  * Automatic repository management:
  * 1. Feature scope detection from descriptions
  * 2. Auto-branch creation based on scope
@@ -9,51 +9,118 @@
  * 4. Commit message formatting & enforcement
  * 5. Folder structure recommendations
  * 6. File organization suggestions
- * 
+ *
  * Transforms feature request → auto-organized branch + templates
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 export class RepoAutoOrg {
   constructor(options = {}) {
     this.config = {
       repoRoot: options.repoRoot || process.cwd(),
-      defaultBranchPrefix: options.defaultBranchPrefix || 'feature',
+      defaultBranchPrefix: options.defaultBranchPrefix || "feature",
       maxBranchNameLength: options.maxBranchNameLength || 50,
-      ...options
+      ...options,
     };
 
     this.scopePatterns = {
-      ui: ['button', 'component', 'interface', 'layout', 'css', 'style', 'design', 'visual'],
-      api: ['endpoint', 'route', 'server', 'handler', 'middleware', 'api', 'request', 'response'],
-      database: ['database', 'schema', 'migration', 'query', 'sql', 'postgres', 'mongo', 'cache'],
-      auth: ['authentication', 'authorization', 'login', 'password', 'token', 'oauth', 'session'],
-      performance: ['optimization', 'performance', 'speed', 'caching', 'memory', 'cpu', 'latency'],
-      security: ['security', 'vulnerability', 'encryption', 'sanitize', 'injection', 'xss', 'csrf'],
-      testing: ['test', 'unit', 'integration', 'e2e', 'coverage', 'jest', 'mocha'],
-      documentation: ['doc', 'readme', 'guide', 'tutorial', 'comment', 'jsdoc'],
-      devops: ['ci', 'cd', 'deployment', 'docker', 'kubernetes', 'infrastructure', 'env'],
-      refactor: ['refactor', 'cleanup', 'restructure', 'improve', 'simplify']
+      ui: [
+        "button",
+        "component",
+        "interface",
+        "layout",
+        "css",
+        "style",
+        "design",
+        "visual",
+      ],
+      api: [
+        "endpoint",
+        "route",
+        "server",
+        "handler",
+        "middleware",
+        "api",
+        "request",
+        "response",
+      ],
+      database: [
+        "database",
+        "schema",
+        "migration",
+        "query",
+        "sql",
+        "postgres",
+        "mongo",
+        "cache",
+      ],
+      auth: [
+        "authentication",
+        "authorization",
+        "login",
+        "password",
+        "token",
+        "oauth",
+        "session",
+      ],
+      performance: [
+        "optimization",
+        "performance",
+        "speed",
+        "caching",
+        "memory",
+        "cpu",
+        "latency",
+      ],
+      security: [
+        "security",
+        "vulnerability",
+        "encryption",
+        "sanitize",
+        "injection",
+        "xss",
+        "csrf",
+      ],
+      testing: [
+        "test",
+        "unit",
+        "integration",
+        "e2e",
+        "coverage",
+        "jest",
+        "mocha",
+      ],
+      documentation: ["doc", "readme", "guide", "tutorial", "comment", "jsdoc"],
+      devops: [
+        "ci",
+        "cd",
+        "deployment",
+        "docker",
+        "kubernetes",
+        "infrastructure",
+        "env",
+      ],
+      refactor: ["refactor", "cleanup", "restructure", "improve", "simplify"],
     };
 
     this.fileOrganization = {
       ui: {
-        folders: ['components/', 'styles/', 'assets/'],
-        ext: ['.jsx', '.tsx', '.css', '.scss']
+        folders: ["components/", "styles/", "assets/"],
+        ext: [".jsx", ".tsx", ".css", ".scss"],
       },
       api: {
-        folders: ['routes/', 'controllers/', 'middleware/'],
-        ext: ['.js', '.ts']
+        folders: ["routes/", "controllers/", "middleware/"],
+        ext: [".js", ".ts"],
       },
       database: {
-        folders: ['migrations/', 'schemas/', 'models/'],
-        ext: ['.sql', '.js']
+        folders: ["migrations/", "schemas/", "models/"],
+        ext: [".sql", ".js"],
       },
       testing: {
-        folders: ['tests/', '__tests__/', 'spec/'],
-        ext: ['.test.js', '.spec.js', '.test.ts']
-      }
+        folders: ["tests/", "__tests__/", "spec/"],
+        ext: [".test.js", ".spec.js", ".test.ts"],
+      },
     };
   }
 
@@ -68,7 +135,7 @@ export class RepoAutoOrg {
     for (const [scope, keywords] of Object.entries(this.scopePatterns)) {
       let score = 0;
       for (const keyword of keywords) {
-        const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+        const regex = new RegExp(`\\b${keyword}\\b`, "g");
         const matches = lower.match(regex);
         if (matches) {
           score += matches.length;
@@ -93,24 +160,32 @@ export class RepoAutoOrg {
     // Extract key words (max 3-4)
     const words = description
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/[^a-z0-9\s]/g, "")
       .split(/\s+/)
-      .filter(w => w.length > 3 && !['this', 'that', 'with', 'from', 'will', 'should'].includes(w))
+      .filter(
+        (w) =>
+          w.length > 3 &&
+          !["this", "that", "with", "from", "will", "should"].includes(w),
+      )
       .slice(0, 3);
 
-    const branchName = `${scope || this.config.defaultBranchPrefix}/${words.join('-')}`.substring(
-      0,
-      this.config.maxBranchNameLength
-    );
+    const branchName =
+      `${scope || this.config.defaultBranchPrefix}/${words.join("-")}`.substring(
+        0,
+        this.config.maxBranchNameLength,
+      );
 
-    return branchName.toLowerCase().replace(/[^a-z0-9\-\/]/g, '');
+    return branchName.toLowerCase().replace(/[^a-z0-9\-\/]/g, "");
   }
 
   /**
    * Generate PR template
    */
   generatePRTemplate(description, scopes, branchName) {
-    const scopeStr = scopes.map(s => s.scope).join(', ').toUpperCase();
+    const scopeStr = scopes
+      .map((s) => s.scope)
+      .join(", ")
+      .toUpperCase();
 
     return `# ${description}
 
@@ -180,19 +255,19 @@ ${scopeStr}
    */
   generateCommitTemplate(scope, description) {
     const typeMap = {
-      ui: 'feat(ui)',
-      api: 'feat(api)',
-      database: 'feat(db)',
-      auth: 'feat(auth)',
-      security: 'security',
-      performance: 'perf',
-      testing: 'test',
-      documentation: 'docs',
-      devops: 'ci',
-      refactor: 'refactor'
+      ui: "feat(ui)",
+      api: "feat(api)",
+      database: "feat(db)",
+      auth: "feat(auth)",
+      security: "security",
+      performance: "perf",
+      testing: "test",
+      documentation: "docs",
+      devops: "ci",
+      refactor: "refactor",
     };
 
-    const type = typeMap[scope] || 'feat';
+    const type = typeMap[scope] || "feat";
     const shortDesc = description.substring(0, 50);
 
     return `${type}: ${shortDesc}
@@ -211,19 +286,21 @@ ${scopeStr}
    * Generate commit message pattern/regex
    */
   generateCommitPattern(scopes) {
-    const types = scopes.map(s => this.getCommitType(s.scope)).filter(Boolean);
-    const typePattern = types.join('|');
+    const types = scopes
+      .map((s) => this.getCommitType(s.scope))
+      .filter(Boolean);
+    const typePattern = types.join("|");
 
     return {
       pattern: `^(${typePattern})(\\(.+\\))?!?: .{1,50}$`,
       examples: [
-        'feat(ui): add login button component',
-        'fix(api): handle missing user id',
-        'perf(db): optimize query performance',
-        'security: sanitize user input',
-        'docs: update API documentation'
+        "feat(ui): add login button component",
+        "fix(api): handle missing user id",
+        "perf(db): optimize query performance",
+        "security: sanitize user input",
+        "docs: update API documentation",
       ],
-      description: 'Commit messages must follow conventional commits format'
+      description: "Commit messages must follow conventional commits format",
     };
   }
 
@@ -232,16 +309,16 @@ ${scopeStr}
    */
   getCommitType(scope) {
     const map = {
-      ui: 'feat',
-      api: 'feat',
-      database: 'feat',
-      auth: 'feat',
-      security: 'security',
-      performance: 'perf',
-      testing: 'test',
-      documentation: 'docs',
-      devops: 'ci',
-      refactor: 'refactor'
+      ui: "feat",
+      api: "feat",
+      database: "feat",
+      auth: "feat",
+      security: "security",
+      performance: "perf",
+      testing: "test",
+      documentation: "docs",
+      devops: "ci",
+      refactor: "refactor",
     };
     return map[scope];
   }
@@ -256,7 +333,10 @@ ${scopeStr}
     const branchName = this.generateBranchName(description, primaryScope);
     const prTemplate = this.generatePRTemplate(description, scopes, branchName);
     const folders = this.generateFolderStructure(scopes);
-    const commitTemplate = this.generateCommitTemplate(primaryScope, description);
+    const commitTemplate = this.generateCommitTemplate(
+      primaryScope,
+      description,
+    );
     const commitPattern = this.generateCommitPattern(scopes);
 
     return {
@@ -271,7 +351,7 @@ ${scopeStr}
       commitTemplate,
       commitPattern,
       commands: this.generateCommands(branchName),
-      fileOrganization: this.generateFileOrganization(scopes)
+      fileOrganization: this.generateFileOrganization(scopes),
     };
   }
 
@@ -285,21 +365,21 @@ ${scopeStr}
       commitExample: 'git commit -m "feat: implement awesome feature"',
       createPR: `gh pr create --base main --head ${branchName} --title "Your PR Title" --body "$(cat PR_TEMPLATE.md)"`,
       allSteps: [
-        '# Create and switch to feature branch',
+        "# Create and switch to feature branch",
         `git checkout -b ${branchName}`,
-        '',
-        '# Make your changes...',
-        '',
-        '# Stage and commit (follows conventional commits)',
-        'git add .',
+        "",
+        "# Make your changes...",
+        "",
+        "# Stage and commit (follows conventional commits)",
+        "git add .",
         'git commit -m "feat: your change description"',
-        '',
-        '# Push to remote',
+        "",
+        "# Push to remote",
         `git push -u origin ${branchName}`,
-        '',
-        '# Create PR',
-        `gh pr create --base main --head ${branchName}`
-      ].join('\n')
+        "",
+        "# Create PR",
+        `gh pr create --base main --head ${branchName}`,
+      ].join("\n"),
     };
   }
 
@@ -316,7 +396,7 @@ ${scopeStr}
           scope,
           suggestedFolders: org.folders,
           suggestedExtensions: org.ext,
-          examples: this.getExamplesForScope(scope)
+          examples: this.getExamplesForScope(scope),
         });
       }
     }
@@ -329,11 +409,19 @@ ${scopeStr}
    */
   getExamplesForScope(scope) {
     const examples = {
-      ui: ['components/Button.jsx', 'styles/button.css', 'components/__tests__/Button.test.jsx'],
-      api: ['routes/users.js', 'controllers/userController.js', 'middleware/auth.js'],
-      database: ['migrations/20251020_add_users_table.sql', 'models/User.js'],
-      testing: ['tests/unit/utils.test.js', 'tests/integration/api.test.js'],
-      auth: ['middleware/authenticate.js', 'services/TokenService.js']
+      ui: [
+        "components/Button.jsx",
+        "styles/button.css",
+        "components/__tests__/Button.test.jsx",
+      ],
+      api: [
+        "routes/users.js",
+        "controllers/userController.js",
+        "middleware/auth.js",
+      ],
+      database: ["migrations/20251020_add_users_table.sql", "models/User.js"],
+      testing: ["tests/unit/utils.test.js", "tests/integration/api.test.js"],
+      auth: ["middleware/authenticate.js", "services/TokenService.js"],
     };
     return examples[scope] || [];
   }
@@ -346,10 +434,10 @@ ${scopeStr}
       supportedScopes: Object.keys(this.scopePatterns).length,
       scopes: Object.entries(this.scopePatterns).map(([scope, keywords]) => ({
         scope,
-        keywordCount: keywords.length
+        keywordCount: keywords.length,
       })),
       fileOrganizationScopes: Object.keys(this.fileOrganization).length,
-      maxBranchNameLength: this.config.maxBranchNameLength
+      maxBranchNameLength: this.config.maxBranchNameLength,
     };
   }
 }

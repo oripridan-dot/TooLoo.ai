@@ -44,8 +44,17 @@ export default class CapabilitiesManager {
   }
 
   async init() {
-    console.log("[CapabilitiesManager] Initializing with " + this.registry.capabilities.size + " capabilities");
-    return { ok: true, engine: "capabilities-manager", status: "ready", count: this.registry.capabilities.size };
+    console.log(
+      "[CapabilitiesManager] Initializing with " +
+        this.registry.capabilities.size +
+        " capabilities",
+    );
+    return {
+      ok: true,
+      engine: "capabilities-manager",
+      status: "ready",
+      count: this.registry.capabilities.size,
+    };
   }
 
   /**
@@ -78,7 +87,8 @@ export default class CapabilitiesManager {
     // NEW: Context-aware visual code generation (Nano Banana + DALL-E)
     this.registerCapability({
       name: "image.context.code-generation.gemini",
-      description: "Generate functional code from visual context using Gemini 3 Pro Image Preview (Nano Banana)",
+      description:
+        "Generate functional code from visual context using Gemini 3 Pro Image Preview (Nano Banana)",
       category: "visual",
       module: "geminiContextCodeGen",
       methods: ["generateCodeFromContext", "analyzeVisualContext"],
@@ -94,17 +104,27 @@ export default class CapabilitiesManager {
 
     this.registerCapability({
       name: "image.context.code-generation.dalle3",
-      description: "Generate functional code from visual context using DALL-E 3 + GPT-4 Turbo",
+      description:
+        "Generate functional code from visual context using DALL-E 3 + GPT-4 Turbo",
       category: "visual",
       module: "dalle3ContextCodeGen",
-      methods: ["generateCodeFromContext", "analyzeVisualContext", "generateImage"],
+      methods: [
+        "generateCodeFromContext",
+        "analyzeVisualContext",
+        "generateImage",
+      ],
       status: "online",
       version: "2.0.0",
       requirements: ["OPENAI_API_KEY"],
       metadata: {
         model: "gpt-4-turbo",
         visionModel: "dall-e-3",
-        capabilities: ["context-aware", "code-generation", "visual-analysis", "image-generation"],
+        capabilities: [
+          "context-aware",
+          "code-generation",
+          "visual-analysis",
+          "image-generation",
+        ],
       },
     });
 
@@ -135,14 +155,20 @@ export default class CapabilitiesManager {
       description: "Create and manage design components",
       category: "design",
       module: "componentEngine",
-      methods: ["createComponent", "updateComponent", "deleteComponent", "listComponents"],
+      methods: [
+        "createComponent",
+        "updateComponent",
+        "deleteComponent",
+        "listComponents",
+      ],
       status: "online",
       version: "1.0.0",
     });
 
     this.registerCapability({
       name: "design.export",
-      description: "Export design systems to various formats (CSS, JSON, FIGMA)",
+      description:
+        "Export design systems to various formats (CSS, JSON, FIGMA)",
       category: "design",
       module: "designExporter",
       methods: ["exportCSS", "exportJSON", "exportFigma"],
@@ -153,7 +179,8 @@ export default class CapabilitiesManager {
     // Chat Visual Capabilities
     this.registerCapability({
       name: "chat.visual.render",
-      description: "Render visual elements in chat (images, diagrams, components)",
+      description:
+        "Render visual elements in chat (images, diagrams, components)",
       category: "chat",
       module: "visualRenderer",
       methods: ["renderImage", "renderDiagram", "renderComponent"],
@@ -204,13 +231,18 @@ export default class CapabilitiesManager {
       requirements: ["GEMINI_API_KEY", "OPENAI_API_KEY"],
     });
 
-    console.log(`[CapabilitiesManager] Initialized ${this.registry.capabilities.size} default capabilities`);
+    console.log(
+      `[CapabilitiesManager] Initialized ${this.registry.capabilities.size} default capabilities`,
+    );
   }
 
   /**
    * Register a new capability
    */
-  registerCapability(capability: Omit<Capability, "registered">): { ok: boolean; capability: string } {
+  registerCapability(capability: Omit<Capability, "registered">): {
+    ok: boolean;
+    capability: string;
+  } {
     const fullCapability: Capability = {
       ...capability,
       registered: new Date(),
@@ -224,14 +256,19 @@ export default class CapabilitiesManager {
     }
     this.registry.categories.get(capability.category)!.push(fullCapability);
 
-    console.log(`[CapabilitiesManager] Registered capability: ${capability.name}`);
+    console.log(
+      `[CapabilitiesManager] Registered capability: ${capability.name}`,
+    );
     return { ok: true, capability: capability.name };
   }
 
   /**
    * Get all capabilities
    */
-  async getCapabilities(filter?: { category?: string; status?: string }): Promise<any> {
+  async getCapabilities(filter?: {
+    category?: string;
+    status?: string;
+  }): Promise<any> {
     let capabilities = Array.from(this.registry.capabilities.values());
 
     if (filter?.category) {
@@ -286,7 +323,9 @@ export default class CapabilitiesManager {
   /**
    * Get capabilities for a specific task
    */
-  async getCapabilitiesForTask(taskType: "visual" | "design" | "chat" | "workflow"): Promise<Capability[]> {
+  async getCapabilitiesForTask(
+    taskType: "visual" | "design" | "chat" | "workflow",
+  ): Promise<Capability[]> {
     return this.getByCategory(taskType);
   }
 
@@ -297,7 +336,10 @@ export default class CapabilitiesManager {
     const byCategory = Object.fromEntries(
       Array.from(this.registry.categories.entries()).map(([cat, caps]) => [
         cat,
-        { total: caps.length, online: caps.filter((c) => c.status === "online").length },
+        {
+          total: caps.length,
+          online: caps.filter((c) => c.status === "online").length,
+        },
       ]),
     );
 
@@ -312,7 +354,10 @@ export default class CapabilitiesManager {
   /**
    * Update capability status
    */
-  updateCapabilityStatus(name: string, status: "online" | "offline" | "degraded"): boolean {
+  updateCapabilityStatus(
+    name: string,
+    status: "online" | "offline" | "degraded",
+  ): boolean {
     const capability = this.registry.capabilities.get(name);
     if (!capability) return false;
 

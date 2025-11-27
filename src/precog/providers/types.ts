@@ -1,4 +1,4 @@
-// @version 2.1.378
+// @version 2.1.28
 export interface ProviderConfig {
   name: string;
   enabled: boolean;
@@ -149,9 +149,7 @@ export interface ImageCodeGenerationResponse {
 
 export interface ContextAwareImageProvider extends ProviderAdapter {
   generateCodeFromContext(
-    req: ImageCodeGenerationRequest
+    req: ImageCodeGenerationRequest,
   ): Promise<ImageCodeGenerationResponse>;
-  analyzeVisualContext(
-    context: VisualContext
-  ): Promise<VisualContextAnalysis>;
+  analyzeVisualContext(context: VisualContext): Promise<VisualContextAnalysis>;
 }

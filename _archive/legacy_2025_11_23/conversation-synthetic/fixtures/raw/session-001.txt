@@ -1,6 +1,0 @@
-user: maybe this overlay approach is the ceiling—are we on the right path?
-ai: Flag received. I'll surface constraints: stability, legal exposure, platform variance. Then propose pivot options.
-ai: Risks: 1) Fragile DOM dependency 2) Potential TOS friction 3) High maintenance per site. Pivot vectors: A) Conversation intelligence B) Local pattern mining C) Workflow guidance.
-user: outline the intelligence path quickly
-ai: Intelligence Path: ingest chat → segment phases → extract recurring micro patterns → build cognitive profile → surface adaptive guidance.
-user: good. proceed with that pivot direction.

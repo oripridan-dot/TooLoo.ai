@@ -24,13 +24,13 @@ export class VersionManager {
 
   constructor(
     private bus: EventBus,
-    private workspaceRoot: string
+    private workspaceRoot: string,
   ) {
     this.packageJsonPath = path.join(workspaceRoot, "package.json");
     this.currentVersion = this.readVersion();
 
     console.log(
-      `[VersionManager] Initialized. Current version: ${this.formatVersion(this.currentVersion)}`
+      `[VersionManager] Initialized. Current version: ${this.formatVersion(this.currentVersion)}`,
     );
     this.checkGitStatus();
   }
@@ -40,18 +40,20 @@ export class VersionManager {
       if (!err && branch) {
         const currentBranch = branch.trim();
         console.log(
-          `[VersionManager] Connected to git branch: ${currentBranch}`
+          `[VersionManager] Connected to git branch: ${currentBranch}`,
         );
-        
+
         // Check if branch matches current version
         const expectedBranch = `feature/tooloo-v${this.formatVersion(this.currentVersion)}-synapsys`;
         if (currentBranch !== expectedBranch) {
-          console.log(`[VersionManager] Branch mismatch. Expected: ${expectedBranch}. Updating...`);
+          console.log(
+            `[VersionManager] Branch mismatch. Expected: ${expectedBranch}. Updating...`,
+          );
           this.updateGitBranch(this.formatVersion(this.currentVersion));
         }
       } else {
         console.warn(
-          "[VersionManager] Warning: Not in a git repository or git not available."
+          "[VersionManager] Warning: Not in a git repository or git not available.",
         );
       }
     });
@@ -122,7 +124,7 @@ export class VersionManager {
     if (this.pendingChanges.size === 0) return;
 
     console.log(
-      `[VersionManager] Processing ${this.pendingChanges.size} file changes...`
+      `[VersionManager] Processing ${this.pendingChanges.size} file changes...`,
     );
 
     // 1. Increment Version (Patch by default)
@@ -148,7 +150,7 @@ export class VersionManager {
 
     this.lastWriteTime = Date.now();
     console.log(
-      `[VersionManager] Upgraded to v${newVersionString}. Tagged ${taggedCount} files.`
+      `[VersionManager] Upgraded to v${newVersionString}. Tagged ${taggedCount} files.`,
     );
 
     // 4. Git Commit & Tag
@@ -163,7 +165,7 @@ export class VersionManager {
       pkg.version = newVersion;
       fs.writeFileSync(
         this.packageJsonPath,
-        JSON.stringify(pkg, null, 2) + "\n"
+        JSON.stringify(pkg, null, 2) + "\n",
       );
     } catch (error) {
       console.error("[VersionManager] Failed to update package.json:", error);
@@ -200,7 +202,7 @@ export class VersionManager {
         // If nothing to commit (e.g. only ignored files changed and package.json didn't change effectively?), just warn
         console.warn(
           "[VersionManager] Git commit failed (possibly nothing to commit):",
-          err.message
+          err.message,
         );
         return;
       }
@@ -218,7 +220,7 @@ export class VersionManager {
 
   private execGit(
     command: string,
-    callback: (error: Error | null, stdout?: string) => void
+    callback: (error: Error | null, stdout?: string) => void,
   ) {
     exec(`git ${command}`, { cwd: this.workspaceRoot }, (error, stdout) => {
       if (error) {
@@ -263,7 +265,7 @@ export class VersionManager {
         ) {
           newContent = content.replace(
             /<!doctype html>/i,
-            `<!DOCTYPE html>\n${tag}`
+            `<!DOCTYPE html>\n${tag}`,
           );
         } else {
           newContent = `${tag}\n${content}`;
@@ -282,7 +284,7 @@ export class VersionManager {
 
   private updateGitBranch(version: string) {
     const newBranchName = `feature/tooloo-v${version}-synapsys`;
-    
+
     // Check if we are already on this branch
     this.execGit("rev-parse --abbrev-ref HEAD", (err, currentBranch) => {
       if (!err && currentBranch && currentBranch.trim() === newBranchName) {
@@ -290,20 +292,27 @@ export class VersionManager {
       }
 
       console.log(`[VersionManager] Switching to new branch: ${newBranchName}`);
-      
+
       // Create and checkout new branch
       this.execGit(`checkout -b ${newBranchName}`, (err) => {
         if (err) {
           // If branch exists, just checkout
           this.execGit(`checkout ${newBranchName}`, (checkoutErr) => {
             if (checkoutErr) {
-              console.error(`[VersionManager] Failed to switch to branch ${newBranchName}:`, checkoutErr);
+              console.error(
+                `[VersionManager] Failed to switch to branch ${newBranchName}:`,
+                checkoutErr,
+              );
             } else {
-              console.log(`[VersionManager] Switched to existing branch: ${newBranchName}`);
+              console.log(
+                `[VersionManager] Switched to existing branch: ${newBranchName}`,
+              );
             }
           });
         } else {
-          console.log(`[VersionManager] Created and switched to branch: ${newBranchName}`);
+          console.log(
+            `[VersionManager] Created and switched to branch: ${newBranchName}`,
+          );
         }
       });
     });

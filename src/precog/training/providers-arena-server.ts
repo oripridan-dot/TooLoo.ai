@@ -36,7 +36,6 @@ const systemPrompt =
 // ============ Provider Mapping ============
 
 const providerMap = {
-  ollama: "ollama",
   claude: "anthropic",
   anthropic: "anthropic",
   gpt: "openai",
@@ -176,7 +175,7 @@ Structure with clear headings and bullet points.`;
 
     const text = await generateLLM({
       prompt: synthesisPrompt,
-      provider: "ollama",
+      provider: "anthropic",
       system: systemPrompt,
       maxTokens: 1500,
     });
@@ -184,7 +183,7 @@ Structure with clear headings and bullet points.`;
     res.json({
       ok: true,
       synthesis: text || "",
-      providerUsed: "ollama",
+      providerUsed: "anthropic",
     });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
@@ -324,7 +323,7 @@ app.get("/api/v1/arena/status", (req, res) => {
  * Test endpoint - returns mock responses without calling real providers
  */
 app.post("/api/v1/arena/test", (req, res) => {
-  const { query, providers = ["ollama", "claude"] } = req.body;
+  const { query, providers = ["anthropic", "openai"] } = req.body;
   const validProviders = providers
     .map((p) => providerMap[p.toLowerCase()])
     .filter((p) => p && p !== undefined)
@@ -362,7 +361,7 @@ app.post("/api/v1/arena/tldr", async (req, res) => {
     try {
       tldr = await generateLLM({
         prompt: `Summarize these provider responses into a concise TLDR (max 2-3 sentences):\n\n${combined}`,
-        provider: "ollama",
+        provider: "anthropic",
         system:
           "You are a summarization expert. Create brief, impactful summaries.",
         maxTokens: 200,
@@ -402,7 +401,7 @@ app.post("/api/v1/arena/questions", async (req, res) => {
     try {
       questions = await generateLLM({
         prompt: `Based on these responses to "${query}", generate 3 follow-up questions that would deepen understanding:\n\n${combined}\n\nFormat: List each as "- Question?"`,
-        provider: "ollama",
+        provider: "anthropic",
         system:
           "You are a critical thinking expert. Generate insightful follow-up questions.",
         maxTokens: 300,
@@ -443,7 +442,7 @@ app.post("/api/v1/arena/actions", async (req, res) => {
     try {
       actions = await generateLLM({
         prompt: `Based on these provider responses to "${query}", generate 3-5 actionable next steps:\n\n${combined}\n\nFormat each as "- Action: Description"`,
-        provider: "ollama",
+        provider: "anthropic",
         system:
           "You are an action planning expert. Generate specific, implementable actions.",
         maxTokens: 400,
@@ -484,7 +483,7 @@ app.post("/api/v1/arena/conflicts", async (req, res) => {
     try {
       conflicts = await generateLLM({
         prompt: `Analyze these responses and identify any contradictions, disagreements, or conflicting recommendations:\n\n${combined}\n\nList each conflict as "- Conflict: providers X vs Y about..."`,
-        provider: "ollama",
+        provider: "anthropic",
         system:
           "You are a conflict analysis expert. Identify and highlight areas of disagreement.",
         maxTokens: 400,

@@ -86,6 +86,8 @@ export class ProviderEngine {
     prompt: string;
     system?: string;
     taskType?: string;
+    cohortId?: string;
+    workflowId?: string;
   }) {
     // Adaptive Routing Logic
     const complexity = this.classifyComplexity(params.prompt, params.taskType);
@@ -106,6 +108,14 @@ export class ProviderEngine {
 
     // Cost Tracking
     const cost = this.costCalculator.getProviderCost(result.provider);
+    this.costCalculator.recordWorkflow(
+      params.cohortId || "default",
+      params.workflowId || `wf-${Date.now()}`,
+      result.provider,
+      cost,
+      0.5, // Default capability gain
+    );
+
     console.log(
       `[ProviderEngine] Request completed via ${result.provider}. Est. Cost: $${cost}`,
     );

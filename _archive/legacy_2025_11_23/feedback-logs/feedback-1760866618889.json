@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-10-19T09:36:58.889Z",
-  "type": "demo",
-  "subject": "Thinking Pattern Analysis",
-  "description": "Colleague: Why did our conversion rate drop?\n\nAnalyst: I looked at three dimensions: traffic source, device type, and time period. Conversion dropped 8% overall, but it's concentrated in mobile traffic from paid ads. When I segment by geography, the US is down 15%, Europe steady, Asia up.\n\nColleague: So it's the traffic source?\n\nAnalyst: Not necessarily. Could be the audience, the ad creative, or a platform change. Let me test by controlling one variable at a time. I want to isolate the true driver with confidence intervals.",
-  "email": "demo@tooloo.ai",
-  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
-}

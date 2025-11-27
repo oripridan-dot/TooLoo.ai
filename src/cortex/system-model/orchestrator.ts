@@ -1,5 +1,6 @@
-// @version 2.1.28
 #!/usr/bin/env node
+// @version 2.1.28
+
 /**
  * TooLoo.ai Orchestrator v5 (TypeScript Optimized)
  * High-performance, parallel-capable service orchestration.
@@ -169,7 +170,7 @@ async function waitForDependencies(service: Service, maxWaitMs = 30000) {
 
   while (Date.now() - startTime < maxWaitMs) {
     const allHealthy = await Promise.all(
-      depServices.map((dep: Service) => checkHealth(dep))
+      depServices.map((dep: Service) => checkHealth(dep)),
     );
 
     if (allHealthy.every((h) => h)) return true;
@@ -295,7 +296,7 @@ function startOrchestratorServer() {
           pid: "?", // We don't track PIDs easily here yet
           uptime: 0, // Placeholder
         };
-      })
+      }),
     );
     res.json({ ok: true, processes });
   });

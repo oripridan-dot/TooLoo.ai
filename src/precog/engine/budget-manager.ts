@@ -6,37 +6,47 @@
  * - Provides 1-hour TTL response cache to reduce costs
  */
 
-import crypto from 'crypto';
+import crypto from "crypto";
 
-const env = (k, d) => (process.env[k] ?? d);
+const env = (k, d) => process.env[k] ?? d;
 
 export default class BudgetManager {
   constructor(options = {}) {
     // Allow constructor overrides while keeping env defaults
-    this.limit = Number(options.limit ?? env('DAILY_BUDGET_LIMIT', '5.00'));
+    this.limit = Number(options.limit ?? env("DAILY_BUDGET_LIMIT", "5.00"));
     this.prices = {
-      deepseek: Number(options.deepseekCost ?? env('DEEPSEEK_COST_PER_CALL', '0.002')),
-      anthropic: Number(options.anthropicCost ?? env('ANTHROPIC_COST_PER_CALL', '0.012')),
-      openai: Number(options.openaiCost ?? env('OPENAI_COST_PER_CALL', '0.010')),
-      gemini: Number(options.geminiCost ?? env('GEMINI_COST_PER_CALL', '0.004'))
+      deepseek: Number(
+        options.deepseekCost ?? env("DEEPSEEK_COST_PER_CALL", "0.002"),
+      ),
+      anthropic: Number(
+        options.anthropicCost ?? env("ANTHROPIC_COST_PER_CALL", "0.012"),
+      ),
+      openai: Number(
+        options.openaiCost ?? env("OPENAI_COST_PER_CALL", "0.010"),
+      ),
+      gemini: Number(
+        options.geminiCost ?? env("GEMINI_COST_PER_CALL", "0.004"),
+      ),
     };
 
     this.state = {
       date: this._todayKey(),
       used: 0,
       calls: { deepseek: 0, anthropic: 0, openai: 0, gemini: 0 },
-      history: []
+      history: [],
     };
 
     this.cache = new Map(); // key -> { value, expiresAt }
     this.defaultTTLms = 60 * 60 * 1000; // 1 hour
   }
 
-  available() { return true; }
+  available() {
+    return true;
+  }
 
   _todayKey() {
     const d = new Date();
-    return d.toISOString().slice(0,10);
+    return d.toISOString().slice(0, 10);
   }
 
   _rolloverIfNeeded() {
@@ -46,7 +56,7 @@ export default class BudgetManager {
         date: today,
         used: 0,
         calls: { deepseek: 0, anthropic: 0, openai: 0, gemini: 0 },
-        history: []
+        history: [],
       };
     }
   }
@@ -69,28 +79,33 @@ export default class BudgetManager {
       remaining,
       percent,
       warning: percent >= 0.8 && percent < 1.0,
-      blocked: percent >= 1.0 || willExceed
+      blocked: percent >= 1.0 || willExceed,
     };
   }
 
   // Back-compat: previous code expects budget.willExceed(provider)
   // Accepts either a provider string or a numeric cost override
   willExceed(providerOrCost) {
-    const estimatedCost = typeof providerOrCost === 'number' 
-      ? providerOrCost 
-      : this.getProviderCost(providerOrCost);
+    const estimatedCost =
+      typeof providerOrCost === "number"
+        ? providerOrCost
+        : this.getProviderCost(providerOrCost);
     const status = this.checkBudget(estimatedCost);
     return status.blocked;
   }
 
   recordCall(provider, costOverride) {
     this._rolloverIfNeeded();
-    const cost = typeof costOverride === 'number' ? costOverride : this.getProviderCost(provider);
+    const cost =
+      typeof costOverride === "number"
+        ? costOverride
+        : this.getProviderCost(provider);
     this.state.used += cost;
     if (!this.state.calls[provider]) this.state.calls[provider] = 0;
     this.state.calls[provider] += 1;
     this.state.history.unshift({ provider, cost, t: Date.now() });
-    if (this.state.history.length > 200) this.state.history = this.state.history.slice(0, 200);
+    if (this.state.history.length > 200)
+      this.state.history = this.state.history.slice(0, 200);
     return cost;
   }
 
@@ -116,15 +131,20 @@ export default class BudgetManager {
       percent,
       calls: this.state.calls,
       warning: percent >= 0.8 && percent < 1.0,
-      blocked: percent >= 1.0
+      blocked: percent >= 1.0,
     };
   }
 
   // Cache helpers
   makeCacheKeyFromRequest(reqBody) {
-    const { prompt = '', system = '', taskType = 'chat', context = {} } = reqBody || {};
+    const {
+      prompt = "",
+      system = "",
+      taskType = "chat",
+      context = {},
+    } = reqBody || {};
     const raw = JSON.stringify({ prompt, system, taskType, context });
-    return crypto.createHash('md5').update(raw).digest('hex');
+    return crypto.createHash("md5").update(raw).digest("hex");
   }
 
   getCached(key) {
@@ -138,10 +158,12 @@ export default class BudgetManager {
   }
 
   setCache(key, value, ttlMs) {
-    const ttl = typeof ttlMs === 'number' ? ttlMs : this.defaultTTLms;
+    const ttl = typeof ttlMs === "number" ? ttlMs : this.defaultTTLms;
     this.cache.set(key, { value, expiresAt: Date.now() + ttl });
   }
 }
 
-function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+function round2(n) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
 // End of module

@@ -10,9 +10,26 @@ export default class DomainExpertise {
     // Domain definitions with keywords, expertise areas, and preferred providers
     this.domains = {
       engineering: {
-        keywords: ['code', 'programming', 'software', 'algorithm', 'debug', 'refactor', 'architecture', 'framework', 'library', 'api', 'database', 'server', 'deployment', 'ci/cd', 'testing', 'performance'],
-        expertise: ['precision', 'logic', 'structure', 'optimization'],
-        preferredProviders: ['anthropic', 'openai', 'deepseek'], // Claude for precision, GPT-4 for structured output
+        keywords: [
+          "code",
+          "programming",
+          "software",
+          "algorithm",
+          "debug",
+          "refactor",
+          "architecture",
+          "framework",
+          "library",
+          "api",
+          "database",
+          "server",
+          "deployment",
+          "ci/cd",
+          "testing",
+          "performance",
+        ],
+        expertise: ["precision", "logic", "structure", "optimization"],
+        preferredProviders: ["anthropic", "openai", "deepseek"], // Claude for precision, GPT-4 for structured output
         systemPrompt: `You are an expert software engineer with 15+ years of experience across multiple programming paradigms and technologies. You excel at:
 
 - Writing clean, maintainable, and efficient code
@@ -29,13 +46,34 @@ When providing code solutions:
 - Suggest testing approaches
 - Consider security implications
 
-Be precise, practical, and focus on production-ready solutions.`
+Be precise, practical, and focus on production-ready solutions.`,
       },
 
       design: {
-        keywords: ['ui', 'ux', 'interface', 'user experience', 'visual', 'design', 'layout', 'color', 'typography', 'wireframe', 'mockup', 'prototype', 'responsive', 'accessibility', 'branding'],
-        expertise: ['creativity', 'aesthetics', 'user-centered', 'visual communication'],
-        preferredProviders: ['gemini', 'anthropic', 'openai'], // Gemini for creativity, Claude for thoughtful design
+        keywords: [
+          "ui",
+          "ux",
+          "interface",
+          "user experience",
+          "visual",
+          "design",
+          "layout",
+          "color",
+          "typography",
+          "wireframe",
+          "mockup",
+          "prototype",
+          "responsive",
+          "accessibility",
+          "branding",
+        ],
+        expertise: [
+          "creativity",
+          "aesthetics",
+          "user-centered",
+          "visual communication",
+        ],
+        preferredProviders: ["gemini", "anthropic", "openai"], // Gemini for creativity, Claude for thoughtful design
         systemPrompt: `You are a senior UX/UI designer with expertise in modern design systems, user research, and digital product design. You specialize in:
 
 - Creating intuitive and beautiful user interfaces
@@ -53,13 +91,30 @@ When providing design solutions:
 - Include accessibility considerations
 - Provide implementation guidance
 
-Focus on creating designs that are both beautiful and highly usable.`
+Focus on creating designs that are both beautiful and highly usable.`,
       },
 
       business: {
-        keywords: ['strategy', 'business', 'market', 'revenue', 'growth', 'product', 'customer', 'sales', 'marketing', 'finance', 'operations', 'management', 'planning', 'analysis', 'metrics', 'kpi'],
-        expertise: ['strategy', 'analysis', 'communication', 'leadership'],
-        preferredProviders: ['openai', 'anthropic', 'gemini'], // GPT-4 for structured business analysis
+        keywords: [
+          "strategy",
+          "business",
+          "market",
+          "revenue",
+          "growth",
+          "product",
+          "customer",
+          "sales",
+          "marketing",
+          "finance",
+          "operations",
+          "management",
+          "planning",
+          "analysis",
+          "metrics",
+          "kpi",
+        ],
+        expertise: ["strategy", "analysis", "communication", "leadership"],
+        preferredProviders: ["openai", "anthropic", "gemini"], // GPT-4 for structured business analysis
         systemPrompt: `You are a seasoned business strategist and consultant with deep expertise in corporate strategy, product management, and business development. You excel at:
 
 - Analyzing market opportunities and competitive landscapes
@@ -77,13 +132,28 @@ When providing business advice:
 - Focus on measurable outcomes and ROI
 - Consider implementation feasibility
 
-Be strategic, analytical, and focused on sustainable business success.`
+Be strategic, analytical, and focused on sustainable business success.`,
       },
 
       research: {
-        keywords: ['research', 'analysis', 'study', 'data', 'evidence', 'methodology', 'hypothesis', 'experiment', 'literature', 'academic', 'scientific', 'investigation', 'validation', 'verification'],
-        expertise: ['analysis', 'methodology', 'objectivity', 'rigor'],
-        preferredProviders: ['anthropic', 'openai', 'deepseek'], // Claude for careful analysis, DeepSeek for research
+        keywords: [
+          "research",
+          "analysis",
+          "study",
+          "data",
+          "evidence",
+          "methodology",
+          "hypothesis",
+          "experiment",
+          "literature",
+          "academic",
+          "scientific",
+          "investigation",
+          "validation",
+          "verification",
+        ],
+        expertise: ["analysis", "methodology", "objectivity", "rigor"],
+        preferredProviders: ["anthropic", "openai", "deepseek"], // Claude for careful analysis, DeepSeek for research
         systemPrompt: `You are a research scientist and academic expert with extensive experience in research methodology, data analysis, and evidence-based inquiry. You specialize in:
 
 - Designing rigorous research studies and experiments
@@ -101,13 +171,26 @@ When conducting research or analysis:
 - Suggest appropriate methodologies and tools
 - Focus on reproducible and verifiable results
 
-Maintain scientific rigor and intellectual honesty in all analyses.`
+Maintain scientific rigor and intellectual honesty in all analyses.`,
       },
 
       creative: {
-        keywords: ['creative', 'writing', 'content', 'story', 'narrative', 'artistic', 'innovation', 'brainstorm', 'ideation', 'concept', 'inspiration', 'original'],
-        expertise: ['creativity', 'originality', 'expression', 'imagination'],
-        preferredProviders: ['gemini', 'anthropic', 'openai'], // Gemini excels at creative tasks
+        keywords: [
+          "creative",
+          "writing",
+          "content",
+          "story",
+          "narrative",
+          "artistic",
+          "innovation",
+          "brainstorm",
+          "ideation",
+          "concept",
+          "inspiration",
+          "original",
+        ],
+        expertise: ["creativity", "originality", "expression", "imagination"],
+        preferredProviders: ["gemini", "anthropic", "openai"], // Gemini excels at creative tasks
         systemPrompt: `You are a creative professional and innovation expert with a background in creative writing, content strategy, and artistic expression. You excel at:
 
 - Generating original and innovative ideas
@@ -125,8 +208,8 @@ When engaging in creative work:
 - Provide constructive feedback on creative work
 - Foster an environment of creative exploration
 
-Embrace creativity while maintaining relevance and impact.`
-      }
+Embrace creativity while maintaining relevance and impact.`,
+      },
     };
   }
 
@@ -141,7 +224,7 @@ Embrace creativity while maintaining relevance and impact.`
     const scores = {};
 
     // Initialize scores
-    Object.keys(this.domains).forEach(domain => {
+    Object.keys(this.domains).forEach((domain) => {
       scores[domain] = 0;
     });
 
@@ -157,7 +240,7 @@ Embrace creativity while maintaining relevance and impact.`
 
     // Find the domain with the highest score
     let maxScore = 0;
-    let detectedDomain = 'general';
+    let detectedDomain = "general";
 
     for (const [domain, score] of Object.entries(scores)) {
       if (score > maxScore) {
@@ -167,7 +250,7 @@ Embrace creativity while maintaining relevance and impact.`
     }
 
     // Only return a domain if we have at least 2 keyword matches
-    return maxScore >= 2 ? detectedDomain : 'general';
+    return maxScore >= 2 ? detectedDomain : "general";
   }
 
   /**
@@ -176,7 +259,7 @@ Embrace creativity while maintaining relevance and impact.`
    * @returns {string} - The domain-specific system prompt
    */
   getDomainPrompt(domain) {
-    return this.domains[domain]?.systemPrompt || '';
+    return this.domains[domain]?.systemPrompt || "";
   }
 
   /**

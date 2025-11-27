@@ -31,7 +31,7 @@ export function calculateVelocityFast(conversations) {
   }
 
   // Normalize: average conversations per week / max possible
-  return Math.min(1, (sum / 8) / 10);  // Assume 10 convos/week is "fast"
+  return Math.min(1, sum / 8 / 10); // Assume 10 convos/week is "fast"
 }
 
 /**
@@ -84,7 +84,9 @@ export function calculateRetentionFast(conversations) {
   }
 
   // Normalize: reused / total capabilities
-  return Object.keys(capabilityReuse).length > 0 ? reusedCapabilities / Object.keys(capabilityReuse).length : 0;
+  return Object.keys(capabilityReuse).length > 0
+    ? reusedCapabilities / Object.keys(capabilityReuse).length
+    : 0;
 }
 
 /**
@@ -101,7 +103,7 @@ export function extractTraitsFast(conversations) {
     domainAffinity: affinity,
     retentionStrength: retention,
     interactionFrequency: frequency,
-    feedbackResponsiveness: 0.7  // Static for now (no rating data)
+    feedbackResponsiveness: 0.7, // Static for now (no rating data)
   };
 }
 
@@ -154,7 +156,9 @@ export function clusterUsersFast(userTraitsArray, k = null) {
     for (let c = 0; c < k; c++) {
       if (clusters[c].length === 0) continue;
 
-      let sumVel = 0, sumAff = 0, sumRet = 0;
+      let sumVel = 0,
+        sumAff = 0,
+        sumRet = 0;
       for (const idx of clusters[c]) {
         sumVel += userTraitsArray[idx].learningVelocity;
         sumAff += userTraitsArray[idx].domainAffinity;
@@ -167,7 +171,7 @@ export function clusterUsersFast(userTraitsArray, k = null) {
         domainAffinity: sumAff / len,
         retentionStrength: sumRet / len,
         interactionFrequency: 0.5,
-        feedbackResponsiveness: 0.7
+        feedbackResponsiveness: 0.7,
       };
     }
   }
@@ -195,7 +199,7 @@ export function clusterUsersFast(userTraitsArray, k = null) {
     finalClusters[bestCluster].push([j, traits]);
   }
 
-  return finalClusters.filter(c => c.length > 0);
+  return finalClusters.filter((c) => c.length > 0);
 }
 
 /**
@@ -203,11 +207,11 @@ export function clusterUsersFast(userTraitsArray, k = null) {
  */
 export function assignArchetypeFast(traits) {
   // Simple rule-based assignment (faster than scoring)
-  if (traits.learningVelocity > 0.7) return 'Fast Learner';
-  if (traits.domainAffinity > 0.65) return 'Specialist';
-  if (traits.interactionFrequency > 0.7) return 'Power User';
-  if (traits.retentionStrength > 0.65) return 'Long-term Retainer';
-  return 'Generalist';
+  if (traits.learningVelocity > 0.7) return "Fast Learner";
+  if (traits.domainAffinity > 0.65) return "Specialist";
+  if (traits.interactionFrequency > 0.7) return "Power User";
+  if (traits.retentionStrength > 0.65) return "Long-term Retainer";
+  return "Generalist";
 }
 
 /**
@@ -230,11 +234,11 @@ export async function discoverCohortsFast(userConversationMap) {
   // Generate cohorts
   const cohorts = [];
   const BASELINES = {
-    'Fast Learner': 1.92,
-    'Specialist': 1.68,
-    'Power User': 1.47,
-    'Long-term Retainer': 1.65,
-    'Generalist': 1.05
+    "Fast Learner": 1.92,
+    Specialist: 1.68,
+    "Power User": 1.47,
+    "Long-term Retainer": 1.65,
+    Generalist: 1.05,
   };
 
   for (let i = 0; i < clusters.length; i++) {
@@ -242,7 +246,10 @@ export async function discoverCohortsFast(userConversationMap) {
     if (cluster.length === 0) continue;
 
     // Calculate average traits
-    let sumVel = 0, sumAff = 0, sumRet = 0, sumFreq = 0;
+    let sumVel = 0,
+      sumAff = 0,
+      sumRet = 0,
+      sumFreq = 0;
     const userIds = [];
 
     for (const [idx, traits] of cluster) {
@@ -259,7 +266,7 @@ export async function discoverCohortsFast(userConversationMap) {
       domainAffinity: sumAff / len,
       retentionStrength: sumRet / len,
       interactionFrequency: sumFreq / len,
-      feedbackResponsiveness: 0.7
+      feedbackResponsiveness: 0.7,
     };
 
     const archetype = assignArchetypeFast(avgTraits);
@@ -271,9 +278,9 @@ export async function discoverCohortsFast(userConversationMap) {
       size: len,
       avgTraits,
       userIds,
-      roi: { baseline: 1.46, optimized: roi, improvement: '+5%' },
+      roi: { baseline: 1.46, optimized: roi, improvement: "+5%" },
       created: new Date().toISOString(),
-      confidence: '85%'
+      confidence: "85%",
     });
   }
 
@@ -282,8 +289,13 @@ export async function discoverCohortsFast(userConversationMap) {
     metadata: {
       totalCohorts: cohorts.length,
       lastUpdated: new Date().toISOString(),
-      algorithm: 'v2-ultra-fast',
-      optimizations: ['linear-traits', 'simplified-distance', 'minimal-iterations', 'vectorized-updates']
-    }
+      algorithm: "v2-ultra-fast",
+      optimizations: [
+        "linear-traits",
+        "simplified-distance",
+        "minimal-iterations",
+        "vectorized-updates",
+      ],
+    },
   };
 }

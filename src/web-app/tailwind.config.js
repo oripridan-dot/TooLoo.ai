@@ -8,6 +8,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        obsidian: {
+          DEFAULT: '#050505',
+          light: '#0a0a0a',
+        },
+        neon: {
+          cyan: '#00f3ff',
+          purple: '#bc13fe',
+          green: '#0aff0a',
+          orange: '#ffaa00',
+          red: '#ff003c',
+        },
         primary: {
           50: '#f0f9ff',
           500: '#3b82f6',
@@ -18,6 +29,11 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+      },
+      boxShadow: {
+        'neon-cyan': '0 0 5px theme("colors.neon.cyan"), 0 0 20px theme("colors.neon.cyan")',
+        'neon-purple': '0 0 5px theme("colors.neon.purple"), 0 0 20px theme("colors.neon.purple")',
       },
     },
   },

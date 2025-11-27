@@ -9,7 +9,7 @@ class ResponseFormatterIntegration {
   constructor() {
     this.enabled = true;
     this.templates = new Map();
-    this.formatterUrl = '/web-app/response-formatter-enhanced.html';
+    this.formatterUrl = "/web-app/response-formatter-enhanced.html";
     this._initializeTemplates();
   }
 
@@ -21,8 +21,11 @@ class ResponseFormatterIntegration {
     return (req, res, next) => {
       const originalJson = res.json.bind(res);
 
-      res.json = function(data) {
-        if (req.query.format === 'enhanced' || req.headers['x-format'] === 'enhanced') {
+      res.json = function (data) {
+        if (
+          req.query.format === "enhanced" ||
+          req.headers["x-format"] === "enhanced"
+        ) {
           const formatted = this._formatResponse(data, req);
           return originalJson(formatted);
         }
@@ -43,9 +46,9 @@ class ResponseFormatterIntegration {
 
     if (!template) {
       return {
-        type: 'raw',
+        type: "raw",
         data,
-        formatterUrl: this.formatterUrl
+        formatterUrl: this.formatterUrl,
       };
     }
 
@@ -57,39 +60,45 @@ class ResponseFormatterIntegration {
    */
   _detectType(data) {
     if (!data) {
-      return 'raw';
+      return "raw";
     }
 
     // Check for known response patterns
-    if (data.metrics || (data.value !== undefined && data.label !== undefined)) {
-      return 'metric';
+    if (
+      data.metrics ||
+      (data.value !== undefined && data.label !== undefined)
+    ) {
+      return "metric";
     }
 
     if (data.chart || data.datasets) {
-      return 'chart';
+      return "chart";
     }
 
-    if (data.table || (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object')) {
-      return 'table';
+    if (
+      data.table ||
+      (Array.isArray(data) && data.length > 0 && typeof data[0] === "object")
+    ) {
+      return "table";
     }
 
     if (data.diagram || data.mermaid) {
-      return 'diagram';
+      return "diagram";
     }
 
     if (data.status || data.healthy !== undefined || data.services) {
-      return 'status';
+      return "status";
     }
 
     if (data.code || data.language) {
-      return 'code';
+      return "code";
     }
 
     if (data.success !== undefined && data.message) {
-      return 'result';
+      return "result";
     }
 
-    return 'raw';
+    return "raw";
   }
 
   /**
@@ -97,84 +106,90 @@ class ResponseFormatterIntegration {
    */
   _initializeTemplates() {
     // Metric template
-    this.templates.set('metric', (data) => ({
-      type: 'metric',
-      title: data.title || 'Metric',
+    this.templates.set("metric", (data) => ({
+      type: "metric",
+      title: data.title || "Metric",
       metrics: Array.isArray(data.metrics) ? data.metrics : [data],
       formatterUrl: this.formatterUrl,
-      renderType: 'metric'
+      renderType: "metric",
     }));
 
     // Chart template
-    this.templates.set('chart', (data) => ({
-      type: 'chart',
-      title: data.title || 'Chart',
+    this.templates.set("chart", (data) => ({
+      type: "chart",
+      title: data.title || "Chart",
       chart: {
-        type: data.chartType || 'line',
+        type: data.chartType || "line",
         labels: data.labels || [],
-        datasets: data.datasets || []
+        datasets: data.datasets || [],
       },
       formatterUrl: this.formatterUrl,
-      renderType: 'chart'
+      renderType: "chart",
     }));
 
     // Table template
-    this.templates.set('table', (data) => ({
-      type: 'table',
-      title: data.title || 'Data',
+    this.templates.set("table", (data) => ({
+      type: "table",
+      title: data.title || "Data",
       table: {
-        headers: data.headers || (Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : []),
-        rows: Array.isArray(data.rows) ? data.rows : (Array.isArray(data) ? data : [data])
+        headers:
+          data.headers ||
+          (Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : []),
+        rows: Array.isArray(data.rows)
+          ? data.rows
+          : Array.isArray(data)
+            ? data
+            : [data],
       },
       formatterUrl: this.formatterUrl,
-      renderType: 'table'
+      renderType: "table",
     }));
 
     // Status template
-    this.templates.set('status', (data) => ({
-      type: 'status',
-      title: data.title || 'Status',
+    this.templates.set("status", (data) => ({
+      type: "status",
+      title: data.title || "Status",
       status: {
         healthy: data.healthy,
         message: data.message || data.status,
-        details: data.details || data.services || []
+        details: data.details || data.services || [],
       },
       formatterUrl: this.formatterUrl,
-      renderType: 'status'
+      renderType: "status",
     }));
 
     // Code template
-    this.templates.set('code', (data) => ({
-      type: 'code',
-      title: data.title || 'Code',
+    this.templates.set("code", (data) => ({
+      type: "code",
+      title: data.title || "Code",
       code: {
-        language: data.language || 'javascript',
-        content: data.code || data.content || ''
+        language: data.language || "javascript",
+        content: data.code || data.content || "",
       },
       formatterUrl: this.formatterUrl,
-      renderType: 'code'
+      renderType: "code",
     }));
 
     // Result template (success/error)
-    this.templates.set('result', (data) => ({
-      type: 'result',
+    this.templates.set("result", (data) => ({
+      type: "result",
       success: data.success,
       message: data.message,
       details: data.details || data.data,
       formatterUrl: this.formatterUrl,
-      renderType: 'result'
+      renderType: "result",
     }));
 
     // Diagram template
-    this.templates.set('diagram', (data) => ({
-      type: 'diagram',
-      title: data.title || 'Diagram',
+    this.templates.set("diagram", (data) => ({
+      type: "diagram",
+      title: data.title || "Diagram",
       diagram: {
-        format: data.format || 'mermaid',
-        content: data.diagram || data.mermaid || ''
+        format: data.format || "mermaid",
+        content: data.diagram || data.mermaid || "",
       },
       formatterUrl: this.formatterUrl,
-      renderType: 'diagram'
+      renderType: "diagram",
     }));
   }
 
@@ -183,9 +198,9 @@ class ResponseFormatterIntegration {
    */
   static createMetric(title, metrics) {
     return {
-      type: 'metric',
+      type: "metric",
       title,
-      metrics: Array.isArray(metrics) ? metrics : [metrics]
+      metrics: Array.isArray(metrics) ? metrics : [metrics],
     };
   }
 
@@ -194,11 +209,11 @@ class ResponseFormatterIntegration {
    */
   static createChart(title, chartType, labels, datasets) {
     return {
-      type: 'chart',
+      type: "chart",
       title,
       chartType,
       labels,
-      datasets
+      datasets,
     };
   }
 
@@ -207,10 +222,10 @@ class ResponseFormatterIntegration {
    */
   static createTable(title, headers, rows) {
     return {
-      type: 'table',
+      type: "table",
       title,
       headers,
-      rows
+      rows,
     };
   }
 
@@ -219,11 +234,11 @@ class ResponseFormatterIntegration {
    */
   static createStatus(title, healthy, message, details) {
     return {
-      type: 'status',
+      type: "status",
       title,
       healthy,
       message,
-      details
+      details,
     };
   }
 
@@ -232,10 +247,10 @@ class ResponseFormatterIntegration {
    */
   static createDiagram(title, content, format) {
     return {
-      type: 'diagram',
+      type: "diagram",
       title,
       diagram: content,
-      format: format || 'mermaid'
+      format: format || "mermaid",
     };
   }
 }

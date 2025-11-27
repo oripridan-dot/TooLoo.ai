@@ -17,3 +17,13 @@ extensions/
 .next/
 .nuxt/
 out/
+
+# Large data and archive folders
+_archive/
+backups/
+data/
+temp/
+temp_model/
+mlruns/
+model_registry/
+

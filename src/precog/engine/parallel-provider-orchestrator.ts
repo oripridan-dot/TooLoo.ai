@@ -16,7 +16,11 @@ export default class ParallelProviderOrchestrator {
   }
 
   async init() {
-    return { ok: true, engine: 'parallel-provider-orchestrator', status: 'ready' };
+    return {
+      ok: true,
+      engine: "parallel-provider-orchestrator",
+      status: "ready",
+    };
   }
 
   async hyperParallelGenerate(prompt: string) {
@@ -24,8 +28,8 @@ export default class ParallelProviderOrchestrator {
       prompt,
       results: [],
       timing: { total: 0 },
-      status: 'completed',
-      consensus: 'Simulated consensus response'
+      status: "completed",
+      consensus: "Simulated consensus response",
     };
   }
 
@@ -33,7 +37,7 @@ export default class ParallelProviderOrchestrator {
     return {
       totalRequests: 0,
       averageLatency: 0,
-      successRate: 100
+      successRate: 100,
     };
   }
 
@@ -42,14 +46,14 @@ export default class ParallelProviderOrchestrator {
       prompt,
       results: [],
       timing: { total: 0 },
-      status: 'completed'
+      status: "completed",
     };
   }
 
   getStatus() {
     return {
-      engine: 'parallel-provider-orchestrator',
-      activeProviders: this.providers.length
+      engine: "parallel-provider-orchestrator",
+      activeProviders: this.providers.length,
     };
   }
 }

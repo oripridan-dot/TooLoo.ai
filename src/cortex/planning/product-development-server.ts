@@ -48,7 +48,7 @@ class ProductDevelopmentServer {
     // Initialize service with unified middleware (replaces 30 LOC of boilerplate)
     this.svc = new ServiceFoundation(
       "product-development-server",
-      process.env.PRODUCT_PORT || 3006
+      process.env.PRODUCT_PORT || 3006,
     );
     this.svc.setupMiddleware();
     this.svc.registerHealthEndpoint();
@@ -122,7 +122,7 @@ class ProductDevelopmentServer {
       await this.loadPersistedData();
       await this.loadDesignSystem();
       console.log(
-        "📁 Workflow, artifact, session, and design system persistence initialized"
+        "📁 Workflow, artifact, session, and design system persistence initialized",
       );
     } catch (error) {
       console.warn("⚠️ Storage initialization failed:", error.message);
@@ -144,7 +144,7 @@ class ProductDevelopmentServer {
       const designFile = path.join(this.designDir, "system.json");
       await fs.writeFile(
         designFile,
-        JSON.stringify(this.designSystem, null, 2)
+        JSON.stringify(this.designSystem, null, 2),
       );
     } catch (err) {
       console.warn("Failed to save design system:", err.message);
@@ -179,7 +179,7 @@ class ProductDevelopmentServer {
       }
 
       console.log(
-        `📋 Loaded ${this.activeWorkflows.size} workflows, ${this.skillMatrix.size} skills, ${this.eventLog.length} events, ${this.artifactsIndex.size} artifacts`
+        `📋 Loaded ${this.activeWorkflows.size} workflows, ${this.skillMatrix.size} skills, ${this.eventLog.length} events, ${this.artifactsIndex.size} artifacts`,
       );
     } catch (error) {
       console.log("📝 Starting with empty state");
@@ -193,7 +193,7 @@ class ProductDevelopmentServer {
       try {
         await fs.copyFile(
           this.workflowsFile,
-          `${this.workflowsFile}.bak.${timestamp}`
+          `${this.workflowsFile}.bak.${timestamp}`,
         );
       } catch {} // Ignore if file doesn't exist
 
@@ -201,7 +201,7 @@ class ProductDevelopmentServer {
       const workflowsObj = Object.fromEntries(this.activeWorkflows);
       await fs.writeFile(
         this.workflowsFile,
-        JSON.stringify(workflowsObj, null, 2)
+        JSON.stringify(workflowsObj, null, 2),
       );
 
       // Save skills
@@ -212,14 +212,14 @@ class ProductDevelopmentServer {
       const recentEvents = this.eventLog.slice(-100);
       await fs.writeFile(
         this.eventsFile,
-        JSON.stringify(recentEvents, null, 2)
+        JSON.stringify(recentEvents, null, 2),
       );
 
       // Save artifacts index
       const artifactsObj = Object.fromEntries(this.artifactsIndex);
       await fs.writeFile(
         this.artifactsIndexFile,
-        JSON.stringify(artifactsObj, null, 2)
+        JSON.stringify(artifactsObj, null, 2),
       );
 
       return true;
@@ -402,7 +402,7 @@ class ProductDevelopmentServer {
         this.logEvent(
           "workflow-started",
           `${type} workflow started: ${requirements.productName || "Unnamed Product"}`,
-          workflowId
+          workflowId,
         );
 
         res.json({
@@ -449,12 +449,12 @@ class ProductDevelopmentServer {
         this.logEvent(
           "phase-executed",
           `${phase || workflow.currentPhase} phase completed (${phaseResult.qualityScore} quality)`,
-          workflowId
+          workflowId,
         );
         this.logEvent(
           "artifacts-generated",
           `Generated ${phaseResult.artifacts.length} artifacts`,
-          workflowId
+          workflowId,
         );
 
         res.json({
@@ -594,7 +594,7 @@ class ProductDevelopmentServer {
         this.logEvent(
           "task-executed",
           `${taskType}: ${task} (${artifacts.length} artifacts generated)`,
-          "workspace"
+          "workspace",
         );
 
         res.json({
@@ -657,7 +657,7 @@ class ProductDevelopmentServer {
             currentPhase: w.currentPhase,
             progress: w.progress,
             startedAt: w.startedAt,
-          })
+          }),
         );
 
         res.json({
@@ -726,7 +726,7 @@ class ProductDevelopmentServer {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt, criticality: "high" }),
-        }
+        },
       );
       const data = await response.json();
       return data.text || "";
@@ -818,7 +818,7 @@ class ProductDevelopmentServer {
             dependencies: { express: "^4.18.2", cors: "^2.8.5" },
           },
           null,
-          2
+          2,
         ),
       });
 
@@ -939,16 +939,16 @@ class ProductDevelopmentServer {
         const skills = Array.from(this.skillMatrix.values());
         const skillMatrix = {
           "technical-foundation": skills.filter(
-            (s) => this.categorizeToDomain(s.name) === "technical"
+            (s) => this.categorizeToDomain(s.name) === "technical",
           ),
           "business-strategy": skills.filter(
-            (s) => this.categorizeToDomain(s.name) === "business"
+            (s) => this.categorizeToDomain(s.name) === "business",
           ),
           "product-design": skills.filter(
-            (s) => this.categorizeToDomain(s.name) === "design"
+            (s) => this.categorizeToDomain(s.name) === "design",
           ),
           "marketing-growth": skills.filter(
-            (s) => this.categorizeToDomain(s.name) === "marketing"
+            (s) => this.categorizeToDomain(s.name) === "marketing",
           ),
         };
 
@@ -1030,7 +1030,7 @@ class ProductDevelopmentServer {
         const analysis = this.simulateDocumentAnalysis(
           content,
           type || "general",
-          mode || "comprehensive"
+          mode || "comprehensive",
         );
 
         res.json({
@@ -1089,7 +1089,7 @@ class ProductDevelopmentServer {
           format: t.format,
           sections: t.sections,
           quality: t.quality,
-        })
+        }),
       );
       res.json({ ok: true, templates });
     });
@@ -1119,7 +1119,7 @@ class ProductDevelopmentServer {
         const artifact = await this.generateSimulatedArtifact(
           type,
           requirements,
-          quality
+          quality,
         );
 
         // Save artifact to persistent storage
@@ -1180,7 +1180,7 @@ class ProductDevelopmentServer {
         const artifact = await this.generateSimulatedArtifact(
           type,
           requirements,
-          quality
+          quality,
         );
 
         // Save artifact to persistent storage
@@ -1255,7 +1255,7 @@ class ProductDevelopmentServer {
         const total = artifacts.length;
         const paginatedArtifacts = artifacts.slice(
           parseInt(offset),
-          parseInt(offset) + parseInt(limit)
+          parseInt(offset) + parseInt(limit),
         );
 
         res.json({
@@ -1320,7 +1320,7 @@ class ProductDevelopmentServer {
             const filename = `${artifact.type}-${id}.json`;
             res.setHeader(
               "Content-Disposition",
-              `attachment; filename="${filename}"`
+              `attachment; filename="${filename}"`,
             );
             res.setHeader("Content-Type", "application/json; charset=utf-8");
             res.json(artifact);
@@ -1331,7 +1331,7 @@ class ProductDevelopmentServer {
             const htmlContent = this.generateHtmlArtifact(artifact);
             res.setHeader(
               "Content-Disposition",
-              `attachment; filename="${htmlFilename}"`
+              `attachment; filename="${htmlFilename}"`,
             );
             res.setHeader("Content-Type", "text/html; charset=utf-8");
             res.send(htmlContent);
@@ -1342,7 +1342,7 @@ class ProductDevelopmentServer {
             const mdFilename = `${artifact.type}-${id}.md`;
             res.setHeader(
               "Content-Disposition",
-              `attachment; filename="${mdFilename}"`
+              `attachment; filename="${mdFilename}"`,
             );
             res.setHeader("Content-Type", "text/markdown; charset=utf-8");
             res.send(artifact.content);
@@ -1362,7 +1362,7 @@ class ProductDevelopmentServer {
       try {
         const { days = 30 } = req.query;
         const cutoff = new Date(
-          Date.now() - parseInt(days) * 24 * 60 * 60 * 1000
+          Date.now() - parseInt(days) * 24 * 60 * 60 * 1000,
         );
 
         const artifacts = Array.from(this.artifactsIndex.values())
@@ -1638,17 +1638,15 @@ class ProductDevelopmentServer {
         // Perform full design system import from Figma
         const importResult = await figmaAdapter.importDesignSystem(
           figmaUrl,
-          token
+          token,
         );
 
         if (!importResult.ok) {
-          return res
-            .status(400)
-            .json({
-              ok: false,
-              error: "Figma import failed",
-              details: importResult,
-            });
+          return res.status(400).json({
+            ok: false,
+            error: "Figma import failed",
+            details: importResult,
+          });
         }
 
         // Merge imported tokens into local design system
@@ -1696,7 +1694,7 @@ class ProductDevelopmentServer {
 
         const designFile = path.join(
           this.designDir,
-          `figma-import-${Date.now()}.json`
+          `figma-import-${Date.now()}.json`,
         );
         await fs.writeFile(designFile, JSON.stringify(importMetadata, null, 2));
 
@@ -1759,19 +1757,17 @@ class ProductDevelopmentServer {
         }
 
         // Import extractors
-        const { DesignExtractor } = await import(
-          "../../lib/design-extractor.js"
-        );
-        const DesignSystemAnalyzer = await import(
-          "../../lib/design-system-analyzer.js"
-        );
+        const { DesignExtractor } =
+          await import("../../lib/design-extractor.js");
+        const DesignSystemAnalyzer =
+          await import("../../lib/design-system-analyzer.js");
         const Analyzer = DesignSystemAnalyzer.default;
 
         const extractor = new DesignExtractor({ verbose });
 
         if (verbose)
           console.log(
-            `[Design Extract] Starting extraction from ${websiteUrl}`
+            `[Design Extract] Starting extraction from ${websiteUrl}`,
           );
 
         const extraction = await extractor.extractFromUrl(websiteUrl, {
@@ -1903,11 +1899,11 @@ class ProductDevelopmentServer {
 
         const designFile = path.join(
           this.designDir,
-          `website-extract-${Date.now()}.json`
+          `website-extract-${Date.now()}.json`,
         );
         await fs.writeFile(
           designFile,
-          JSON.stringify(extractionMetadata, null, 2)
+          JSON.stringify(extractionMetadata, null, 2),
         );
 
         res.json({
@@ -1989,7 +1985,7 @@ class ProductDevelopmentServer {
         const { id } = req.params;
         const filePath = path.join(
           this.designDir,
-          `website-extract-${id}.json`
+          `website-extract-${id}.json`,
         );
 
         try {
@@ -2020,7 +2016,7 @@ class ProductDevelopmentServer {
           const readSystem = async (sysId) => {
             const filePath = path.join(
               this.designDir,
-              `website-extract-${sysId}.json`
+              `website-extract-${sysId}.json`,
             );
             const data = await fs.readFile(filePath, "utf8");
             return JSON.parse(data);
@@ -2041,18 +2037,18 @@ class ProductDevelopmentServer {
               system1Count: sys1.typographyExtracted,
               system2Count: sys2.typographyExtracted,
               difference: Math.abs(
-                sys1.typographyExtracted - sys2.typographyExtracted
+                sys1.typographyExtracted - sys2.typographyExtracted,
               ),
             },
             spacing: {
               system1Count: sys1.spacingExtracted,
               system2Count: sys2.spacingExtracted,
               difference: Math.abs(
-                sys1.spacingExtracted - sys2.spacingExtracted
+                sys1.spacingExtracted - sys2.spacingExtracted,
               ),
             },
             maturityGap: Math.abs(
-              sys1.estimatedMaturity - sys2.estimatedMaturity
+              sys1.estimatedMaturity - sys2.estimatedMaturity,
             ),
             readinessComparison: {
               system1: sys1.analysis?.readiness || "N/A",
@@ -2067,7 +2063,7 @@ class ProductDevelopmentServer {
         } catch (err) {
           res.status(500).json({ ok: false, error: err.message });
         }
-      }
+      },
     );
 
     /**
@@ -2078,7 +2074,7 @@ class ProductDevelopmentServer {
         const { id } = req.params;
         const filePath = path.join(
           this.designDir,
-          `website-extract-${id}.json`
+          `website-extract-${id}.json`,
         );
 
         await fs.unlink(filePath);
@@ -2102,7 +2098,7 @@ class ProductDevelopmentServer {
 
         const filePath = path.join(
           this.designDir,
-          `website-extract-${id}.json`
+          `website-extract-${id}.json`,
         );
         const data = await fs.readFile(filePath, "utf8");
         const metadata = JSON.parse(data);
@@ -2158,9 +2154,8 @@ class ProductDevelopmentServer {
             .json({ ok: false, error: "html content required" });
         }
 
-        const { default: DesignSystemEnhancer } = await import(
-          "../../lib/design-system-enhancer.js"
-        );
+        const { default: DesignSystemEnhancer } =
+          await import("../../lib/design-system-enhancer.js");
         const enhancer = new DesignSystemEnhancer();
 
         const components = await enhancer.detectComponents(html);
@@ -2177,7 +2172,7 @@ class ProductDevelopmentServer {
                   Object.values(comp).reduce((s, c) => s + (c.count || 0), 0)
                 );
               },
-              0
+              0,
             ),
           },
         });
@@ -2199,7 +2194,7 @@ class ProductDevelopmentServer {
           try {
             const filePath = path.join(
               this.designDir,
-              `website-extract-${systemId}.json`
+              `website-extract-${systemId}.json`,
             );
             const data = await fs.readFile(filePath, "utf8");
             const metadata = JSON.parse(data);
@@ -2213,9 +2208,8 @@ class ProductDevelopmentServer {
           system = this.designSystem || {};
         }
 
-        const { default: DesignSystemEnhancer } = await import(
-          "../lib/design-system-enhancer.js"
-        );
+        const { default: DesignSystemEnhancer } =
+          await import("../lib/design-system-enhancer.js");
         const enhancer = new DesignSystemEnhancer(system);
 
         const maturityScore = enhancer.scoreDesignMaturity(system);
@@ -2247,7 +2241,7 @@ class ProductDevelopmentServer {
         const readSystem = async (sysId) => {
           const filePath = path.join(
             this.designDir,
-            `website-extract-${sysId}.json`
+            `website-extract-${sysId}.json`,
           );
           const data = await fs.readFile(filePath, "utf8");
           return JSON.parse(data);
@@ -2256,9 +2250,8 @@ class ProductDevelopmentServer {
         const system1 = await readSystem(systemId1);
         const system2 = await readSystem(systemId2);
 
-        const { default: DesignSystemEnhancer } = await import(
-          "../lib/design-system-enhancer.js"
-        );
+        const { default: DesignSystemEnhancer } =
+          await import("../lib/design-system-enhancer.js");
         const enhancer = new DesignSystemEnhancer(system1);
 
         const comparison = enhancer.compareWithSystem(system2);
@@ -2290,7 +2283,7 @@ class ProductDevelopmentServer {
           try {
             const filePath = path.join(
               this.designDir,
-              `website-extract-${systemId}.json`
+              `website-extract-${systemId}.json`,
             );
             const data = await fs.readFile(filePath, "utf8");
             const metadata = JSON.parse(data);
@@ -2304,9 +2297,8 @@ class ProductDevelopmentServer {
           system = tokens || this.designSystem || {};
         }
 
-        const { default: DesignSystemEnhancer } = await import(
-          "../lib/design-system-enhancer.js"
-        );
+        const { default: DesignSystemEnhancer } =
+          await import("../lib/design-system-enhancer.js");
         const enhancer = new DesignSystemEnhancer(system);
 
         const semanticNames = enhancer.generateSemanticNames(system);
@@ -2348,7 +2340,7 @@ class ProductDevelopmentServer {
 
           const filePath = path.join(
             this.designDir,
-            `website-extract-${systemId}.json`
+            `website-extract-${systemId}.json`,
           );
           let system;
           try {
@@ -2360,9 +2352,8 @@ class ProductDevelopmentServer {
               .json({ ok: false, error: "System not found" });
           }
 
-          const { default: DesignSystemEnhancer } = await import(
-            "../lib/design-system-enhancer.js"
-          );
+          const { default: DesignSystemEnhancer } =
+            await import("../lib/design-system-enhancer.js");
           const enhancer = new DesignSystemEnhancer(system);
 
           const maturityScore = enhancer.scoreDesignMaturity(system);
@@ -2382,7 +2373,7 @@ class ProductDevelopmentServer {
         } catch (err) {
           res.status(500).json({ ok: false, error: err.message });
         }
-      }
+      },
     );
 
     /**
@@ -2429,7 +2420,7 @@ class ProductDevelopmentServer {
 
         const benchmark = this.designAnalytics.benchmarkAgainstIndustry(
           system,
-          industry
+          industry,
         );
 
         res.json({
@@ -2467,7 +2458,7 @@ class ProductDevelopmentServer {
         } catch (err) {
           res.status(500).json({ ok: false, error: err.message });
         }
-      }
+      },
     );
 
     /**
@@ -2515,7 +2506,7 @@ class ProductDevelopmentServer {
 
         const anomalies = this.designAnalytics.detectAnomalies(
           system,
-          baseline
+          baseline,
         );
 
         res.json({
@@ -2607,7 +2598,7 @@ class ProductDevelopmentServer {
         } catch (err) {
           res.status(500).json({ ok: false, error: err.message });
         }
-      }
+      },
     );
 
     /**
@@ -2709,7 +2700,7 @@ class ProductDevelopmentServer {
         const { industry } = req.params;
 
         const benchmark = this.industryRegistry.benchmarkIndustry(
-          industry || "general"
+          industry || "general",
         );
 
         res.json({
@@ -2758,7 +2749,7 @@ class ProductDevelopmentServer {
           const { industry } = req.params;
 
           const metrics = this.industryRegistry.getStandardizationMetrics(
-            industry || "general"
+            industry || "general",
           );
 
           res.json({
@@ -2769,7 +2760,7 @@ class ProductDevelopmentServer {
         } catch (err) {
           res.status(500).json({ ok: false, error: err.message });
         }
-      }
+      },
     );
 
     /**
@@ -2811,9 +2802,8 @@ class ProductDevelopmentServer {
         }
 
         // Import DesignTokenConverter
-        const { DesignTokenConverter } = await import(
-          "../lib/adapters/design-token-converter.js"
-        );
+        const { DesignTokenConverter } =
+          await import("../lib/adapters/design-token-converter.js");
         const converter = new DesignTokenConverter();
 
         // Generate CSS content
@@ -2831,7 +2821,7 @@ class ProductDevelopmentServer {
           // Save CSS file
           const cssFile = path.join(
             this.designDir,
-            `design-tokens-${Date.now()}.css`
+            `design-tokens-${Date.now()}.css`,
           );
           await fs.writeFile(cssFile, cssContent);
 
@@ -2930,7 +2920,7 @@ class ProductDevelopmentServer {
             totalCategories: Object.keys(allTokens).length,
             totalTokens: Object.values(allTokens).reduce(
               (sum, cat) => sum + Object.keys(cat).length,
-              0
+              0,
             ),
           };
         }
@@ -2961,9 +2951,8 @@ class ProductDevelopmentServer {
         }
 
         // Import token converter
-        const { DesignTokenConverter } = await import(
-          "../lib/adapters/design-token-converter.js"
-        );
+        const { DesignTokenConverter } =
+          await import("../lib/adapters/design-token-converter.js");
         const converter = new DesignTokenConverter();
         const cssContent = converter.generateCssContent(this.designSystem);
 
@@ -2972,22 +2961,22 @@ class ProductDevelopmentServer {
           "validation-dashboard": path.join(
             process.cwd(),
             "web-app",
-            "validation-dashboard.html"
+            "validation-dashboard.html",
           ),
           "chat-professional": path.join(
             process.cwd(),
             "web-app",
-            "chat-professional.html"
+            "chat-professional.html",
           ),
           "control-room": path.join(
             process.cwd(),
             "web-app",
-            "control-room-clarity.html"
+            "control-room-clarity.html",
           ),
           "design-suite": path.join(
             process.cwd(),
             "web-app",
-            "design-suite.html"
+            "design-suite.html",
           ),
         };
 
@@ -3068,12 +3057,10 @@ class ProductDevelopmentServer {
 
         // Only handle file update events
         if (type !== "FILE_UPDATE" && type !== "FILE_CHANGE") {
-          return res
-            .status(200)
-            .json({
-              ok: true,
-              message: "Event acknowledged but not processed",
-            });
+          return res.status(200).json({
+            ok: true,
+            message: "Event acknowledged but not processed",
+          });
         }
 
         // Create webhook event log
@@ -3089,7 +3076,7 @@ class ProductDevelopmentServer {
         await fs.mkdir(webhookDir, { recursive: true });
         const webhookLogFile = path.join(
           webhookDir,
-          `webhook-${Date.now()}.json`
+          `webhook-${Date.now()}.json`,
         );
         await fs.writeFile(webhookLogFile, JSON.stringify(webhookLog, null, 2));
 
@@ -3106,15 +3093,14 @@ class ProductDevelopmentServer {
             const token = process.env.FIGMA_API_TOKEN;
             if (!token) {
               console.warn(
-                "⚠️ Figma webhook: No API token configured for auto-sync"
+                "⚠️ Figma webhook: No API token configured for auto-sync",
               );
               return;
             }
 
             // Re-import the file to get latest tokens
-            const { FigmaAdapter } = await import(
-              "../lib/adapters/figma-adapter.js"
-            );
+            const { FigmaAdapter } =
+              await import("../lib/adapters/figma-adapter.js");
             const figmaAdapter = new FigmaAdapter(token);
 
             // Assuming we have the file URL stored or can reconstruct it
@@ -3122,7 +3108,7 @@ class ProductDevelopmentServer {
 
             const importResult = await figmaAdapter.importDesignSystem(
               figmaUrl,
-              token
+              token,
             );
 
             if (importResult.ok) {
@@ -3149,12 +3135,11 @@ class ProductDevelopmentServer {
               await this.saveDesignSystem();
 
               // Regenerate CSS and apply to UI surfaces
-              const { DesignTokenConverter } = await import(
-                "../lib/adapters/design-token-converter.js"
-              );
+              const { DesignTokenConverter } =
+                await import("../lib/adapters/design-token-converter.js");
               const converter = new DesignTokenConverter();
               const cssContent = converter.generateCssContent(
-                this.designSystem
+                this.designSystem,
               );
 
               // Apply to all surfaces
@@ -3162,12 +3147,12 @@ class ProductDevelopmentServer {
                 "validation-dashboard": path.join(
                   process.cwd(),
                   "web-app",
-                  "validation-dashboard.html"
+                  "validation-dashboard.html",
                 ),
                 "chat-professional": path.join(
                   process.cwd(),
                   "web-app",
-                  "chat-professional.html"
+                  "chat-professional.html",
                 ),
               };
 
@@ -3204,7 +3189,7 @@ class ProductDevelopmentServer {
               webhookLog.status = "success";
               await fs.writeFile(
                 webhookLogFile,
-                JSON.stringify(webhookLog, null, 2)
+                JSON.stringify(webhookLog, null, 2),
               );
 
               console.log("✅ Figma design system auto-synced successfully");
@@ -3217,7 +3202,7 @@ class ProductDevelopmentServer {
             webhookLog.error = err.message;
             await fs.writeFile(
               webhookLogFile,
-              JSON.stringify(webhookLog, null, 2)
+              JSON.stringify(webhookLog, null, 2),
             );
           }
         });
@@ -3337,7 +3322,7 @@ class ProductDevelopmentServer {
           try {
             const content = await fs.readFile(
               path.join(webhookDir, file),
-              "utf8"
+              "utf8",
             );
             webhookLogs.push(JSON.parse(content));
           } catch (e) {
@@ -3435,7 +3420,7 @@ class ProductDevelopmentServer {
 
         const totalTokens = Object.keys(this.designSystem).reduce(
           (sum, cat) => sum + Object.keys(this.designSystem[cat] || {}).length,
-          0
+          0,
         );
 
         res.json({
@@ -3479,7 +3464,7 @@ class ProductDevelopmentServer {
         // Send metadata
         const tokenCount = Object.keys(this.designSystem).reduce(
           (sum, cat) => sum + Object.keys(this.designSystem[cat] || {}).length,
-          0
+          0,
         );
         sendEvent("meta", {
           totalTokens: tokenCount,
@@ -3549,7 +3534,7 @@ class ProductDevelopmentServer {
         const session = await this.sessionManager.getOrCreateSession(
           sessionId,
           "user",
-          projectId
+          projectId,
         );
         session.messages = messages;
         if (metadata) {
@@ -3602,7 +3587,7 @@ class ProductDevelopmentServer {
             sessionId,
             "user", // Default user ID
             message || "",
-            { strategy: strategy || "hybrid" }
+            { strategy: strategy || "hybrid" },
           );
 
           res.json({ ok: true, context });
@@ -3610,7 +3595,7 @@ class ProductDevelopmentServer {
           console.error("Failed to get session context:", error);
           res.status(500).json({ ok: false, error: error.message });
         }
-      }
+      },
     );
   }
 
@@ -3911,7 +3896,7 @@ class ProductDevelopmentServer {
         } catch (err) {
           res.status(500).json({ ok: false, error: err.message });
         }
-      }
+      },
     );
 
     /**
@@ -3988,7 +3973,7 @@ class ProductDevelopmentServer {
         const analysis = this.simulateBookWormAnalysis(
           content,
           analysisType,
-          depth
+          depth,
         );
 
         res.json({
@@ -4053,7 +4038,7 @@ class ProductDevelopmentServer {
         // Call real AI providers via ProductAnalysisEngine
         const result = await ProductAnalysisEngine.generateProductIdeas(
           topic,
-          count
+          count,
         );
 
         res.json({ ok: true, ...result });
@@ -4079,7 +4064,7 @@ class ProductDevelopmentServer {
         // Call real AI providers via ProductAnalysisEngine
         const result = await ProductAnalysisEngine.critiqueProductIdeas(
           ideas,
-          criteria
+          criteria,
         );
 
         res.json({ ok: true, ...result });
@@ -4146,7 +4131,7 @@ class ProductDevelopmentServer {
           const artifact = await this.generateSimulatedArtifact(
             type,
             requirements,
-            "production"
+            "production",
           );
           const saveResult = await this.saveArtifact(artifact);
 
@@ -4493,7 +4478,7 @@ class ProductDevelopmentServer {
     const analysis = this.simulateDocumentAnalysis(
       content,
       analysisType || "comprehensive",
-      depth || "comprehensive"
+      depth || "comprehensive",
     );
 
     return {
@@ -4532,7 +4517,7 @@ class ProductDevelopmentServer {
     const sectionBonus = Math.min(0.2, sectionCount / 10);
     const qualityScore = Math.min(
       1.0,
-      Number((base + sectionBonus).toFixed(2))
+      Number((base + sectionBonus).toFixed(2)),
     );
     const thresholds = { draft: 0.0, review: 0.75, production: 0.85 };
     const requested = (quality || "production").toLowerCase();
@@ -4751,7 +4736,7 @@ class ProductDevelopmentServer {
   start() {
     this.svc.start();
     console.log(
-      "🏭 Product Development Server capabilities: Workflow Orchestration | Dynamic Learning | Book Worm Analysis | Artifact Generation"
+      "🏭 Product Development Server capabilities: Workflow Orchestration | Dynamic Learning | Book Worm Analysis | Artifact Generation",
     );
   }
 }

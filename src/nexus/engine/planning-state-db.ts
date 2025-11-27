@@ -4,13 +4,13 @@
  * Manages persistent storage of user's planning, tasks, ideas, and roadmaps
  */
 
-import sqlite3 from 'sqlite3';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import sqlite3 from "sqlite3";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, '..', 'data', 'planning-state.db');
+const DB_PATH = path.join(__dirname, "..", "data", "planning-state.db");
 
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);
@@ -22,9 +22,9 @@ class PlanningStateDB {
   constructor() {
     this.db = new sqlite3.Database(DB_PATH, (err) => {
       if (err) {
-        console.error('❌ Planning DB error:', err);
+        console.error("❌ Planning DB error:", err);
       } else {
-        console.log('✅ Planning state DB connected');
+        console.log("✅ Planning state DB connected");
         this.initTables();
       }
     });
@@ -130,16 +130,16 @@ class PlanningStateDB {
   }
 
   // Session Management
-  createSession(name = 'New Planning Session') {
+  createSession(name = "New Planning Session") {
     return new Promise((resolve, reject) => {
       const id = `session-${Date.now()}`;
       this.db.run(
-        'INSERT INTO planning_sessions (id, name, mode, canvas) VALUES (?, ?, ?, ?)',
-        [id, name, 'planning', 'ideation'],
+        "INSERT INTO planning_sessions (id, name, mode, canvas) VALUES (?, ?, ?, ?)",
+        [id, name, "planning", "ideation"],
         (err) => {
           if (err) reject(err);
           else resolve(id);
-        }
+        },
       );
     });
   }
@@ -147,12 +147,12 @@ class PlanningStateDB {
   getSession(sessionId) {
     return new Promise((resolve, reject) => {
       this.db.get(
-        'SELECT * FROM planning_sessions WHERE id = ?',
+        "SELECT * FROM planning_sessions WHERE id = ?",
         [sessionId],
         (err, row) => {
           if (err) reject(err);
           else resolve(row);
-        }
+        },
       );
     });
   }
@@ -160,12 +160,12 @@ class PlanningStateDB {
   saveSessionState(sessionId, state) {
     return new Promise((resolve, reject) => {
       this.db.run(
-        'UPDATE planning_sessions SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        "UPDATE planning_sessions SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
         [JSON.stringify(state), sessionId],
         (err) => {
           if (err) reject(err);
           else resolve();
-        }
+        },
       );
     });
   }
@@ -177,27 +177,37 @@ class PlanningStateDB {
       this.db.run(
         `INSERT INTO planning_tasks (id, session_id, title, description, priority, status, column) 
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [id, sessionId, task.title, task.description, task.priority, 'backlog', task.column || 'backlog'],
+        [
+          id,
+          sessionId,
+          task.title,
+          task.description,
+          task.priority,
+          "backlog",
+          task.column || "backlog",
+        ],
         (err) => {
           if (err) reject(err);
           else resolve(id);
-        }
+        },
       );
     });
   }
 
   updateTask(taskId, updates) {
     return new Promise((resolve, reject) => {
-      const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+      const fields = Object.keys(updates)
+        .map((k) => `${k} = ?`)
+        .join(", ");
       const values = [...Object.values(updates), taskId];
-      
+
       this.db.run(
         `UPDATE planning_tasks SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         values,
         (err) => {
           if (err) reject(err);
           else resolve();
-        }
+        },
       );
     });
   }
@@ -205,12 +215,12 @@ class PlanningStateDB {
   getTasksBySession(sessionId) {
     return new Promise((resolve, reject) => {
       this.db.all(
-        'SELECT * FROM planning_tasks WHERE session_id = ? ORDER BY created_at DESC',
+        "SELECT * FROM planning_tasks WHERE session_id = ? ORDER BY created_at DESC",
         [sessionId],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows || []);
-        }
+        },
       );
     });
   }
@@ -222,11 +232,18 @@ class PlanningStateDB {
       this.db.run(
         `INSERT INTO planning_ideas (id, session_id, title, description, icon, tags) 
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, sessionId, idea.title, idea.description, idea.icon, JSON.stringify(idea.tags)],
+        [
+          id,
+          sessionId,
+          idea.title,
+          idea.description,
+          idea.icon,
+          JSON.stringify(idea.tags),
+        ],
         (err) => {
           if (err) reject(err);
           else resolve(id);
-        }
+        },
       );
     });
   }
@@ -234,12 +251,12 @@ class PlanningStateDB {
   getIdeasBySession(sessionId) {
     return new Promise((resolve, reject) => {
       this.db.all(
-        'SELECT * FROM planning_ideas WHERE session_id = ? ORDER BY created_at DESC',
+        "SELECT * FROM planning_ideas WHERE session_id = ? ORDER BY created_at DESC",
         [sessionId],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows || []);
-        }
+        },
       );
     });
   }
@@ -255,7 +272,7 @@ class PlanningStateDB {
         (err) => {
           if (err) reject(err);
           else resolve(id);
-        }
+        },
       );
     });
   }
@@ -263,12 +280,12 @@ class PlanningStateDB {
   getPhasesBySession(sessionId) {
     return new Promise((resolve, reject) => {
       this.db.all(
-        'SELECT * FROM planning_phases WHERE session_id = ? ORDER BY sequence',
+        "SELECT * FROM planning_phases WHERE session_id = ? ORDER BY sequence",
         [sessionId],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows || []);
-        }
+        },
       );
     });
   }
@@ -284,7 +301,7 @@ class PlanningStateDB {
         (err) => {
           if (err) reject(err);
           else resolve();
-        }
+        },
       );
     });
   }
@@ -292,12 +309,12 @@ class PlanningStateDB {
   getAIQueryHistory(sessionId, limit = 10) {
     return new Promise((resolve, reject) => {
       this.db.all(
-        'SELECT * FROM planning_ai_queries WHERE session_id = ? ORDER BY created_at DESC LIMIT ?',
+        "SELECT * FROM planning_ai_queries WHERE session_id = ? ORDER BY created_at DESC LIMIT ?",
         [sessionId, limit],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows || []);
-        }
+        },
       );
     });
   }
@@ -306,14 +323,14 @@ class PlanningStateDB {
   saveVersion(sessionId, snapshot, description) {
     return new Promise((resolve, reject) => {
       const id = `version-${Date.now()}`;
-      
+
       // Get current version number
       this.db.get(
-        'SELECT MAX(version_number) as max_version FROM planning_versions WHERE session_id = ?',
+        "SELECT MAX(version_number) as max_version FROM planning_versions WHERE session_id = ?",
         [sessionId],
         (err, row) => {
           const nextVersion = (row?.max_version || 0) + 1;
-          
+
           this.db.run(
             `INSERT INTO planning_versions (id, session_id, version_number, snapshot, description) 
              VALUES (?, ?, ?, ?, ?)`,
@@ -321,9 +338,9 @@ class PlanningStateDB {
             (err2) => {
               if (err2) reject(err2);
               else resolve(id);
-            }
+            },
           );
-        }
+        },
       );
     });
   }
@@ -331,12 +348,12 @@ class PlanningStateDB {
   getVersionHistory(sessionId, limit = 20) {
     return new Promise((resolve, reject) => {
       this.db.all(
-        'SELECT * FROM planning_versions WHERE session_id = ? ORDER BY version_number DESC LIMIT ?',
+        "SELECT * FROM planning_versions WHERE session_id = ? ORDER BY version_number DESC LIMIT ?",
         [sessionId, limit],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows || []);
-        }
+        },
       );
     });
   }
@@ -356,10 +373,10 @@ class PlanningStateDB {
         ideas,
         phases,
         queryHistory,
-        exportedAt: new Date().toISOString()
+        exportedAt: new Date().toISOString(),
       };
     } catch (err) {
-      console.error('Export error:', err);
+      console.error("Export error:", err);
       throw err;
     }
   }

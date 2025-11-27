@@ -5,8 +5,8 @@
  * with dependency resolution, error handling, and rollback support
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 export class CapabilityActivator {
   constructor(options = {}) {
@@ -15,7 +15,9 @@ export class CapabilityActivator {
     this.maxConcurrent = options.maxConcurrent || 3;
     this.errorThreshold = options.errorThreshold || 5;
     this.rollbackEnabled = options.rollbackEnabled !== false;
-    this.stateFile = options.stateFile || path.join(process.cwd(), 'data/activated-capabilities.json');
+    this.stateFile =
+      options.stateFile ||
+      path.join(process.cwd(), "data/activated-capabilities.json");
     this.loadState();
   }
 
@@ -24,28 +26,30 @@ export class CapabilityActivator {
    */
   dependencyMap = {
     // Base capabilities that have no dependencies
-    'autonomousEvolutionEngine:startAutonomousEvolution': [],
-    'enhancedLearning:initialize': [],
-    'predictiveEngine:initialize': [],
-    'userModelEngine:initialize': [],
-    'proactiveIntelligenceEngine:initialize': [],
-    'contextBridgeEngine:initialize': [],
+    "autonomousEvolutionEngine:startAutonomousEvolution": [],
+    "enhancedLearning:initialize": [],
+    "predictiveEngine:initialize": [],
+    "userModelEngine:initialize": [],
+    "proactiveIntelligenceEngine:initialize": [],
+    "contextBridgeEngine:initialize": [],
 
     // Mid-level capabilities that depend on base capabilities
-    'autonomousEvolutionEngine:performEvolutionCycle': ['autonomousEvolutionEngine:startAutonomousEvolution'],
-    'enhancedLearning:startEnhancedSession': ['enhancedLearning:initialize'],
-    'predictiveEngine:predictUserIntent': ['predictiveEngine:initialize'],
-    'userModelEngine:buildUserModel': ['userModelEngine:initialize'],
+    "autonomousEvolutionEngine:performEvolutionCycle": [
+      "autonomousEvolutionEngine:startAutonomousEvolution",
+    ],
+    "enhancedLearning:startEnhancedSession": ["enhancedLearning:initialize"],
+    "predictiveEngine:predictUserIntent": ["predictiveEngine:initialize"],
+    "userModelEngine:buildUserModel": ["userModelEngine:initialize"],
 
     // High-level capabilities that may depend on multiple systems
-    'autonomousEvolutionEngine:generateNewCapabilities': [
-      'autonomousEvolutionEngine:startAutonomousEvolution',
-      'enhancedLearning:initialize'
+    "autonomousEvolutionEngine:generateNewCapabilities": [
+      "autonomousEvolutionEngine:startAutonomousEvolution",
+      "enhancedLearning:initialize",
     ],
-    'contextBridgeEngine:mergeContextThreads': [
-      'contextBridgeEngine:initialize',
-      'userModelEngine:initialize'
-    ]
+    "contextBridgeEngine:mergeContextThreads": [
+      "contextBridgeEngine:initialize",
+      "userModelEngine:initialize",
+    ],
   };
 
   /**
@@ -60,36 +64,46 @@ export class CapabilityActivator {
 
     checkDependencies: (capId) => {
       const deps = this.dependencyMap[capId] || [];
-      return deps.every(dep => this.activatedCapabilities.has(dep));
+      return deps.every((dep) => this.activatedCapabilities.has(dep));
     },
 
     checkErrorRate: () => {
       const recentErrors = this.activationLog
-        .filter(log => log.timestamp > Date.now() - 60000)
-        .filter(log => !log.success).length;
+        .filter((log) => log.timestamp > Date.now() - 60000)
+        .filter((log) => !log.success).length;
       return recentErrors < this.errorThreshold;
-    }
+    },
   };
 
   /**
    * Activate a specific capability with full validation
    */
-  async activate(component, method, mode = 'safe') {
+  async activate(component, method, mode = "safe") {
     const capId = `${component}:${method}`;
 
     try {
       // Pre-activation validation
       const validations = [
-        { name: 'resources', pass: this.validators.checkResources() },
-        { name: 'dependencies', pass: this.validators.checkDependencies(capId) },
-        { name: 'error_rate', pass: this.validators.checkErrorRate() }
+        { name: "resources", pass: this.validators.checkResources() },
+        {
+          name: "dependencies",
+          pass: this.validators.checkDependencies(capId),
+        },
+        { name: "error_rate", pass: this.validators.checkErrorRate() },
       ];
 
-      const allValid = validations.every(v => v.pass);
+      const allValid = validations.every((v) => v.pass);
       if (!allValid) {
-        const failed = validations.filter(v => !v.pass).map(v => v.name);
-        this.logActivation(capId, false, `Validation failed: ${failed.join(', ')}`);
-        return { success: false, reason: `Validation failed: ${failed.join(', ')}` };
+        const failed = validations.filter((v) => !v.pass).map((v) => v.name);
+        this.logActivation(
+          capId,
+          false,
+          `Validation failed: ${failed.join(", ")}`,
+        );
+        return {
+          success: false,
+          reason: `Validation failed: ${failed.join(", ")}`,
+        };
       }
 
       // Simulate method execution based on mode
@@ -101,7 +115,7 @@ export class CapabilityActivator {
           method,
           mode,
           activatedAt: new Date(),
-          performanceScore: result.performanceScore
+          performanceScore: result.performanceScore,
         });
 
         this.logActivation(capId, true, `Activated in ${mode} mode`);
@@ -119,7 +133,7 @@ export class CapabilityActivator {
   /**
    * Activate a batch of capabilities with intelligent sequencing
    */
-  async activateBatch(capabilities, mode = 'safe') {
+  async activateBatch(capabilities, mode = "safe") {
     // Sort by dependencies to ensure correct activation order
     const sorted = this.sortByDependencies(capabilities);
     const results = [];
@@ -130,37 +144,39 @@ export class CapabilityActivator {
 
       // Stop on critical failures
       if (!result.success && result.isCritical) {
-        console.warn('Critical failure during batch activation. Stopping.');
+        console.warn("Critical failure during batch activation. Stopping.");
         break;
       }
     }
 
     return {
       total: capabilities.length,
-      successful: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
-      results
+      successful: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
     };
   }
 
   /**
    * Activate all 242 capabilities in phases
    */
-  async activateAll(mode = 'safe') {
+  async activateAll(mode = "safe") {
     const phases = this.getPhasedActivationPlan();
     const results = { phases: [] };
 
     for (const [phaseName, capabilities] of Object.entries(phases)) {
-      console.log(`\n🚀 Activating Phase: ${phaseName} (${capabilities.length} capabilities)`);
+      console.log(
+        `\n🚀 Activating Phase: ${phaseName} (${capabilities.length} capabilities)`,
+      );
 
       const phaseResult = await this.activateBatch(capabilities, mode);
       results.phases.push({
         phase: phaseName,
-        ...phaseResult
+        ...phaseResult,
       });
 
       // Wait between phases for stability
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     return results;
@@ -171,39 +187,63 @@ export class CapabilityActivator {
    */
   getPhasedActivationPlan() {
     return {
-      'Phase 1: Core Initialization': [
-        { component: 'autonomousEvolutionEngine', method: 'startAutonomousEvolution' },
-        { component: 'enhancedLearning', method: 'initialize' },
-        { component: 'predictiveEngine', method: 'initialize' },
-        { component: 'userModelEngine', method: 'initialize' },
-        { component: 'proactiveIntelligenceEngine', method: 'initialize' },
-        { component: 'contextBridgeEngine', method: 'initialize' }
+      "Phase 1: Core Initialization": [
+        {
+          component: "autonomousEvolutionEngine",
+          method: "startAutonomousEvolution",
+        },
+        { component: "enhancedLearning", method: "initialize" },
+        { component: "predictiveEngine", method: "initialize" },
+        { component: "userModelEngine", method: "initialize" },
+        { component: "proactiveIntelligenceEngine", method: "initialize" },
+        { component: "contextBridgeEngine", method: "initialize" },
       ],
 
-      'Phase 2: Learning & Prediction': [
-        { component: 'enhancedLearning', method: 'startEnhancedSession' },
-        { component: 'enhancedLearning', method: 'loadData' },
-        { component: 'predictiveEngine', method: 'predictUserIntent' },
-        { component: 'predictiveEngine', method: 'identifyPatterns' },
-        { component: 'userModelEngine', method: 'buildUserModel' },
-        { component: 'userModelEngine', method: 'updateUserPreferences' }
+      "Phase 2: Learning & Prediction": [
+        { component: "enhancedLearning", method: "startEnhancedSession" },
+        { component: "enhancedLearning", method: "loadData" },
+        { component: "predictiveEngine", method: "predictUserIntent" },
+        { component: "predictiveEngine", method: "identifyPatterns" },
+        { component: "userModelEngine", method: "buildUserModel" },
+        { component: "userModelEngine", method: "updateUserPreferences" },
       ],
 
-      'Phase 3: Autonomous Evolution': [
-        { component: 'autonomousEvolutionEngine', method: 'performEvolutionCycle' },
-        { component: 'autonomousEvolutionEngine', method: 'analyzeSelfPerformance' },
-        { component: 'autonomousEvolutionEngine', method: 'identifyImprovementOpportunities' },
-        { component: 'autonomousEvolutionEngine', method: 'generateOptimizations' },
-        { component: 'autonomousEvolutionEngine', method: 'applyOptimizations' }
+      "Phase 3: Autonomous Evolution": [
+        {
+          component: "autonomousEvolutionEngine",
+          method: "performEvolutionCycle",
+        },
+        {
+          component: "autonomousEvolutionEngine",
+          method: "analyzeSelfPerformance",
+        },
+        {
+          component: "autonomousEvolutionEngine",
+          method: "identifyImprovementOpportunities",
+        },
+        {
+          component: "autonomousEvolutionEngine",
+          method: "generateOptimizations",
+        },
+        {
+          component: "autonomousEvolutionEngine",
+          method: "applyOptimizations",
+        },
       ],
 
-      'Phase 4: Advanced Features': [
-        { component: 'autonomousEvolutionEngine', method: 'generateNewCapabilities' },
-        { component: 'contextBridgeEngine', method: 'mapConceptDependencies' },
-        { component: 'contextBridgeEngine', method: 'mergeContextThreads' },
-        { component: 'proactiveIntelligenceEngine', method: 'predictNextUserAction' },
-        { component: 'proactiveIntelligenceEngine', method: 'anticipateNeeds' }
-      ]
+      "Phase 4: Advanced Features": [
+        {
+          component: "autonomousEvolutionEngine",
+          method: "generateNewCapabilities",
+        },
+        { component: "contextBridgeEngine", method: "mapConceptDependencies" },
+        { component: "contextBridgeEngine", method: "mergeContextThreads" },
+        {
+          component: "proactiveIntelligenceEngine",
+          method: "predictNextUserAction",
+        },
+        { component: "proactiveIntelligenceEngine", method: "anticipateNeeds" },
+      ],
     };
   }
 
@@ -219,14 +259,16 @@ export class CapabilityActivator {
       seen.add(capId);
 
       const deps = this.dependencyMap[capId] || [];
-      deps.forEach(dep => visit(dep));
+      deps.forEach((dep) => visit(dep));
 
       // Find the capability in the input list
-      const cap = capabilities.find(c => `${c.component}:${c.method}` === capId);
+      const cap = capabilities.find(
+        (c) => `${c.component}:${c.method}` === capId,
+      );
       if (cap) sorted.push(cap);
     };
 
-    capabilities.forEach(cap => {
+    capabilities.forEach((cap) => {
       visit(`${cap.component}:${cap.method}`);
     });
 
@@ -236,22 +278,23 @@ export class CapabilityActivator {
   /**
    * Simulate capability activation with realistic outcomes
    */
-  simulateActivation(capId, mode = 'safe') {
+  simulateActivation(capId, mode = "safe") {
     const modeConfigs = {
       safe: { successRate: 0.92, perfMin: 0.7, perfMax: 0.95 },
       balanced: { successRate: 0.85, perfMin: 0.75, perfMax: 1.1 },
-      aggressive: { successRate: 0.75, perfMin: 0.8, perfMax: 1.5 }
+      aggressive: { successRate: 0.75, perfMin: 0.8, perfMax: 1.5 },
     };
 
     const config = modeConfigs[mode] || modeConfigs.safe;
     const success = Math.random() < config.successRate;
-    const perfScore = Math.random() * (config.perfMax - config.perfMin) + config.perfMin;
+    const perfScore =
+      Math.random() * (config.perfMax - config.perfMin) + config.perfMin;
 
     if (!success) {
       return {
         success: false,
         reason: `${capId} activation failed in ${mode} mode`,
-        isCritical: Math.random() < 0.3 // 30% chance of critical failure
+        isCritical: Math.random() < 0.3, // 30% chance of critical failure
       };
     }
 
@@ -260,7 +303,7 @@ export class CapabilityActivator {
       performanceScore: parseFloat(perfScore.toFixed(2)),
       latency: Math.floor(Math.random() * 100 + 20), // 20-120ms
       memoryUsage: Math.floor(Math.random() * 5 + 1), // 1-6 MB
-      mode
+      mode,
     };
   }
 
@@ -269,7 +312,7 @@ export class CapabilityActivator {
    */
   async rollback(component, method) {
     if (!this.rollbackEnabled) {
-      return { success: false, reason: 'Rollback disabled' };
+      return { success: false, reason: "Rollback disabled" };
     }
 
     const capId = `${component}:${method}`;
@@ -281,7 +324,7 @@ export class CapabilityActivator {
 
     try {
       this.activatedCapabilities.delete(capId);
-      this.logActivation(capId, true, 'Rolled back');
+      this.logActivation(capId, true, "Rolled back");
       await this.saveState();
 
       return { success: true, message: `Rolled back ${capId}` };
@@ -304,7 +347,7 @@ export class CapabilityActivator {
       activationRate: parseFloat(activationRate.toFixed(2)),
       recentActivations: this.activationLog.slice(-10),
       errorRate: this.getErrorRate(),
-      averagePerformance: this.getAveragePerformance()
+      averagePerformance: this.getAveragePerformance(),
     };
   }
 
@@ -314,7 +357,7 @@ export class CapabilityActivator {
   getErrorRate() {
     if (this.activationLog.length === 0) return 0;
     const recent = this.activationLog.slice(-50);
-    const failures = recent.filter(log => !log.success).length;
+    const failures = recent.filter((log) => !log.success).length;
     return parseFloat(((failures / recent.length) * 100).toFixed(2));
   }
 
@@ -323,8 +366,8 @@ export class CapabilityActivator {
    */
   getAveragePerformance() {
     const scores = Array.from(this.activatedCapabilities.values())
-      .map(cap => cap.performanceScore)
-      .filter(s => s);
+      .map((cap) => cap.performanceScore)
+      .filter((s) => s);
 
     if (scores.length === 0) return 0;
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -334,12 +377,12 @@ export class CapabilityActivator {
   /**
    * Log activation event
    */
-  logActivation(capId, success, details = '') {
+  logActivation(capId, success, details = "") {
     this.activationLog.push({
       timestamp: Date.now(),
       capId,
       success,
-      details
+      details,
     });
 
     // Keep only recent logs
@@ -356,14 +399,17 @@ export class CapabilityActivator {
       const data = {
         activated: Array.from(this.activatedCapabilities.entries()),
         log: this.activationLog.slice(-100),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       const dir = path.dirname(this.stateFile);
       await fs.promises.mkdir(dir, { recursive: true });
-      await fs.promises.writeFile(this.stateFile, JSON.stringify(data, null, 2));
+      await fs.promises.writeFile(
+        this.stateFile,
+        JSON.stringify(data, null, 2),
+      );
     } catch (error) {
-      console.warn('Failed to save state:', error.message);
+      console.warn("Failed to save state:", error.message);
     }
   }
 
@@ -373,7 +419,7 @@ export class CapabilityActivator {
   loadState() {
     try {
       if (!fs.existsSync(this.stateFile)) return;
-      const data = JSON.parse(fs.readFileSync(this.stateFile, 'utf-8'));
+      const data = JSON.parse(fs.readFileSync(this.stateFile, "utf-8"));
       if (data.activated) {
         this.activatedCapabilities = new Map(data.activated);
       }
@@ -381,7 +427,7 @@ export class CapabilityActivator {
         this.activationLog = data.log;
       }
     } catch (error) {
-      console.warn('Failed to load state:', error.message);
+      console.warn("Failed to load state:", error.message);
     }
   }
 
@@ -392,7 +438,7 @@ export class CapabilityActivator {
     this.activatedCapabilities.clear();
     this.activationLog = [];
     await this.saveState();
-    return { success: true, message: 'Capability activator reset' };
+    return { success: true, message: "Capability activator reset" };
   }
 
   /**
@@ -404,7 +450,7 @@ export class CapabilityActivator {
       id: capId,
       activated: this.activatedCapabilities.has(capId),
       info: this.activatedCapabilities.get(capId) || null,
-      dependencies: this.dependencyMap[capId] || []
+      dependencies: this.dependencyMap[capId] || [],
     };
   }
 
@@ -413,12 +459,12 @@ export class CapabilityActivator {
    */
   getHealthReport() {
     return {
-      status: this.activatedCapabilities.size > 0 ? 'active' : 'dormant',
+      status: this.activatedCapabilities.size > 0 ? "active" : "dormant",
       totalActivated: this.activatedCapabilities.size,
       errorRate: this.getErrorRate(),
       averagePerformance: this.getAveragePerformance(),
       lastActivations: this.activationLog.slice(-5),
-      recommendation: this.getRecommendation()
+      recommendation: this.getRecommendation(),
     };
   }
 
@@ -427,15 +473,15 @@ export class CapabilityActivator {
    */
   getRecommendation() {
     if (this.activatedCapabilities.size === 0) {
-      return 'Start with Phase 1 activation (6 core capabilities)';
+      return "Start with Phase 1 activation (6 core capabilities)";
     }
     if (this.getErrorRate() > 10) {
-      return 'Error rate high - switch to safe mode and review recent failures';
+      return "Error rate high - switch to safe mode and review recent failures";
     }
     if (this.activatedCapabilities.size < 50) {
       return `Continue with Phase 2 and 3 activations (${50 - this.activatedCapabilities.size} remaining)`;
     }
-    return 'System ready for full 242-capability activation';
+    return "System ready for full 242-capability activation";
   }
 }
 

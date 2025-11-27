@@ -1,6 +1,7 @@
 // @version 2.1.344
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { resolve } from "path";
 
 const isCodespace = Boolean(process.env.CODESPACES);
@@ -13,12 +14,14 @@ const hmrConfig =
     : undefined;
 
 export default defineConfig({
+  root: __dirname,
   base: "/app/",
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     rollupOptions: {
       input: {
         visuals: resolve(__dirname, "visuals.html"),
+        index: resolve(__dirname, "index.html"),
       },
     },
   },

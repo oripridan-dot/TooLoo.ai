@@ -1,7 +1,9 @@
 # TooLoo.ai UI Redesign - Complete Implementation Guide
 
 ## Overview
+
 Complete redesign of TooLoo.ai UI with modern, minimal design focused on:
+
 - **Purposeful components**: Every UI element serves a user need
 - **Modern aesthetics**: Claude/ChatGPT-like clean interface
 - **Unique features**: Conversation hierarchy, segmentation, coaching, Slack-like threading
@@ -14,7 +16,9 @@ Complete redesign of TooLoo.ai UI with modern, minimal design focused on:
 ### ✅ Created Files
 
 #### 1. **`DESIGN_SYSTEM.md`**
+
 Complete design specification including:
+
 - Color palette (dark mode first)
 - Typography scale
 - Spacing system
@@ -23,7 +27,9 @@ Complete design specification including:
 - Accessibility guidelines
 
 #### 2. **`chat-modern.html`**
+
 Modern chat interface (Claude-like):
+
 - Clean two-panel layout (chat + sidebar)
 - Segmentation tracking in real-time
 - Coaching recommendations panel
@@ -33,7 +39,9 @@ Modern chat interface (Claude-like):
 - Dark mode by default
 
 #### 3. **`index-modern.html`**
+
 Beautiful landing page:
+
 - Hero section with clear value proposition
 - Feature cards (6 key features)
 - How it works section (4 steps)
@@ -67,12 +75,14 @@ Beautiful landing page:
 ```
 
 ### Color Strategy
+
 - **Dark mode first**: Lower eye strain, modern feel
 - **Accent blue** (#0969DA → #58A6FF): Draws attention without being jarring
 - **High contrast**: Ensures readability
 - **Semantic colors**: Green (success), Orange (warning), Red (danger)
 
 ### Typography
+
 - **System fonts**: Fast loading, OS-native feel
 - **Clear hierarchy**: 6 type sizes from 11px (tiny) to 32px (H1)
 - **Generous line-height**: Comfortable reading (1.4-1.6)
@@ -83,6 +93,7 @@ Beautiful landing page:
 ## Component Breakdown
 
 ### 1. Chat Message Bubbles
+
 ```
 User Message:
 ├─ Right-aligned
@@ -103,6 +114,7 @@ Assistant Message:
 ```
 
 ### 2. Segmentation Panel
+
 ```
 Segments List:
 ├─ Header: "SEGMENTS" (uppercase, small)
@@ -116,6 +128,7 @@ Segments List:
 ```
 
 ### 3. Coaching Panel
+
 ```
 Coaching Hints:
 ├─ Header: "COACHING" (uppercase, small)
@@ -128,6 +141,7 @@ Coaching Hints:
 ```
 
 ### 4. Provider Status
+
 ```
 Status Indicator:
 ├─ Position: Top-right (header)
@@ -144,16 +158,20 @@ Status Indicator:
 ### Required Endpoints
 
 #### 1. **POST `/api/v1/chat/message`**
+
 Send message to AI
+
 ```json
 Request: { message: string, conversationHistory: Message[] }
 Response: { response: string, segmentsUpdated?: Segment[] }
 ```
 
 #### 2. **GET `/api/v1/conversation/history`**
+
 Load conversation
+
 ```json
-Response: { 
+Response: {
   messages: Message[],
   segments: Segment[],
   coaching?: CoachingRec[]
@@ -161,7 +179,9 @@ Response: {
 ```
 
 #### 3. **POST `/api/v1/segmentation/analyze`**
+
 Get conversation segments
+
 ```json
 Request: { messages: Message[] }
 Response: {
@@ -176,9 +196,11 @@ Response: {
 ```
 
 #### 4. **POST `/api/v1/coaching/recommendations`**
+
 Get coaching hints
+
 ```json
-Request: { 
+Request: {
   messages: Message[],
   segments: Segment[]
 }
@@ -192,7 +214,9 @@ Response: {
 ```
 
 #### 5. **GET `/api/v1/system/status`** (Optional)
+
 Get system/provider status
+
 ```json
 Response: {
   provider: string,
@@ -206,6 +230,7 @@ Response: {
 ## Migration Path
 
 ### Phase 1: Parallel Launch (Week 1)
+
 1. Keep existing `chat.html` and `control-room-home.html` running
 2. Deploy `chat-modern.html` as `/chat-modern`
 3. Deploy `index-modern.html` as `/landing-modern`
@@ -213,12 +238,14 @@ Response: {
 5. Gather user feedback
 
 ### Phase 2: Gradual Transition (Week 2-3)
+
 1. Make `chat-modern.html` the default for `/chat`
 2. Redirect old control room to `control-room-minimal.html`
 3. Keep archived versions at `/legacy/*`
 4. Monitor analytics
 
 ### Phase 3: Cleanup (Week 4+)
+
 1. Remove unused control room pages
 2. Archive meaningless functions to backend-only
 3. Consolidate CSS/JS utilities
@@ -229,6 +256,7 @@ Response: {
 ## Removing Meaningless Control Room Functions
 
 ### ❌ Removed Functions (Move to Backend API)
+
 - Service ping displays (still works, just not shown)
 - Port number listings (move to `/api/v1/system/processes`)
 - Manual mode switching (integrate into chat UX)
@@ -236,13 +264,16 @@ Response: {
 - Artifact browser (build dedicated page if needed)
 
 ### ✅ Minimal Control Room (Backend Admin)
+
 - System start/stop buttons
 - Health check indicators
 - Emergency shutdown
 - Provider status (if needed)
 
 ### 🎯 Path Forward
+
 All **admin/system controls** move to:
+
 - `/api/v1/system/start` → Start all services
 - `/api/v1/system/stop` → Stop all services
 - `/api/v1/system/status` → Get full status
@@ -256,11 +287,13 @@ Create **simple admin dashboard** at `/admin` if needed (separate from user-faci
 ### Running the New UI
 
 1. **Navigate to modern chat:**
+
    ```
    http://localhost:3000/chat-modern
    ```
 
 2. **Navigate to landing:**
+
    ```
    http://localhost:3000/index-modern
    ```
@@ -271,6 +304,7 @@ Create **simple admin dashboard** at `/admin` if needed (separate from user-faci
    - Coaching hints appear (if endpoints ready)
 
 ### Testing Segmentation
+
 ```bash
 curl -X POST http://127.0.0.1:3000/api/v1/segmentation/analyze \
   -H 'Content-Type: application/json' \
@@ -288,16 +322,19 @@ curl -X POST http://127.0.0.1:3000/api/v1/segmentation/analyze \
 ## Responsive Design
 
 ### Desktop (1024px+)
+
 - Two-column layout
 - Full sidebar visible
 - All features enabled
 
 ### Tablet (768px - 1023px)
+
 - Sidebar becomes collapsible
 - Or stacks below chat
 - Touch-friendly buttons
 
 ### Mobile (< 768px)
+
 - Single column
 - Sidebar hidden (swipe to reveal or tab)
 - Compact input area

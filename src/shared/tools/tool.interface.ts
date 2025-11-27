@@ -1,7 +1,7 @@
 // @version 2.2.2
 /**
  * Tool Definition Standard
- * 
+ *
  * Defines the interface for all tools that can be executed by the system.
  * This ensures a consistent way to discover, validate, and execute tools.
  */

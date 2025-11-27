@@ -1,10 +1,10 @@
-// @version 2.1.28
 #!/usr/bin/env node
+// @version 2.1.28
 
 /**
  * TooLoo.ai Alert Engine
  * Extends orchestrator with rule-based alerting and auto-remediation
- * 
+ *
  * Routes:
  * POST /api/v1/system/alerts/rules - Add/update alert rule
  * GET  /api/v1/system/alerts/rules - List all rules
@@ -13,9 +13,9 @@
  * POST /api/v1/system/alerts/trigger - Manual trigger (testing)
  */
 
-import express from 'express';
-import fetch from 'node-fetch';
-import crypto from 'crypto';
+import express from "express";
+import fetch from "node-fetch";
+import crypto from "crypto";
 
 // Alert rule engine - stores and evaluates alert thresholds
 class AlertEngine {
@@ -33,19 +33,21 @@ class AlertEngine {
     if (!rule.id) {
       rule.id = crypto.randomUUID();
     }
-    
+
     // Validate rule structure
     if (!rule.metric || !rule.operator || rule.threshold === undefined) {
-      throw new Error('Rule must have: metric, operator, threshold');
+      throw new Error("Rule must have: metric, operator, threshold");
     }
 
     this.rules.set(rule.id, {
       ...rule,
       createdAt: new Date().toISOString(),
-      enabled: rule.enabled !== false
+      enabled: rule.enabled !== false,
     });
 
-    console.log(`✅ Alert rule added: ${rule.id} (${rule.metric} ${rule.operator} ${rule.threshold})`);
+    console.log(
+      `✅ Alert rule added: ${rule.id} (${rule.metric} ${rule.operator} ${rule.threshold})`,
+    );
     return rule.id;
   }
 
@@ -74,24 +76,24 @@ class AlertEngine {
 
       let matches = false;
       switch (rule.operator) {
-      case '>':
-        matches = value > rule.threshold;
-        break;
-      case '<':
-        matches = value < rule.threshold;
-        break;
-      case '>=':
-        matches = value >= rule.threshold;
-        break;
-      case '<=':
-        matches = value <= rule.threshold;
-        break;
-      case '==':
-        matches = value === rule.threshold;
-        break;
-      case '!=':
-        matches = value !== rule.threshold;
-        break;
+        case ">":
+          matches = value > rule.threshold;
+          break;
+        case "<":
+          matches = value < rule.threshold;
+          break;
+        case ">=":
+          matches = value >= rule.threshold;
+          break;
+        case "<=":
+          matches = value <= rule.threshold;
+          break;
+        case "==":
+          matches = value === rule.threshold;
+          break;
+        case "!=":
+          matches = value !== rule.threshold;
+          break;
       }
 
       if (matches) {
@@ -111,11 +113,11 @@ class AlertEngine {
       id: alertId,
       metric: metric,
       value: value,
-      rules: rules.map(r => r.id),
-      severity: rules[0]?.severity || 'warning',
+      rules: rules.map((r) => r.id),
+      severity: rules[0]?.severity || "warning",
       action: rules[0]?.action,
       timestamp: new Date().toISOString(),
-      status: 'active'
+      status: "active",
     };
 
     this.activeAlerts.set(alertId, alert);
@@ -126,7 +128,9 @@ class AlertEngine {
       this.history.shift();
     }
 
-    console.log(`🚨 Alert triggered: ${metric}=${value} (severity: ${alert.severity})`);
+    console.log(
+      `🚨 Alert triggered: ${metric}=${value} (severity: ${alert.severity})`,
+    );
     return alert;
   }
 
@@ -136,7 +140,7 @@ class AlertEngine {
   resolveAlert(alertId) {
     const alert = this.activeAlerts.get(alertId);
     if (alert) {
-      alert.status = 'resolved';
+      alert.status = "resolved";
       alert.resolvedAt = new Date().toISOString();
       this.activeAlerts.delete(alertId);
     }
@@ -169,14 +173,17 @@ class RemediationEngine {
 
   setupDefaultActions() {
     // Default remediation actions
-    this.registerAction('restart-service', async (params) => {
+    this.registerAction("restart-service", async (params) => {
       const { serviceId } = params;
       console.log(`🔄 Restarting service: ${serviceId}`);
-      
+
       try {
-        const response = await fetch(`http://127.0.0.1:3000/api/v1/system/service/${serviceId}/restart`, {
-          method: 'POST'
-        });
+        const response = await fetch(
+          `http://127.0.0.1:3000/api/v1/system/service/${serviceId}/restart`,
+          {
+            method: "POST",
+          },
+        );
         return response.ok;
       } catch (error) {
         console.error(`Failed to restart ${serviceId}:`, error);
@@ -184,33 +191,39 @@ class RemediationEngine {
       }
     });
 
-    this.registerAction('switch-provider', async (params) => {
+    this.registerAction("switch-provider", async (params) => {
       const { newProvider } = params;
       console.log(`🔄 Switching provider to: ${newProvider}`);
-      
+
       try {
-        const response = await fetch('http://127.0.0.1:3003/api/v1/providers/switch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: newProvider })
-        });
+        const response = await fetch(
+          "http://127.0.0.1:3003/api/v1/providers/switch",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ provider: newProvider }),
+          },
+        );
         return response.ok;
       } catch (error) {
-        console.error('Failed to switch provider:', error);
+        console.error("Failed to switch provider:", error);
         return false;
       }
     });
 
-    this.registerAction('scale-up', async (params) => {
+    this.registerAction("scale-up", async (params) => {
       const { serviceId, instances } = params;
       console.log(`📈 Scaling ${serviceId} to ${instances} instances`);
-      
+
       try {
-        const response = await fetch(`http://127.0.0.1:3000/api/v1/system/service/${serviceId}/scale`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instances })
-        });
+        const response = await fetch(
+          `http://127.0.0.1:3000/api/v1/system/service/${serviceId}/scale`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ instances }),
+          },
+        );
         return response.ok;
       } catch (error) {
         console.error(`Failed to scale ${serviceId}:`, error);
@@ -218,7 +231,7 @@ class RemediationEngine {
       }
     });
 
-    this.registerAction('notify', async (params) => {
+    this.registerAction("notify", async (params) => {
       const { message, channel } = params;
       console.log(`📢 Notification: ${message}`);
       // Could integrate with Slack, Discord, etc.
@@ -256,38 +269,38 @@ setupDefaultRules();
 function setupDefaultRules() {
   // High response time alert
   alertEngine.addRule({
-    id: 'rule-response-time',
-    metric: 'service.responseTime',
-    operator: '>',
+    id: "rule-response-time",
+    metric: "service.responseTime",
+    operator: ">",
     threshold: 5000, // 5 seconds
-    severity: 'warning',
-    action: 'restart-service',
-    actionParams: { serviceId: 'unknown' }, // Set dynamically
-    description: 'Alert when service response time exceeds 5s'
+    severity: "warning",
+    action: "restart-service",
+    actionParams: { serviceId: "unknown" }, // Set dynamically
+    description: "Alert when service response time exceeds 5s",
   });
 
   // Service offline
   alertEngine.addRule({
-    id: 'rule-offline',
-    metric: 'service.health',
-    operator: '==',
-    threshold: 'offline',
-    severity: 'critical',
-    action: 'restart-service',
-    actionParams: { serviceId: 'unknown' },
-    description: 'Alert when service goes offline'
+    id: "rule-offline",
+    metric: "service.health",
+    operator: "==",
+    threshold: "offline",
+    severity: "critical",
+    action: "restart-service",
+    actionParams: { serviceId: "unknown" },
+    description: "Alert when service goes offline",
   });
 
   // Low provider success rate
   alertEngine.addRule({
-    id: 'rule-provider-rate',
-    metric: 'provider.successRate',
-    operator: '<',
+    id: "rule-provider-rate",
+    metric: "provider.successRate",
+    operator: "<",
     threshold: 0.7, // 70%
-    severity: 'warning',
-    action: 'switch-provider',
-    actionParams: { newProvider: 'fallback' },
-    description: 'Switch provider if success rate drops below 70%'
+    severity: "warning",
+    action: "switch-provider",
+    actionParams: { newProvider: "fallback" },
+    description: "Switch provider if success rate drops below 70%",
   });
 }
 
@@ -298,7 +311,7 @@ function setupDefaultRules() {
 /**
  * Add/update alert rule
  */
-app.post('/api/v1/system/alerts/rules', (req, res) => {
+app.post("/api/v1/system/alerts/rules", (req, res) => {
   try {
     const rule = req.body;
     const ruleId = alertEngine.addRule(rule);
@@ -311,17 +324,17 @@ app.post('/api/v1/system/alerts/rules', (req, res) => {
 /**
  * List all rules
  */
-app.get('/api/v1/system/alerts/rules', (req, res) => {
+app.get("/api/v1/system/alerts/rules", (req, res) => {
   res.json({
     rules: alertEngine.getRules(),
-    total: alertEngine.rules.size
+    total: alertEngine.rules.size,
   });
 });
 
 /**
  * Delete rule
  */
-app.delete('/api/v1/system/alerts/rules/:id', (req, res) => {
+app.delete("/api/v1/system/alerts/rules/:id", (req, res) => {
   const { id } = req.params;
   const deleted = alertEngine.removeRule(id);
   res.json({ ok: deleted });
@@ -330,54 +343,57 @@ app.delete('/api/v1/system/alerts/rules/:id', (req, res) => {
 /**
  * Get current alert status
  */
-app.get('/api/v1/system/alerts/status', (req, res) => {
+app.get("/api/v1/system/alerts/status", (req, res) => {
   res.json({
     active: alertEngine.getActiveAlerts(),
     history: alertEngine.getHistory(req.query.limit || 20),
     totalActive: alertEngine.activeAlerts.size,
-    totalHistory: alertEngine.history.length
+    totalHistory: alertEngine.history.length,
   });
 });
 
 /**
  * Manual alert trigger (for testing)
  */
-app.post('/api/v1/system/alerts/trigger', async (req, res) => {
+app.post("/api/v1/system/alerts/trigger", async (req, res) => {
   try {
     const { metric, value } = req.body;
 
     if (!metric || value === undefined) {
       return res.status(400).json({
-        error: 'Required: metric, value'
+        error: "Required: metric, value",
       });
     }
 
     const matchedRules = alertEngine.evaluateRules(metric, value);
-    
+
     if (matchedRules.length > 0) {
       const alert = alertEngine.triggerAlert(metric, value, matchedRules);
-      
+
       // Execute remediation if defined
       const rule = matchedRules[0];
       if (rule.action) {
         const actionParams = {
           ...rule.actionParams,
-          alertId: alert.id
+          alertId: alert.id,
         };
-        
+
         try {
-          const success = await remediationEngine.executeAction(rule.action, actionParams);
+          const success = await remediationEngine.executeAction(
+            rule.action,
+            actionParams,
+          );
           alert.remediationAttempted = true;
           alert.remediationSuccess = success;
         } catch (error) {
-          console.error('Remediation error:', error);
+          console.error("Remediation error:", error);
           alert.remediationError = error.message;
         }
       }
 
       res.json({ ok: true, alert: alert });
     } else {
-      res.json({ ok: true, message: 'No rules triggered' });
+      res.json({ ok: true, message: "No rules triggered" });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -387,11 +403,11 @@ app.post('/api/v1/system/alerts/trigger', async (req, res) => {
 /**
  * Health endpoint
  */
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
-    status: 'healthy',
-    service: 'alert-engine',
-    timestamp: new Date().toISOString()
+    status: "healthy",
+    service: "alert-engine",
+    timestamp: new Date().toISOString(),
   });
 });
 

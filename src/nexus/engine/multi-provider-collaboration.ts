@@ -8,48 +8,54 @@
 class MultiProviderCollaborationFramework {
   constructor() {
     this.providers = {
-      'anthropic': { name: 'Claude', strength: 'reasoning', confidence: 0.9 },
-      'gemini': { name: 'Gemini', strength: 'analysis', confidence: 0.85 },
-      'openai': { name: 'OpenAI', strength: 'coding', confidence: 0.88 }
+      anthropic: { name: "Claude", strength: "reasoning", confidence: 0.9 },
+      gemini: { name: "Gemini", strength: "analysis", confidence: 0.85 },
+      openai: { name: "OpenAI", strength: "coding", confidence: 0.88 },
     };
 
     this.collaborationModes = {
-      'consensus': this.consensusVoting,
-      'ensemble': this.ensembleMethod,
-      'hierarchical': this.hierarchicalSelection,
-      'comparative': this.comparativeAnalysis
+      consensus: this.consensusVoting,
+      ensemble: this.ensembleMethod,
+      hierarchical: this.hierarchicalSelection,
+      comparative: this.comparativeAnalysis,
     };
   }
 
   /**
    * Orchestrate multi-provider query with collaboration
    */
-  async orchestrateCollaboration(query, selectedProviders, responses, mode = 'ensemble') {
+  async orchestrateCollaboration(
+    query,
+    selectedProviders,
+    responses,
+    mode = "ensemble",
+  ) {
     // Validate responses
     const validResponses = selectedProviders
-      .map(provider => ({
+      .map((provider) => ({
         provider,
         response: responses[provider],
-        quality: this.assessResponseQuality(responses[provider], provider)
+        quality: this.assessResponseQuality(responses[provider], provider),
       }))
-      .filter(r => r.response);
+      .filter((r) => r.response);
 
     if (validResponses.length === 0) {
-      throw new Error('No valid provider responses received');
+      throw new Error("No valid provider responses received");
     }
 
     // Select collaboration mode
-    const collaborationMethod = this.collaborationModes[mode] || this.collaborationModes['ensemble'];
+    const collaborationMethod =
+      this.collaborationModes[mode] || this.collaborationModes["ensemble"];
     const result = await collaborationMethod.call(this, query, validResponses);
 
     return {
       mode,
       consensus: result,
-      providerInputs: validResponses.map(r => ({
+      providerInputs: validResponses.map((r) => ({
         provider: r.provider,
-        quality: r.quality
+        quality: r.quality,
       })),
-      methodology: this.getMethodologyDescription(mode)
+      methodology: this.getMethodologyDescription(mode),
     };
   }
 
@@ -64,21 +70,24 @@ class MultiProviderCollaborationFramework {
     if (length > 200 && length < 2000) score += 15;
 
     // Structure assessment
-    if (response.includes('\n') && response.includes('•')) score += 10;
+    if (response.includes("\n") && response.includes("•")) score += 10;
     if (response.match(/\d+\./)) score += 5; // Numbered list
 
     // Content quality
-    if (!response.toLowerCase().includes('error') && 
-        !response.toLowerCase().includes('failed')) score += 10;
+    if (
+      !response.toLowerCase().includes("error") &&
+      !response.toLowerCase().includes("failed")
+    )
+      score += 10;
 
     // Complexity markers
-    if (response.includes('[') || response.includes('{')) score += 5;
+    if (response.includes("[") || response.includes("{")) score += 5;
 
     // Provider-specific assessments
     const providerBonus = {
-      'anthropic': 5,
-      'gemini': 3,
-      'openai': 4
+      anthropic: 5,
+      gemini: 3,
+      openai: 4,
     };
 
     score += providerBonus[provider] || 0;
@@ -94,11 +103,12 @@ class MultiProviderCollaborationFramework {
     const conflicts = this.findConflicts(responses);
 
     return {
-      type: 'consensus',
-      agreementLevel: (agreements.length / responses.length * 100).toFixed(1) + '%',
+      type: "consensus",
+      agreementLevel:
+        ((agreements.length / responses.length) * 100).toFixed(1) + "%",
       consensusPoints: agreements,
       conflictingPoints: conflicts,
-      recommendation: this.buildConsensusRecommendation(agreements, responses)
+      recommendation: this.buildConsensusRecommendation(agreements, responses),
     };
   }
 
@@ -107,24 +117,26 @@ class MultiProviderCollaborationFramework {
    */
   async ensembleMethod(query, responses) {
     // Weight responses by quality
-    const weighted = responses.map(r => ({
+    const weighted = responses.map((r) => ({
       ...r,
-      weight: r.quality / 100
+      weight: r.quality / 100,
     }));
 
     // Extract key insights from each
-    const insights = weighted.map(r => this.extractKeyInsights(r.response, r.provider));
+    const insights = weighted.map((r) =>
+      this.extractKeyInsights(r.response, r.provider),
+    );
 
     // Combine into unified perspective
     return {
-      type: 'ensemble',
+      type: "ensemble",
       combinedInsights: this.combineInsights(insights),
       providerContributions: insights.map((i, idx) => ({
         provider: responses[idx].provider,
         strength: this.providers[responses[idx].provider]?.strength,
-        contribution: i.slice(0, 2)
+        contribution: i.slice(0, 2),
       })),
-      unifiedPerspective: this.generateUnifiedPerspective(insights, responses)
+      unifiedPerspective: this.generateUnifiedPerspective(insights, responses),
     };
   }
 
@@ -141,12 +153,12 @@ class MultiProviderCollaborationFramework {
     const validation = this.validateResponse(primary.response, validators);
 
     return {
-      type: 'hierarchical',
+      type: "hierarchical",
       primaryProvider: primary.provider,
       primaryResponse: primary.response,
       validationResults: validation,
       confidence: this.calculateConfidence(primary, validation),
-      recommendation: primary.response
+      recommendation: primary.response,
     };
   }
 
@@ -155,16 +167,16 @@ class MultiProviderCollaborationFramework {
    */
   async comparativeAnalysis(query, responses) {
     const analysis = {
-      type: 'comparative',
-      perspectives: responses.map(r => ({
+      type: "comparative",
+      perspectives: responses.map((r) => ({
         provider: r.provider,
         approach: this.identifyApproach(r.response),
         strength: this.providers[r.provider]?.strength,
-        uniqueContribution: this.findUniqueContribution(r.response, responses)
+        uniqueContribution: this.findUniqueContribution(r.response, responses),
       })),
       similarities: this.findSimilarities(responses),
       differences: this.findDifferences(responses),
-      synthesisRecommendation: this.synthesizeComparison(responses)
+      synthesisRecommendation: this.synthesizeComparison(responses),
     };
 
     return analysis;
@@ -175,12 +187,14 @@ class MultiProviderCollaborationFramework {
    */
   findAgreements(responses) {
     const agreements = [];
-    const sentences = responses.map(r => r.response.split(/[.!?]+/).filter(s => s.trim()));
+    const sentences = responses.map((r) =>
+      r.response.split(/[.!?]+/).filter((s) => s.trim()),
+    );
 
     // Simplified agreement detection
     const commonPhrases = {};
     sentences.forEach((sentenceList, idx) => {
-      sentenceList.forEach(sentence => {
+      sentenceList.forEach((sentence) => {
         const normalized = sentence.toLowerCase().trim();
         if (normalized.length > 20) {
           commonPhrases[normalized] = (commonPhrases[normalized] || 0) + 1;
@@ -205,11 +219,11 @@ class MultiProviderCollaborationFramework {
     const conflicts = [];
     if (responses.length > 1) {
       // Simplified conflict detection
-      const negativeWords = ['not', 'cannot', 'should not', 'avoid'];
-      const positiveWords = ['should', 'must', 'recommend', 'implement'];
+      const negativeWords = ["not", "cannot", "should not", "avoid"];
+      const positiveWords = ["should", "must", "recommend", "implement"];
 
       // This would need NLP in production - for now return placeholder
-      conflicts.push('Check provider disagreements on approach');
+      conflicts.push("Check provider disagreements on approach");
     }
     return conflicts;
   }
@@ -219,7 +233,7 @@ class MultiProviderCollaborationFramework {
    */
   buildConsensusRecommendation(agreements, responses) {
     if (agreements.length === 0) {
-      return 'Providers have divergent recommendations - see comparative analysis above';
+      return "Providers have divergent recommendations - see comparative analysis above";
     }
 
     return `Consensus: ${agreements[0]}. Additional perspectives available in comparative analysis.`;
@@ -230,11 +244,11 @@ class MultiProviderCollaborationFramework {
    */
   extractKeyInsights(response, provider) {
     const insights = [];
-    const lines = response.split('\n');
+    const lines = response.split("\n");
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       if (line.trim().match(/^[\d•\-*]/)) {
-        insights.push(line.replace(/^[\d•\-*]\s*/, '').trim());
+        insights.push(line.replace(/^[\d•\-*]\s*/, "").trim());
       } else if (line.length > 40 && line.length < 300) {
         insights.push(line.trim());
       }
@@ -250,7 +264,7 @@ class MultiProviderCollaborationFramework {
     const combined = [];
     const maxPerProvider = 2;
 
-    insightsList.forEach(insights => {
+    insightsList.forEach((insights) => {
       combined.push(...insights.slice(0, maxPerProvider));
     });
 
@@ -261,9 +275,11 @@ class MultiProviderCollaborationFramework {
    * Generate unified perspective
    */
   generateUnifiedPerspective(insights, responses) {
-    return `Combining the strengths of ${responses.map(r => this.providers[r.provider]?.name).join(', ')}, ` +
-           `the unified perspective emphasizes: ${insights[0]?.insights?.[0] || 'collaborative intelligence'}. ` +
-           'This approach leverages each provider\'s expertise for comprehensive analysis.';
+    return (
+      `Combining the strengths of ${responses.map((r) => this.providers[r.provider]?.name).join(", ")}, ` +
+      `the unified perspective emphasizes: ${insights[0]?.insights?.[0] || "collaborative intelligence"}. ` +
+      "This approach leverages each provider's expertise for comprehensive analysis."
+    );
   }
 
   /**
@@ -271,9 +287,9 @@ class MultiProviderCollaborationFramework {
    */
   validateResponse(primaryResponse, validators) {
     return {
-      supportingValidators: validators.slice(0, 2).map(v => v.provider),
-      validationScore: Math.min(100, 85 + (validators.length * 5)),
-      notes: 'Response validated against alternative perspectives'
+      supportingValidators: validators.slice(0, 2).map((v) => v.provider),
+      validationScore: Math.min(100, 85 + validators.length * 5),
+      notes: "Response validated against alternative perspectives",
     };
   }
 
@@ -281,7 +297,9 @@ class MultiProviderCollaborationFramework {
    * Calculate confidence level
    */
   calculateConfidence(primary, validation) {
-    return (primary.quality * 0.7 + validation.validationScore * 0.3).toFixed(1);
+    return (primary.quality * 0.7 + validation.validationScore * 0.3).toFixed(
+      1,
+    );
   }
 
   /**
@@ -289,13 +307,14 @@ class MultiProviderCollaborationFramework {
    */
   identifyApproach(response) {
     const approaches = {
-      analytical: response.includes('analyze') || response.includes('data'),
-      creative: response.includes('imagine') || response.includes('innovative'),
-      practical: response.includes('step') || response.includes('implement'),
-      theoretical: response.includes('framework') || response.includes('concept')
+      analytical: response.includes("analyze") || response.includes("data"),
+      creative: response.includes("imagine") || response.includes("innovative"),
+      practical: response.includes("step") || response.includes("implement"),
+      theoretical:
+        response.includes("framework") || response.includes("concept"),
     };
 
-    return Object.entries(approaches).find(([_, has]) => has)?.[0] || 'general';
+    return Object.entries(approaches).find(([_, has]) => has)?.[0] || "general";
   }
 
   /**
@@ -305,14 +324,14 @@ class MultiProviderCollaborationFramework {
     // Identify what this provider says that others don't
     const shortResponse = response.substring(0, 200).toLowerCase();
     const otherResponses = allResponses
-      .filter(r => r.response !== response)
-      .map(r => r.response.toLowerCase());
+      .filter((r) => r.response !== response)
+      .map((r) => r.response.toLowerCase());
 
-    if (otherResponses.some(other => other.includes(shortResponse))) {
-      return 'Supports consensus view';
+    if (otherResponses.some((other) => other.includes(shortResponse))) {
+      return "Supports consensus view";
     }
 
-    return 'Offers distinct perspective';
+    return "Offers distinct perspective";
   }
 
   /**
@@ -322,11 +341,11 @@ class MultiProviderCollaborationFramework {
     const similarities = [];
 
     // Look for common recommendations
-    const keywords = ['recommend', 'should', 'important', 'focus', 'consider'];
+    const keywords = ["recommend", "should", "important", "focus", "consider"];
     const commonRecommendations = {};
 
-    responses.forEach(r => {
-      keywords.forEach(kw => {
+    responses.forEach((r) => {
+      keywords.forEach((kw) => {
         if (r.response.toLowerCase().includes(kw)) {
           commonRecommendations[kw] = (commonRecommendations[kw] || 0) + 1;
         }
@@ -336,7 +355,9 @@ class MultiProviderCollaborationFramework {
     Object.entries(commonRecommendations)
       .filter(([_, count]) => count > 1)
       .forEach(([keyword]) => {
-        similarities.push(`All providers emphasize the importance of ${keyword}`);
+        similarities.push(
+          `All providers emphasize the importance of ${keyword}`,
+        );
       });
 
     return similarities.slice(0, 3);
@@ -349,8 +370,12 @@ class MultiProviderCollaborationFramework {
     const differences = [];
 
     if (responses.length > 1) {
-      differences.push(`${responses[0].provider} prioritizes ${this.providers[responses[0].provider]?.strength}`);
-      differences.push(`${responses[1].provider} prioritizes ${this.providers[responses[1].provider]?.strength}`);
+      differences.push(
+        `${responses[0].provider} prioritizes ${this.providers[responses[0].provider]?.strength}`,
+      );
+      differences.push(
+        `${responses[1].provider} prioritizes ${this.providers[responses[1].provider]?.strength}`,
+      );
     }
 
     return differences;
@@ -360,10 +385,14 @@ class MultiProviderCollaborationFramework {
    * Synthesize comparison into actionable recommendation
    */
   synthesizeComparison(responses) {
-    const providers = responses.map(r => this.providers[r.provider]?.name).join(', ');
-    return `To optimize outcomes, leverage ${providers}'s combined strengths: ` +
-           `${responses[0].provider} for foundational thinking, ` +
-           'cross-validate with alternatives for comprehensive coverage.';
+    const providers = responses
+      .map((r) => this.providers[r.provider]?.name)
+      .join(", ");
+    return (
+      `To optimize outcomes, leverage ${providers}'s combined strengths: ` +
+      `${responses[0].provider} for foundational thinking, ` +
+      "cross-validate with alternatives for comprehensive coverage."
+    );
   }
 
   /**
@@ -371,13 +400,17 @@ class MultiProviderCollaborationFramework {
    */
   getMethodologyDescription(mode) {
     const descriptions = {
-      'consensus': 'Identifies agreement points across all providers for confidence building',
-      'ensemble': 'Combines strengths of each provider for comprehensive analysis',
-      'hierarchical': 'Uses highest-quality response as primary, validated by others',
-      'comparative': 'Shows distinct perspectives from each provider for informed decision-making'
+      consensus:
+        "Identifies agreement points across all providers for confidence building",
+      ensemble:
+        "Combines strengths of each provider for comprehensive analysis",
+      hierarchical:
+        "Uses highest-quality response as primary, validated by others",
+      comparative:
+        "Shows distinct perspectives from each provider for informed decision-making",
     };
 
-    return descriptions[mode] || 'Multi-provider collaboration';
+    return descriptions[mode] || "Multi-provider collaboration";
   }
 
   /**
@@ -389,8 +422,8 @@ class MultiProviderCollaborationFramework {
       collaborationModes: Object.keys(this.collaborationModes),
       strengths: Object.entries(this.providers).map(([key, p]) => ({
         provider: p.name,
-        strength: p.strength
-      }))
+        strength: p.strength,
+      })),
     };
   }
 }

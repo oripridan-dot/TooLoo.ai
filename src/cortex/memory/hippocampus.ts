@@ -1,45 +1,40 @@
-// @version 2.1.232
+// @version 2.1.387
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { VectorStore } from "./vector-store.js";
 import { smartFS } from "../../core/fs-manager.js";
+import {
+  memoryRepository,
+  MemoryEntry,
+} from "../../core/repositories/MemoryRepository.js";
+import KnowledgeGraphEngine from "./knowledge-graph-engine.js";
 
-interface MemoryEntry {
-  id: string;
-  timestamp: number;
-  type: "action" | "observation" | "thought" | "system";
-  content: any;
-  tags: string[];
-  transactionId?: string;
-  affectedFiles?: string[];
-}
+// Memory limits to prevent disk bloat
+const MAX_EPISODIC_ENTRIES = 5000; // Max entries before pruning
+const PRUNE_TARGET = 3000; // Keep this many after pruning
+const MAX_FILE_SIZE_MB = 100; // Max file size in MB
 
 export class Hippocampus {
   private shortTermMemory: MemoryEntry[] = [];
   private readonly STM_LIMIT = 100;
-  private memoryPath: string;
   private isReady: boolean = false;
+  private episodicHistory: MemoryEntry[] = [];
   public vectorStore: VectorStore;
+  public knowledgeGraph: KnowledgeGraphEngine;
 
   constructor(
     private bus: EventBus,
     private workspaceRoot: string,
   ) {
-    this.memoryPath = path.join(
-      workspaceRoot,
-      "data",
-      "memory",
-      "episodic.json",
-    );
     this.vectorStore = new VectorStore(workspaceRoot);
+    this.knowledgeGraph = new KnowledgeGraphEngine();
   }
 
   async initialize() {
     console.log("[Hippocampus] Initializing Memory Systems...");
 
-    await this.ensureStorage();
-    await this.loadLongTermMemory(); // For now, just load recent history or ensure file exists
+    await this.loadLongTermMemory();
     await this.vectorStore.initialize();
 
     this.setupListeners();
@@ -51,23 +46,23 @@ export class Hippocampus {
     console.log("[Hippocampus] Online - Recording enabled.");
   }
 
-  private async ensureStorage() {
-    const dir = path.dirname(this.memoryPath);
+  private async loadLongTermMemory() {
     try {
-      await fs.mkdir(dir, { recursive: true });
+      this.episodicHistory = memoryRepository.getRecent(PRUNE_TARGET);
+      console.log(
+        `[Hippocampus] Loaded ${this.episodicHistory.length} episodic memories from SQLite.`,
+      );
     } catch (e) {
-      // Ignore if exists
+      console.error("[Hippocampus] Failed to load memories:", e);
+      this.episodicHistory = [];
     }
   }
 
-  private async loadLongTermMemory() {
-    // In a real system, we wouldn't load everything.
-    // For this phase, we'll just ensure we can read the file.
-    try {
-      await fs.access(this.memoryPath);
-    } catch {
-      await fs.writeFile(this.memoryPath, JSON.stringify([], null, 2));
-    }
+  private async pruneEpisodicMemory() {
+    const removed = memoryRepository.prune(PRUNE_TARGET);
+    console.log(`[Hippocampus] Pruned ${removed} old memories.`);
+    // Refresh local cache
+    this.episodicHistory = memoryRepository.getRecent(PRUNE_TARGET);
   }
 
   private setupListeners() {
@@ -128,6 +123,22 @@ export class Hippocampus {
         results,
       });
     });
+
+    // Record Response & Update KG
+    this.bus.on("cortex:response", (event) => {
+      const { requestId, data } = event.payload;
+      if (data && data.provider) {
+        this.knowledgeGraph.recordTaskPerformance({
+          taskId: requestId || Date.now().toString(),
+          goal: "interaction",
+          provider: data.provider.toLowerCase().replace(/\s+/g, "-"),
+          success: true,
+          responseTime: 1000, // Placeholder
+          quality: 0.8,
+          context: { meta: data.meta },
+        });
+      }
+    });
   }
 
   private record(
@@ -169,25 +180,17 @@ export class Hippocampus {
   }
 
   private async persist(entry: MemoryEntry) {
-    // Simple append-only JSON log for now.
-    // In production, this would be a database insert.
+    // Append to in-memory cache and save
     try {
-      // Read current (inefficient but safe for v1)
-      const data = await fs.readFile(this.memoryPath, "utf-8");
-      let history: MemoryEntry[] = [];
-      try {
-        history = JSON.parse(data);
-      } catch {
-        history = [];
+      this.episodicHistory.push(entry);
+
+      // Save to SQLite
+      memoryRepository.save(entry);
+
+      // Auto-prune if exceeded
+      if (this.episodicHistory.length > MAX_EPISODIC_ENTRIES) {
+        await this.pruneEpisodicMemory();
       }
-
-      history.push(entry);
-
-      // Write back using SmartFS for safety
-      await smartFS.writeSafe(
-        this.memoryPath,
-        JSON.stringify(history, null, 2),
-      );
     } catch (err) {
       console.error("[Hippocampus] Persistence error", err);
     }

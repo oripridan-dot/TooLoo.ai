@@ -9,7 +9,9 @@ import TrainingCamp from "../engine/training-camp.js";
 import MetaLearningEngine from "../engine/meta-learning-engine.js";
 import HyperSpeedTrainingCamp from "../engine/hyper-speed-training-camp.js";
 import ParallelProviderOrchestrator from "../engine/parallel-provider-orchestrator.js";
-import ValidatedExecutionFramework, { createValidationFramework } from "../engine/validated-execution-framework.js";
+import ValidatedExecutionFramework, {
+  createValidationFramework,
+} from "../engine/validated-execution-framework.js";
 
 interface FeedbackEntry {
   id: string;
@@ -393,7 +395,7 @@ export class TrainingService extends EventEmitter {
 
   async runMicroBatch(domain?: string, question?: string) {
     return await this.validationFramework.safeExecute(
-        async ({ domain, question }: { domain: string; question: string }) => {
+      async ({ domain, question }: { domain: string; question: string }) => {
         return await this.hyperCamp.runMicroBatch({ domain, question });
       },
       { domain, question },
@@ -438,7 +440,11 @@ export class TrainingService extends EventEmitter {
     });
   }
 
-  async completeTrainingRound(roundId: string, response: string, score?: number) {
+  async completeTrainingRound(
+    roundId: string,
+    response: string,
+    score?: number,
+  ) {
     return await this.trainingCamp.completeRound(roundId, response, score);
   }
 

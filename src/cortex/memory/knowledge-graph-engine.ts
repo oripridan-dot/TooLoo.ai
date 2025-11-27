@@ -1,4 +1,4 @@
-// @version 2.1.28
+// @version 2.1.377
 /**
  * Cross-Goal Knowledge Graph Engine
  * Tracks relationships between goals, tasks, and provider performance across different contexts
@@ -28,11 +28,15 @@ export default class KnowledgeGraphEngine {
    */
   initializeProviders() {
     const providers = [
-      'ollama', 'localai', 'huggingface', 'deepseek',
-      'openinterpreter', 'anthropic', 'openai', 'gemini'
+      "huggingface",
+      "deepseek",
+      "openinterpreter",
+      "anthropic",
+      "openai",
+      "gemini",
     ];
 
-    providers.forEach(provider => {
+    providers.forEach((provider) => {
       this.providers.set(provider, {
         id: provider,
         name: provider,
@@ -41,11 +45,11 @@ export default class KnowledgeGraphEngine {
           speed: 0.5, // 0-1 scale
           reliability: 0.5,
           cost: 0.5,
-          quality: 0.5
+          quality: 0.5,
         },
         goalPerformance: new Map(), // goal -> performance metrics
         taskHistory: [], // Recent task performance
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
       });
     });
   }
@@ -55,17 +59,38 @@ export default class KnowledgeGraphEngine {
    */
   getProviderCapabilities(provider) {
     const capabilities = {
-      ollama: ['local', 'fast', 'customizable', 'low-cost'],
-      localai: ['local', 'flexible', 'moderate-speed', 'configurable'],
-      huggingface: ['diverse-models', 'research-focused', 'variable-speed', 'free-tier'],
-      deepseek: ['fast-inference', 'cost-effective', 'good-quality', 'api-based'],
-      openinterpreter: ['code-execution', 'tool-integration', 'versatile', 'experimental'],
-      anthropic: ['high-quality', 'safe', 'expensive', 'reliable'],
-      openai: ['versatile', 'fast', 'premium-cost', 'high-reliability'],
-      gemini: ['multimodal', 'google-ecosystem', 'moderate-cost', 'innovative', 'high-quality', 'reliable']
+      localai: ["local", "flexible", "moderate-speed", "configurable"],
+      huggingface: [
+        "diverse-models",
+        "research-focused",
+        "variable-speed",
+        "free-tier",
+      ],
+      deepseek: [
+        "fast-inference",
+        "cost-effective",
+        "good-quality",
+        "api-based",
+      ],
+      openinterpreter: [
+        "code-execution",
+        "tool-integration",
+        "versatile",
+        "experimental",
+      ],
+      anthropic: ["high-quality", "safe", "expensive", "reliable"],
+      openai: ["versatile", "fast", "premium-cost", "high-reliability"],
+      gemini: [
+        "multimodal",
+        "google-ecosystem",
+        "moderate-cost",
+        "innovative",
+        "high-quality",
+        "reliable",
+      ],
     };
 
-    return capabilities[provider] || ['general-purpose'];
+    return capabilities[provider] || ["general-purpose"];
   }
 
   /**
@@ -81,7 +106,7 @@ export default class KnowledgeGraphEngine {
       cost,
       quality,
       context = {},
-      timestamp = Date.now()
+      timestamp = Date.now(),
     } = taskData;
 
     // Create/update task node
@@ -91,7 +116,7 @@ export default class KnowledgeGraphEngine {
         goal,
         context,
         performance: [],
-        created: timestamp
+        created: timestamp,
       });
     }
 
@@ -102,7 +127,7 @@ export default class KnowledgeGraphEngine {
       responseTime,
       cost,
       quality,
-      timestamp
+      timestamp,
     });
 
     // Update provider performance for this goal
@@ -111,14 +136,21 @@ export default class KnowledgeGraphEngine {
       responseTime,
       cost,
       quality,
-      timestamp
+      timestamp,
     });
 
     // Create relationships in knowledge graph
     this.createRelationships(taskId, goal, provider, context);
 
     // Update correlation matrix
-    this.updateCorrelations(goal, provider, success, responseTime, cost, quality);
+    this.updateCorrelations(
+      goal,
+      provider,
+      success,
+      responseTime,
+      cost,
+      quality,
+    );
 
     // Add to learning history
     this.learningHistory.push({
@@ -130,7 +162,7 @@ export default class KnowledgeGraphEngine {
       cost,
       quality,
       context,
-      timestamp
+      timestamp,
     });
 
     // Maintain history size
@@ -157,7 +189,7 @@ export default class KnowledgeGraphEngine {
         avgCost: 0,
         avgQuality: 0,
         successRate: 0,
-        lastAttempt: null
+        lastAttempt: null,
       });
     }
 
@@ -190,44 +222,44 @@ export default class KnowledgeGraphEngine {
 
     // Task -> Goal relationship
     this.addEdge(`task-${taskId}`, `goal-${goal}`, {
-      type: 'belongs_to',
+      type: "belongs_to",
       strength: 1.0,
-      created: timestamp
+      created: timestamp,
     });
 
     // Task -> Provider relationship
     this.addEdge(`task-${taskId}`, `provider-${provider}`, {
-      type: 'executed_by',
+      type: "executed_by",
       strength: 1.0,
-      created: timestamp
+      created: timestamp,
     });
 
     // Goal -> Provider relationship (performance-based)
     const goalProviderKey = `goal-${goal}-provider-${provider}`;
     if (!this.edges.has(goalProviderKey)) {
       this.addEdge(`goal-${goal}`, `provider-${provider}`, {
-        type: 'performance_history',
+        type: "performance_history",
         strength: 0.1,
         attempts: 0,
         successes: 0,
-        created: timestamp
+        created: timestamp,
       });
     }
 
     // Context-based relationships
     if (context.domain) {
       this.addEdge(`goal-${goal}`, `domain-${context.domain}`, {
-        type: 'domain_context',
+        type: "domain_context",
         strength: 0.8,
-        created: timestamp
+        created: timestamp,
       });
     }
 
     if (context.complexity) {
       this.addEdge(`task-${taskId}`, `complexity-${context.complexity}`, {
-        type: 'complexity_level',
+        type: "complexity_level",
         strength: 0.9,
-        created: timestamp
+        created: timestamp,
       });
     }
   }
@@ -241,7 +273,7 @@ export default class KnowledgeGraphEngine {
       id: edgeId,
       from: fromId,
       to: toId,
-      ...data
+      ...data,
     });
   }
 
@@ -262,7 +294,7 @@ export default class KnowledgeGraphEngine {
         avgQuality: 0,
         timeQualityCorr: 0, // Correlation between time and quality
         costQualityCorr: 0, // Correlation between cost and quality
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
       });
     }
 
@@ -271,7 +303,8 @@ export default class KnowledgeGraphEngine {
 
     // Update running averages
     const alpha = 1 / corr.samples; // Learning rate decreases with more samples
-    corr.successRate = (1 - alpha) * corr.successRate + alpha * (success ? 1 : 0);
+    corr.successRate =
+      (1 - alpha) * corr.successRate + alpha * (success ? 1 : 0);
     corr.avgTime = (1 - alpha) * corr.avgTime + alpha * responseTime;
     corr.avgCost = (1 - alpha) * corr.avgCost + alpha * (cost || 0);
     corr.avgQuality = (1 - alpha) * corr.avgQuality + alpha * (quality || 0.5);
@@ -290,7 +323,12 @@ export default class KnowledgeGraphEngine {
       if (!goalPerf || goalPerf.attempts < 3) continue; // Need minimum samples
 
       // Calculate composite score based on multiple factors
-      const score = this.calculateProviderScore(providerId, goal, context, goalPerf);
+      const score = this.calculateProviderScore(
+        providerId,
+        goal,
+        context,
+        goalPerf,
+      );
       const confidence = Math.min(goalPerf.attempts / 10, 1.0); // Confidence increases with samples
 
       candidates.push({
@@ -302,17 +340,15 @@ export default class KnowledgeGraphEngine {
           avgTime: goalPerf.avgTime,
           avgCost: goalPerf.avgCost,
           avgQuality: goalPerf.avgQuality,
-          attempts: goalPerf.attempts
+          attempts: goalPerf.attempts,
         },
         capabilities: provider.capabilities,
-        lastUsed: goalPerf.lastAttempt
+        lastUsed: goalPerf.lastAttempt,
       });
     }
 
     // Sort by score and return top recommendations
-    return candidates
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
+    return candidates.sort((a, b) => b.score - a.score).slice(0, 5);
   }
 
   /**
@@ -322,11 +358,10 @@ export default class KnowledgeGraphEngine {
     let score = 0;
 
     // Base performance score (40% weight)
-    const perfScore = (
+    const perfScore =
       goalPerf.successRate * 0.4 +
       (1 - Math.min(goalPerf.avgTime / 30000, 1)) * 0.3 + // Faster is better (normalized to 30s)
-      goalPerf.avgQuality * 0.3
-    );
+      goalPerf.avgQuality * 0.3;
     score += perfScore * 0.4;
 
     // Cost efficiency score (20% weight) - lower cost is better
@@ -334,20 +369,25 @@ export default class KnowledgeGraphEngine {
     score += costScore * 0.2;
 
     // Capability match score (20% weight)
-    const capabilityScore = this.calculateCapabilityMatch(providerId, goal, context);
+    const capabilityScore = this.calculateCapabilityMatch(
+      providerId,
+      goal,
+      context,
+    );
     score += capabilityScore * 0.2;
 
     // Recency bonus (10% weight) - prefer recently successful providers
-    const hoursSinceLastUse = (Date.now() - goalPerf.lastAttempt) / (1000 * 60 * 60);
+    const hoursSinceLastUse =
+      (Date.now() - goalPerf.lastAttempt) / (1000 * 60 * 60);
     const recencyScore = Math.max(0, 1 - hoursSinceLastUse / 24); // Decay over 24 hours
     score += recencyScore * 0.1;
 
     // Context-specific adjustments
-    if (context.priority === 'speed') {
+    if (context.priority === "speed") {
       score = score * 0.7 + (1 - Math.min(goalPerf.avgTime / 10000, 1)) * 0.3;
-    } else if (context.priority === 'quality') {
+    } else if (context.priority === "quality") {
       score = score * 0.8 + goalPerf.avgQuality * 0.2;
-    } else if (context.priority === 'cost') {
+    } else if (context.priority === "cost") {
       score = score * 0.7 + costScore * 0.3;
     }
 
@@ -366,7 +406,7 @@ export default class KnowledgeGraphEngine {
 
     // Goal-based capability matching
     const goalCapabilities = this.getGoalCapabilities(goal);
-    goalCapabilities.forEach(cap => {
+    goalCapabilities.forEach((cap) => {
       totalChecks++;
       if (provider.capabilities.includes(cap)) matchScore += 1;
     });
@@ -375,12 +415,16 @@ export default class KnowledgeGraphEngine {
     if (context.domain) {
       totalChecks++;
       const domainCaps = this.getDomainCapabilities(context.domain);
-      if (domainCaps.some(cap => provider.capabilities.includes(cap))) matchScore += 1;
+      if (domainCaps.some((cap) => provider.capabilities.includes(cap)))
+        matchScore += 1;
     }
 
-    if (context.complexity === 'high') {
+    if (context.complexity === "high") {
       totalChecks++;
-      if (provider.capabilities.includes('high-quality') || provider.capabilities.includes('reliable')) {
+      if (
+        provider.capabilities.includes("high-quality") ||
+        provider.capabilities.includes("reliable")
+      ) {
         matchScore += 1;
       }
     }
@@ -393,15 +437,15 @@ export default class KnowledgeGraphEngine {
    */
   getGoalCapabilities(goal) {
     const goalCapabilities = {
-      'training': ['reliable', 'fast', 'cost-effective'],
-      'evaluation': ['high-quality', 'accurate', 'consistent'],
-      'generation': ['creative', 'versatile', 'fast'],
-      'analysis': ['analytical', 'detailed', 'reliable'],
-      'coding': ['code-execution', 'accurate', 'fast'],
-      'research': ['comprehensive', 'accurate', 'research-focused']
+      training: ["reliable", "fast", "cost-effective"],
+      evaluation: ["high-quality", "accurate", "consistent"],
+      generation: ["creative", "versatile", "fast"],
+      analysis: ["analytical", "detailed", "reliable"],
+      coding: ["code-execution", "accurate", "fast"],
+      research: ["comprehensive", "accurate", "research-focused"],
     };
 
-    return goalCapabilities[goal] || ['general-purpose'];
+    return goalCapabilities[goal] || ["general-purpose"];
   }
 
   /**
@@ -409,10 +453,10 @@ export default class KnowledgeGraphEngine {
    */
   getDomainCapabilities(domain) {
     const domainCapabilities = {
-      'technical': ['code-execution', 'accurate', 'fast'],
-      'creative': ['creative', 'versatile', 'innovative'],
-      'academic': ['comprehensive', 'accurate', 'research-focused'],
-      'business': ['professional', 'reliable', 'efficient']
+      technical: ["code-execution", "accurate", "fast"],
+      creative: ["creative", "versatile", "innovative"],
+      academic: ["comprehensive", "accurate", "research-focused"],
+      business: ["professional", "reliable", "efficient"],
     };
 
     return domainCapabilities[domain] || [];
@@ -427,15 +471,17 @@ export default class KnowledgeGraphEngine {
         goals: this.goals.size,
         providers: this.providers.size,
         tasks: this.tasks.size,
-        total: this.nodes.size
+        total: this.nodes.size,
       },
       edges: {
         total: this.edges.size,
-        byType: this.getEdgeTypeCounts()
+        byType: this.getEdgeTypeCounts(),
       },
       correlations: this.correlationMatrix.size,
       learningHistory: this.learningHistory.length,
-      lastUpdated: Math.max(...Array.from(this.providers.values()).map(p => p.lastUpdated))
+      lastUpdated: Math.max(
+        ...Array.from(this.providers.values()).map((p) => p.lastUpdated),
+      ),
     };
   }
 
@@ -460,7 +506,7 @@ export default class KnowledgeGraphEngine {
       goals: Array.from(this.goals.values()),
       providers: Array.from(this.providers.values()),
       correlations: Array.from(this.correlationMatrix.values()),
-      statistics: this.getGraphStatistics()
+      statistics: this.getGraphStatistics(),
     };
   }
 
@@ -475,7 +521,7 @@ export default class KnowledgeGraphEngine {
       if (goalPerf && goalPerf.attempts > 0) {
         goalProviders.push({
           provider: providerId,
-          ...goalPerf
+          ...goalPerf,
         });
       }
     }
@@ -484,10 +530,12 @@ export default class KnowledgeGraphEngine {
       goal,
       providerCount: goalProviders.length,
       totalAttempts: goalProviders.reduce((sum, p) => sum + p.attempts, 0),
-      avgSuccessRate: goalProviders.length > 0
-        ? goalProviders.reduce((sum, p) => sum + p.successRate, 0) / goalProviders.length
-        : 0,
-      providers: goalProviders.sort((a, b) => b.successRate - a.successRate)
+      avgSuccessRate:
+        goalProviders.length > 0
+          ? goalProviders.reduce((sum, p) => sum + p.successRate, 0) /
+            goalProviders.length
+          : 0,
+      providers: goalProviders.sort((a, b) => b.successRate - a.successRate),
     };
   }
 }

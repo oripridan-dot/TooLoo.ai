@@ -2,7 +2,7 @@
 /**
  * StreamingHandler
  * Core streaming connection management and event distribution
- * 
+ *
  * Manages active streams, tracks metrics, and handles SSE/WebSocket updates
  */
 
@@ -16,7 +16,7 @@ export class StreamingHandler {
       streamsCompleted: 0,
       peakConcurrentStreams: 0,
       averageStreamDuration: 0,
-      startTime: Date.now()
+      startTime: Date.now(),
     };
   }
 
@@ -28,24 +28,24 @@ export class StreamingHandler {
    */
   createStream(analysisId, options = {}) {
     const streamId = `stream-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    
+
     this.streams.set(streamId, {
       id: streamId,
       analysisId,
-      type: 'sse',
+      type: "sse",
       startTime: Date.now(),
       bytesStreamed: 0,
       eventCount: 0,
       active: true,
       findings: [],
       phases: [],
-      ...options
+      ...options,
     });
 
     this.metrics.activeStreams++;
     this.metrics.peakConcurrentStreams = Math.max(
       this.metrics.peakConcurrentStreams,
-      this.metrics.activeStreams
+      this.metrics.activeStreams,
     );
 
     return streamId;
@@ -73,12 +73,12 @@ export class StreamingHandler {
     this.metrics.totalBytesStreamed += sseLine.length;
 
     // Track findings
-    if (type === 'finding') {
+    if (type === "finding") {
       stream.findings.push(data);
     }
 
     // Track phases
-    if (type === 'phase') {
+    if (type === "phase") {
       stream.phases.push({ name: data.name, timestamp: Date.now(), ...data });
     }
 
@@ -99,10 +99,12 @@ export class StreamingHandler {
 
     this.metrics.activeStreams--;
     this.metrics.streamsCompleted++;
-    
+
     if (this.metrics.streamsCompleted > 0) {
       this.metrics.averageStreamDuration =
-        (this.metrics.averageStreamDuration * (this.metrics.streamsCompleted - 1) + duration) /
+        (this.metrics.averageStreamDuration *
+          (this.metrics.streamsCompleted - 1) +
+          duration) /
         this.metrics.streamsCompleted;
     }
 
@@ -116,7 +118,7 @@ export class StreamingHandler {
    * @param {string} streamId - Stream identifier
    * @param {string} reason - Cancellation reason
    */
-  cancelStream(streamId, reason = 'User cancelled') {
+  cancelStream(streamId, reason = "User cancelled") {
     const stream = this.streams.get(streamId);
     if (!stream) return;
 
@@ -132,7 +134,7 @@ export class StreamingHandler {
    * @returns {array} List of active streams
    */
   getActiveStreams() {
-    return Array.from(this.streams.values()).filter(s => s.active);
+    return Array.from(this.streams.values()).filter((s) => s.active);
   }
 
   /**
@@ -144,7 +146,9 @@ export class StreamingHandler {
       ...this.metrics,
       uptime: Date.now() - this.metrics.startTime,
       activeStreamCount: this.metrics.activeStreams,
-      throughput: this.metrics.totalBytesStreamed / ((Date.now() - this.metrics.startTime) / 1000)
+      throughput:
+        this.metrics.totalBytesStreamed /
+        ((Date.now() - this.metrics.startTime) / 1000),
     };
   }
 
@@ -165,7 +169,7 @@ export class StreamingHandler {
     let cleaned = 0;
 
     for (const [streamId, stream] of this.streams.entries()) {
-      if (!stream.active && (stream.endTime && now - stream.endTime > maxAge)) {
+      if (!stream.active && stream.endTime && now - stream.endTime > maxAge) {
         this.streams.delete(streamId);
         cleaned++;
       }

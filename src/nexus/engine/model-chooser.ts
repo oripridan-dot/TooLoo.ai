@@ -4,7 +4,7 @@
  *
  * Builds execution plans based on intent complexity, budget, and provider availability.
  * Decides concurrency lanes: fast-lane (cheap/quick), focus-lane (high-quality), audit-lane (validators).
- * Applies provider priority: Ollama → Anthropic → OpenAI → Gemini → LocalAI → DeepSeek
+ * Applies provider priority: Anthropic → OpenAI → Gemini → LocalAI → DeepSeek
  */
 
 import LLMProvider from "../../precog/providers/llm-provider.js";
@@ -49,14 +49,6 @@ export class ModelChooser {
         lane: "audit",
         available: this.llmProvider.providers.openai,
         model: this.llmProvider.defaultModel.openai,
-      },
-      ollama: {
-        priority: 4,
-        costPerMTok: 0,
-        latencyMs: 500,
-        lane: "fast",
-        available: this.llmProvider.providers.ollama,
-        model: this.llmProvider.defaultModel.ollama,
       },
       localai: {
         priority: 5,
@@ -214,12 +206,12 @@ export class ModelChooser {
     // Check budget constraints
     if (plan.totalEstimatedCostUsd > budget) {
       console.warn(
-        `Estimated cost (${plan.totalEstimatedCostUsd.toFixed(4)}) exceeds budget (${budget.toFixed(4)}). Degrading to fast lane only.`
+        `Estimated cost (${plan.totalEstimatedCostUsd.toFixed(4)}) exceeds budget (${budget.toFixed(4)}). Degrading to fast lane only.`,
       );
       plan.lanes = { fast: plan.lanes.fast || [] };
       plan.totalEstimatedCostUsd = (plan.lanes.fast || []).reduce(
         (sum, c) => sum + c.estimatedCostUsd,
-        0
+        0,
       );
     }
 

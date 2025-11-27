@@ -554,4 +554,48 @@ router.post("/optimization/plan", (req, res) => {
   }
 });
 
+router.get("/patterns/catalog", (req, res) => {
+  try {
+    // Stub response for now
+    res.json({ ok: true, patterns: [] });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.get("/learning/report", (req, res) => {
+  try {
+    res.json({
+      ok: true,
+      data: {
+        totalSessions: 0,
+        successfulGenerations: 0,
+        failedGenerations: 0,
+        improvements: {
+          firstTrySuccess: { current: 0, target: 0.8, baseline: 0.5, achieved: false },
+          repeatProblems: { current: 0, target: 0.1, baseline: 0.3, achieved: false }
+        },
+        commonFailures: []
+      }
+    });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.get("/decisions/report", (req, res) => {
+  try {
+    res.json({
+      ok: true,
+      data: {
+        totalDecisions: 0,
+        decisionsWithOutcomes: 0,
+        recentDecisions: []
+      }
+    });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 export const trainingRoutes = router;

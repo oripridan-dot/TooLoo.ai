@@ -4,7 +4,7 @@
  * Real-time collection of process metrics, service health, and system statistics
  */
 
-import os from 'os';
+import os from "os";
 
 export class MetricsCollector {
   constructor() {
@@ -14,7 +14,7 @@ export class MetricsCollector {
       totalProcessed: 0,
       successful: 0,
       failed: 0,
-      avgLatencyMs: 0
+      avgLatencyMs: 0,
     };
     this.serviceMetrics = new Map();
     this.resourceSnapshots = [];
@@ -27,22 +27,22 @@ export class MetricsCollector {
   getProcessMetrics() {
     const memUsage = process.memoryUsage();
     const uptime = process.uptime();
-    
+
     return {
       pid: process.pid,
       memory: {
         heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024), // MB
         heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024), // MB
         external: Math.round(memUsage.external / 1024 / 1024), // MB
-        rss: Math.round(memUsage.rss / 1024 / 1024) // MB
+        rss: Math.round(memUsage.rss / 1024 / 1024), // MB
       },
       uptime: {
         seconds: Math.round(uptime),
         hours: (uptime / 3600).toFixed(2),
-        human: this.formatUptime(uptime)
+        human: this.formatUptime(uptime),
       },
       cpuUsage: process.cpuUsage(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -65,25 +65,25 @@ export class MetricsCollector {
       arch: os.arch(),
       cpus: {
         count: cpuCount,
-        model: cpus[0]?.model || 'unknown',
-        speed: cpus[0]?.speed || 0
+        model: cpus[0]?.model || "unknown",
+        speed: cpus[0]?.speed || 0,
       },
       memory: {
         total: Math.round(totalMem / 1024 / 1024), // MB
         used: Math.round(usedMem / 1024 / 1024), // MB
         free: Math.round(freeMem / 1024 / 1024), // MB
-        utilization: (usedMem / totalMem * 100).toFixed(2) + '%'
+        utilization: ((usedMem / totalMem) * 100).toFixed(2) + "%",
       },
       load: {
-        '1min': avgLoad[0].toFixed(2),
-        '5min': avgLoad[1].toFixed(2),
-        '15min': avgLoad[2].toFixed(2),
-        cpuPercent: ((avgLoad[0] / cpuCount) * 100).toFixed(2) + '%'
+        "1min": avgLoad[0].toFixed(2),
+        "5min": avgLoad[1].toFixed(2),
+        "15min": avgLoad[2].toFixed(2),
+        cpuPercent: ((avgLoad[0] / cpuCount) * 100).toFixed(2) + "%",
       },
       uptime: {
         seconds: os.uptime(),
-        human: this.formatUptime(os.uptime())
-      }
+        human: this.formatUptime(os.uptime()),
+      },
     };
   }
 
@@ -101,7 +101,7 @@ export class MetricsCollector {
         lastStatus: null,
         lastCheck: null,
         avgLatency: 0,
-        details: {}
+        details: {},
       });
     }
 
@@ -110,7 +110,7 @@ export class MetricsCollector {
       timestamp: new Date().toISOString(),
       healthy,
       latencyMs,
-      details
+      details,
     };
 
     metric.checks.push(check);
@@ -122,10 +122,11 @@ export class MetricsCollector {
       metric.downCount++;
     }
 
-    metric.lastStatus = healthy ? 'up' : 'down';
+    metric.lastStatus = healthy ? "up" : "down";
     metric.lastCheck = check.timestamp;
     metric.avgLatency = Math.round(
-      metric.checks.reduce((sum, c) => sum + c.latencyMs, 0) / metric.checks.length
+      metric.checks.reduce((sum, c) => sum + c.latencyMs, 0) /
+        metric.checks.length,
     );
     metric.details = details;
   }
@@ -142,9 +143,10 @@ export class MetricsCollector {
     }
 
     // Update running average latency
-    const prevTotal = this.intentStats.avgLatencyMs * (this.intentStats.totalProcessed - 1);
+    const prevTotal =
+      this.intentStats.avgLatencyMs * (this.intentStats.totalProcessed - 1);
     this.intentStats.avgLatencyMs = Math.round(
-      (prevTotal + latencyMs) / this.intentStats.totalProcessed
+      (prevTotal + latencyMs) / this.intentStats.totalProcessed,
     );
   }
 
@@ -156,7 +158,7 @@ export class MetricsCollector {
       instances,
       shards,
       totalDurationMs: durationMs,
-      speedupEstimate: Math.min(instances, speedupEstimate)
+      speedupEstimate: Math.min(instances, speedupEstimate),
     };
     return this.instanceMetrics;
   }
@@ -167,14 +169,14 @@ export class MetricsCollector {
   getSystemOverview() {
     const processMetrics = this.getProcessMetrics();
     const systemMetrics = this.getSystemMetrics();
-    
+
     return {
       timestamp: new Date().toISOString(),
       process: processMetrics,
       system: systemMetrics,
       services: this.getAllServiceMetrics(),
       intents: this.intentStats,
-      instanceMetrics: this.instanceMetrics || { instances: 0, shards: 0 }
+      instanceMetrics: this.instanceMetrics || { instances: 0, shards: 0 },
     };
   }
 
@@ -184,11 +186,14 @@ export class MetricsCollector {
   async getProcessesReport(services) {
     const report = {
       timestamp: new Date().toISOString(),
-      processes: []
+      processes: [],
     };
 
     // Import fetch if not available
-    const fetchFn = typeof fetch !== 'undefined' ? fetch : (await import('node-fetch')).default;
+    const fetchFn =
+      typeof fetch !== "undefined"
+        ? fetch
+        : (await import("node-fetch")).default;
 
     for (const service of services) {
       let healthy = false;
@@ -196,7 +201,10 @@ export class MetricsCollector {
       const startTime = Date.now();
 
       try {
-        const res = await fetchFn(`http://127.0.0.1:${service.port}${service.health}`, { timeout: 5000 });
+        const res = await fetchFn(
+          `http://127.0.0.1:${service.port}${service.health}`,
+          { timeout: 5000 },
+        );
         healthy = res.status === 200;
         latency = Date.now() - startTime;
       } catch {
@@ -214,7 +222,7 @@ export class MetricsCollector {
         latency,
         lastCheck: new Date().toISOString(),
         uptimePercent: metrics.uptimePercent || 0,
-        avgLatency: metrics.avgLatencyMs || 0
+        avgLatency: metrics.avgLatencyMs || 0,
       });
     }
 
@@ -229,15 +237,15 @@ export class MetricsCollector {
     const systemMetrics = this.getSystemMetrics();
 
     // Aggregate service health
-    const serviceHealth = servicesList.map(s => {
+    const serviceHealth = servicesList.map((s) => {
       const metric = this.serviceMetrics.get(s.name);
       if (!metric) {
         return {
           name: s.name,
           port: s.port,
-          status: 'unknown',
+          status: "unknown",
           uptime: 0,
-          downtime: 0
+          downtime: 0,
         };
       }
 
@@ -251,13 +259,13 @@ export class MetricsCollector {
         uptimePercent: uptime,
         lastCheck: metric.lastCheck,
         avgLatencyMs: metric.avgLatency,
-        details: metric.details
+        details: metric.details,
       };
     });
 
     // Calculate overall health score (0-100)
     let healthScore = 100;
-    
+
     // Deduct for memory pressure
     const memPercent = parseFloat(systemMetrics.memory.utilization);
     if (memPercent > 85) healthScore -= 30;
@@ -265,12 +273,15 @@ export class MetricsCollector {
     else if (memPercent > 65) healthScore -= 5;
 
     // Deduct for service issues
-    const downServices = serviceHealth.filter(s => s.status === 'down').length;
+    const downServices = serviceHealth.filter(
+      (s) => s.status === "down",
+    ).length;
     healthScore -= downServices * 10;
 
     // Deduct for high failure rate
     if (this.intentStats.totalProcessed > 0) {
-      const failureRate = this.intentStats.failed / this.intentStats.totalProcessed;
+      const failureRate =
+        this.intentStats.failed / this.intentStats.totalProcessed;
       healthScore -= failureRate * 20;
     }
 
@@ -279,7 +290,12 @@ export class MetricsCollector {
     return {
       timestamp: new Date().toISOString(),
       healthScore: Math.round(healthScore),
-      status: healthScore >= 80 ? 'healthy' : healthScore >= 60 ? 'degraded' : 'unhealthy',
+      status:
+        healthScore >= 80
+          ? "healthy"
+          : healthScore >= 60
+            ? "degraded"
+            : "unhealthy",
       process: processMetrics,
       system: systemMetrics,
       services: serviceHealth,
@@ -287,15 +303,20 @@ export class MetricsCollector {
         total: this.intentStats.totalProcessed,
         successful: this.intentStats.successful,
         failed: this.intentStats.failed,
-        successRate: this.intentStats.totalProcessed > 0 
-          ? Math.round((this.intentStats.successful / this.intentStats.totalProcessed) * 100)
-          : 0,
-        avgLatencyMs: this.intentStats.avgLatencyMs
+        successRate:
+          this.intentStats.totalProcessed > 0
+            ? Math.round(
+                (this.intentStats.successful /
+                  this.intentStats.totalProcessed) *
+                  100,
+              )
+            : 0,
+        avgLatencyMs: this.intentStats.avgLatencyMs,
       },
       uptime: {
         seconds: Math.round((Date.now() - this.startTime) / 1000),
-        human: this.formatUptime((Date.now() - this.startTime) / 1000)
-      }
+        human: this.formatUptime((Date.now() - this.startTime) / 1000),
+      },
     };
   }
 
@@ -320,7 +341,7 @@ export class MetricsCollector {
       avgLatencyMs: metric.avgLatency,
       lastCheck: metric.lastCheck,
       recentChecks: metric.checks.slice(-10),
-      details: metric.details
+      details: metric.details,
     };
   }
 
@@ -328,14 +349,14 @@ export class MetricsCollector {
    * Get all service metrics
    */
   getAllServiceMetrics() {
-    return Array.from(this.serviceMetrics.values()).map(m => ({
+    return Array.from(this.serviceMetrics.values()).map((m) => ({
       name: m.name,
       port: m.port,
       status: m.lastStatus,
       upCount: m.upCount,
       downCount: m.downCount,
       avgLatencyMs: m.avgLatency,
-      lastCheck: m.lastCheck
+      lastCheck: m.lastCheck,
     }));
   }
 
@@ -354,7 +375,7 @@ export class MetricsCollector {
     if (minutes > 0) parts.push(`${minutes}m`);
     if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
 
-    return parts.join(' ');
+    return parts.join(" ");
   }
 
   /**
@@ -365,7 +386,7 @@ export class MetricsCollector {
       totalProcessed: 0,
       successful: 0,
       failed: 0,
-      avgLatencyMs: 0
+      avgLatencyMs: 0,
     };
     this.serviceMetrics.clear();
   }

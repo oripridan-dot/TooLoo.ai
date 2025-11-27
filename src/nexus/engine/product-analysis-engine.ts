@@ -79,7 +79,7 @@ Return ONLY a valid JSON array. Example format:
         } catch (err) {
           console.warn(
             `Provider ${provider} failed for ideas generation:`,
-            err.message
+            err.message,
           );
         }
         return null;
@@ -87,7 +87,7 @@ Return ONLY a valid JSON array. Example format:
 
       const responses = await Promise.all(calls);
       const validResponses = responses.filter(
-        (r) => r !== null && r.ideas && r.ideas.length > 0
+        (r) => r !== null && r.ideas && r.ideas.length > 0,
       );
 
       if (validResponses.length === 0) {
@@ -202,7 +202,7 @@ Return as valid JSON array matching ideas count.`;
         } catch (err) {
           console.warn(
             `Provider ${provider} failed for critique:`,
-            err.message
+            err.message,
           );
         }
         return null;
@@ -219,7 +219,7 @@ Return as valid JSON array matching ideas count.`;
         critiques: validResponses,
         consensusScores: this.calculateConsensusScores(
           validResponses,
-          ideas.length
+          ideas.length,
         ),
       };
     } catch (err) {
@@ -305,7 +305,7 @@ Return as valid JSON array with scores and analysis.`;
       return {
         timestamp: new Date().toISOString(),
         rankedIdeas: aggregated.sort(
-          (a, b) => b.consensusScore - a.consensusScore
+          (a, b) => b.consensusScore - a.consensusScore,
         ),
         providersUsed: validResponses.map((r) => r.provider),
         methodology: "Multi-provider consensus scoring",
@@ -323,14 +323,7 @@ Return as valid JSON array with scores and analysis.`;
     const available = this.llm.providers;
 
     // Priority order
-    const order = [
-      "ollama",
-      "anthropic",
-      "openai",
-      "gemini",
-      "deepseek",
-      "localai",
-    ];
+    const order = ["anthropic", "openai", "gemini", "deepseek", "localai"];
     for (const p of order) {
       if (available[p]) providers.push(p);
     }

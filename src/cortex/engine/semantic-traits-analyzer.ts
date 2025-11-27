@@ -314,7 +314,7 @@ Respond with a JSON object with these exact keys:
       withConfidence[key] = {
         ...normalized[key],
         confidence: parseFloat(
-          (baseConfidence + (Math.random() * 0.1 - 0.05)).toFixed(2)
+          (baseConfidence + (Math.random() * 0.1 - 0.05)).toFixed(2),
         ),
       };
     });

@@ -1,11 +1,11 @@
 // @version 2.1.28
 /**
  * Intent Bus Engine
- * 
+ *
  * Central nervous system for TooLoo Parallel Multi-Station OS.
  * Normalizes all user inputs into rich Intent Packets.
  * Routes to appropriate stations, tracks confidence, orchestrates tournaments.
- * 
+ *
  * Intent Packet structure:
  * {
  *   id: unique identifier,
@@ -26,7 +26,7 @@
  * }
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 export class IntentPacket {
   constructor(prompt, options = {}) {
@@ -34,18 +34,18 @@ export class IntentPacket {
     this.timestamp = new Date().toISOString();
     this.prompt = prompt;
     this.originalPrompt = prompt;
-    
+
     // Context layers
     this.screenContext = options.screenContext || {};
     this.segmentationContext = options.segmentationContext || []; // [tier1, tier2, tier3]
     this.metadata = {
-      userId: options.userId || 'anonymous',
+      userId: options.userId || "anonymous",
       sessionId: options.sessionId || uuidv4(),
-      source: options.source || 'chat',
-      priority: options.priority || 'normal',
-      ...options.metadata
+      source: options.source || "chat",
+      priority: options.priority || "normal",
+      ...options.metadata,
     };
-    
+
     // Execution plan (built by chooser)
     this.executionPlan = {
       candidatePlans: [],
@@ -55,19 +55,19 @@ export class IntentPacket {
         minConfidence: 0.82,
         maxRetries: 2,
         maxParallel: 8,
-        timeCapMs: 6 * 60 * 1000 // 6 minutes
-      }
+        timeCapMs: 6 * 60 * 1000, // 6 minutes
+      },
     };
-    
+
     // Results
     this.artifacts = [];
     this.verdicts = [];
     this.confidence = 0;
-    this.status = 'pending';
+    this.status = "pending";
     this.startTime = Date.now();
     this.errors = [];
   }
-  
+
   /**
    * Add screen context (screenshot + OCR)
    */
@@ -76,11 +76,11 @@ export class IntentPacket {
       screenshot,
       ocrTags,
       capturedAt: new Date().toISOString(),
-      isPrimary: true
+      isPrimary: true,
     };
     return this;
   }
-  
+
   /**
    * Add segmentation context (3-tier memory)
    */
@@ -88,60 +88,64 @@ export class IntentPacket {
     this.segmentationContext = [tier1, tier2, tier3].filter(Boolean);
     return this;
   }
-  
+
   /**
    * Build augmented prompt with context
    */
   getAugmentedPrompt() {
     let aug = this.originalPrompt;
-    
+
     if (this.segmentationContext.length > 0) {
-      aug += '\n\n[CONTEXT (3-tier memory)]';
+      aug += "\n\n[CONTEXT (3-tier memory)]";
       this.segmentationContext.forEach((ctx, idx) => {
-        aug += `\nTier ${idx + 1}: ${typeof ctx === 'string' ? ctx : JSON.stringify(ctx).substring(0, 200)}`;
+        aug += `\nTier ${idx + 1}: ${typeof ctx === "string" ? ctx : JSON.stringify(ctx).substring(0, 200)}`;
       });
     }
-    
-    if (this.screenContext && this.screenContext.ocrTags && this.screenContext.ocrTags.length > 0) {
-      aug += '\n\n[SCREEN CONTEXT (OCR)]';
-      aug += '\nVisible elements: ' + this.screenContext.ocrTags.join(', ');
+
+    if (
+      this.screenContext &&
+      this.screenContext.ocrTags &&
+      this.screenContext.ocrTags.length > 0
+    ) {
+      aug += "\n\n[SCREEN CONTEXT (OCR)]";
+      aug += "\nVisible elements: " + this.screenContext.ocrTags.join(", ");
     }
-    
+
     return aug;
   }
-  
+
   /**
    * Record a candidate plan
    */
   addCandidatePlan(plan) {
     this.executionPlan.candidatePlans.push({
       id: uuidv4(),
-      lane: plan.lane || 'focus',
+      lane: plan.lane || "focus",
       models: plan.models || [],
       tools: plan.tools || [],
       dod: plan.dod || {},
       estimatedCostUsd: plan.estimatedCostUsd || 0,
       estimatedTimeMs: plan.estimatedTimeMs || 0,
-      ...plan
+      ...plan,
     });
     return this;
   }
-  
+
   /**
    * Record an artifact + verdict
    */
   addArtifact(artifact, verdict) {
     this.artifacts.push({
       id: artifact.id || uuidv4(),
-      type: artifact.type || 'text',
-      content: artifact.content || '',
+      type: artifact.type || "text",
+      content: artifact.content || "",
       modelSource: artifact.modelSource,
       createdAt: new Date().toISOString(),
-      verdict: verdict || {}
+      verdict: verdict || {},
     });
     return this;
   }
-  
+
   /**
    * Calculate overall confidence
    */
@@ -150,20 +154,20 @@ export class IntentPacket {
       this.confidence = 0;
       return 0;
     }
-    
+
     const weights = {
-      deterministic: 0.30,
-      grounding: 0.20,
+      deterministic: 0.3,
+      grounding: 0.2,
       critic: 0.15,
       semantic: 0.15,
-      reliability: 0.10,
-      cost: -0.10
+      reliability: 0.1,
+      cost: -0.1,
     };
-    
+
     let score = 0;
     let count = 0;
-    
-    this.verdicts.forEach(v => {
+
+    this.verdicts.forEach((v) => {
       for (const [key, weight] of Object.entries(weights)) {
         if (v[key] !== undefined && v[key] !== null) {
           score += (v[key] || 0) * weight;
@@ -171,34 +175,34 @@ export class IntentPacket {
         }
       }
     });
-    
+
     this.confidence = Math.min(1, Math.max(0, count > 0 ? score / count : 0));
     return this.confidence;
   }
-  
+
   /**
    * Mark as complete
    */
   complete(finalConfidence = null) {
-    this.status = 'complete';
+    this.status = "complete";
     if (finalConfidence !== null) this.confidence = finalConfidence;
     this.endTime = Date.now();
     return this;
   }
-  
+
   /**
    * Mark as failed
    */
   fail(error) {
-    this.status = 'failed';
+    this.status = "failed";
     this.errors.push({
       message: error.message || String(error),
       stack: error.stack,
-      at: new Date().toISOString()
+      at: new Date().toISOString(),
     });
     return this;
   }
-  
+
   /**
    * Get elapsed time
    */
@@ -210,24 +214,24 @@ export class IntentPacket {
 export class IntentBus {
   constructor(options = {}) {
     this.config = {
-      storageDir: options.storageDir || process.cwd() + '/data/intent-bus',
+      storageDir: options.storageDir || process.cwd() + "/data/intent-bus",
       maxHistorySize: options.maxHistorySize || 1000,
       enablePersist: options.enablePersist !== false,
-      ...options
+      ...options,
     };
-    
+
     this.history = [];
     this.handlers = new Map(); // status -> [handlers]
     this.middlewares = [];
   }
-  
+
   /**
    * Create a new Intent Packet
    */
   createIntent(prompt, options = {}) {
     return new IntentPacket(prompt, options);
   }
-  
+
   /**
    * Register a middleware to enrich intents
    */
@@ -235,7 +239,7 @@ export class IntentBus {
     this.middlewares.push(middleware);
     return this;
   }
-  
+
   /**
    * Register a status change handler
    */
@@ -246,39 +250,39 @@ export class IntentBus {
     this.handlers.get(status).push(handler);
     return this;
   }
-  
+
   /**
    * Process an intent through the bus
    */
   async process(intent) {
     try {
-      intent.status = 'running';
-      this.emit('running', intent);
-      
+      intent.status = "running";
+      this.emit("running", intent);
+
       // Apply middlewares
       for (const mw of this.middlewares) {
         await mw(intent);
       }
-      
+
       this.history.push(intent);
       if (this.history.length > this.config.maxHistorySize) {
         this.history.shift();
       }
-      
+
       return intent;
     } catch (error) {
       intent.fail(error);
-      this.emit('failed', intent);
+      this.emit("failed", intent);
       throw error;
     }
   }
-  
+
   /**
    * Emit event to handlers
    */
   emit(status, intent) {
     const handlers = this.handlers.get(status) || [];
-    handlers.forEach(h => {
+    handlers.forEach((h) => {
       try {
         h(intent);
       } catch (e) {
@@ -286,23 +290,25 @@ export class IntentBus {
       }
     });
   }
-  
+
   /**
    * Get intent history (optional filtering)
    */
   getHistory(filter = {}) {
     let results = this.history;
-    
+
     if (filter.status) {
-      results = results.filter(i => i.status === filter.status);
+      results = results.filter((i) => i.status === filter.status);
     }
     if (filter.sessionId) {
-      results = results.filter(i => i.metadata.sessionId === filter.sessionId);
+      results = results.filter(
+        (i) => i.metadata.sessionId === filter.sessionId,
+      );
     }
     if (filter.limit) {
       results = results.slice(-filter.limit);
     }
-    
+
     return results;
   }
 }
