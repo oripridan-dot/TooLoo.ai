@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @version 2.1.374 -->
+<!-- @version 2.1.383 -->
 <!-- @version 2.1.367 - fixed [object Object] display -->
 <html lang="en">
   <head>
@@ -1046,6 +1046,63 @@
         // Handle both old API (string) and new API (token object)
         const text = typeof textOrToken === 'object' ? textOrToken.text : textOrToken;
         return '<p class="mb-3 text-gray-300 leading-relaxed">' + text + "</p>";
+      };
+
+      // IMAGE RENDERER - Handles generated images from TooLoo
+      renderer.image = function (hrefOrToken, title, text) {
+        // Handle both old API (strings) and new API (token object)
+        const href = typeof hrefOrToken === 'object' ? hrefOrToken.href : hrefOrToken;
+        const imgTitle = typeof hrefOrToken === 'object' ? hrefOrToken.title : title;
+        const imgText = typeof hrefOrToken === 'object' ? hrefOrToken.text : text;
+        
+        // Check if it's a base64 data URL (generated image)
+        const isGenerated = href && href.startsWith('data:image');
+        
+        if (isGenerated) {
+          // Rich card layout for generated images
+          return `
+            <div class="generated-image-card my-4 rounded-xl overflow-hidden border border-cyan-500/30 bg-gradient-to-br from-gray-900 to-gray-800 shadow-xl">
+              <div class="p-3 border-b border-white/10 bg-white/5 flex items-center gap-2">
+                <span class="text-cyan-400">🎨</span>
+                <span class="text-sm font-medium text-white">${imgText || 'Generated Image'}</span>
+                <span class="ml-auto text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-300">AI Generated</span>
+              </div>
+              <div class="p-4">
+                <img 
+                  src="${href}" 
+                  alt="${imgText || 'Generated Image'}"
+                  title="${imgTitle || imgText || 'Click to view full size'}"
+                  class="w-full max-h-[512px] object-contain rounded-lg cursor-pointer hover:scale-[1.02] transition-transform"
+                  onclick="openImageModal(this.src, '${(imgText || '').replace(/'/g, "\\'")}');"
+                />
+              </div>
+              <div class="px-4 pb-3 flex gap-2">
+                <button 
+                  onclick="downloadImage('${href}', 'tooloo-generated.png')" 
+                  class="flex-1 px-3 py-2 text-sm bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg transition flex items-center justify-center gap-2"
+                >
+                  <span>⬇️</span> Download
+                </button>
+                <button 
+                  onclick="copyImageToClipboard('${href}')" 
+                  class="flex-1 px-3 py-2 text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition flex items-center justify-center gap-2"
+                >
+                  <span>📋</span> Copy
+                </button>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Regular image (external URL)
+        return `
+          <img 
+            src="${href}" 
+            alt="${imgText || ''}"
+            title="${imgTitle || ''}"
+            class="max-w-full h-auto rounded-lg my-4 border border-white/10"
+          />
+        `;
       };
 
       renderer.list = function (bodyOrToken, ordered, start) {
