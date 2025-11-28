@@ -1,4 +1,4 @@
-// @version 2.2.40
+// @version 2.2.91
 import React, { useEffect, useState } from 'react';
 import { Activity, Server, Database, Share2 } from 'lucide-react';
 
@@ -54,8 +54,8 @@ const CortexMonitor = () => {
         </div>
       </div>
       
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-        <svg width="400" height="400" className="overflow-visible">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[200px]">
+        <svg viewBox="0 0 400 400" className="w-full h-auto overflow-visible">
           {/* Center Node (Cortex) */}
           <circle cx={centerX} cy={centerY} r="40" fill="#050505" stroke="#00f3ff" strokeWidth="2" className="filter drop-shadow-[0_0_15px_rgba(0,243,255,0.6)]" />
           <text x={centerX} y={centerY} textAnchor="middle" dy=".3em" fill="#fff" fontSize="12" fontFamily="monospace" fontWeight="bold">CORTEX</text>
