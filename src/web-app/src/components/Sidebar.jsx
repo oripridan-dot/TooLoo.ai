@@ -1,4 +1,4 @@
-// @version 2.2.60
+// @version 2.2.78
 import React, { useState, useEffect } from "react";
 
 const Sidebar = ({ setActiveComponent, activeComponent, currentSessionId, setCurrentSessionId }) => {
