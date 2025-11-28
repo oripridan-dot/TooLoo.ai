@@ -1,4 +1,4 @@
-// @version 2.2.62
+// @version 2.2.66
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { io } from "socket.io-client";
@@ -129,9 +129,25 @@ const Chat = ({ currentSessionId, setCurrentSessionId }) => {
     if (currentSessionId && messages.length > 0) {
       const savedSession = localStorage.getItem(`tooloo_session_${currentSessionId}`);
       if (savedSession) {
-        const session = JSON.parse(savedSession);
-        session.messages = messages;
-        localStorage.setItem(`tooloo_session_${currentSessionId}`, JSON.stringify(session));
+        try {
+          const session = JSON.parse(savedSession);
+          session.messages = messages;
+          localStorage.setItem(`tooloo_session_${currentSessionId}`, JSON.stringify(session));
+        } catch (e) {
+          if (e.name === 'QuotaExceededError') {
+            console.warn("LocalStorage quota exceeded. Trimming history...");
+            // Try to save only the last 20 messages
+            try {
+              const session = JSON.parse(savedSession);
+              session.messages = messages.slice(-20);
+              localStorage.setItem(`tooloo_session_${currentSessionId}`, JSON.stringify(session));
+            } catch (retryError) {
+              console.error("Failed to save trimmed history:", retryError);
+            }
+          } else {
+            console.error("Failed to save session:", e);
+          }
+        }
       }
     }
   }, [messages, currentSessionId]);
