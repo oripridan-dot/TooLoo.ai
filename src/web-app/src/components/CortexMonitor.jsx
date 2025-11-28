@@ -1,6 +1,6 @@
-// @version 2.2.114
+// @version 2.2.115
 import React, { useState, useEffect } from "react";
-import { Activity, Server, Database, Share2, Cpu } from "lucide-react";
+import { Server, Database, Share2, Cpu } from "lucide-react";
 import { getProviderLogo } from "./ProviderLogos";
 
 const CortexMonitor = ({ compact = false, activeProvider = null }) => {
@@ -265,7 +265,10 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   className="overflow-visible"
                 >
                   <div className="flex items-center justify-center w-full h-full">
-                    {getProviderLogo(p.provider, `${logoSizeClass} ${logoColorClass}`)}
+                    {getProviderLogo(
+                      p.provider,
+                      `${logoSizeClass} ${logoColorClass}`,
+                    )}
                   </div>
                 </foreignObject>
 
@@ -282,7 +285,7 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                 >
                   {p.provider}
                 </text>
-                
+
                 {/* Success Rate (on hover or active) */}
                 <text
                   x={x}
@@ -308,21 +311,27 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
             <div className="text-xl font-bold text-white font-mono">
               {stats?.nodes?.total?.toLocaleString() || 0}
             </div>
-            <div className="text-[10px] text-cyan-500/70 font-mono tracking-widest">NODES</div>
+            <div className="text-[10px] text-cyan-500/70 font-mono tracking-widest">
+              NODES
+            </div>
           </div>
           <div className="bg-gray-900/40 p-3 rounded-lg border border-white/5 flex flex-col items-center hover:bg-gray-800/40 transition-colors group">
             <Server className="w-5 h-5 text-purple-500 mb-1 group-hover:scale-110 transition-transform" />
             <div className="text-xl font-bold text-white font-mono">
               {stats?.edges?.total?.toLocaleString() || 0}
             </div>
-            <div className="text-[10px] text-purple-500/70 font-mono tracking-widest">EDGES</div>
+            <div className="text-[10px] text-purple-500/70 font-mono tracking-widest">
+              EDGES
+            </div>
           </div>
           <div className="bg-gray-900/40 p-3 rounded-lg border border-white/5 flex flex-col items-center hover:bg-gray-800/40 transition-colors group">
             <Database className="w-5 h-5 text-emerald-500 mb-1 group-hover:scale-110 transition-transform" />
             <div className="text-xl font-bold text-white font-mono">
               {stats?.learningHistory?.toLocaleString() || 0}
             </div>
-            <div className="text-[10px] text-emerald-500/70 font-mono tracking-widest">MEMORIES</div>
+            <div className="text-[10px] text-emerald-500/70 font-mono tracking-widest">
+              MEMORIES
+            </div>
           </div>
         </div>
       )}
