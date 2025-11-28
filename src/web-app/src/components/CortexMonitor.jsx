@@ -1,18 +1,22 @@
-// @version 2.2.119
+// @version 2.2.120
 import React, { useState, useEffect } from "react";
 import { Server, Database, Share2, Cpu } from "lucide-react";
 import { getProviderLogo } from "./ProviderLogos";
 
-const CortexMonitor = ({ compact = false, activeProvider = null }) => {
+const CortexMonitor = ({ compact = false }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [systemStatus, setSystemStatus] = useState({ busy: false, activeCount: 0, activeProvider: null });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch("/api/v1/observability/knowledge-graph");
         const json = await res.json();
-        if (json.ok) setData(json.data);
+        if (json.ok) {
+          setData(json.data);
+          setSystemStatus(json.data.status || { busy: false, activeCount: 0, activeProvider: null });
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -20,7 +24,8 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
       }
     };
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    // Faster polling for "disco" effect
+    const interval = setInterval(fetchData, 1500);
     return () => clearInterval(interval);
   }, []);
 
@@ -42,7 +47,6 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
     );
   }
 
-  // Mock data for visual effect if real data is empty or missing
   const hasRealData =
     data &&
     data.providers &&
@@ -54,27 +58,45 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
     : {
         providers: {
           providers: [
-            { provider: "claude", successRate: 0.98, attempts: 120 },
-            { provider: "gemini", successRate: 0.85, attempts: 45 },
-            { provider: "openai", successRate: 0.94, attempts: 200 },
-            { provider: "mistral", successRate: 0.78, attempts: 30 },
-            { provider: "huggingface", successRate: 0.91, attempts: 80 },
+            { provider: "claude", successRate: 0, attempts: 0 },
+            { provider: "gemini", successRate: 0, attempts: 0 },
+            { provider: "openai", successRate: 0, attempts: 0 },
+            { provider: "deepseek", successRate: 0, attempts: 0 },
+            { provider: "huggingface", successRate: 0, attempts: 0 },
           ],
         },
         stats: {
-          nodes: { total: data?.stats?.nodes?.total || 1243 },
-          edges: { total: data?.stats?.edges?.total || 3502 },
-          learningHistory: data?.stats?.learningHistory || 892,
+          nodes: { total: data?.stats?.nodes?.total || 0 },
+          edges: { total: data?.stats?.edges?.total || 0 },
+          learningHistory: data?.stats?.learningHistory || 0,
         },
       };
 
   const { providers, stats } = displayData;
-  // Filter out unused providers (attempts === 0) unless we have very few, then show top ones
+  // Only show providers that have been used
   let providerList = (providers?.providers || []).filter((p) => p.attempts > 0);
   
-  // If no providers have attempts (e.g. fresh start), show all to avoid empty graph
   if (providerList.length === 0) {
-    providerList = providers?.providers || [];
+    // If no providers used, show a few placeholders
+    providerList = (providers?.providers || []).slice(0, 5);
+  }
+
+  // Cortex Core stress levels
+  const stressLevel = systemStatus.activeCount;
+  let coreColor = "#00f3ff"; // Cyan
+  let coreAnimationDuration = "10s";
+  let corePulseClass = "";
+
+  if (stressLevel === 1) {
+    coreColor = "#00f3ff"; // Active - Bright Cyan
+    coreAnimationDuration = "5s";
+    corePulseClass = "animate-pulse";
+  } else if (stressLevel > 1) {
+    coreColor = "#f97316"; // Stressed - Orange
+    coreAnimationDuration = "1.5s";
+    corePulseClass = "animate-ping";
+  } else {
+    coreColor = "#0e7490"; // Idle - Dim Cyan
   }
 
   // Radial Layout Calculation
@@ -106,9 +128,9 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
             <Cpu className="w-4 h-4" />
             CORTEX_NEURAL_MONITOR
           </h3>
-          <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-900/20 px-2 py-1 rounded border border-emerald-500/30">
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            SYSTEM ONLINE
+          <div className={`flex items-center gap-2 text-xs px-2 py-1 rounded border transition-all ${systemStatus.busy ? 'text-orange-400 bg-orange-900/20 border-orange-500/30' : 'text-emerald-400 bg-emerald-900/20 border-emerald-500/30'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${systemStatus.busy ? 'bg-orange-500 animate-ping' : 'bg-emerald-500'}`}></span>
+            {systemStatus.busy ? `PROCESSING (${systemStatus.activeCount})` : 'SYSTEM ONLINE'}
           </div>
         </div>
       )}
@@ -151,13 +173,13 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
           />
 
           {/* Center Node (Cortex Core) */}
-          <g className="filter drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]">
+          <g className={`filter drop-shadow-[0_0_15px_rgba(0,243,255,0.5)] transition-all duration-300 ${corePulseClass}`} style={{'--core-color': coreColor}}>
             <circle
               cx={centerX}
               cy={centerY}
               r={compact ? 35 : 40}
               fill="#050505"
-              stroke="#00f3ff"
+              stroke={coreColor}
               strokeWidth="2"
             />
             <circle
@@ -165,18 +187,18 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
               cy={centerY}
               r={compact ? 25 : 30}
               fill="none"
-              stroke="#00f3ff"
+              stroke={coreColor}
               strokeWidth="1"
               strokeDasharray="2 2"
               className="animate-spin-slow"
-              style={{ animationDuration: "10s" }}
+              style={{ animationDuration: coreAnimationDuration }}
             />
             <text
               x={centerX}
               y={centerY}
               textAnchor="middle"
               dy=".3em"
-              fill="#fff"
+              fill={stressLevel > 1 ? coreColor : "#fff"}
               fontSize={compact ? "10" : "12"}
               fontFamily="monospace"
               fontWeight="bold"
@@ -186,55 +208,39 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
             </text>
           </g>
 
-          {/* Active Provider Pulse (if passed from parent) */}
-          {activeProvider && (
-            <>
-              <circle
-                cx={centerX}
-                cy={centerY}
-                r={compact ? 80 : 60}
-                fill="none"
-                stroke="#00f3ff"
-                strokeWidth="1"
-                className="animate-ping opacity-20"
-              />
-            </>
-          )}
-
           {/* Provider Nodes */}
           {providerList.map((p, i) => {
             const angle = (i * 2 * Math.PI) / providerList.length - Math.PI / 2;
             const x = centerX + radius * Math.cos(angle);
             const y = centerY + radius * Math.sin(angle);
 
-            // Check if this provider is active (bidirectional check)
+            const activeProviderName = systemStatus.activeProvider || "";
             const isActive =
-              activeProvider &&
+              activeProviderName &&
               (p.provider
                 .toLowerCase()
-                .includes(activeProvider.toLowerCase()) ||
-                activeProvider
+                .includes(activeProviderName.toLowerCase()) ||
+                activeProviderName
                   .toLowerCase()
                   .includes(p.provider.toLowerCase()));
 
+            const isUsed = p.attempts > 0;
+            
             // Edge Styling
-            const edgeWidth = isActive ? 3 : 1.5;
-            const isUnused = p.attempts === 0;
-            const edgeColor = isActive
-              ? "#00f3ff"
-              : isUnused
-                ? "#334155" // Slate-700
-                : p.successRate > 0.8
-                  ? "#10b981" // Emerald-500
-                  : p.successRate > 0.5
-                    ? "#f59e0b" // Amber-500
-                    : "#ef4444"; // Red-500
+            const edgeWidth = isActive ? 3 : 1;
+            let edgeColor = "#334155"; // OFF state
+            if (isUsed) {
+              edgeColor = p.successRate > 0.8 ? "#10b981" : p.successRate > 0.5 ? "#f59e0b" : "#ef4444";
+            }
+            if (isActive) {
+              edgeColor = "#00f3ff"; // Active state
+            }
 
-            // Logo Size Classes (Explicit strings for Tailwind JIT)
+            // Logo Size Classes
             const logoSizeClass = isActive ? "w-8 h-8" : "w-6 h-6";
             const logoColorClass = isActive
               ? "text-white filter drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]"
-              : "text-slate-400";
+              : isUsed ? "text-slate-300" : "text-slate-600";
 
             return (
               <g key={p.provider} className="transition-all duration-500 group">
@@ -246,7 +252,7 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   y2={y}
                   stroke={edgeColor}
                   strokeWidth={edgeWidth}
-                  opacity={isActive ? 0.8 : 0.3}
+                  opacity={isActive ? 0.8 : isUsed ? 0.3 : 0.1}
                   strokeDasharray={isActive ? "none" : "2 4"}
                   className={isActive ? "animate-pulse" : ""}
                 />
@@ -258,11 +264,11 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   r={isActive ? 20 : 16}
                   fill="#0f172a"
                   stroke={edgeColor}
-                  strokeWidth={isActive ? 2 : 1}
+                  strokeWidth={isActive ? 2 : isUsed ? 1 : 0.5}
                   className="transition-all duration-300"
                 />
 
-                {/* Node (Logo) - Using foreignObject to render HTML/React component inside SVG */}
+                {/* Node (Logo) */}
                 <foreignObject
                   x={x - (isActive ? 16 : 12)}
                   y={y - (isActive ? 16 : 12)}
@@ -283,7 +289,7 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   x={x}
                   y={y + 30}
                   textAnchor="middle"
-                  fill={isActive ? "#fff" : "#64748b"}
+                  fill={isActive ? "#fff" : isUsed ? "#64748b" : "#475569"}
                   fontSize="10"
                   fontFamily="monospace"
                   fontWeight={isActive ? "bold" : "normal"}
@@ -292,18 +298,20 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   {p.provider}
                 </text>
 
-                {/* Success Rate (on hover or active) */}
-                <text
-                  x={x}
-                  y={y + 42}
-                  textAnchor="middle"
-                  fill={edgeColor}
-                  fontSize="9"
-                  fontFamily="monospace"
-                  opacity={isActive ? 1 : 0.7}
-                >
-                  {(p.successRate * 100).toFixed(0)}%
-                </text>
+                {/* Success Rate (only if used) */}
+                {isUsed && (
+                  <text
+                    x={x}
+                    y={y + 42}
+                    textAnchor="middle"
+                    fill={edgeColor}
+                    fontSize="9"
+                    fontFamily="monospace"
+                    opacity={isActive ? 1 : 0.7}
+                  >
+                    {(p.successRate * 100).toFixed(0)}%
+                  </text>
+                )}
               </g>
             );
           })}
