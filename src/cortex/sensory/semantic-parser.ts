@@ -1,4 +1,4 @@
-// @version 2.1.203
+// @version 2.2.75
 import fs from "fs-extra";
 import * as path from "path";
 import { glob } from "glob";
@@ -59,12 +59,15 @@ export class SemanticParser {
         console.log("[SemanticParser] Loaded cached analysis.");
 
         // Publish cached findings immediately
+        // DISABLED: Causing 429 Quota Exceeded loops due to size
+        /*
         this.bus.publish("cortex", "memory:store", {
           description: "Project Structure Analysis (Cached)",
           content: JSON.stringify(cachedInfo),
           type: "system",
           tags: ["project-analysis", "structure", "symbols"],
         });
+        */
       }
     } catch (e) {
       console.warn(
