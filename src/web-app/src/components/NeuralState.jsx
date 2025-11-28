@@ -1,4 +1,4 @@
-// @version 2.2.50
+// @version 2.2.55
 import React, { useState, useEffect } from "react";
 import { Activity, Brain, Database, Cpu } from "lucide-react";
 
@@ -8,6 +8,7 @@ const NeuralState = ({ socket, sessionId }) => {
   const [memory, setMemory] = useState({ short: "", long: "" });
   const [activeTab, setActiveTab] = useState("short");
   const [insights, setInsights] = useState({ provider: "-", quality: "-" });
+  const [intent, setIntent] = useState(null);
 
   // Initial Fetch
   useEffect(() => {
