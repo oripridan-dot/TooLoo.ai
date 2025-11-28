@@ -1,4 +1,4 @@
-// @version 2.1.379
+// @version 2.2.83
 /**
  * CapabilitiesManager - Unified capabilities registry
  * Dynamically registers and discovers visual capabilities and Designer tools
@@ -84,11 +84,11 @@ export default class CapabilitiesManager {
       requirements: ["GEMINI_API_KEY"],
     });
 
-    // NEW: Context-aware visual code generation (Nano Banana + DALL-E)
+    // NEW: Context-aware visual code generation (DeSign Studio + DALL-E)
     this.registerCapability({
       name: "image.context.code-generation.gemini",
       description:
-        "Generate functional code from visual context using Gemini 3 Pro Image Preview (Nano Banana)",
+        "Generate functional code from visual context using Gemini 3 Pro Image Preview (DeSign Studio)",
       category: "visual",
       module: "geminiContextCodeGen",
       methods: ["generateCodeFromContext", "analyzeVisualContext"],
@@ -97,7 +97,7 @@ export default class CapabilitiesManager {
       requirements: ["GEMINI_API_KEY"],
       metadata: {
         model: "gemini-3-pro-image-preview",
-        codeName: "NanoBanana",
+        codeName: "DeSignStudio",
         capabilities: ["context-aware", "code-generation", "design-analysis"],
       },
     });
