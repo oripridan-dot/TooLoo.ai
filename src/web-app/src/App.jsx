@@ -1,4 +1,4 @@
-// @version 2.1.310
+// @version 2.2.58
 import { useState } from "react";
 import Layout from "./components/Layout";
 import Dashboard from "./components/Dashboard";
@@ -17,6 +17,7 @@ function App() {
   const [activeComponent, setActiveComponent] = useState(
     isVisualsPage ? "Visual Designer" : "Dashboard",
   );
+  const [currentSessionId, setCurrentSessionId] = useState(null);
 
   const renderComponent = () => {
     switch (activeComponent) {
@@ -37,12 +38,19 @@ function App() {
       case "Cortex Monitor":
         return <CortexMonitor />;
       default:
-        return <Chat />;
+        return <Chat currentSessionId={currentSessionId} setCurrentSessionId={setCurrentSessionId} />;
     }
   };
 
   return (
-    <Layout setActiveComponent={setActiveComponent}>{renderComponent()}</Layout>
+    <Layout
+      setActiveComponent={setActiveComponent}
+      activeComponent={activeComponent}
+      currentSessionId={currentSessionId}
+      setCurrentSessionId={setCurrentSessionId}
+    >
+      {renderComponent()}
+    </Layout>
   );
 }
 
