@@ -1,4 +1,4 @@
-// @version 2.2.94
+// @version 2.2.95
 import React, { useEffect, useState } from 'react';
 import { Activity, Server, Database, Share2 } from 'lucide-react';
 
@@ -32,16 +32,20 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
   }
 
   // If no data, mock it for visual effect if compact mode (so it doesn't look broken in sidebar)
-  const displayData = data || (compact ? { 
+  // Also use mock if data exists but has no providers (empty state)
+  const hasRealData = data && data.providers && data.providers.providers && data.providers.providers.length > 0;
+  
+  const displayData = hasRealData ? data : (compact ? { 
       providers: { providers: [
-          { provider: 'claude', successRate: 0.9 },
-          { provider: 'gemini', successRate: 0.8 },
-          { provider: 'openai', successRate: 0.85 }
+          { provider: 'claude', successRate: 0.95 },
+          { provider: 'gemini', successRate: 0.88 },
+          { provider: 'openai', successRate: 0.92 },
+          { provider: 'mistral', successRate: 0.75 }
       ]}, 
       stats: { nodes: { total: 12 }, edges: { total: 24 }, learningHistory: 156 } 
   } : null);
 
-  if (!displayData) return <div className="text-red-500">Failed to load Cortex data.</div>;
+  if (!displayData) return <div className="text-red-500 text-xs p-4">Waiting for Cortex stream...</div>;
 
   const { providers, stats } = displayData;
   const providerList = providers?.providers || [];
@@ -49,10 +53,19 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
   // Radial Layout Calculation
   const centerX = 200;
   const centerY = 200;
-  const radius = compact ? 140 : 120; // Larger radius in compact mode to fill space
+  const radius = compact ? 110 : 120; 
   
   return (
-    <div className={`${compact ? 'h-full w-full flex items-center justify-center' : 'bg-[#0f1117] border border-cyan-900/30 rounded-xl p-6 shadow-[0_0_30px_rgba(0,243,255,0.05)] h-full flex flex-col'}`}>
+    <div className={`${compact ? 'h-full w-full flex items-center justify-center overflow-hidden relative' : 'bg-[#0f1117] border border-cyan-900/30 rounded-xl p-6 shadow-[0_0_30px_rgba(0,243,255,0.05)] h-full flex flex-col'}`}>
+      {/* Inject Custom Animations */}
+      <style>{`
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+        .animate-spin-slow { animation: spin-slow 20s linear infinite; transform-origin: center; }
+        .animate-spin-reverse { animation: spin-reverse 25s linear infinite; transform-origin: center; }
+      `}</style>
+
       {!compact && (
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-cyan-400 font-mono text-sm flex items-center gap-2">
@@ -68,13 +81,20 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
       
       <div className={`flex-1 flex flex-col items-center justify-center ${compact ? '' : 'min-h-[200px]'}`}>
         <svg viewBox="0 0 400 400" className="w-full h-full overflow-visible">
+          {/* Background Ambient Rings */}
+          <circle cx={centerX} cy={centerY} r={compact ? 140 : 160} fill="none" stroke="#00f3ff" strokeWidth="1" strokeDasharray="10 10" opacity="0.1" className="animate-spin-slow" />
+          <circle cx={centerX} cy={centerY} r={compact ? 120 : 140} fill="none" stroke="#bc13fe" strokeWidth="1" strokeDasharray="20 5" opacity="0.05" className="animate-spin-reverse" />
+
           {/* Center Node (Cortex) */}
-          <circle cx={centerX} cy={centerY} r={compact ? 50 : 40} fill="#050505" stroke="#00f3ff" strokeWidth="2" className="filter drop-shadow-[0_0_15px_rgba(0,243,255,0.6)]" />
-          <text x={centerX} y={centerY} textAnchor="middle" dy=".3em" fill="#fff" fontSize={compact ? "14" : "12"} fontFamily="monospace" fontWeight="bold">CORTEX</text>
+          <circle cx={centerX} cy={centerY} r={compact ? 45 : 40} fill="#050505" stroke="#00f3ff" strokeWidth="2" className="filter drop-shadow-[0_0_15px_rgba(0,243,255,0.6)]" />
+          <text x={centerX} y={centerY} textAnchor="middle" dy=".3em" fill="#fff" fontSize={compact ? "12" : "12"} fontFamily="monospace" fontWeight="bold">CORTEX</text>
           
           {/* Active Provider Pulse (if passed from parent) */}
           {activeProvider && (
-             <circle cx={centerX} cy={centerY} r={compact ? 80 : 60} fill="none" stroke="#00f3ff" strokeWidth="1" className="animate-ping opacity-20" />
+             <>
+               <circle cx={centerX} cy={centerY} r={compact ? 80 : 60} fill="none" stroke="#00f3ff" strokeWidth="1" className="animate-ping opacity-20" />
+               <circle cx={centerX} cy={centerY} r={compact ? 100 : 80} fill="none" stroke="#00f3ff" strokeWidth="0.5" className="animate-ping opacity-10" style={{ animationDelay: '0.5s' }} />
+             </>
           )}
 
           {/* Provider Nodes */}
@@ -83,10 +103,14 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
             const x = centerX + radius * Math.cos(angle);
             const y = centerY + radius * Math.sin(angle);
             
-            const isActive = activeProvider && p.provider.toLowerCase().includes(activeProvider.toLowerCase());
+            // Check if this provider is active (bidirectional check)
+            const isActive = activeProvider && (
+                p.provider.toLowerCase().includes(activeProvider.toLowerCase()) || 
+                activeProvider.toLowerCase().includes(p.provider.toLowerCase())
+            );
             
             // Edge
-            const edgeWidth = isActive ? 4 : Math.max(1, p.successRate * 3);
+            const edgeWidth = isActive ? 3 : Math.max(1, p.successRate * 2);
             const edgeColor = isActive ? '#00f3ff' : (p.successRate > 0.8 ? '#0aff0a' : p.successRate > 0.5 ? '#ffaa00' : '#ff003c');
             
             return (
@@ -97,25 +121,22 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   x2={x} y2={y} 
                   stroke={edgeColor} 
                   strokeWidth={edgeWidth} 
-                  opacity={isActive ? 1 : 0.3}
-                  strokeDasharray={isActive ? "none" : "4 2"}
+                  opacity={isActive ? 0.8 : 0.2}
+                  strokeDasharray={isActive ? "none" : "4 4"}
                   className={isActive ? "animate-pulse" : ""}
                 />
                 
                 {/* Node */}
                 <circle 
                   cx={x} cy={y} 
-                  r={isActive ? 25 : 20} 
+                  r={isActive ? 18 : 14} 
                   fill="#0a0a0a" 
                   stroke={edgeColor} 
-                  strokeWidth={isActive ? 3 : 2}
+                  strokeWidth={isActive ? 2 : 1}
                   className={`hover:fill-gray-900 cursor-pointer transition-colors ${isActive ? 'filter drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]' : ''}`}
                 />
-                <text x={x} y={y + 35} textAnchor="middle" fill="#cbd5e1" fontSize="10" fontFamily="monospace">
-                  {p.provider}
-                </text>
-                <text x={x} y={y} textAnchor="middle" dy=".3em" fill="#fff" fontSize="10" fontWeight="bold">
-                  {Math.round(p.successRate * 100)}%
+                <text x={x} y={y + 25} textAnchor="middle" fill={isActive ? "#fff" : "#94a3b8"} fontSize="9" fontFamily="monospace" fontWeight={isActive ? "bold" : "normal"}>
+                  {p.provider.toUpperCase()}
                 </text>
               </g>
             );
