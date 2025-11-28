@@ -1,6 +1,6 @@
-// @version 2.2.92
+// @version 2.2.93
 import React, { useState, useEffect, useRef } from "react";
-import { Activity, Brain, Database, Cpu, Zap, Terminal } from "lucide-react";
+import { Brain, Zap, Terminal } from "lucide-react";
 import CortexMonitor from "./CortexMonitor";
 
 const SystemLog = ({ events }) => {
