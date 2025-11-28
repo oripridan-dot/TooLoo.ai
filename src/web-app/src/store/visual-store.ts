@@ -1,4 +1,4 @@
-// @version 2.1.313
+// @version 2.2.74
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -57,7 +57,7 @@ export const useVisualStore = create<VisualState>()(
 
       settings: {
         provider: "gemini",
-        model: "gemini-2.0-flash-exp",
+        model: "imagen-3.0-generate-001",
         aspectRatio: "1:1",
         imageSize: "1K",
         enhancePrompt: true,
