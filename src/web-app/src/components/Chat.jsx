@@ -1,4 +1,4 @@
-// @version 2.2.47
+// @version 2.2.48
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -218,6 +218,26 @@ const Chat = () => {
     if (socket) {
       socket.emit("stop_generation");
       setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      content: input,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    if (socket) {
+      socket.emit("message", { message: input });
     }
   };
 
