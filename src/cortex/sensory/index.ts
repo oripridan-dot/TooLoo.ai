@@ -54,9 +54,59 @@ export class SensoryCortex {
       await this.parser.analyzeProject();
     });
 
+    // Listen for real-time input (typing)
+    this.bus.on("sensory:input", (event: SynapsysEvent) => {
+      this.analyzeInputStream(event.payload.input);
+    });
+
     // Listen for motor output to "see" what the hands are doing
     this.bus.on("motor:result", (event: SynapsysEvent) => {
       this.analyzeMotorOutput(event.payload);
+    });
+  }
+
+  private analyzeInputStream(input: string) {
+    if (!input || input.length < 5) return;
+
+    // Simple Intent Recognition (Heuristic)
+    const lower = input.toLowerCase();
+    let type = "General Chat";
+    let confidence = 0.5;
+    const entities: string[] = [];
+
+    if (lower.startsWith("create") || lower.startsWith("make")) {
+      type = "Creative Task";
+      confidence = 0.85;
+    } else if (lower.startsWith("analyze") || lower.startsWith("check")) {
+      type = "Analysis Task";
+      confidence = 0.8;
+    } else if (lower.includes("plan") || lower.includes("roadmap")) {
+      type = "Planning Task";
+      confidence = 0.9;
+    } else if (lower.includes("code") || lower.includes("function")) {
+      type = "Coding Task";
+      confidence = 0.85;
+    } else if (lower.startsWith("run") || lower.startsWith("exec")) {
+      type = "Execution Task";
+      confidence = 0.9;
+    }
+
+    // Extract potential entities (quoted strings or file extensions)
+    const quoted = input.match(/"([^"]+)"/g);
+    if (quoted) {
+      entities.push(...quoted.map((s) => s.replace(/"/g, "")));
+    }
+
+    const files = input.match(/\b[\w-]+\.(ts|js|json|md|py|html|css)\b/g);
+    if (files) {
+      entities.push(...files);
+    }
+
+    this.bus.publish("cortex", "precog:intent_prediction", {
+      type,
+      confidence,
+      entities: [...new Set(entities)], // Unique
+      input,
     });
   }
 

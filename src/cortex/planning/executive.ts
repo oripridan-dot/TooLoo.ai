@@ -225,6 +225,12 @@ export class Executive {
         command: step.payload.command,
         cwd: step.payload.cwd,
       });
+    } else if (step.type === "code:execute") {
+      this.bus.publish("cortex", "motor:code:execute", {
+        id: step.id,
+        code: step.payload.code,
+        language: step.payload.language,
+      });
     } else if (step.type === "file:write") {
       this.bus.publish("cortex", "motor:file:write", {
         id: step.id,

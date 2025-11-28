@@ -63,6 +63,9 @@ export class ProviderEngine {
               console.error(
                 `[ProviderEngine] OpenAI Embedding Error: ${response.status} ${err}`,
               );
+              if (response.status === 429) {
+                throw new Error(`OpenAI API 429: ${err}`);
+              }
               return null;
             }
 

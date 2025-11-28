@@ -141,7 +141,12 @@ export class VectorStore {
         };
 
         this.documents.push(doc);
-      } catch (error) {
+      } catch (error: any) {
+        // Handle Quota Exceeded (429) gracefully
+        if (error?.message?.includes("429") || error?.message?.includes("quota")) {
+            console.warn(`[VectorStore] Embedding quota exceeded (429). Skipping remaining chunks for this document.`);
+            break; // Stop processing chunks for this document
+        }
         console.error(
           `[VectorStore] Failed to generate embedding for chunk ${i}: ${error}`,
         );

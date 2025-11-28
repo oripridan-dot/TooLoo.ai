@@ -1,4 +1,4 @@
-// @version 2.1.331
+// @version 2.2.57
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import { successResponse, errorResponse } from "../utils.js";
@@ -30,7 +30,10 @@ router.get("/status", (req, res) => {
       version: SYSTEM_VERSION,
       services: 3, // Cortex, Precog, Nexus
       active: true,
-      architecture: "Synapsys V2.1",
+      ready: true, // Frontend expects this for Cortex status
+      uptime: process.uptime() * 1000, // Frontend expects ms
+      memory: process.memoryUsage(),
+      architecture: "Synapsys V2.2",
       modules: {
         cortex: { status: "loaded", role: "Cognitive Core" },
         precog: { status: "loaded", role: "Predictive Intelligence" },
@@ -45,7 +48,7 @@ router.get("/awareness", (req, res) => {
   res.json(
     successResponse({
       identity: "TooLoo.ai",
-      architecture: "Synapsys V2.1",
+      architecture: "Synapsys V2.2",
       capabilities: {
         selfModification: true,
         githubIntegration: true,

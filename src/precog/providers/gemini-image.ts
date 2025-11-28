@@ -34,12 +34,16 @@ export class GeminiImageProvider {
     }
 
     // Determine model name. Map "gemini" placeholders to actual Imagen models.
-    let modelName = req.model || "gemini-2.0-flash-exp";
+    // If the user explicitly requests an Imagen model, we should try to use it.
+    // Gemini 2.0 Flash Exp is primarily a text/multimodal-input model, not an image generator.
+    let modelName = req.model || "imagen-4.0-generate-001";
 
-    if (modelName.includes("imagen")) {
-      // Fallback: Imagen 3 is not available in v1beta public API yet for all keys.
-      // Use Gemini 2.0 Flash Exp which has multimodal generation capabilities
-      modelName = "gemini-2.0-flash-exp";
+    // Force Imagen 4 if a text model is requested for image generation
+    // But allow "Nano Banana" (gemini-2.5-flash-image) if we implement support for it later via generateContent
+    // For now, we assume generateImages is used, which requires an Imagen model.
+    if ((modelName.includes("flash") || modelName.includes("pro")) && !modelName.includes("imagen")) {
+      console.warn(`[GeminiImageProvider] Requested model ${modelName} does not support image generation via generateImages. Switching to imagen-4.0-generate-001.`);
+      modelName = "imagen-4.0-generate-001";
     }
 
     // Construct parts
@@ -54,39 +58,14 @@ export class GeminiImageProvider {
       finalPrompt += `\n\nNegative prompt (exclude these elements): ${req.negativePrompt}`;
     }
 
-    if (finalPrompt) {
-      parts.push({ text: finalPrompt });
-    }
-
-    // Add reference images if any
-    if (req.referenceImages && req.referenceImages.length > 0) {
-      for (const img of req.referenceImages) {
-        if (typeof img === "object" && "mimeType" in img && "data" in img) {
-          parts.push({
-            inlineData: {
-              mimeType: (img as any).mimeType,
-              data: (img as any).data,
-            },
-          });
-        }
-      }
-    }
-
     // Config
     const config: Record<string, unknown> = {
-      responseModalities: ["IMAGE"],
+      numberOfImages: 1,
     };
 
     // Only add imageConfig if we have a valid aspect ratio.
     if (req.aspectRatio) {
-      // For Gemini 2.0 Flash, aspect ratio might be a prompt instruction or config
-      // But let's try to keep it in config if supported, otherwise append to prompt
-      // The SDK types suggest imageConfig might be correct for some models
-      config.generationConfig = {
-        responseModalities: ["IMAGE"],
-      };
-      // We'll also append it to prompt to be safe for the experimental model
-      // parts[0].text += `\n\nAspect Ratio: ${req.aspectRatio}`;
+      config.aspectRatio = req.aspectRatio;
     }
 
     try {
@@ -94,32 +73,22 @@ export class GeminiImageProvider {
         `[GeminiImageProvider] Generating image with model ${modelName}...`,
       );
 
-      // Ensure we are passing Content[] not Part[]
-      const contents = [{ role: "user", parts: parts }];
-
-      const response = await this.client.models.generateContent({
+      // Use generateImages for Imagen models
+      const response = await this.client.models.generateImages({
         model: modelName,
-        contents: contents,
+        prompt: finalPrompt,
         config: config,
       });
 
       const images: { data: string; mimeType: string }[] = [];
 
-      if (response.candidates && response.candidates.length > 0) {
-        for (const candidate of response.candidates) {
-          if (candidate.content && candidate.content.parts) {
-            for (const part of candidate.content.parts) {
-              if (
-                part.inlineData &&
-                part.inlineData.data &&
-                part.inlineData.mimeType
-              ) {
-                images.push({
-                  data: part.inlineData.data,
-                  mimeType: part.inlineData.mimeType,
-                });
-              }
-            }
+      if (response.generatedImages && response.generatedImages.length > 0) {
+        for (const img of response.generatedImages) {
+          if (img.image && img.image.imageBytes) {
+             images.push({
+               data: img.image.imageBytes,
+               mimeType: "image/png", // Imagen usually returns PNG
+             });
           }
         }
       }
@@ -138,7 +107,6 @@ export class GeminiImageProvider {
         images,
         metadata: {
           model: modelName,
-          usage: response.usageMetadata,
         },
       };
     } catch (error: unknown) {

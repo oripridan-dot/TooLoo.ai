@@ -156,12 +156,15 @@ export class SemanticParser {
     }
 
     // 4. Publish findings to Memory (Hippocampus)
+    // DISABLED: Causing 429 Quota Exceeded loops due to size
+    /*
     this.bus.publish("cortex", "memory:store", {
       description: "Project Structure Analysis",
       content: JSON.stringify(projectInfo),
       type: "system",
       tags: ["project-analysis", "structure", "symbols"],
     });
+    */
 
     // 5. Cache the result
     try {

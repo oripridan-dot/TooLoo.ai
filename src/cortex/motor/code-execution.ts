@@ -14,7 +14,10 @@ export interface CodeExecutionResult {
 export class CodeExecutor {
   constructor(private workspaceRoot: string) {}
 
-  async executeInDocker(code: string, language: string): Promise<CodeExecutionResult> {
+  async executeInDocker(
+    code: string,
+    language: string,
+  ): Promise<CodeExecutionResult> {
     const id = uuidv4();
     const tempDir = path.join(this.workspaceRoot, "temp", "execution", id);
     await fs.mkdir(tempDir, { recursive: true });
@@ -72,7 +75,9 @@ export class CodeExecutor {
       ...cmd,
     ];
 
-    console.log(`[CodeExecutor] Executing ${language} in Docker: ${dockerArgs.join(" ")}`);
+    console.log(
+      `[CodeExecutor] Executing ${language} in Docker: ${dockerArgs.join(" ")}`,
+    );
 
     return new Promise((resolve) => {
       const child = spawn("docker", dockerArgs);
@@ -92,7 +97,10 @@ export class CodeExecutor {
         try {
           await fs.rm(tempDir, { recursive: true, force: true });
         } catch (e) {
-          console.error(`[CodeExecutor] Failed to cleanup temp dir: ${tempDir}`, e);
+          console.error(
+            `[CodeExecutor] Failed to cleanup temp dir: ${tempDir}`,
+            e,
+          );
         }
 
         resolve({

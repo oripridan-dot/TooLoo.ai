@@ -8,6 +8,7 @@ import { SensoryCortex } from "./sensory/index.js";
 import { Hippocampus } from "./memory/index.js";
 import { PrefrontalCortex } from "./planning/index.js";
 import { synthesizer } from "../precog/synthesizer.js";
+import { precog } from "../precog/index.js";
 import { tracer } from "./tracer.js";
 import { metaprogrammer } from "./metaprogrammer.js";
 import { ProjectManager } from "./project-manager.js";
@@ -72,6 +73,7 @@ export class Cortex {
       const { message, requestId, projectId, responseType, sessionId } =
         event.payload;
       console.log("[Cortex] Processing chat request:", requestId);
+      const startTime = Date.now();
 
       // 1. Quick Intent Analysis (Heuristic for now)
       const actionKeywords = [
@@ -158,11 +160,11 @@ export class Cortex {
             `[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`,
           );
 
-          // Create a timeout promise (reduced to 4s for faster response delivery)
+          // Create a timeout promise (increased to 60s for thinking models)
           const timeoutPromise = new Promise((_, reject) =>
             setTimeout(
-              () => reject(new Error("Synthesizer timeout after 4s")),
-              4000,
+              () => reject(new Error("Synthesizer timeout after 60s")),
+              60000,
             ),
           );
 
@@ -228,6 +230,30 @@ Here are the key points in response:
           .autoUpdateMemory(projectId, message, responseText)
           .catch(console.error);
       }
+
+      // Close the Learning Loop
+      const latency = Date.now() - startTime;
+
+      // Track Interaction
+      precog.training.trackInteraction({
+        userId: "user", // Single user system
+        queryType: isAction ? "action" : "chat",
+        selectedProvider: provider,
+        responseTime: latency,
+        engaged: true,
+        timestamp: Date.now(),
+      });
+
+      // Record Metrics
+      precog.training.recordMetrics({
+        responseId: requestId,
+        provider: provider,
+        latency: latency,
+        tokensUsed: responseText.length / 4, // Rough estimate
+        costEstimate: 0, // Internal
+        quality: 1, // Default baseline
+        timestamp: Date.now(),
+      });
     });
 
     // Handle Project List

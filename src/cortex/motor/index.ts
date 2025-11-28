@@ -1,11 +1,13 @@
 // @version 2.1.28
 import { EventBus, SynapsysEvent } from "../../core/event-bus.js";
 import { Executor, ExecutionResult } from "./executor.js";
+import { CodeExecutor } from "./code-execution.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 
 export class MotorCortex {
   private executor: Executor;
+  private codeExecutor: CodeExecutor;
   private isActive: boolean = false;
 
   constructor(
@@ -13,6 +15,7 @@ export class MotorCortex {
     private workspaceRoot: string,
   ) {
     this.executor = new Executor(workspaceRoot);
+    this.codeExecutor = new CodeExecutor(workspaceRoot);
   }
 
   async initialize() {
@@ -27,6 +30,24 @@ export class MotorCortex {
   }
 
   private setupListeners() {
+    // Code Execution (Docker Sandbox)
+    this.bus.on("motor:code:execute", async (event: SynapsysEvent) => {
+      const payload = event.payload;
+      console.log(
+        `[MotorCortex] Received code execution request (${payload.language})`,
+      );
+
+      const result = await this.codeExecutor.executeInDocker(
+        payload.code,
+        payload.language,
+      );
+
+      this.bus.publish("cortex", "motor:result", {
+        requestId: payload.id,
+        ...result,
+      });
+    });
+
     // Command Execution
     this.bus.on("motor:execute", async (event: SynapsysEvent) => {
       const payload = event.payload;

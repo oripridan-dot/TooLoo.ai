@@ -1,4 +1,4 @@
-// @version 2.1.314
+// @version 2.2.57
 /**
  * Response Visualizer
  * Analyzes text responses and automatically wraps them in appropriate visual cards

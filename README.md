@@ -2,7 +2,7 @@
 
 **TooLoo.ai** is a self-improving, multi-provider AI development platform powered by the **Synapsys Architecture**.
 
-## 🧠 Synapsys Architecture (v2.1)
+## 🧠 Synapsys Architecture (v2.2)
 
 The system is composed of three core modules working in unison:
 
@@ -46,7 +46,7 @@ This will launch the **Synapsys** system on **Port 4000**.
 
 ## 👁️ Cognitive Observability
 
-Synapsys v2.1 introduces advanced observability features:
+Synapsys v2.2 introduces advanced observability features:
 
 - **Thought Bubbles**: Real-time visualization of the agent's internal thought process (Planning, Tool Execution, Reflection) directly in the Chat UI.
 - **Trace Viewer**: Deep dive into system traces, event logs, and performance metrics.

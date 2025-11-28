@@ -353,6 +353,15 @@ export default class LLMProvider {
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
       try {
+        if (sessionId) {
+          bus.publish("precog", "precog:telemetry", {
+            type: "provider_status",
+            sessionId,
+            provider: p,
+            status: "processing",
+          });
+        }
+
         const startTime = Date.now();
         const result = await fns[p]();
         const latency = Date.now() - startTime;

@@ -54,6 +54,19 @@ export class SocketServer {
         }
       });
 
+      // Handle Sensory Input (Typing)
+      socket.on("sensory:input", (data: any) => {
+        try {
+          bus.publish("nexus", "sensory:input", {
+            input: data.input,
+            sessionId: data.sessionId,
+            timestamp: data.timestamp,
+          });
+        } catch (err) {
+          console.error(`[Socket] Error handling sensory input:`, err);
+        }
+      });
+
       socket.on("error", (err: any) => {
         console.error(`[Socket] Client error: ${socket.id}`, err);
       });

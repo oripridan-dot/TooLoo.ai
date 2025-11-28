@@ -120,7 +120,7 @@ POST /api/v1/system/self-patch
 *Last Updated: 2025-11-26T15:58:23.197Z*
 
 ### 📦 Project Status
-- **Version**: 2.1.314
+- **Version**: 2.2.57
 - **Scripts**: start, start:synapsys, dev, stop:all, test, test:watch, lint, format, clean, clean:deep, info, update-context, tooloo, tooloo:introspect, tooloo:awareness, tooloo:github:status, tooloo:github:info, tooloo:github:context, branch:status
 
 ### 📂 Module Structure (src/)

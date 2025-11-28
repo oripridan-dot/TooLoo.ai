@@ -101,8 +101,16 @@ const VisualCard = ({ type, data }) => {
 
     if (!imageSrc) {
       return (
-        <div className="text-red-400 text-sm p-4 bg-red-900/20 rounded border border-red-700">
-          Image source missing
+        <div className="my-4 w-full max-w-2xl animate-fade-in">
+            <div className="rounded-xl overflow-hidden border border-yellow-500/30 bg-yellow-900/10 p-4 flex items-center gap-3">
+                <div className="p-2 bg-yellow-500/20 rounded-full text-yellow-500">
+                    <span className="text-xl">⚠️</span>
+                </div>
+                <div>
+                    <div className="text-yellow-200 font-medium text-sm">Image Generation Pending or Failed</div>
+                    <div className="text-yellow-400/60 text-xs mt-1">{imageAlt}</div>
+                </div>
+            </div>
         </div>
       );
     }

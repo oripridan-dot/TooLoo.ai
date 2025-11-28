@@ -171,12 +171,12 @@ const DeSignStudio: React.FC = () => {
                   model:
                     newProvider === "openai"
                       ? "dall-e-3"
-                      : "gemini-2.0-flash-exp",
+                      : "imagen-4.0-generate-001",
                 });
               }}
               className="bg-[#0f1117] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"
             >
-              <option value="gemini">Nano Banana (Gemini)</option>
+              <option value="gemini">Imagen 3 (Google)</option>
               <option value="openai">DALL-E (OpenAI)</option>
             </select>
 
@@ -277,8 +277,8 @@ const DeSignStudio: React.FC = () => {
                 >
                   {settings.provider === "gemini" ? (
                     <>
-                      <option value="imagen-3.0-generate-001">
-                        Imagen 3 (High Quality)
+                      <option value="imagen-4.0-generate-001">
+                        Imagen 4 (High Quality)
                       </option>
                     </>
                   ) : (
