@@ -1,4 +1,4 @@
-// @version 2.2.50
+// @version 2.2.52
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -20,6 +20,27 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [socket, setSocket] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // Debounce utility
+  const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  };
+
+  // Sensory Input Emitter (Debounced)
+  const emitSensoryInput = useRef(
+    debounce((text, socketInstance) => {
+      if (socketInstance && text.length > 3) {
+        socketInstance.emit("sensory:input", {
+          input: text,
+          timestamp: Date.now(),
+        });
+      }
+    }, 300)
+  ).current;
 
   // Fetch history on mount
   useEffect(() => {
