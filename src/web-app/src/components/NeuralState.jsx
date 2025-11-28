@@ -1,4 +1,4 @@
-// @version 2.2.55
+// @version 2.2.56
 import React, { useState, useEffect } from "react";
 import { Activity, Brain, Database, Cpu } from "lucide-react";
 
@@ -69,6 +69,8 @@ const NeuralState = ({ socket, sessionId }) => {
           setActiveProvider(provider);
           setInsights((prev) => ({ ...prev, provider: provider }));
         }
+      } else if (event.type === "precog:intent_prediction") {
+        setIntent(event.payload);
       }
     };
 
@@ -180,6 +182,49 @@ const NeuralState = ({ socket, sessionId }) => {
         <button className="w-full py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-white/10 transition flex items-center justify-center gap-2">
           <Database className="w-3 h-3" /> Save Memory
         </button>
+
+        {/* Real-time Intent Section */}
+        {intent && (
+          <div className="mt-6">
+            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Brain className="w-3 h-3" /> Predicted Intent
+            </h2>
+            <div className="bg-gray-900/50 border border-white/5 p-3 rounded text-xs text-gray-400 space-y-2">
+              <div>
+                <span className="block text-cyan-400 mb-1 font-bold">Type</span>
+                <span className="capitalize">{intent.type}</span>
+              </div>
+              <div>
+                <span className="block text-cyan-400 mb-1 font-bold">
+                  Confidence
+                </span>
+                <div className="w-full bg-gray-800 rounded-full h-1.5 mt-1">
+                  <div
+                    className="bg-cyan-500 h-1.5 rounded-full"
+                    style={{ width: `${intent.confidence * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+              {intent.entities && intent.entities.length > 0 && (
+                <div>
+                  <span className="block text-cyan-400 mb-1 font-bold">
+                    Entities
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {intent.entities.map((e, i) => (
+                      <span
+                        key={i}
+                        className="bg-gray-800 px-1.5 py-0.5 rounded text-[10px]"
+                      >
+                        {e}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Insights Section */}
         <div className="mt-6">
