@@ -1,4 +1,4 @@
-// @version 2.2.71
+// @version 2.2.72
 import { useState } from "react";
 import Layout from "./components/Layout";
 import Dashboard from "./components/Dashboard";
@@ -8,15 +8,15 @@ import SelfImprovement from "./components/SelfImprovement";
 import ActivityFeed from "./components/ActivityFeed";
 import UICustomizer from "./components/UICustomizer";
 import Chat from "./components/Chat";
-import VisualDesigner from "./components/VisualDesigner";
 import DeSignStudio from "./components/DeSignStudio";
 import CortexMonitor from "./components/CortexMonitor";
 
 function App() {
   // Check if we are on the visuals page
+  /* eslint-disable-next-line no-undef */
   const isVisualsPage = window.location.pathname.includes("visuals.html");
   const [activeComponent, setActiveComponent] = useState(
-    isVisualsPage ? "Visual Designer" : "Dashboard",
+    isVisualsPage ? "DeSign Studio" : "Dashboard",
   );
   const [currentSessionId, setCurrentSessionId] = useState(null);
 
@@ -35,11 +35,17 @@ function App() {
       case "UI Customizer":
         return <UICustomizer />;
       case "Visual Designer":
-        return <VisualDesigner />;
+      case "DeSign Studio":
+        return <DeSignStudio />;
       case "Cortex Monitor":
         return <CortexMonitor />;
       default:
-        return <Chat currentSessionId={currentSessionId} setCurrentSessionId={setCurrentSessionId} />;
+        return (
+          <Chat
+            currentSessionId={currentSessionId}
+            setCurrentSessionId={setCurrentSessionId}
+          />
+        );
     }
   };
 
