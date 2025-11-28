@@ -1,4 +1,4 @@
-// @version 2.2.118
+// @version 2.2.119
 import React, { useState, useEffect } from "react";
 import { Server, Database, Share2, Cpu } from "lucide-react";
 import { getProviderLogo } from "./ProviderLogos";
@@ -70,7 +70,7 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
 
   const { providers, stats } = displayData;
   // Filter out unused providers (attempts === 0) unless we have very few, then show top ones
-  let providerList = (providers?.providers || []).filter(p => p.attempts > 0);
+  let providerList = (providers?.providers || []).filter((p) => p.attempts > 0);
   
   // If no providers have attempts (e.g. fresh start), show all to avoid empty graph
   if (providerList.length === 0) {
