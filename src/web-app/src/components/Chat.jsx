@@ -1,254 +1,183 @@
-// @version 2.2.53
+// @version 2.2.62
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import VisualRegistry from "./VisualRegistry";
 import PlanVisualizer from "./PlanVisualizer";
 import NeuralState from "./NeuralState";
 
-const Chat = () => {
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: "initial-welcome",
-      type: "assistant",
-      content: "Welcome to TooLoo.ai! How can I help you today?",
-      timestamp: new Date(),
-    },
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [socket, setSocket] = useState(null);
-  const messagesEndRef = useRef(null);
+const ThoughtBubble = ({ steps, isCollapsed, onToggle }) => {
+  if (!steps || steps.length === 0) return null;
 
-  // Debounce utility
-  const debounce = (func, wait) => {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
+  return (
+    <div className="my-2 border border-white/10 rounded-lg bg-gray-900/50 overflow-hidden text-sm">
+      <div 
+        className="px-3 py-2 bg-black/20 flex items-center gap-2 cursor-pointer hover:bg-black/30 select-none"
+        onClick={onToggle}
+      >
+        <span className="text-gray-400 font-medium flex-1">
+          {isCollapsed ? "Thinking Complete" : "Thinking..."}
+        </span>
+        {isCollapsed ? <ChevronRight size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+      </div>
+      {!isCollapsed && (
+        <div className="p-3 border-t border-white/10 flex flex-col gap-2">
+          {steps.map((step, idx) => (
+            <div key={idx} className="flex gap-2 items-start text-xs font-mono text-gray-400">
+              <span>{step.icon || "•"}</span>
+              <span>{step.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SourceBadge = ({ source, relevance }) => {
+  const getSourceType = (src) => {
+    if (src.includes("Code") || src.includes("src/")) return "🔧";
+    if (src.includes("Doc") || src.includes("README")) return "📚";
+    if (src.includes("Config") || src.includes("config")) return "⚙️";
+    if (src.includes("Test") || src.includes("test")) return "✅";
+    return "📖";
   };
 
-  // Sensory Input Emitter (Debounced)
-  const emitSensoryInput = useRef(
-    debounce((text, socketInstance) => {
-      if (socketInstance && text.length > 3) {
-        socketInstance.emit("sensory:input", {
-          input: text,
-          timestamp: Date.now(),
-        });
-      }
-    }, 300)
-  ).current;
+  const getSourceColor = (rel) => {
+    if (rel >= 0.7) return "bg-cyan-500/20 border-cyan-500 text-cyan-300";
+    if (rel >= 0.5) return "bg-blue-500/20 border-blue-500 text-blue-300";
+    return "bg-gray-700/20 border-gray-600 text-gray-400";
+  };
 
-  // Fetch history on mount
+  const filename = source.split("/").pop() || source;
+
+  return (
+    <div className={`flex items-center gap-2 px-2 py-1.5 rounded border text-xs ${getSourceColor(relevance)} transition hover:brightness-110 cursor-help`} title={source}>
+      <span>{getSourceType(source)}</span>
+      <span className="font-mono">[{Math.round(relevance * 100)}%]</span>
+      <span className="truncate max-w-[150px]">{filename}</span>
+    </div>
+  );
+};
+
+const Chat = ({ currentSessionId, setCurrentSessionId }) => {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [socket, setSocket] = useState(null);
+  const [responsePreference, setResponsePreference] = useState("context-driven");
+  const [activeThought, setActiveThought] = useState(null);
+  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  // Initialize Session
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await fetch("/api/v1/chat/history");
-        const data = await res.json();
-        if (data.ok && data.data.history && data.data.history.length > 0) {
-          // Transform history if needed, or just set it
-          // Ensure timestamps are Date objects
-          const history = data.data.history.map((msg) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          }));
-          setMessages(history);
-        }
-      } catch (err) {
-        console.error("Failed to fetch chat history:", err);
+    if (!currentSessionId) {
+      // Check if there's a last active session in localStorage
+      const lastSessionId = localStorage.getItem("tooloo_current_session_id");
+      if (lastSessionId && localStorage.getItem(`tooloo_session_${lastSessionId}`)) {
+        if (setCurrentSessionId) setCurrentSessionId(lastSessionId);
+      } else {
+        // Create new session
+        const sessionId = "session-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+        const newSession = {
+          id: sessionId,
+          name: `Session ${new Date().toLocaleTimeString()}`,
+          created: new Date(),
+          messages: [
+            {
+              id: "initial-welcome",
+              type: "assistant",
+              content: "Welcome to TooLoo.ai! How can I help you today?",
+              timestamp: new Date(),
+            }
+          ]
+        };
+        localStorage.setItem(`tooloo_session_${sessionId}`, JSON.stringify(newSession));
+        localStorage.setItem("tooloo_current_session_id", sessionId);
+        if (setCurrentSessionId) setCurrentSessionId(sessionId);
       }
-    };
+    }
+  }, [currentSessionId, setCurrentSessionId]);
 
-    fetchHistory();
-  }, []);
+  // Load Messages when Session Changes
+  useEffect(() => {
+    if (currentSessionId) {
+      const savedSession = localStorage.getItem(`tooloo_session_${currentSessionId}`);
+      if (savedSession) {
+        try {
+          const session = JSON.parse(savedSession);
+          // Ensure timestamps are Date objects
+          const loadedMessages = (session.messages || []).map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setMessages(loadedMessages);
+        } catch (e) {
+          console.error("Failed to load session", e);
+        }
+      } else {
+        setMessages([]);
+      }
+    }
+  }, [currentSessionId]);
 
+  // Save Messages to LocalStorage
+  useEffect(() => {
+    if (currentSessionId && messages.length > 0) {
+      const savedSession = localStorage.getItem(`tooloo_session_${currentSessionId}`);
+      if (savedSession) {
+        const session = JSON.parse(savedSession);
+        session.messages = messages;
+        localStorage.setItem(`tooloo_session_${currentSessionId}`, JSON.stringify(session));
+      }
+    }
+  }, [messages, currentSessionId]);
+
+  // Socket Connection
   useEffect(() => {
     const newSocket = io();
     setSocket(newSocket);
 
-    // Define handlers first, before using them
-    const handleVisualEvent = (event) => {
-      const payload = event.payload;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          type: "assistant",
-          content: "", // No text content, just visual
-          visual: payload.visual,
-          timestamp: new Date(),
-        },
-      ]);
-    };
-
-    const handlePlanningEvent = (event) => {
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const payload = event.payload;
-
-        // Find if we already have a message for this plan
-        const planId = payload.plan?.id || payload.planId;
-        const existingMsgIndex = newMessages.findIndex(
-          (m) => m.type === "plan" && m.planId === planId,
-        );
-
-        if (event.type === "planning:plan:start") {
-          if (existingMsgIndex === -1) {
-            // Add new plan message
-            newMessages.push({
-              id: `plan-${planId}`,
-              type: "plan",
-              planId: planId,
-              content: payload.plan, // Store the whole plan object
-              timestamp: new Date(),
-            });
-          }
-        } else if (existingMsgIndex !== -1) {
-          // Update existing plan message
-          const msg = newMessages[existingMsgIndex];
-          const plan = { ...msg.content }; // Clone plan
-
-          if (event.type === "planning:step:start") {
-            if (plan.steps && plan.steps[payload.index]) {
-              plan.steps[payload.index].status = "running";
-            }
-          } else if (event.type === "planning:step:complete") {
-            if (plan.steps) {
-              // Find step by ID or index
-              const stepIndex = plan.steps.findIndex(
-                (s) => s.id === payload.step.id,
-              );
-              if (stepIndex !== -1) {
-                plan.steps[stepIndex] = payload.step;
-                plan.steps[stepIndex].status = "completed";
-                plan.steps[stepIndex].result = payload.result;
-              }
-            }
-          } else if (event.type === "planning:step:failed") {
-            if (plan.steps) {
-              const stepIndex = plan.steps.findIndex(
-                (s) => s.id === payload.step.id,
-              );
-              if (stepIndex !== -1) {
-                plan.steps[stepIndex].status = "failed";
-                plan.steps[stepIndex].result = { error: payload.error };
-              }
-            }
-            plan.status = "failed";
-          } else if (event.type === "planning:plan:complete") {
-            plan.status = "completed";
-          }
-
-          newMessages[existingMsgIndex] = { ...msg, content: plan };
-        }
-
-        return newMessages;
-      });
-    };
-
-    newSocket.on("thinking", () => setIsLoading(true));
-
-    // Now use the handlers
     newSocket.on("synapsys:event", (event) => {
-      if (event.type.startsWith("planning:")) {
-        handlePlanningEvent(event);
+      if (event.type.startsWith("planning:") || event.type.startsWith("cortex:tool:")) {
+        setActiveThought(prev => {
+          const steps = prev?.steps || [];
+          let newStep = null;
+
+          if (event.type === "planning:plan:created") {
+            newStep = { icon: "📋", text: `Plan created: ${event.payload.plan.goal}` };
+          } else if (event.type === "cortex:tool:call") {
+            newStep = { icon: "🛠️", text: `Executing: ${event.payload.type}` };
+          } else if (event.type === "cortex:tool:result") {
+            newStep = { icon: event.payload.result.ok ? "✅" : "❌", text: `Result: ${event.payload.result.ok ? "Success" : "Failed"}` };
+          }
+
+          if (newStep) {
+            return { ...prev, steps: [...steps, newStep], isCollapsed: false };
+          }
+          return prev;
+        });
       } else if (event.type === "visual:generated") {
-        handleVisualEvent(event);
-      }
-    });
-
-    newSocket.on("response", (data) => {
-      // Check if response contains code-like content
-      const content = data.response || data.content || "";
-      let visual = data.visual;
-
-      // Auto-detect generated images (Markdown image with base64 data)
-      const imageMatch = content.match(/!\[([^\]]*)\]\((data:image\/[^)]+)\)/);
-      if (!visual && imageMatch) {
-        visual = {
-          type: "image",
-          data: {
-            src: imageMatch[2],
-            alt: imageMatch[1] || "Generated Image",
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            type: "assistant",
+            content: "",
+            visual: event.payload.visual,
+            timestamp: new Date(),
           },
-        };
+        ]);
       }
-      // Auto-detect code if not already marked as visual
-      else if (
-        !visual &&
-        content &&
-        (content.includes("{") ||
-          content.includes("<") ||
-          content.includes("function") ||
-          content.includes("const "))
-      ) {
-        visual = {
-          type: "code",
-          data: content,
-        };
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          type: "assistant",
-          content: content,
-          visual: visual,
-          timestamp: new Date(),
-        },
-      ]);
-      setIsLoading(false);
-    });
-
-    newSocket.on("error", (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          type: "error",
-          content: `Error: ${data.message}`,
-          timestamp: new Date(),
-        },
-      ]);
-      setIsLoading(false);
     });
 
     return () => newSocket.close();
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const clearHistory = async () => {
-    if (!confirm("Are you sure you want to clear the chat history?")) return;
-    try {
-      await fetch("/api/v1/chat/history", { method: "DELETE" });
-      setMessages([
-        {
-          id: "initial-welcome",
-          type: "assistant",
-          content: "History cleared. How can I help you?",
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (err) {
-      console.error("Failed to clear history:", err);
-    }
-  };
-
-  const handleStop = () => {
-    if (socket) {
-      socket.emit("stop_generation");
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
@@ -262,149 +191,212 @@ const Chat = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setActiveThought({ steps: [], isCollapsed: false });
 
-    if (socket) {
-      // Use 'generate' event to match backend socket.ts listener
-      const requestId = `req-${Date.now()}`;
-      socket.emit("generate", {
-        message: input,
-        requestId,
-        sessionId: null, // Or pass current session ID if available
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+
+    try {
+      const response = await fetch("/api/v1/chat/pro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.content,
+          sessionId: currentSessionId,
+          responseType: responsePreference,
+        }),
       });
+
+      const data = await response.json();
+      
+      if (data.ok && data.data) {
+        const responseData = data.data;
+        const assistantMessage = {
+          id: Date.now(),
+          type: "assistant",
+          content: responseData.response || responseData.message || "",
+          provider: responseData.provider,
+          sources: responseData.sources,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        throw new Error(data.error || "Unknown error");
+      }
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          type: "error",
+          content: `Error: ${err.message}`,
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+      setActiveThought(prev => prev ? { ...prev, isCollapsed: true } : null);
     }
   };
 
-  const handleInputChange = (e) => {
-    const newValue = e.target.value;
-    setInput(newValue);
-    if (socket) {
-      emitSensoryInput(newValue, socket);
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
+
+  const handleInput = (e) => {
+    setInput(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = e.target.scrollHeight + "px";
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, activeThought]);
 
   return (
     <div className="flex h-full bg-obsidian text-gray-100">
-      <div className="flex-1 flex flex-col h-full">
-        <div className="bg-[#0f1117] border-b border-gray-800 p-4 flex justify-between items-center shadow-sm z-10">
-          <h2 className="text-lg font-semibold text-gray-100">Chat Stream</h2>
-          <button
-            onClick={clearHistory}
-            className="text-xs text-red-400 hover:text-red-300 px-3 py-1 border border-red-900/50 rounded hover:bg-red-900/20 transition-colors"
-          >
-            Clear History
-          </button>
+      <div className="flex-1 flex flex-col h-full relative">
+        {/* Header */}
+        <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-gray-900/30 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="font-mono text-xs text-emerald-400">GEMINI PRO // ONLINE</span>
+          </div>
+          <div className="flex gap-4 items-center">
+             {/* Project Selector Placeholder */}
+             <button className="text-xs text-gray-400 hover:text-white flex items-center gap-2">
+               <span>Select Project</span>
+               <ChevronDown size={12} />
+             </button>
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+        {/* Chat Stream */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
           {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-lg lg:max-w-2xl px-4 py-2 rounded-lg ${
-                  msg.type === "user"
-                    ? "bg-blue-600 text-white"
-                    : msg.type === "assistant"
-                      ? "bg-[#1a1d24] text-gray-100 border border-gray-800"
-                      : msg.type === "plan"
-                        ? "w-full max-w-3xl bg-transparent p-0" // Special styling for plan
-                        : "bg-red-900/50 text-red-200 border border-red-900"
-                }`}
-              >
-                {msg.type === "plan" ? (
-                  <PlanVisualizer plan={msg.content} />
-                ) : msg.visual ? (
-                  <VisualRegistry
-                    type={msg.visual.type}
-                    data={msg.visual.data}
-                  />
-                ) : msg.content &&
-                  (msg.content.includes("{") ||
-                    msg.content.includes("<") ||
-                    msg.content.includes("function") ||
-                    msg.content.includes("const ")) &&
-                  msg.content.length > 50 ? (
-                  // Auto-detect code content and render as visual
-                  <VisualRegistry type="code" data={msg.content} />
-                ) : (
-                  <ReactMarkdown
-                    components={{
-                      code({ node, inline, className, children, ...props }) {
-                        const match = /language-(\w+)/.exec(className || "");
-                        return !inline && match ? (
-                          <div className="bg-[#0d1117] border border-gray-700 text-gray-200 p-3 rounded-md my-2 overflow-x-auto">
-                            <pre>
-                              <code className={className} {...props}>
-                                {children}
-                              </code>
-                            </pre>
-                          </div>
-                        ) : (
-                          <code
-                            className={`${className} bg-gray-800 px-1 py-0.5 rounded text-sm`}
-                            {...props}
-                          >
-                            {children}
-                          </code>
-                        );
-                      },
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                )}
-                <div className="text-xs opacity-60 mt-1 text-right text-gray-400">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
+            <div key={msg.id} className="flex gap-4 max-w-3xl mx-auto mb-6 animate-fade-in">
+              <div className={`w-8 h-8 rounded-full border flex items-center justify-center flex-shrink-0 text-xs ${msg.type === "user" ? "bg-gray-800 border-white/10" : "bg-cyan-500/20 border-cyan-500 text-cyan-400"}`}>
+                {msg.type === "user" ? "U" : "AI"}
+              </div>
+              <div className="space-y-1 w-full min-w-0">
+                <div className={`text-xs mono ${msg.type === "user" ? "text-gray-500" : "text-cyan-400"}`}>
+                  {msg.type === "user" ? "USER // NOW" : "TOOLOO // NOW"}
+                  {msg.provider && <span className="ml-2 opacity-50">via {msg.provider}</span>}
                 </div>
+                
+                <div className="text-gray-300 leading-relaxed">
+                  {msg.visual ? (
+                    <VisualRegistry type={msg.visual.type} data={msg.visual.data} />
+                  ) : (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code({ node, inline, className, children, ...props }) {
+                          const match = /language-(\w+)/.exec(className || "");
+                          const codeContent = String(children).replace(/\n$/, "");
+                          
+                          if (!inline && match) {
+                            if (match[1] === 'mermaid') {
+                                return <VisualRegistry type="diagram" data={codeContent} />;
+                            }
+                            return <VisualRegistry type="code" data={{ code: codeContent, language: match[1] }} />;
+                          }
+                          return (
+                            <code className={`${className} bg-gray-800 px-1 py-0.5 rounded text-sm`} {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                        img({ src, alt }) {
+                            return <VisualRegistry type="image" data={{ src, alt }} />;
+                        }
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  )}
+                </div>
+
+                {/* Sources */}
+                {msg.sources && msg.sources.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="text-[10px] uppercase text-gray-500 font-bold mb-3">📌 Knowledge Sources</div>
+                    <div className="flex flex-wrap gap-2">
+                      {msg.sources.map((s, i) => (
+                        <SourceBadge key={i} source={s.source} relevance={s.relevance} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="max-w-lg lg:max-w-2xl px-4 py-2 rounded-lg bg-[#1a1d24] text-gray-100 border border-gray-800">
-                <div className="flex items-center">
-                  <Loader2 className="animate-spin mr-2 text-blue-400" />
-                  <span className="text-gray-300">
-                    TooLoo.ai is thinking...
-                  </span>
-                  <button
-                    onClick={handleStop}
-                    className="ml-4 text-xs text-red-400 hover:text-red-300 underline"
-                  >
-                    Stop
-                  </button>
-                </div>
-              </div>
+
+          {/* Active Thought Bubble */}
+          {isLoading && activeThought && (
+            <div className="max-w-3xl mx-auto pl-12">
+              <ThoughtBubble 
+                steps={activeThought.steps} 
+                isCollapsed={activeThought.isCollapsed} 
+                onToggle={() => setActiveThought(prev => ({ ...prev, isCollapsed: !prev.isCollapsed }))} 
+              />
             </div>
           )}
+
+          {isLoading && !activeThought && (
+             <div className="flex justify-start max-w-3xl mx-auto pl-12">
+                <div className="flex items-center text-gray-400 text-sm">
+                  <Loader2 className="animate-spin mr-2 w-4 h-4 text-cyan-400" />
+                  Thinking...
+                </div>
+             </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 border-t border-gray-800 bg-[#0f1117]"
-        >
-          <div className="relative">
-            <input
-              type="text"
+
+        {/* Input Matrix */}
+        <div className="p-6 border-t border-white/10 bg-gray-900/50 backdrop-blur flex-shrink-0">
+          <div className="max-w-3xl mx-auto relative">
+            <textarea
+              ref={textareaRef}
               value={input}
-              onChange={handleInputChange}
-              placeholder="Ask TooLoo.ai anything..."
-              className="w-full p-3 pr-12 bg-[#1a1d24] border border-gray-700 text-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder="Input directive for Synapsys..."
+              className="w-full bg-gray-950/80 border border-white/10 rounded-lg p-4 pl-4 pr-32 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-600 resize-none min-h-[6rem] max-h-[20rem] font-mono text-sm"
               disabled={isLoading}
             />
-            <button
-              type="submit"
-              className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-blue-400 transition-colors"
-              disabled={isLoading}
-            >
-              {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
-            </button>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <select
+                value={responsePreference}
+                onChange={(e) => setResponsePreference(e.target.value)}
+                className="bg-gray-900 border border-white/10 text-gray-400 text-xs rounded px-2 py-1 focus:outline-none"
+              >
+                <option value="context-driven">Auto</option>
+                <option value="detailed">Detailed</option>
+                <option value="concise">Concise</option>
+                <option value="code">Code</option>
+              </select>
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold tracking-wide transition flex items-center gap-2"
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className="animate-spin w-3 h-3" /> : "EXECUTE"}
+              </button>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
 
       {/* Right Sidebar: Neural State */}
-      <NeuralState socket={socket} />
+      <NeuralState socket={socket} sessionId={currentSessionId} />
     </div>
   );
 };
