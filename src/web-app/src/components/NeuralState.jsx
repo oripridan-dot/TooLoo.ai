@@ -1,82 +1,79 @@
-// @version 2.2.90
-import React, { useState, useEffect } from "react";
-import { Activity, Brain, Database, Cpu } from "lucide-react";
+// @version 2.2.92
+import React, { useState, useEffect, useRef } from "react";
+import { Activity, Brain, Database, Cpu, Zap, Terminal } from "lucide-react";
+import CortexMonitor from "./CortexMonitor";
+
+const SystemLog = ({ events }) => {
+  const endRef = useRef(null);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [events]);
+
+  return (
+    <div className="font-mono text-[10px] h-32 overflow-y-auto space-y-1 p-2 bg-black/20 rounded border border-white/5">
+      {events.length === 0 && <div className="text-gray-600 italic">System idle...</div>}
+      {events.map((ev, i) => (
+        <div key={i} className="flex gap-2 animate-fade-in">
+          <span className="text-gray-500">{ev.time}</span>
+          <span className={`${ev.color || 'text-gray-300'}`}>{ev.message}</span>
+        </div>
+      ))}
+      <div ref={endRef} />
+    </div>
+  );
+};
 
 const NeuralState = ({ socket, sessionId }) => {
-  const [providers, setProviders] = useState([]);
   const [activeProvider, setActiveProvider] = useState(null);
+  const [systemEvents, setSystemEvents] = useState([]);
   const [memory, setMemory] = useState({ short: "", long: "" });
   const [activeTab, setActiveTab] = useState("short");
-  const [insights, setInsights] = useState({ provider: "-", quality: "-" });
   const [intent, setIntent] = useState(null);
-
-  // Initial Fetch
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch("/api/v1/providers/status");
-        const data = await res.json();
-        if (data.ok) {
-          // Filter for specific providers: Gemini, OpenAI, Claude
-          const targetProviders = ['gemini', 'openai', 'anthropic', 'claude'];
-          const filteredProviders = (data.data.providers || []).filter(p => 
-            targetProviders.some(t => p.id.toLowerCase().includes(t))
-          );
-          setProviders(filteredProviders);
-          
-          // Set active provider if one is busy/processing, otherwise default
-          const active =
-            filteredProviders.find((p) => p.status === "Busy") ||
-            filteredProviders.find((p) => p.id === "gemini");
-          setActiveProvider(active?.id);
-        }
-      } catch (e) {
-        console.error("Failed to fetch provider status", e);
-      }
-    };
-
-    fetchStatus();
-    // Poll every 10s as backup
-    const interval = setInterval(fetchStatus, 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Socket Listeners
   useEffect(() => {
     if (!socket) return;
 
+    const addEvent = (msg, color = "text-gray-300") => {
+      setSystemEvents(prev => [...prev.slice(-19), {
+        time: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' }),
+        message: msg,
+        color
+      }]);
+    };
+
     const handleEvent = (event) => {
       // Filter by session if provided
-      if (
-        sessionId &&
-        event.payload?.sessionId &&
-        event.payload.sessionId !== sessionId
-      ) {
+      if (sessionId && event.payload?.sessionId && event.payload.sessionId !== sessionId) {
         return;
       }
 
+      // Map events to log messages
       if (event.type === "precog:telemetry") {
         const { provider, status, latency } = event.payload;
-
-        setProviders((prev) =>
-          prev.map((p) => {
-            if (p.id.includes(provider)) {
-              return {
-                ...p,
-                status: status === "success" ? "Ready" : "Error",
-                latency,
-              };
-            }
-            return p;
-          }),
-        );
-
         if (status === "processing") {
           setActiveProvider(provider);
-          setInsights((prev) => ({ ...prev, provider: provider }));
+          addEvent(`Consulting ${provider}...`, "text-cyan-400");
+        } else if (status === "success") {
+          setActiveProvider(null);
+          addEvent(`${provider} responded (${latency}ms)`, "text-green-400");
+        } else if (status === "error") {
+          setActiveProvider(null);
+          addEvent(`${provider} failed`, "text-red-400");
         }
-      } else if (event.type === "precog:intent_prediction") {
+      } 
+      else if (event.type === "precog:intent_prediction") {
         setIntent(event.payload);
+        addEvent(`Intent: ${event.payload.type}`, "text-purple-400");
+      }
+      else if (event.type === "planning:plan:created") {
+        addEvent("Plan created", "text-yellow-400");
+      }
+      else if (event.type === "cortex:tool:call") {
+        addEvent(`Tool: ${event.payload.type}`, "text-blue-400");
+      }
+      else if (event.type === "thought") {
+         addEvent(event.payload.text, "text-gray-400 italic");
       }
     };
 
@@ -84,71 +81,32 @@ const NeuralState = ({ socket, sessionId }) => {
     return () => socket.off("synapsys:event", handleEvent);
   }, [socket, sessionId]);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Ready":
-        return "bg-emerald-500";
-      case "Busy":
-        return "bg-cyan-500";
-      case "Error":
-        return "bg-red-500";
-      default:
-        return "bg-gray-700";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "Ready":
-        return "text-emerald-500";
-      case "Busy":
-        return "text-cyan-400 animate-pulse";
-      case "Error":
-        return "text-red-500";
-      default:
-        return "text-gray-500";
-    }
-  };
-
   return (
     <aside className="w-72 border-l border-white/10 bg-gray-900/30 hidden xl:flex flex-col h-full">
-      {/* Neural State Section */}
-      <div className="p-4 border-b border-white/10">
-        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Activity className="w-3 h-3" /> Neural State
-        </h2>
-
-        <div className="space-y-4">
-          {providers.map((p) => (
-            <div key={p.id} className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span
-                  className={`font-medium ${activeProvider === p.id ? "text-white" : "text-gray-400"}`}
-                >
-                  {p.name}
-                </span>
-                <span className={getStatusText(p.status)}>{p.status}</span>
-              </div>
-              <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    p.status === "Busy" 
-                      ? "bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 animate-progress" 
-                      : getStatusColor(p.status)
-                  }`}
-                  style={{
-                    width:
-                      p.status === "Busy"
-                        ? "100%"
-                        : p.status === "Ready"
-                          ? "5%"
-                          : "0%",
-                  }}
-                ></div>
-              </div>
+      {/* Cortex Monitor Visualization */}
+      <div className="h-64 border-b border-white/10 relative overflow-hidden bg-black/20">
+         <div className="absolute inset-0 flex items-center justify-center scale-75 origin-top">
+            <CortexMonitor />
+         </div>
+         {/* Overlay Status */}
+         <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
+            <div className="bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-mono text-cyan-400 border border-cyan-900/50">
+               SYNAPSYS_V2.2
             </div>
-          ))}
-        </div>
+            {activeProvider && (
+                <div className="bg-cyan-900/80 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-white animate-pulse border border-cyan-500">
+                    {activeProvider.toUpperCase()} ACTIVE
+                </div>
+            )}
+         </div>
+      </div>
+
+      {/* Real-time Log */}
+      <div className="p-4 border-b border-white/10">
+        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+          <Terminal className="w-3 h-3" /> System Activity
+        </h2>
+        <SystemLog events={systemEvents} />
       </div>
 
       {/* Context Memory Section */}
@@ -189,73 +147,26 @@ const NeuralState = ({ socket, sessionId }) => {
           placeholder={`${activeTab === "short" ? "Short" : "Long"}-term context...`}
         />
 
-        <button className="w-full py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-white/10 transition flex items-center justify-center gap-2">
-          <Database className="w-3 h-3" /> Save Memory
-        </button>
-
         {/* Real-time Intent Section */}
         {intent && (
-          <div className="mt-6">
-            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Brain className="w-3 h-3" /> Predicted Intent
+          <div className="mt-4">
+            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Zap className="w-3 h-3 text-yellow-500" /> Active Intent
             </h2>
-            <div className="bg-gray-900/50 border border-white/5 p-3 rounded text-xs text-gray-400 space-y-2">
-              <div>
-                <span className="block text-cyan-400 mb-1 font-bold">Type</span>
-                <span className="capitalize">{intent.type}</span>
+            <div className="bg-gray-900/50 border border-white/5 p-3 rounded text-xs text-gray-400 space-y-1">
+              <div className="flex justify-between">
+                <span className="text-cyan-400 font-bold">Type</span>
+                <span className="capitalize text-white">{intent.type}</span>
               </div>
-              <div>
-                <span className="block text-cyan-400 mb-1 font-bold">
-                  Confidence
-                </span>
-                <div className="w-full bg-gray-800 rounded-full h-1.5 mt-1">
+              <div className="w-full bg-gray-800 rounded-full h-1 mt-1">
                   <div
-                    className="bg-cyan-500 h-1.5 rounded-full"
+                    className="bg-cyan-500 h-1 rounded-full transition-all duration-500"
                     style={{ width: `${intent.confidence * 100}%` }}
                   ></div>
-                </div>
               </div>
-              {intent.entities && intent.entities.length > 0 && (
-                <div>
-                  <span className="block text-cyan-400 mb-1 font-bold">
-                    Entities
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {intent.entities.map((e, i) => (
-                      <span
-                        key={i}
-                        className="bg-gray-800 px-1.5 py-0.5 rounded text-[10px]"
-                      >
-                        {e}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
-
-        {/* Insights Section */}
-        <div className="mt-6">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Cpu className="w-3 h-3" /> Insights
-          </h2>
-          <div className="space-y-2">
-            <div className="bg-gray-900/50 border border-white/5 p-3 rounded text-xs text-gray-400">
-              <span className="block text-cyan-400 mb-1 font-bold">
-                Active Provider
-              </span>
-              <span>{insights.provider}</span>
-            </div>
-            <div className="bg-gray-900/50 border border-white/5 p-3 rounded text-xs text-gray-400">
-              <span className="block text-cyan-400 mb-1 font-bold">
-                Quality Score
-              </span>
-              <span>{insights.quality}</span>
-            </div>
-          </div>
-        </div>
       </div>
     </aside>
   );
