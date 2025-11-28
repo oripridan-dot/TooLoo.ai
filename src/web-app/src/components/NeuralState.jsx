@@ -1,8 +1,9 @@
-// @version 2.2.105
+// @version 2.2.107
 import React, { useState, useEffect, useRef } from "react";
 import { Brain, Zap, Terminal, Activity as ActivityIcon } from "lucide-react";
 import CortexMonitor from "./CortexMonitor";
 import PlanVisualizer from "./PlanVisualizer";
+import VisualRegistry from "./VisualRegistry";
 
 const SystemLog = ({ events }) => {
   const endRef = useRef(null);
@@ -35,6 +36,7 @@ const NeuralState = ({ socket, sessionId }) => {
   const [taskHeadline, setTaskHeadline] = useState("Awaiting instructions...");
   const [taskProgress, setTaskProgress] = useState(0);
   const [activePlan, setActivePlan] = useState(null);
+  const [lastVisual, setLastVisual] = useState(null);
 
   // Initial Memory Fetch
   useEffect(() => {
@@ -141,6 +143,9 @@ const NeuralState = ({ socket, sessionId }) => {
         setActivePlan(prev => prev ? { ...prev, status: 'completed' } : null);
       } else if (event.type === "cortex:tool:call") {
         addEvent(`Tool: ${event.payload.type}`, "text-blue-400");
+      } else if (event.type === "visual:generated") {
+        setLastVisual(event.payload.visual);
+        setActiveTab("visuals");
       } else if (event.type === "thought") {
         addEvent(event.payload.text, "text-gray-400 italic");
       }
@@ -233,16 +238,40 @@ const NeuralState = ({ socket, sessionId }) => {
           >
             Long-Term
           </button>
+          <button
+            onClick={() => setActiveTab("visuals")}
+            className={`flex-1 py-1 text-xs rounded border transition-colors ${
+              activeTab === "visuals"
+                ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                : "bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700"
+            }`}
+          >
+            Visuals
+          </button>
         </div>
 
-        <textarea
-          value={memory[activeTab]}
-          onChange={(e) =>
-            setMemory({ ...memory, [activeTab]: e.target.value })
-          }
-          className="w-full h-32 bg-gray-950/50 border border-white/10 rounded p-2 text-xs text-gray-400 font-mono resize-none focus:outline-none focus:border-cyan-500/30 mb-2"
-          placeholder={`${activeTab === "short" ? "Short" : "Long"}-term context...`}
-        />
+        {activeTab === "visuals" ? (
+          <div className="w-full h-32 bg-gray-950/50 border border-white/10 rounded p-2 overflow-y-auto mb-2">
+            {lastVisual ? (
+              <div className="scale-75 origin-top-left w-[133%]">
+                <VisualRegistry type={lastVisual.type} data={lastVisual.data} />
+              </div>
+            ) : (
+              <div className="text-gray-500 text-xs italic text-center mt-10">
+                No active visuals
+              </div>
+            )}
+          </div>
+        ) : (
+          <textarea
+            value={memory[activeTab]}
+            onChange={(e) =>
+              setMemory({ ...memory, [activeTab]: e.target.value })
+            }
+            className="w-full h-32 bg-gray-950/50 border border-white/10 rounded p-2 text-xs text-gray-400 font-mono resize-none focus:outline-none focus:border-cyan-500/30 mb-2"
+            placeholder={`${activeTab === "short" ? "Short" : "Long"}-term context...`}
+          />
+        )}
 
         {/* Real-time Intent Section */}
         {intent && (
