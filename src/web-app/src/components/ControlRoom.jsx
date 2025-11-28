@@ -1,5 +1,6 @@
-// @version 2.2.108
+// @version 2.2.110
 import React, { useState, useEffect } from 'react';
+import { Github, GitBranch, GitPullRequest, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 const ControlRoom = () => {
   const [activeTab, setActiveTab] = useState('providers');
@@ -7,6 +8,7 @@ const ControlRoom = () => {
   const [error, setError] = useState(null);
   const [providerData, setProviderData] = useState(null);
   const [systemData, setSystemData] = useState(null);
+  const [githubData, setGithubData] = useState(null);
 
   const fetchProviderStatus = async () => {
     setLoading(true);
@@ -21,7 +23,7 @@ const ControlRoom = () => {
     } catch (e) {
       console.error("Provider fetch error:", e);
       setError(e.message);
-      setProviderData({ available: [], active: null });
+      setProviderData({ providers: [], active: null });
     } finally {
       setLoading(false);
     }
@@ -41,11 +43,41 @@ const ControlRoom = () => {
     }
   };
 
+  const fetchGithubStatus = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [healthRes, infoRes, issuesRes] = await Promise.all([
+        fetch('/api/v1/github/health'),
+        fetch('/api/v1/github/info'),
+        fetch('/api/v1/github/issues?limit=5')
+      ]);
+
+      const health = await healthRes.json();
+      const info = await infoRes.json();
+      const issues = await issuesRes.json();
+
+      setGithubData({
+        connected: health.ok && health.status === 'connected',
+        details: health.details,
+        repo: info.info,
+        issues: issues.issues || []
+      });
+    } catch (e) {
+      console.error("GitHub fetch error:", e);
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'providers') {
       fetchProviderStatus();
     } else if (activeTab === 'system') {
       fetchSystemStatus();
+    } else if (activeTab === 'github') {
+      fetchGithubStatus();
     }
   }, [activeTab]);
 
