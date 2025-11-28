@@ -1,4 +1,4 @@
-// @version 2.1.385
+// @version 2.2.64
 import React, { useEffect, useRef, useState } from "react";
 import {
   Info,
@@ -98,6 +98,14 @@ const VisualCard = ({ type, data }) => {
         : "Generated Image";
     const mimeType =
       typeof data === "object" ? data.mimeType || "image/png" : "image/png";
+
+    if (!imageSrc) {
+      return (
+        <div className="text-red-400 text-sm p-4 bg-red-900/20 rounded border border-red-700">
+          Image source missing
+        </div>
+      );
+    }
 
     // Build the full data URL if needed
     const fullSrc = imageSrc.startsWith("data:")
