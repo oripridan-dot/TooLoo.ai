@@ -1,4 +1,4 @@
-// @version 2.1.377
+// @version 2.2.109
 /**
  * Cross-Goal Knowledge Graph Engine
  * Tracks relationships between goals, tasks, and provider performance across different contexts
@@ -522,6 +522,21 @@ export default class KnowledgeGraphEngine {
         goalProviders.push({
           provider: providerId,
           ...goalPerf,
+        });
+      } else {
+        // Include provider with default/empty stats so it shows up in the monitor
+        goalProviders.push({
+          provider: providerId,
+          attempts: 0,
+          successes: 0,
+          totalTime: 0,
+          totalCost: 0,
+          qualitySum: 0,
+          avgTime: 0,
+          avgCost: 0,
+          avgQuality: 0,
+          successRate: 0,
+          lastAttempt: null,
         });
       }
     }
