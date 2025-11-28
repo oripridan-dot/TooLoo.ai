@@ -1,4 +1,4 @@
-// @version 2.2.98
+// @version 2.2.99
 import path from "path";
 import fs from "fs";
 import fetch from "node-fetch";
@@ -663,6 +663,8 @@ export class TrainingService extends EventEmitter {
       providerData.totalRequests;
     providerData.totalCost += costEstimate;
 
+    this.persistMetrics().catch(console.error);
+
     return { message: "Metrics recorded" };
   }
 
@@ -687,6 +689,8 @@ export class TrainingService extends EventEmitter {
 
     this.feedbackStore.interactions.push(interaction);
     this.feedbackStore.lastUpdated = Date.now();
+
+    this.persistMetrics().catch(console.error);
 
     return { message: "Interaction tracked" };
   }
