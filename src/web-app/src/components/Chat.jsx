@@ -1,4 +1,4 @@
-// @version 2.2.48
+// @version 2.2.49
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -237,7 +237,13 @@ const Chat = () => {
     setIsLoading(true);
 
     if (socket) {
-      socket.emit("message", { message: input });
+      // Use 'generate' event to match backend socket.ts listener
+      const requestId = `req-${Date.now()}`;
+      socket.emit("generate", { 
+        message: input,
+        requestId,
+        sessionId: null // Or pass current session ID if available
+      });
     }
   };
 
