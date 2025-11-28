@@ -1,4 +1,4 @@
-// @version 2.2.93
+// @version 2.2.96
 import React, { useState, useEffect, useRef } from "react";
 import { Brain, Zap, Terminal } from "lucide-react";
 import CortexMonitor from "./CortexMonitor";
@@ -29,6 +29,35 @@ const NeuralState = ({ socket, sessionId }) => {
   const [memory, setMemory] = useState({ short: "", long: "" });
   const [activeTab, setActiveTab] = useState("short");
   const [intent, setIntent] = useState(null);
+  const [taskHeadline, setTaskHeadline] = useState("Awaiting instructions...");
+  const [taskProgress, setTaskProgress] = useState(0);
+
+  // Initial Memory Fetch
+  useEffect(() => {
+    const fetchMemory = async () => {
+      try {
+        // Try to get active project or default
+        const res = await fetch('/api/v1/projects'); 
+        const data = await res.json();
+        if (data.ok && data.projects && data.projects.length > 0) {
+           // For now, just grab the first one or a specific one if we had ID
+           // In a real scenario, we'd want the *active* project
+           const pid = data.projects[0].id;
+           const memRes = await fetch(`/api/v1/projects/${pid}`);
+           const memData = await memRes.json();
+           if (memData.ok && memData.project && memData.project.memory) {
+              setMemory({
+                 short: memData.project.memory.shortTerm || "",
+                 long: memData.project.memory.longTerm || ""
+              });
+           }
+        }
+      } catch (e) {
+        console.error("Memory fetch failed", e);
+      }
+    };
+    fetchMemory();
+  }, []);
 
   // Socket Listeners
   useEffect(() => {
@@ -66,8 +95,26 @@ const NeuralState = ({ socket, sessionId }) => {
         setIntent(event.payload);
         addEvent(`Intent: ${event.payload.type}`, "text-purple-400");
       }
+      else if (event.type === "planning:intent") {
+         setTaskHeadline(event.payload.goal || "Processing...");
+         setTaskProgress(0);
+         addEvent(`New Goal: ${event.payload.goal}`, "text-yellow-400 font-bold");
+      }
+      else if (event.type === "nexus:orchestrator_plan_update") {
+         const queue = event.payload.queue || [];
+         // Simple progress estimation: if we have a queue, we are in progress. 
+         // Ideally we need total steps vs current step.
+         // For now, let's just animate it a bit or set it to 50% if busy
+         setTaskProgress(queue.length > 0 ? 50 : 100);
+      }
       else if (event.type === "planning:plan:created") {
         addEvent("Plan created", "text-yellow-400");
+        setTaskProgress(10);
+      }
+      else if (event.type === "planning:plan:completed") {
+        addEvent("Plan completed", "text-green-400 font-bold");
+        setTaskProgress(100);
+        setTimeout(() => setTaskProgress(0), 3000);
       }
       else if (event.type === "cortex:tool:call") {
         addEvent(`Tool: ${event.payload.type}`, "text-blue-400");
@@ -85,8 +132,8 @@ const NeuralState = ({ socket, sessionId }) => {
     <aside className="w-72 border-l border-white/10 bg-gray-900/30 hidden xl:flex flex-col h-full">
       {/* Cortex Monitor Visualization */}
       <div className="h-64 border-b border-white/10 relative overflow-hidden bg-black/20">
-         <div className="absolute inset-0 flex items-center justify-center scale-75 origin-top">
-            <CortexMonitor />
+         <div className="absolute inset-0">
+            <CortexMonitor compact={true} activeProvider={activeProvider} />
          </div>
          {/* Overlay Status */}
          <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
@@ -106,6 +153,18 @@ const NeuralState = ({ socket, sessionId }) => {
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
           <Terminal className="w-3 h-3" /> System Activity
         </h2>
+        
+        {/* Task Progress Bar */}
+        <div className="mb-3 bg-gray-900/50 p-2 rounded border border-white/5">
+           <div className="text-[10px] text-cyan-300 mb-1 truncate font-mono">{taskHeadline}</div>
+           <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                 className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
+                 style={{ width: `${taskProgress}%` }}
+              />
+           </div>
+        </div>
+
         <SystemLog events={systemEvents} />
       </div>
 

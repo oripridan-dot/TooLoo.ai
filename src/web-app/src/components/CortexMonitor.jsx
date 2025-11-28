@@ -1,6 +1,7 @@
-// @version 2.2.95
-import React, { useEffect, useState } from 'react';
+// @version 2.2.96
+import React, { useState, useEffect } from 'react';
 import { Activity, Server, Database, Share2 } from 'lucide-react';
+import { getProviderLogo } from './ProviderLogos';
 
 const CortexMonitor = ({ compact = false, activeProvider = null }) => {
   const [data, setData] = useState(null);
@@ -126,15 +127,11 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
                   className={isActive ? "animate-pulse" : ""}
                 />
                 
-                {/* Node */}
-                <circle 
-                  cx={x} cy={y} 
-                  r={isActive ? 18 : 14} 
-                  fill="#0a0a0a" 
-                  stroke={edgeColor} 
-                  strokeWidth={isActive ? 2 : 1}
-                  className={`hover:fill-gray-900 cursor-pointer transition-colors ${isActive ? 'filter drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]' : ''}`}
-                />
+                {/* Node (Logo) */}
+                <g transform={`translate(${x - (isActive ? 12 : 10)}, ${y - (isActive ? 12 : 10)})`}>
+                   {getProviderLogo(p.provider, `w-${isActive ? 6 : 5} h-${isActive ? 6 : 5} ${isActive ? 'text-white filter drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]' : 'text-gray-500'}`)}
+                </g>
+
                 <text x={x} y={y + 25} textAnchor="middle" fill={isActive ? "#fff" : "#94a3b8"} fontSize="9" fontFamily="monospace" fontWeight={isActive ? "bold" : "normal"}>
                   {p.provider.toUpperCase()}
                 </text>
