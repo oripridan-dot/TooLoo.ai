@@ -1,4 +1,4 @@
-// @version 2.2.89
+// @version 2.2.90
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -98,9 +98,9 @@ export default class LLMProvider {
       get() {
         return {
           deepseek: env("DEEPSEEK_MODEL", "deepseek-chat"),
-          anthropic: env("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
-          openai: env("OPENAI_MODEL", "gpt-4o"),
-          gemini: env("GEMINI_MODEL", "gemini-2.0-flash-exp"), // Gemini 2.0 Flash (Latest)
+          anthropic: env("ANTHROPIC_MODEL", "claude-sonnet-4.5"), // Default to Sonnet 4.5
+          openai: env("OPENAI_MODEL", "gpt-5"), // Default to GPT-5
+          gemini: env("GEMINI_MODEL", "gemini-3-pro-preview"), // Default to Gemini 3 Pro
           localai: env("LOCALAI_MODEL", "gpt-4"),
           openinterpreter: env("OI_MODEL", "openinterpreter/default"),
           huggingface: env("HF_MODEL", "microsoft/DialoGPT-large"),
@@ -127,16 +127,17 @@ export default class LLMProvider {
 
   getProviderStatus() {
     const providerList = [
-      { id: "gemini", name: "Gemini 2.0 Flash", model: "gemini-2.0-flash-exp" },
-      { id: "gemini-pro", name: "Gemini 1.5 Pro", model: "gemini-1.5-pro" },
-      { id: "anthropic-sonnet", name: "Claude 3.5 Sonnet", model: "claude-3-5-sonnet-20241022" },
-      { id: "anthropic-haiku", name: "Claude 3.5 Haiku", model: "claude-3-5-haiku-20241022" },
-      { id: "anthropic-opus", name: "Claude 3 Opus", model: "claude-3-opus-20240229" },
-      { id: "openai-gpt4o", name: "GPT-4o", model: "gpt-4o" },
-      { id: "openai-gpt4o-mini", name: "GPT-4o Mini", model: "gpt-4o-mini" },
-      { id: "openai-o1", name: "o1-preview", model: "o1-preview" },
-      { id: "deepseek", name: "DeepSeek V3", model: "deepseek-chat" },
-      { id: "localai", name: "LocalAI", model: "gpt-4" },
+      { id: "anthropic-haiku-4.5", name: "Claude Haiku 4.5", model: "claude-haiku-4.5" },
+      { id: "anthropic-opus-4.5", name: "Claude Opus 4.5 (Preview)", model: "claude-opus-4.5-preview" },
+      { id: "anthropic-sonnet-4", name: "Claude Sonnet 4", model: "claude-sonnet-4" },
+      { id: "anthropic-sonnet-4.5", name: "Claude Sonnet 4.5", model: "claude-sonnet-4.5" },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", model: "gemini-2.5-pro" },
+      { id: "gemini-3-pro", name: "Gemini 3 Pro (Preview)", model: "gemini-3-pro-preview" },
+      { id: "openai-gpt-5", name: "GPT-5", model: "gpt-5" },
+      { id: "openai-gpt-5-codex", name: "GPT-5-Codex (Preview)", model: "gpt-5-codex-preview" },
+      { id: "openai-gpt-5.1", name: "GPT-5.1 (Preview)", model: "gpt-5.1-preview" },
+      { id: "openai-gpt-5.1-codex", name: "GPT-5.1-Codex (Preview)", model: "gpt-5.1-codex-preview" },
+      { id: "openai-gpt-5.1-codex-mini", name: "GPT-5.1-Codex-Mini (Preview)", model: "gpt-5.1-codex-mini-preview" },
     ];
 
     return providerList.map((p) => {

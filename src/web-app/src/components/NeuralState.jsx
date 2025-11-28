@@ -1,4 +1,4 @@
-// @version 2.2.89
+// @version 2.2.90
 import React, { useState, useEffect } from "react";
 import { Activity, Brain, Database, Cpu } from "lucide-react";
 
@@ -131,7 +131,11 @@ const NeuralState = ({ socket, sessionId }) => {
               </div>
               <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-500 ${getStatusColor(p.status)}`}
+                  className={`h-full transition-all duration-500 ${
+                    p.status === "Busy" 
+                      ? "bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 animate-progress" 
+                      : getStatusColor(p.status)
+                  }`}
                   style={{
                     width:
                       p.status === "Busy"
