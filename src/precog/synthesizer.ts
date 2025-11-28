@@ -1,9 +1,13 @@
-// @version 2.1.236
+// @version 2.2.50
 import { generateLLM } from "./providers/llm-provider.js";
 import { TOOLOO_PERSONA } from "../cortex/persona.js";
 
 export class Synthesizer {
-  async synthesize(prompt: string, responseType: string = "context-driven") {
+  async synthesize(
+    prompt: string,
+    responseType: string = "context-driven",
+    sessionId?: string,
+  ) {
     console.log("[Synthesizer] Starting multi-provider synthesis...");
 
     const providers = ["gemini", "anthropic", "openai"];
@@ -16,6 +20,7 @@ export class Synthesizer {
           provider,
           system: TOOLOO_PERSONA,
           maxTokens: 1024,
+          sessionId,
         });
         return { provider, response, success: true };
       } catch (error: any) {
@@ -80,6 +85,7 @@ Return ONLY the synthesized response.
         provider: "gemini", // Use Gemini as the synthesizer
         system: TOOLOO_PERSONA,
         maxTokens: 2048,
+        sessionId,
       });
 
       return {

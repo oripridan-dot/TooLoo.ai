@@ -1,4 +1,4 @@
-// @version 2.1.321
+// @version 2.2.50
 
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
@@ -27,7 +27,7 @@ export class SocketServer {
       // When client sends 'generate' request (chat message), store the socket for later routing
       socket.on("generate", (data: any) => {
         try {
-          const { message, requestId } = data;
+          const { message, requestId, sessionId } = data;
           console.log(
             `[Socket] Received generate request: ${requestId} - Message: "${message.substring(0, 50)}..."`,
           );
@@ -44,6 +44,7 @@ export class SocketServer {
           bus.publish("nexus", "nexus:chat_request", {
             message,
             requestId,
+            sessionId,
             projectId: null,
             responseType: "chat",
           });
@@ -97,7 +98,9 @@ export class SocketServer {
       // Forward all Cortex, Visual, System, and Planning events automatically
       // This is the "Nervous System" of Synapsys V3
       if (
-        /^(cortex|visual|system|planning|motor|sensory|arena):/.test(event.type)
+        /^(cortex|visual|system|planning|motor|sensory|arena|precog|provider):/.test(
+          event.type,
+        )
       ) {
         this.io.emit("synapsys:event", event);
       }

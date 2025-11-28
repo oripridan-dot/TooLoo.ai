@@ -1,4 +1,4 @@
-// @version 2.2.49
+// @version 2.2.50
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -30,9 +30,9 @@ const Chat = () => {
         if (data.ok && data.data.history && data.data.history.length > 0) {
           // Transform history if needed, or just set it
           // Ensure timestamps are Date objects
-          const history = data.data.history.map(msg => ({
+          const history = data.data.history.map((msg) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp)
+            timestamp: new Date(msg.timestamp),
           }));
           setMessages(history);
         }
@@ -67,11 +67,11 @@ const Chat = () => {
       setMessages((prev) => {
         const newMessages = [...prev];
         const payload = event.payload;
-        
+
         // Find if we already have a message for this plan
         const planId = payload.plan?.id || payload.planId;
         const existingMsgIndex = newMessages.findIndex(
-          m => m.type === "plan" && m.planId === planId
+          (m) => m.type === "plan" && m.planId === planId,
         );
 
         if (event.type === "planning:plan:start") {
@@ -82,14 +82,14 @@ const Chat = () => {
               type: "plan",
               planId: planId,
               content: payload.plan, // Store the whole plan object
-              timestamp: new Date()
+              timestamp: new Date(),
             });
           }
         } else if (existingMsgIndex !== -1) {
           // Update existing plan message
           const msg = newMessages[existingMsgIndex];
           const plan = { ...msg.content }; // Clone plan
-          
+
           if (event.type === "planning:step:start") {
             if (plan.steps && plan.steps[payload.index]) {
               plan.steps[payload.index].status = "running";
@@ -97,7 +97,9 @@ const Chat = () => {
           } else if (event.type === "planning:step:complete") {
             if (plan.steps) {
               // Find step by ID or index
-              const stepIndex = plan.steps.findIndex(s => s.id === payload.step.id);
+              const stepIndex = plan.steps.findIndex(
+                (s) => s.id === payload.step.id,
+              );
               if (stepIndex !== -1) {
                 plan.steps[stepIndex] = payload.step;
                 plan.steps[stepIndex].status = "completed";
@@ -105,8 +107,10 @@ const Chat = () => {
               }
             }
           } else if (event.type === "planning:step:failed") {
-             if (plan.steps) {
-              const stepIndex = plan.steps.findIndex(s => s.id === payload.step.id);
+            if (plan.steps) {
+              const stepIndex = plan.steps.findIndex(
+                (s) => s.id === payload.step.id,
+              );
               if (stepIndex !== -1) {
                 plan.steps[stepIndex].status = "failed";
                 plan.steps[stepIndex].result = { error: payload.error };
@@ -119,7 +123,7 @@ const Chat = () => {
 
           newMessages[existingMsgIndex] = { ...msg, content: plan };
         }
-        
+
         return newMessages;
       });
     };
@@ -203,12 +207,14 @@ const Chat = () => {
     if (!confirm("Are you sure you want to clear the chat history?")) return;
     try {
       await fetch("/api/v1/chat/history", { method: "DELETE" });
-      setMessages([{
-        id: "initial-welcome",
-        type: "assistant",
-        content: "History cleared. How can I help you?",
-        timestamp: new Date(),
-      }]);
+      setMessages([
+        {
+          id: "initial-welcome",
+          type: "assistant",
+          content: "History cleared. How can I help you?",
+          timestamp: new Date(),
+        },
+      ]);
     } catch (err) {
       console.error("Failed to clear history:", err);
     }
@@ -239,10 +245,10 @@ const Chat = () => {
     if (socket) {
       // Use 'generate' event to match backend socket.ts listener
       const requestId = `req-${Date.now()}`;
-      socket.emit("generate", { 
+      socket.emit("generate", {
         message: input,
         requestId,
-        sessionId: null // Or pass current session ID if available
+        sessionId: null, // Or pass current session ID if available
       });
     }
   };
@@ -252,7 +258,7 @@ const Chat = () => {
       <div className="flex-1 flex flex-col h-full">
         <div className="bg-[#0f1117] border-b border-gray-800 p-4 flex justify-between items-center shadow-sm z-10">
           <h2 className="text-lg font-semibold text-gray-100">Chat Stream</h2>
-          <button 
+          <button
             onClick={clearHistory}
             className="text-xs text-red-400 hover:text-red-300 px-3 py-1 border border-red-900/50 rounded hover:bg-red-900/20 transition-colors"
           >
@@ -279,7 +285,10 @@ const Chat = () => {
                 {msg.type === "plan" ? (
                   <PlanVisualizer plan={msg.content} />
                 ) : msg.visual ? (
-                  <VisualRegistry type={msg.visual.type} data={msg.visual.data} />
+                  <VisualRegistry
+                    type={msg.visual.type}
+                    data={msg.visual.data}
+                  />
                 ) : msg.content &&
                   (msg.content.includes("{") ||
                     msg.content.includes("<") ||
@@ -302,7 +311,10 @@ const Chat = () => {
                             </pre>
                           </div>
                         ) : (
-                          <code className={`${className} bg-gray-800 px-1 py-0.5 rounded text-sm`} {...props}>
+                          <code
+                            className={`${className} bg-gray-800 px-1 py-0.5 rounded text-sm`}
+                            {...props}
+                          >
                             {children}
                           </code>
                         );
@@ -323,8 +335,10 @@ const Chat = () => {
               <div className="max-w-lg lg:max-w-2xl px-4 py-2 rounded-lg bg-[#1a1d24] text-gray-100 border border-gray-800">
                 <div className="flex items-center">
                   <Loader2 className="animate-spin mr-2 text-blue-400" />
-                  <span className="text-gray-300">TooLoo.ai is thinking...</span>
-                  <button 
+                  <span className="text-gray-300">
+                    TooLoo.ai is thinking...
+                  </span>
+                  <button
                     onClick={handleStop}
                     className="ml-4 text-xs text-red-400 hover:text-red-300 underline"
                   >
@@ -336,7 +350,10 @@ const Chat = () => {
           )}
           <div ref={messagesEndRef} />
         </div>
-        <form onSubmit={handleSubmit} className="p-4 border-t border-gray-800 bg-[#0f1117]">
+        <form
+          onSubmit={handleSubmit}
+          className="p-4 border-t border-gray-800 bg-[#0f1117]"
+        >
           <div className="relative">
             <input
               type="text"
@@ -356,7 +373,7 @@ const Chat = () => {
           </div>
         </form>
       </div>
-      
+
       {/* Right Sidebar: Neural State */}
       <NeuralState socket={socket} />
     </div>

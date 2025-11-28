@@ -1,4 +1,4 @@
-// @version 2.1.376
+// @version 2.2.50
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -17,6 +17,60 @@ ensureEnvLoaded();
 
 const env = (name: string, def: unknown = undefined) =>
   process.env[name] ?? def;
+
+// --- Telemetry & Metrics ---
+
+interface ProviderMetrics {
+  id: string;
+  name: string;
+  model: string;
+  status: "Ready" | "Error" | "Busy" | "Missing Key";
+  latency: number;
+  successRate: number;
+  totalRequests: number;
+  lastUsed: number;
+}
+
+const metricsStore: Record<string, ProviderMetrics> = {};
+
+function updateMetrics(provider: string, latency: number, success: boolean) {
+  if (!metricsStore[provider]) {
+    // Initialize if missing (lazy init)
+    metricsStore[provider] = {
+      id: provider,
+      name: provider,
+      model: "unknown",
+      status: "Ready",
+      latency: 0,
+      successRate: 100,
+      totalRequests: 0,
+      lastUsed: Date.now(),
+    };
+  }
+
+  const m = metricsStore[provider];
+  if (m) {
+    // Moving average for latency (weighted towards recent)
+    m.latency =
+      m.totalRequests === 0
+        ? latency
+        : Math.round(m.latency * 0.7 + latency * 0.3);
+    m.totalRequests++;
+
+    // Success rate calculation
+    if (success) {
+      m.successRate =
+        (m.successRate * (m.totalRequests - 1) + 100) / m.totalRequests;
+      m.status = "Ready";
+    } else {
+      m.successRate =
+        (m.successRate * (m.totalRequests - 1) + 0) / m.totalRequests;
+      m.status = "Error";
+    }
+
+    m.lastUsed = Date.now();
+  }
+}
 
 export default class LLMProvider {
   public providers: any;
@@ -93,13 +147,20 @@ export default class LLMProvider {
     ];
 
     return providerList.map((p) => {
-      const isAvailable = providerAvailable(p.id.split("-")[0]); // Check base provider
+      const baseId = p.id.split("-")[0];
+      const isAvailable = providerAvailable(baseId); // Check base provider
+
+      // Merge with real metrics if available
+      const realMetrics = metricsStore[baseId];
+
       return {
         id: p.id,
         name: p.name,
         model: p.model,
-        status: isAvailable ? "Ready" : "Missing Key",
-        latency: isAvailable ? Math.floor(Math.random() * 50) + 50 : 0,
+        status: isAvailable ? realMetrics?.status || "Ready" : "Missing Key",
+        latency: isAvailable ? realMetrics?.latency || 0 : 0,
+        successRate: realMetrics?.successRate || 100,
+        lastUsed: realMetrics?.lastUsed || 0,
       };
     });
   }
@@ -181,6 +242,7 @@ export default class LLMProvider {
       taskType = "chat",
       context = {},
       modelTier,
+      sessionId,
     } = request || {};
     if (!prompt || typeof prompt !== "string") {
       return {
@@ -291,12 +353,26 @@ export default class LLMProvider {
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
       try {
+        const startTime = Date.now();
         const result = await fns[p]();
         const latency = Date.now() - startTime;
         const success =
           result.content &&
           result.content.length > 10 &&
           !result.content.includes("error"); // Basic success detection
+
+        // Update Metrics & Telemetry
+        updateMetrics(p, latency, success);
+
+        if (sessionId) {
+          bus.publish("precog", "precog:telemetry", {
+            type: "provider_latency",
+            sessionId,
+            provider: p,
+            latency,
+            status: success ? "success" : "error",
+          });
+        }
 
         // Record the interaction for learning
         this.learning.recordInteraction(
@@ -313,6 +389,9 @@ export default class LLMProvider {
         console.warn(
           `[LLMProvider] Provider ${p} failed: ${errorMessage}. Falling back...`,
         );
+
+        // Update Metrics (Failure)
+        updateMetrics(p, 0, false);
 
         // Amygdala Feedback Loop
         if (
@@ -798,7 +877,13 @@ function hasProviderCredentials(config) {
   return !!config.key;
 }
 
-export async function generateLLM({ prompt, provider, system, maxTokens }) {
+export async function generateLLM({
+  prompt,
+  provider,
+  system,
+  maxTokens,
+  sessionId,
+}) {
   const config = getProviderConfig(provider);
   if (!config) {
     throw new Error("Provider not supported");

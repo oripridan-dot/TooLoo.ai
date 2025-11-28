@@ -1,10 +1,12 @@
-// @version 2.1.342
+// @version 2.2.50
 import { Router } from "express";
 import fs from "fs-extra";
 import path from "path";
 
 const router = Router();
 const METRICS_PATH = path.join(process.cwd(), "data", "learning-metrics.json");
+const PATTERNS_PATH = path.join(process.cwd(), "data", "patterns.json");
+const DECISIONS_PATH = path.join(process.cwd(), "data", "decisions.json");
 
 // Ensure data dir exists
 fs.ensureDirSync(path.dirname(METRICS_PATH));
@@ -41,9 +43,47 @@ if (!fs.existsSync(METRICS_PATH)) {
   );
 }
 
+// Initialize default patterns if missing
+if (!fs.existsSync(PATTERNS_PATH)) {
+  fs.writeJsonSync(PATTERNS_PATH, { patterns: [] }, { spaces: 2 });
+}
+
+// Initialize default decisions if missing
+if (!fs.existsSync(DECISIONS_PATH)) {
+  fs.writeJsonSync(
+    DECISIONS_PATH,
+    { totalDecisions: 0, decisionsWithOutcomes: 0, recentDecisions: [] },
+    { spaces: 2 },
+  );
+}
+
 router.get("/report", async (req, res) => {
   try {
     const data = await fs.readJson(METRICS_PATH);
+    res.json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/patterns", async (req, res) => {
+  try {
+    const data = await fs.readJson(PATTERNS_PATH);
+    res.json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/decisions", async (req, res) => {
+  try {
+    const data = await fs.readJson(DECISIONS_PATH);
     res.json({
       success: true,
       data: data,

@@ -1,4 +1,4 @@
-// @version 2.1.333
+// @version 2.2.50
 import { bus, SynapsysEvent } from "../core/event-bus.js";
 import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
@@ -69,7 +69,8 @@ export class Cortex {
   private setupListeners() {
     // Handle Chat Requests
     bus.on("nexus:chat_request", async (event) => {
-      const { message, requestId, projectId, responseType } = event.payload;
+      const { message, requestId, projectId, responseType, sessionId } =
+        event.payload;
       console.log("[Cortex] Processing chat request:", requestId);
 
       // 1. Quick Intent Analysis (Heuristic for now)
@@ -124,7 +125,10 @@ export class Cortex {
           bus.on("planning:plan:failed", onFail);
 
           // Trigger Planning
-          bus.publish("cortex", "planning:intent", { goal: message });
+          bus.publish("cortex", "planning:intent", {
+            goal: message,
+            sessionId,
+          });
         });
 
         const timeoutPromise = new Promise<PlanResult>((resolve) => {
@@ -163,7 +167,7 @@ export class Cortex {
           );
 
           const result = (await Promise.race([
-            synthesizer.synthesize(message, responseType),
+            synthesizer.synthesize(message, responseType, sessionId),
             timeoutPromise,
           ])) as any;
 

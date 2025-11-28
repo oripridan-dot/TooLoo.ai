@@ -1,4 +1,4 @@
-// @version 2.1.265
+// @version 2.2.50
 import LLMProvider from "./providers/llm-provider.js";
 import { GeminiImageProvider } from "./providers/gemini-image.js";
 import { OpenAIImageProvider } from "./providers/openai-image.js";
@@ -88,6 +88,7 @@ export class ProviderEngine {
     taskType?: string;
     cohortId?: string;
     workflowId?: string;
+    sessionId?: string;
   }) {
     // Adaptive Routing Logic
     const complexity = this.classifyComplexity(params.prompt, params.taskType);
@@ -104,6 +105,7 @@ export class ProviderEngine {
       taskType: params.taskType,
       maxTokens: 4096, // Increased default for thinking models
       modelTier, // Pass tier to provider (needs implementation in LLMProvider)
+      sessionId: params.sessionId,
     });
 
     // Cost Tracking
