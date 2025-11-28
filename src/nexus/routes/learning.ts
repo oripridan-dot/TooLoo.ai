@@ -118,11 +118,15 @@ router.post("/ingest", async (req, res) => {
 
   try {
     // Execute the learner script
-    const { stdout, stderr } = await execPromise(`${LEARNER_SCRIPT} learn --url "${url}"`);
+    const { stdout, stderr } = await execPromise(
+      `${LEARNER_SCRIPT} learn --url "${url}"`,
+    );
     res.json({ success: true, output: stdout, error: stderr });
   } catch (error: any) {
     console.error("Ingestion Error:", error);
-    res.status(500).json({ success: false, error: error.message, details: error.stderr });
+    res
+      .status(500)
+      .json({ success: false, error: error.message, details: error.stderr });
   }
 });
 
@@ -136,12 +140,16 @@ router.post("/query", async (req, res) => {
   try {
     // Escape double quotes to prevent shell injection/breaking
     const safeQuery = query.replace(/"/g, '\\"');
-    const { stdout, stderr } = await execPromise(`${LEARNER_SCRIPT} ask --query "${safeQuery}"`);
-    
+    const { stdout, stderr } = await execPromise(
+      `${LEARNER_SCRIPT} ask --query "${safeQuery}"`,
+    );
+
     res.json({ success: true, answer: stdout, raw: stdout });
   } catch (error: any) {
     console.error("Query Error:", error);
-    res.status(500).json({ success: false, error: error.message, details: error.stderr });
+    res
+      .status(500)
+      .json({ success: false, error: error.message, details: error.stderr });
   }
 });
 
@@ -160,7 +168,9 @@ router.get("/sources", async (req, res) => {
     }
   } catch (error: any) {
     console.error("List Sources Error:", error);
-    res.status(500).json({ success: false, error: error.message, details: error.stderr });
+    res
+      .status(500)
+      .json({ success: false, error: error.message, details: error.stderr });
   }
 });
 

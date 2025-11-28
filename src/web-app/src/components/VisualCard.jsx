@@ -25,10 +25,37 @@ const DiagramRenderer = ({ code }) => {
         window.mermaid.initialize({ startOnLoad: false, theme: "neutral" });
 
         // Clean the code: remove markdown code blocks if present
-        const cleanCode = code
+        let cleanCode = code
           .replace(/```mermaid/g, "")
           .replace(/```/g, "")
           .trim();
+
+        // Validate code is not empty
+        if (!cleanCode || cleanCode.length === 0) {
+          setError("Diagram code is empty");
+          return;
+        }
+
+        // Fix common truncation issues or syntax errors
+        // If code ends with "Anthr", replace with "Anthropic"
+        if (cleanCode.endsWith("Anthr")) {
+          cleanCode = cleanCode.replace(/Anthr$/, "Anthropic");
+        }
+
+        // Check for common Mermaid syntax patterns
+        const validMermaidTypes = [
+          "graph", "pie", "sequenceDiagram", "gantt", "classDiagram",
+          "stateDiagram", "erDiagram", "journey", "gitGraph", "flowchart"
+        ];
+        const isValidMermaid = validMermaidTypes.some(type => 
+          cleanCode.toLowerCase().startsWith(type)
+        );
+
+        if (!isValidMermaid && !cleanCode.includes("%%")) {
+          // Doesn't look like a valid Mermaid diagram
+          setError("Invalid Mermaid diagram format. Expected: graph, pie, sequence, etc.");
+          return;
+        }
 
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         /* eslint-disable-next-line no-undef */
@@ -37,7 +64,7 @@ const DiagramRenderer = ({ code }) => {
         setError(null);
       } catch (err) {
         console.error("Mermaid render error:", err);
-        setError(err.message);
+        setError(`${err.message || "Failed to render diagram"}. Please check the diagram syntax.`);
       }
     };
 

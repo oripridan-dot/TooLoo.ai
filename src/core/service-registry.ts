@@ -1,11 +1,12 @@
-// @version 2.2.124
+// @version 2.2.125
 /**
  * Service Registry
  * Runtime dependency injection that enforces single implementation per interface.
  * Prevents duplicate services from registering for the same responsibility.
  *
- * @version 2.2.121
+ * @version 2.2.125
  * @responsibility service-registration
+ * @category core-infrastructure
  */
 
 import { bus } from "./event-bus.js";
@@ -50,6 +51,10 @@ export const SERVICE_CATEGORIES = [
   "ui-memory-display",      // Memory/context display
   "ui-activity-log",        // Activity/event log display
   "ui-plan-visualization",  // Plan/task visualization
+
+  // Architecture & Quality
+  "architecture-analysis",  // Code quality and duplicate detection
+  "component-registry",     // Frontend component catalog
 ] as const;
 
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
@@ -69,6 +74,13 @@ export interface ServiceConflict {
   existingService: string;
   attemptedService: string;
   resolution: "rejected" | "replaced" | "coexist";
+}
+
+export interface RegisterOptions {
+  version?: string;
+  metadata?: Record<string, unknown>;
+  healthCheck?: () => Promise<boolean>;
+  force?: boolean;
 }
 
 /**
@@ -91,12 +103,7 @@ class ServiceRegistry {
     category: ServiceCategory,
     name: string,
     instance: T,
-    options: {
-      version?: string;
-      metadata?: Record<string, unknown>;
-      healthCheck?: () => Promise<boolean>;
-      force?: boolean;
-    } = {}
+    options: RegisterOptions = {}
   ): void {
     const {
       version = "1.0.0",
@@ -126,7 +133,7 @@ class ServiceRegistry {
           `Resolution: Add @duplicates-intentional annotation or consolidate services.`
         );
         console.error(error.message);
-        
+
         // Emit event for monitoring
         bus.publish("system", "registry:conflict", {
           conflict,
@@ -179,6 +186,7 @@ class ServiceRegistry {
    */
   getRequired<T>(category: ServiceCategory): T {
     const service = this.get<T>(category);
+
     if (!service) {
       throw new Error(`[ServiceRegistry] Required service not found: ${category}`);
     }
@@ -371,10 +379,12 @@ class ServiceRegistry {
 // Singleton instance
 export const serviceRegistry = new ServiceRegistry();
 
-// Helper decorator for automatic registration
+/**
+ * Helper decorator for automatic registration
+ * Usage: @RegisterService("provider-tracking", "1.0.0")
+ */
 export function RegisterService(category: ServiceCategory, version: string = "1.0.0") {
   return function <T extends { new (...args: unknown[]): object }>(constructor: T) {
-    // This will be called when the class is instantiated
     const original = constructor;
 
     const wrapped = function (this: unknown, ...args: unknown[]) {

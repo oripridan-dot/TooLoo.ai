@@ -1,10 +1,10 @@
 // @version 2.2.2
 export class VisualSDK {
   /**
-   * Placeholder for Nano Banana Studio integration.
+   * Placeholder for DeSign Studio integration.
    */
   async renderDiagram(mermaidCode: string): Promise<string> {
-    // TODO: Integrate with Nano Banana Studio
+    // TODO: Integrate with DeSign Studio
     console.log("[VisualSDK] Rendering diagram (mock)...");
     return `[Diagram rendered from: ${mermaidCode.substring(0, 20)}...]`;
   }

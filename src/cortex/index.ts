@@ -22,6 +22,15 @@ import { ReasoningChain } from "./reasoning-chain.js";
 import { ContextManager } from "./context-manager.js";
 import { VectorStore } from "./memory/vector-store.js";
 import KnowledgeGraphEngine from "./memory/knowledge-graph-engine.js";
+import {
+  sessionContextService,
+  SessionContextService,
+} from "./session-context-service.js";
+import {
+  providerFeedbackEngine,
+  ProviderFeedbackEngine,
+} from "./feedback/index.js";
+import { MemoryAutoFiller } from "./memory/memory-auto-filler.js";
 
 interface PlanResult {
   ok?: boolean;
@@ -44,6 +53,9 @@ export class Cortex {
   public contextResonance: ContextResonanceEngine;
   private reasoningChain: ReasoningChain;
   private contextManager: ContextManager;
+  public sessionContextService: SessionContextService;
+  public providerFeedbackEngine: ProviderFeedbackEngine;
+  public memoryAutoFiller: MemoryAutoFiller;
 
   constructor() {
     console.log("[Cortex] Initializing Cognitive Core...");
@@ -81,6 +93,11 @@ export class Cortex {
     const vectorStore = new VectorStore(process.cwd());
     const knowledgeGraph = new KnowledgeGraphEngine();
     this.contextManager = new ContextManager(vectorStore, knowledgeGraph);
+
+    // Initialize feedback and context services
+    this.sessionContextService = new SessionContextService();
+    this.providerFeedbackEngine = new ProviderFeedbackEngine();
+    this.memoryAutoFiller = new MemoryAutoFiller(this.hippocampus);
 
     this.setupListeners();
   }
@@ -235,6 +252,14 @@ export class Cortex {
               `[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`,
             );
 
+            // Notify frontend of synthesis start
+            bus.publish("precog", "precog:telemetry", {
+              provider: "Synapsys Synthesizer",
+              status: "processing",
+              latency: 0,
+              sessionId,
+            });
+
             // Create a timeout promise (increased to 60s for thinking models)
             const timeoutPromise = new Promise((_, reject) =>
               setTimeout(
@@ -252,6 +277,14 @@ export class Cortex {
             provider = "Synapsys Synthesizer";
             meta = result.meta;
             console.log(`[Cortex] Synthesizer responded successfully`);
+
+            // Notify frontend of success
+            bus.publish("precog", "precog:telemetry", {
+              provider: "Synapsys Synthesizer",
+              status: "success",
+              latency: Date.now() - startTime,
+              sessionId,
+            });
           }
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : String(err);

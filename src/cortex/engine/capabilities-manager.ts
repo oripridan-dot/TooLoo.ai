@@ -1,4 +1,4 @@
-// @version 2.2.83
+// @version 2.1.379
 /**
  * CapabilitiesManager - Unified capabilities registry
  * Dynamically registers and discovers visual capabilities and Designer tools

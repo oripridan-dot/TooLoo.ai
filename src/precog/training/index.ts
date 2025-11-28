@@ -130,7 +130,11 @@ export class TrainingService extends EventEmitter {
       "data",
       "sources-github-state.json",
     );
-    this.metricsFile = path.join(this.workspaceRoot, "data", "learning-metrics.json");
+    this.metricsFile = path.join(
+      this.workspaceRoot,
+      "data",
+      "learning-metrics.json",
+    );
     this.initializeEngines();
     this.loadMetrics();
   }
@@ -139,7 +143,7 @@ export class TrainingService extends EventEmitter {
     try {
       if (fs.existsSync(this.metricsFile)) {
         const data = JSON.parse(fs.readFileSync(this.metricsFile, "utf8"));
-        // We don't fully hydrate the in-memory store from the file because the file structure 
+        // We don't fully hydrate the in-memory store from the file because the file structure
         // is different (optimized for frontend), but we could if needed.
         // For now, we just ensure the file exists.
       }
@@ -152,9 +156,13 @@ export class TrainingService extends EventEmitter {
     try {
       // Calculate derived metrics for the frontend
       const total = this.metricsStore.responses.length;
-      const successes = this.metricsStore.responses.filter(r => r.quality >= 0.8).length;
-      const failures = this.metricsStore.responses.filter(r => r.quality < 0.5).length;
-      
+      const successes = this.metricsStore.responses.filter(
+        (r) => r.quality >= 0.8,
+      ).length;
+      const failures = this.metricsStore.responses.filter(
+        (r) => r.quality < 0.5,
+      ).length;
+
       const firstTrySuccessRate = total > 0 ? successes / total : 0.75; // Default to 0.75 if no data
 
       let currentData: any = {};
@@ -169,19 +177,23 @@ export class TrainingService extends EventEmitter {
           firstTrySuccess: {
             ...currentData.improvements?.firstTrySuccess,
             current: firstTrySuccessRate,
-            achieved: firstTrySuccessRate >= (currentData.improvements?.firstTrySuccess?.target || 0.9)
+            achieved:
+              firstTrySuccessRate >=
+              (currentData.improvements?.firstTrySuccess?.target || 0.9),
           },
           // Simulate repeat problems reduction based on total interactions
           repeatProblems: {
-             ...currentData.improvements?.repeatProblems,
-             current: Math.max(0.05, 0.15 - (total * 0.001)), // Slowly decrease
-             achieved: (0.15 - (total * 0.001)) <= (currentData.improvements?.repeatProblems?.target || 0.05)
-          }
+            ...currentData.improvements?.repeatProblems,
+            current: Math.max(0.05, 0.15 - total * 0.001), // Slowly decrease
+            achieved:
+              0.15 - total * 0.001 <=
+              (currentData.improvements?.repeatProblems?.target || 0.05),
+          },
         },
         totalSessions: this.feedbackStore.interactions.length,
         successfulGenerations: successes,
         failedGenerations: failures,
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
       };
 
       fs.writeFileSync(this.metricsFile, JSON.stringify(newData, null, 2));

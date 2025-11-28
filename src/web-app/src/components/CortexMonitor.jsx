@@ -6,7 +6,11 @@ import { getProviderLogo } from "./ProviderLogos";
 const CortexMonitor = ({ compact = false }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [systemStatus, setSystemStatus] = useState({ busy: false, activeCount: 0, activeProvider: null });
+  const [systemStatus, setSystemStatus] = useState({
+    busy: false,
+    activeCount: 0,
+    activeProvider: null,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,7 +19,13 @@ const CortexMonitor = ({ compact = false }) => {
         const json = await res.json();
         if (json.ok) {
           setData(json.data);
-          setSystemStatus(json.data.status || { busy: false, activeCount: 0, activeProvider: null });
+          setSystemStatus(
+            json.data.status || {
+              busy: false,
+              activeCount: 0,
+              activeProvider: null,
+            },
+          );
         }
       } catch (e) {
         console.error(e);
@@ -75,7 +85,7 @@ const CortexMonitor = ({ compact = false }) => {
   const { providers, stats } = displayData;
   // Only show providers that have been used
   let providerList = (providers?.providers || []).filter((p) => p.attempts > 0);
-  
+
   if (providerList.length === 0) {
     // If no providers used, show a few placeholders
     providerList = (providers?.providers || []).slice(0, 5);
@@ -128,9 +138,15 @@ const CortexMonitor = ({ compact = false }) => {
             <Cpu className="w-4 h-4" />
             CORTEX_NEURAL_MONITOR
           </h3>
-          <div className={`flex items-center gap-2 text-xs px-2 py-1 rounded border transition-all ${systemStatus.busy ? 'text-orange-400 bg-orange-900/20 border-orange-500/30' : 'text-emerald-400 bg-emerald-900/20 border-emerald-500/30'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${systemStatus.busy ? 'bg-orange-500 animate-ping' : 'bg-emerald-500'}`}></span>
-            {systemStatus.busy ? `PROCESSING (${systemStatus.activeCount})` : 'SYSTEM ONLINE'}
+          <div
+            className={`flex items-center gap-2 text-xs px-2 py-1 rounded border transition-all ${systemStatus.busy ? "text-orange-400 bg-orange-900/20 border-orange-500/30" : "text-emerald-400 bg-emerald-900/20 border-emerald-500/30"}`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${systemStatus.busy ? "bg-orange-500 animate-ping" : "bg-emerald-500"}`}
+            ></span>
+            {systemStatus.busy
+              ? `PROCESSING (${systemStatus.activeCount})`
+              : "SYSTEM ONLINE"}
           </div>
         </div>
       )}
@@ -173,7 +189,10 @@ const CortexMonitor = ({ compact = false }) => {
           />
 
           {/* Center Node (Cortex Core) */}
-          <g className={`filter drop-shadow-[0_0_15px_rgba(0,243,255,0.5)] transition-all duration-300 ${corePulseClass}`} style={{'--core-color': coreColor}}>
+          <g
+            className={`filter drop-shadow-[0_0_15px_rgba(0,243,255,0.5)] transition-all duration-300 ${corePulseClass}`}
+            style={{ "--core-color": coreColor }}
+          >
             <circle
               cx={centerX}
               cy={centerY}
@@ -225,12 +244,17 @@ const CortexMonitor = ({ compact = false }) => {
                   .includes(p.provider.toLowerCase()));
 
             const isUsed = p.attempts > 0;
-            
+
             // Edge Styling
             const edgeWidth = isActive ? 3 : 1;
             let edgeColor = "#334155"; // OFF state
             if (isUsed) {
-              edgeColor = p.successRate > 0.8 ? "#10b981" : p.successRate > 0.5 ? "#f59e0b" : "#ef4444";
+              edgeColor =
+                p.successRate > 0.8
+                  ? "#10b981"
+                  : p.successRate > 0.5
+                    ? "#f59e0b"
+                    : "#ef4444";
             }
             if (isActive) {
               edgeColor = "#00f3ff"; // Active state
@@ -240,7 +264,9 @@ const CortexMonitor = ({ compact = false }) => {
             const logoSizeClass = isActive ? "w-8 h-8" : "w-6 h-6";
             const logoColorClass = isActive
               ? "text-white filter drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]"
-              : isUsed ? "text-slate-300" : "text-slate-600";
+              : isUsed
+                ? "text-slate-300"
+                : "text-slate-600";
 
             return (
               <g key={p.provider} className="transition-all duration-500 group">

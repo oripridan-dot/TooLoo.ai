@@ -142,7 +142,7 @@ export class VisualCortex {
       }
       console.log(`[VisualCortex] Selected artist: ${provider} (${model})`);
     } else if (provider === "gemini" && !model) {
-        model = "imagen-4.0-generate-001";
+      model = "imagen-4.0-generate-001";
     }
 
     // 3. Execute

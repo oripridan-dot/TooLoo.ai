@@ -276,9 +276,17 @@ function SelfImprovementDashboard() {
             <div className="bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto p-2">
               <ul className="space-y-1">
                 {knowledgeSources.map((source, idx) => (
-                  <li key={idx} className="text-xs text-gray-600 flex items-center">
+                  <li
+                    key={idx}
+                    className="text-xs text-gray-600 flex items-center"
+                  >
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></div>
-                    <a href={source} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 hover:underline truncate">
+                    <a
+                      href={source}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-blue-600 hover:underline truncate"
+                    >
                       {source}
                     </a>
                   </li>

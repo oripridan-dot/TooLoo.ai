@@ -87,7 +87,7 @@ export interface ComponentCode {
 
 /**
  * Context-aware visual generation interfaces
- * Enables visual providers (Nano Banana, DALL-E) to generate functional code
+ * Enables visual providers (DeSign Studio, DALL-E) to generate functional code
  * by analyzing design context and requirements
  */
 
@@ -130,7 +130,7 @@ export interface ImageCodeGenerationRequest {
   codePrompt: string; // Specific code generation instructions
   context: VisualContext; // Design tokens, patterns, requirements
   outputFormat: "html" | "react" | "vue" | "markdown"; // Target language
-  provider?: "gemini-nano" | "dalle3"; // Force provider (Nano Banana or DALL-E)
+  provider?: "gemini-nano" | "dalle3"; // Force provider (DeSign Studio or DALL-E)
   includeImage?: boolean; // Also generate visual mockup
   temperature?: number;
   maxTokens?: number;

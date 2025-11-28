@@ -41,8 +41,13 @@ export class GeminiImageProvider {
     // Force Imagen 4 if a text model is requested for image generation
     // But allow "DeSign Studio" (gemini-2.5-flash-image) if we implement support for it later via generateContent
     // For now, we assume generateImages is used, which requires an Imagen model.
-    if ((modelName.includes("flash") || modelName.includes("pro")) && !modelName.includes("imagen")) {
-      console.warn(`[GeminiImageProvider] Requested model ${modelName} does not support image generation via generateImages. Switching to imagen-4.0-generate-001.`);
+    if (
+      (modelName.includes("flash") || modelName.includes("pro")) &&
+      !modelName.includes("imagen")
+    ) {
+      console.warn(
+        `[GeminiImageProvider] Requested model ${modelName} does not support image generation via generateImages. Switching to imagen-4.0-generate-001.`,
+      );
       modelName = "imagen-4.0-generate-001";
     }
 
@@ -85,10 +90,10 @@ export class GeminiImageProvider {
       if (response.generatedImages && response.generatedImages.length > 0) {
         for (const img of response.generatedImages) {
           if (img.image && img.image.imageBytes) {
-             images.push({
-               data: img.image.imageBytes,
-               mimeType: "image/png", // Imagen usually returns PNG
-             });
+            images.push({
+              data: img.image.imageBytes,
+              mimeType: "image/png", // Imagen usually returns PNG
+            });
           }
         }
       }

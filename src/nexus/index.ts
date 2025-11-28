@@ -20,6 +20,7 @@ import contextRoutes from "./routes/context.js";
 import learningRoutes from "./routes/learning.js";
 import assetsRoutes from "./routes/assets.js";
 import { trainingRoutes } from "./routes/training.js";
+import { cortexRoutes } from "./routes/cortex.js";
 import { registry } from "../core/module-registry.js";
 import { SYSTEM_VERSION } from "../core/system-info.js";
 import { autoArchitect } from "./auto-architect.js";
@@ -45,6 +46,7 @@ export function createNexusApp() {
   app.use("/api/v1/context", contextRoutes);
   app.use("/api/v1/learning", learningRoutes);
   app.use("/api/v1/assets", assetsRoutes);
+  app.use("/api/v1/cortex", cortexRoutes);
 
   // Training & Sources Routes (Precog)
   app.use("/api/v1", trainingRoutes);

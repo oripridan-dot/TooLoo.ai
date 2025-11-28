@@ -65,7 +65,7 @@ export class Synthesizer {
         return { provider, response, success: true };
       } catch (error: any) {
         console.warn(`[Synthesizer] ${provider} failed: ${error.message}`);
-        
+
         // Notify error
         bus.publish("precog", "precog:telemetry", {
           provider: provider.toUpperCase(),
@@ -132,7 +132,7 @@ Return ONLY the synthesized response.
       const finalResponse = await generateLLM({
         prompt: synthesisPrompt,
         provider: "gemini", // Use Gemini as the synthesizer
-        system: TOOLOO_PERSONA,
+        system: systemPrompt,
         maxTokens: 2048,
         sessionId,
       });

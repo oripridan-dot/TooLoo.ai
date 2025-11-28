@@ -127,17 +127,53 @@ export default class LLMProvider {
 
   getProviderStatus() {
     const providerList = [
-      { id: "anthropic-haiku-4.5", name: "Claude Haiku 4.5", model: "claude-haiku-4.5" },
-      { id: "anthropic-opus-4.5", name: "Claude Opus 4.5 (Preview)", model: "claude-opus-4.5-preview" },
-      { id: "anthropic-sonnet-4", name: "Claude Sonnet 4", model: "claude-sonnet-4" },
-      { id: "anthropic-sonnet-4.5", name: "Claude Sonnet 4.5", model: "claude-sonnet-4.5" },
+      {
+        id: "anthropic-haiku-4.5",
+        name: "Claude Haiku 4.5",
+        model: "claude-haiku-4.5",
+      },
+      {
+        id: "anthropic-opus-4.5",
+        name: "Claude Opus 4.5 (Preview)",
+        model: "claude-opus-4.5-preview",
+      },
+      {
+        id: "anthropic-sonnet-4",
+        name: "Claude Sonnet 4",
+        model: "claude-sonnet-4",
+      },
+      {
+        id: "anthropic-sonnet-4.5",
+        name: "Claude Sonnet 4.5",
+        model: "claude-sonnet-4.5",
+      },
       { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", model: "gemini-2.5-pro" },
-      { id: "gemini-3-pro", name: "Gemini 3 Pro (Preview)", model: "gemini-3-pro-preview" },
+      {
+        id: "gemini-3-pro",
+        name: "Gemini 3 Pro (Preview)",
+        model: "gemini-3-pro-preview",
+      },
       { id: "openai-gpt-5", name: "GPT-5", model: "gpt-5" },
-      { id: "openai-gpt-5-codex", name: "GPT-5-Codex (Preview)", model: "gpt-5-codex-preview" },
-      { id: "openai-gpt-5.1", name: "GPT-5.1 (Preview)", model: "gpt-5.1-preview" },
-      { id: "openai-gpt-5.1-codex", name: "GPT-5.1-Codex (Preview)", model: "gpt-5.1-codex-preview" },
-      { id: "openai-gpt-5.1-codex-mini", name: "GPT-5.1-Codex-Mini (Preview)", model: "gpt-5.1-codex-mini-preview" },
+      {
+        id: "openai-gpt-5-codex",
+        name: "GPT-5-Codex (Preview)",
+        model: "gpt-5-codex-preview",
+      },
+      {
+        id: "openai-gpt-5.1",
+        name: "GPT-5.1 (Preview)",
+        model: "gpt-5.1-preview",
+      },
+      {
+        id: "openai-gpt-5.1-codex",
+        name: "GPT-5.1-Codex (Preview)",
+        model: "gpt-5.1-codex-preview",
+      },
+      {
+        id: "openai-gpt-5.1-codex-mini",
+        name: "GPT-5.1-Codex-Mini (Preview)",
+        model: "gpt-5.1-codex-mini-preview",
+      },
     ];
 
     return providerList.map((p) => {

@@ -1,5 +1,5 @@
 // @version 2.2.96
-import React from 'react';
+import React from "react";
 
 export const ClaudeLogo = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -10,7 +10,10 @@ export const ClaudeLogo = ({ className }) => (
 export const GeminiLogo = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" />
-    <path d="M12 6L13.5 10.5L18 12L13.5 13.5L12 18L10.5 13.5L6 12L10.5 10.5L12 6Z" opacity="0.5" />
+    <path
+      d="M12 6L13.5 10.5L18 12L13.5 13.5L12 18L10.5 13.5L6 12L10.5 10.5L12 6Z"
+      opacity="0.5"
+    />
   </svg>
 );
 
@@ -28,17 +31,31 @@ export const MistralLogo = ({ className }) => (
 
 export const ToolooLogo = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+    <circle
+      cx="12"
+      cy="12"
+      r="8"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
+    />
     <circle cx="12" cy="12" r="3" fill="currentColor" />
-    <path d="M12 2V4M12 20V22M2 12H4M20 12H22" stroke="currentColor" strokeWidth="2" />
+    <path
+      d="M12 2V4M12 20V22M2 12H4M20 12H22"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
   </svg>
 );
 
 export const getProviderLogo = (providerName, className) => {
   const name = providerName.toLowerCase();
-  if (name.includes('claude') || name.includes('anthropic')) return <ClaudeLogo className={className} />;
-  if (name.includes('gemini') || name.includes('google')) return <GeminiLogo className={className} />;
-  if (name.includes('openai') || name.includes('gpt')) return <OpenAILogo className={className} />;
-  if (name.includes('mistral')) return <MistralLogo className={className} />;
+  if (name.includes("claude") || name.includes("anthropic"))
+    return <ClaudeLogo className={className} />;
+  if (name.includes("gemini") || name.includes("google"))
+    return <GeminiLogo className={className} />;
+  if (name.includes("openai") || name.includes("gpt"))
+    return <OpenAILogo className={className} />;
+  if (name.includes("mistral")) return <MistralLogo className={className} />;
   return <ToolooLogo className={className} />;
 };
