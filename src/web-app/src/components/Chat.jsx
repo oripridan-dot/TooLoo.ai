@@ -1,4 +1,4 @@
-// @version 2.2.68
+// @version 2.2.69
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { io } from "socket.io-client";
@@ -127,26 +127,47 @@ const Chat = ({ currentSessionId, setCurrentSessionId }) => {
   // Save Messages to LocalStorage
   useEffect(() => {
     if (currentSessionId && messages.length > 0) {
-      const savedSession = localStorage.getItem(`tooloo_session_${currentSessionId}`);
-      if (savedSession) {
-        try {
+      const saveSession = (msgs) => {
+        const savedSession = localStorage.getItem(`tooloo_session_${currentSessionId}`);
+        if (savedSession) {
           const session = JSON.parse(savedSession);
-          session.messages = messages;
+          session.messages = msgs;
           localStorage.setItem(`tooloo_session_${currentSessionId}`, JSON.stringify(session));
-        } catch (e) {
-          if (e.name === 'QuotaExceededError') {
-            console.warn("LocalStorage quota exceeded. Trimming history...");
-            // Try to save only the last 20 messages
-            try {
-              const session = JSON.parse(savedSession);
-              session.messages = messages.slice(-20);
-              localStorage.setItem(`tooloo_session_${currentSessionId}`, JSON.stringify(session));
-            } catch (retryError) {
-              console.error("Failed to save trimmed history:", retryError);
-            }
-          } else {
-            console.error("Failed to save session:", e);
+        }
+      };
+
+      try {
+        saveSession(messages);
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+          console.warn("LocalStorage quota exceeded. Attempting cleanup...");
+          
+          // Strategy 1: Trim current session
+          try {
+            saveSession(messages.slice(-20));
+            console.log("Saved trimmed session.");
+          } catch (e2) {
+             // Strategy 2: Delete old sessions
+             try {
+               const keys = Object.keys(localStorage).filter(k => k.startsWith('tooloo_session_') && k !== `tooloo_session_${currentSessionId}`);
+               if (keys.length > 0) {
+                 // Sort by ID (which starts with timestamp) to find oldest
+                 keys.sort(); 
+                 // Remove up to 3 old sessions to make space
+                 for (let i = 0; i < Math.min(3, keys.length); i++) {
+                    localStorage.removeItem(keys[i]);
+                 }
+                 console.log("Removed old sessions to free space");
+                 saveSession(messages.slice(-20)); // Try saving trimmed again
+               } else {
+                 console.error("Storage full and no other sessions to delete.");
+               }
+             } catch (e3) {
+               console.error("Critical storage failure:", e3);
+             }
           }
+        } else {
+          console.error("Failed to save session:", e);
         }
       }
     }
