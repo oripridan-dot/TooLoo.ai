@@ -1,10 +1,11 @@
-// @version 2.2.43
+// @version 2.2.46
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
 import ReactMarkdown from "react-markdown";
 import VisualRegistry from "./VisualRegistry";
 import PlanVisualizer from "./PlanVisualizer";
+import NeuralState from "./NeuralState";
 
 const Chat = () => {
   const [input, setInput] = useState("");
