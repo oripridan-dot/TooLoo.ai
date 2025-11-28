@@ -1,4 +1,4 @@
-// @version 2.2.64
+// @version 2.2.87
 import React, { useEffect, useRef, useState } from "react";
 import {
   Info,
@@ -12,23 +12,47 @@ import {
 } from "lucide-react";
 
 const DiagramRenderer = ({ code }) => {
-  const mermaidRef = useRef(null);
+  const [svg, setSvg] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    /* eslint-disable-next-line no-undef */
-    if (mermaidRef.current && typeof window !== "undefined" && window.mermaid) {
+    const renderDiagram = async () => {
       /* eslint-disable-next-line no-undef */
-      window.mermaid.contentLoaded();
-    }
+      if (!code || typeof window === "undefined" || !window.mermaid) return;
+
+      try {
+        /* eslint-disable-next-line no-undef */
+        window.mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        
+        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+        /* eslint-disable-next-line no-undef */
+        const { svg } = await window.mermaid.render(id, code);
+        setSvg(svg);
+        setError(null);
+      } catch (err) {
+        console.error("Mermaid render error:", err);
+        setError(err.message);
+      }
+    };
+
+    renderDiagram();
   }, [code]);
+
+  if (error) {
+      return (
+          <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm font-mono overflow-auto">
+              <div className="font-bold mb-2">Diagram Error:</div>
+              {error}
+              <pre className="mt-2 text-xs opacity-70">{code}</pre>
+          </div>
+      );
+  }
 
   return (
     <div
-      className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96"
-      ref={mermaidRef}
-    >
-      <div className="mermaid">{code}</div>
-    </div>
+      className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96 flex justify-center"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   );
 };
 
@@ -343,32 +367,8 @@ const VisualCard = ({ type, data }) => {
         );
 
       case "diagram": {
-        /* eslint-disable-next-line no-undef */
-        const mermaidRef = useRef(null);
-        /* eslint-disable-next-line no-undef */
-        useEffect(() => {
-          if (
-            mermaidRef.current &&
-            /* eslint-disable-next-line no-undef */
-            typeof window !== "undefined" &&
-            /* eslint-disable-next-line no-undef */
-            window.mermaid
-          ) {
-            /* eslint-disable-next-line no-undef */
-            window.mermaid.contentLoaded();
-          }
-        }, [data]);
-
-        return (
-          <div
-            className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96"
-            ref={mermaidRef}
-          >
-            <div className="mermaid">
-              {typeof data === "string" ? data : data.code}
-            </div>
-          </div>
-        );
+        const diagramCode = typeof data === "string" ? data : data.code;
+        return <DiagramRenderer code={diagramCode} />;
       }
 
       case "code": {
