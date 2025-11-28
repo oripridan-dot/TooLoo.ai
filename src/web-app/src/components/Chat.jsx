@@ -1,4 +1,4 @@
-// @version 2.2.52
+// @version 2.2.53
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -274,6 +274,14 @@ const Chat = () => {
     }
   };
 
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setInput(newValue);
+    if (socket) {
+      emitSensoryInput(newValue, socket);
+    }
+  };
+
   return (
     <div className="flex h-full bg-obsidian text-gray-100">
       <div className="flex-1 flex flex-col h-full">
@@ -379,7 +387,7 @@ const Chat = () => {
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Ask TooLoo.ai anything..."
               className="w-full p-3 pr-12 bg-[#1a1d24] border border-gray-700 text-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
               disabled={isLoading}
