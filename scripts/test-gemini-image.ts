@@ -1,5 +1,5 @@
-
-import 'dotenv/config';
+// @version 2.2.80
+import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -11,7 +11,8 @@ async function testImageGen() {
   try {
     const response = await client.models.generateImages({
       model: modelName,
-      prompt: "A futuristic city with flying cars, neon lights, cyberpunk style",
+      prompt:
+        "A futuristic city with flying cars, neon lights, cyberpunk style",
       config: {
         numberOfImages: 1,
       },
