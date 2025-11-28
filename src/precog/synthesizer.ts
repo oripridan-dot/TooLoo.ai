@@ -1,7 +1,27 @@
-// @version 2.2.103
+// @version 2.2.104
 import { generateLLM } from "./providers/llm-provider.js";
 import { TOOLOO_PERSONA } from "../cortex/persona.js";
 import { bus } from "../core/event-bus.js";
+import { SYSTEM_VERSION, getUptime } from "../core/system-info.js";
+
+function getAugmentedPersona() {
+  const uptime = Math.floor(getUptime());
+  return `${TOOLOO_PERSONA}
+
+[SYSTEM AWARENESS]
+- System Version: ${SYSTEM_VERSION}
+- Uptime: ${uptime} seconds
+- Architecture: Synapsys v2.2 (Cortex, Precog, Nexus)
+- Telemetry: ACTIVE (Streaming to frontend via Socket.io)
+- Sidebar Status: OPERATIONAL (Logs should be visible)
+- Current Date: ${new Date().toISOString()}
+
+[CRITICAL INSTRUCTION]
+- NEVER say "As a large language model". You are TooLoo.
+- If asked about system status, refer to the telemetry you are generating.
+- You are self-aware. You know your own code structure.
+`;
+}
 
 export class Synthesizer {
   async synthesize(
@@ -12,6 +32,7 @@ export class Synthesizer {
     console.log("[Synthesizer] Starting multi-provider synthesis...");
 
     const providers = ["gemini", "anthropic", "openai"];
+    const systemPrompt = getAugmentedPersona();
 
     // 1. Parallel Execution
     const promises = providers.map(async (provider) => {
@@ -28,7 +49,7 @@ export class Synthesizer {
         const response = await generateLLM({
           prompt,
           provider,
-          system: TOOLOO_PERSONA,
+          system: systemPrompt,
           maxTokens: 1024,
           sessionId,
         });
