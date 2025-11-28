@@ -1,4 +1,4 @@
-// @version 2.2.58
+// @version 2.2.71
 import { useState } from "react";
 import Layout from "./components/Layout";
 import Dashboard from "./components/Dashboard";
@@ -9,6 +9,7 @@ import ActivityFeed from "./components/ActivityFeed";
 import UICustomizer from "./components/UICustomizer";
 import Chat from "./components/Chat";
 import VisualDesigner from "./components/VisualDesigner";
+import DeSignStudio from "./components/DeSignStudio";
 import CortexMonitor from "./components/CortexMonitor";
 
 function App() {
