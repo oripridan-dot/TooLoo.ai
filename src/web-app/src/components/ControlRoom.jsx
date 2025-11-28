@@ -1,4 +1,4 @@
-// @version 2.2.34
+// @version 2.2.108
 import React, { useState, useEffect } from 'react';
 
 const ControlRoom = () => {
@@ -103,12 +103,12 @@ const ControlRoom = () => {
 
           {!loading && !error && activeTab === 'providers' && providerData && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(!providerData.available || providerData.available.length === 0) ? (
+              {(!providerData.providers || providerData.providers.length === 0) ? (
                  <div className="col-span-3 text-center text-gray-500 italic p-8 border border-white/5 rounded-lg">
                     No providers detected. Check system configuration.
                  </div>
               ) : (
-              providerData.available.map((p) => {
+              providerData.providers.map((p) => {
                 const isOperational = p.status === "Ready" || p.status === "Operational";
                 const colorClass = isOperational ? "text-emerald-400" : "text-yellow-400";
                 const borderColor = p.id === providerData.active ? "border-cyan-500/50" : "border-white/10";
