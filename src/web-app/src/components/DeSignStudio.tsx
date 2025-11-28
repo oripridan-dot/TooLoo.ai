@@ -1,4 +1,4 @@
-// @version 2.2.36
+// @version 2.2.73
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -279,9 +279,6 @@ const DeSignStudio: React.FC = () => {
                     <>
                       <option value="imagen-3.0-generate-001">
                         Imagen 3 (High Quality)
-                      </option>
-                      <option value="gemini-2.0-flash-exp">
-                        Nano Banana (Gemini 2.0 Flash)
                       </option>
                     </>
                   ) : (
