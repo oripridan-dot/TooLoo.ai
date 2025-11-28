@@ -1,6 +1,7 @@
-// @version 2.2.50
+// @version 2.2.103
 import { generateLLM } from "./providers/llm-provider.js";
 import { TOOLOO_PERSONA } from "../cortex/persona.js";
+import { bus } from "../core/event-bus.js";
 
 export class Synthesizer {
   async synthesize(
@@ -15,6 +16,15 @@ export class Synthesizer {
     // 1. Parallel Execution
     const promises = providers.map(async (provider) => {
       try {
+        // Notify start
+        bus.publish("precog", "precog:telemetry", {
+          provider: provider.toUpperCase(),
+          status: "processing",
+          latency: 0,
+          sessionId,
+        });
+
+        const start = Date.now();
         const response = await generateLLM({
           prompt,
           provider,
@@ -22,9 +32,27 @@ export class Synthesizer {
           maxTokens: 1024,
           sessionId,
         });
+
+        // Notify success
+        bus.publish("precog", "precog:telemetry", {
+          provider: provider.toUpperCase(),
+          status: "success",
+          latency: Date.now() - start,
+          sessionId,
+        });
+
         return { provider, response, success: true };
       } catch (error: any) {
         console.warn(`[Synthesizer] ${provider} failed: ${error.message}`);
+        
+        // Notify error
+        bus.publish("precog", "precog:telemetry", {
+          provider: provider.toUpperCase(),
+          status: "error",
+          latency: 0,
+          sessionId,
+        });
+
         return { provider, error: error.message, success: false };
       }
     });
