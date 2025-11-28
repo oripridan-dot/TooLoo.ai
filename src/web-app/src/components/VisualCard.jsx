@@ -1,4 +1,4 @@
-// @version 2.2.89
+// @version 2.2.112
 import React, { useEffect, useRef, useState } from "react";
 import {
   Info,
@@ -22,11 +22,17 @@ const DiagramRenderer = ({ code }) => {
 
       try {
         /* eslint-disable-next-line no-undef */
-        window.mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-        
+        window.mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+
+        // Clean the code: remove markdown code blocks if present
+        const cleanCode = code
+          .replace(/```mermaid/g, "")
+          .replace(/```/g, "")
+          .trim();
+
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         /* eslint-disable-next-line no-undef */
-        const { svg } = await window.mermaid.render(id, code);
+        const { svg } = await window.mermaid.render(id, cleanCode);
         setSvg(svg);
         setError(null);
       } catch (err) {
@@ -39,13 +45,13 @@ const DiagramRenderer = ({ code }) => {
   }, [code]);
 
   if (error) {
-      return (
-          <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm font-mono overflow-auto">
-              <div className="font-bold mb-2">Diagram Error:</div>
-              {error}
-              <pre className="mt-2 text-xs opacity-70">{code}</pre>
-          </div>
-      );
+    return (
+      <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm font-mono overflow-auto">
+        <div className="font-bold mb-2">Diagram Error:</div>
+        {error}
+        <pre className="mt-2 text-xs opacity-70">{code}</pre>
+      </div>
+    );
   }
 
   return (
@@ -116,10 +122,15 @@ const VisualCard = ({ type, data }) => {
   if (type === "image") {
     let imageSrc =
       typeof data === "string" ? data : data.src || data.url || data.data;
-    
+
     // Handle array of images (e.g. from Gemini/OpenAI provider response)
-    if (!imageSrc && data.images && Array.isArray(data.images) && data.images.length > 0) {
-        imageSrc = data.images[0].data || data.images[0].url;
+    if (
+      !imageSrc &&
+      data.images &&
+      Array.isArray(data.images) &&
+      data.images.length > 0
+    ) {
+      imageSrc = data.images[0].data || data.images[0].url;
     }
 
     const imageAlt =
@@ -132,15 +143,17 @@ const VisualCard = ({ type, data }) => {
     if (!imageSrc) {
       return (
         <div className="my-4 w-full max-w-2xl animate-fade-in">
-            <div className="rounded-xl overflow-hidden border border-yellow-500/30 bg-yellow-900/10 p-4 flex items-center gap-3">
-                <div className="p-2 bg-yellow-500/20 rounded-full text-yellow-500">
-                    <span className="text-xl">⚠️</span>
-                </div>
-                <div>
-                    <div className="text-yellow-200 font-medium text-sm">Image Generation Pending or Failed</div>
-                    <div className="text-yellow-400/60 text-xs mt-1">{imageAlt}</div>
-                </div>
+          <div className="rounded-xl overflow-hidden border border-yellow-500/30 bg-yellow-900/10 p-4 flex items-center gap-3">
+            <div className="p-2 bg-yellow-500/20 rounded-full text-yellow-500">
+              <span className="text-xl">⚠️</span>
             </div>
+            <div>
+              <div className="text-yellow-200 font-medium text-sm">
+                Image Generation Pending or Failed
+              </div>
+              <div className="text-yellow-400/60 text-xs mt-1">{imageAlt}</div>
+            </div>
+          </div>
         </div>
       );
     }
