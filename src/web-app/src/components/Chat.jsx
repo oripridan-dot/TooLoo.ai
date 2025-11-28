@@ -1,4 +1,4 @@
-// @version 2.2.66
+// @version 2.2.68
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader2, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { io } from "socket.io-client";
@@ -328,6 +328,7 @@ const Chat = ({ currentSessionId, setCurrentSessionId }) => {
                             </code>
                           );
                         },
+                        p: ({node, ...props}) => <div {...props} className={`mb-2 ${props.className || ''}`} />,
                         img({ src, alt }) {
                             return <VisualRegistry type="image" data={{ src, alt }} />;
                         }
