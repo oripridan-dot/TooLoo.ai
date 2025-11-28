@@ -1,4 +1,4 @@
-// @version 2.2.110
+// @version 2.2.111
 import React, { useState, useEffect } from 'react';
 import { Github, GitBranch, GitPullRequest, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
@@ -190,7 +190,70 @@ const ControlRoom = () => {
           )}
 
           {activeTab === 'github' && (
-             <div className="text-center text-gray-500 italic">GitHub integration coming soon to React Dashboard...</div>
+             <div className="space-y-6">
+               {!githubData ? (
+                 <div className="text-center text-gray-500 italic">Connecting to GitHub...</div>
+               ) : (
+                 <>
+                   {/* Connection Status */}
+                   <div className={`p-4 rounded-lg border ${githubData.connected ? 'border-green-500/30 bg-green-900/10' : 'border-red-500/30 bg-red-900/10'} flex items-center justify-between`}>
+                     <div className="flex items-center gap-3">
+                       <Github className={`w-6 h-6 ${githubData.connected ? 'text-green-400' : 'text-red-400'}`} />
+                       <div>
+                         <h3 className="text-white font-bold">{githubData.connected ? 'Connected to GitHub' : 'Disconnected'}</h3>
+                         <p className="text-xs text-gray-400">{githubData.details || 'Check GH_TOKEN in .env'}</p>
+                       </div>
+                     </div>
+                     {githubData.connected && <CheckCircle className="w-5 h-5 text-green-400" />}
+                   </div>
+
+                   {/* Repo Info */}
+                   {githubData.repo && (
+                     <div className="bg-gray-900/70 backdrop-blur border border-white/10 p-6 rounded-lg">
+                       <div className="flex justify-between items-start mb-4">
+                         <div>
+                           <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                             {githubData.repo.owner.login} / {githubData.repo.name}
+                           </h3>
+                           <p className="text-sm text-gray-400 mt-1">{githubData.repo.description}</p>
+                         </div>
+                         <a href={githubData.repo.url} target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-cyan-300 text-xs">
+                           View on GitHub →
+                         </a>
+                       </div>
+                       <div className="flex gap-4 text-xs font-mono text-gray-500">
+                         <span className="flex items-center gap-1"><GitBranch className="w-3 h-3" /> {githubData.repo.defaultBranchRef.name}</span>
+                       </div>
+                     </div>
+                   )}
+
+                   {/* Recent Issues */}
+                   <div className="space-y-3">
+                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Recent Issues</h3>
+                     {githubData.issues.length === 0 ? (
+                       <div className="text-gray-500 text-sm italic">No open issues found.</div>
+                     ) : (
+                       githubData.issues.map(issue => (
+                         <a key={issue.number} href={issue.url} target="_blank" rel="noreferrer" className="block bg-gray-900/40 border border-white/5 p-3 rounded hover:bg-gray-900/60 hover:border-cyan-500/30 transition group">
+                           <div className="flex justify-between items-start">
+                             <div className="flex gap-3">
+                               <AlertCircle className="w-4 h-4 text-green-400 mt-0.5" />
+                               <div>
+                                 <div className="text-sm text-gray-200 font-medium group-hover:text-cyan-300 transition-colors">{issue.title}</div>
+                                 <div className="text-xs text-gray-500 mt-1">#{issue.number} opened on {new Date(issue.createdAt).toLocaleDateString()}</div>
+                               </div>
+                             </div>
+                             <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${issue.state === 'OPEN' ? 'bg-green-900/30 text-green-400' : 'bg-purple-900/30 text-purple-400'}`}>
+                               {issue.state}
+                             </span>
+                           </div>
+                         </a>
+                       ))
+                     )}
+                   </div>
+                 </>
+               )}
+             </div>
           )}
         </div>
       </div>
