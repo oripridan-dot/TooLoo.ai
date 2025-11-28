@@ -1,4 +1,4 @@
-// @version 2.1.276
+// @version 2.2.84
 import { GoogleGenAI } from "@google/genai";
 import {
   ImageGenerationRequest,
@@ -11,7 +11,7 @@ import {
 export class GeminiImageProvider {
   private client: GoogleGenAI;
   private apiKey: string;
-  public name = "GeminiNanoBanana";
+  public name = "GeminiDeSign";
   public type: "paid" | "local" | "free" = "paid";
 
   constructor() {
@@ -39,7 +39,7 @@ export class GeminiImageProvider {
     let modelName = req.model || "imagen-4.0-generate-001";
 
     // Force Imagen 4 if a text model is requested for image generation
-    // But allow "Nano Banana" (gemini-2.5-flash-image) if we implement support for it later via generateContent
+    // But allow "DeSign Studio" (gemini-2.5-flash-image) if we implement support for it later via generateContent
     // For now, we assume generateImages is used, which requires an Imagen model.
     if ((modelName.includes("flash") || modelName.includes("pro")) && !modelName.includes("imagen")) {
       console.warn(`[GeminiImageProvider] Requested model ${modelName} does not support image generation via generateImages. Switching to imagen-4.0-generate-001.`);
@@ -118,7 +118,7 @@ export class GeminiImageProvider {
   }
 
   /**
-   * Analyze visual context and generate functional code (Nano Banana capability)
+   * Analyze visual context and generate functional code (DeSign Studio capability)
    * Uses Gemini 3 Pro Image Preview to understand design context and generate code
    */
   async generateCodeFromContext(
