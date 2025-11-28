@@ -1,5 +1,6 @@
-// @version 2.2.33
+// @version 2.2.89
 import React, { useState, useEffect } from 'react';
+import CortexMonitor from './CortexMonitor';
 
 const Dashboard = ({ setActiveComponent }) => {
   const [stats, setStats] = useState({
@@ -175,22 +176,10 @@ const Dashboard = ({ setActiveComponent }) => {
         {/* System Health */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-white border-b border-white/5 pb-2">
-            System Health
+            Cortex Monitor
           </h2>
-          <div className="bg-[#0f1117]/60 backdrop-blur border border-white/5 p-4 rounded-lg space-y-4">
-            {['Cortex', 'Precog', 'Nexus'].map((module) => (
-              <div key={module}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400">{module}</span>
-                  <span className={`text-${systemHealth[module.toLowerCase()] === 'online' ? 'emerald' : 'red'}-400 capitalize font-mono`}>
-                    {systemHealth[module.toLowerCase()]}
-                  </span>
-                </div>
-                <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                  <div className={`w-full h-full ${systemHealth[module.toLowerCase()] === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-red-500'}`}></div>
-                </div>
-              </div>
-            ))}
+          <div className="h-[400px]">
+            <CortexMonitor />
           </div>
         </div>
       </div>

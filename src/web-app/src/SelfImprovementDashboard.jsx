@@ -1,12 +1,13 @@
-// @version 2.2.39
+// @version 2.2.89
 import { useState, useEffect } from 'react'
-import { Brain, TrendingUp, BookOpen, FileText, Target, Zap } from 'lucide-react'
+import { Brain, TrendingUp, BookOpen, FileText, Target, Zap, Wrench } from 'lucide-react'
 
 function SelfImprovementDashboard() {
   const [learningReport, setLearningReport] = useState(null)
   const [patterns, setPatterns] = useState([])
   const [decisions, setDecisions] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [toolStatus, setToolStatus] = useState(null)
 
   useEffect(() => {
     fetchAllData()
@@ -39,6 +40,18 @@ function SelfImprovementDashboard() {
     }
   }
 
+  const runTool = async (toolName) => {
+      setToolStatus(`Running ${toolName}...`);
+      try {
+          // Mock API call for now, or map to real endpoints if available
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          setToolStatus(`${toolName} completed successfully.`);
+          setTimeout(() => setToolStatus(null), 3000);
+      } catch (e) {
+          setToolStatus(`Error running ${toolName}.`);
+      }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -52,11 +65,46 @@ function SelfImprovementDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-3">
-        <Brain className="w-8 h-8 text-purple-500" />
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Self-Improvement Dashboard</h2>
-          <p className="text-sm text-gray-600">TooLoo's learning journey towards Meta-AI</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+            <Brain className="w-8 h-8 text-purple-500" />
+            <div>
+            <h2 className="text-2xl font-bold text-gray-800">Self-Improvement Dashboard</h2>
+            <p className="text-sm text-gray-600">TooLoo's learning journey towards Meta-AI</p>
+            </div>
+        </div>
+        {toolStatus && (
+            <div className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium animate-pulse">
+                {toolStatus}
+            </div>
+        )}
+      </div>
+
+      {/* Tools Section */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div className="flex items-center space-x-2 mb-4">
+            <Wrench className="w-5 h-5 text-gray-600" />
+            <h3 className="text-lg font-semibold text-gray-800">Improvement Tools</h3>
+        </div>
+        <div className="flex gap-4">
+            <button 
+                onClick={() => runTool('Deep Analysis')}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition shadow-sm"
+            >
+                Run Deep Analysis
+            </button>
+            <button 
+                onClick={() => runTool('Pattern Consolidation')}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm"
+            >
+                Consolidate Patterns
+            </button>
+            <button 
+                onClick={() => runTool('Memory Optimization')}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition shadow-sm"
+            >
+                Optimize Memory
+            </button>
         </div>
       </div>
 

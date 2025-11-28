@@ -1,4 +1,4 @@
-// @version 2.2.50
+// @version 2.2.89
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
@@ -98,9 +98,9 @@ export default class LLMProvider {
       get() {
         return {
           deepseek: env("DEEPSEEK_MODEL", "deepseek-chat"),
-          anthropic: env("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022"),
-          openai: env("OPENAI_MODEL", "gpt-4o-mini"),
-          gemini: env("GEMINI_MODEL", "gemini-3-pro-preview"), // Gemini 3 Pro
+          anthropic: env("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
+          openai: env("OPENAI_MODEL", "gpt-4o"),
+          gemini: env("GEMINI_MODEL", "gemini-2.0-flash-exp"), // Gemini 2.0 Flash (Latest)
           localai: env("LOCALAI_MODEL", "gpt-4"),
           openinterpreter: env("OI_MODEL", "openinterpreter/default"),
           huggingface: env("HF_MODEL", "microsoft/DialoGPT-large"),
@@ -127,21 +127,14 @@ export default class LLMProvider {
 
   getProviderStatus() {
     const providerList = [
-      { id: "gemini", name: "Gemini 3 Pro", model: "gemini-3-pro-preview" },
-      { id: "gemini-nano", name: "Gemini Nano", model: "gemini-nano" },
-      {
-        id: "anthropic-haiku",
-        name: "Claude Haiku 4.5",
-        model: "claude-3-5-haiku-20241022",
-      },
-      {
-        id: "anthropic-opus",
-        name: "Claude Opus 4.5",
-        model: "claude-3-opus-20250219",
-      },
-      { id: "openai-gpt4", name: "GPT-4 Turbo", model: "gpt-4-turbo" },
-      { id: "openai-dalle", name: "DALL-E 3", model: "dall-e-3" },
-      { id: "openai-codex", name: "Codex (GPT-3.5)", model: "gpt-3.5-turbo" },
+      { id: "gemini", name: "Gemini 2.0 Flash", model: "gemini-2.0-flash-exp" },
+      { id: "gemini-pro", name: "Gemini 1.5 Pro", model: "gemini-1.5-pro" },
+      { id: "anthropic-sonnet", name: "Claude 3.5 Sonnet", model: "claude-3-5-sonnet-20241022" },
+      { id: "anthropic-haiku", name: "Claude 3.5 Haiku", model: "claude-3-5-haiku-20241022" },
+      { id: "anthropic-opus", name: "Claude 3 Opus", model: "claude-3-opus-20240229" },
+      { id: "openai-gpt4o", name: "GPT-4o", model: "gpt-4o" },
+      { id: "openai-gpt4o-mini", name: "GPT-4o Mini", model: "gpt-4o-mini" },
+      { id: "openai-o1", name: "o1-preview", model: "o1-preview" },
       { id: "deepseek", name: "DeepSeek V3", model: "deepseek-chat" },
       { id: "localai", name: "LocalAI", model: "gpt-4" },
     ];

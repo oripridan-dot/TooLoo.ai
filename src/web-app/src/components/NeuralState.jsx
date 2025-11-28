@@ -1,4 +1,4 @@
-// @version 2.2.56
+// @version 2.2.89
 import React, { useState, useEffect } from "react";
 import { Activity, Brain, Database, Cpu } from "lucide-react";
 
@@ -17,11 +17,17 @@ const NeuralState = ({ socket, sessionId }) => {
         const res = await fetch("/api/v1/providers/status");
         const data = await res.json();
         if (data.ok) {
-          setProviders(data.data.providers);
+          // Filter for specific providers: Gemini, OpenAI, Claude
+          const targetProviders = ['gemini', 'openai', 'anthropic', 'claude'];
+          const filteredProviders = (data.data.providers || []).filter(p => 
+            targetProviders.some(t => p.id.toLowerCase().includes(t))
+          );
+          setProviders(filteredProviders);
+          
           // Set active provider if one is busy/processing, otherwise default
           const active =
-            data.data.providers.find((p) => p.status === "Busy") ||
-            data.data.providers.find((p) => p.id === "gemini");
+            filteredProviders.find((p) => p.status === "Busy") ||
+            filteredProviders.find((p) => p.id === "gemini");
           setActiveProvider(active?.id);
         }
       } catch (e) {

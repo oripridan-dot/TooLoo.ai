@@ -1,4 +1,4 @@
-// @version 2.2.87
+// @version 2.2.89
 import React, { useEffect, useRef, useState } from "react";
 import {
   Info,
@@ -114,8 +114,14 @@ const VisualCard = ({ type, data }) => {
 
   // Handle image type
   if (type === "image") {
-    const imageSrc =
+    let imageSrc =
       typeof data === "string" ? data : data.src || data.url || data.data;
+    
+    // Handle array of images (e.g. from Gemini/OpenAI provider response)
+    if (!imageSrc && data.images && Array.isArray(data.images) && data.images.length > 0) {
+        imageSrc = data.images[0].data || data.images[0].url;
+    }
+
     const imageAlt =
       typeof data === "object"
         ? data.alt || data.prompt || "Generated Image"
