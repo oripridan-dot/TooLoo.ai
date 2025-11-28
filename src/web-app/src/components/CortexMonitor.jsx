@@ -1,4 +1,4 @@
-// @version 2.2.115
+// @version 2.2.118
 import React, { useState, useEffect } from "react";
 import { Server, Database, Share2, Cpu } from "lucide-react";
 import { getProviderLogo } from "./ProviderLogos";
@@ -69,7 +69,13 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
       };
 
   const { providers, stats } = displayData;
-  const providerList = providers?.providers || [];
+  // Filter out unused providers (attempts === 0) unless we have very few, then show top ones
+  let providerList = (providers?.providers || []).filter(p => p.attempts > 0);
+  
+  // If no providers have attempts (e.g. fresh start), show all to avoid empty graph
+  if (providerList.length === 0) {
+    providerList = providers?.providers || [];
+  }
 
   // Radial Layout Calculation
   const centerX = 200;
@@ -90,8 +96,8 @@ const CortexMonitor = ({ compact = false, activeProvider = null }) => {
         @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
         @keyframes pulse-glow { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-        .animate-spin-slow { animation: spin-slow 30s linear infinite; transform-origin: center; }
-        .animate-spin-reverse { animation: spin-reverse 40s linear infinite; transform-origin: center; }
+        .animate-spin-slow { animation: spin-slow 15s linear infinite; transform-origin: center; }
+        .animate-spin-reverse { animation: spin-reverse 20s linear infinite; transform-origin: center; }
       `}</style>
 
       {!compact && (
