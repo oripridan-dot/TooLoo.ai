@@ -572,11 +572,21 @@ router.get("/learning/report", (req, res) => {
         successfulGenerations: 0,
         failedGenerations: 0,
         improvements: {
-          firstTrySuccess: { current: 0, target: 0.8, baseline: 0.5, achieved: false },
-          repeatProblems: { current: 0, target: 0.1, baseline: 0.3, achieved: false }
+          firstTrySuccess: {
+            current: 0,
+            target: 0.8,
+            baseline: 0.5,
+            achieved: false,
+          },
+          repeatProblems: {
+            current: 0,
+            target: 0.1,
+            baseline: 0.3,
+            achieved: false,
+          },
         },
-        commonFailures: []
-      }
+        commonFailures: [],
+      },
     });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e.message });
@@ -590,8 +600,8 @@ router.get("/decisions/report", (req, res) => {
       data: {
         totalDecisions: 0,
         decisionsWithOutcomes: 0,
-        recentDecisions: []
-      }
+        recentDecisions: [],
+      },
     });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e.message });

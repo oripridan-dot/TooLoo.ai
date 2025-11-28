@@ -1,4 +1,4 @@
-// @version 2.2.64
+// @version 2.2.112
 import React, { useEffect, useRef, useState } from "react";
 import {
   Info,
@@ -12,23 +12,80 @@ import {
 } from "lucide-react";
 
 const DiagramRenderer = ({ code }) => {
-  const mermaidRef = useRef(null);
+  const [svg, setSvg] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    /* eslint-disable-next-line no-undef */
-    if (mermaidRef.current && typeof window !== "undefined" && window.mermaid) {
+    const renderDiagram = async () => {
       /* eslint-disable-next-line no-undef */
-      window.mermaid.contentLoaded();
-    }
+      if (!code || typeof window === "undefined" || !window.mermaid) return;
+
+      try {
+        /* eslint-disable-next-line no-undef */
+        window.mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+
+        // Clean the code: remove markdown code blocks if present
+        let cleanCode = code
+          .replace(/```mermaid/g, "")
+          .replace(/```/g, "")
+          .trim();
+
+        // Validate code is not empty
+        if (!cleanCode || cleanCode.length === 0) {
+          setError("Diagram code is empty");
+          return;
+        }
+
+        // Fix common truncation issues or syntax errors
+        // If code ends with "Anthr", replace with "Anthropic"
+        if (cleanCode.endsWith("Anthr")) {
+          cleanCode = cleanCode.replace(/Anthr$/, "Anthropic");
+        }
+
+        // Check for common Mermaid syntax patterns
+        const validMermaidTypes = [
+          "graph", "pie", "sequenceDiagram", "gantt", "classDiagram",
+          "stateDiagram", "erDiagram", "journey", "gitGraph", "flowchart"
+        ];
+        const isValidMermaid = validMermaidTypes.some(type => 
+          cleanCode.toLowerCase().startsWith(type)
+        );
+
+        if (!isValidMermaid && !cleanCode.includes("%%")) {
+          // Doesn't look like a valid Mermaid diagram
+          setError("Invalid Mermaid diagram format. Expected: graph, pie, sequence, etc.");
+          return;
+        }
+
+        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+        /* eslint-disable-next-line no-undef */
+        const { svg } = await window.mermaid.render(id, cleanCode);
+        setSvg(svg);
+        setError(null);
+      } catch (err) {
+        console.error("Mermaid render error:", err);
+        setError(`${err.message || "Failed to render diagram"}. Please check the diagram syntax.`);
+      }
+    };
+
+    renderDiagram();
   }, [code]);
+
+  if (error) {
+    return (
+      <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm font-mono overflow-auto">
+        <div className="font-bold mb-2">Diagram Error:</div>
+        {error}
+        <pre className="mt-2 text-xs opacity-70">{code}</pre>
+      </div>
+    );
+  }
 
   return (
     <div
-      className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96"
-      ref={mermaidRef}
-    >
-      <div className="mermaid">{code}</div>
-    </div>
+      className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96 flex justify-center"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   );
 };
 
@@ -90,8 +147,19 @@ const VisualCard = ({ type, data }) => {
 
   // Handle image type
   if (type === "image") {
-    const imageSrc =
+    let imageSrc =
       typeof data === "string" ? data : data.src || data.url || data.data;
+
+    // Handle array of images (e.g. from Gemini/OpenAI provider response)
+    if (
+      !imageSrc &&
+      data.images &&
+      Array.isArray(data.images) &&
+      data.images.length > 0
+    ) {
+      imageSrc = data.images[0].data || data.images[0].url;
+    }
+
     const imageAlt =
       typeof data === "object"
         ? data.alt || data.prompt || "Generated Image"
@@ -102,15 +170,17 @@ const VisualCard = ({ type, data }) => {
     if (!imageSrc) {
       return (
         <div className="my-4 w-full max-w-2xl animate-fade-in">
-            <div className="rounded-xl overflow-hidden border border-yellow-500/30 bg-yellow-900/10 p-4 flex items-center gap-3">
-                <div className="p-2 bg-yellow-500/20 rounded-full text-yellow-500">
-                    <span className="text-xl">⚠️</span>
-                </div>
-                <div>
-                    <div className="text-yellow-200 font-medium text-sm">Image Generation Pending or Failed</div>
-                    <div className="text-yellow-400/60 text-xs mt-1">{imageAlt}</div>
-                </div>
+          <div className="rounded-xl overflow-hidden border border-yellow-500/30 bg-yellow-900/10 p-4 flex items-center gap-3">
+            <div className="p-2 bg-yellow-500/20 rounded-full text-yellow-500">
+              <span className="text-xl">⚠️</span>
             </div>
+            <div>
+              <div className="text-yellow-200 font-medium text-sm">
+                Image Generation Pending or Failed
+              </div>
+              <div className="text-yellow-400/60 text-xs mt-1">{imageAlt}</div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -343,32 +413,8 @@ const VisualCard = ({ type, data }) => {
         );
 
       case "diagram": {
-        /* eslint-disable-next-line no-undef */
-        const mermaidRef = useRef(null);
-        /* eslint-disable-next-line no-undef */
-        useEffect(() => {
-          if (
-            mermaidRef.current &&
-            /* eslint-disable-next-line no-undef */
-            typeof window !== "undefined" &&
-            /* eslint-disable-next-line no-undef */
-            window.mermaid
-          ) {
-            /* eslint-disable-next-line no-undef */
-            window.mermaid.contentLoaded();
-          }
-        }, [data]);
-
-        return (
-          <div
-            className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 overflow-auto max-h-96"
-            ref={mermaidRef}
-          >
-            <div className="mermaid">
-              {typeof data === "string" ? data : data.code}
-            </div>
-          </div>
-        );
+        const diagramCode = typeof data === "string" ? data : data.code;
+        return <DiagramRenderer code={diagramCode} />;
       }
 
       case "code": {

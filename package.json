@@ -1,6 +1,6 @@
 {
   "name": "tooloo-ai",
-  "version": "2.2.78",
+  "version": "2.2.124",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -27,7 +27,12 @@
     "tooloo:github:status": "tsx src/cli/index.ts github status",
     "tooloo:github:info": "tsx src/cli/index.ts github info",
     "tooloo:github:context": "tsx src/cli/index.ts github context",
-    "branch:status": "git status"
+    "branch:status": "git status",
+    "check:duplicates": "tsx scripts/check-duplicates.ts",
+    "check:duplicates:all": "tsx scripts/check-duplicates.ts --all",
+    "analyze:architecture": "tsx src/core/architecture-analyzer.ts",
+    "analyze:components": "tsx src/core/component-registry.ts",
+    "generate:responsibilities": "tsx -e \"import { registry } from './src/core/module-registry.js'; registry.saveResponsibilitiesDoc()\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",

@@ -1,2 +1,16 @@
-/* @version 2.2.14 */
+/* @version 2.2.90 */
 @import "tailwindcss";
+
+@keyframes progress-indeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-progress {
+  background-size: 200% 100%;
+  animation: progress-indeterminate 1.5s infinite linear;
+}

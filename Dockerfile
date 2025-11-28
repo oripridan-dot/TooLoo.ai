@@ -10,7 +10,7 @@ RUN npm run build:frontend
 FROM node:20-slim
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --production
+RUN npm ci
 COPY --from=frontend-builder /app/src/web-app/dist ./src/web-app/dist
 COPY . .
 

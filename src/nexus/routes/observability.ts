@@ -45,7 +45,26 @@ router.get("/knowledge-graph", (req, res) => {
       cortex.hippocampus.knowledgeGraph.getGoalPerformanceSummary(
         "interaction",
       );
-    res.json({ ok: true, data: { stats, providers } });
+
+    // Get active traces to determine system load/activity
+    const activeTraces = tracer
+      .getTraces()
+      .filter((t) => t.status === "running");
+    const isBusy = activeTraces.length > 0;
+    const activeProvider = activeTraces.length > 0 ? "synapsys" : null; // Simplified for now
+
+    res.json({
+      ok: true,
+      data: {
+        stats,
+        providers,
+        status: {
+          busy: isBusy,
+          activeCount: activeTraces.length,
+          activeProvider, // In the future, extract actual provider from trace steps
+        },
+      },
+    });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e.message });
   }

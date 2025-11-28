@@ -1,4 +1,4 @@
-// @version 2.2.50
+// @version 2.2.102
 import { bus, SynapsysEvent } from "../core/event-bus.js";
 import { amygdala } from "./amygdala/index.js";
 import { orchestrator } from "./orchestrator.js";
@@ -18,12 +18,30 @@ import { registry } from "../core/module-registry.js";
 import { Plan } from "./planning/planner.js";
 import { SYSTEM_VERSION } from "../core/system-info.js";
 import { ContextResonanceEngine } from "./context-resonance.js";
+import { ReasoningChain } from "./reasoning-chain.js";
+import { ContextManager } from "./context-manager.js";
+import { VectorStore } from "./memory/vector-store.js";
+import KnowledgeGraphEngine from "./memory/knowledge-graph-engine.js";
+import {
+  sessionContextService,
+  SessionContextService,
+} from "./session-context-service.js";
+import {
+  providerFeedbackEngine,
+  ProviderFeedbackEngine,
+} from "./feedback/index.js";
+import { MemoryAutoFiller } from "./memory/memory-auto-filler.js";
 
 interface PlanResult {
   ok?: boolean;
   timeout?: boolean;
   plan?: Plan;
   reason?: string;
+}
+
+interface SynthesisResult {
+  response: string;
+  meta: any;
 }
 
 export class Cortex {
@@ -33,6 +51,11 @@ export class Cortex {
   private prefrontal: PrefrontalCortex;
   private projectManager: ProjectManager;
   public contextResonance: ContextResonanceEngine;
+  private reasoningChain: ReasoningChain;
+  private contextManager: ContextManager;
+  public sessionContextService: SessionContextService;
+  public providerFeedbackEngine: ProviderFeedbackEngine;
+  public memoryAutoFiller: MemoryAutoFiller;
 
   constructor() {
     console.log("[Cortex] Initializing Cognitive Core...");
@@ -64,6 +87,18 @@ export class Cortex {
     this.prefrontal = new PrefrontalCortex(bus, process.cwd());
     this.projectManager = new ProjectManager(process.cwd());
     this.contextResonance = new ContextResonanceEngine();
+    this.reasoningChain = new ReasoningChain();
+
+    // Initialize Context Manager with persistence layers
+    const vectorStore = new VectorStore(process.cwd());
+    const knowledgeGraph = new KnowledgeGraphEngine();
+    this.contextManager = new ContextManager(vectorStore, knowledgeGraph);
+
+    // Initialize feedback and context services
+    this.sessionContextService = new SessionContextService();
+    this.providerFeedbackEngine = new ProviderFeedbackEngine();
+    this.memoryAutoFiller = new MemoryAutoFiller(this.hippocampus);
+
     this.setupListeners();
   }
 
@@ -156,27 +191,101 @@ export class Cortex {
       } else {
         // It's just chat. Use Synthesizer for multi-provider aggregation with timeout.
         try {
-          console.log(
-            `[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`,
-          );
+          // Check for complex reasoning intent
+          const isComplex =
+            message.toLowerCase().includes("reason") ||
+            message.toLowerCase().includes("analyze") ||
+            message.toLowerCase().includes("think") ||
+            message.length > 200;
 
-          // Create a timeout promise (increased to 60s for thinking models)
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Synthesizer timeout after 60s")),
-              60000,
-            ),
-          );
+          if (isComplex) {
+            console.log(
+              `[Cortex] Invoking Reasoning Chain for complex query...`,
+            );
 
-          const result = (await Promise.race([
-            synthesizer.synthesize(message, responseType, sessionId),
-            timeoutPromise,
-          ])) as any;
+            // Retrieve Context
+            const context = await this.contextManager.getContext(message);
+            const contextString =
+              context.length > 0 ? `\n\nContext:\n${context.join("\n")}` : "";
+            const augmentedMessage = message + contextString;
 
-          responseText = result.response;
-          provider = "Synapsys Synthesizer";
-          meta = result.meta;
-          console.log(`[Cortex] Synthesizer responded successfully`);
+            // Notify frontend of reasoning start
+            bus.publish("precog", "precog:telemetry", {
+              provider: "Synapsys Reasoning Engine",
+              status: "processing",
+              latency: 0,
+              sessionId,
+            });
+
+            const reasoningResult =
+              await this.reasoningChain.execute(augmentedMessage);
+
+            if (reasoningResult) {
+              responseText = `**Reasoning Process:**\n\n*Thought:* ${reasoningResult.thought}\n\n*Evidence:* ${reasoningResult.evidence}\n\n*Confidence:* ${reasoningResult.confidence}\n\n**Conclusion:** ${reasoningResult.next_action}`;
+              provider = "Synapsys Reasoning Engine";
+              meta = { reasoning: reasoningResult };
+              console.log(`[Cortex] Reasoning Chain completed successfully`);
+
+              // Notify frontend of success
+              bus.publish("precog", "precog:telemetry", {
+                provider: "Synapsys Reasoning Engine",
+                status: "success",
+                latency: Date.now() - startTime,
+                sessionId,
+              });
+            } else {
+              console.warn(
+                "[Cortex] Reasoning Chain failed or returned null. Falling back to Synthesizer.",
+              );
+              // Fallback to standard synthesis
+              const result = await synthesizer.synthesize(
+                message,
+                responseType,
+                sessionId,
+              );
+              responseText = result.response;
+              provider = "Synapsys Synthesizer (Fallback)";
+              meta = result.meta;
+            }
+          } else {
+            console.log(
+              `[Cortex] Invoking synthesizer for: ${message.substring(0, 50)}`,
+            );
+
+            // Notify frontend of synthesis start
+            bus.publish("precog", "precog:telemetry", {
+              provider: "Synapsys Synthesizer",
+              status: "processing",
+              latency: 0,
+              sessionId,
+            });
+
+            // Create a timeout promise (increased to 60s for thinking models)
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Synthesizer timeout after 60s")),
+                60000,
+              ),
+            );
+
+            const result = (await Promise.race([
+              synthesizer.synthesize(message, responseType, sessionId),
+              timeoutPromise,
+            ])) as SynthesisResult;
+
+            responseText = result.response;
+            provider = "Synapsys Synthesizer";
+            meta = result.meta;
+            console.log(`[Cortex] Synthesizer responded successfully`);
+
+            // Notify frontend of success
+            bus.publish("precog", "precog:telemetry", {
+              provider: "Synapsys Synthesizer",
+              status: "success",
+              latency: Date.now() - startTime,
+              sessionId,
+            });
+          }
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : String(err);
           console.error(`[Cortex] Synthesis error: ${errorMessage}`);

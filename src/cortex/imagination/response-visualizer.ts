@@ -243,9 +243,72 @@ export class ResponseVisualizer {
     return {
       type: "diagram",
       data: {
-        code: diagramCode.trim(),
+        code: this.sanitizeMermaid(diagramCode.trim()),
       },
     };
+  }
+
+  private sanitizeMermaid(code: string): string {
+    let sanitized = code;
+
+    // 1. Fix subgraph names with spaces (e.g., subgraph My System -> subgraph "My System")
+    sanitized = sanitized.replace(
+      /subgraph\s+([^"\[\n]+[\s]+[^"\[\n]+)/g,
+      (match, name) => {
+        return `subgraph "${name.trim()}"`;
+      },
+    );
+
+    const lines = sanitized.split("\n");
+    const fixedLines = lines.map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+
+      // 2. Fix "end" on same line as other content (rare but possible artifact)
+      if (trimmed.startsWith("end ") && trimmed.length > 4) {
+        return "end\n" + this.sanitizeLine(trimmed.substring(4));
+      }
+
+      return this.sanitizeLine(line);
+    });
+
+    return fixedLines.join("\n");
+  }
+
+  private sanitizeLine(line: string): string {
+    // Regex to find arrows: -->, ---, -.->, ==>
+    // We capture the arrow to split by it.
+    // We allow optional spaces around it.
+    const arrowRegex = /((?:--|==|-.+)>|---)/;
+    const match = line.match(arrowRegex);
+
+    if (!match) return line;
+
+    const arrow = match[1];
+    const parts = line.split(arrow);
+
+    // Only handle simple A -> B cases for now to avoid breaking complex labels
+    if (parts.length !== 2) return line;
+
+    let left = parts[0].trim();
+    let right = parts[1].trim();
+
+    // Helper: needs quotes if spaces present and not already quoted/bracketed
+    const needsQuotes = (s: string) => {
+      if (!s.includes(" ")) return false;
+      // Check if already wrapped in quotes
+      if (s.startsWith('"') && s.endsWith('"')) return false;
+      // Check if it has brackets [] () {} - likely a node definition
+      if (/[\[\(\{\)]/.test(s)) return false;
+      return true;
+    };
+
+    if (needsQuotes(left)) left = `"${left}"`;
+    if (needsQuotes(right)) right = `"${right}"`;
+
+    // Preserve indentation
+    const indent = line.match(/^\s*/)?.[0] || "";
+    return `${indent}${left} ${arrow} ${right}`;
   }
 
   private buildCodeVisual(code: string, language: string): VisualData {

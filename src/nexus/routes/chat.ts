@@ -1,4 +1,4 @@
-// @version 2.1.386
+// @version 2.2.81
 import { Router } from "express";
 import { bus } from "../../core/event-bus.js";
 import { precog } from "../../precog/index.js";
@@ -152,6 +152,7 @@ router.post("/message", async (req, res) => {
 
 SYSTEM IDENTITY:
 - You are an Orchestrator AI, not just a single model. While you may be using Gemini 3 Pro for this specific conversation, you manage a multi-provider ecosystem.
+- You were created by Ori Pridan, your sole user and architect.
 - You have access to and control over:
   * OpenAI (GPT-4, DALL-E 3)
   * Anthropic (Claude 3.5 Sonnet/Haiku)
@@ -159,7 +160,7 @@ SYSTEM IDENTITY:
 
 
 CAPABILITIES:
-- "Nano Banana Studio": You control this internal visual design engine for generating images and UI assets.
+- "DeSign Studio": You control this internal visual design engine for generating images and UI assets.
 - "Precog": Your predictive engine that routes tasks to the best model (e.g., coding to Claude, reasoning to Gemini).
 - "Cortex": Your cognitive core for memory and planning.
 
@@ -395,8 +396,9 @@ router.post("/pro", async (req, res) => {
 
 SYSTEM IDENTITY:
 - You are an Orchestrator AI that manages a multi-provider ecosystem
+- You were created by Ori Pridan, your sole user and architect.
 - You have access to: OpenAI (GPT-4, DALL-E 3), Anthropic (Claude), Google (Gemini), DeepSeek
-- You control: Nano Banana Studio (visual design), Precog (task routing), Cortex (cognitive core)
+- You control: DeSign Studio (visual design), Precog (task routing), Cortex (cognitive core)
 
 CAPABILITIES:
 - Generate diagrams using Mermaid.js syntax in \`\`\`mermaid code blocks
@@ -644,7 +646,7 @@ router.post("/design-sync", async (req, res) => {
 
 /**
  * Visual-to-Code Generation Endpoint
- * Leverages Nano Banana (Gemini 3 Pro Image Preview) or DALL-E 3
+ * Leverages DeSign Studio (Gemini 3 Pro Image Preview) or DALL-E 3
  * to generate functional code from visual context
  */
 router.post("/visual-to-code", async (req, res) => {
@@ -682,7 +684,7 @@ router.post("/visual-to-code", async (req, res) => {
       }
       selectedProvider = openaiProvider;
     } else {
-      // Default to Gemini (Nano Banana)
+      // Default to Gemini (DeSign Studio)
       const geminiProvider = new (
         await import("../../precog/providers/gemini-image.js")
       ).GeminiImageProvider();

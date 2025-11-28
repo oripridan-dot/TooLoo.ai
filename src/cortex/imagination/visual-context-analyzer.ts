@@ -1,8 +1,8 @@
-// @version 2.1.0
+// @version 2.2.85
 /**
  * Visual Context Analyzer
  * Extracts design tokens, UI patterns, and requirements from context
- * Enables visual providers (Nano Banana, DALL-E) to make intelligent code generation decisions
+ * Enables visual providers (DeSign Studio, DALL-E) to make intelligent code generation decisions
  */
 
 import {

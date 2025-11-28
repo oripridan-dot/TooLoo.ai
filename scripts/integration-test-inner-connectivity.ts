@@ -1,3 +1,4 @@
+// @version 2.2.86
 #!/usr/bin/env tsx
 /**
  * TooLoo.ai Inner Connectivity Integration Test Suite
@@ -59,7 +60,7 @@ class IntegrationTestSuite {
     // Test 5: Chat Visual Commands
     await this.testChatVisualCommands();
 
-    // Test 6: Visual Providers (Nano Banana + DALL-E context-aware code generation)
+    // Test 6: Visual Providers (DeSign Studio + DALL-E context-aware code generation)
     await this.testVisualProviders();
 
     // Print summary
@@ -505,7 +506,7 @@ class IntegrationTestSuite {
   }
 
   /**
-   * Test 6: Visual Providers (Nano Banana + DALL-E context-aware code generation)
+   * Test 6: Visual Providers (DeSign Studio + DALL-E context-aware code generation)
    */
   private async testVisualProviders() {
     let passed = true;
@@ -517,16 +518,16 @@ class IntegrationTestSuite {
     );
 
     try {
-      // Test 6.1: Verify Nano Banana capability is registered
-      console.log("  ├─ Checking Nano Banana capability...");
+      // Test 6.1: Verify DeSign Studio capability is registered
+      console.log("  ├─ Checking DeSign Studio capability...");
       const capMgr = CapabilitiesManager.getInstance();
-      const nanoBanana = capMgr.checkCapability(
+      const designStudio = capMgr.checkCapability(
         "image.context.code-generation.gemini",
       );
-      if (!nanoBanana) {
-        throw new Error("Nano Banana capability not registered");
+      if (!designStudio) {
+        throw new Error("DeSign Studio capability not registered");
       }
-      console.log("  ✓ Nano Banana capability registered");
+      console.log("  ✓ DeSign Studio capability registered");
 
       // Test 6.2: Verify DALL-E capability is registered
       console.log("  ├─ Checking DALL-E 3 capability...");
@@ -648,8 +649,8 @@ class IntegrationTestSuite {
       console.log(`${colors.red}❌ Test 6 FAILED: ${error}${colors.reset}\n`);
     }
 
-    this.recordResult({
-      name: "Visual Providers (Nano Banana + DALL-E) Integration",
+      this.recordResult({
+      name: "Visual Providers (DeSign Studio + DALL-E) Integration",
       passed,
       duration: Date.now() - startTime,
       error,
