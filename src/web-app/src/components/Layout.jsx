@@ -1,4 +1,4 @@
-// @version 2.2.78
+// @version 2.2.79
 import React from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
