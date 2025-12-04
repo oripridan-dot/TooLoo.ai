@@ -1,4 +1,4 @@
-// @version 3.3.12
+// @version 3.3.16
 /**
  * Execution Agent - Core Autonomous Execution Loop
  *
@@ -598,10 +598,10 @@ export class ExecutionAgent {
       }
 
       if (!deployResult.success) {
-        logs.push(`Deployment failed: ${deployResult.stderr || deployResult.output}`);
+        logs.push(`Deployment failed: ${deployResult.stderr}`);
         return {
           success: false,
-          output: `Deployment to ${target} failed: ${deployResult.stderr || deployResult.output}`,
+          output: `Deployment to ${target} failed: ${deployResult.stderr}`,
         };
       }
 
@@ -619,9 +619,12 @@ export class ExecutionAgent {
         output: `Successfully deployed to ${target}`,
         artifacts: [{
           id: uuidv4(),
-          type: 'deployment',
+          type: 'deployment' as const,
           name: `deployment-${target}-${Date.now()}`,
           path: workDir,
+          version: '1.0.0',
+          createdAt: new Date(),
+          createdBy: task.id,
           metadata: {
             target,
             deployedAt: new Date().toISOString(),
@@ -637,7 +640,7 @@ export class ExecutionAgent {
   }
 
   private async deployLocal(
-    command: string, 
+    command: string,
     workDir: string, 
     environment: Record<string, string>,
     logs: string[]
