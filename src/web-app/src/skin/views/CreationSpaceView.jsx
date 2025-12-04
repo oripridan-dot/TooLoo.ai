@@ -1,4 +1,4 @@
-// @version 3.3.35
+// @version 3.3.36
 // TooLoo.ai LIQUID CREATION SPACE - Multi-Artifact Visual Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Generates MULTIPLE visual artifacts per prompt with intelligent follow-ups
@@ -488,12 +488,13 @@ const FloatingArtifact = memo(({
   return (
     <motion.div
       drag
-      dragMomentum={false}
-      dragElastic={0.1}
-      onDrag={(_, info) => {
-        setLocalPos({ x: localPos.x + info.delta.x, y: localPos.y + info.delta.y });
-      }}
-      className="absolute cursor-grab active:cursor-grabbing z-30"
+      dragMomentum={true}
+      dragElastic={0.15}
+      dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+      className={`absolute z-30 ${isDragging ? 'cursor-grabbing z-50' : 'cursor-grab'}`}
       style={{
         left: localPos.x,
         top: localPos.y,
@@ -507,7 +508,8 @@ const FloatingArtifact = memo(({
       }}
       transition={{ type: 'spring', stiffness: 100, damping: 15 }}
       whileHover={{ scale: (position.scale || 1) * 1.05 }}
-      onClick={(e) => { e.stopPropagation(); onToggle?.(); }}
+      whileDrag={{ scale: 1.1, boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}
+      onClick={(e) => { e.stopPropagation(); if (!isDragging) onToggle?.(); }}
     >
       {/* Connector line to center */}
       <svg 
@@ -954,13 +956,24 @@ ArtifactSelectionPanel.displayName = 'ArtifactSelectionPanel';
 // COMPLETED ARTIFACT - A finalized visual artifact in the cosmos
 // ============================================================================
 
+// ============================================================================
+// COMPLETED ARTIFACT - Interactive artifact with free movement
+// v3.3.33 - Enhanced with drag-anywhere, momentum, and position persistence
+// ============================================================================
+
 const CompletedArtifact = memo(({ 
   artifact, 
   position, 
   isExpanded, 
   onToggle,
   onFollowUp,
+  onPositionChange,
 }) => {
+  const [localPos, setLocalPos] = useState(position);
+  const [isDragging, setIsDragging] = useState(false);
+  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
+  const rafRef = useRef(null);
+  
   const colorMap = {
     cyan: 'from-cyan-500/30 to-cyan-600/10',
     purple: 'from-purple-500/30 to-purple-600/10',
@@ -974,18 +987,101 @@ const CompletedArtifact = memo(({
   
   const gradient = colorMap[artifact.color] || colorMap.cyan;
   
+  // Sync with external position updates (when not dragging)
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalPos(position);
+    }
+  }, [position, isDragging]);
+  
+  // Apply momentum/drift when released
+  useEffect(() => {
+    if (isDragging || (Math.abs(velocity.x) < 0.5 && Math.abs(velocity.y) < 0.5)) {
+      return;
+    }
+    
+    const animate = () => {
+      setVelocity(v => ({
+        x: v.x * 0.92, // Smooth friction
+        y: v.y * 0.92,
+      }));
+      
+      setLocalPos(prev => {
+        // Soft boundaries with bounce
+        const padding = 120;
+        const maxX = window.innerWidth - padding;
+        const maxY = window.innerHeight - padding;
+        
+        let newX = prev.x + velocity.x;
+        let newY = prev.y + velocity.y;
+        let bounceX = velocity.x;
+        let bounceY = velocity.y;
+        
+        // Bounce off edges with dampening
+        if (newX < padding) { newX = padding; bounceX = Math.abs(velocity.x) * 0.6; }
+        if (newX > maxX) { newX = maxX; bounceX = -Math.abs(velocity.x) * 0.6; }
+        if (newY < padding) { newY = padding; bounceY = Math.abs(velocity.y) * 0.6; }
+        if (newY > maxY) { newY = maxY; bounceY = -Math.abs(velocity.y) * 0.6; }
+        
+        if (bounceX !== velocity.x || bounceY !== velocity.y) {
+          setVelocity({ x: bounceX, y: bounceY });
+        }
+        
+        return { x: newX, y: newY };
+      });
+      
+      if (Math.abs(velocity.x) > 0.5 || Math.abs(velocity.y) > 0.5) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+    
+    rafRef.current = requestAnimationFrame(animate);
+    return () => rafRef.current && cancelAnimationFrame(rafRef.current);
+  }, [isDragging, velocity]);
+  
+  const handleDragStart = () => {
+    setIsDragging(true);
+    setVelocity({ x: 0, y: 0 });
+  };
+  
+  const handleDrag = (_, info) => {
+    const newPos = {
+      x: localPos.x + info.delta.x,
+      y: localPos.y + info.delta.y,
+    };
+    setLocalPos(newPos);
+    // Track velocity for momentum effect
+    setVelocity({ x: info.delta.x * 0.8, y: info.delta.y * 0.8 });
+  };
+  
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    // Persist new position
+    onPositionChange?.({ ...localPos, id: artifact.id });
+  };
+  
   return (
     <motion.div
-      className="absolute cursor-pointer z-20"
+      drag
+      dragMomentum={false}
+      dragElastic={0.08}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+      className={`absolute z-20 ${isDragging ? 'cursor-grabbing z-50' : 'cursor-grab'}`}
       style={{
-        left: position.x,
-        top: position.y,
+        left: localPos.x,
+        top: localPos.y,
         transform: 'translate(-50%, -50%)',
       }}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      whileHover={{ scale: 1.05 }}
-      onClick={onToggle}
+      whileHover={{ scale: isDragging ? 1.08 : 1.05 }}
+      whileDrag={{ 
+        scale: 1.08, 
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(6, 182, 212, 0.3)',
+        zIndex: 100,
+      }}
     >
       {/* Connector to center */}
       <svg 
