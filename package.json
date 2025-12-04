@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.5",
+  "version": "3.3.6",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -93,6 +93,7 @@
     "react-dom": "^18.2.0",
     "react-live": "^4.1.8",
     "react-markdown": "^9.0.1",
+    "react-resizable-panels": "^3.0.6",
     "remark-gfm": "^4.0.1",
     "sharp": "^0.34.5",
     "socket.io": "^4.7.4",
