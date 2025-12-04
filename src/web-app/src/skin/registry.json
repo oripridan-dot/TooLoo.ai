@@ -1,0 +1,320 @@
+{
+  "version": "1.0.0",
+  "name": "TooLoo Skin Registry",
+  "description": "Component DNA manifest for dynamic composition and generative UI",
+
+  "primitives": {
+    "Button": {
+      "id": "button",
+      "type": "interactive",
+      "file": "./primitives/Button.jsx",
+      "exports": ["Button", "IconButton"],
+      "variants": ["primary", "secondary", "ghost", "danger", "success", "accent"],
+      "sizes": ["xs", "sm", "md", "lg", "xl"],
+      "props": {
+        "variant": { "type": "enum", "default": "primary" },
+        "size": { "type": "enum", "default": "md" },
+        "icon": { "type": "component", "optional": true },
+        "iconPosition": { "type": "enum", "values": ["left", "right"], "default": "left" },
+        "loading": { "type": "boolean", "default": false },
+        "disabled": { "type": "boolean", "default": false },
+        "fullWidth": { "type": "boolean", "default": false }
+      },
+      "designInstruction": "Interactive button with multiple variants for different contexts. Primary for main actions, secondary for supporting actions, ghost for minimal footprint."
+    },
+
+    "Card": {
+      "id": "card",
+      "type": "container",
+      "file": "./primitives/Card.jsx",
+      "exports": [
+        "Card",
+        "CardHeader",
+        "CardTitle",
+        "CardDescription",
+        "CardContent",
+        "CardFooter"
+      ],
+      "variants": [
+        "default",
+        "elevated",
+        "outlined",
+        "glass",
+        "gradient",
+        "accent",
+        "warning",
+        "danger",
+        "success"
+      ],
+      "sizes": ["sm", "md", "lg", "xl"],
+      "props": {
+        "variant": { "type": "enum", "default": "default" },
+        "size": { "type": "enum", "default": "md" },
+        "hover": { "type": "boolean", "default": false },
+        "clickable": { "type": "boolean", "default": false }
+      },
+      "designInstruction": "Container component for grouping related content. Use elevated for prominent sections, glass for overlays, gradient for featured content."
+    },
+
+    "Panel": {
+      "id": "panel",
+      "type": "container",
+      "file": "./primitives/Panel.jsx",
+      "exports": ["Panel", "SimplePanel"],
+      "variants": ["default", "elevated", "transparent", "accent"],
+      "props": {
+        "title": { "type": "string", "required": true },
+        "icon": { "type": "component", "optional": true },
+        "collapsible": { "type": "boolean", "default": true },
+        "defaultCollapsed": { "type": "boolean", "default": false },
+        "actions": { "type": "node", "optional": true },
+        "badge": { "type": "string", "optional": true }
+      },
+      "designInstruction": "Collapsible section container with header. Use for organizing dashboard widgets, settings sections, or any content that benefits from show/hide control."
+    },
+
+    "StatCard": {
+      "id": "stat-card",
+      "type": "display",
+      "file": "./primitives/StatCard.jsx",
+      "exports": ["StatCard", "MiniStat", "StatGroup"],
+      "accents": ["cyan", "purple", "emerald", "amber", "rose", "gray"],
+      "sizes": ["sm", "md", "lg"],
+      "props": {
+        "title": { "type": "string", "required": true },
+        "value": { "type": "string|number", "required": true },
+        "subtitle": { "type": "string", "optional": true },
+        "icon": { "type": "component", "optional": true },
+        "trend": { "type": "enum", "values": ["up", "down", "neutral"], "optional": true },
+        "trendValue": { "type": "string", "optional": true },
+        "accent": { "type": "enum", "default": "cyan" }
+      },
+      "designInstruction": "Metric display card showing key statistics with optional trend indicators. Use consistent accents per metric category."
+    },
+
+    "Badge": {
+      "id": "badge",
+      "type": "display",
+      "file": "./primitives/Badge.jsx",
+      "exports": ["Badge", "StatusBadge", "CountBadge"],
+      "variants": [
+        "default",
+        "primary",
+        "success",
+        "warning",
+        "danger",
+        "info",
+        "purple",
+        "rose",
+        "solid-*",
+        "outline-*"
+      ],
+      "sizes": ["xs", "sm", "md", "lg"],
+      "props": {
+        "variant": { "type": "enum", "default": "default" },
+        "size": { "type": "enum", "default": "sm" },
+        "icon": { "type": "component", "optional": true },
+        "dot": { "type": "boolean", "default": false },
+        "pill": { "type": "boolean", "default": true }
+      },
+      "designInstruction": "Status indicators and labels. Use StatusBadge for online/offline states, CountBadge for notifications."
+    },
+
+    "Input": {
+      "id": "input",
+      "type": "interactive",
+      "file": "./primitives/Input.jsx",
+      "exports": ["Input", "SearchInput", "Textarea", "FormField"],
+      "variants": ["default", "filled", "ghost", "error"],
+      "sizes": ["sm", "md", "lg"],
+      "props": {
+        "variant": { "type": "enum", "default": "default" },
+        "size": { "type": "enum", "default": "md" },
+        "icon": { "type": "component", "optional": true },
+        "iconPosition": { "type": "enum", "values": ["left", "right"], "default": "left" },
+        "suffix": { "type": "node", "optional": true },
+        "error": { "type": "string", "optional": true }
+      },
+      "designInstruction": "Text input field with optional icons and validation states. Use FormField wrapper for label and error message display."
+    },
+
+    "Select": {
+      "id": "select",
+      "type": "interactive",
+      "file": "./primitives/Select.jsx",
+      "exports": ["Select", "NativeSelect"],
+      "variants": ["default", "filled"],
+      "sizes": ["sm", "md", "lg"],
+      "props": {
+        "options": { "type": "array", "required": true },
+        "value": { "type": "string", "required": true },
+        "onChange": { "type": "function", "required": true },
+        "placeholder": { "type": "string", "default": "Select..." }
+      },
+      "designInstruction": "Dropdown selection. Use NativeSelect for form submissions, Select for custom styling."
+    },
+
+    "Toggle": {
+      "id": "toggle",
+      "type": "interactive",
+      "file": "./primitives/Toggle.jsx",
+      "exports": ["Toggle", "Checkbox", "Radio"],
+      "accents": ["cyan", "purple", "emerald", "amber", "rose"],
+      "sizes": ["sm", "md", "lg"],
+      "props": {
+        "checked": { "type": "boolean", "required": true },
+        "onChange": { "type": "function", "required": true },
+        "label": { "type": "string", "optional": true },
+        "description": { "type": "string", "optional": true },
+        "accent": { "type": "enum", "default": "cyan" }
+      },
+      "designInstruction": "Boolean toggle switch. Use for on/off settings. Checkbox for multi-select, Radio for single-select groups."
+    },
+
+    "Tabs": {
+      "id": "tabs",
+      "type": "navigation",
+      "file": "./primitives/Tabs.jsx",
+      "exports": ["Tabs", "TabPanels", "TabPanel", "TabsController"],
+      "variants": ["default", "pills", "underline", "cards"],
+      "sizes": ["sm", "md", "lg"],
+      "props": {
+        "tabs": { "type": "array", "required": true },
+        "activeTab": { "type": "string", "required": true },
+        "onChange": { "type": "function", "required": true },
+        "variant": { "type": "enum", "default": "default" },
+        "fullWidth": { "type": "boolean", "default": false }
+      },
+      "designInstruction": "Tabbed navigation for sectioned content. Pills variant for standalone, underline for minimal, cards for emphasized sections."
+    },
+
+    "Modal": {
+      "id": "modal",
+      "type": "overlay",
+      "file": "./primitives/Modal.jsx",
+      "exports": ["Modal", "ConfirmDialog", "AlertDialog"],
+      "sizes": ["sm", "md", "lg", "xl", "2xl", "full"],
+      "props": {
+        "isOpen": { "type": "boolean", "required": true },
+        "onClose": { "type": "function", "required": true },
+        "title": { "type": "string", "optional": true },
+        "description": { "type": "string", "optional": true },
+        "size": { "type": "enum", "default": "md" },
+        "footer": { "type": "node", "optional": true }
+      },
+      "designInstruction": "Dialog overlay for focused interactions. ConfirmDialog for destructive actions, AlertDialog for info-only messages."
+    },
+
+    "Toast": {
+      "id": "toast",
+      "type": "feedback",
+      "file": "./primitives/Toast.jsx",
+      "exports": ["ToastProvider", "useToast"],
+      "variants": ["success", "error", "warning", "info"],
+      "props": {
+        "message": { "type": "string", "required": true },
+        "description": { "type": "string", "optional": true },
+        "variant": { "type": "enum", "default": "info" },
+        "duration": { "type": "number", "default": 5000 }
+      },
+      "designInstruction": "Notification popups. Wrap app in ToastProvider, use useToast() hook to show notifications."
+    },
+
+    "Tooltip": {
+      "id": "tooltip",
+      "type": "overlay",
+      "file": "./primitives/Tooltip.jsx",
+      "exports": ["Tooltip", "InfoTooltip"],
+      "positions": ["top", "bottom", "left", "right"],
+      "props": {
+        "content": { "type": "string|node", "required": true },
+        "position": { "type": "enum", "default": "top" },
+        "delay": { "type": "number", "default": 200 }
+      },
+      "designInstruction": "Hover-triggered information popup. InfoTooltip provides a question mark icon trigger."
+    },
+
+    "Progress": {
+      "id": "progress",
+      "type": "feedback",
+      "file": "./primitives/Progress.jsx",
+      "exports": ["Progress", "CircularProgress", "LoadingBar", "Steps"],
+      "accents": ["cyan", "purple", "emerald", "amber", "rose", "gradient"],
+      "sizes": ["xs", "sm", "md", "lg", "xl"],
+      "props": {
+        "value": { "type": "number", "required": true },
+        "max": { "type": "number", "default": 100 },
+        "showLabel": { "type": "boolean", "default": false },
+        "animated": { "type": "boolean", "default": false },
+        "striped": { "type": "boolean", "default": false }
+      },
+      "designInstruction": "Progress indicators. Linear for downloads/uploads, Circular for compact displays, Steps for multi-stage processes."
+    },
+
+    "Spinner": {
+      "id": "spinner",
+      "type": "feedback",
+      "file": "./primitives/Spinner.jsx",
+      "exports": [
+        "Spinner",
+        "DotsSpinner",
+        "PulseSpinner",
+        "BarSpinner",
+        "OrbitalSpinner",
+        "LoadingOverlay",
+        "Skeleton",
+        "SkeletonText"
+      ],
+      "accents": ["white", "cyan", "purple", "emerald", "amber", "gray"],
+      "sizes": ["xs", "sm", "md", "lg", "xl"],
+      "props": {
+        "size": { "type": "enum", "default": "md" },
+        "accent": { "type": "enum", "default": "cyan" }
+      },
+      "designInstruction": "Loading states. Spinner for buttons, DotsSpinner for inline, Skeleton for content placeholders."
+    },
+
+    "Divider": {
+      "id": "divider",
+      "type": "layout",
+      "file": "./primitives/Divider.jsx",
+      "exports": ["Divider", "VerticalDivider", "SectionDivider", "Spacer"],
+      "variants": ["default", "subtle", "strong", "accent", "gradient"],
+      "props": {
+        "variant": { "type": "enum", "default": "default" },
+        "label": { "type": "string", "optional": true }
+      },
+      "designInstruction": "Visual separators. Gradient for elegant transitions, SectionDivider for labeled sections, Spacer for invisible spacing."
+    }
+  },
+
+  "layouts": {
+    "SkinShell": {
+      "id": "skin-shell",
+      "type": "layout-engine",
+      "file": "../SkinShell.jsx",
+      "exports": ["SkinShell", "SkinLayoutContext", "useSkinLayout", "LAYOUT_PRESETS"],
+      "description": "Resizable 3-panel layout with presets",
+      "presets": ["chat-focus", "monitor-mode", "dashboard", "minimal", "split"]
+    }
+  },
+
+  "tokens": {
+    "file": "../tokens.js",
+    "categories": [
+      "colors",
+      "spacing",
+      "typography",
+      "radii",
+      "shadows",
+      "transitions",
+      "layout",
+      "zIndex"
+    ]
+  },
+
+  "store": {
+    "file": "../store.js",
+    "exports": ["useSkinStore"]
+  }
+}

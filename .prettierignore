@@ -1,0 +1,12 @@
+dist/
+node_modules/
+coverage/
+_cleanup/
+*.log
+.env
+.env.local
+storybook-static/
+src/web-app/dist/
+src/web-app/node_modules/
+temp/
+data/
