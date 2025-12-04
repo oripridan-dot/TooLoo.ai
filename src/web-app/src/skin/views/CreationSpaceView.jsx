@@ -1,4 +1,4 @@
-// @version 3.3.37
+// @version 3.3.38
 // TooLoo.ai LIQUID CREATION SPACE - Multi-Artifact Visual Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Generates MULTIPLE visual artifacts per prompt with intelligent follow-ups
@@ -1426,6 +1426,15 @@ const CreationSpaceView = memo(({ className = '' }) => {
     setCurrentPrompt('');
   }, []);
   
+  // Handle artifact position change (free movement)
+  const handlePositionChange = useCallback((newPosition) => {
+    setCompletedArtifacts(prev => prev.map(artifact => 
+      artifact.id === newPosition.id 
+        ? { ...artifact, position: { x: newPosition.x, y: newPosition.y } }
+        : artifact
+    ));
+  }, []);
+  
   return (
     <div className={`h-full w-full relative overflow-hidden bg-black ${className}`}>
       {/* Background */}
@@ -1449,7 +1458,7 @@ const CreationSpaceView = memo(({ className = '' }) => {
           isCreating={isGenerating}
         />
         
-        {/* Completed Artifacts */}
+        {/* Completed Artifacts - Freely draggable */}
         <AnimatePresence>
           {completedArtifacts.map((artifact) => (
             <CompletedArtifact
@@ -1459,6 +1468,7 @@ const CreationSpaceView = memo(({ className = '' }) => {
               isExpanded={expandedId === artifact.id}
               onToggle={() => setExpandedId(prev => prev === artifact.id ? null : artifact.id)}
               onFollowUp={handleArtifactFollowUp}
+              onPositionChange={handlePositionChange}
             />
           ))}
         </AnimatePresence>
