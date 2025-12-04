@@ -1,4 +1,4 @@
-// @version 2.2.637
+// @version 3.3.35
 // TooLoo.ai LIQUID CREATION SPACE - Multi-Artifact Visual Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Generates MULTIPLE visual artifacts per prompt with intelligent follow-ups
@@ -380,6 +380,7 @@ ThoughtNebula.displayName = 'ThoughtNebula';
 
 // ============================================================================
 // FLOATING CREATION ARTIFACT - Individual creation in space
+// v3.3.33 - Enhanced free movement with velocity, boundary bounce, and persistence
 // ============================================================================
 
 const FloatingArtifact = memo(({ 
@@ -389,14 +390,91 @@ const FloatingArtifact = memo(({
   onToggle,
   onDrag,
   isFocused = false,
+  onPositionChange, // New: callback to persist position changes
 }) => {
   const [localPos, setLocalPos] = useState(position);
-  const dragConstraints = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
+  const rafRef = useRef(null);
   
   const summary = useMemo(() => {
     const text = creation.content || '';
     return text.length > 80 ? text.substring(0, 80) + '...' : text;
   }, [creation.content]);
+  
+  // Sync with external position changes
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalPos(position);
+    }
+  }, [position, isDragging]);
+  
+  // Apply momentum/drift when not dragging
+  useEffect(() => {
+    if (isDragging || (Math.abs(velocity.x) < 0.1 && Math.abs(velocity.y) < 0.1)) {
+      return;
+    }
+    
+    const animate = () => {
+      setVelocity(v => ({
+        x: v.x * 0.95, // Friction
+        y: v.y * 0.95,
+      }));
+      
+      setLocalPos(prev => {
+        const newX = prev.x + velocity.x;
+        const newY = prev.y + velocity.y;
+        
+        // Soft boundary bounce at screen edges with some padding
+        const padding = 100;
+        const maxX = window.innerWidth - padding;
+        const maxY = window.innerHeight - padding;
+        
+        let boundedX = newX;
+        let boundedY = newY;
+        let bounceX = velocity.x;
+        let bounceY = velocity.y;
+        
+        if (newX < padding) { boundedX = padding; bounceX = Math.abs(velocity.x) * 0.5; }
+        if (newX > maxX) { boundedX = maxX; bounceX = -Math.abs(velocity.x) * 0.5; }
+        if (newY < padding) { boundedY = padding; bounceY = Math.abs(velocity.y) * 0.5; }
+        if (newY > maxY) { boundedY = maxY; bounceY = -Math.abs(velocity.y) * 0.5; }
+        
+        if (bounceX !== velocity.x || bounceY !== velocity.y) {
+          setVelocity({ x: bounceX, y: bounceY });
+        }
+        
+        return { ...prev, x: boundedX, y: boundedY };
+      });
+      
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    
+    rafRef.current = requestAnimationFrame(animate);
+    return () => rafRef.current && cancelAnimationFrame(rafRef.current);
+  }, [isDragging, velocity]);
+  
+  const handleDragStart = () => {
+    setIsDragging(true);
+    setVelocity({ x: 0, y: 0 });
+  };
+  
+  const handleDrag = (_, info) => {
+    setLocalPos(prev => ({
+      ...prev,
+      x: prev.x + info.delta.x,
+      y: prev.y + info.delta.y,
+    }));
+    // Track velocity for momentum
+    setVelocity({ x: info.delta.x, y: info.delta.y });
+    onDrag?.(_, info);
+  };
+  
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    // Persist position if callback provided
+    onPositionChange?.({ ...localPos, id: creation.id });
+  };
   
   const providerGradient = useMemo(() => {
     const p = (creation.metadata?.provider || '').toLowerCase();
