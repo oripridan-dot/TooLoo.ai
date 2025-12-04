@@ -1,4 +1,4 @@
-// @version 3.3.4
+// @version 3.3.7
 /**
  * @description Legacy component stubs for backwards compatibility
  * @intent These are placeholder components that allow the app to build
@@ -21,8 +21,14 @@ const PlaceholderComponent = ({ name }) => (
 // Layout Component
 export const Layout = ({ children, setActiveComponent, activeComponent }) => {
   const navItems = [
-    'Dashboard', 'Control Room', 'Projects', 'Self-Improvement',
-    'Activity Feed', 'Cortex Monitor', 'QA Guardian', 'Emergence Room'
+    'Dashboard',
+    'Control Room',
+    'Projects',
+    'Self-Improvement',
+    'Activity Feed',
+    'Cortex Monitor',
+    'QA Guardian',
+    'Emergence Room',
   ];
 
   return (

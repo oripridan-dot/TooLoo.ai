@@ -1,4 +1,4 @@
-// @version 3.3.3
+// @version 3.3.7
 /**
  * @description Vitest configuration for TooLoo.ai V3 Synapsys
  * @intent Configure unit testing with coverage tracking, starting at 0% threshold
@@ -9,8 +9,18 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/_archive/**', 'src/web-app/**'],
+    include: [
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/_archive/**',
+      'src/web-app/**',
+    ],
     // Improve test isolation and stability
     isolate: true,
     pool: 'forks',

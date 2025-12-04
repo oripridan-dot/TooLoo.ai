@@ -1,4 +1,4 @@
-// @version 3.3.1
+// @version 3.3.7
 import React from 'react';
 
 /**
@@ -21,7 +21,7 @@ class ErrorBoundary extends React.Component {
     // Log the error to console in development
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ errorInfo });
-    
+
     // You can also log the error to an error reporting service here
     // e.g., Sentry, LogRocket, etc.
   }
@@ -51,12 +51,8 @@ class ErrorBoundary extends React.Component {
                 />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-white mb-2">
-              Something went wrong
-            </h1>
-            <p className="text-gray-400 mb-4">
-              The application encountered an unexpected error.
-            </p>
+            <h1 className="text-xl font-bold text-white mb-2">Something went wrong</h1>
+            <p className="text-gray-400 mb-4">The application encountered an unexpected error.</p>
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="text-left mb-4">
                 <summary className="text-gray-500 cursor-pointer hover:text-gray-300">
