@@ -1,4 +1,4 @@
-// @version 3.3.19
+// @version 3.3.22
 /**
  * Agent Execution System - Main Export
  *
@@ -21,7 +21,7 @@ export { ArtifactManager, artifactManager } from './artifact-manager.js';
 // Team Framework - Automatic agent pairing
 export {
   TeamRegistry,
-  TeamTaskExecutor,
+  TeamExecutor,
   teamRegistry,
   teamExecutor,
   initializeTeamFramework,
