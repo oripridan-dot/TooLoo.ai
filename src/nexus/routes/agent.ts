@@ -1,4 +1,4 @@
-// @version 3.3.27
+// @version 3.3.28
 /**
  * Agent API Routes
  *
@@ -119,6 +119,109 @@ router.post('/task/execute', async (req: Request, res: Response) => {
     res.status(500).json({
       ok: false,
       error: errMsg,
+    });
+  }
+});
+
+/**
+ * @route POST /api/v1/agent/task/team-execute
+ * @description Execute a task with team validation (executor + validator pair)
+ * V3.3.17: Uses System Execution Hub for quality-assured execution
+ */
+router.post('/task/team-execute', async (req: Request, res: Response) => {
+  try {
+    const { type, prompt, code, context, options } = req.body as {
+      type: TaskType;
+      prompt: string;
+      code?: string;
+      context?: Record<string, unknown>;
+      options?: {
+        source?: string;
+        useTeam?: boolean;
+        teamSpecialization?: string;
+        qualityThreshold?: number;
+        maxIterations?: number;
+      };
+    };
+
+    if (!type || !prompt) {
+      res.status(400).json({
+        ok: false,
+        error: 'Missing required fields: type, prompt',
+      });
+      return;
+    }
+
+    // Execute through System Execution Hub with team validation
+    const response = await systemExecutionHub.execute({
+      source: (options?.source as any) || 'api',
+      type,
+      prompt,
+      code,
+      context,
+      options: {
+        useTeam: options?.useTeam !== false, // Default to team execution
+        teamSpecialization: options?.teamSpecialization,
+        qualityThreshold: options?.qualityThreshold || 0.8,
+        maxIterations: options?.maxIterations || 3,
+        saveArtifacts: true,
+      },
+      priority: 'normal',
+    });
+
+    res.json({
+      ok: response.success,
+      data: {
+        requestId: response.requestId,
+        output: response.output,
+        artifacts: response.artifacts,
+        teamId: response.teamId,
+        iterations: response.iterations,
+        qualityScore: response.qualityScore,
+        durationMs: response.durationMs,
+        metadata: response.metadata,
+      },
+    });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    res.status(500).json({
+      ok: false,
+      error: errMsg,
+    });
+  }
+});
+
+/**
+ * @route GET /api/v1/agent/teams
+ * @description Get all active agent teams
+ * V3.3.17: Shows executor+validator team pairs
+ */
+router.get('/teams', (_req: Request, res: Response) => {
+  try {
+    const teams = teamRegistry.getAllTeams();
+    const stats = systemExecutionHub.getStats();
+
+    res.json({
+      ok: true,
+      data: {
+        teams: teams.map(t => ({
+          id: t.id,
+          name: t.name,
+          specialization: t.specialization,
+          status: t.status,
+          roles: {
+            executor: t.executor,
+            validator: t.validator,
+          },
+          metrics: t.metrics,
+        })),
+        stats,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
     });
   }
 });
