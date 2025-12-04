@@ -1,4 +1,4 @@
-// @version 3.3.16
+// @version 3.3.23
 /**
  * Execution Agent - Core Autonomous Execution Loop
  *
@@ -325,6 +325,38 @@ export class ExecutionAgent {
       successRate: this.totalTasksExecuted > 0 ? this.successfulTasks / this.totalTasksExecuted : 0,
       lastActivity: new Date(),
     };
+  }
+
+  /**
+   * Get task status by ID
+   * Used by team framework and system hub to poll task completion
+   */
+  getTaskStatus(taskId: string): { status: string; result?: TaskResult } | null {
+    const queueStatus = this.processor.getQueueStatus();
+    
+    // Check if currently processing
+    if (queueStatus.currentTask?.id === taskId) {
+      return { status: 'processing' };
+    }
+    
+    // Check if in queue
+    const queue = this.processor.getQueue();
+    const inQueue = queue.find(t => t.id === taskId);
+    if (inQueue) {
+      return { status: inQueue.status };
+    }
+    
+    // Check history for completion
+    const history = this.processor.getHistory(100);
+    const completed = history.find(t => t.id === taskId);
+    if (completed) {
+      return { 
+        status: completed.status,
+        result: completed.result,
+      };
+    }
+    
+    return null;
   }
 
   // ============= Private: Task Executors =============
