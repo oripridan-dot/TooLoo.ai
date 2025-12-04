@@ -1,4 +1,4 @@
-// @version 3.3.36
+// @version 3.3.37
 // TooLoo.ai LIQUID CREATION SPACE - Multi-Artifact Visual Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Generates MULTIPLE visual artifacts per prompt with intelligent follow-ups
@@ -1108,6 +1108,7 @@ const CompletedArtifact = memo(({
       
       <motion.div
         layout
+        onClick={(e) => { e.stopPropagation(); if (!isDragging) onToggle?.(); }}
         className={`
           rounded-2xl overflow-hidden backdrop-blur-xl
           bg-gradient-to-br ${gradient} border border-white/20
