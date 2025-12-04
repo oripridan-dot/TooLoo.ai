@@ -1,4 +1,4 @@
-// @version 3.1.0
+// @version 3.3.26
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -17,6 +17,8 @@ import { projectContext } from '../../core/project-context.js';
 import { recordDecision } from './cost.js';
 import { creativeChatOrchestrator, illustrationEngine } from '../../cortex/creative/index.js';
 import type { IllustrationStyle, IllustrationMood } from '../../cortex/creative/index.js';
+// V3.3.17: System Execution Hub for code execution
+import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
 import fs from 'fs/promises';
 import path from 'path';
 
