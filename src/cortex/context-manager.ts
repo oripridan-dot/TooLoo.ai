@@ -1,4 +1,4 @@
-// @version 3.3.9
+// @version 3.3.14
 import { VectorStore } from './memory/vector-store.js';
 import KnowledgeGraphEngine from './memory/knowledge-graph-engine.js';
 
@@ -90,9 +90,9 @@ export class ContextManager {
       const taskKeywords = ['generate', 'create', 'analyze', 'code', 'write', 'help'];
       const isTaskQuery = taskKeywords.some(kw => query.toLowerCase().includes(kw));
       
-      if (isTaskQuery && topGoals.length > 0) {
+      if (isTaskQuery && topGoals.length > 0 && topGoals[0]) {
         const recommendations = this.knowledgeGraph.getProviderRecommendations(topGoals[0].goal);
-        if (recommendations.length > 0) {
+        if (recommendations.length > 0 && recommendations[0]) {
           const topRec = recommendations[0];
           context.push(
             `Recommended provider: ${topRec.provider} ` +
