@@ -1,4 +1,4 @@
-// @version 3.3.0
+// @version 3.3.15
 /**
  * Artifact Manager - Code and File Artifact Storage
  *
@@ -351,6 +351,7 @@ export class ArtifactManager {
       documentation: '.md',
       data: '.json',
       binary: '.bin',
+      deployment: '.json',
     };
 
     return typeExtensions[type] || '.txt';
