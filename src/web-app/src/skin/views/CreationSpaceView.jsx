@@ -1,6 +1,7 @@
-// @version 3.3.38
+// @version 3.3.39
 // TooLoo.ai LIQUID CREATION SPACE - Multi-Artifact Visual Canvas
 // ═══════════════════════════════════════════════════════════════════════════
+// v3.3.39 - FREE MOVEMENT: Drag artifacts anywhere with momentum & persistence
 // Generates MULTIPLE visual artifacts per prompt with intelligent follow-ups
 // Each selection influences the next set of artifacts - contextual creativity
 // ═══════════════════════════════════════════════════════════════════════════
