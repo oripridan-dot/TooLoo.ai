@@ -124,7 +124,7 @@ router.post('/task/execute', async (req: Request, res: Response) => {
  */
 router.get('/task/:taskId', (req: Request, res: Response) => {
   try {
-    const task = taskProcessor.getTask(req.params.taskId);
+    const task = taskProcessor.getTask(req.params['taskId'] || '');
 
     if (!task) {
       res.status(404).json({
@@ -152,7 +152,7 @@ router.get('/task/:taskId', (req: Request, res: Response) => {
  */
 router.delete('/task/:taskId', (req: Request, res: Response) => {
   try {
-    const cancelled = taskProcessor.cancelTask(req.params.taskId);
+    const cancelled = taskProcessor.cancelTask(req.params['taskId'] || '');
 
     res.json({
       ok: cancelled,
@@ -222,7 +222,7 @@ router.delete('/queue', (_req: Request, res: Response) => {
  */
 router.get('/history', (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = parseInt(req.query['limit'] as string) || 50;
     const history = taskProcessor.getHistory(limit);
 
     res.json({
@@ -318,7 +318,7 @@ router.get('/artifacts', async (req: Request, res: Response) => {
  */
 router.get('/artifacts/:artifactId', async (req: Request, res: Response) => {
   try {
-    const artifact = await artifactManager.getArtifact(req.params.artifactId);
+    const artifact = await artifactManager.getArtifact(req.params['artifactId'] || '');
 
     if (!artifact) {
       res.status(404).json({
@@ -346,7 +346,7 @@ router.get('/artifacts/:artifactId', async (req: Request, res: Response) => {
  */
 router.get('/artifacts/:artifactId/versions', async (req: Request, res: Response) => {
   try {
-    const versions = await artifactManager.getVersions(req.params.artifactId);
+    const versions = await artifactManager.getVersions(req.params['artifactId'] || '');
 
     res.json({
       ok: true,
@@ -369,7 +369,7 @@ router.get('/artifacts/:artifactId/versions', async (req: Request, res: Response
  */
 router.delete('/artifacts/:artifactId', async (req: Request, res: Response) => {
   try {
-    const deleted = await artifactManager.deleteArtifact(req.params.artifactId);
+    const deleted = await artifactManager.deleteArtifact(req.params['artifactId'] || '');
 
     res.json({
       ok: deleted,
