@@ -1,5 +1,6 @@
-// @version 3.3.34
+// @version 3.3.40
 // TooLoo.ai Liquid Chat Components
+// v3.3.35 - Added Execute button for team-validated code execution in chat
 // Rich visual display capabilities for chat responses
 // Integrates liquid skin throughout the chat experience
 // Enhanced with Visual Renderers for creative AI responses
