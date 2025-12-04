@@ -1,10 +1,14 @@
-// @version 2.2.677
+// @version 3.3.27
 /**
  * Agent API Routes
  *
  * REST API for the Agent Execution System.
  * Enables external systems and UI to submit tasks,
  * run processes, and manage artifacts.
+ * 
+ * V3.3.17: Integrated with System Execution Hub and Team Framework
+ * - All tasks now go through team validation (executor + validator pairs)
+ * - Cross-system execution support
  *
  * @module nexus/routes/agent
  */
@@ -13,6 +17,7 @@ import { Router, Request, Response } from 'express';
 import { executionAgent } from '../../cortex/agent/execution-agent.js';
 import { taskProcessor } from '../../cortex/agent/task-processor.js';
 import { artifactManager } from '../../cortex/agent/artifact-manager.js';
+import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
 import type { TaskType, TaskInput, ProcessDefinition } from '../../cortex/agent/types.js';
 
 const router = Router();
