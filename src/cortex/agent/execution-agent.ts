@@ -1,4 +1,4 @@
-// @version 2.2.676
+// @version 3.3.12
 /**
  * Execution Agent - Core Autonomous Execution Loop
  *
@@ -525,11 +525,254 @@ export class ExecutionAgent {
   }
 
   private async executeDeploy(task: AgentTask, logs: string[]): Promise<TaskResult> {
-    logs.push('Deploy task - not implemented yet');
-    return {
-      success: false,
-      output: 'Deploy functionality not yet implemented',
-    };
+    const { 
+      target = 'local', 
+      script,
+      directory,
+      buildCommand,
+      deployCommand,
+      environment = {},
+      dryRun = false
+    } = task.input;
+
+    logs.push(`Starting deployment to target: ${target}`);
+
+    try {
+      // Step 1: Validate deployment configuration
+      logs.push('Validating deployment configuration...');
+      
+      if (!deployCommand && !script) {
+        return {
+          success: false,
+          output: 'No deployment command or script specified',
+        };
+      }
+
+      const workDir = directory || process.cwd();
+      
+      // Step 2: Optional build step
+      if (buildCommand) {
+        logs.push(`Running build: ${buildCommand}`);
+        
+        if (!dryRun) {
+          const buildResult = await this.runShellCommand(buildCommand, workDir, environment);
+          if (!buildResult.success) {
+            logs.push(`Build failed: ${buildResult.stderr}`);
+            return {
+              success: false,
+              output: `Build failed: ${buildResult.stderr}`,
+            };
+          }
+          logs.push('Build completed successfully');
+        } else {
+          logs.push('[DRY RUN] Would execute build command');
+        }
+      }
+
+      // Step 3: Run deployment
+      const deployCmd = deployCommand || script;
+      logs.push(`Executing deployment: ${deployCmd}`);
+
+      if (dryRun) {
+        logs.push('[DRY RUN] Would execute deployment command');
+        return {
+          success: true,
+          output: `Dry run completed successfully. Would deploy to: ${target}`,
+        };
+      }
+
+      // Execute deployment based on target
+      let deployResult;
+      switch (target) {
+        case 'local':
+          deployResult = await this.deployLocal(deployCmd!, workDir, environment, logs);
+          break;
+        case 'docker':
+          deployResult = await this.deployDocker(task.input, workDir, logs);
+          break;
+        case 'git':
+          deployResult = await this.deployGit(task.input, workDir, logs);
+          break;
+        default:
+          deployResult = await this.runShellCommand(deployCmd!, workDir, environment);
+      }
+
+      if (!deployResult.success) {
+        logs.push(`Deployment failed: ${deployResult.stderr || deployResult.output}`);
+        return {
+          success: false,
+          output: `Deployment to ${target} failed: ${deployResult.stderr || deployResult.output}`,
+        };
+      }
+
+      logs.push(`Deployment to ${target} completed successfully`);
+      
+      // Emit deployment event
+      bus.publish('cortex', 'agent:deployment:completed', {
+        taskId: task.id,
+        target,
+        timestamp: Date.now(),
+      });
+
+      return {
+        success: true,
+        output: `Successfully deployed to ${target}`,
+        artifacts: [{
+          id: uuidv4(),
+          type: 'deployment',
+          name: `deployment-${target}-${Date.now()}`,
+          path: workDir,
+          metadata: {
+            target,
+            deployedAt: new Date().toISOString(),
+            logs: logs.join('\n'),
+          }
+        }]
+      };
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      logs.push(`Deployment error: ${errMsg}`);
+      return { success: false, output: errMsg };
+    }
+  }
+
+  private async deployLocal(
+    command: string, 
+    workDir: string, 
+    environment: Record<string, string>,
+    logs: string[]
+  ): Promise<{ success: boolean; stdout: string; stderr: string; output?: string }> {
+    logs.push('Deploying locally...');
+    return this.runShellCommand(command, workDir, environment);
+  }
+
+  private async deployDocker(
+    input: TaskInput, 
+    workDir: string, 
+    logs: string[]
+  ): Promise<{ success: boolean; stdout: string; stderr: string; output?: string }> {
+    const { imageName, containerName, ports = [], volumes = [] } = input;
+    
+    if (!imageName) {
+      return { success: false, stdout: '', stderr: 'No Docker image specified', output: 'No Docker image specified' };
+    }
+
+    logs.push(`Building Docker image: ${imageName}`);
+    
+    // Build the image
+    const buildResult = await this.runShellCommand(
+      `docker build -t ${imageName} .`,
+      workDir,
+      {}
+    );
+    
+    if (!buildResult.success) {
+      return buildResult;
+    }
+    logs.push('Docker image built successfully');
+
+    // Stop existing container if it exists
+    const name = containerName || `tooloo-${imageName.replace(/[:/]/g, '-')}`;
+    await this.runShellCommand(`docker stop ${name} 2>/dev/null || true`, workDir, {});
+    await this.runShellCommand(`docker rm ${name} 2>/dev/null || true`, workDir, {});
+
+    // Build run command
+    let runCmd = `docker run -d --name ${name}`;
+    
+    for (const port of ports) {
+      runCmd += ` -p ${port}`;
+    }
+    
+    for (const volume of volumes) {
+      runCmd += ` -v ${volume}`;
+    }
+    
+    runCmd += ` ${imageName}`;
+
+    logs.push(`Starting container: ${name}`);
+    const runResult = await this.runShellCommand(runCmd, workDir, {});
+    
+    if (runResult.success) {
+      logs.push(`Container ${name} started successfully`);
+    }
+    
+    return runResult;
+  }
+
+  private async deployGit(
+    input: TaskInput, 
+    workDir: string, 
+    logs: string[]
+  ): Promise<{ success: boolean; stdout: string; stderr: string; output?: string }> {
+    const { branch = 'main', remote = 'origin', commitMessage } = input;
+    
+    logs.push(`Deploying via git push to ${remote}/${branch}`);
+
+    // Add all changes
+    const addResult = await this.runShellCommand('git add -A', workDir, {});
+    if (!addResult.success) {
+      return addResult;
+    }
+
+    // Commit if there are changes
+    const statusResult = await this.runShellCommand('git status --porcelain', workDir, {});
+    if (statusResult.stdout.trim()) {
+      const message = commitMessage || `[TooLoo Deploy] ${new Date().toISOString()}`;
+      const commitResult = await this.runShellCommand(`git commit -m "${message}"`, workDir, {});
+      if (!commitResult.success && !commitResult.stderr.includes('nothing to commit')) {
+        return commitResult;
+      }
+      logs.push('Changes committed');
+    }
+
+    // Push to remote
+    const pushResult = await this.runShellCommand(`git push ${remote} ${branch}`, workDir, {});
+    if (pushResult.success) {
+      logs.push(`Pushed to ${remote}/${branch}`);
+    }
+    
+    return pushResult;
+  }
+
+  private async runShellCommand(
+    command: string,
+    cwd: string,
+    env: Record<string, string>
+  ): Promise<{ success: boolean; stdout: string; stderr: string }> {
+    return new Promise((resolve) => {
+      const proc = spawn('sh', ['-c', command], {
+        cwd,
+        env: { ...process.env, ...env },
+        timeout: 120000, // 2 minute timeout
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      proc.stdout?.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      proc.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        resolve({
+          success: code === 0,
+          stdout: stdout.trim(),
+          stderr: stderr.trim(),
+        });
+      });
+
+      proc.on('error', (err) => {
+        resolve({
+          success: false,
+          stdout: '',
+          stderr: err.message,
+        });
+      });
+    });
   }
 
   // ============= Private: Helpers =============
