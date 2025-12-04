@@ -1,4 +1,4 @@
-// @version 3.0.0
+// @version 3.3.20
 import { bus, SynapsysEvent } from '../core/event-bus.js';
 import { amygdala } from './amygdala/index.js';
 import { orchestrator } from './orchestrator.js';
@@ -30,6 +30,13 @@ import { CuriosityEngine } from './exploration/curiosity-engine.js';
 import { DisCoverAgent } from './discover/index.js';
 import { ReinforcementLearner } from './learning/reinforcement-learner.js';
 import { EmergenceAmplifier } from './discover/emergence-amplifier.js';
+// V3.3.17: Agent Team Framework & System Execution Hub
+import { 
+  systemExecutionHub, 
+  initializeSystemExecutionHub,
+  teamRegistry,
+  initializeTeamFramework,
+} from './agent/index.js';
 
 import { validationLoop, ValidationLoopOutput } from './cognition/index.js';
 
