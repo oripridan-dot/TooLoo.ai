@@ -1,4 +1,4 @@
-// @version 2.2.611
+// @version 3.3.34
 // TooLoo.ai Liquid Chat Components
 // Rich visual display capabilities for chat responses
 // Integrates liquid skin throughout the chat experience
@@ -490,17 +490,80 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
 EnhancedMarkdown.displayName = 'EnhancedMarkdown';
 
 // ============================================================================
-// LIQUID CODE BLOCK - Syntax highlighted code with copy button
+// LIQUID CODE BLOCK - Syntax highlighted code with copy & execute buttons
+// v3.3.33 - Added Execute button for team-validated code execution
 // ============================================================================
+
+// Execution languages that can be run
+const EXECUTABLE_LANGUAGES = ['javascript', 'js', 'typescript', 'ts', 'python', 'py', 'shell', 'bash', 'sh'];
 
 export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
   const [copied, setCopied] = useState(false);
+  const [executing, setExecuting] = useState(false);
+  const [executionResult, setExecutionResult] = useState(null);
   const codeString = String(children).replace(/\n$/, '');
+  
+  // Determine if this code can be executed
+  const canExecute = EXECUTABLE_LANGUAGES.includes((language || '').toLowerCase());
+  
+  // Map language to execution type
+  const getExecutionType = () => {
+    const lang = (language || '').toLowerCase();
+    if (['javascript', 'js'].includes(lang)) return 'javascript';
+    if (['typescript', 'ts'].includes(lang)) return 'typescript';
+    if (['python', 'py'].includes(lang)) return 'python';
+    if (['shell', 'bash', 'sh'].includes(lang)) return 'shell';
+    return 'typescript';
+  };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(codeString);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+  
+  const handleExecute = async () => {
+    if (executing) return;
+    
+    setExecuting(true);
+    setExecutionResult(null);
+    
+    try {
+      const response = await fetch('/api/v1/agent/task/team-execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task: `Execute the following ${language} code`,
+          code: codeString,
+          language: getExecutionType(),
+          specialization: 'code-execution',
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setExecutionResult({
+          success: true,
+          output: result.data?.output || result.data?.result || 'Execution completed',
+          qualityScore: result.data?.qualityScore || result.data?.quality_score,
+          executedBy: result.data?.team || result.data?.executor,
+          validatedBy: result.data?.validatedBy,
+        });
+      } else {
+        setExecutionResult({
+          success: false,
+          error: result.error || 'Execution failed',
+        });
+      }
+    } catch (err) {
+      setExecutionResult({
+        success: false,
+        error: err.message || 'Failed to execute code',
+      });
+    } finally {
+      setExecuting(false);
+    }
   };
 
   return (
@@ -508,12 +571,39 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
       {/* Header bar */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-black/60 border-b border-white/10">
         <span className="text-xs text-gray-500 font-mono">{language}</span>
-        <button
-          onClick={handleCopy}
-          className="text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-        >
-          {copied ? '✓ Copied' : 'Copy'}
-        </button>
+        <div className="flex items-center gap-2">
+          {canExecute && (
+            <button
+              onClick={handleExecute}
+              disabled={executing}
+              className={`text-xs px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
+                executing 
+                  ? 'bg-purple-500/20 text-purple-300 cursor-wait' 
+                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300'
+              }`}
+            >
+              {executing ? (
+                <>
+                  <motion.span 
+                    animate={{ rotate: 360 }} 
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    ⚡
+                  </motion.span>
+                  Running...
+                </>
+              ) : (
+                <>▶ Execute</>
+              )}
+            </button>
+          )}
+          <button
+            onClick={handleCopy}
+            className="text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+          >
+            {copied ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
       </div>
 
       {/* Code content */}
@@ -522,6 +612,53 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
           {children}
         </code>
       </pre>
+      
+      {/* Execution result panel */}
+      <AnimatePresence>
+        {executionResult && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-white/10 overflow-hidden"
+          >
+            <div className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+              {/* Result header */}
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {executionResult.success ? '✓ Execution Successful' : '✕ Execution Failed'}
+                </span>
+                {executionResult.qualityScore && (
+                  <span className="text-xs text-cyan-400">
+                    Quality: {(executionResult.qualityScore * 100).toFixed(0)}%
+                  </span>
+                )}
+                <button
+                  onClick={() => setExecutionResult(null)}
+                  className="text-xs text-gray-500 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {/* Output/Error content */}
+              <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+                {executionResult.success ? executionResult.output : executionResult.error}
+              </pre>
+              
+              {/* Team info */}
+              {executionResult.executedBy && (
+                <div className="mt-2 pt-2 border-t border-white/10 text-xs text-gray-500">
+                  Executed by: <span className="text-purple-400">{executionResult.executedBy}</span>
+                  {executionResult.validatedBy && (
+                    <> • Validated by: <span className="text-cyan-400">{executionResult.validatedBy}</span></>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Subtle glow effect */}
       <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
