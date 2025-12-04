@@ -1,4 +1,4 @@
-// @version 3.3.0
+// @version 3.3.13
 /**
  * Agent Execution System - Types
  *
@@ -43,6 +43,23 @@ export interface TaskInput {
   files?: string[];
   template?: string;
   context?: Record<string, unknown>;
+  // Deploy-specific fields
+  target?: 'local' | 'docker' | 'git' | string;
+  script?: string;
+  directory?: string;
+  buildCommand?: string;
+  deployCommand?: string;
+  environment?: Record<string, string>;
+  dryRun?: boolean;
+  // Docker-specific
+  imageName?: string;
+  containerName?: string;
+  ports?: string[];
+  volumes?: string[];
+  // Git-specific
+  branch?: string;
+  remote?: string;
+  commitMessage?: string;
 }
 
 export interface TaskOptions {
