@@ -1,4 +1,4 @@
-// @version 3.3.17
+// @version 3.3.24
 /**
  * Agent Team Framework
  * 
@@ -482,8 +482,8 @@ export class TeamExecutor {
     const lower = prompt.toLowerCase();
 
     // Check for explicit specialization in context
-    if (context?.specialization) {
-      return String(context.specialization);
+    if (context?.['specialization']) {
+      return String(context['specialization']);
     }
 
     // Infer from type
@@ -728,7 +728,7 @@ Please address these issues and improve the output.`;
       });
     }
 
-    if (output.includes('console.log') && !task.input.context?.allowConsoleLogs) {
+    if (output.includes('console.log') && !task.input.context?.['allowConsoleLogs']) {
       issues.push({
         type: 'improvement',
         category: 'code-quality',
