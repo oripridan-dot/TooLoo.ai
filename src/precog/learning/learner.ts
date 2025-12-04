@@ -1,6 +1,8 @@
+// @version 3.3.11
 import fs from 'fs-extra';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import * as cheerio from 'cheerio';
 
 interface Source {
   id: string;
@@ -35,9 +37,18 @@ interface LearningMemory {
   stats: SessionStats;
 }
 
+interface FetchOptions {
+  timeout?: number;
+  maxContentLength?: number;
+  extractText?: boolean;
+  followRedirects?: boolean;
+}
+
 export class Learner {
   private memoryPath: string;
   private memory: LearningMemory;
+  private readonly DEFAULT_TIMEOUT = 15000; // 15 seconds
+  private readonly MAX_CONTENT_LENGTH = 500000; // 500KB max
 
   constructor() {
     this.memoryPath = path.join(process.cwd(), 'data', 'memory', 'vectors.json');
@@ -88,6 +99,142 @@ export class Learner {
       await fs.writeJson(this.memoryPath, this.memory, { spaces: 2 });
     } catch (error) {
       console.error('Failed to save learner memory:', error);
+    }
+  }
+
+  /**
+   * Fetch content from a URL with proper error handling and content extraction
+   */
+  private async fetchUrlContent(url: string, options: FetchOptions = {}): Promise<{
+    content: string;
+    title?: string;
+    contentType: string;
+    length: number;
+  }> {
+    const {
+      timeout = this.DEFAULT_TIMEOUT,
+      maxContentLength = this.MAX_CONTENT_LENGTH,
+      extractText = true,
+      followRedirects = true,
+    } = options;
+
+    console.log(`[Learner] Fetching URL: ${url}`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        redirect: followRedirects ? 'follow' : 'manual',
+        headers: {
+          'User-Agent': 'TooLoo-Learner/3.3.0 (Knowledge Ingestion Bot)',
+          'Accept': 'text/html,application/json,text/plain,*/*',
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || 'text/plain';
+      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+
+      // Check content length before downloading
+      if (contentLength > maxContentLength) {
+        console.warn(`[Learner] Content too large (${contentLength} bytes), truncating...`);
+      }
+
+      const rawContent = await response.text();
+      const truncatedContent = rawContent.slice(0, maxContentLength);
+
+      let content = truncatedContent;
+      let title: string | undefined;
+
+      // Extract text from HTML if needed
+      if (extractText && contentType.includes('text/html')) {
+        const extracted = this.extractTextFromHtml(truncatedContent);
+        content = extracted.text;
+        title = extracted.title;
+      } else if (contentType.includes('application/json')) {
+        // Pretty-print JSON for readability
+        try {
+          const json = JSON.parse(truncatedContent);
+          content = JSON.stringify(json, null, 2);
+        } catch {
+          content = truncatedContent;
+        }
+      }
+
+      console.log(`[Learner] Fetched ${content.length} chars from ${url}`);
+
+      return {
+        content,
+        title,
+        contentType,
+        length: content.length,
+      };
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        throw new Error(`Fetch timeout after ${timeout}ms`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Extract readable text from HTML using cheerio
+   */
+  private extractTextFromHtml(html: string): { text: string; title?: string } {
+    try {
+      const $ = cheerio.load(html);
+      
+      // Get title
+      const title = $('title').first().text().trim() || 
+                    $('h1').first().text().trim() ||
+                    $('meta[property="og:title"]').attr('content');
+
+      // Remove script, style, and other non-content elements
+      $('script, style, nav, footer, header, aside, iframe, noscript').remove();
+      
+      // Get meta description
+      const metaDesc = $('meta[name="description"]').attr('content') ||
+                       $('meta[property="og:description"]').attr('content') || '';
+
+      // Extract main content (prefer article, main, or body)
+      let mainContent = '';
+      const contentSelectors = ['article', 'main', '.content', '#content', '.post', '.article', 'body'];
+      
+      for (const selector of contentSelectors) {
+        const element = $(selector).first();
+        if (element.length) {
+          mainContent = element.text();
+          break;
+        }
+      }
+
+      // Clean up the text
+      const cleanText = mainContent
+        .replace(/\s+/g, ' ')  // Normalize whitespace
+        .replace(/\n\s*\n/g, '\n\n')  // Normalize line breaks
+        .trim();
+
+      // Combine meta description with content
+      const finalText = metaDesc 
+        ? `${metaDesc}\n\n${cleanText}` 
+        : cleanText;
+
+      return {
+        text: finalText.slice(0, this.MAX_CONTENT_LENGTH),
+        title: title || undefined,
+      };
+    } catch (error) {
+      console.warn('[Learner] HTML extraction failed, using raw text');
+      return { text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() };
     }
   }
 
@@ -151,29 +298,102 @@ export class Learner {
     return { success: true, id };
   }
 
-  async ingest(url: string): Promise<{ success: boolean; id?: string; error?: string }> {
+  /**
+   * Ingest content from a URL into the learning system
+   */
+  async ingest(url: string, options?: FetchOptions): Promise<{ 
+    success: boolean; 
+    id?: string; 
+    error?: string;
+    metadata?: Record<string, any>;
+  }> {
     try {
-      // In a real implementation, we would fetch the URL content here.
-      // For now, we'll simulate ingestion.
+      // Validate URL
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        return { success: false, error: 'Invalid URL format' };
+      }
+
+      // Only allow http/https
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return { success: false, error: `Unsupported protocol: ${parsedUrl.protocol}` };
+      }
+
+      // Fetch the content
+      const { content, title, contentType, length } = await this.fetchUrlContent(url, options);
+
+      if (!content || content.length < 50) {
+        return { success: false, error: 'Content too short or empty' };
+      }
+
       const id = uuidv4();
       const source: Source = {
         id,
         url,
-        content: `Simulated content for ${url}`, // TODO: Implement real fetching
+        content,
         timestamp: new Date().toISOString(),
         metadata: {
           status: 'ingested',
           type: 'web',
+          title: title || parsedUrl.hostname,
+          contentType,
+          contentLength: length,
+          domain: parsedUrl.hostname,
+          path: parsedUrl.pathname,
         },
       };
 
       this.memory.sources.push(source);
+      
+      // Keep only last 100 sources to prevent bloat
+      if (this.memory.sources.length > 100) {
+        this.memory.sources = this.memory.sources.slice(-100);
+      }
+      
       await this.saveMemory();
 
-      return { success: true, id };
+      console.log(`[Learner] ✅ Ingested "${title || url}" (${length} chars)`);
+
+      return { 
+        success: true, 
+        id,
+        metadata: source.metadata
+      };
     } catch (error: any) {
+      console.error(`[Learner] ❌ Failed to ingest ${url}:`, error.message);
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * Bulk ingest multiple URLs
+   */
+  async ingestBulk(urls: string[]): Promise<{
+    successful: number;
+    failed: number;
+    results: Array<{ url: string; success: boolean; id?: string; error?: string }>;
+  }> {
+    const results: Array<{ url: string; success: boolean; id?: string; error?: string }> = [];
+    let successful = 0;
+    let failed = 0;
+
+    for (const url of urls) {
+      const result = await this.ingest(url);
+      results.push({ url, ...result });
+      
+      if (result.success) {
+        successful++;
+      } else {
+        failed++;
+      }
+
+      // Small delay between requests to be polite
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    return { successful, failed, results };
   }
 
   async query(queryText: string): Promise<{ answer: string; sources: Source[] }> {
@@ -255,6 +475,33 @@ export class Learner {
     const repeatRate = total > 0 ? failures.length / total : 0;
 
     return { repeatRate, commonFailures };
+  }
+
+  /**
+   * Delete a source by ID
+   */
+  async deleteSource(id: string): Promise<boolean> {
+    const index = this.memory.sources.findIndex(s => s.id === id);
+    if (index !== -1) {
+      this.memory.sources.splice(index, 1);
+      await this.saveMemory();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Search sources by content or URL
+   */
+  searchSources(query: string, limit: number = 10): Source[] {
+    const lowerQuery = query.toLowerCase();
+    return this.memory.sources
+      .filter(s => 
+        s.url.toLowerCase().includes(lowerQuery) ||
+        s.content.toLowerCase().includes(lowerQuery) ||
+        (s.metadata.title && s.metadata.title.toLowerCase().includes(lowerQuery))
+      )
+      .slice(0, limit);
   }
 }
 
