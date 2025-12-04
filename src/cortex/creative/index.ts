@@ -1,7 +1,8 @@
-// @version 3.0.0
+// @version 3.3.30
 // TooLoo.ai Creative Chat Module
 // Integrates Visual Response Engine and Creative Persona Engine
 // for maximally creative and visually rich chat experiences
+// V3.3.17: Added execution capability awareness
 
 import { visualResponseEngine, VisualDirective } from './visual-response-engine.js';
 import { creativePersonaEngine, CreativeDirective, PERSONAS } from './persona-engine.js';
