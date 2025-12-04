@@ -1,4 +1,4 @@
-// @version 3.3.20
+// @version 3.3.21
 import { bus, SynapsysEvent } from '../core/event-bus.js';
 import { amygdala } from './amygdala/index.js';
 import { orchestrator } from './orchestrator.js';
@@ -137,6 +137,13 @@ export class Cortex {
 
     // MEGA-BOOST: Emergence signal amplification
     this.emergenceAmplifier = EmergenceAmplifier.getInstance();
+
+    // V3.3.17: Initialize Team Framework & System Execution Hub
+    // This connects execution to ALL TooLoo systems
+    initializeTeamFramework();
+    initializeSystemExecutionHub().catch(err => {
+      console.error('[Cortex] Failed to initialize System Execution Hub:', err);
+    });
 
     this.setupListeners();
   }
