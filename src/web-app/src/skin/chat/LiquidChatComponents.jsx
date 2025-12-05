@@ -1,4 +1,4 @@
-// @version 3.3.164
+// @version 3.3.165
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -2369,17 +2369,61 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
         <span className="text-emerald-400">visualize</span>.
       </p>
 
-      {/* Visual capabilities showcase */}
-      <div className="flex flex-wrap justify-center gap-2 mb-6 max-w-lg">
-        {visualCapabilities.map(({ icon, label, desc, color }) => (
-          <motion.div
-            key={label}
-            whileHover={{ scale: 1.05, y: -2 }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${colorClasses[color]} text-xs`}
+      {/* Visual capabilities showcase - ENHANCED & INTERACTIVE */}
+      <div className="flex flex-wrap justify-center gap-2 mb-6 max-w-2xl">
+        {visualCapabilities.map((cap) => (
+          <motion.button
+            key={cap.label}
+            onClick={() => handleCapabilityClick(cap)}
+            onMouseEnter={() => setHoveredCapability(cap.label)}
+            onMouseLeave={() => setHoveredCapability(null)}
+            whileHover={{ scale: 1.08, y: -4 }}
+            whileTap={{ scale: 0.95 }}
+            className={`relative flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer transition-all duration-300 ${colorClasses[cap.color]} ${
+              hoveredCapability === cap.label ? `shadow-lg ${glowClasses[cap.color]}` : ''
+            } ${selectedCapability === cap.label ? 'ring-2 ring-offset-2 ring-offset-[#0f0f1a]' : ''}`}
           >
-            <span>{icon}</span>
-            <span className="font-medium">{label}</span>
-          </motion.div>
+            {/* Animated background glow on hover */}
+            <motion.div
+              className="absolute inset-0 rounded-full opacity-0"
+              style={{
+                background: `radial-gradient(circle at center, var(--${cap.color}-500, #6366f1) 0%, transparent 70%)`,
+              }}
+              animate={{
+                opacity: hoveredCapability === cap.label ? 0.15 : 0,
+              }}
+              transition={{ duration: 0.2 }}
+            />
+            <span className="text-lg relative z-10">{cap.icon}</span>
+            <span className="font-semibold text-sm relative z-10">{cap.label}</span>
+
+            {/* Hover tooltip with examples */}
+            <AnimatePresence>
+              {hoveredCapability === cap.label && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50"
+                >
+                  <div className="bg-[#1e1e2f] border border-white/10 rounded-xl px-4 py-3 shadow-2xl min-w-[200px]">
+                    <p className="text-xs text-gray-400 mb-2">{cap.desc}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {cap.examples?.map((ex, i) => (
+                        <span
+                          key={i}
+                          className={`text-[10px] px-2 py-0.5 rounded-full bg-${cap.color}-500/20 text-${cap.color}-300`}
+                        >
+                          {ex}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-2 italic">Click to try →</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
         ))}
       </div>
 
