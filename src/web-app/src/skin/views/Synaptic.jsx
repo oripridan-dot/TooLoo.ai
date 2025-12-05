@@ -1,8 +1,9 @@
-// @version 2.2.607
+// @version 3.3.68
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
 // Enhanced with Liquid Skin visual capabilities
+// V3.3.68: Model selection, thinking process, large preview mode
 
 import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,14 +28,36 @@ import {
 const API_BASE = '/api/v1/chat';
 
 // ============================================================================
+// AI MODEL DEFINITIONS - Full provider + model selection
+// ============================================================================
+
+const AI_MODELS = {
+  auto: { provider: null, model: null, label: '🤖 Auto (TooLoo Selects)', description: 'Let TooLoo choose the best model' },
+  // Gemini models
+  'gemini-3-pro': { provider: 'gemini', model: 'gemini-3-pro-preview', label: '✨ Gemini 3 Pro', description: 'Advanced reasoning & speed' },
+  'gemini-flash': { provider: 'gemini', model: 'gemini-2.0-flash-exp', label: '⚡ Gemini Flash', description: 'Ultra-fast responses' },
+  // Claude models  
+  'claude-sonnet': { provider: 'anthropic', model: 'claude-sonnet-4.5', label: '🎭 Claude Sonnet 4.5', description: 'Balanced performance' },
+  'claude-opus': { provider: 'anthropic', model: 'claude-3-opus-20240229', label: '🧠 Claude Opus', description: 'Deep reasoning' },
+  // OpenAI models
+  'gpt-5': { provider: 'openai', model: 'gpt-5', label: '🌟 GPT-5', description: 'Latest generation' },
+  'gpt-4o': { provider: 'openai', model: 'gpt-4o', label: '💫 GPT-4o', description: 'Optimized performance' },
+  // DeepSeek
+  'deepseek-chat': { provider: 'deepseek', model: 'deepseek-chat', label: '🔮 DeepSeek Chat', description: 'Cost-effective coding' },
+};
+
+// ============================================================================
 // CUSTOM HOOK - Chat API with streaming support
 // ============================================================================
 
 const useChatAPI = () => {
   const sendMessage = useCallback(async (message, options = {}) => {
-    const { onChunk, onThought, onComplete, onError, mode = 'quick', sessionId } = options;
+    const { onChunk, onThought, onComplete, onError, mode = 'quick', sessionId, provider, model } = options;
     
     try {
+      // Emit thinking step
+      onThought?.('🔌 Connecting to TooLoo API...');
+      
       const response = await fetch(`${API_BASE}/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -42,8 +65,12 @@ const useChatAPI = () => {
           message,
           mode,
           sessionId,
+          provider, // Pass selected provider
+          model, // Pass selected model
         }),
       });
+      
+      onThought?.(provider ? `🎯 Routing to ${provider}/${model}...` : '🤖 Auto-selecting best model...');
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -73,6 +100,17 @@ const useChatAPI = () => {
               throw new Error(data.error);
             }
             
+            // Emit meta info as thinking steps
+            if (data.meta) {
+              if (data.meta.persona) onThought?.(`🎭 Persona: ${data.meta.persona}`);
+              if (data.meta.visualEnabled) onThought?.(`🎨 Visual mode: ${data.meta.visualType || 'enabled'}`);
+            }
+            
+            // Visual enhancement notification
+            if (data.visualEnhanced) {
+              onThought?.(`✨ Enhanced for ${data.visualType || 'visual'} generation`);
+            }
+            
             if (data.chunk) {
               fullContent += data.chunk;
               onChunk?.(data.chunk, fullContent);
@@ -85,6 +123,9 @@ const useChatAPI = () => {
                 cost_usd: data.cost_usd,
                 reasoning: data.reasoning,
               };
+              onThought?.(`✅ Completed via ${data.provider} (${data.model})`);
+              if (data.cost_usd) onThought?.(`💰 Cost: $${data.cost_usd.toFixed(4)}`);
+              if (data.reasoning) onThought?.(`📝 ${data.reasoning}`);
             }
           } catch (e) {
             // Skip malformed lines
