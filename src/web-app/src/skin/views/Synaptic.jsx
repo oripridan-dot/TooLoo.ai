@@ -1,4 +1,4 @@
-// @version 3.3.76
+// @version 3.3.77
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1277,6 +1277,7 @@ const Synaptic = memo(({ className = '' }) => {
     setStatus('thinking');
     setAppState('processing');
     setActiveProviders([]); // Reset active providers
+    setCurrentStage('connecting'); // Start with connecting stage
     
     // Get selected model config
     const modelConfig = AI_MODELS[selectedModel] || AI_MODELS.auto;
@@ -1284,10 +1285,17 @@ const Synaptic = memo(({ className = '' }) => {
     // Initial thoughts with model info
     addThought(`📥 Received: "${input.substring(0, 40)}${input.length > 40 ? '...' : ''}"`);
     
+    // Stage: Analyzing
+    setTimeout(() => setCurrentStage('analyzing'), 300);
+    
     if (selectedModel === 'auto') {
       addThought('🤖 Auto mode: TooLoo selecting optimal model...');
     } else {
       addThought(`🎯 Using ${modelConfig.label} (${modelConfig.description})`);
+    }
+    
+    // Stage: Routing
+    setTimeout(() => setCurrentStage('routing'), 800);
     }
     
     // Show orchestration in border
