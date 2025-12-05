@@ -1,4 +1,4 @@
-// @version 3.3.130
+// @version 3.3.164
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -958,7 +958,7 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
   // ALL HOOKS MUST BE AT THE TOP - Before any conditional returns
   // This fixes "Rendered more hooks than during the previous render" error
   // ========================================================================
-  
+
   // Clean the content first
   const cleanedContent = useMemo(() => cleanContent(content), [content]);
 
@@ -1159,8 +1159,10 @@ class PreviewErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     // Silently catch hook violations from generated code - this is expected
-    if (error.message?.includes('Rendered more hooks') || 
-        error.message?.includes('Rendered fewer hooks')) {
+    if (
+      error.message?.includes('Rendered more hooks') ||
+      error.message?.includes('Rendered fewer hooks')
+    ) {
       console.debug('[LivePreview] Hook count mismatch in generated code - this is normal');
     } else {
       console.warn('[LivePreview] Error caught:', error.message);
@@ -1179,7 +1181,7 @@ class PreviewErrorBoundary extends React.Component {
       const isHooksError = this.state.error?.message?.includes('hooks');
       return (
         <div className="p-4 text-xs text-amber-400 bg-amber-500/10 rounded">
-          {isHooksError 
+          {isHooksError
             ? '⚠️ Preview unavailable - code uses dynamic hooks'
             : `⚠️ Preview unavailable - ${this.state.error?.message || 'Render error'}`}
         </div>
@@ -1489,7 +1491,12 @@ render(<${componentName} />);`;
           <div className="bg-[#0a0a0a] border-b border-white/10">
             <PreviewErrorBoundary>
               {/* Key forces remount when code changes, preventing hook violations */}
-              <LiveProvider key={cleanedCode.slice(0, 100)} code={cleanedCode} scope={liveScope} noInline>
+              <LiveProvider
+                key={cleanedCode.slice(0, 100)}
+                code={cleanedCode}
+                scope={liveScope}
+                noInline
+              >
                 <div className="p-4 min-h-[80px]">
                   <LivePreview />
                 </div>
@@ -2210,13 +2217,59 @@ LiquidThinkingIndicator.displayName = 'LiquidThinkingIndicator';
 // ============================================================================
 
 export const WelcomeMessage = memo(({ onQuickAction }) => {
+  const [hoveredCapability, setHoveredCapability] = useState(null);
+  const [selectedCapability, setSelectedCapability] = useState(null);
+
+  // Enhanced visual capabilities with direct actions
   const visualCapabilities = [
-    { icon: '📊', label: 'Charts & Graphs', desc: 'Bar, line, pie charts', color: 'cyan' },
-    { icon: '🔄', label: 'Diagrams', desc: 'Flow & architecture', color: 'purple' },
-    { icon: '📅', label: 'Timelines', desc: 'Visual histories', color: 'emerald' },
-    { icon: '🎨', label: 'Infographics', desc: 'Data visualization', color: 'pink' },
-    { icon: '⚡', label: 'Animations', desc: 'Dynamic visuals', color: 'amber' },
-    { icon: '🧩', label: 'Components', desc: 'Live React code', color: 'blue' },
+    {
+      icon: '📊',
+      label: 'Charts & Graphs',
+      desc: 'Bar, line, pie charts',
+      color: 'cyan',
+      action: 'Create an animated bar chart showing quarterly revenue: Q1: $2.1M, Q2: $2.8M, Q3: $3.2M, Q4: $4.1M',
+      examples: ['Bar charts', 'Line graphs', 'Pie & donut', 'Gauges', 'Sparklines'],
+    },
+    {
+      icon: '🔄',
+      label: 'Diagrams',
+      desc: 'Flow & architecture',
+      color: 'purple',
+      action: 'Draw a clean SVG architecture diagram showing a microservices system with API Gateway, Auth Service, and Database layers',
+      examples: ['Flow diagrams', 'Architecture', 'Mind maps', 'Process flows'],
+    },
+    {
+      icon: '📅',
+      label: 'Timelines',
+      desc: 'Visual histories',
+      color: 'emerald',
+      action: 'Create an animated timeline showing the evolution of AI: 1950 Turing Test, 1997 Deep Blue, 2012 ImageNet, 2022 ChatGPT, 2024 GPT-4V',
+      examples: ['Project milestones', 'Historical events', 'Roadmaps', 'Gantt charts'],
+    },
+    {
+      icon: '🎨',
+      label: 'Infographics',
+      desc: 'Data visualization',
+      color: 'pink',
+      action: 'Create a beautiful infographic about AI adoption: 75% of enterprises use AI, 45% productivity boost, $500B market by 2025',
+      examples: ['Statistics', 'Comparisons', 'Metrics', 'KPI dashboards'],
+    },
+    {
+      icon: '⚡',
+      label: 'Animations',
+      desc: 'Dynamic visuals',
+      color: 'amber',
+      action: 'Show me different animation presets: fadeInUp, bounce, pulse, glow, float, and spin with CSS code',
+      examples: ['Entrance effects', 'Transitions', 'Loading states', 'Micro-interactions'],
+    },
+    {
+      icon: '🧩',
+      label: 'Components',
+      desc: 'Live React code',
+      color: 'blue',
+      action: 'Create a React component: an animated stats card showing user growth metrics with a sparkline and percentage change indicator',
+      examples: ['Cards', 'Badges', 'Buttons', 'Interactive widgets'],
+    },
   ];
 
   const quickActions = [
@@ -2247,12 +2300,28 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
   ];
 
   const colorClasses = {
-    cyan: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400',
-    purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
-    emerald: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-    pink: 'bg-pink-500/10 border-pink-500/30 text-pink-400',
-    amber: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    blue: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+    cyan: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400/50',
+    purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400/50',
+    emerald: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-400/50',
+    pink: 'bg-pink-500/10 border-pink-500/30 text-pink-400 hover:bg-pink-500/20 hover:border-pink-400/50',
+    amber: 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-400/50',
+    blue: 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-400/50',
+  };
+
+  const glowClasses = {
+    cyan: 'shadow-cyan-500/30',
+    purple: 'shadow-purple-500/30',
+    emerald: 'shadow-emerald-500/30',
+    pink: 'shadow-pink-500/30',
+    amber: 'shadow-amber-500/30',
+    blue: 'shadow-blue-500/30',
+  };
+
+  const handleCapabilityClick = (cap) => {
+    setSelectedCapability(cap.label);
+    if (onQuickAction) {
+      onQuickAction(cap.action);
+    }
   };
 
   return (
