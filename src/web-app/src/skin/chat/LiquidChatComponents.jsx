@@ -1,5 +1,6 @@
-// @version 3.3.61
+// @version 3.3.62
 // TooLoo.ai Liquid Chat Components
+// v3.3.62 - Fixed JSX live preview: better code cleaning, error boundary, scope expansion
 // v3.3.53 - Complete LiquidCodeBlock rewrite: Live JSX/SVG/HTML preview, sandbox execution, artifact handoff
 // v3.3.48 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
 // v3.3.35 - Added Execute button for team-validated code execution in chat
