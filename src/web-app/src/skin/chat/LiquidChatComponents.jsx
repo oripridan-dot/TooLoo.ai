@@ -1,4 +1,4 @@
-// @version 3.3.165
+// @version 3.3.168
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -1384,10 +1384,34 @@ render(<${componentName} />);`;
   // Render SVG directly with sanitization
   const renderSVGPreview = () => {
     try {
+      // Check if we have valid SVG content
+      if (!codeString || codeString.trim().length === 0) {
+        return (
+          <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
+            ⚠️ Empty SVG content
+          </div>
+        );
+      }
+
       // Basic sanitization - remove script tags and event handlers
       let safeSvg = codeString
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
         .replace(/\bon\w+\s*=/gi, 'data-removed=');
+
+      // Check if it looks like valid SVG
+      if (!safeSvg.includes('<svg') || !safeSvg.includes('</svg>')) {
+        return (
+          <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
+            ⚠️ Content doesn't appear to be valid SVG (missing svg tags)
+            <pre className="mt-2 text-[10px] text-gray-500 max-h-20 overflow-auto">
+              {codeString.substring(0, 200)}...
+            </pre>
+          </div>
+        );
+      }
+
+      // Make SVG responsive
+      safeSvg = safeSvg.replace(/<svg/, '<svg style="max-width:100%;height:auto;"');
 
       return (
         <div
@@ -1396,8 +1420,11 @@ render(<${componentName} />);`;
         />
       );
     } catch (e) {
+      console.error('[SVG Preview] Error:', e);
       return (
-        <div className="p-4 text-amber-400 text-xs bg-amber-500/10">⚠️ Unable to preview SVG</div>
+        <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
+          ⚠️ Unable to preview SVG: {e.message}
+        </div>
       );
     }
   };
