@@ -1,4 +1,4 @@
-// @version 3.3.137
+// @version 3.3.143
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -203,13 +203,6 @@ const ConfirmModal = memo(({ isOpen, onClose, onConfirm, title, message, confirm
 });
 
 ConfirmModal.displayName = 'ConfirmModal';
-
-const API_BASE = '/api/v1';
-// Use wss:// for secure connections (HTTPS), ws:// for HTTP
-const WS_URL =
-  typeof window !== 'undefined'
-    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
-    : '';
 
 // ============================================================================
 // GROWTH RING - Circular progress indicator (simplified CSS)
