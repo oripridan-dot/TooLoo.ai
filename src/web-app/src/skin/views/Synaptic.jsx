@@ -1,4 +1,4 @@
-// @version 3.3.107
+// @version 3.3.114
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1020,7 +1020,10 @@ const Synaptic = memo(({ className = '' }) => {
   
   // Refs
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const userScrolledRef = useRef(false);
+  const lastMessageCountRef = useRef(0);
   
   // Hooks
   const { sendMessage: sendToAPI } = useChatAPI();
@@ -1039,10 +1042,36 @@ const Synaptic = memo(({ className = '' }) => {
     });
   }, []);
 
-  // Scroll to bottom on new messages
+  // Detect user scroll - if user scrolls up, don't auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      userScrolledRef.current = !isNearBottom;
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Smart scroll: only scroll on NEW messages, not during streaming updates
+  // Let user read from top while content streams below
+  useEffect(() => {
+    const newMessageCount = messages.length;
+    const isNewMessage = newMessageCount > lastMessageCountRef.current;
+    lastMessageCountRef.current = newMessageCount;
+    
+    // Only auto-scroll when:
+    // 1. A new message is added (user sent or AI started responding)
+    // 2. User hasn't manually scrolled up
+    // 3. NOT during streaming content updates
+    if (isNewMessage && !userScrolledRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length]); // Only trigger on message count change, not content updates
 
   // Estimate tokens from message content
   const estimateTokens = useCallback((content) => {
