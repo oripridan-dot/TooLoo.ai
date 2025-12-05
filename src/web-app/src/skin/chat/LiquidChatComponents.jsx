@@ -1,4 +1,4 @@
-// @version 3.3.104
+// @version 3.3.108
 // TooLoo.ai Liquid Chat Components
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
@@ -184,13 +184,13 @@ export const LiquidMessageBubble = memo(
     return (
       <motion.div
         ref={bubbleRef}
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
         className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 group ${className}`}
+        layout={false}
       >
         {/* TooLoo Avatar (for AI messages) */}
         {!isUser && showAvatar && (
@@ -636,12 +636,35 @@ const CollapsibleSection = memo(({ title, level, children, defaultOpen = false, 
 
 CollapsibleSection.displayName = 'CollapsibleSection';
 
+// Clean up content by removing noise patterns
+const cleanContent = (content) => {
+  if (!content) return '';
+  
+  return content
+    // Remove connection interrupted messages
+    .replace(/_?\[Connection interrupted[^\]]*\]_?/g, '')
+    .replace(/_?\[Response was interrupted[^\]]*\]_?/g, '')
+    // Clean up multiple blank lines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+// Check if content is primarily code
+const isCodeHeavy = (content) => {
+  const codeBlockCount = (content.match(/```/g) || []).length / 2;
+  const lines = content.split('\n').length;
+  return codeBlockCount > 0 && lines > 20;
+};
+
 export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
+  // Clean the content first
+  const cleanedContent = useMemo(() => cleanContent(content), [content]);
+  
   // Parse content into sections based on headers
   const sections = useMemo(() => {
-    if (!content) return [];
+    if (!cleanedContent) return [];
     
-    const lines = content.split('\n');
+    const lines = cleanedContent.split('\n');
     const result = [];
     let currentSection = null;
     let currentContent = [];
