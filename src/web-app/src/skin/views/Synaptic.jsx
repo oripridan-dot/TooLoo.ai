@@ -1,4 +1,4 @@
-// @version 3.3.150
+// @version 3.3.166
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1132,12 +1132,14 @@ const Synaptic = memo(({ className = '' }) => {
     // Load saved preferences from localStorage
     try {
       const saved = localStorage.getItem('tooloo-ui-preferences');
-      return saved ? JSON.parse(saved) : {
-        showLargePreviewToggle: false, // Hidden by default as requested
-        showModelSelector: true,
-        showStatusIndicator: true,
-        compactMode: false,
-      };
+      return saved
+        ? JSON.parse(saved)
+        : {
+            showLargePreviewToggle: false, // Hidden by default as requested
+            showModelSelector: true,
+            showStatusIndicator: true,
+            compactMode: false,
+          };
     } catch {
       return {
         showLargePreviewToggle: false,
@@ -1155,7 +1157,7 @@ const Synaptic = memo(({ className = '' }) => {
 
   // Function to update UI preferences (can be called from within TooLoo)
   const updateUiPreference = useCallback((key, value) => {
-    setUiPreferences(prev => {
+    setUiPreferences((prev) => {
       const updated = { ...prev, [key]: value };
       localStorage.setItem('tooloo-ui-preferences', JSON.stringify(updated));
       return updated;
@@ -1426,7 +1428,7 @@ const Synaptic = memo(({ className = '' }) => {
   // SELF-MODIFICATION API - TooLoo can modify its own UI
   // Exposed to window for internal access
   // ============================================================================
-  
+
   useEffect(() => {
     // Expose self-modification API to window for internal TooLoo commands
     window.toolooUI = {
@@ -1436,7 +1438,7 @@ const Synaptic = memo(({ className = '' }) => {
         return `✅ UI preference '${key}' set to ${value}`;
       },
       getPreferences: () => uiPreferences,
-      
+
       // Quick toggles
       showLargePreview: () => updateUiPreference('showLargePreviewToggle', true),
       hideLargePreview: () => updateUiPreference('showLargePreviewToggle', false),
@@ -1444,29 +1446,32 @@ const Synaptic = memo(({ className = '' }) => {
       hideModelSelector: () => updateUiPreference('showModelSelector', false),
       enableCompactMode: () => updateUiPreference('compactMode', true),
       disableCompactMode: () => updateUiPreference('compactMode', false),
-      
+
       // Get current state
       getCurrentModel: () => selectedModel,
       setModel: (model) => setSelectedModel(model),
-      
+
       // Messages
       addSystemMessage: (content) => {
-        setMessages(prev => [...prev, {
-          id: Date.now(),
-          content,
-          isUser: false,
-          timestamp: Date.now(),
-          provider: 'System',
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            content,
+            isUser: false,
+            timestamp: Date.now(),
+            provider: 'System',
+          },
+        ]);
       },
-      
+
       // Clear
       clearChat: () => setMessages([]),
-      
+
       // Mood
       setMood: (mood) => setCurrentMood(mood),
     };
-    
+
     return () => {
       delete window.toolooUI;
     };
@@ -1608,6 +1613,24 @@ const Synaptic = memo(({ className = '' }) => {
   // ============================================================================
 
   const handleQuickAction = useCallback((action) => {
+    // If action is a full prompt string (from Visual Cortex 2.0 buttons), use it directly
+    if (action && action.length > 20) {
+      setInput(action);
+      inputRef.current?.focus();
+      // Auto-submit after a short delay to give user a chance to see the prompt
+      setTimeout(() => {
+        if (inputRef.current) {
+          // Trigger form submission
+          const form = inputRef.current.closest('form');
+          if (form) {
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Legacy predefined actions
     const actionMessages = {
       brainstorm: "Let's brainstorm some ideas together! What topic would you like to explore?",
       write: "I'd love to help you write something. What would you like to create?",
@@ -1615,7 +1638,7 @@ const Synaptic = memo(({ className = '' }) => {
       creative: "Let's get creative! Tell me about your creative project or idea.",
     };
 
-    setInput(actionMessages[action] || '');
+    setInput(actionMessages[action] || action || '');
     inputRef.current?.focus();
   }, []);
 
