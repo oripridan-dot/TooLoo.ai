@@ -1,4 +1,4 @@
-// @version 3.3.117
+// @version 3.3.118
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1043,20 +1043,28 @@ const Synaptic = memo(({ className = '' }) => {
     });
   }, []);
 
-  // Detect user scroll - if user scrolls up, don't auto-scroll
+  // Detect user scroll - if user scrolls up, show floating indicator
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
     
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
       userScrolledRef.current = !isNearBottom;
+      setShowMoreBelow(!isNearBottom && isStreaming);
     };
     
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isStreaming]);
+
+  // Hide "more below" when streaming stops
+  useEffect(() => {
+    if (!isStreaming) {
+      setShowMoreBelow(false);
+    }
+  }, [isStreaming]);
 
   // Smart scroll: only scroll on NEW messages, not during streaming updates
   // Let user read from top while content streams below
