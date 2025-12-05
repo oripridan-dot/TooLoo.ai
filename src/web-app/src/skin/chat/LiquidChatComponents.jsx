@@ -1,4 +1,4 @@
-// @version 3.3.44
+// @version 3.3.45
 // TooLoo.ai Liquid Chat Components
 // v3.3.44 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
 // v3.3.35 - Added Execute button for team-validated code execution in chat
@@ -1489,4 +1489,5 @@ export default {
   LiquidCodeBlock,
   ProviderBadge,
   StreamingIndicator,
+  UniversalCodeSandbox,
 };
