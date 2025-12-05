@@ -1,4 +1,4 @@
-// @version 3.3.124
+// @version 3.3.128
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -143,7 +143,16 @@ TooLooAvatar.displayName = 'TooLooAvatar';
 // ============================================================================
 
 export const LiquidMessageBubble = memo(
-  ({ message, isUser, isLatest, isStreaming, showAvatar = true, onReact, className = '', fullWidth = false }) => {
+  ({
+    message,
+    isUser,
+    isLatest,
+    isStreaming,
+    showAvatar = true,
+    onReact,
+    className = '',
+    fullWidth = false,
+  }) => {
     const { getEmotionValues, getAnimationState } = useLiquidEngine();
     const bubbleRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
@@ -563,107 +572,111 @@ EnhancedMarkdown.displayName = 'EnhancedMarkdown';
 // Parses markdown headers and creates a clean outline with expandable content
 // ============================================================================
 
-const CollapsibleSection = memo(({ title, level, children, defaultOpen = false, isFirst = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  
-  // Visual hierarchy based on header level - clean, clickable sections
-  const levelStyles = {
-    1: { 
-      title: 'text-base font-semibold text-white',
-      icon: '▾',
-      iconClosed: '▸',
-      bg: 'bg-white/[0.03] hover:bg-white/[0.06]',
-      border: 'border-white/10'
-    },
-    2: { 
-      title: 'text-sm font-medium text-gray-200',
-      icon: '▾',
-      iconClosed: '▸',
-      bg: 'hover:bg-white/[0.04]',
-      border: 'border-white/5'
-    },
-    3: { 
-      title: 'text-sm text-gray-300',
-      icon: '▾',
-      iconClosed: '▸',
-      bg: 'hover:bg-white/[0.03]',
-      border: 'border-transparent'
-    },
-    4: { 
-      title: 'text-xs text-gray-400',
-      icon: '–',
-      iconClosed: '+',
-      bg: 'hover:bg-white/[0.02]',
-      border: 'border-transparent'
-    },
-  };
-  
-  const style = levelStyles[level] || levelStyles[3];
-  const indent = Math.max(0, (level - 1) * 12);
-  
-  return (
-    <div className={`${isFirst ? '' : 'mt-2'}`} style={{ marginLeft: indent }}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
+const CollapsibleSection = memo(
+  ({ title, level, children, defaultOpen = false, isFirst = false }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+
+    // Visual hierarchy based on header level - clean, clickable sections
+    const levelStyles = {
+      1: {
+        title: 'text-base font-semibold text-white',
+        icon: '▾',
+        iconClosed: '▸',
+        bg: 'bg-white/[0.03] hover:bg-white/[0.06]',
+        border: 'border-white/10',
+      },
+      2: {
+        title: 'text-sm font-medium text-gray-200',
+        icon: '▾',
+        iconClosed: '▸',
+        bg: 'hover:bg-white/[0.04]',
+        border: 'border-white/5',
+      },
+      3: {
+        title: 'text-sm text-gray-300',
+        icon: '▾',
+        iconClosed: '▸',
+        bg: 'hover:bg-white/[0.03]',
+        border: 'border-transparent',
+      },
+      4: {
+        title: 'text-xs text-gray-400',
+        icon: '–',
+        iconClosed: '+',
+        bg: 'hover:bg-white/[0.02]',
+        border: 'border-transparent',
+      },
+    };
+
+    const style = levelStyles[level] || levelStyles[3];
+    const indent = Math.max(0, (level - 1) * 12);
+
+    return (
+      <div className={`${isFirst ? '' : 'mt-2'}`} style={{ marginLeft: indent }}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`
           w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left transition-all
           ${style.bg} border ${style.border}
         `}
-      >
-        <span className="text-gray-500 text-[10px] w-3">
-          {isOpen ? style.icon : style.iconClosed}
-        </span>
-        <span className={style.title}>{title}</span>
-        {!isOpen && <span className="text-[10px] text-gray-600 ml-auto">click to expand</span>}
-      </button>
-      
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="py-2 px-3 text-gray-300 text-sm leading-relaxed">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-});
+        >
+          <span className="text-gray-500 text-[10px] w-3">
+            {isOpen ? style.icon : style.iconClosed}
+          </span>
+          <span className={style.title}>{title}</span>
+          {!isOpen && <span className="text-[10px] text-gray-600 ml-auto">click to expand</span>}
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="py-2 px-3 text-gray-300 text-sm leading-relaxed">{children}</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+);
 
 CollapsibleSection.displayName = 'CollapsibleSection';
 
 // Clean up content by removing noise patterns
 const cleanContent = (content) => {
   if (!content) return '';
-  
-  return content
-    // Remove connection interrupted messages (all variants)
-    .replace(/_?\[Connection interrupted[^\]]*\]_?\.?/gi, '')
-    .replace(/_?\[Response was interrupted[^\]]*\]_?\.?/gi, '')
-    .replace(/\*\*?Connection interrupted[^*]*\*\*?/gi, '')
-    .replace(/Connection interrupted\.?\.?\.?/gi, '')
-    // Remove mocked/test response indicators
-    .replace(/This is a mocked V\d+[\s\S]*?response\.?/gi, '')
-    .replace(/\[mocked\s*response\]/gi, '')
-    .replace(/mocked response/gi, '')
-    // Remove debug/system messages
-    .replace(/\[DEBUG\][^\n]*/gi, '')
-    .replace(/\[SYSTEM\][^\n]*/gi, '')
-    // Remove standalone underscores with brackets
-    .replace(/^_\[.*?\]_$/gm, '')
-    // Clean up lines that are just underscores or dots
-    .replace(/^[_\.]+$/gm, '')
-    // Clean up multiple blank lines
-    .replace(/\n{3,}/g, '\n\n')
-    // Remove leading/trailing whitespace from each line
-    .split('\n').map(line => line.trimEnd()).join('\n')
-    .trim();
+
+  return (
+    content
+      // Remove connection interrupted messages (all variants)
+      .replace(/_?\[Connection interrupted[^\]]*\]_?\.?/gi, '')
+      .replace(/_?\[Response was interrupted[^\]]*\]_?\.?/gi, '')
+      .replace(/\*\*?Connection interrupted[^*]*\*\*?/gi, '')
+      .replace(/Connection interrupted\.?\.?\.?/gi, '')
+      // Remove mocked/test response indicators
+      .replace(/This is a mocked V\d+[\s\S]*?response\.?/gi, '')
+      .replace(/\[mocked\s*response\]/gi, '')
+      .replace(/mocked response/gi, '')
+      // Remove debug/system messages
+      .replace(/\[DEBUG\][^\n]*/gi, '')
+      .replace(/\[SYSTEM\][^\n]*/gi, '')
+      // Remove standalone underscores with brackets
+      .replace(/^_\[.*?\]_$/gm, '')
+      // Clean up lines that are just underscores or dots
+      .replace(/^[_\.]+$/gm, '')
+      // Clean up multiple blank lines
+      .replace(/\n{3,}/g, '\n\n')
+      // Remove leading/trailing whitespace from each line
+      .split('\n')
+      .map((line) => line.trimEnd())
+      .join('\n')
+      .trim()
+  );
 };
 
 // ============================================================================
@@ -674,43 +687,74 @@ const cleanContent = (content) => {
 // Detect the type of response to render appropriate visual
 const detectResponseType = (content) => {
   const lower = content.toLowerCase();
-  
+
   // Success/completion patterns
-  if (lower.includes('✅') || lower.includes('done') || lower.includes('completed') || 
-      lower.includes('success') || lower.includes('finished')) {
+  if (
+    lower.includes('✅') ||
+    lower.includes('done') ||
+    lower.includes('completed') ||
+    lower.includes('success') ||
+    lower.includes('finished')
+  ) {
     return 'success';
   }
-  
+
   // List/steps patterns
-  if ((content.match(/^[\d]+\./gm) || []).length >= 3 ||
-      (content.match(/^[-•*]\s/gm) || []).length >= 3) {
+  if (
+    (content.match(/^[\d]+\./gm) || []).length >= 3 ||
+    (content.match(/^[-•*]\s/gm) || []).length >= 3
+  ) {
     return 'steps';
   }
-  
+
   // Question/inquiry patterns
-  if (lower.includes('?') && (lower.includes('would you') || lower.includes('do you') ||
-      lower.includes('can you') || lower.includes('should') || lower.includes('what if'))) {
+  if (
+    lower.includes('?') &&
+    (lower.includes('would you') ||
+      lower.includes('do you') ||
+      lower.includes('can you') ||
+      lower.includes('should') ||
+      lower.includes('what if'))
+  ) {
     return 'question';
   }
-  
+
   // Insight/analysis patterns
-  if (lower.includes('insight') || lower.includes('analysis') || lower.includes('found that') ||
-      lower.includes('discovered') || lower.includes('noticed') || lower.includes('interesting')) {
+  if (
+    lower.includes('insight') ||
+    lower.includes('analysis') ||
+    lower.includes('found that') ||
+    lower.includes('discovered') ||
+    lower.includes('noticed') ||
+    lower.includes('interesting')
+  ) {
     return 'insight';
   }
-  
-  // Warning/caution patterns  
-  if (lower.includes('warning') || lower.includes('caution') || lower.includes('careful') ||
-      lower.includes('⚠') || lower.includes('note:') || lower.includes('important:')) {
+
+  // Warning/caution patterns
+  if (
+    lower.includes('warning') ||
+    lower.includes('caution') ||
+    lower.includes('careful') ||
+    lower.includes('⚠') ||
+    lower.includes('note:') ||
+    lower.includes('important:')
+  ) {
     return 'warning';
   }
-  
+
   // Idea/suggestion patterns
-  if (lower.includes('idea') || lower.includes('suggest') || lower.includes('could try') ||
-      lower.includes('how about') || lower.includes('💡') || lower.includes('consider')) {
+  if (
+    lower.includes('idea') ||
+    lower.includes('suggest') ||
+    lower.includes('could try') ||
+    lower.includes('how about') ||
+    lower.includes('💡') ||
+    lower.includes('consider')
+  ) {
     return 'idea';
   }
-  
+
   // Default conversational
   return 'conversational';
 };
@@ -718,25 +762,25 @@ const detectResponseType = (content) => {
 // Extract key points from content for visual summary
 const extractKeyPoints = (content) => {
   const points = [];
-  
+
   // Extract numbered items
   const numberedMatches = content.match(/^\d+\.\s*\*?\*?([^:\n]+)/gm) || [];
-  numberedMatches.forEach(match => {
+  numberedMatches.forEach((match) => {
     const text = match.replace(/^\d+\.\s*\*?\*?/, '').trim();
     if (text.length > 10 && text.length < 100) {
       points.push(text);
     }
   });
-  
+
   // Extract bold items as key points
   const boldMatches = content.match(/\*\*([^*]+)\*\*/g) || [];
-  boldMatches.forEach(match => {
+  boldMatches.forEach((match) => {
     const text = match.replace(/\*\*/g, '').trim();
     if (text.length > 5 && text.length < 60 && !points.includes(text)) {
       points.push(text);
     }
   });
-  
+
   return points.slice(0, 5); // Max 5 key points
 };
 
@@ -748,64 +792,64 @@ const countCodeBlocks = (content) => {
 // Visual card for response type
 const ResponseTypeCard = memo(({ type, keyPoints = [] }) => {
   const typeConfig = {
-    success: { 
-      icon: '✨', 
-      label: 'Complete', 
+    success: {
+      icon: '✨',
+      label: 'Complete',
       color: 'emerald',
       bg: 'from-emerald-500/20 to-emerald-600/5',
-      border: 'border-emerald-500/30'
+      border: 'border-emerald-500/30',
     },
-    steps: { 
-      icon: '📋', 
-      label: 'Steps', 
+    steps: {
+      icon: '📋',
+      label: 'Steps',
       color: 'blue',
       bg: 'from-blue-500/20 to-blue-600/5',
-      border: 'border-blue-500/30'
+      border: 'border-blue-500/30',
     },
-    question: { 
-      icon: '💭', 
-      label: 'Question', 
+    question: {
+      icon: '💭',
+      label: 'Question',
       color: 'purple',
       bg: 'from-purple-500/20 to-purple-600/5',
-      border: 'border-purple-500/30'
+      border: 'border-purple-500/30',
     },
-    insight: { 
-      icon: '💡', 
-      label: 'Insight', 
+    insight: {
+      icon: '💡',
+      label: 'Insight',
       color: 'amber',
       bg: 'from-amber-500/20 to-amber-600/5',
-      border: 'border-amber-500/30'
+      border: 'border-amber-500/30',
     },
-    warning: { 
-      icon: '⚡', 
-      label: 'Note', 
+    warning: {
+      icon: '⚡',
+      label: 'Note',
       color: 'orange',
       bg: 'from-orange-500/20 to-orange-600/5',
-      border: 'border-orange-500/30'
+      border: 'border-orange-500/30',
     },
-    idea: { 
-      icon: '🎯', 
-      label: 'Idea', 
+    idea: {
+      icon: '🎯',
+      label: 'Idea',
       color: 'cyan',
       bg: 'from-cyan-500/20 to-cyan-600/5',
-      border: 'border-cyan-500/30'
+      border: 'border-cyan-500/30',
     },
-    conversational: { 
-      icon: '💬', 
-      label: '', 
+    conversational: {
+      icon: '💬',
+      label: '',
       color: 'gray',
       bg: 'from-white/5 to-transparent',
-      border: 'border-white/10'
+      border: 'border-white/10',
     },
   };
-  
+
   const config = typeConfig[type] || typeConfig.conversational;
-  
+
   // Don't show card for simple conversational responses
   if (type === 'conversational' && keyPoints.length === 0) {
     return null;
   }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -820,7 +864,7 @@ const ResponseTypeCard = memo(({ type, keyPoints = [] }) => {
           </span>
         )}
       </div>
-      
+
       {keyPoints.length > 0 && (
         <div className="space-y-1.5">
           {keyPoints.map((point, i) => (
@@ -840,11 +884,11 @@ ResponseTypeCard.displayName = 'ResponseTypeCard';
 // Technical details toggle - hides code by default
 const TechnicalDetails = memo(({ children, codeCount = 0 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   if (codeCount === 0) {
     return children;
   }
-  
+
   return (
     <div className="mt-3">
       <button
@@ -856,10 +900,14 @@ const TechnicalDetails = memo(({ children, codeCount = 0 }) => {
         </span>
         <span>
           {isOpen ? 'Hide' : 'Show'} technical details
-          {!isOpen && <span className="text-gray-600 ml-1">({codeCount} code {codeCount === 1 ? 'block' : 'blocks'})</span>}
+          {!isOpen && (
+            <span className="text-gray-600 ml-1">
+              ({codeCount} code {codeCount === 1 ? 'block' : 'blocks'})
+            </span>
+          )}
         </span>
       </button>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -869,9 +917,7 @@ const TechnicalDetails = memo(({ children, codeCount = 0 }) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 pt-3 border-t border-white/5">
-              {children}
-            </div>
+            <div className="mt-3 pt-3 border-t border-white/5">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -886,12 +932,12 @@ const extractConversationalContent = (content) => {
   // Remove code blocks for the conversational view
   let conversational = content
     .replace(/```[\s\S]*?```/g, '') // Remove fenced code blocks
-    .replace(/`[^`]+`/g, match => match) // Keep inline code but could hide
+    .replace(/`[^`]+`/g, (match) => match) // Keep inline code but could hide
     .trim();
-  
+
   // Clean up multiple newlines left by removed blocks
   conversational = conversational.replace(/\n{3,}/g, '\n\n').trim();
-  
+
   return conversational;
 };
 
@@ -910,38 +956,41 @@ const isCodeHeavy = (content) => {
 export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
   // Clean the content first
   const cleanedContent = useMemo(() => cleanContent(content), [content]);
-  
+
   // Detect response type for visual treatment
   const responseType = useMemo(() => detectResponseType(cleanedContent), [cleanedContent]);
-  
+
   // Extract key points for visual summary
   const keyPoints = useMemo(() => extractKeyPoints(cleanedContent), [cleanedContent]);
-  
+
   // Count code blocks
   const codeCount = useMemo(() => countCodeBlocks(cleanedContent), [cleanedContent]);
-  
+
   // Get conversational (non-code) content
-  const conversationalContent = useMemo(() => extractConversationalContent(cleanedContent), [cleanedContent]);
-  
+  const conversationalContent = useMemo(
+    () => extractConversationalContent(cleanedContent),
+    [cleanedContent]
+  );
+
   // During streaming, show simple view
   if (isStreaming) {
     return <EnhancedMarkdown content={cleanedContent} isStreaming={true} />;
   }
-  
+
   // For code-heavy responses, show visual summary + hidden code
   if (codeCount > 0) {
     return (
       <div className="space-y-2">
         {/* Visual response type indicator */}
         <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
-        
+
         {/* Conversational content (no code) - always visible */}
         {conversationalContent && (
           <div className="text-gray-200">
             <EnhancedMarkdown content={conversationalContent} isStreaming={false} />
           </div>
         )}
-        
+
         {/* Code blocks hidden by default */}
         <TechnicalDetails codeCount={codeCount}>
           <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
@@ -949,18 +998,18 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
       </div>
     );
   }
-  
+
   // For non-code responses, check for sections
   const sections = useMemo(() => {
     const lines = cleanedContent.split('\n');
     const result = [];
     let currentSection = null;
     let currentContent = [];
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const headerMatch = line.match(/^(#{1,4})\s+(.+)$/);
-      
+
       if (headerMatch) {
         if (currentSection) {
           currentSection.content = currentContent.join('\n').trim();
@@ -977,7 +1026,7 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
         currentContent.push(line);
       }
     }
-    
+
     if (currentSection) {
       currentSection.content = currentContent.join('\n').trim();
       result.push(currentSection);
@@ -989,12 +1038,12 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
         content: currentContent.join('\n').trim(),
       });
     }
-    
+
     return result;
   }, [cleanedContent]);
-  
-  const hasSections = sections.some(s => s.level > 0);
-  
+
+  const hasSections = sections.some((s) => s.level > 0);
+
   // Simple content without sections - show with visual card
   if (!hasSections) {
     return (
@@ -1007,30 +1056,36 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
       </div>
     );
   }
-  
+
   // Sectioned content - show visual summary + collapsible sections
   return (
     <div className="space-y-2">
       {/* Visual response type indicator */}
       <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
-      
+
       {/* Quick navigation for many sections */}
       {sections.length > 3 && (
         <div className="mb-3 p-2 rounded-lg bg-white/[0.02] border border-white/5">
           <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Contents</p>
           <div className="flex flex-wrap gap-1">
-            {sections.filter(s => s.level > 0 && s.level <= 2).map((section) => (
-              <span 
-                key={section.id}
-                className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 cursor-default transition-colors"
-              >
-                {section.title.replace(/\*\*/g, '').replace(/[🔍💭🎯❓🚀🧠⚡🎨🔧📊]/g, '').trim().substring(0, 30)}
-              </span>
-            ))}
+            {sections
+              .filter((s) => s.level > 0 && s.level <= 2)
+              .map((section) => (
+                <span
+                  key={section.id}
+                  className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 cursor-default transition-colors"
+                >
+                  {section.title
+                    .replace(/\*\*/g, '')
+                    .replace(/[🔍💭🎯❓🚀🧠⚡🎨🔧📊]/g, '')
+                    .trim()
+                    .substring(0, 30)}
+                </span>
+              ))}
           </div>
         </div>
       )}
-      
+
       {/* Section list */}
       {sections.map((section, idx) => {
         if (section.level === 0) {
@@ -1040,9 +1095,9 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
             </div>
           );
         }
-        
+
         const hasCode = section.content.includes('```');
-        
+
         return (
           <CollapsibleSection
             key={section.id}
@@ -1082,11 +1137,11 @@ const EXECUTABLE_LANGUAGES = [
 // Languages that can be previewed client-side
 const PREVIEWABLE_LANGUAGES = ['jsx', 'react', 'tsx', 'svg', 'html'];
 
-// Error boundary for live preview
+// Error boundary for live preview - catches hook violations from generated code
 class PreviewErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, key: 0 };
   }
 
   static getDerivedStateFromError(error) {
@@ -1094,18 +1149,34 @@ class PreviewErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.warn('[LivePreview] Error caught:', error.message);
+    // Silently catch hook violations from generated code - this is expected
+    if (error.message?.includes('Rendered more hooks') || 
+        error.message?.includes('Rendered fewer hooks')) {
+      console.debug('[LivePreview] Hook count mismatch in generated code - this is normal');
+    } else {
+      console.warn('[LivePreview] Error caught:', error.message);
+    }
+  }
+
+  // Reset error state when children change
+  componentDidUpdate(prevProps) {
+    if (prevProps.children !== this.props.children && this.state.hasError) {
+      this.setState({ hasError: false, error: null, key: this.state.key + 1 });
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      const isHooksError = this.state.error?.message?.includes('hooks');
       return (
         <div className="p-4 text-xs text-amber-400 bg-amber-500/10 rounded">
-          ⚠️ Preview unavailable - {this.state.error?.message || 'Render error'}
+          {isHooksError 
+            ? '⚠️ Preview unavailable - code uses dynamic hooks'
+            : `⚠️ Preview unavailable - ${this.state.error?.message || 'Render error'}`}
         </div>
       );
     }
-    return this.props.children;
+    return <React.Fragment key={this.state.key}>{this.props.children}</React.Fragment>;
   }
 }
 
@@ -1128,15 +1199,17 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   const isJSX = ['jsx', 'react', 'tsx'].includes(lang);
   const isSVG = lang === 'svg';
   const isHTML = lang === 'html';
-  
+
   // Extract a summary from the code (first comment or class/function name)
   const codeSummary = useMemo(() => {
     const lines = codeString.split('\n');
     // Look for a comment at the start
-    const commentLine = lines.find(l => l.trim().startsWith('#') || l.trim().startsWith('//') || l.trim().startsWith('"""'));
+    const commentLine = lines.find(
+      (l) => l.trim().startsWith('#') || l.trim().startsWith('//') || l.trim().startsWith('"""')
+    );
     if (commentLine) return commentLine.replace(/^[#/\s"]+/, '').substring(0, 60);
     // Look for class or function definition
-    const defLine = lines.find(l => l.match(/^(class|def|function|const|export)\s+\w+/));
+    const defLine = lines.find((l) => l.match(/^(class|def|function|const|export)\s+\w+/));
     if (defLine) return defLine.trim().substring(0, 60);
     return `${lineCount} lines of ${lang || 'code'}`;
   }, [codeString, lineCount, lang]);
@@ -1165,7 +1238,9 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
     if (!hasRenderCall) {
       // Find the main component (function or const arrow function)
       const funcMatch = cleaned.match(/function\s+([A-Z]\w*)\s*\(/);
-      const constMatch = cleaned.match(/const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)\s*=>|\(\)\s*=>|[^=]*=>)/);
+      const constMatch = cleaned.match(
+        /const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)\s*=>|\(\)\s*=>|[^=]*=>)/
+      );
       const classMatch = cleaned.match(/class\s+([A-Z]\w*)\s+extends/);
 
       const componentName = funcMatch?.[1] || constMatch?.[1] || classMatch?.[1];
@@ -1421,14 +1496,12 @@ render(<${componentName} />);`;
         {isHTML && showPreview && renderHTMLPreview()}
 
         {/* Code view (always shown if preview is off, or as secondary for previewable) */}
-        {(!canPreview || !showPreview) && (
-          isLongCode && !showCode ? (
+        {(!canPreview || !showPreview) &&
+          (isLongCode && !showCode ? (
             // Collapsed view for long code
             <div className="bg-black/40 p-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">
-                  📄 {codeSummary}...
-                </span>
+                <span className="text-xs text-gray-400">📄 {codeSummary}...</span>
                 <button
                   onClick={() => setShowCode(true)}
                   className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
@@ -1453,8 +1526,7 @@ render(<${componentName} />);`;
                 </button>
               )}
             </div>
-          )
-        )}
+          ))}
 
         {/* Show code toggle for previewable */}
         {canPreview && showPreview && (
