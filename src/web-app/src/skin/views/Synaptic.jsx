@@ -1,4 +1,4 @@
-// @version 3.3.116
+// @version 3.3.117
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1017,6 +1017,7 @@ const Synaptic = memo(({ className = '' }) => {
   const [tokenCount, setTokenCount] = useState(0);
   const [actionFeedback, setActionFeedback] = useState({});
   const [currentMood, setCurrentMood] = useState('balanced');
+  const [showMoreBelow, setShowMoreBelow] = useState(false); // For floating "writing" indicator
   
   // Refs
   const messagesEndRef = useRef(null);
