@@ -1,4 +1,4 @@
-// @version 3.3.89
+// @version 3.3.90
 // TooLoo.ai Liquid Chat Components
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
 // v3.3.82 - Added inline code execution support via /run and /execute commands
@@ -643,25 +643,29 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
     if (!hasRenderCall) {
       // Find the main component (function or const arrow function)
       const funcMatch = cleaned.match(/function\s+([A-Z]\w*)\s*\(/);
-      const constMatch = cleaned.match(/const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)|[^=])\s*=>/);
+      const constMatch = cleaned.match(/const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)\s*=>|\(\)\s*=>|[^=]*=>)/);
       const classMatch = cleaned.match(/class\s+([A-Z]\w*)\s+extends/);
 
       const componentName = funcMatch?.[1] || constMatch?.[1] || classMatch?.[1];
 
       if (componentName) {
-        // Wrap in try-catch for safety
-        cleaned = `
-try {
-${cleaned}
-render(<${componentName} />);
-} catch (e) {
-render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>);
-}`;
+        // Wrap in try-catch for safety and add render call
+        cleaned = `${cleaned}
+
+render(<${componentName} />);`;
       } else {
         // If no component found, try to render as-is (might be raw JSX)
         const trimmed = cleaned.trim();
         if (trimmed.startsWith('<') && !trimmed.startsWith('<!')) {
           cleaned = `render(${trimmed});`;
+        } else {
+          // Wrap standalone code in a render with a simple display
+          cleaned = `render(
+  <div style={{padding: '1rem', color: '#9ca3af', fontSize: '12px', fontFamily: 'monospace'}}>
+    <div style={{color: '#f59e0b', marginBottom: '0.5rem'}}>⚡ Code Preview (not a React component)</div>
+    <pre style={{margin: 0, whiteSpace: 'pre-wrap'}}>{${JSON.stringify(cleaned.substring(0, 500))}}</pre>
+  </div>
+);`;
         }
       }
     }
