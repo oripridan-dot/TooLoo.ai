@@ -1,4 +1,4 @@
-// @version 3.3.83
+// @version 3.3.88
 // TooLoo.ai Liquid Chat Components
 // v3.3.82 - Added inline code execution support via /run and /execute commands
 // v3.3.62 - Fixed JSX live preview: better code cleaning, error boundary, scope expansion
@@ -698,18 +698,13 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
     setExecutionResult(null);
 
     try {
-      const response = await fetch('/api/v1/agent/task/team-execute', {
+      // V3.3.87: Use the new inline execute endpoint for reliable execution
+      const response = await fetch('/api/v1/chat/command/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'code_execution',
-          prompt: `Execute this ${language} code and return the result`,
           code: codeString,
-          options: {
-            useTeam: true,
-            qualityThreshold: 0.8,
-            maxIterations: 3,
-          },
+          language: language || 'javascript',
         }),
       });
 
@@ -718,7 +713,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
       if (result.ok) {
         setExecutionResult({
           success: true,
-          output: result.data?.output || 'Execution completed',
+          output: result.data?.output || result.data?.execution?.stdout || 'Execution completed',
           qualityScore: result.data?.qualityScore,
           artifacts: result.data?.artifacts,
           teamId: result.data?.teamId,
