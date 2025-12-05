@@ -1,4 +1,4 @@
-// @version 3.3.90
+// @version 3.3.96
 // TooLoo.ai Liquid Chat Components
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
 // v3.3.82 - Added inline code execution support via /run and /execute commands
@@ -553,6 +553,184 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
 });
 
 EnhancedMarkdown.displayName = 'EnhancedMarkdown';
+
+// ============================================================================
+// COLLAPSIBLE MARKDOWN - Structured response with expandable header sections
+// v3.3.92 - Major UX improvement: Headers become collapsible sections
+// Parses markdown headers and creates a clean outline with expandable content
+// ============================================================================
+
+const CollapsibleSection = memo(({ title, level, children, defaultOpen = true, isFirst = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  // Visual hierarchy based on header level
+  const levelStyles = {
+    1: { 
+      title: 'text-lg font-bold text-white',
+      icon: '▸',
+      bg: 'bg-white/5 hover:bg-white/8',
+      border: 'border-white/10'
+    },
+    2: { 
+      title: 'text-base font-semibold text-gray-200',
+      icon: '▸',
+      bg: 'bg-white/3 hover:bg-white/5',
+      border: 'border-white/5'
+    },
+    3: { 
+      title: 'text-sm font-medium text-gray-300',
+      icon: '▸',
+      bg: 'hover:bg-white/3',
+      border: 'border-transparent'
+    },
+    4: { 
+      title: 'text-sm text-gray-400',
+      icon: '•',
+      bg: 'hover:bg-white/3',
+      border: 'border-transparent'
+    },
+  };
+  
+  const style = levelStyles[level] || levelStyles[3];
+  const indent = Math.max(0, (level - 1) * 12);
+  
+  return (
+    <div className={`${isFirst ? '' : 'mt-2'}`} style={{ marginLeft: indent }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all
+          ${style.bg} border ${style.border}
+        `}
+      >
+        <span 
+          className={`text-gray-500 text-xs transition-transform ${isOpen ? 'rotate-90' : ''}`}
+        >
+          {style.icon}
+        </span>
+        <span className={style.title}>{title}</span>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="py-2 px-3 text-gray-300 text-sm leading-relaxed">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+CollapsibleSection.displayName = 'CollapsibleSection';
+
+export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
+  // Parse content into sections based on headers
+  const sections = useMemo(() => {
+    if (!content) return [];
+    
+    const lines = content.split('\n');
+    const result = [];
+    let currentSection = null;
+    let currentContent = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const headerMatch = line.match(/^(#{1,4})\s+(.+)$/);
+      
+      if (headerMatch) {
+        // Save previous section if exists
+        if (currentSection) {
+          currentSection.content = currentContent.join('\n').trim();
+          result.push(currentSection);
+        }
+        
+        // Start new section
+        currentSection = {
+          id: `section-${i}`,
+          level: headerMatch[1].length,
+          title: headerMatch[2],
+          content: '',
+        };
+        currentContent = [];
+      } else {
+        currentContent.push(line);
+      }
+    }
+    
+    // Save last section
+    if (currentSection) {
+      currentSection.content = currentContent.join('\n').trim();
+      result.push(currentSection);
+    } else if (currentContent.length > 0) {
+      // No headers found - return single intro section
+      result.push({
+        id: 'intro',
+        level: 0,
+        title: null,
+        content: currentContent.join('\n').trim(),
+      });
+    }
+    
+    return result;
+  }, [content]);
+  
+  // Check if we have meaningful sections (more than just intro)
+  const hasSections = sections.some(s => s.level > 0);
+  
+  // If no headers found or streaming, fall back to regular markdown
+  if (!hasSections || isStreaming) {
+    return <EnhancedMarkdown content={content} isStreaming={isStreaming} />;
+  }
+  
+  // Render table of contents + collapsible sections
+  return (
+    <div className="space-y-1">
+      {/* Section list with collapsible content */}
+      {sections.map((section, idx) => {
+        if (section.level === 0) {
+          // Intro content (no header)
+          return (
+            <div key={section.id} className="mb-4">
+              <EnhancedMarkdown content={section.content} isStreaming={false} />
+            </div>
+          );
+        }
+        
+        return (
+          <CollapsibleSection
+            key={section.id}
+            title={section.title}
+            level={section.level}
+            defaultOpen={idx === 0 || section.level === 1}
+            isFirst={idx === 0}
+          >
+            <EnhancedMarkdown content={section.content} isStreaming={false} />
+          </CollapsibleSection>
+        );
+      })}
+      
+      {/* Streaming cursor */}
+      {isStreaming && (
+        <motion.span
+          className="inline-block w-2 h-4 bg-cyan-400 ml-1"
+          animate={{ opacity: [1, 0, 1] }}
+          transition={{ duration: 0.8, repeat: Infinity }}
+        />
+      )}
+    </div>
+  );
+});
+
+CollapsibleMarkdown.displayName = 'CollapsibleMarkdown';
 
 // ============================================================================
 // LIQUID CODE BLOCK - Universal code renderer with preview, execute, handoff
