@@ -1,4 +1,4 @@
-// @version 3.3.169
+// @version 3.3.170
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -1208,6 +1208,19 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   const lang = (language || '').toLowerCase();
   const lineCount = codeString.split('\n').length;
   const isLongCode = lineCount > 15; // Collapse code blocks with more than 15 lines
+
+  // Debug logging for SVG
+  useEffect(() => {
+    if (lang === 'svg' || codeString.includes('<svg')) {
+      console.log('[LiquidCodeBlock] SVG detected:', {
+        language: lang,
+        codeLength: codeString.length,
+        hasContent: codeString.trim().length > 0,
+        startsWithSvg: codeString.trim().startsWith('<svg'),
+        preview: codeString.substring(0, 100)
+      });
+    }
+  }, [lang, codeString]);
 
   // Determine capabilities
   const canExecute = EXECUTABLE_LANGUAGES.includes(lang);
