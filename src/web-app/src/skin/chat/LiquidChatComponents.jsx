@@ -1,4 +1,4 @@
-// @version 3.3.110
+// @version 3.3.111
 // TooLoo.ai Liquid Chat Components
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
@@ -641,11 +641,20 @@ const cleanContent = (content) => {
   if (!content) return '';
   
   return content
-    // Remove connection interrupted messages
-    .replace(/_?\[Connection interrupted[^\]]*\]_?/g, '')
-    .replace(/_?\[Response was interrupted[^\]]*\]_?/g, '')
+    // Remove connection interrupted messages (various formats)
+    .replace(/_?\[Connection interrupted[^\]]*\]_?\.?/gi, '')
+    .replace(/_?\[Response was interrupted[^\]]*\]_?\.?/gi, '')
+    // Remove mocked/test response indicators
+    .replace(/This is a mocked V\d+ response\.?/gi, '')
+    .replace(/\[mocked\s*response\]/gi, '')
+    // Remove standalone underscores with brackets
+    .replace(/^_\[.*?\]_$/gm, '')
+    // Clean up lines that are just underscores
+    .replace(/^_+$/gm, '')
     // Clean up multiple blank lines
     .replace(/\n{3,}/g, '\n\n')
+    // Remove leading/trailing whitespace from each line
+    .split('\n').map(line => line.trimEnd()).join('\n')
     .trim();
 };
 
@@ -1140,11 +1149,38 @@ render(<${componentName} />);`;
 
         {/* Code view (always shown if preview is off, or as secondary for previewable) */}
         {(!canPreview || !showPreview) && (
-          <pre className="bg-black/40 p-4 overflow-x-auto text-xs max-h-96">
-            <code className={`language-${language} text-gray-300 font-mono`} {...props}>
-              {children}
-            </code>
-          </pre>
+          isLongCode && !showCode ? (
+            // Collapsed view for long code
+            <div className="bg-black/40 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">
+                  📄 {codeSummary}...
+                </span>
+                <button
+                  onClick={() => setShowCode(true)}
+                  className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
+                >
+                  Show {lineCount} lines
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative">
+              <pre className="bg-black/40 p-4 overflow-x-auto text-xs max-h-96">
+                <code className={`language-${language} text-gray-300 font-mono`} {...props}>
+                  {children}
+                </code>
+              </pre>
+              {isLongCode && showCode && (
+                <button
+                  onClick={() => setShowCode(false)}
+                  className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-black/60 text-gray-400 hover:text-white transition-colors"
+                >
+                  Collapse
+                </button>
+              )}
+            </div>
+          )
         )}
 
         {/* Show code toggle for previewable */}
