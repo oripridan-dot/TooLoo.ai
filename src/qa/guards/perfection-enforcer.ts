@@ -1,4 +1,4 @@
-// @version 3.3.58
+// @version 3.3.59
 /**
  * Perfection Enforcer - Proactive Code Quality Guardian
  *
@@ -8,6 +8,7 @@
  * 3. Tracking TODO completion status
  * 4. Runtime validation of all API routes
  * 5. Reporting gaps before they become bugs
+ * 6. Filtering known acceptable placeholders (documented limitations)
  *
  * @module qa/guards/perfection-enforcer
  * @intent Catch ALL issues before they reach production
@@ -135,11 +136,13 @@ const ACCEPTABLE_PLACEHOLDERS: Array<{ file: string; line: number; reason: strin
   // Cortex synthesizer - latency tracking not yet implemented
   { file: 'src/cortex/index.ts', line: 354, reason: 'Synthesizer latency tracking planned for v3.4' },
   
-  // PerfectionEnforcer itself - these are pattern definitions, not stubs
+  // PerfectionEnforcer itself - these are pattern definitions and messages, not stubs
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 72, reason: 'Pattern definition comment' },
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 85, reason: 'Pattern definition regex' },
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 818, reason: 'Error message template' },
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 820, reason: 'Error message template' },
+  { file: 'src/qa/guards/perfection-enforcer.ts', line: 862, reason: 'Recommendation message string' },
+  { file: 'src/qa/guards/perfection-enforcer.ts', line: 865, reason: 'Recommendation message string' },
   
   // Autonomous fixer - template for generated stubs (intentional)
   { file: 'src/qa/agent/autonomous-fixer.ts', line: 468, reason: 'Template for auto-generated route stubs' },
