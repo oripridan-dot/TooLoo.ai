@@ -1,5 +1,6 @@
-// @version 3.3.112
+// @version 3.3.113
 // TooLoo.ai Liquid Chat Components
+// v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
 // v3.3.82 - Added inline code execution support via /run and /execute commands
