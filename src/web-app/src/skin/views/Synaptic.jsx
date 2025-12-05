@@ -1,4 +1,4 @@
-// @version 3.3.105
+// @version 3.3.106
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1442,12 +1442,12 @@ const Synaptic = memo(({ className = '' }) => {
           )}
         </div>
 
-        {/* Messages area - Responsive padding */}
-        <div className={`flex-1 overflow-auto ${largePreview ? 'p-4 md:p-8' : 'p-3 md:p-6'}`}>
+        {/* Messages area - Stable layout during streaming */}
+        <div className={`flex-1 overflow-auto scroll-smooth ${largePreview ? 'p-4 md:p-8' : 'p-3 md:p-6'}`}>
           {showWelcome ? (
             <WelcomeMessage onQuickAction={handleQuickAction} />
           ) : (
-            <AnimatePresence mode="popLayout">
+            <div className="space-y-4">
               {messages.map((msg, i) => (
                 <MessageBubble
                   key={msg.id}
@@ -1459,8 +1459,8 @@ const Synaptic = memo(({ className = '' }) => {
                   fullWidth={largePreview}
                 />
               ))}
-              {/* Show InlineProcessPanel during thinking or streaming */}
-              {(isThinking || isStreaming) && (
+              {/* Show InlineProcessPanel during thinking only (not streaming - it's distracting) */}
+              {isThinking && !isStreaming && (
                 <InlineProcessPanel
                   key="process-panel"
                   thoughts={thoughts}
@@ -1471,7 +1471,7 @@ const Synaptic = memo(({ className = '' }) => {
                   modelLabel={AI_MODELS[selectedModel]?.label}
                 />
               )}
-            </AnimatePresence>
+            </div>
           )}
           <div ref={messagesEndRef} />
         </div>
