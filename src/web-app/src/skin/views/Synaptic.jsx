@@ -1,4 +1,4 @@
-// @version 3.3.103
+// @version 3.3.105
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -58,14 +58,11 @@ const THINKING_STAGES = {
 import { motion, AnimatePresence } from 'framer-motion';
 import { LiquidPanel } from '../shell/LiquidShell';
 import { useSkinEmotion, useChatEmotion } from '../hooks';
-import { useSynapsynDNA, SYNAPSYS_PRESETS } from '../synapsys/SynapysDNA';
+import { useSynapsynDNA } from '../synapsys/SynapysDNA';
 import { useLiquidEngine, PointerAurora, LiquidSurface, EmotionalOrbs } from '../effects';
-import { DataFlow } from '../effects/NeuralMesh';
-import ReactMarkdown from 'react-markdown';
 import { 
   TooLooAvatar, 
   LiquidMessageBubble, 
-  LiquidThinkingIndicator, 
   WelcomeMessage,
   ProviderBadge,
 } from '../chat';
