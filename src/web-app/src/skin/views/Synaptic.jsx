@@ -1,4 +1,4 @@
-// @version 3.3.118
+// @version 3.3.119
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1518,24 +1518,27 @@ const Synaptic = memo(({ className = '' }) => {
             </div>
           )}
           <div ref={messagesEndRef} />
-          
-          {/* Floating "writing" indicator - shows when streaming and user scrolled up */}
-          {isStreaming && userScrolledRef.current && (
+        </div>
+        
+        {/* Floating "writing" indicator - shows when streaming and user scrolled up */}
+        <AnimatePresence>
+          {showMoreBelow && (
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               onClick={() => {
                 userScrolledRef.current = false;
+                setShowMoreBelow(false);
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="fixed bottom-32 right-8 z-50 px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm backdrop-blur-sm hover:bg-cyan-500/30 transition-colors flex items-center gap-2 shadow-lg"
+              className="fixed bottom-32 right-8 z-50 px-4 py-2 rounded-full bg-[#0a0a0a]/90 border border-cyan-500/30 text-cyan-400 text-sm backdrop-blur-sm hover:bg-cyan-500/10 transition-colors flex items-center gap-2 shadow-lg"
             >
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               Writing... ↓
             </motion.button>
           )}
-        </div>
+        </AnimatePresence>
 
         {/* Input with ThoughtStream Border wrapping the entire input area */}
         <div className="px-3 md:px-6 py-3 md:py-4 border-t border-white/5 flex-shrink-0">
