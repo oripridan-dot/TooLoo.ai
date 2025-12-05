@@ -1,4 +1,4 @@
-// @version 3.3.57
+// @version 3.3.58
 /**
  * Perfection Enforcer - Proactive Code Quality Guardian
  *
@@ -344,7 +344,10 @@ export class PerfectionEnforcer {
       }
     }
 
-    return stubs;
+    // Filter out acceptable placeholders (documented limitations)
+    const filteredStubs = stubs.filter((stub) => !this.isAcceptablePlaceholder(stub.file, stub.line));
+    
+    return filteredStubs;
   }
 
   /**
