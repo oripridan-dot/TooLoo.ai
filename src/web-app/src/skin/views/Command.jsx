@@ -1,4 +1,4 @@
-// @version 3.3.140
+// @version 3.3.141
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -684,28 +684,72 @@ const Command = memo(({ className = '' }) => {
     [addLog]
   );
 
-  const handleForceRestart = useCallback(async () => {
-    if (confirm('Force restart ALL systems? This may cause brief downtime.')) {
-      addLog('warn', 'Force restarting all systems...');
-      try {
-        await fetch(`${API_BASE}/system/restart`, { method: 'POST' });
-        addLog('info', 'Restart command sent');
-      } catch (error) {
-        addLog('error', `Restart failed: ${error.message}`);
-      }
+  const handleForceRestart = useCallback(() => {
+    setModalState(prev => ({ ...prev, forceRestart: true }));
+  }, []);
+
+  const doForceRestart = useCallback(async () => {
+    addLog('warn', 'Force restarting all systems...');
+    try {
+      await fetch(`${API_BASE}/system/restart`, { method: 'POST' });
+      addLog('info', 'Restart command sent');
+    } catch (error) {
+      addLog('error', `Restart failed: ${error.message}`);
     }
   }, [addLog]);
 
-  const handleClearData = useCallback(async () => {
-    if (confirm('WARNING: Clear ALL data? This action cannot be undone!')) {
-      addLog('error', 'Data clear requested');
-      // This would be a destructive operation - just log for now
-      alert('Data clearing is disabled for safety. Use the CLI for destructive operations.');
-    }
+  const handleClearData = useCallback(() => {
+    setModalState(prev => ({ ...prev, clearData: true }));
+  }, []);
+
+  const doClearData = useCallback(async () => {
+    addLog('error', 'Data clear requested');
+    addLog('info', 'Data clearing is disabled for safety. Use the CLI for destructive operations.');
   }, [addLog]);
 
   return (
     <div className={`h-full flex flex-col ${className}`}>
+      {/* Modals for better UX */}
+      <AnimatePresence>
+        <InfoModal
+          isOpen={modalState.cortexConfig}
+          onClose={() => setModalState(prev => ({ ...prev, cortexConfig: false }))}
+          title="⚙️ Cortex Configuration"
+          content={`• Provider rotation: Auto
+• Fallback enabled: Yes
+• Session management: Active
+• Multi-provider consensus: Enabled
+• Temperature: 0.7
+• Max retries: 3`}
+        />
+        <ConfirmModal
+          isOpen={modalState.clearCache}
+          onClose={() => setModalState(prev => ({ ...prev, clearCache: false }))}
+          onConfirm={() => pendingAction.current?.()}
+          title="🗑️ Clear Cache"
+          message="Clear all cached data? This will remove temporary files and may briefly impact performance."
+          confirmText="Clear Cache"
+        />
+        <ConfirmModal
+          isOpen={modalState.forceRestart}
+          onClose={() => setModalState(prev => ({ ...prev, forceRestart: false }))}
+          onConfirm={doForceRestart}
+          title="🔄 Force Restart"
+          message="Force restart ALL systems? This may cause brief downtime."
+          confirmText="Restart All"
+          danger={true}
+        />
+        <ConfirmModal
+          isOpen={modalState.clearData}
+          onClose={() => setModalState(prev => ({ ...prev, clearData: false }))}
+          onConfirm={doClearData}
+          title="⚠️ Clear All Data"
+          message="WARNING: This will clear ALL data including learning metrics, memories, and configurations. This action cannot be undone! For safety, destructive operations are limited to CLI access."
+          confirmText="I Understand"
+          danger={true}
+        />
+      </AnimatePresence>
+
       {/* Header */}
       <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-transparent via-amber-950/10 to-transparent">
         <div>
