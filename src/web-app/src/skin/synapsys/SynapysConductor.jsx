@@ -1,4 +1,4 @@
-// @version 3.3.131
+// @version 3.3.142
 // TooLoo.ai Synapsys Conductor - Orchestrates rapid changes across all systems
 // Bridges SynapysDNA with LiquidEngine, TextureEngine, and TooLooPresence
 
@@ -321,7 +321,7 @@ export function useRapidSkin() {
         colors: { energy: Math.min(1, dna.colors.energy * 1.3) },
       });
       setTimeout(() => useSynapsynDNA.getState().reset(), 300);
-    }
+    },
     
     // Dials (0-1)
     intensity: (v) => useSynapsynDNA.getState().setIntensityDial(v),
