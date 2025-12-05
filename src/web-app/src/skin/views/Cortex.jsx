@@ -1,4 +1,4 @@
-// @version 2.2.582
+// @version 3.3.132
 // TooLoo.ai Cortex View - The Brain
 // Provider visualization, processing status, neural activity
 // Enhanced with visual polish and subtle animations
@@ -267,19 +267,55 @@ const Cortex = memo(({ className = '' }) => {
     }
   }, []);
 
-  const handleViewHistory = useCallback(() => {
-    // Would navigate to history view
-    console.log('[Cortex] View history requested');
+  const handleViewHistory = useCallback(async () => {
+    setActionFeedback(prev => ({ ...prev, history: 'loading' }));
+    try {
+      const res = await fetch('/api/v1/cortex/history');
+      const data = await res.json();
+      setActionFeedback(prev => ({ ...prev, history: 'success' }));
+      
+      // Show history in a more user-friendly way
+      if (data.ok && data.data) {
+        const { providers, totalInteractions, recentActivity } = data.data;
+        console.log('[Cortex] History:', data.data);
+        
+        // Could open a modal here, for now show summary
+        const summary = providers.map(p => 
+          `${p.provider}: ${p.interactions} calls, ${Math.round(p.successRate * 100)}% success`
+        ).join('\n');
+        
+        // Dispatch event for modal system or sidebar
+        window.dispatchEvent(new CustomEvent('cortex:history', { 
+          detail: { providers, totalInteractions, recentActivity } 
+        }));
+      }
+      setTimeout(() => setActionFeedback(prev => ({ ...prev, history: null })), 2000);
+    } catch (e) {
+      console.error('[Cortex] History fetch failed:', e);
+      setActionFeedback(prev => ({ ...prev, history: null }));
+    }
   }, []);
 
   const handleRunBenchmark = useCallback(async () => {
     setActionFeedback(prev => ({ ...prev, benchmark: 'loading' }));
     try {
-      // Simulate benchmark
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setActionFeedback(prev => ({ ...prev, benchmark: 'success' }));
-      setTimeout(() => setActionFeedback(prev => ({ ...prev, benchmark: null })), 2000);
+      const res = await fetch('/api/v1/cortex/benchmark', { method: 'POST' });
+      const data = await res.json();
+      
+      if (data.ok && data.data) {
+        console.log('[Cortex] Benchmark results:', data.data);
+        setActionFeedback(prev => ({ ...prev, benchmark: 'success' }));
+        
+        // Dispatch event for results display
+        window.dispatchEvent(new CustomEvent('cortex:benchmark', { 
+          detail: data.data 
+        }));
+      } else {
+        setActionFeedback(prev => ({ ...prev, benchmark: null }));
+      }
+      setTimeout(() => setActionFeedback(prev => ({ ...prev, benchmark: null })), 3000);
     } catch (e) {
+      console.error('[Cortex] Benchmark failed:', e);
       setActionFeedback(prev => ({ ...prev, benchmark: null }));
     }
   }, []);
