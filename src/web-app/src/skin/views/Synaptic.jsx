@@ -1,4 +1,4 @@
-// @version 3.3.79
+// @version 3.3.80
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1297,7 +1297,6 @@ const Synaptic = memo(({ className = '' }) => {
     
     // Stage: Routing
     setTimeout(() => setCurrentStage('routing'), 800);
-    }
     
     // Show orchestration in border
     setActiveProviders([{ 
@@ -1740,14 +1739,6 @@ const Synaptic = memo(({ className = '' }) => {
 
       {/* Side panel - Shows on xl screens (1280px+), hidden below */}
       <div className="w-72 xl:w-80 border-l border-white/5 p-3 xl:p-4 space-y-3 xl:space-y-4 overflow-auto hidden xl:flex xl:flex-col flex-shrink-0">
-        {/* TooLoo Thinking Process Panel - NEW */}
-        <ThinkingProcessPanel 
-          thoughts={thoughts} 
-          isActive={isThinking || isStreaming}
-          provider={lastUsedProvider}
-          model={selectedModel !== 'auto' ? AI_MODELS[selectedModel]?.model : null}
-        />
-        
         {/* Session Info */}
         <LiquidPanel variant="surface" className="p-4">
           <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
