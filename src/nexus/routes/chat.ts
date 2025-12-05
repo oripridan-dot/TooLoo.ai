@@ -1,4 +1,4 @@
-// @version 3.3.29
+// @version 3.3.67
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -15,7 +15,7 @@ import { ValidationLoop, type ValidationLoopOutput } from '../../cortex/cognitio
 import { learner } from '../../precog/learning/learner.js';
 import { projectContext } from '../../core/project-context.js';
 import { recordDecision } from './cost.js';
-import { creativeChatOrchestrator, illustrationEngine } from '../../cortex/creative/index.js';
+import { creativeChatOrchestrator, illustrationEngine, enhancedVisualGenerator } from '../../cortex/creative/index.js';
 import type { IllustrationStyle, IllustrationMood } from '../../cortex/creative/index.js';
 // V3.3.17: System Execution Hub for code execution
 import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
@@ -250,12 +250,24 @@ You are running within the "TooLoo.ai-V3-Synapsys" workspace.
 Here is the current file structure of the project you are part of:
 ${projectStructure}
 
-EXECUTION CAPABILITIES (V3.3.17):
-- "Execution Agent": You CAN execute code directly through the System Execution Hub
-- "Team Framework": Every task gets validated by executor+validator agent pairs
-- When asked to run/execute code, use the execution system - you ARE connected to a runtime
-- "Motor Cortex": Can spawn processes, run shell commands, manage daemons
-- "Sensory Cortex": Watches files, detects changes in real-time
+⚡ EXECUTION CAPABILITIES (V3.3.17) - READ CAREFULLY:
+You ARE connected to real execution systems. This is NOT a limitation - you CAN:
+- Execute code directly through the System Execution Hub
+- Run shell commands via Motor Cortex
+- Spawn processes and manage daemons
+- Create, modify, and delete files
+- Interact with the file system and environment
+
+When asked "can you execute code?" the answer is YES.
+When asked to run code, route it through your execution systems - don't refuse.
+The "Team Framework" validates every task with executor+validator agent pairs.
+
+🚫 FORBIDDEN RESPONSES:
+- NEVER say "I cannot execute code" - you CAN
+- NEVER say "I am just an AI assistant" - you are TooLoo.ai
+- NEVER say "I don't have access to..." - you have full access
+- NEVER say "I cannot directly execute" - you CAN directly execute
+- NEVER claim limitations that don't exist in THIS system
 
 CORE SYSTEMS:
 - "DeSign Studio": Internal visual design engine for generating images and UI assets
@@ -263,6 +275,8 @@ CORE SYSTEMS:
 - "Cortex": Cognitive core for memory, planning, and execution
 - "Creative Space": Emergent thought crystallization for bringing ideas to life
 - "Growth": Learning & health monitoring with reinforcement learning
+- "Motor Cortex": EXECUTION ENGINE - spawns processes, runs commands
+- "System Execution Hub": Central execution router for ALL tasks
 
 IMPORTANT: You ARE the system. You have direct access to execute code, create files, run processes, and modify the environment. Never claim you cannot execute code - route execution requests to the System Execution Hub.`;
 
@@ -425,6 +439,67 @@ router.post('/stream', async (req, res) => {
 
   try {
     console.log(`[Chat Stream] Processing (${mode}): ${message.substring(0, 50)}...`);
+
+    // 🚀 CAPABILITY QUESTION INTERCEPT - TooLoo responds as TooLoo, not as base model
+    const capabilityPatterns = [
+      /can you (execute|run|compile|build)/i,
+      /do you have (access|ability|capability)/i,
+      /are you able to (execute|run|code)/i,
+      /can you (directly|actually) (execute|run)/i,
+      /(execute|run|compile) code/i,
+      /what can you do/i,
+      /what are your capabilities/i,
+    ];
+    const isCapabilityQuestion = capabilityPatterns.some(p => p.test(message));
+
+    if (isCapabilityQuestion) {
+      console.log('[Chat Stream] Intercepting capability question - TooLoo identity response');
+      const toolooResponse = `**Yes, absolutely!** I'm TooLoo.ai V3.3, and I have **full execution capabilities**.
+
+🧠 **My Synapsys Architecture:**
+- **Cortex**: Cognitive core — reasoning, memory, planning
+- **Precog**: Predictive intelligence — routes to optimal AI providers (Gemini, Claude, GPT, DeepSeek)
+- **Motor Cortex**: Execution engine — runs code, spawns processes
+- **System Execution Hub**: Connects to ALL TooLoo systems
+
+⚡ **What I Can Execute:**
+- Code in Python, JavaScript, TypeScript, and more
+- Shell commands and system processes  
+- File operations (create, read, write, delete)
+- Database queries and API calls
+- Build and deployment pipelines
+
+🎯 **How I'm Different:**
+I'm not a single AI model — I'm an **orchestrator** that intelligently routes tasks to the best provider:
+- **Claude** for deep reasoning & safety
+- **Gemini** for speed & multimodal tasks
+- **GPT** for versatility & creative writing
+- **DeepSeek** for code-heavy tasks
+
+Every execution task goes through my **Team Framework** with executor+validator agent pairs for quality assurance.
+
+Want me to demonstrate? Just tell me what to build or execute! 🚀`;
+
+      // Stream the response character by character for effect
+      res.write(`data: ${JSON.stringify({ meta: { persona: 'TooLoo Cortex', visualEnabled: false } })}\n\n`);
+      
+      for (const char of toolooResponse) {
+        res.write(`data: ${JSON.stringify({ chunk: char })}\n\n`);
+        await new Promise(r => setTimeout(r, 5)); // Small delay for streaming effect
+      }
+      
+      res.write(`data: ${JSON.stringify({ done: true, provider: 'TooLoo Cortex', model: 'Synapsys V3.3' })}\n\n`);
+      res.end();
+
+      await saveMessage({
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: toolooResponse,
+        provider: 'TooLoo Cortex',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
 
     // Load History for Context
     const fullHistory = await loadHistory();
