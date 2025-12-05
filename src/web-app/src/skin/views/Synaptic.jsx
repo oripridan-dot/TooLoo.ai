@@ -1,4 +1,4 @@
-// @version 3.3.93
+// @version 3.3.94
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -259,7 +259,8 @@ const MessageBubble = memo(({ message, isUser, isLatest, isStreaming, onReact, f
 MessageBubble.displayName = 'MessageBubble';
 
 // ============================================================================
-// INLINE PROCESS PANEL - Large, prominent thinking display (replaces ThinkingIndicator)
+// INLINE PROCESS PANEL - Quiet, honest design with colored stage progress
+// v3.3.92 - Simplified: removed heavy animations, added segmented progress bar
 // ============================================================================
 
 const InlineProcessPanel = memo(({ 
@@ -271,190 +272,129 @@ const InlineProcessPanel = memo(({
   modelLabel
 }) => {
   const containerRef = useRef(null);
-  const [progressWidth, setProgressWidth] = useState(0);
+  const [stageTimings, setStageTimings] = useState({});
+  const [stageStartTime, setStageStartTime] = useState(Date.now());
+  
+  // Track time spent in each stage
+  useEffect(() => {
+    const now = Date.now();
+    setStageTimings(prev => ({
+      ...prev,
+      [currentStage]: (prev[currentStage] || 0) + (now - stageStartTime)
+    }));
+    setStageStartTime(now);
+  }, [currentStage]);
   
   // Get current stage info
   const stageInfo = THINKING_STAGES[currentStage] || THINKING_STAGES.processing;
   
-  // Auto-scroll and progress animation
+  // Auto-scroll
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [thoughts]);
-  
-  // Animate progress based on stage
-  useEffect(() => {
-    const stageOrder = ['connecting', 'analyzing', 'routing', 'processing', 'enhancing', 'streaming', 'complete'];
-    const currentIndex = stageOrder.indexOf(currentStage);
-    const progress = ((currentIndex + 1) / stageOrder.length) * 100;
-    setProgressWidth(progress);
-  }, [currentStage]);
 
-  const stageColors = {
-    cyan: { bg: 'from-cyan-500/30 to-cyan-600/20', border: 'border-cyan-500/40', text: 'text-cyan-400', glow: 'shadow-cyan-500/30' },
-    purple: { bg: 'from-purple-500/30 to-purple-600/20', border: 'border-purple-500/40', text: 'text-purple-400', glow: 'shadow-purple-500/30' },
-    blue: { bg: 'from-blue-500/30 to-blue-600/20', border: 'border-blue-500/40', text: 'text-blue-400', glow: 'shadow-blue-500/30' },
-    amber: { bg: 'from-amber-500/30 to-amber-600/20', border: 'border-amber-500/40', text: 'text-amber-400', glow: 'shadow-amber-500/30' },
-    emerald: { bg: 'from-emerald-500/30 to-emerald-600/20', border: 'border-emerald-500/40', text: 'text-emerald-400', glow: 'shadow-emerald-500/30' },
-  };
-  
-  const colors = stageColors[stageInfo.color] || stageColors.cyan;
+  // Stage order and colors for the segmented progress bar
+  const stages = [
+    { key: 'connecting', label: 'Connect', color: 'bg-slate-400' },
+    { key: 'analyzing', label: 'Analyze', color: 'bg-purple-500' },
+    { key: 'routing', label: 'Route', color: 'bg-blue-500' },
+    { key: 'processing', label: 'Process', color: 'bg-amber-500' },
+    { key: 'streaming', label: 'Stream', color: 'bg-cyan-500' },
+    { key: 'complete', label: 'Done', color: 'bg-emerald-500' },
+  ];
+
+  const currentStageIndex = stages.findIndex(s => s.key === currentStage);
+  const totalTime = Object.values(stageTimings).reduce((a, b) => a + b, 0) || 1;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="w-full mb-6"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="w-full mb-4"
     >
-      <div className={`
-        relative overflow-hidden rounded-2xl
-        bg-gradient-to-br ${colors.bg}
-        border-2 ${colors.border}
-        shadow-xl ${colors.glow}
-        backdrop-blur-xl
-      `}>
-        {/* Animated background pulse */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-          animate={{ x: ['-100%', '200%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        
-        {/* Header with brain animation */}
-        <div className="relative p-5 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Animated brain icon */}
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="text-4xl"
-              >
-                🧠
-              </motion.div>
-              <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                  TooLoo Process
-                  <motion.span
-                    animate={{ opacity: [1, 0.5, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className={`text-sm font-normal ${colors.text}`}
-                  >
-                    • Live
-                  </motion.span>
-                </h2>
-                <p className="text-sm text-gray-400 mt-1">Neural processing in progress</p>
-              </div>
+      <div className="rounded-xl bg-[#0a0a0a]/80 border border-white/10 overflow-hidden">
+        {/* Simple header */}
+        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-lg">{stageInfo.icon}</span>
+            <div>
+              <span className="text-sm font-medium text-white">{stageInfo.title}</span>
+              <span className="text-xs text-gray-500 ml-2">{stageInfo.description}</span>
             </div>
-            
-            {/* Model badge */}
-            {(provider || modelLabel) && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-3 py-1.5 rounded-full bg-white/10 text-white border border-white/20">
-                  {modelLabel || provider}
-                </span>
-              </div>
-            )}
           </div>
+          {(provider || modelLabel) && (
+            <span className="text-xs px-2 py-1 rounded bg-white/5 text-gray-400 border border-white/10">
+              {modelLabel || provider}
+            </span>
+          )}
         </div>
         
-        {/* Current Stage - PROMINENT */}
-        <div className="relative p-6">
-          <motion.div
-            key={currentStage}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4 mb-4"
-          >
-            <motion.span
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="text-5xl"
-            >
-              {stageInfo.icon}
-            </motion.span>
-            <div className="flex-1">
-              <h3 className={`text-2xl font-bold ${colors.text}`}>
-                {stageInfo.title}
-              </h3>
-              <p className="text-gray-300 text-base mt-1">
-                {stageInfo.description}
-              </p>
-            </div>
-          </motion.div>
-          
-          {/* Progress bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-xs text-gray-500 mb-2">
-              <span>Progress</span>
-              <span className={colors.text}>{Math.round(progressWidth)}%</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <motion.div
-                className={`h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500 rounded-full`}
-                initial={{ width: 0 }}
-                animate={{ width: `${progressWidth}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-              />
-            </div>
-          </div>
-          
-          {/* Thought steps log */}
-          <div className="bg-black/30 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-400">Process Log</h4>
-              <span className="text-xs text-gray-500">{thoughts.length} steps</span>
-            </div>
-            <div 
-              ref={containerRef} 
-              className="space-y-2 max-h-40 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
-            >
-              <AnimatePresence mode="popLayout">
-                {thoughts.slice(-10).map((thought, i) => (
-                  <motion.div
-                    key={thought.id || i}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className={`
-                      flex items-start gap-3 text-sm py-2 px-3 rounded-lg
-                      ${thought.type === 'success' 
-                        ? 'bg-emerald-500/10 border border-emerald-500/30' 
-                        : thought.type === 'error' 
-                          ? 'bg-red-500/10 border border-red-500/30' 
-                          : 'bg-white/5 border border-white/10'}
-                    `}
-                  >
-                    <span className={`flex-shrink-0 w-2 h-2 rounded-full mt-1.5 ${
-                      thought.type === 'success' ? 'bg-emerald-400' : 
-                      thought.type === 'error' ? 'bg-red-400' : 'bg-cyan-400'
-                    }`} />
-                    <span className={`flex-1 ${
-                      thought.type === 'success' ? 'text-emerald-300' : 
-                      thought.type === 'error' ? 'text-red-300' : 'text-gray-300'
-                    }`}>{thought.text}</span>
-                    <span className="text-gray-600 text-xs flex-shrink-0">
-                      {new Date(thought.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </span>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+        {/* Colored segmented progress bar showing time per stage */}
+        <div className="px-4 py-3 border-b border-white/5">
+          <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-white/5">
+            {stages.map((stage, idx) => {
+              const isCompleted = idx < currentStageIndex;
+              const isCurrent = idx === currentStageIndex;
+              const stageTime = stageTimings[stage.key] || 0;
+              const widthPercent = isCompleted || isCurrent ? Math.max(stageTime / totalTime * 100, isCurrent ? 15 : 5) : 0;
               
-              {thoughts.length === 0 && (
-                <div className="text-center py-4 text-gray-500 text-sm">
-                  Waiting for process steps...
+              return (
+                <div
+                  key={stage.key}
+                  className={`
+                    ${stage.color} transition-all duration-300
+                    ${isCurrent ? 'opacity-100' : isCompleted ? 'opacity-70' : 'opacity-20'}
+                  `}
+                  style={{ width: isCompleted || isCurrent ? `${widthPercent}%` : '0%' }}
+                />
+              );
+            })}
+          </div>
+          
+          {/* Stage labels */}
+          <div className="flex justify-between mt-2 text-[10px] text-gray-600">
+            {stages.map((stage, idx) => {
+              const isCompleted = idx < currentStageIndex;
+              const isCurrent = idx === currentStageIndex;
+              const stageTime = stageTimings[stage.key];
+              
+              return (
+                <div 
+                  key={stage.key} 
+                  className={`flex flex-col items-center ${isCurrent ? 'text-white' : isCompleted ? 'text-gray-400' : ''}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full mb-1 ${isCurrent || isCompleted ? stage.color : 'bg-white/10'}`} />
+                  <span>{stage.label}</span>
+                  {stageTime > 0 && (
+                    <span className="text-[9px] text-gray-500">{(stageTime / 1000).toFixed(1)}s</span>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
+        
+        {/* Minimal thought log - only show latest 3 */}
+        {thoughts.length > 0 && (
+          <div ref={containerRef} className="px-4 py-2 max-h-24 overflow-auto">
+            {thoughts.slice(-3).map((thought, i) => (
+              <div
+                key={thought.id || i}
+                className="flex items-center gap-2 text-xs py-1 text-gray-400"
+              >
+                <span className={`w-1 h-1 rounded-full ${
+                  thought.type === 'success' ? 'bg-emerald-400' : 
+                  thought.type === 'error' ? 'bg-red-400' : 'bg-gray-500'
+                }`} />
+                <span className="truncate">{thought.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );
