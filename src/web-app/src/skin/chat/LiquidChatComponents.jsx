@@ -1,4 +1,4 @@
-// @version 3.3.129
+// @version 3.3.130
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -954,6 +954,11 @@ const isCodeHeavy = (content) => {
 // ============================================================================
 
 export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
+  // ========================================================================
+  // ALL HOOKS MUST BE AT THE TOP - Before any conditional returns
+  // This fixes "Rendered more hooks than during the previous render" error
+  // ========================================================================
+  
   // Clean the content first
   const cleanedContent = useMemo(() => cleanContent(content), [content]);
 
@@ -972,34 +977,7 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
     [cleanedContent]
   );
 
-  // During streaming, show simple view
-  if (isStreaming) {
-    return <EnhancedMarkdown content={cleanedContent} isStreaming={true} />;
-  }
-
-  // For code-heavy responses, show visual summary + hidden code
-  if (codeCount > 0) {
-    return (
-      <div className="space-y-2">
-        {/* Visual response type indicator */}
-        <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
-
-        {/* Conversational content (no code) - always visible */}
-        {conversationalContent && (
-          <div className="text-gray-200">
-            <EnhancedMarkdown content={conversationalContent} isStreaming={false} />
-          </div>
-        )}
-
-        {/* Code blocks hidden by default */}
-        <TechnicalDetails codeCount={codeCount}>
-          <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
-        </TechnicalDetails>
-      </div>
-    );
-  }
-
-  // For non-code responses, check for sections
+  // Parse sections - MUST be called unconditionally (hooks rule)
   const sections = useMemo(() => {
     const lines = cleanedContent.split('\n');
     const result = [];
@@ -1042,7 +1020,38 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
     return result;
   }, [cleanedContent]);
 
-  const hasSections = sections.some((s) => s.level > 0);
+  const hasSections = useMemo(() => sections.some((s) => s.level > 0), [sections]);
+
+  // ========================================================================
+  // CONDITIONAL RENDERING - After all hooks have been called
+  // ========================================================================
+
+  // During streaming, show simple view
+  if (isStreaming) {
+    return <EnhancedMarkdown content={cleanedContent} isStreaming={true} />;
+  }
+
+  // For code-heavy responses, show visual summary + hidden code
+  if (codeCount > 0) {
+    return (
+      <div className="space-y-2">
+        {/* Visual response type indicator */}
+        <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
+
+        {/* Conversational content (no code) - always visible */}
+        {conversationalContent && (
+          <div className="text-gray-200">
+            <EnhancedMarkdown content={conversationalContent} isStreaming={false} />
+          </div>
+        )}
+
+        {/* Code blocks hidden by default */}
+        <TechnicalDetails codeCount={codeCount}>
+          <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
+        </TechnicalDetails>
+      </div>
+    );
+  }
 
   // Simple content without sections - show with visual card
   if (!hasSections) {
