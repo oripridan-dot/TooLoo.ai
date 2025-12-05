@@ -1,4 +1,4 @@
-// @version 3.3.45
+// @version 3.3.49
 // TooLoo.ai Liquid Chat Components
 // v3.3.44 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
 // v3.3.35 - Added Execute button for team-validated code execution in chat
@@ -539,41 +539,73 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
 EnhancedMarkdown.displayName = 'EnhancedMarkdown';
 
 // ============================================================================
-// LIQUID CODE BLOCK - Syntax highlighted code with copy & execute buttons
-// v3.3.33 - Added Execute button for team-validated code execution
+// LIQUID CODE BLOCK - Universal code renderer with preview, execute, handoff
+// v3.3.48 - Complete rewrite: Live preview, sandbox execution, artifact handoff
 // ============================================================================
 
-// Execution languages that can be run
-const EXECUTABLE_LANGUAGES = [
-  'javascript',
-  'js',
-  'typescript',
-  'ts',
-  'python',
-  'py',
-  'shell',
-  'bash',
-  'sh',
-];
+// Languages that can be executed server-side
+const EXECUTABLE_LANGUAGES = ['javascript', 'js', 'typescript', 'ts', 'python', 'py', 'shell', 'bash', 'sh'];
 
-export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
+// Languages that can be previewed client-side
+const PREVIEWABLE_LANGUAGES = ['jsx', 'react', 'tsx', 'svg', 'html'];
+
+// Import react-live for JSX preview
+import { LiveProvider, LivePreview, LiveError } from 'react-live';
+
+export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...props }) => {
   const [copied, setCopied] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState(null);
+  const [showPreview, setShowPreview] = useState(true);
+  const [previewError, setPreviewError] = useState(null);
+  
   const codeString = String(children).replace(/\n$/, '');
+  const lang = (language || '').toLowerCase();
 
-  // Determine if this code can be executed
-  const canExecute = EXECUTABLE_LANGUAGES.includes((language || '').toLowerCase());
+  // Determine capabilities
+  const canExecute = EXECUTABLE_LANGUAGES.includes(lang);
+  const canPreview = PREVIEWABLE_LANGUAGES.includes(lang);
+  const isJSX = ['jsx', 'react', 'tsx'].includes(lang);
+  const isSVG = lang === 'svg';
+  const isHTML = lang === 'html';
 
-  // Map language to execution type
-  const getExecutionType = () => {
-    const lang = (language || '').toLowerCase();
-    if (['javascript', 'js'].includes(lang)) return 'javascript';
-    if (['typescript', 'ts'].includes(lang)) return 'typescript';
-    if (['python', 'py'].includes(lang)) return 'python';
-    if (['shell', 'bash', 'sh'].includes(lang)) return 'shell';
-    return 'typescript';
-  };
+  // Clean JSX code for preview (remove imports/exports)
+  const cleanedCode = useMemo(() => {
+    if (!isJSX) return codeString;
+    
+    let cleaned = codeString;
+    // Remove imports
+    cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
+    // Remove exports but keep component
+    cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
+    cleaned = cleaned.replace(/^export\s+/gm, '');
+    // Add render call if it's a function component
+    if (cleaned.includes('function') && !cleaned.includes('render(')) {
+      const match = cleaned.match(/function\s+(\w+)/);
+      if (match) {
+        cleaned += `\nrender(<${match[1]} />);`;
+      }
+    }
+    // Handle arrow function components
+    if (cleaned.includes('const') && cleaned.includes('=>') && !cleaned.includes('render(')) {
+      const match = cleaned.match(/const\s+(\w+)\s*=/);
+      if (match) {
+        cleaned += `\nrender(<${match[1]} />);`;
+      }
+    }
+    return cleaned.trim();
+  }, [codeString, isJSX]);
+
+  // Default scope for react-live
+  const liveScope = useMemo(() => ({
+    React,
+    useState: React.useState,
+    useEffect: React.useEffect,
+    useCallback: React.useCallback,
+    useMemo: React.useMemo,
+    useRef: React.useRef,
+    motion,
+  }), []);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(codeString);
@@ -583,7 +615,6 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
 
   const handleExecute = async () => {
     if (executing) return;
-
     setExecuting(true);
     setExecutionResult(null);
 
@@ -592,23 +623,32 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          task: `Execute the following ${language} code`,
+          type: 'code_execution',
+          prompt: `Execute this ${language} code and return the result`,
           code: codeString,
-          language: getExecutionType(),
-          specialization: 'code-execution',
+          options: {
+            useTeam: true,
+            qualityThreshold: 0.8,
+            maxIterations: 3,
+          },
         }),
       });
 
       const result = await response.json();
 
-      if (result.success) {
+      if (result.ok) {
         setExecutionResult({
           success: true,
-          output: result.data?.output || result.data?.result || 'Execution completed',
-          qualityScore: result.data?.qualityScore || result.data?.quality_score,
-          executedBy: result.data?.team || result.data?.executor,
-          validatedBy: result.data?.validatedBy,
+          output: result.data?.output || 'Execution completed',
+          qualityScore: result.data?.qualityScore,
+          artifacts: result.data?.artifacts,
+          teamId: result.data?.teamId,
         });
+        
+        // If there are artifacts, offer to hand them off
+        if (result.data?.artifacts && onArtifactCreate) {
+          onArtifactCreate(result.data.artifacts);
+        }
       } else {
         setExecutionResult({
           success: false,
@@ -625,52 +665,164 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
     }
   };
 
+  // Create artifact from this code
+  const handleCreateArtifact = async () => {
+    const artifactType = isJSX ? 'component' : isSVG ? 'visual' : isHTML ? 'html' : 'code';
+    
+    try {
+      const response = await fetch('/api/v1/artifacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: artifactType,
+          content: codeString,
+          language: lang,
+          metadata: {
+            createdFrom: 'chat',
+            previewable: canPreview,
+          },
+        }),
+      });
+      
+      const result = await response.json();
+      if (result.ok && onArtifactCreate) {
+        onArtifactCreate([result.data]);
+      }
+    } catch (err) {
+      console.error('Failed to create artifact:', err);
+    }
+  };
+
+  // Render SVG directly
+  const renderSVGPreview = () => {
+    try {
+      return (
+        <div 
+          className="p-4 bg-[#0a0a0a] flex items-center justify-center min-h-[150px]"
+          dangerouslySetInnerHTML={{ __html: codeString }}
+        />
+      );
+    } catch (e) {
+      return <div className="p-4 text-red-400 text-sm">Failed to render SVG</div>;
+    }
+  };
+
+  // Render HTML in iframe
+  const renderHTMLPreview = () => {
+    const htmlDoc = `<!DOCTYPE html><html><head><style>body{margin:0;background:#0a0a0a;color:#fff;font-family:sans-serif;padding:1rem;}</style></head><body>${codeString}</body></html>`;
+    return (
+      <iframe
+        srcDoc={htmlDoc}
+        className="w-full h-48 border-0 bg-[#0a0a0a]"
+        sandbox="allow-scripts"
+        title="HTML Preview"
+      />
+    );
+  };
+
   return (
-    <div className="relative group my-3 rounded-xl overflow-hidden">
+    <div className="relative group my-3 rounded-xl overflow-hidden border border-white/10">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-black/60 border-b border-white/10">
-        <span className="text-xs text-gray-500 font-mono">{language}</span>
+      <div className="flex items-center justify-between px-3 py-2 bg-black/60 border-b border-white/10">
         <div className="flex items-center gap-2">
-          {canExecute && (
+          <span className="text-xs text-gray-500 font-mono uppercase">{language || 'code'}</span>
+          {canPreview && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400">
+              Live
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-1">
+          {/* Preview toggle for previewable languages */}
+          {canPreview && (
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className={`text-xs px-2 py-1 rounded transition-colors ${
+                showPreview ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-gray-400'
+              }`}
+            >
+              {showPreview ? '👁 Preview' : '📝 Code'}
+            </button>
+          )}
+          
+          {/* Execute button */}
+          {(canExecute || canPreview) && (
             <button
               onClick={handleExecute}
               disabled={executing}
-              className={`text-xs px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
+              className={`text-xs px-2 py-1 rounded transition-colors flex items-center gap-1 ${
                 executing
                   ? 'bg-purple-500/20 text-purple-300 cursor-wait'
-                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300'
+                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'
               }`}
             >
-              {executing ? (
-                <>
-                  <motion.span
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  >
-                    ⚡
-                  </motion.span>
-                  Running...
-                </>
-              ) : (
-                <>▶ Execute</>
-              )}
+              {executing ? '⚡ Running...' : '▶ Run'}
             </button>
           )}
+          
+          {/* Create Artifact button */}
+          {canPreview && (
+            <button
+              onClick={handleCreateArtifact}
+              className="text-xs px-2 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 transition-colors"
+              title="Save as artifact"
+            >
+              📦 Save
+            </button>
+          )}
+          
+          {/* Copy button */}
           <button
             onClick={handleCopy}
-            className="text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
           >
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? '✓' : '📋'}
           </button>
         </div>
       </div>
 
-      {/* Code content */}
-      <pre className="bg-black/40 p-4 overflow-x-auto text-xs">
-        <code className={`language-${language} text-gray-300 font-mono`} {...props}>
-          {children}
-        </code>
-      </pre>
+      {/* Content area */}
+      <div className="relative">
+        {/* Live Preview for JSX */}
+        {isJSX && showPreview && (
+          <div className="bg-[#0a0a0a] border-b border-white/10">
+            <LiveProvider code={cleanedCode} scope={liveScope} noInline>
+              <div className="p-4 min-h-[100px]">
+                <LivePreview />
+              </div>
+              <LiveError className="px-4 py-2 text-xs text-red-400 bg-red-500/10 font-mono" />
+            </LiveProvider>
+          </div>
+        )}
+
+        {/* SVG Preview */}
+        {isSVG && showPreview && renderSVGPreview()}
+
+        {/* HTML Preview */}
+        {isHTML && showPreview && renderHTMLPreview()}
+
+        {/* Code view (always shown if preview is off, or as secondary for previewable) */}
+        {(!canPreview || !showPreview) && (
+          <pre className="bg-black/40 p-4 overflow-x-auto text-xs max-h-96">
+            <code className={`language-${language} text-gray-300 font-mono`} {...props}>
+              {children}
+            </code>
+          </pre>
+        )}
+
+        {/* Show code toggle for previewable */}
+        {canPreview && showPreview && (
+          <details className="border-t border-white/10">
+            <summary className="px-3 py-2 text-xs text-gray-500 cursor-pointer hover:text-gray-300 bg-black/40">
+              View Source Code
+            </summary>
+            <pre className="bg-black/40 p-4 overflow-x-auto text-xs max-h-64">
+              <code className="text-gray-300 font-mono">{codeString}</code>
+            </pre>
+          </details>
+        )}
+      </div>
 
       {/* Execution result panel */}
       <AnimatePresence>
@@ -681,23 +833,53 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
             exit={{ height: 0, opacity: 0 }}
             className="border-t border-white/10 overflow-hidden"
           >
-            <div
-              className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
-            >
-              {/* Result header */}
+            <div className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
               <div className="flex items-center justify-between mb-2">
-                <span
-                  className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}
-                >
+                <span className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
                   {executionResult.success ? '✓ Execution Successful' : '✕ Execution Failed'}
                 </span>
-                {executionResult.qualityScore && (
-                  <span className="text-xs text-cyan-400">
-                    Quality: {(executionResult.qualityScore * 100).toFixed(0)}%
-                  </span>
-                )}
-                <button
-                  onClick={() => setExecutionResult(null)}
+                <div className="flex items-center gap-2">
+                  {executionResult.qualityScore && (
+                    <span className="text-xs text-cyan-400">
+                      Quality: {(executionResult.qualityScore * 100).toFixed(0)}%
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setExecutionResult(null)}
+                    className="text-xs text-gray-500 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+                {executionResult.success ? executionResult.output : executionResult.error}
+              </pre>
+              
+              {/* Artifact buttons if execution produced artifacts */}
+              {executionResult.artifacts?.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-white/10 flex gap-2">
+                  <span className="text-xs text-gray-500">Artifacts:</span>
+                  {executionResult.artifacts.map((art, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onArtifactCreate?.([art])}
+                      className="text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                    >
+                      📦 {art.name || `Artifact ${i + 1}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+LiquidCodeBlock.displayName = 'LiquidCodeBlock';
                   className="text-xs text-gray-500 hover:text-white"
                 >
                   ✕
