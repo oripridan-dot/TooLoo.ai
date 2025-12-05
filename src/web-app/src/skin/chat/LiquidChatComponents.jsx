@@ -1,5 +1,6 @@
-// @version 3.3.43
+// @version 3.3.44
 // TooLoo.ai Liquid Chat Components
+// v3.3.44 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
 // v3.3.35 - Added Execute button for team-validated code execution in chat
 // Rich visual display capabilities for chat responses
 // Integrates liquid skin throughout the chat experience
