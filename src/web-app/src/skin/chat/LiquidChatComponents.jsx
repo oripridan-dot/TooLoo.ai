@@ -1,4 +1,4 @@
-// @version 3.3.49
+// @version 3.3.50
 // TooLoo.ai Liquid Chat Components
 // v3.3.44 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
 // v3.3.35 - Added Execute button for team-validated code execution in chat
@@ -875,44 +875,6 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-});
-
-LiquidCodeBlock.displayName = 'LiquidCodeBlock';
-                  className="text-xs text-gray-500 hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Output/Error content */}
-              <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-40 overflow-auto">
-                {executionResult.success ? executionResult.output : executionResult.error}
-              </pre>
-
-              {/* Team info */}
-              {executionResult.executedBy && (
-                <div className="mt-2 pt-2 border-t border-white/10 text-xs text-gray-500">
-                  Executed by: <span className="text-purple-400">{executionResult.executedBy}</span>
-                  {executionResult.validatedBy && (
-                    <>
-                      {' '}
-                      • Validated by:{' '}
-                      <span className="text-cyan-400">{executionResult.validatedBy}</span>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Subtle glow effect */}
-      <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5" />
-      </div>
     </div>
   );
 });
