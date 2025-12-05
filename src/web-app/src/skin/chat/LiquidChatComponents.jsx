@@ -1,4 +1,4 @@
-// @version 3.3.54
+// @version 3.3.55
 // TooLoo.ai Liquid Chat Components
 // v3.3.53 - Complete LiquidCodeBlock rewrite: Live JSX/SVG/HTML preview, sandbox execution, artifact handoff
 // v3.3.48 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
@@ -669,7 +669,7 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
     const artifactType = isJSX ? 'component' : isSVG ? 'visual' : isHTML ? 'html' : 'code';
     
     try {
-      const response = await fetch('/api/v1/artifacts', {
+      const response = await fetch('/api/v1/agent/artifacts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
