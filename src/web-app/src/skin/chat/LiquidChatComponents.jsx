@@ -1,4 +1,4 @@
-// @version 3.3.40
+// @version 3.3.41
 // TooLoo.ai Liquid Chat Components
 // v3.3.35 - Added Execute button for team-validated code execution in chat
 // Rich visual display capabilities for chat responses
@@ -264,40 +264,86 @@ LiquidMessageBubble.displayName = 'LiquidMessageBubble';
 // ============================================================================
 
 export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
-  // Extract and render visual blocks (SVG, JSX) separately
+  // Extract and render visual blocks (SVG, JSX, embedded code) separately
   const { textParts, visualBlocks } = useMemo(() => {
     const parts = [];
     const visuals = [];
-    let remaining = content || '';
+    let processedContent = content || '';
     let lastIndex = 0;
 
-    // Find SVG blocks
-    const svgRegex = /```svg\n([\s\S]*?)```/g;
+    // PHASE 1: Extract embedded React code from various formats
+    // Format 1: Python triple-quoted strings (react_code = """...""")
+    const pythonReactRegex = /react_code\s*=\s*(?:"""|'''|")([\s\S]*?)(?:"""|'''|")/g;
     let match;
-    while ((match = svgRegex.exec(content)) !== null) {
-      // Add text before this block
+    
+    // Collect all embedded code first
+    const embeddedCode = [];
+    while ((match = pythonReactRegex.exec(processedContent)) !== null) {
+      const code = match[1].trim();
+      if (code.includes('import React') || code.includes('useState') || code.includes('function') || code.includes('const')) {
+        embeddedCode.push({ type: 'jsx', code, index: match.index, length: match[0].length });
+      }
+    }
+
+    // Format 2: Executor/Validator comments with code blocks
+    const executorRegex = /# (?:Executor|Validator)[^:]*:\s*\n([\s\S]*?)(?=\n#|$)/g;
+    while ((match = executorRegex.exec(processedContent)) !== null) {
+      const code = match[1].trim();
+      if (code && !code.startsWith('import subprocess')) {
+        embeddedCode.push({ type: 'text', code, index: match.index, length: match[0].length });
+      }
+    }
+
+    // Reset for main parsing
+    lastIndex = 0;
+
+    // PHASE 2: Find SVG blocks - ```svg format
+    const svgRegex = /```svg\n([\s\S]*?)```/g;
+    while ((match = svgRegex.exec(processedContent)) !== null) {
       if (match.index > lastIndex) {
-        parts.push({ type: 'text', content: remaining.substring(lastIndex, match.index) });
+        parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
       }
       visuals.push({ type: 'svg', code: match[1], index: parts.length });
       parts.push({ type: 'svg', code: match[1] });
       lastIndex = match.index + match[0].length;
     }
 
-    // Find JSX/React blocks
-    const jsxRegex = /```(?:jsx|react)\n([\s\S]*?)```/g;
-    while ((match = jsxRegex.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', content: remaining.substring(lastIndex, match.index) });
+    // PHASE 3: Find JSX/React blocks - ```jsx or ```react format
+    const jsxRegex = /```(?:jsx|react|javascript)\n([\s\S]*?)```/g;
+    processedContent = content || ''; // Reset
+    while ((match = jsxRegex.exec(processedContent)) !== null) {
+      // Check if this overlaps with already processed parts
+      const alreadyProcessed = parts.some(p => 
+        p.type !== 'text' && match.index >= lastIndex && match.index < lastIndex + (p.code?.length || 0)
+      );
+      
+      if (!alreadyProcessed && match.index >= lastIndex) {
+        if (match.index > lastIndex) {
+          parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
+        }
+        visuals.push({ type: 'jsx', code: match[1], index: parts.length });
+        parts.push({ type: 'jsx', code: match[1] });
+        lastIndex = match.index + match[0].length;
       }
-      visuals.push({ type: 'jsx', code: match[1], index: parts.length });
-      parts.push({ type: 'jsx', code: match[1] });
-      lastIndex = match.index + match[0].length;
+    }
+
+    // PHASE 4: Extract raw SVG code (not in code blocks)
+    const rawSvgRegex = /(<svg[^>]*>[\s\S]*?<\/svg>)/gi;
+    processedContent = content || '';
+    while ((match = rawSvgRegex.exec(processedContent)) !== null) {
+      const alreadyProcessed = parts.some(p => p.type === 'svg' && p.code === match[1]);
+      if (!alreadyProcessed) {
+        // Only add if it looks like a complete SVG
+        if (match[1].includes('viewBox') || match[1].includes('width')) {
+          visuals.push({ type: 'svg', code: match[1], index: parts.length, raw: true });
+          // Don't add to parts - let it render inline for now
+        }
+      }
     }
 
     // Add remaining text
-    if (lastIndex < content?.length) {
-      parts.push({ type: 'text', content: content.substring(lastIndex) });
+    if (lastIndex < (content?.length || 0)) {
+      parts.push({ type: 'text', content: (content || '').substring(lastIndex) });
     }
 
     // If no visual blocks found, return all as text
@@ -496,17 +542,27 @@ EnhancedMarkdown.displayName = 'EnhancedMarkdown';
 // ============================================================================
 
 // Execution languages that can be run
-const EXECUTABLE_LANGUAGES = ['javascript', 'js', 'typescript', 'ts', 'python', 'py', 'shell', 'bash', 'sh'];
+const EXECUTABLE_LANGUAGES = [
+  'javascript',
+  'js',
+  'typescript',
+  'ts',
+  'python',
+  'py',
+  'shell',
+  'bash',
+  'sh',
+];
 
 export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
   const [copied, setCopied] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState(null);
   const codeString = String(children).replace(/\n$/, '');
-  
+
   // Determine if this code can be executed
   const canExecute = EXECUTABLE_LANGUAGES.includes((language || '').toLowerCase());
-  
+
   // Map language to execution type
   const getExecutionType = () => {
     const lang = (language || '').toLowerCase();
@@ -522,13 +578,13 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  
+
   const handleExecute = async () => {
     if (executing) return;
-    
+
     setExecuting(true);
     setExecutionResult(null);
-    
+
     try {
       const response = await fetch('/api/v1/agent/task/team-execute', {
         method: 'POST',
@@ -540,9 +596,9 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
           specialization: 'code-execution',
         }),
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         setExecutionResult({
           success: true,
@@ -578,15 +634,15 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
               onClick={handleExecute}
               disabled={executing}
               className={`text-xs px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
-                executing 
-                  ? 'bg-purple-500/20 text-purple-300 cursor-wait' 
+                executing
+                  ? 'bg-purple-500/20 text-purple-300 cursor-wait'
                   : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300'
               }`}
             >
               {executing ? (
                 <>
-                  <motion.span 
-                    animate={{ rotate: 360 }} 
+                  <motion.span
+                    animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   >
                     ⚡
@@ -613,7 +669,7 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
           {children}
         </code>
       </pre>
-      
+
       {/* Execution result panel */}
       <AnimatePresence>
         {executionResult && (
@@ -623,10 +679,14 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
             exit={{ height: 0, opacity: 0 }}
             className="border-t border-white/10 overflow-hidden"
           >
-            <div className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <div
+              className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+            >
               {/* Result header */}
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span
+                  className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}
+                >
                   {executionResult.success ? '✓ Execution Successful' : '✕ Execution Failed'}
                 </span>
                 {executionResult.qualityScore && (
@@ -641,18 +701,22 @@ export const LiquidCodeBlock = memo(({ language, children, ...props }) => {
                   ✕
                 </button>
               </div>
-              
+
               {/* Output/Error content */}
               <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-40 overflow-auto">
                 {executionResult.success ? executionResult.output : executionResult.error}
               </pre>
-              
+
               {/* Team info */}
               {executionResult.executedBy && (
                 <div className="mt-2 pt-2 border-t border-white/10 text-xs text-gray-500">
                   Executed by: <span className="text-purple-400">{executionResult.executedBy}</span>
                   {executionResult.validatedBy && (
-                    <> • Validated by: <span className="text-cyan-400">{executionResult.validatedBy}</span></>
+                    <>
+                      {' '}
+                      • Validated by:{' '}
+                      <span className="text-cyan-400">{executionResult.validatedBy}</span>
+                    </>
                   )}
                 </div>
               )}
