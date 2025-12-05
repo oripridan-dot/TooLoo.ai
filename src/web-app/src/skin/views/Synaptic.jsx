@@ -1,4 +1,4 @@
-// @version 3.3.75
+// @version 3.3.76
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1211,6 +1211,9 @@ const Synaptic = memo(({ className = '' }) => {
   // Active providers during processing
   const [activeProviders, setActiveProviders] = useState([]);
   
+  // Current thinking stage for InlineProcessPanel
+  const [currentStage, setCurrentStage] = useState('connecting');
+  
   // UI state
   const [status, setStatus] = useState('idle');
   const [tokenCount, setTokenCount] = useState(0);
@@ -1312,6 +1315,7 @@ const Synaptic = memo(({ className = '' }) => {
       setIsStreaming(true);
       setStatus('streaming');
       setAppState('streaming');
+      setCurrentStage('streaming'); // Update to streaming stage
       
       // Add streaming start thought
       addThought('📡 Stream connected, receiving response...', 'success');
@@ -1651,9 +1655,21 @@ const Synaptic = memo(({ className = '' }) => {
                   isLatest={i === messages.length - 1 && !msg.isUser}
                   isStreaming={msg.id === streamingMessageId}
                   onReact={handleMessageReaction}
+                  fullWidth={largePreview}
                 />
               ))}
-              {isThinking && <ThinkingIndicator key="thinking" stage="connecting" />}
+              {/* Show InlineProcessPanel during thinking or streaming */}
+              {(isThinking || isStreaming) && (
+                <InlineProcessPanel
+                  key="process-panel"
+                  thoughts={thoughts}
+                  isActive={true}
+                  currentStage={currentStage}
+                  provider={lastUsedProvider || (AI_MODELS[selectedModel]?.provider)}
+                  model={AI_MODELS[selectedModel]?.model}
+                  modelLabel={AI_MODELS[selectedModel]?.label}
+                />
+              )}
             </AnimatePresence>
           )}
           <div ref={messagesEndRef} />
