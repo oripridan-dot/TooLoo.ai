@@ -1,4 +1,4 @@
-// @version 3.3.70
+// @version 3.3.71
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1318,34 +1318,69 @@ const Synaptic = memo(({ className = '' }) => {
       <PointerAurora size={200} intensity={0.2} blur={100} className="opacity-50" />
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        {/* Header with liquid glass effect */}
-        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-transparent via-cyan-950/20 to-transparent backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <TooLooAvatar 
-              size={40} 
-              state={isStreaming ? 'speaking' : isThinking ? 'thinking' : 'idle'} 
-              showBreath={false}
-            />
-            <div>
-              <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-                Synaptic
-                <StatusLight status={status} size="sm" />
-              </h1>
-              <p className="text-sm text-gray-500">Neural conversation interface</p>
+        {/* Header with liquid glass effect - Now includes Model Selector & Preview Toggle */}
+        <div className="px-6 py-4 border-b border-white/5 bg-gradient-to-r from-transparent via-cyan-950/20 to-transparent backdrop-blur-sm flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <TooLooAvatar 
+                size={40} 
+                state={isStreaming ? 'speaking' : isThinking ? 'thinking' : 'idle'} 
+                showBreath={false}
+              />
+              <div>
+                <h1 className="text-xl font-semibold text-white flex items-center gap-2">
+                  Synaptic
+                  <StatusLight status={status} size="sm" />
+                </h1>
+                <p className="text-sm text-gray-500">Neural conversation interface</p>
+              </div>
+            </div>
+            
+            {/* Model Selection & Controls */}
+            <div className="flex items-center gap-3">
+              {/* Model Selector */}
+              <ModelSelector 
+                selectedModel={selectedModel}
+                onChange={setSelectedModel}
+                disabled={isThinking || isStreaming}
+              />
+              
+              {/* Large Preview Toggle */}
+              <PreviewSizeToggle
+                largePreview={largePreview}
+                onToggle={() => setLargePreview(!largePreview)}
+              />
+              
+              {/* Status indicator */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                <StatusLight status={isStreaming ? 'streaming' : isThinking ? 'thinking' : 'active'} />
+                <span className="text-xs text-gray-400">
+                  {isStreaming ? 'Streaming...' : isThinking ? 'Processing...' : 'Ready'}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-              <StatusLight status={isStreaming ? 'streaming' : isThinking ? 'thinking' : 'active'} />
-              <span className="text-xs text-gray-400">
-                {isStreaming ? 'Streaming response...' : isThinking ? 'Processing...' : 'TooLoo is focused on you'}
+          
+          {/* Selected model info bar */}
+          {selectedModel !== 'auto' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 flex items-center gap-2 text-xs text-gray-500"
+            >
+              <span>Using:</span>
+              <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                {AI_MODELS[selectedModel]?.label}
               </span>
-            </div>
-          </div>
+              <span className="text-gray-600">•</span>
+              <span>{AI_MODELS[selectedModel]?.description}</span>
+            </motion.div>
+          )}
         </div>
 
-        {/* Messages area with enhanced visuals */}
-        <div className="flex-1 overflow-auto p-6">
+        {/* Messages area with enhanced visuals - Large preview support */}
+        <div className={`flex-1 overflow-auto ${largePreview ? 'p-8' : 'p-6'}`}>
           {showWelcome ? (
             <WelcomeMessage onQuickAction={handleQuickAction} />
           ) : (
