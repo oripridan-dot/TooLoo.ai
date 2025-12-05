@@ -1,4 +1,4 @@
-// @version 3.3.143
+// @version 3.3.157
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -156,51 +156,53 @@ InfoModal.displayName = 'InfoModal';
 // CONFIRM MODAL - Replaces browser confirm() for better UX
 // ============================================================================
 
-const ConfirmModal = memo(({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', danger = false }) => {
-  if (!isOpen) return null;
+const ConfirmModal = memo(
+  ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', danger = false }) => {
+    if (!isOpen) return null;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    return (
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${danger ? 'border-rose-500/30' : 'border-white/10'}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
       >
-        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-        <p className="text-gray-400 text-sm mb-4">{message}</p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-              danger 
-                ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400' 
-                : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400'
-            }`}
-          >
-            {confirmText}
-          </button>
-        </div>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          className={`w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${danger ? 'border-rose-500/30' : 'border-white/10'}`}
+        >
+          <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+          <p className="text-gray-400 text-sm mb-4">{message}</p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                danger
+                  ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400'
+                  : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400'
+              }`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
-});
+    );
+  }
+);
 
 ConfirmModal.displayName = 'ConfirmModal';
 
@@ -615,7 +617,7 @@ const HypothesisStatusBadge = memo(({ status }) => {
   );
 });
 
-const ExplorationQueue = memo(({ hypotheses = [], onTriggerExploration, className = '' }) => {
+const ExplorationQueue = memo(({ hypotheses = [], onTriggerExploration, onOpenHypothesisModal, className = '' }) => {
   return (
     <LiquidPanel variant="elevated" className={`p-4 ${className}`}>
       <div className="flex items-center justify-between mb-3">
@@ -626,7 +628,7 @@ const ExplorationQueue = memo(({ hypotheses = [], onTriggerExploration, classNam
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={onTriggerExploration}
+          onClick={onOpenHypothesisModal}
           className="text-xs px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 transition-colors"
         >
           + New Hypothesis
@@ -1484,54 +1486,62 @@ const Growth = memo(({ className = '' }) => {
   }, [fetchProviders]);
 
   // NEW: Trigger new hypothesis exploration (uses modal)
-  const handleTriggerHypothesis = useCallback(async (hypothesis) => {
-    if (!hypothesis) return;
+  const handleTriggerHypothesis = useCallback(
+    async (hypothesis) => {
+      if (!hypothesis) return;
 
-    try {
-      const res = await fetch(`${API_BASE}/exploration/hypothesis`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hypothesis }),
-      });
-      const data = await res.json();
-      console.log('[Growth] Hypothesis created:', data);
-      fetchExplorationQueue();
-    } catch (error) {
-      console.error('[Growth] Failed to create hypothesis');
-      // Add to local queue for demo
-      setHypothesisQueue((prev) => [
-        {
-          id: Date.now(),
-          title: hypothesis,
-          type: 'custom',
-          status: 'pending',
-          confidence: 0.5,
-        },
-        ...prev,
-      ]);
-    }
-  }, [fetchExplorationQueue]);
+      try {
+        const res = await fetch(`${API_BASE}/exploration/hypothesis`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hypothesis }),
+        });
+        const data = await res.json();
+        console.log('[Growth] Hypothesis created:', data);
+        fetchExplorationQueue();
+      } catch (error) {
+        console.error('[Growth] Failed to create hypothesis');
+        // Add to local queue for demo
+        setHypothesisQueue((prev) => [
+          {
+            id: Date.now(),
+            title: hypothesis,
+            type: 'custom',
+            status: 'pending',
+            confidence: 0.5,
+          },
+          ...prev,
+        ]);
+      }
+    },
+    [fetchExplorationQueue]
+  );
 
   const handleViewReport = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/learning/report`);
       const data = await res.json();
       console.log('[Growth] Full Report:', data);
-      
+
       // Build report content for modal
       const reportContent = `Total Sessions: ${data.data?.totalSessions || 0}
 Success Rate: ${Math.round((data.data?.improvements?.firstTrySuccess?.current || 0) * 100)}%
 Patterns Learned: ${data.data?.recentLearnings?.length || 0}
 
 Recent Learnings:
-${(data.data?.recentLearnings || []).slice(0, 5).map((l, i) => `  ${i + 1}. ${l}`).join('\n') || '  No recent learnings'}
+${
+  (data.data?.recentLearnings || [])
+    .slice(0, 5)
+    .map((l, i) => `  ${i + 1}. ${l}`)
+    .join('\n') || '  No recent learnings'
+}
 
 Improvements:
   • First-try Success: ${Math.round((data.data?.improvements?.firstTrySuccess?.current || 0) * 100)}% → ${Math.round((data.data?.improvements?.firstTrySuccess?.target || 0.9) * 100)}% target
   • Repeat Problems: ${Math.round((data.data?.improvements?.repeatProblems?.current || 0) * 100)}% → ${Math.round((data.data?.improvements?.repeatProblems?.target || 0.05) * 100)}% target`;
-      
+
       setReportData(reportContent);
-      setModalState(prev => ({ ...prev, report: true }));
+      setModalState((prev) => ({ ...prev, report: true }));
     } catch (error) {
       console.error('[Growth] Failed to view report:', error);
     }
@@ -1586,7 +1596,7 @@ Improvements:
       <AnimatePresence>
         <InputModal
           isOpen={modalState.hypothesis}
-          onClose={() => setModalState(prev => ({ ...prev, hypothesis: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, hypothesis: false }))}
           onSubmit={handleTriggerHypothesis}
           title="🔬 New Hypothesis"
           placeholder="Enter a hypothesis to explore..."
@@ -1594,7 +1604,7 @@ Improvements:
         />
         <InputModal
           isOpen={modalState.goals}
-          onClose={() => setModalState(prev => ({ ...prev, goals: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, goals: false }))}
           onSubmit={handleSetGoals}
           title="🎯 Set Learning Goal"
           placeholder="Enter your learning goal..."
@@ -1602,14 +1612,14 @@ Improvements:
         />
         <InfoModal
           isOpen={modalState.report}
-          onClose={() => setModalState(prev => ({ ...prev, report: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, report: false }))}
           title="📊 Learning Report"
           content={reportData || 'Loading...'}
           type="info"
         />
         <ConfirmModal
           isOpen={modalState.resetConfirm}
-          onClose={() => setModalState(prev => ({ ...prev, resetConfirm: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, resetConfirm: false }))}
           onConfirm={handleResetMetrics}
           title="⚠️ Reset Metrics"
           message="Are you sure you want to reset all learning metrics? This action cannot be undone."
@@ -1820,13 +1830,13 @@ Improvements:
                           📊 View Full Report
                         </button>
                         <button
-                          onClick={() => setModalState(prev => ({ ...prev, goals: true }))}
+                          onClick={() => setModalState((prev) => ({ ...prev, goals: true }))}
                           className="w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-gray-300 text-left transition-colors"
                         >
                           🎯 Set Learning Goals
                         </button>
                         <button
-                          onClick={() => setModalState(prev => ({ ...prev, resetConfirm: true }))}
+                          onClick={() => setModalState((prev) => ({ ...prev, resetConfirm: true }))}
                           className="w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-gray-300 text-left transition-colors"
                         >
                           🔄 Reset Metrics
@@ -1892,7 +1902,7 @@ Improvements:
                       <h3 className="text-sm font-medium text-white mb-3">Curiosity Actions</h3>
                       <div className="space-y-2">
                         <button
-                          onClick={() => setModalState(prev => ({ ...prev, hypothesis: true }))}
+                          onClick={() => setModalState((prev) => ({ ...prev, hypothesis: true }))}
                           className="w-full px-3 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-sm text-cyan-400 text-left transition-colors border border-cyan-500/20"
                         >
                           🧪 Test New Hypothesis
