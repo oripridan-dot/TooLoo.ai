@@ -1,4 +1,4 @@
-// @version 3.3.151
+// @version 3.3.152
 /**
  * Comprehensive System Test
  * 
@@ -564,9 +564,9 @@ async function runTests(): Promise<SystemTestReport> {
 runTests().then(async (report) => {
   // Save report to file
   const reportPath = `data/test-reports/system-test-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-  const fs = await import('fs-extra');
-  await fs.ensureDir('data/test-reports');
-  await fs.writeJson(reportPath, report, { spaces: 2 });
+  const fsExtra = await import('fs-extra');
+  await fsExtra.default.ensureDir('data/test-reports');
+  await fsExtra.default.writeJson(reportPath, report, { spaces: 2 });
   log(`📄 Report saved to: ${reportPath}`, 'blue');
   
   // Exit with appropriate code
