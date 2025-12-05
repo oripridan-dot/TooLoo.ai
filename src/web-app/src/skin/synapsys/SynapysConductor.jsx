@@ -1,4 +1,4 @@
-// @version 2.2.541
+// @version 3.3.131
 // TooLoo.ai Synapsys Conductor - Orchestrates rapid changes across all systems
 // Bridges SynapysDNA with LiquidEngine, TextureEngine, and TooLooPresence
 
@@ -223,12 +223,12 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       toggleMesh: (on) => getActions().toggleEffect('mesh', on),
       toggleParticles: (on) => getActions().toggleEffect('particles', on),
       
-      // Sequences - simplified, no-op for performance
-      playEmergence: () => {},
-      playAlert: () => {},
-      playThinking: () => () => {},
-      pulse: () => {},
-      colorWave: () => () => {},
+      // Sequences - now fully activated
+      playEmergence,
+      playAlert,
+      playThinking,
+      pulse,
+      colorWave,
       
       // Current state
       getCurrentDNA: () => useSynapsynDNA.getState().dna,
@@ -295,11 +295,33 @@ export function useRapidSkin() {
     goImmersive: () => useSynapsynDNA.getState().transitionTo('immersive'),
     goBalanced: () => useSynapsynDNA.getState().transitionTo('balanced'),
     
-    // Quick effects - these are simpler versions
-    emerge: () => {}, // Disabled in dev mode
-    alert: () => {},  // Disabled in dev mode  
-    think: () => {},  // Disabled in dev mode
-    pulse: () => {},  // Disabled in dev mode
+    // Quick effects - now fully activated
+    emerge: () => {
+      const state = useSynapsynDNA.getState();
+      const originalPreset = state.preset;
+      state.transitionTo('creative', 500);
+      setTimeout(() => useSynapsynDNA.getState().transitionTo(originalPreset, 500), 2000);
+    },
+    alert: () => {
+      const state = useSynapsynDNA.getState();
+      const originalPreset = state.preset;
+      state.transitionTo('focus', 200);
+      setTimeout(() => useSynapsynDNA.getState().transitionTo(originalPreset, 800), 1000);
+    },
+    think: () => {
+      const state = useSynapsynDNA.getState();
+      state.transitionTo('zen', 300);
+      return () => useSynapsynDNA.getState().transitionTo('balanced', 500);
+    },
+    pulse: () => {
+      const state = useSynapsynDNA.getState();
+      const dna = state.dna;
+      state.override({
+        liquid: { intensity: Math.min(1, dna.liquid.intensity * 1.3) },
+        colors: { energy: Math.min(1, dna.colors.energy * 1.3) },
+      });
+      setTimeout(() => useSynapsynDNA.getState().reset(), 300);
+    }
     
     // Dials (0-1)
     intensity: (v) => useSynapsynDNA.getState().setIntensityDial(v),
