@@ -1,4 +1,4 @@
-// @version 3.3.133
+// @version 3.3.134
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -1032,6 +1032,15 @@ const Growth = memo(({ className = '' }) => {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [celebrating, setCelebrating] = useState(false);
+
+  // NEW: Modal state for better UX (replaces browser dialogs)
+  const [modalState, setModalState] = useState({
+    hypothesis: false,
+    goals: false,
+    report: false,
+    resetConfirm: false,
+  });
+  const [reportData, setReportData] = useState(null);
 
   // NEW: Mega-boost state
   const [curiosityDimensions, setCuriosityDimensions] = useState({});
