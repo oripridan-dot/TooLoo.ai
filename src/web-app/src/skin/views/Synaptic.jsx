@@ -1,4 +1,4 @@
-// @version 3.3.68
+// @version 3.3.69
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -723,6 +723,207 @@ const MoodButton = memo(({ preset, icon, label, isActive, onClick }) => {
 MoodButton.displayName = 'MoodButton';
 
 // ============================================================================
+// MODEL SELECTOR - Dropdown for selecting AI models
+// ============================================================================
+
+const ModelSelector = memo(({ selectedModel, onChange, disabled = false }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  // Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const currentModel = AI_MODELS[selectedModel] || AI_MODELS.auto;
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10 cursor-pointer'}
+          bg-white/5 border border-white/10
+        `}
+      >
+        <span className="text-gray-300">{currentModel.label}</span>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="text-gray-500"
+        >
+          ▼
+        </motion.span>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full mt-2 left-0 z-50 w-64 rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl overflow-hidden"
+          >
+            <div className="max-h-80 overflow-auto">
+              {Object.entries(AI_MODELS).map(([key, model]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    onChange(key);
+                    setIsOpen(false);
+                  }}
+                  className={`
+                    w-full px-4 py-3 text-left transition-colors flex items-start gap-3
+                    ${selectedModel === key ? 'bg-cyan-500/20 border-l-2 border-cyan-500' : 'hover:bg-white/5'}
+                  `}
+                >
+                  <span className="text-lg flex-shrink-0">{model.label.split(' ')[0]}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-white font-medium truncate">
+                      {model.label.split(' ').slice(1).join(' ')}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">{model.description}</div>
+                  </div>
+                  {selectedModel === key && (
+                    <span className="text-cyan-400 text-sm">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+ModelSelector.displayName = 'ModelSelector';
+
+// ============================================================================
+// PREVIEW SIZE TOGGLE - Large preview option
+// ============================================================================
+
+const PreviewSizeToggle = memo(({ largePreview, onToggle }) => {
+  return (
+    <button
+      onClick={onToggle}
+      className={`
+        flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all
+        ${largePreview 
+          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' 
+          : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'}
+      `}
+      title={largePreview ? 'Disable large preview' : 'Enable large preview'}
+    >
+      <span>{largePreview ? '🖼️' : '🔲'}</span>
+      <span>Large Preview</span>
+    </button>
+  );
+});
+
+PreviewSizeToggle.displayName = 'PreviewSizeToggle';
+
+// ============================================================================
+// THINKING PROCESS PANEL - Detailed process visualization
+// ============================================================================
+
+const ThinkingProcessPanel = memo(({ thoughts = [], isActive = false, provider, model }) => {
+  const containerRef = useRef(null);
+  
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [thoughts]);
+
+  return (
+    <LiquidPanel variant="glass" className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
+          🧠 TooLoo Process
+          {isActive && (
+            <motion.span
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="text-cyan-400"
+            >
+              Live
+            </motion.span>
+          )}
+        </h3>
+        {provider && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">
+            {provider}
+          </span>
+        )}
+      </div>
+      
+      {/* Progress bar when active */}
+      {isActive && (
+        <div className="mb-3">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              style={{ width: '50%' }}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Thought steps */}
+      <div ref={containerRef} className="space-y-1.5 max-h-48 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+        <AnimatePresence mode="popLayout">
+          {thoughts.map((thought, i) => (
+            <motion.div
+              key={thought.id || i}
+              initial={{ opacity: 0, x: -10, height: 0 }}
+              animate={{ opacity: 1, x: 0, height: 'auto' }}
+              exit={{ opacity: 0, x: 10, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`
+                flex items-start gap-2 text-[11px] py-1.5 px-2 rounded bg-white/5
+                ${thought.type === 'success' ? 'border-l-2 border-emerald-500' : 
+                  thought.type === 'error' ? 'border-l-2 border-red-500' : 
+                  'border-l-2 border-cyan-500/50'}
+              `}
+            >
+              <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full mt-1 ${
+                thought.type === 'success' ? 'bg-emerald-400' : 
+                thought.type === 'error' ? 'bg-red-400' : 'bg-cyan-400'
+              }`} />
+              <span className="text-gray-300 flex-1">{thought.text}</span>
+              <span className="text-gray-600 text-[9px]">
+                {new Date(thought.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        
+        {thoughts.length === 0 && (
+          <p className="text-xs text-gray-600 italic text-center py-4">
+            Awaiting process activity...
+          </p>
+        )}
+      </div>
+    </LiquidPanel>
+  );
+});
+
+ThinkingProcessPanel.displayName = 'ThinkingProcessPanel';
+
+// ============================================================================
 // SYNAPTIC VIEW - Main export (FULLY WIRED)
 // ============================================================================
 
@@ -745,6 +946,11 @@ const Synaptic = memo(({ className = '' }) => {
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState(null);
+  
+  // Model selection state (NEW)
+  const [selectedModel, setSelectedModel] = useState('auto');
+  const [largePreview, setLargePreview] = useState(false);
+  const [lastUsedProvider, setLastUsedProvider] = useState(null);
   
   // Thought stream state
   const [thoughts, setThoughts] = useState([]);
