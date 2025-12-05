@@ -1,8 +1,9 @@
-// @version 3.3.119
+// @version 3.3.120
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
 // Enhanced with Liquid Skin visual capabilities
+// V3.3.120: Reader-centric scroll - user stays at top while content streams below
 // V3.3.107: Stable streaming - removed layout animations, folded sections, cleaned imports
 
 import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
