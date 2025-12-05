@@ -1,14 +1,208 @@
-// @version 2.2.674
+// @version 3.3.133
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
 // Fully wired with real API connections + WebSocket real-time updates
 // v2.3.0: Fixed API paths, added mock mode indicators, symbiotic integration
 // v2.3.1: Fixed WebSocket protocol for secure connections (wss:// vs ws://)
+// v2.3.2: Replaced browser dialogs with proper modal UI components
 
 import React, { memo, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LiquidPanel } from '../shell/LiquidShell';
+
+const API_BASE = '/api/v1';
+// Use wss:// for secure connections (HTTPS), ws:// for HTTP
+const WS_URL =
+  typeof window !== 'undefined'
+    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+    : '';
+
+// ============================================================================
+// INPUT MODAL - Replaces browser prompt() for better UX
+// ============================================================================
+
+const InputModal = memo(({ isOpen, onClose, onSubmit, title, placeholder, defaultValue = '' }) => {
+  const [value, setValue] = useState(defaultValue);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setValue(defaultValue);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen, defaultValue]);
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl"
+      >
+        <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={placeholder}
+          className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && value.trim()) {
+              onSubmit(value.trim());
+              onClose();
+            } else if (e.key === 'Escape') {
+              onClose();
+            }
+          }}
+        />
+        <div className="flex justify-end gap-3 mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              if (value.trim()) {
+                onSubmit(value.trim());
+                onClose();
+              }
+            }}
+            disabled={!value.trim()}
+            className="px-4 py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 text-sm transition-colors disabled:opacity-50"
+          >
+            Submit
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+});
+
+InputModal.displayName = 'InputModal';
+
+// ============================================================================
+// INFO MODAL - Replaces browser alert() for better UX
+// ============================================================================
+
+const InfoModal = memo(({ isOpen, onClose, title, content, type = 'info' }) => {
+  if (!isOpen) return null;
+
+  const typeStyles = {
+    info: 'border-cyan-500/30 bg-cyan-500/5',
+    success: 'border-emerald-500/30 bg-emerald-500/5',
+    warning: 'border-amber-500/30 bg-amber-500/5',
+    error: 'border-rose-500/30 bg-rose-500/5',
+  };
+
+  const typeIcons = {
+    info: '📊',
+    success: '✅',
+    warning: '⚠️',
+    error: '❌',
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-lg p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${typeStyles[type]}`}
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <span className="text-2xl">{typeIcons[type]}</span>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+        </div>
+        <div className="text-gray-300 text-sm whitespace-pre-wrap max-h-96 overflow-y-auto">
+          {content}
+        </div>
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+});
+
+InfoModal.displayName = 'InfoModal';
+
+// ============================================================================
+// CONFIRM MODAL - Replaces browser confirm() for better UX
+// ============================================================================
+
+const ConfirmModal = memo(({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', danger = false }) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${danger ? 'border-rose-500/30' : 'border-white/10'}`}
+      >
+        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+        <p className="text-gray-400 text-sm mb-4">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+              danger 
+                ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400' 
+                : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400'
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+});
+
+ConfirmModal.displayName = 'ConfirmModal';
 
 const API_BASE = '/api/v1';
 // Use wss:// for secure connections (HTTPS), ws:// for HTTP
