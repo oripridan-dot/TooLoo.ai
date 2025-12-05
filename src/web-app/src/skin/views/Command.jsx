@@ -1,4 +1,4 @@
-// @version 3.3.141
+// @version 3.3.147
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -419,6 +419,37 @@ const Command = memo(({ className = '' }) => {
   });
   const pendingAction = useRef(null);
 
+  // UI Preferences - synced with Synaptic view
+  const [uiPrefs, setUiPrefs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tooloo-ui-preferences');
+      return saved ? JSON.parse(saved) : {
+        showLargePreviewToggle: false,
+        showModelSelector: true,
+        showStatusIndicator: true,
+        compactMode: false,
+      };
+    } catch {
+      return {
+        showLargePreviewToggle: false,
+        showModelSelector: true,
+        showStatusIndicator: true,
+        compactMode: false,
+      };
+    }
+  });
+
+  // Save UI prefs and notify other components
+  const updateUiPref = useCallback((key, value) => {
+    setUiPrefs(prev => {
+      const updated = { ...prev, [key]: value };
+      localStorage.setItem('tooloo-ui-preferences', JSON.stringify(updated));
+      // Trigger window event for other components
+      window.dispatchEvent(new CustomEvent('tooloo-ui-prefs-changed', { detail: updated }));
+      return updated;
+    });
+  }, []);
+
   const [visualConfig, setVisualConfig] = useState([
     { id: 'animations', label: 'Animations', description: 'Enable all animations', enabled: true },
     {
@@ -430,6 +461,14 @@ const Command = memo(({ className = '' }) => {
     { id: 'blur', label: 'Blur Effects', description: 'Glass morphism blur', enabled: true },
     { id: 'autoQuality', label: 'Auto Quality', description: 'Adjust based on FPS', enabled: true },
   ]);
+
+  // UI Config items (separate from visual)
+  const uiConfigItems = useMemo(() => [
+    { id: 'showLargePreviewToggle', label: 'Large Preview Button', description: 'Show in Synaptic header', enabled: uiPrefs.showLargePreviewToggle },
+    { id: 'showModelSelector', label: 'Model Selector', description: 'Show AI model picker', enabled: uiPrefs.showModelSelector },
+    { id: 'showStatusIndicator', label: 'Status Indicator', description: 'Show ready/streaming status', enabled: uiPrefs.showStatusIndicator },
+    { id: 'compactMode', label: 'Compact Mode', description: 'Reduce spacing and padding', enabled: uiPrefs.compactMode },
+  ], [uiPrefs]);
 
   // Add log entry
   const addLog = useCallback((level, message) => {
