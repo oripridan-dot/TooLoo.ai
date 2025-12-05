@@ -1,14 +1,106 @@
-// @version 2.2.670
+// @version 3.3.138
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
+// v2.2.680: Added proper modals instead of browser alerts/confirms
 
-import React, { memo, useState, useCallback, useEffect } from 'react';
+import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSynapsynDNA } from '../synapsys';
 import { LiquidPanel } from '../shell/LiquidShell';
 
 const API_BASE = '/api/v1';
+
+// ============================================================================
+// INFO MODAL - Replaces browser alert() for better UX
+// ============================================================================
+
+const InfoModal = memo(({ isOpen, onClose, title, content }) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border border-white/10 shadow-2xl"
+      >
+        <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
+        <div className="text-gray-300 text-sm whitespace-pre-wrap">{content}</div>
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+});
+
+InfoModal.displayName = 'InfoModal';
+
+// ============================================================================
+// CONFIRM MODAL - Replaces browser confirm() for better UX
+// ============================================================================
+
+const ConfirmModal = memo(({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', danger = false }) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${danger ? 'border-rose-500/30' : 'border-white/10'}`}
+      >
+        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+        <p className="text-gray-400 text-sm mb-4">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+              danger 
+                ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400' 
+                : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400'
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+});
+
+ConfirmModal.displayName = 'ConfirmModal';
 
 // ============================================================================
 // STATUS BADGE - System status indicator (simplified)
