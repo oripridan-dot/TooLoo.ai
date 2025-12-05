@@ -1,4 +1,4 @@
-// @version 3.3.145
+// @version 3.3.146
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1406,6 +1406,56 @@ const Synaptic = memo(({ className = '' }) => {
     flashEmotion,
     addThought,
   ]);
+
+  // ============================================================================
+  // SELF-MODIFICATION API - TooLoo can modify its own UI
+  // Exposed to window for internal access
+  // ============================================================================
+  
+  useEffect(() => {
+    // Expose self-modification API to window for internal TooLoo commands
+    window.toolooUI = {
+      // UI Preferences
+      setPreference: (key, value) => {
+        updateUiPreference(key, value);
+        return `✅ UI preference '${key}' set to ${value}`;
+      },
+      getPreferences: () => uiPreferences,
+      
+      // Quick toggles
+      showLargePreview: () => updateUiPreference('showLargePreviewToggle', true),
+      hideLargePreview: () => updateUiPreference('showLargePreviewToggle', false),
+      showModelSelector: () => updateUiPreference('showModelSelector', true),
+      hideModelSelector: () => updateUiPreference('showModelSelector', false),
+      enableCompactMode: () => updateUiPreference('compactMode', true),
+      disableCompactMode: () => updateUiPreference('compactMode', false),
+      
+      // Get current state
+      getCurrentModel: () => selectedModel,
+      setModel: (model) => setSelectedModel(model),
+      
+      // Messages
+      addSystemMessage: (content) => {
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          content,
+          isUser: false,
+          timestamp: Date.now(),
+          provider: 'System',
+        }]);
+      },
+      
+      // Clear
+      clearChat: () => setMessages([]),
+      
+      // Mood
+      setMood: (mood) => setCurrentMood(mood),
+    };
+    
+    return () => {
+      delete window.toolooUI;
+    };
+  }, [uiPreferences, selectedModel, updateUiPreference]);
 
   // ============================================================================
   // QUICK ACTIONS - Copy, Clear, Export
