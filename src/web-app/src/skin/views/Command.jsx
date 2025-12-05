@@ -1,10 +1,11 @@
-// @version 3.3.147
+// @version 3.3.148
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
 // v2.2.680: Added proper modals instead of browser alerts/confirms
+// v2.2.681: Added UI Preferences section for self-modification
 
-import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
+import React, { memo, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSynapsynDNA } from '../synapsys';
 import { LiquidPanel } from '../shell/LiquidShell';
