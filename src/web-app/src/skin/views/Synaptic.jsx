@@ -1,4 +1,4 @@
-// @version 3.3.144
+// @version 3.3.145
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1620,29 +1620,35 @@ const Synaptic = memo(({ className = '' }) => {
             {/* Model Selection & Controls - Responsive */}
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
               {/* Model Selector */}
-              <ModelSelector
-                selectedModel={selectedModel}
-                onChange={setSelectedModel}
-                disabled={isThinking || isStreaming}
-              />
-
-              {/* Large Preview Toggle - Hidden on very small screens */}
-              <div className="hidden sm:block">
-                <PreviewSizeToggle
-                  largePreview={largePreview}
-                  onToggle={() => setLargePreview(!largePreview)}
+              {uiPreferences.showModelSelector && (
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onChange={setSelectedModel}
+                  disabled={isThinking || isStreaming}
                 />
-              </div>
+              )}
+
+              {/* Large Preview Toggle - Only shown if preference enabled */}
+              {uiPreferences.showLargePreviewToggle && (
+                <div className="hidden sm:block">
+                  <PreviewSizeToggle
+                    largePreview={largePreview}
+                    onToggle={() => setLargePreview(!largePreview)}
+                  />
+                </div>
+              )}
 
               {/* Status indicator - Simplified on mobile */}
-              <div className="flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                <StatusLight
-                  status={isStreaming ? 'streaming' : isThinking ? 'thinking' : 'active'}
-                />
-                <span className="text-xs text-gray-400 hidden sm:inline">
-                  {isStreaming ? 'Streaming...' : isThinking ? 'Processing...' : 'Ready'}
-                </span>
-              </div>
+              {uiPreferences.showStatusIndicator && (
+                <div className="flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <StatusLight
+                    status={isStreaming ? 'streaming' : isThinking ? 'thinking' : 'active'}
+                  />
+                  <span className="text-xs text-gray-400 hidden sm:inline">
+                    {isStreaming ? 'Streaming...' : isThinking ? 'Processing...' : 'Ready'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
