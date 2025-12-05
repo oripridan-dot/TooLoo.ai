@@ -1,4 +1,4 @@
-// @version 3.3.113
+// @version 3.3.121
 // TooLoo.ai Liquid Chat Components
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
@@ -663,6 +663,235 @@ const cleanContent = (content) => {
     // Remove leading/trailing whitespace from each line
     .split('\n').map(line => line.trimEnd()).join('\n')
     .trim();
+};
+
+// ============================================================================
+// VISUAL RESPONSE SYSTEM - Human-friendly, visual-first communication
+// v3.3.121 - Like a washing machine: you see the clothes spin, not the PCB
+// ============================================================================
+
+// Detect the type of response to render appropriate visual
+const detectResponseType = (content) => {
+  const lower = content.toLowerCase();
+  
+  // Success/completion patterns
+  if (lower.includes('✅') || lower.includes('done') || lower.includes('completed') || 
+      lower.includes('success') || lower.includes('finished')) {
+    return 'success';
+  }
+  
+  // List/steps patterns
+  if ((content.match(/^[\d]+\./gm) || []).length >= 3 ||
+      (content.match(/^[-•*]\s/gm) || []).length >= 3) {
+    return 'steps';
+  }
+  
+  // Question/inquiry patterns
+  if (lower.includes('?') && (lower.includes('would you') || lower.includes('do you') ||
+      lower.includes('can you') || lower.includes('should') || lower.includes('what if'))) {
+    return 'question';
+  }
+  
+  // Insight/analysis patterns
+  if (lower.includes('insight') || lower.includes('analysis') || lower.includes('found that') ||
+      lower.includes('discovered') || lower.includes('noticed') || lower.includes('interesting')) {
+    return 'insight';
+  }
+  
+  // Warning/caution patterns  
+  if (lower.includes('warning') || lower.includes('caution') || lower.includes('careful') ||
+      lower.includes('⚠') || lower.includes('note:') || lower.includes('important:')) {
+    return 'warning';
+  }
+  
+  // Idea/suggestion patterns
+  if (lower.includes('idea') || lower.includes('suggest') || lower.includes('could try') ||
+      lower.includes('how about') || lower.includes('💡') || lower.includes('consider')) {
+    return 'idea';
+  }
+  
+  // Default conversational
+  return 'conversational';
+};
+
+// Extract key points from content for visual summary
+const extractKeyPoints = (content) => {
+  const points = [];
+  
+  // Extract numbered items
+  const numberedMatches = content.match(/^\d+\.\s*\*?\*?([^:\n]+)/gm) || [];
+  numberedMatches.forEach(match => {
+    const text = match.replace(/^\d+\.\s*\*?\*?/, '').trim();
+    if (text.length > 10 && text.length < 100) {
+      points.push(text);
+    }
+  });
+  
+  // Extract bold items as key points
+  const boldMatches = content.match(/\*\*([^*]+)\*\*/g) || [];
+  boldMatches.forEach(match => {
+    const text = match.replace(/\*\*/g, '').trim();
+    if (text.length > 5 && text.length < 60 && !points.includes(text)) {
+      points.push(text);
+    }
+  });
+  
+  return points.slice(0, 5); // Max 5 key points
+};
+
+// Count code blocks in content
+const countCodeBlocks = (content) => {
+  return (content.match(/```[\s\S]*?```/g) || []).length;
+};
+
+// Visual card for response type
+const ResponseTypeCard = memo(({ type, keyPoints = [] }) => {
+  const typeConfig = {
+    success: { 
+      icon: '✨', 
+      label: 'Complete', 
+      color: 'emerald',
+      bg: 'from-emerald-500/20 to-emerald-600/5',
+      border: 'border-emerald-500/30'
+    },
+    steps: { 
+      icon: '📋', 
+      label: 'Steps', 
+      color: 'blue',
+      bg: 'from-blue-500/20 to-blue-600/5',
+      border: 'border-blue-500/30'
+    },
+    question: { 
+      icon: '💭', 
+      label: 'Question', 
+      color: 'purple',
+      bg: 'from-purple-500/20 to-purple-600/5',
+      border: 'border-purple-500/30'
+    },
+    insight: { 
+      icon: '💡', 
+      label: 'Insight', 
+      color: 'amber',
+      bg: 'from-amber-500/20 to-amber-600/5',
+      border: 'border-amber-500/30'
+    },
+    warning: { 
+      icon: '⚡', 
+      label: 'Note', 
+      color: 'orange',
+      bg: 'from-orange-500/20 to-orange-600/5',
+      border: 'border-orange-500/30'
+    },
+    idea: { 
+      icon: '🎯', 
+      label: 'Idea', 
+      color: 'cyan',
+      bg: 'from-cyan-500/20 to-cyan-600/5',
+      border: 'border-cyan-500/30'
+    },
+    conversational: { 
+      icon: '💬', 
+      label: '', 
+      color: 'gray',
+      bg: 'from-white/5 to-transparent',
+      border: 'border-white/10'
+    },
+  };
+  
+  const config = typeConfig[type] || typeConfig.conversational;
+  
+  // Don't show card for simple conversational responses
+  if (type === 'conversational' && keyPoints.length === 0) {
+    return null;
+  }
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`mb-4 p-3 rounded-xl bg-gradient-to-br ${config.bg} border ${config.border}`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xl">{config.icon}</span>
+        {config.label && (
+          <span className={`text-xs font-medium text-${config.color}-400 uppercase tracking-wider`}>
+            {config.label}
+          </span>
+        )}
+      </div>
+      
+      {keyPoints.length > 0 && (
+        <div className="space-y-1.5">
+          {keyPoints.map((point, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className={`text-${config.color}-400 text-sm mt-0.5`}>→</span>
+              <span className="text-sm text-gray-300">{point}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+});
+
+ResponseTypeCard.displayName = 'ResponseTypeCard';
+
+// Technical details toggle - hides code by default
+const TechnicalDetails = memo(({ children, codeCount = 0 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  if (codeCount === 0) {
+    return children;
+  }
+  
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors group"
+      >
+        <span className="w-5 h-5 rounded bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition-colors">
+          {isOpen ? '−' : '+'}
+        </span>
+        <span>
+          {isOpen ? 'Hide' : 'Show'} technical details
+          {!isOpen && <span className="text-gray-600 ml-1">({codeCount} code {codeCount === 1 ? 'block' : 'blocks'})</span>}
+        </span>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 pt-3 border-t border-white/5">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+TechnicalDetails.displayName = 'TechnicalDetails';
+
+// Extract conversational text (non-code) from content
+const extractConversationalContent = (content) => {
+  // Remove code blocks for the conversational view
+  let conversational = content
+    .replace(/```[\s\S]*?```/g, '') // Remove fenced code blocks
+    .replace(/`[^`]+`/g, match => match) // Keep inline code but could hide
+    .trim();
+  
+  // Clean up multiple newlines left by removed blocks
+  conversational = conversational.replace(/\n{3,}/g, '\n\n').trim();
+  
+  return conversational;
 };
 
 // Check if content is primarily code
