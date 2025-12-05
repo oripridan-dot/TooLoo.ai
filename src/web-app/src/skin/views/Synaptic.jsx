@@ -1,4 +1,4 @@
-// @version 3.3.69
+// @version 3.3.70
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1003,7 +1003,7 @@ const Synaptic = memo(({ className = '' }) => {
   }, [messages, estimateTokens]);
 
   // ============================================================================
-  // SEND MESSAGE - Core chat functionality
+  // SEND MESSAGE - Core chat functionality with model selection
   // ============================================================================
   
   const handleSend = useCallback(async () => {
@@ -1023,12 +1023,23 @@ const Synaptic = memo(({ className = '' }) => {
     setAppState('processing');
     setActiveProviders([]); // Reset active providers
     
-    // Initial thoughts
-    addThought('Received user input');
-    addThought('Routing to optimal AI provider...');
+    // Get selected model config
+    const modelConfig = AI_MODELS[selectedModel] || AI_MODELS.auto;
     
-    // Show orchestration in border - indicate we're selecting providers
-    setActiveProviders([{ provider: 'TooLoo', model: 'Orchestrating...' }]);
+    // Initial thoughts with model info
+    addThought(`📥 Received: "${input.substring(0, 40)}${input.length > 40 ? '...' : ''}"`);
+    
+    if (selectedModel === 'auto') {
+      addThought('🤖 Auto mode: TooLoo selecting optimal model...');
+    } else {
+      addThought(`🎯 Using ${modelConfig.label} (${modelConfig.description})`);
+    }
+    
+    // Show orchestration in border
+    setActiveProviders([{ 
+      provider: modelConfig.provider || 'TooLoo', 
+      model: modelConfig.model || 'Auto-selecting...' 
+    }]);
 
     const streamingMsgId = Date.now() + 1;
     
@@ -1049,12 +1060,16 @@ const Synaptic = memo(({ className = '' }) => {
       setIsStreaming(true);
       setStatus('streaming');
       setAppState('streaming');
-      
-      addThought('Stream connected, receiving tokens...', 'success');
 
       await sendToAPI(userMessage.content, {
         mode: 'quick',
         sessionId,
+        provider: modelConfig.provider, // Pass selected provider
+        model: modelConfig.model, // Pass selected model
+        onThought: (text, type = 'info') => {
+          // Emit thinking steps from API
+          addThought(text, type);
+        },
         onChunk: (chunk, fullContent) => {
           setMessages(prev => prev.map(msg => 
             msg.id === streamingMsgId 
@@ -1073,16 +1088,11 @@ const Synaptic = memo(({ className = '' }) => {
               : msg
           ));
           
+          // Update last used provider
+          setLastUsedProvider(provider);
+          
           // Show which provider actually handled the request
           setActiveProviders([{ provider, model }]);
-          addThought(`Response from ${provider} (${model})`, 'success');
-          
-          if (metadata.cost_usd) {
-            addThought(`Cost: $${metadata.cost_usd.toFixed(4)}`);
-          }
-          if (metadata.reasoning) {
-            addThought(`Selection: ${metadata.reasoning}`);
-          }
           
           setIsStreaming(false);
           setStreamingMessageId(null);
@@ -1102,7 +1112,7 @@ const Synaptic = memo(({ className = '' }) => {
     } catch (error) {
       console.error('[Synaptic] Send error:', error);
       
-      addThought(`Error: ${error.message}`, 'error');
+      addThought(`❌ Error: ${error.message}`, 'error');
       setActiveProviders([]);
       
       // Remove failed streaming message and add error message
@@ -1125,7 +1135,7 @@ const Synaptic = memo(({ className = '' }) => {
       
       setTimeout(() => setStatus('idle'), 3000);
     }
-  }, [input, isThinking, isStreaming, sessionId, sendToAPI, setAppState, flashEmotion, addThought]);
+  }, [input, isThinking, isStreaming, sessionId, selectedModel, sendToAPI, setAppState, flashEmotion, addThought]);
 
   // ============================================================================
   // QUICK ACTIONS - Copy, Clear, Export
