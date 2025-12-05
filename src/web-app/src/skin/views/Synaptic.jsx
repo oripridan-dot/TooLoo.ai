@@ -1,4 +1,4 @@
-// @version 3.3.166
+// @version 3.3.167
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1617,16 +1617,6 @@ const Synaptic = memo(({ className = '' }) => {
     if (action && action.length > 20) {
       setInput(action);
       inputRef.current?.focus();
-      // Auto-submit after a short delay to give user a chance to see the prompt
-      setTimeout(() => {
-        if (inputRef.current) {
-          // Trigger form submission
-          const form = inputRef.current.closest('form');
-          if (form) {
-            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-          }
-        }
-      }, 100);
       return;
     }
 
