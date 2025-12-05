@@ -1,4 +1,4 @@
-// @version 3.3.41
+// @version 3.3.43
 // TooLoo.ai Liquid Chat Components
 // v3.3.35 - Added Execute button for team-validated code execution in chat
 // Rich visual display capabilities for chat responses
@@ -20,6 +20,7 @@ import {
   ComparisonTable,
   MindMapNode,
   DocumentPreview,
+  UniversalCodeSandbox,
 } from './VisualRenderers';
 
 // ============================================================================
