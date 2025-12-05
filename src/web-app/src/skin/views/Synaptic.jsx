@@ -1,4 +1,4 @@
-// @version 3.3.114
+// @version 3.3.115
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1471,8 +1471,11 @@ const Synaptic = memo(({ className = '' }) => {
           )}
         </div>
 
-        {/* Messages area - Stable layout during streaming */}
-        <div className={`flex-1 overflow-auto scroll-smooth ${largePreview ? 'p-4 md:p-8' : 'p-3 md:p-6'}`}>
+        {/* Messages area - Reader-centric: user stays at top, content streams below */}
+        <div 
+          ref={messagesContainerRef}
+          className={`flex-1 overflow-auto scroll-smooth relative ${largePreview ? 'p-4 md:p-8' : 'p-3 md:p-6'}`}
+        >
           {showWelcome ? (
             <WelcomeMessage onQuickAction={handleQuickAction} />
           ) : (
@@ -1503,6 +1506,23 @@ const Synaptic = memo(({ className = '' }) => {
             </div>
           )}
           <div ref={messagesEndRef} />
+          
+          {/* Floating "writing" indicator - shows when streaming and user scrolled up */}
+          {isStreaming && userScrolledRef.current && (
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              onClick={() => {
+                userScrolledRef.current = false;
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="fixed bottom-32 right-8 z-50 px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm backdrop-blur-sm hover:bg-cyan-500/30 transition-colors flex items-center gap-2 shadow-lg"
+            >
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              Writing... ↓
+            </motion.button>
+          )}
         </div>
 
         {/* Input with ThoughtStream Border wrapping the entire input area */}
