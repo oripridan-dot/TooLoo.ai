@@ -1,4 +1,4 @@
-// @version 3.3.122
+// @version 3.3.123
 // TooLoo.ai Liquid Chat Components
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
@@ -1054,29 +1054,6 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
           </CollapsibleSection>
         );
       })}
-    </div>
-  );
-});
-          <CollapsibleSection
-            key={section.id}
-            title={section.title}
-            level={section.level}
-            defaultOpen={idx === 0 && section.level === 1 && !hasCode}
-            isFirst={idx === 0}
-          >
-            <EnhancedMarkdown content={section.content} isStreaming={false} />
-          </CollapsibleSection>
-        );
-      })}
-      
-      {/* Streaming cursor */}
-      {isStreaming && (
-        <motion.span
-          className="inline-block w-2 h-4 bg-cyan-400 ml-1"
-          animate={{ opacity: [1, 0, 1] }}
-          transition={{ duration: 0.8, repeat: Infinity }}
-        />
-      )}
     </div>
   );
 });
