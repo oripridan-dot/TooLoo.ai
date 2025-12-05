@@ -1,4 +1,4 @@
-// @version 3.3.62
+// @version 3.3.78
 // TooLoo.ai Liquid Chat Components
 // v3.3.62 - Fixed JSX live preview: better code cleaning, error boundary, scope expansion
 // v3.3.53 - Complete LiquidCodeBlock rewrite: Live JSX/SVG/HTML preview, sandbox execution, artifact handoff
@@ -138,7 +138,7 @@ TooLooAvatar.displayName = 'TooLooAvatar';
 // ============================================================================
 
 export const LiquidMessageBubble = memo(
-  ({ message, isUser, isLatest, isStreaming, showAvatar = true, onReact, className = '' }) => {
+  ({ message, isUser, isLatest, isStreaming, showAvatar = true, onReact, className = '', fullWidth = false }) => {
     const { getEmotionValues, getAnimationState } = useLiquidEngine();
     const bubbleRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
@@ -175,6 +175,9 @@ export const LiquidMessageBubble = memo(
       return { textContent: text, specialBlocks: blocks };
     }, [message.content]);
 
+    // Determine max width based on fullWidth prop
+    const maxWidthClass = fullWidth ? 'max-w-[95%]' : 'max-w-[80%]';
+
     return (
       <motion.div
         ref={bubbleRef}
@@ -193,7 +196,7 @@ export const LiquidMessageBubble = memo(
           </div>
         )}
 
-        <div className="max-w-[80%] relative">
+        <div className={`${maxWidthClass} relative`}>
           {/* Main bubble with liquid glass effect */}
           <LiquidGlass
             intensity={isHovered ? 0.8 : 0.4}
@@ -280,12 +283,17 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     // Format 1: Python triple-quoted strings (react_code = """...""")
     const pythonReactRegex = /react_code\s*=\s*(?:"""|'''|")([\s\S]*?)(?:"""|'''|")/g;
     let match;
-    
+
     // Collect all embedded code first
     const embeddedCode = [];
     while ((match = pythonReactRegex.exec(processedContent)) !== null) {
       const code = match[1].trim();
-      if (code.includes('import React') || code.includes('useState') || code.includes('function') || code.includes('const')) {
+      if (
+        code.includes('import React') ||
+        code.includes('useState') ||
+        code.includes('function') ||
+        code.includes('const')
+      ) {
         embeddedCode.push({ type: 'jsx', code, index: match.index, length: match[0].length });
       }
     }
@@ -318,10 +326,13 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     processedContent = content || ''; // Reset
     while ((match = jsxRegex.exec(processedContent)) !== null) {
       // Check if this overlaps with already processed parts
-      const alreadyProcessed = parts.some(p => 
-        p.type !== 'text' && match.index >= lastIndex && match.index < lastIndex + (p.code?.length || 0)
+      const alreadyProcessed = parts.some(
+        (p) =>
+          p.type !== 'text' &&
+          match.index >= lastIndex &&
+          match.index < lastIndex + (p.code?.length || 0)
       );
-      
+
       if (!alreadyProcessed && match.index >= lastIndex) {
         if (match.index > lastIndex) {
           parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
@@ -336,7 +347,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     const rawSvgRegex = /(<svg[^>]*>[\s\S]*?<\/svg>)/gi;
     processedContent = content || '';
     while ((match = rawSvgRegex.exec(processedContent)) !== null) {
-      const alreadyProcessed = parts.some(p => p.type === 'svg' && p.code === match[1]);
+      const alreadyProcessed = parts.some((p) => p.type === 'svg' && p.code === match[1]);
       if (!alreadyProcessed) {
         // Only add if it looks like a complete SVG
         if (match[1].includes('viewBox') || match[1].includes('width')) {
@@ -547,7 +558,17 @@ EnhancedMarkdown.displayName = 'EnhancedMarkdown';
 // ============================================================================
 
 // Languages that can be executed server-side
-const EXECUTABLE_LANGUAGES = ['javascript', 'js', 'typescript', 'ts', 'python', 'py', 'shell', 'bash', 'sh'];
+const EXECUTABLE_LANGUAGES = [
+  'javascript',
+  'js',
+  'typescript',
+  'ts',
+  'python',
+  'py',
+  'shell',
+  'bash',
+  'sh',
+];
 
 // Languages that can be previewed client-side
 const PREVIEWABLE_LANGUAGES = ['jsx', 'react', 'tsx', 'svg', 'html'];
@@ -558,15 +579,15 @@ class PreviewErrorBoundary extends React.Component {
     super(props);
     this.state = { hasError: false, error: null };
   }
-  
+
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
-  
+
   componentDidCatch(error, errorInfo) {
     console.warn('[LivePreview] Error caught:', error.message);
   }
-  
+
   render() {
     if (this.state.hasError) {
       return (
@@ -585,7 +606,7 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   const [executionResult, setExecutionResult] = useState(null);
   const [showPreview, setShowPreview] = useState(true);
   const [previewError, setPreviewError] = useState(null);
-  
+
   const codeString = String(children).replace(/\n$/, '');
   const lang = (language || '').toLowerCase();
 
@@ -599,32 +620,32 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   // Clean and prepare JSX code for react-live preview
   const cleanedCode = useMemo(() => {
     if (!isJSX) return codeString;
-    
+
     let cleaned = codeString;
-    
+
     // Remove import statements
     cleaned = cleaned.replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '');
     cleaned = cleaned.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
-    
+
     // Remove export statements but keep the code
     cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
     cleaned = cleaned.replace(/^export\s+(?:const|let|var|function|class)\s+/gm, '$1 ');
     cleaned = cleaned.replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
-    
+
     // Clean up any empty lines at start
     cleaned = cleaned.replace(/^\s*\n+/, '');
-    
+
     // Check if we need to add a render call
     const hasRenderCall = cleaned.includes('render(') || cleaned.includes('render(<');
-    
+
     if (!hasRenderCall) {
       // Find the main component (function or const arrow function)
       const funcMatch = cleaned.match(/function\s+([A-Z]\w*)\s*\(/);
       const constMatch = cleaned.match(/const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)|[^=])\s*=>/);
       const classMatch = cleaned.match(/class\s+([A-Z]\w*)\s+extends/);
-      
+
       const componentName = funcMatch?.[1] || constMatch?.[1] || classMatch?.[1];
-      
+
       if (componentName) {
         // Wrap in try-catch for safety
         cleaned = `
@@ -642,24 +663,27 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
         }
       }
     }
-    
+
     return cleaned.trim();
   }, [codeString, isJSX]);
 
   // Default scope for react-live with common utilities
-  const liveScope = useMemo(() => ({
-    React,
-    useState: React.useState,
-    useEffect: React.useEffect,
-    useCallback: React.useCallback,
-    useMemo: React.useMemo,
-    useRef: React.useRef,
-    useReducer: React.useReducer,
-    useContext: React.useContext,
-    Fragment: React.Fragment,
-    motion,
-    AnimatePresence,
-  }), []);
+  const liveScope = useMemo(
+    () => ({
+      React,
+      useState: React.useState,
+      useEffect: React.useEffect,
+      useCallback: React.useCallback,
+      useMemo: React.useMemo,
+      useRef: React.useRef,
+      useReducer: React.useReducer,
+      useContext: React.useContext,
+      Fragment: React.Fragment,
+      motion,
+      AnimatePresence,
+    }),
+    []
+  );
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(codeString);
@@ -698,7 +722,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
           artifacts: result.data?.artifacts,
           teamId: result.data?.teamId,
         });
-        
+
         // If there are artifacts, offer to hand them off
         if (result.data?.artifacts && onArtifactCreate) {
           onArtifactCreate(result.data.artifacts);
@@ -722,7 +746,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
   // Create artifact from this code
   const handleCreateArtifact = async () => {
     const artifactType = isJSX ? 'component' : isSVG ? 'visual' : isHTML ? 'html' : 'code';
-    
+
     try {
       const response = await fetch('/api/v1/agent/artifacts', {
         method: 'POST',
@@ -738,7 +762,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
           },
         }),
       });
-      
+
       const result = await response.json();
       if (result.ok && onArtifactCreate) {
         onArtifactCreate([result.data]);
@@ -755,18 +779,16 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
       let safeSvg = codeString
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
         .replace(/\bon\w+\s*=/gi, 'data-removed=');
-      
+
       return (
-        <div 
+        <div
           className="p-4 bg-[#0a0a0a] flex items-center justify-center min-h-[100px] overflow-auto"
           dangerouslySetInnerHTML={{ __html: safeSvg }}
         />
       );
     } catch (e) {
       return (
-        <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
-          ⚠️ Unable to preview SVG
-        </div>
+        <div className="p-4 text-amber-400 text-xs bg-amber-500/10">⚠️ Unable to preview SVG</div>
       );
     }
   };
@@ -800,12 +822,10 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 font-mono uppercase">{language || 'code'}</span>
           {canPreview && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400">
-              Live
-            </span>
+            <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400">Live</span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-1">
           {/* Preview toggle for previewable languages */}
           {canPreview && (
@@ -818,7 +838,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
               {showPreview ? '👁 Preview' : '📝 Code'}
             </button>
           )}
-          
+
           {/* Execute button */}
           {(canExecute || canPreview) && (
             <button
@@ -833,7 +853,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
               {executing ? '⚡ Running...' : '▶ Run'}
             </button>
           )}
-          
+
           {/* Create Artifact button */}
           {canPreview && (
             <button
@@ -844,7 +864,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
               📦 Save
             </button>
           )}
-          
+
           {/* Copy button */}
           <button
             onClick={handleCopy}
@@ -908,9 +928,13 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
             exit={{ height: 0, opacity: 0 }}
             className="border-t border-white/10 overflow-hidden"
           >
-            <div className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <div
+              className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+            >
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span
+                  className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}
+                >
                   {executionResult.success ? '✓ Execution Successful' : '✕ Execution Failed'}
                 </span>
                 <div className="flex items-center gap-2">
@@ -930,7 +954,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
               <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-40 overflow-auto">
                 {executionResult.success ? executionResult.output : executionResult.error}
               </pre>
-              
+
               {/* Artifact buttons if execution produced artifacts */}
               {executionResult.artifacts?.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-white/10 flex gap-2">
