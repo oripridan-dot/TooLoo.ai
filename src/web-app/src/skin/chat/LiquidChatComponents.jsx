@@ -1,4 +1,4 @@
-// @version 3.3.128
+// @version 3.3.129
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -1479,7 +1479,8 @@ render(<${componentName} />);`;
         {isJSX && showPreview && (
           <div className="bg-[#0a0a0a] border-b border-white/10">
             <PreviewErrorBoundary>
-              <LiveProvider code={cleanedCode} scope={liveScope} noInline>
+              {/* Key forces remount when code changes, preventing hook violations */}
+              <LiveProvider key={cleanedCode.slice(0, 100)} code={cleanedCode} scope={liveScope} noInline>
                 <div className="p-4 min-h-[80px]">
                   <LivePreview />
                 </div>
