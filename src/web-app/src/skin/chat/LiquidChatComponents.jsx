@@ -1,4 +1,4 @@
-// @version 3.3.168
+// @version 3.3.169
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -292,6 +292,11 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     const visuals = [];
     let processedContent = content || '';
     let lastIndex = 0;
+
+    // Debug: Log content for SVG detection
+    if (processedContent.includes('svg') || processedContent.includes('SVG')) {
+      console.log('[EnhancedMarkdown] Content contains SVG-related text, length:', processedContent.length);
+    }
 
     // PHASE 1: Extract embedded React code from various formats
     // Format 1: Python triple-quoted strings (react_code = """...""")
