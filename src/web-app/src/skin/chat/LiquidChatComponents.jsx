@@ -1,5 +1,6 @@
-// @version 3.3.97
+// @version 3.3.98
 // TooLoo.ai Liquid Chat Components
+// v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
 // v3.3.82 - Added inline code execution support via /run and /execute commands
 // v3.3.62 - Fixed JSX live preview: better code cleaning, error boundary, scope expansion
