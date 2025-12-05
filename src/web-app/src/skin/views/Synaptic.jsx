@@ -1,4 +1,4 @@
-// @version 3.3.72
+// @version 3.3.73
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -123,7 +123,8 @@ const useChatAPI = () => {
                 cost_usd: data.cost_usd,
                 reasoning: data.reasoning,
               };
-              onThought?.(`✅ Completed via ${data.provider} (${data.model})`);
+              const displayModel = data.model || data.provider || 'default';
+              onThought?.(`✅ Completed via ${data.provider}`, 'success');
               if (data.cost_usd) onThought?.(`💰 Cost: $${data.cost_usd.toFixed(4)}`);
               if (data.reasoning) onThought?.(`📝 ${data.reasoning}`);
             }
@@ -847,22 +848,22 @@ const ThinkingProcessPanel = memo(({ thoughts = [], isActive = false, provider, 
   }, [thoughts]);
 
   return (
-    <LiquidPanel variant="glass" className="p-4">
+    <LiquidPanel variant="elevated" className="p-4 bg-gradient-to-br from-cyan-950/30 to-purple-950/20 border border-cyan-500/20">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
           🧠 TooLoo Process
           {isActive && (
             <motion.span
               animate={{ opacity: [1, 0.5, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
-              className="text-cyan-400"
+              className="text-cyan-400 text-xs"
             >
-              Live
+              • Live
             </motion.span>
           )}
         </h3>
         {provider && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400">
+          <span className="text-xs px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
             {provider}
           </span>
         )}
@@ -871,7 +872,7 @@ const ThinkingProcessPanel = memo(({ thoughts = [], isActive = false, provider, 
       {/* Progress bar when active */}
       {isActive && (
         <div className="mb-3">
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500"
               animate={{ x: ['-100%', '100%'] }}
@@ -879,32 +880,38 @@ const ThinkingProcessPanel = memo(({ thoughts = [], isActive = false, provider, 
               style={{ width: '50%' }}
             />
           </div>
+          <p className="text-[10px] text-cyan-400 mt-1 text-center">Processing your request...</p>
         </div>
       )}
       
       {/* Thought steps */}
-      <div ref={containerRef} className="space-y-1.5 max-h-48 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+      <div ref={containerRef} className="space-y-2 max-h-64 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
         <AnimatePresence mode="popLayout">
           {thoughts.map((thought, i) => (
             <motion.div
               key={thought.id || i}
-              initial={{ opacity: 0, x: -10, height: 0 }}
-              animate={{ opacity: 1, x: 0, height: 'auto' }}
-              exit={{ opacity: 0, x: 10, height: 0 }}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.2 }}
               className={`
-                flex items-start gap-2 text-[11px] py-1.5 px-2 rounded bg-white/5
-                ${thought.type === 'success' ? 'border-l-2 border-emerald-500' : 
-                  thought.type === 'error' ? 'border-l-2 border-red-500' : 
-                  'border-l-2 border-cyan-500/50'}
+                flex items-start gap-2 text-xs py-2 px-3 rounded-lg
+                ${thought.type === 'success' 
+                  ? 'bg-emerald-500/10 border border-emerald-500/30' 
+                  : thought.type === 'error' 
+                    ? 'bg-red-500/10 border border-red-500/30' 
+                    : 'bg-white/5 border border-white/10'}
               `}
             >
-              <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full mt-1 ${
+              <span className={`flex-shrink-0 w-2 h-2 rounded-full mt-0.5 ${
                 thought.type === 'success' ? 'bg-emerald-400' : 
                 thought.type === 'error' ? 'bg-red-400' : 'bg-cyan-400'
               }`} />
-              <span className="text-gray-300 flex-1">{thought.text}</span>
-              <span className="text-gray-600 text-[9px]">
+              <span className={`flex-1 ${
+                thought.type === 'success' ? 'text-emerald-300' : 
+                thought.type === 'error' ? 'text-red-300' : 'text-gray-300'
+              }`}>{thought.text}</span>
+              <span className="text-gray-600 text-[9px] flex-shrink-0">
                 {new Date(thought.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             </motion.div>
@@ -912,9 +919,12 @@ const ThinkingProcessPanel = memo(({ thoughts = [], isActive = false, provider, 
         </AnimatePresence>
         
         {thoughts.length === 0 && (
-          <p className="text-xs text-gray-600 italic text-center py-4">
-            Awaiting process activity...
-          </p>
+          <div className="text-center py-6">
+            <div className="text-2xl mb-2">🧠</div>
+            <p className="text-xs text-gray-500">
+              Send a message to see TooLoo's thinking process
+            </p>
+          </div>
         )}
       </div>
     </LiquidPanel>
@@ -1060,6 +1070,9 @@ const Synaptic = memo(({ className = '' }) => {
       setIsStreaming(true);
       setStatus('streaming');
       setAppState('streaming');
+      
+      // Add streaming start thought
+      addThought('📡 Stream connected, receiving response...', 'success');
 
       await sendToAPI(userMessage.content, {
         mode: 'quick',
