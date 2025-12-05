@@ -1,4 +1,4 @@
-// @version 3.3.77
+// @version 3.3.79
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -222,7 +222,7 @@ const useChatAPI = () => {
 // MESSAGE BUBBLE - Enhanced with Liquid Skin (wraps LiquidMessageBubble)
 // ============================================================================
 
-const MessageBubble = memo(({ message, isUser, isLatest, isStreaming, onReact }) => {
+const MessageBubble = memo(({ message, isUser, isLatest, isStreaming, onReact, fullWidth = false }) => {
   // Use the enhanced LiquidMessageBubble from chat module
   return (
     <LiquidMessageBubble
@@ -232,6 +232,7 @@ const MessageBubble = memo(({ message, isUser, isLatest, isStreaming, onReact })
       isStreaming={isStreaming}
       showAvatar={true}
       onReact={onReact}
+      fullWidth={fullWidth}
     />
   );
 });
