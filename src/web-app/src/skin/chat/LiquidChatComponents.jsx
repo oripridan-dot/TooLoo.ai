@@ -1,4 +1,4 @@
-// @version 3.3.171
+// @version 3.3.172
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -1414,8 +1414,11 @@ render(<${componentName} />);`;
       // Check if we have valid SVG content
       if (!codeString || codeString.trim().length === 0) {
         return (
-          <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
-            ⚠️ Empty SVG content
+          <div className="p-4 flex items-center justify-center min-h-[80px] bg-[#0a0a0a]">
+            <div className="text-gray-500 text-xs flex items-center gap-2">
+              <span className="animate-pulse">⏳</span>
+              Waiting for SVG content...
+            </div>
           </div>
         );
       }
@@ -1427,9 +1430,23 @@ render(<${componentName} />);`;
 
       // Check if it looks like valid SVG
       if (!safeSvg.includes('<svg') || !safeSvg.includes('</svg>')) {
+        // Could be still streaming - show partial content
+        if (safeSvg.includes('<svg')) {
+          return (
+            <div className="p-4 flex flex-col items-center justify-center min-h-[80px] bg-[#0a0a0a]">
+              <div className="text-cyan-400 text-xs flex items-center gap-2 mb-2">
+                <span className="animate-spin">◐</span>
+                Rendering SVG...
+              </div>
+              <pre className="text-[10px] text-gray-600 max-h-16 overflow-hidden">
+                {codeString.substring(0, 150)}...
+              </pre>
+            </div>
+          );
+        }
         return (
           <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
-            ⚠️ Content doesn't appear to be valid SVG (missing svg tags)
+            ⚠️ Content doesn't appear to be valid SVG
             <pre className="mt-2 text-[10px] text-gray-500 max-h-20 overflow-auto">
               {codeString.substring(0, 200)}...
             </pre>
