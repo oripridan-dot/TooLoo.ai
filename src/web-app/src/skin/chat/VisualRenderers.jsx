@@ -1,5 +1,6 @@
-// @version 3.3.42
+// @version 3.3.46
 // TooLoo.ai Visual Renderers
+// v3.3.44 - Added UniversalCodeSandbox for dynamic code rendering + execution
 // Rich visual components for rendering AI-generated visual content
 // Supports SVG, diagrams, charts, animations, and interactive elements
 
