@@ -1,4 +1,4 @@
-// @version 3.3.98
+// @version 3.3.104
 // TooLoo.ai Liquid Chat Components
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
@@ -561,33 +561,37 @@ EnhancedMarkdown.displayName = 'EnhancedMarkdown';
 // Parses markdown headers and creates a clean outline with expandable content
 // ============================================================================
 
-const CollapsibleSection = memo(({ title, level, children, defaultOpen = true, isFirst = false }) => {
+const CollapsibleSection = memo(({ title, level, children, defaultOpen = false, isFirst = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
-  // Visual hierarchy based on header level
+  // Visual hierarchy based on header level - clean, clickable sections
   const levelStyles = {
     1: { 
-      title: 'text-lg font-bold text-white',
-      icon: '▸',
-      bg: 'bg-white/5 hover:bg-white/8',
+      title: 'text-base font-semibold text-white',
+      icon: '▾',
+      iconClosed: '▸',
+      bg: 'bg-white/[0.03] hover:bg-white/[0.06]',
       border: 'border-white/10'
     },
     2: { 
-      title: 'text-base font-semibold text-gray-200',
-      icon: '▸',
-      bg: 'bg-white/3 hover:bg-white/5',
+      title: 'text-sm font-medium text-gray-200',
+      icon: '▾',
+      iconClosed: '▸',
+      bg: 'hover:bg-white/[0.04]',
       border: 'border-white/5'
     },
     3: { 
-      title: 'text-sm font-medium text-gray-300',
-      icon: '▸',
-      bg: 'hover:bg-white/3',
+      title: 'text-sm text-gray-300',
+      icon: '▾',
+      iconClosed: '▸',
+      bg: 'hover:bg-white/[0.03]',
       border: 'border-transparent'
     },
     4: { 
-      title: 'text-sm text-gray-400',
-      icon: '•',
-      bg: 'hover:bg-white/3',
+      title: 'text-xs text-gray-400',
+      icon: '–',
+      iconClosed: '+',
+      bg: 'hover:bg-white/[0.02]',
       border: 'border-transparent'
     },
   };
@@ -600,16 +604,15 @@ const CollapsibleSection = memo(({ title, level, children, defaultOpen = true, i
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all
+          w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left transition-all
           ${style.bg} border ${style.border}
         `}
       >
-        <span 
-          className={`text-gray-500 text-xs transition-transform ${isOpen ? 'rotate-90' : ''}`}
-        >
-          {style.icon}
+        <span className="text-gray-500 text-[10px] w-3">
+          {isOpen ? style.icon : style.iconClosed}
         </span>
         <span className={style.title}>{title}</span>
+        {!isOpen && <span className="text-[10px] text-gray-600 ml-auto">click to expand</span>}
       </button>
       
       <AnimatePresence>
@@ -711,7 +714,7 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
             key={section.id}
             title={section.title}
             level={section.level}
-            defaultOpen={idx === 0 || section.level === 1}
+            defaultOpen={idx === 0 && section.level === 1}
             isFirst={idx === 0}
           >
             <EnhancedMarkdown content={section.content} isStreaming={false} />
