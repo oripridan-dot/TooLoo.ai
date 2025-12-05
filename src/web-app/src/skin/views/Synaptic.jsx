@@ -1,4 +1,4 @@
-// @version 3.3.81
+// @version 3.3.82
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1298,30 +1298,21 @@ const Synaptic = memo(({ className = '' }) => {
     setAppState('processing');
     setActiveProviders([]); // Reset active providers
     setCurrentStage('connecting'); // Start with connecting stage
+    setThoughts([]); // Clear previous thoughts
     
     // Get selected model config
     const modelConfig = AI_MODELS[selectedModel] || AI_MODELS.auto;
     
-    // Initial thoughts with model info
-    addThought(`📥 Received: "${input.substring(0, 40)}${input.length > 40 ? '...' : ''}"`);
+    // Initial thought - will be replaced by real backend events
+    addThought(`📥 Sending: "${input.substring(0, 40)}${input.length > 40 ? '...' : ''}"`);
     
-    // Stage: Analyzing
-    setTimeout(() => setCurrentStage('analyzing'), 300);
-    
-    if (selectedModel === 'auto') {
-      addThought('🤖 Auto mode: TooLoo selecting optimal model...');
-    } else {
-      addThought(`🎯 Using ${modelConfig.label} (${modelConfig.description})`);
+    // Show initial provider info
+    if (selectedModel !== 'auto') {
+      setActiveProviders([{ 
+        provider: modelConfig.provider || 'TooLoo', 
+        model: modelConfig.model || 'Auto' 
+      }]);
     }
-    
-    // Stage: Routing
-    setTimeout(() => setCurrentStage('routing'), 800);
-    
-    // Show orchestration in border
-    setActiveProviders([{ 
-      provider: modelConfig.provider || 'TooLoo', 
-      model: modelConfig.model || 'Auto-selecting...' 
-    }]);
 
     const streamingMsgId = Date.now() + 1;
     
@@ -1338,22 +1329,27 @@ const Synaptic = memo(({ className = '' }) => {
       
       setMessages(prev => [...prev, streamingMessage]);
       setStreamingMessageId(streamingMsgId);
-      setIsThinking(false);
-      setIsStreaming(true);
-      setStatus('streaming');
-      setAppState('streaming');
-      setCurrentStage('streaming'); // Update to streaming stage
-      
-      // Add streaming start thought
-      addThought('📡 Stream connected, receiving response...', 'success');
 
       await sendToAPI(userMessage.content, {
         mode: 'quick',
         sessionId,
         provider: modelConfig.provider, // Pass selected provider
         model: modelConfig.model, // Pass selected model
+        // V3.3.80: Real-time stage updates from backend
+        onStageChange: (stage) => {
+          setCurrentStage(stage);
+          // Update UI state based on stage
+          if (stage === 'streaming') {
+            setIsThinking(false);
+            setIsStreaming(true);
+            setStatus('streaming');
+            setAppState('streaming');
+          } else if (stage === 'complete') {
+            // Will be handled in onComplete
+          }
+        },
         onThought: (text, type = 'info') => {
-          // Emit thinking steps from API
+          // Emit thinking steps from API - these are REAL events now
           addThought(text, type);
         },
         onChunk: (chunk, fullContent) => {
