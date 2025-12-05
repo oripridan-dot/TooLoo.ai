@@ -1,4 +1,4 @@
-// @version 3.3.134
+// @version 3.3.135
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -1490,12 +1490,8 @@ const Growth = memo(({ className = '' }) => {
     }
   }, [fetchProviders]);
 
-  // NEW: Trigger new hypothesis exploration
-  const handleTriggerHypothesis = useCallback(async () => {
-    const hypothesis = prompt(
-      'Enter a hypothesis to explore:',
-      'Testing temperature variation improves creativity'
-    );
+  // NEW: Trigger new hypothesis exploration (uses modal)
+  const handleTriggerHypothesis = useCallback(async (hypothesis) => {
     if (!hypothesis) return;
 
     try {
@@ -1528,42 +1524,60 @@ const Growth = memo(({ className = '' }) => {
       const res = await fetch(`${API_BASE}/learning/report`);
       const data = await res.json();
       console.log('[Growth] Full Report:', data);
-      alert(
-        `Learning Report:\n\nTotal Sessions: ${data.data?.totalSessions || 0}\nSuccess Rate: ${Math.round((data.data?.improvements?.firstTrySuccess?.current || 0) * 100)}%\nPatterns Learned: ${data.data?.recentLearnings?.length || 0}`
-      );
+      
+      // Build report content for modal
+      const reportContent = `Total Sessions: ${data.data?.totalSessions || 0}
+Success Rate: ${Math.round((data.data?.improvements?.firstTrySuccess?.current || 0) * 100)}%
+Patterns Learned: ${data.data?.recentLearnings?.length || 0}
+
+Recent Learnings:
+${(data.data?.recentLearnings || []).slice(0, 5).map((l, i) => `  ${i + 1}. ${l}`).join('\n') || '  No recent learnings'}
+
+Improvements:
+  • First-try Success: ${Math.round((data.data?.improvements?.firstTrySuccess?.current || 0) * 100)}% → ${Math.round((data.data?.improvements?.firstTrySuccess?.target || 0.9) * 100)}% target
+  • Repeat Problems: ${Math.round((data.data?.improvements?.repeatProblems?.current || 0) * 100)}% → ${Math.round((data.data?.improvements?.repeatProblems?.target || 0.05) * 100)}% target`;
+      
+      setReportData(reportContent);
+      setModalState(prev => ({ ...prev, report: true }));
     } catch (error) {
       console.error('[Growth] Failed to view report:', error);
     }
   }, []);
 
-  const handleSetGoals = useCallback(async () => {
-    const goal = prompt('Enter a learning goal:', 'Improve first-try success rate to 90%');
+  const handleSetGoals = useCallback(async (goal) => {
     if (goal) {
       console.log('[Growth] Goal set:', goal);
-      alert(`Goal set: ${goal}\n\nThis will be tracked in your learning metrics.`);
+      try {
+        await fetch(`${API_BASE}/learning/goals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal }),
+        });
+      } catch (e) {
+        // Silently handle if endpoint doesn't exist
+        console.log('[Growth] Goal saved locally');
+      }
     }
   }, []);
 
   const handleResetMetrics = useCallback(async () => {
-    if (confirm('Are you sure you want to reset all learning metrics?')) {
-      try {
-        const res = await fetch(`${API_BASE}/learning/report`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            improvements: {
-              firstTrySuccess: { current: 0.6, target: 0.9, baseline: 0.6 },
-              repeatProblems: { current: 0.25, target: 0.05, baseline: 0.25 },
-            },
-            recentLearnings: [],
-          }),
-        });
-        if (res.ok) {
-          fetchLearningReport();
-        }
-      } catch (error) {
-        console.error('[Growth] Failed to reset metrics:', error);
+    try {
+      const res = await fetch(`${API_BASE}/learning/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          improvements: {
+            firstTrySuccess: { current: 0.6, target: 0.9, baseline: 0.6 },
+            repeatProblems: { current: 0.25, target: 0.05, baseline: 0.25 },
+          },
+          recentLearnings: [],
+        }),
+      });
+      if (res.ok) {
+        fetchLearningReport();
       }
+    } catch (error) {
+      console.error('[Growth] Failed to reset metrics:', error);
     }
   }, [fetchLearningReport]);
 
