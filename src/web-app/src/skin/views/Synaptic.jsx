@@ -1,4 +1,4 @@
-// @version 3.3.80
+// @version 3.3.81
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -101,11 +101,12 @@ const AI_MODELS = {
 
 const useChatAPI = () => {
   const sendMessage = useCallback(async (message, options = {}) => {
-    const { onChunk, onThought, onComplete, onError, mode = 'quick', sessionId, provider, model } = options;
+    const { onChunk, onThought, onStageChange, onComplete, onError, mode = 'quick', sessionId, provider, model } = options;
     
     try {
-      // Emit thinking step
+      // Emit initial connection thought
       onThought?.('🔌 Connecting to TooLoo API...');
+      onStageChange?.('connecting');
       
       const response = await fetch(`${API_BASE}/stream`, {
         method: 'POST',
@@ -118,8 +119,6 @@ const useChatAPI = () => {
           model, // Pass selected model
         }),
       });
-      
-      onThought?.(provider ? `🎯 Routing to ${provider}/${model}...` : '🤖 Auto-selecting best model...');
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -149,6 +148,24 @@ const useChatAPI = () => {
               throw new Error(data.error);
             }
             
+            // V3.3.80: Handle REAL thinking events from backend
+            if (data.thinking) {
+              const { stage, message: thinkingMsg, type } = data.thinking;
+              onThought?.(thinkingMsg, type);
+              
+              // Map backend stages to frontend stages
+              const stageMap = {
+                'analyzing': 'analyzing',
+                'routing': 'routing',
+                'processing': 'processing',
+                'streaming': 'streaming',
+                'complete': 'complete',
+              };
+              if (stageMap[stage]) {
+                onStageChange?.(stageMap[stage]);
+              }
+            }
+            
             // Emit meta info as thinking steps
             if (data.meta) {
               if (data.meta.persona) onThought?.(`🎭 Persona: ${data.meta.persona}`);
@@ -163,6 +180,8 @@ const useChatAPI = () => {
             if (data.chunk) {
               fullContent += data.chunk;
               onChunk?.(data.chunk, fullContent);
+              // Switch to streaming stage when we get first chunk
+              onStageChange?.('streaming');
             }
             
             if (data.done) {
@@ -172,10 +191,10 @@ const useChatAPI = () => {
                 cost_usd: data.cost_usd,
                 reasoning: data.reasoning,
               };
-              const displayModel = data.model || data.provider || 'default';
               onThought?.(`✅ Completed via ${data.provider}`, 'success');
               if (data.cost_usd) onThought?.(`💰 Cost: $${data.cost_usd.toFixed(4)}`);
               if (data.reasoning) onThought?.(`📝 ${data.reasoning}`);
+              onStageChange?.('complete');
             }
           } catch (e) {
             // Skip malformed lines
