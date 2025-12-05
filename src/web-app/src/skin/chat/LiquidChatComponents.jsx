@@ -1,4 +1,4 @@
-// @version 3.3.55
+// @version 3.3.60
 // TooLoo.ai Liquid Chat Components
 // v3.3.53 - Complete LiquidCodeBlock rewrite: Live JSX/SVG/HTML preview, sandbox execution, artifact handoff
 // v3.3.48 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
@@ -551,6 +551,33 @@ const EXECUTABLE_LANGUAGES = ['javascript', 'js', 'typescript', 'ts', 'python', 
 // Languages that can be previewed client-side
 const PREVIEWABLE_LANGUAGES = ['jsx', 'react', 'tsx', 'svg', 'html'];
 
+// Error boundary for live preview
+class PreviewErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error, errorInfo) {
+    console.warn('[LivePreview] Error caught:', error.message);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 text-xs text-amber-400 bg-amber-500/10 rounded">
+          ⚠️ Preview unavailable - {this.state.error?.message || 'Render error'}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...props }) => {
   const [copied, setCopied] = useState(false);
   const [executing, setExecuting] = useState(false);
@@ -568,34 +595,57 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   const isSVG = lang === 'svg';
   const isHTML = lang === 'html';
 
-  // Clean JSX code for preview (remove imports/exports)
+  // Clean and prepare JSX code for react-live preview
   const cleanedCode = useMemo(() => {
     if (!isJSX) return codeString;
     
     let cleaned = codeString;
-    // Remove imports
-    cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
-    // Remove exports but keep component
+    
+    // Remove import statements
+    cleaned = cleaned.replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '');
+    cleaned = cleaned.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
+    
+    // Remove export statements but keep the code
     cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
-    cleaned = cleaned.replace(/^export\s+/gm, '');
-    // Add render call if it's a function component
-    if (cleaned.includes('function') && !cleaned.includes('render(')) {
-      const match = cleaned.match(/function\s+(\w+)/);
-      if (match) {
-        cleaned += `\nrender(<${match[1]} />);`;
+    cleaned = cleaned.replace(/^export\s+(?:const|let|var|function|class)\s+/gm, '$1 ');
+    cleaned = cleaned.replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
+    
+    // Clean up any empty lines at start
+    cleaned = cleaned.replace(/^\s*\n+/, '');
+    
+    // Check if we need to add a render call
+    const hasRenderCall = cleaned.includes('render(') || cleaned.includes('render(<');
+    
+    if (!hasRenderCall) {
+      // Find the main component (function or const arrow function)
+      const funcMatch = cleaned.match(/function\s+([A-Z]\w*)\s*\(/);
+      const constMatch = cleaned.match(/const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)|[^=])\s*=>/);
+      const classMatch = cleaned.match(/class\s+([A-Z]\w*)\s+extends/);
+      
+      const componentName = funcMatch?.[1] || constMatch?.[1] || classMatch?.[1];
+      
+      if (componentName) {
+        // Wrap in try-catch for safety
+        cleaned = `
+try {
+${cleaned}
+render(<${componentName} />);
+} catch (e) {
+render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>);
+}`;
+      } else {
+        // If no component found, try to render as-is (might be raw JSX)
+        const trimmed = cleaned.trim();
+        if (trimmed.startsWith('<') && !trimmed.startsWith('<!')) {
+          cleaned = `render(${trimmed});`;
+        }
       }
     }
-    // Handle arrow function components
-    if (cleaned.includes('const') && cleaned.includes('=>') && !cleaned.includes('render(')) {
-      const match = cleaned.match(/const\s+(\w+)\s*=/);
-      if (match) {
-        cleaned += `\nrender(<${match[1]} />);`;
-      }
-    }
+    
     return cleaned.trim();
   }, [codeString, isJSX]);
 
-  // Default scope for react-live
+  // Default scope for react-live with common utilities
   const liveScope = useMemo(() => ({
     React,
     useState: React.useState,
@@ -603,7 +653,11 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
     useCallback: React.useCallback,
     useMemo: React.useMemo,
     useRef: React.useRef,
+    useReducer: React.useReducer,
+    useContext: React.useContext,
+    Fragment: React.Fragment,
     motion,
+    AnimatePresence,
   }), []);
 
   const handleCopy = async () => {
