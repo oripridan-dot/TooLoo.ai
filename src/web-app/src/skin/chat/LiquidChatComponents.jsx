@@ -1,4 +1,4 @@
-// @version 3.3.96
+// @version 3.3.97
 // TooLoo.ai Liquid Chat Components
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
 // v3.3.82 - Added inline code execution support via /run and /execute commands
@@ -220,7 +220,7 @@ export const LiquidMessageBubble = memo(
               {isUser ? (
                 <p className="break-words">{message.content}</p>
               ) : (
-                <EnhancedMarkdown content={textContent} isStreaming={isStreaming} />
+                <CollapsibleMarkdown content={textContent} isStreaming={isStreaming} />
               )}
             </div>
 
@@ -1908,6 +1908,7 @@ export default {
   LiquidThinkingIndicator,
   WelcomeMessage,
   EnhancedMarkdown,
+  CollapsibleMarkdown,
   LiquidCodeBlock,
   ProviderBadge,
   StreamingIndicator,
