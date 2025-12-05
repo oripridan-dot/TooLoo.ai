@@ -1,11 +1,60 @@
-// @version 3.3.74
+// @version 3.3.75
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
 // Enhanced with Liquid Skin visual capabilities
-// V3.3.68: Model selection, thinking process, large preview mode
+// V3.3.75: Prominent inline process panel, dynamic thinking stages, wider messages
 
 import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
+
+// ============================================================================
+// THINKING STAGES - Dynamic stage definitions with descriptions
+// ============================================================================
+
+const THINKING_STAGES = {
+  connecting: {
+    icon: '🔌',
+    title: 'Connecting',
+    description: 'Establishing secure connection to TooLoo neural network...',
+    color: 'cyan',
+  },
+  analyzing: {
+    icon: '🔍',
+    title: 'Analyzing Request',
+    description: 'Understanding your query and identifying key requirements...',
+    color: 'purple',
+  },
+  routing: {
+    icon: '🧭',
+    title: 'Routing',
+    description: 'Selecting optimal AI model and processing pathway...',
+    color: 'blue',
+  },
+  processing: {
+    icon: '⚡',
+    title: 'Processing',
+    description: 'Generating response with selected AI model...',
+    color: 'amber',
+  },
+  enhancing: {
+    icon: '✨',
+    title: 'Enhancing',
+    description: 'Refining and optimizing the response for clarity...',
+    color: 'emerald',
+  },
+  streaming: {
+    icon: '📡',
+    title: 'Streaming',
+    description: 'Delivering response in real-time...',
+    color: 'cyan',
+  },
+  complete: {
+    icon: '✅',
+    title: 'Complete',
+    description: 'Response delivered successfully!',
+    color: 'emerald',
+  },
+};
 import { motion, AnimatePresence } from 'framer-motion';
 import { LiquidPanel } from '../shell/LiquidShell';
 import { useSkinEmotion, useChatEmotion } from '../hooks';
@@ -190,15 +239,208 @@ const MessageBubble = memo(({ message, isUser, isLatest, isStreaming, onReact })
 MessageBubble.displayName = 'MessageBubble';
 
 // ============================================================================
-// THINKING INDICATOR - Enhanced with Liquid Skin (wraps LiquidThinkingIndicator)
+// INLINE PROCESS PANEL - Large, prominent thinking display (replaces ThinkingIndicator)
 // ============================================================================
 
-const ThinkingIndicator = memo(({ stage = 'thinking' }) => {
-  // Use the enhanced LiquidThinkingIndicator from chat module
-  return <LiquidThinkingIndicator stage={stage} showNeural={true} />;
+const InlineProcessPanel = memo(({ 
+  thoughts = [], 
+  isActive = false, 
+  currentStage = 'connecting',
+  provider,
+  model,
+  modelLabel
+}) => {
+  const containerRef = useRef(null);
+  const [progressWidth, setProgressWidth] = useState(0);
+  
+  // Get current stage info
+  const stageInfo = THINKING_STAGES[currentStage] || THINKING_STAGES.processing;
+  
+  // Auto-scroll and progress animation
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [thoughts]);
+  
+  // Animate progress based on stage
+  useEffect(() => {
+    const stageOrder = ['connecting', 'analyzing', 'routing', 'processing', 'enhancing', 'streaming', 'complete'];
+    const currentIndex = stageOrder.indexOf(currentStage);
+    const progress = ((currentIndex + 1) / stageOrder.length) * 100;
+    setProgressWidth(progress);
+  }, [currentStage]);
+
+  const stageColors = {
+    cyan: { bg: 'from-cyan-500/30 to-cyan-600/20', border: 'border-cyan-500/40', text: 'text-cyan-400', glow: 'shadow-cyan-500/30' },
+    purple: { bg: 'from-purple-500/30 to-purple-600/20', border: 'border-purple-500/40', text: 'text-purple-400', glow: 'shadow-purple-500/30' },
+    blue: { bg: 'from-blue-500/30 to-blue-600/20', border: 'border-blue-500/40', text: 'text-blue-400', glow: 'shadow-blue-500/30' },
+    amber: { bg: 'from-amber-500/30 to-amber-600/20', border: 'border-amber-500/40', text: 'text-amber-400', glow: 'shadow-amber-500/30' },
+    emerald: { bg: 'from-emerald-500/30 to-emerald-600/20', border: 'border-emerald-500/40', text: 'text-emerald-400', glow: 'shadow-emerald-500/30' },
+  };
+  
+  const colors = stageColors[stageInfo.color] || stageColors.cyan;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="w-full mb-6"
+    >
+      <div className={`
+        relative overflow-hidden rounded-2xl
+        bg-gradient-to-br ${colors.bg}
+        border-2 ${colors.border}
+        shadow-xl ${colors.glow}
+        backdrop-blur-xl
+      `}>
+        {/* Animated background pulse */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        />
+        
+        {/* Header with brain animation */}
+        <div className="relative p-5 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Animated brain icon */}
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-4xl"
+              >
+                🧠
+              </motion.div>
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                  TooLoo Process
+                  <motion.span
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className={`text-sm font-normal ${colors.text}`}
+                  >
+                    • Live
+                  </motion.span>
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">Neural processing in progress</p>
+              </div>
+            </div>
+            
+            {/* Model badge */}
+            {(provider || modelLabel) && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-3 py-1.5 rounded-full bg-white/10 text-white border border-white/20">
+                  {modelLabel || provider}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Current Stage - PROMINENT */}
+        <div className="relative p-6">
+          <motion.div
+            key={currentStage}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4 mb-4"
+          >
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="text-5xl"
+            >
+              {stageInfo.icon}
+            </motion.span>
+            <div className="flex-1">
+              <h3 className={`text-2xl font-bold ${colors.text}`}>
+                {stageInfo.title}
+              </h3>
+              <p className="text-gray-300 text-base mt-1">
+                {stageInfo.description}
+              </p>
+            </div>
+          </motion.div>
+          
+          {/* Progress bar */}
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-gray-500 mb-2">
+              <span>Progress</span>
+              <span className={colors.text}>{Math.round(progressWidth)}%</span>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className={`h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500 rounded-full`}
+                initial={{ width: 0 }}
+                animate={{ width: `${progressWidth}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
+          
+          {/* Thought steps log */}
+          <div className="bg-black/30 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-gray-400">Process Log</h4>
+              <span className="text-xs text-gray-500">{thoughts.length} steps</span>
+            </div>
+            <div 
+              ref={containerRef} 
+              className="space-y-2 max-h-40 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
+            >
+              <AnimatePresence mode="popLayout">
+                {thoughts.slice(-10).map((thought, i) => (
+                  <motion.div
+                    key={thought.id || i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className={`
+                      flex items-start gap-3 text-sm py-2 px-3 rounded-lg
+                      ${thought.type === 'success' 
+                        ? 'bg-emerald-500/10 border border-emerald-500/30' 
+                        : thought.type === 'error' 
+                          ? 'bg-red-500/10 border border-red-500/30' 
+                          : 'bg-white/5 border border-white/10'}
+                    `}
+                  >
+                    <span className={`flex-shrink-0 w-2 h-2 rounded-full mt-1.5 ${
+                      thought.type === 'success' ? 'bg-emerald-400' : 
+                      thought.type === 'error' ? 'bg-red-400' : 'bg-cyan-400'
+                    }`} />
+                    <span className={`flex-1 ${
+                      thought.type === 'success' ? 'text-emerald-300' : 
+                      thought.type === 'error' ? 'text-red-300' : 'text-gray-300'
+                    }`}>{thought.text}</span>
+                    <span className="text-gray-600 text-xs flex-shrink-0">
+                      {new Date(thought.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              
+              {thoughts.length === 0 && (
+                <div className="text-center py-4 text-gray-500 text-sm">
+                  Waiting for process steps...
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 });
 
-ThinkingIndicator.displayName = 'ThinkingIndicator';
+InlineProcessPanel.displayName = 'InlineProcessPanel';
 
 // ============================================================================
 // NEURAL PULSE - Side panel showing brain activity
