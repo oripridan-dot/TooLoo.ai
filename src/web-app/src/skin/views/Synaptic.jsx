@@ -1,4 +1,4 @@
-// @version 3.3.102
+// @version 3.3.103
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -342,7 +342,6 @@ const InlineProcessPanel = memo(({
       )}
     </div>
   );
-});
 });
 
 InlineProcessPanel.displayName = 'InlineProcessPanel';
