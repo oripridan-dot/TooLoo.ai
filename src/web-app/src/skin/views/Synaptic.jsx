@@ -1,4 +1,4 @@
-// @version 3.3.95
+// @version 3.3.99
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -648,125 +648,42 @@ const ThoughtStreamBorder = memo(({
   activeProviders = [], // Array of {provider, model} being used
   className = '' 
 }) => {
-  const containerRef = useRef(null);
-  
-  // Border animation position (0-360 degrees around the perimeter)
-  const [borderAngle, setBorderAngle] = useState(0);
-
-  // Animate the pulse around the border
-  useEffect(() => {
-    const speed = isActive ? 3 : 0.5; // Faster when active
-    const interval = setInterval(() => {
-      setBorderAngle(prev => (prev + speed) % 360);
-    }, 20);
-
-    return () => clearInterval(interval);
-  }, [isActive]);
-
-  // Border thickness based on state
-  const borderThickness = isActive ? 3 : 1;
-
   return (
-    <div 
-      ref={containerRef}
-      className={`relative ${className}`}
-    >
-      {/* Animated border wrapper - always visible, intensity changes */}
+    <div className={`relative ${className}`}>
+      {/* Simple border - no animation */}
       <div 
-        className="absolute rounded-xl pointer-events-none transition-all duration-300"
-        style={{
-          inset: `-${borderThickness}px`,
-          background: `conic-gradient(from ${borderAngle}deg at 50% 50%, 
-            ${isActive ? 'rgba(6,182,212,0.9)' : 'rgba(6,182,212,0.3)'} 0deg, 
-            ${isActive ? 'rgba(139,92,246,0.9)' : 'rgba(139,92,246,0.2)'} 90deg, 
-            ${isActive ? 'rgba(6,182,212,0.9)' : 'rgba(6,182,212,0.3)'} 180deg, 
-            ${isActive ? 'rgba(139,92,246,0.9)' : 'rgba(139,92,246,0.2)'} 270deg,
-            ${isActive ? 'rgba(6,182,212,0.9)' : 'rgba(6,182,212,0.3)'} 360deg
-          )`,
-          opacity: isActive ? 1 : 0.6,
-        }}
-      />
-      
-      {/* Inner mask to show only the border */}
-      <div 
-        className="absolute rounded-xl pointer-events-none"
-        style={{
-          inset: '0px',
-          background: '#050505',
-        }}
+        className={`absolute inset-0 rounded-xl pointer-events-none border transition-colors duration-300 ${
+          isActive ? 'border-white/20' : 'border-white/5'
+        }`}
       />
 
       {/* Content area with provider info */}
       <div className="relative z-10 flex items-center justify-between px-3 py-1.5 min-h-[28px]">
         {/* Left side: Current thought/status */}
-        <AnimatePresence mode="wait">
-          {isActive && thoughts.length > 0 ? (
-            <motion.span
-              key={thoughts[thoughts.length - 1]?.id || 'thought'}
-              className="text-[10px] text-cyan-400/80 truncate max-w-[40%] font-mono"
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.15 }}
-            >
-              {thoughts[thoughts.length - 1]?.text}
-            </motion.span>
-          ) : isActive ? (
-            <motion.span
-              className="text-[10px] text-gray-500 font-mono"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              Processing...
-            </motion.span>
-          ) : (
-            <span className="text-[10px] text-gray-600 font-mono">Ready • TooLoo</span>
-          )}
-        </AnimatePresence>
+        {isActive && thoughts.length > 0 ? (
+          <span className="text-[10px] text-gray-400 truncate max-w-[50%]">
+            {thoughts[thoughts.length - 1]?.text}
+          </span>
+        ) : isActive ? (
+          <span className="text-[10px] text-gray-500">Processing...</span>
+        ) : (
+          <span className="text-[10px] text-gray-600">Ready</span>
+        )}
 
         {/* Right side: Active providers during processing */}
-        <AnimatePresence>
-          {isActive && activeProviders.length > 0 && (
-            <motion.div
-              className="flex items-center gap-1.5"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-            >
-              {activeProviders.map((p, i) => (
-                <motion.div
-                  key={p.provider || i}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-medium"
-                  style={{
-                    background: getProviderColor(p.provider).bg,
-                    color: getProviderColor(p.provider).text,
-                    border: `1px solid ${getProviderColor(p.provider).border}`,
-                  }}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <ProviderLogo provider={p.provider} size={12} />
-                  <span>{p.model || p.provider}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isActive && activeProviders.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            {activeProviders.map((p, i) => (
+              <div
+                key={p.provider || i}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] bg-white/5 text-gray-400 border border-white/10"
+              >
+                <span>{p.model || p.provider}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Shimmer overlay when active */}
-      {isActive && (
-        <motion.div
-          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-        >
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          />
-        </motion.div>
-      )}
     </div>
   );
 });
