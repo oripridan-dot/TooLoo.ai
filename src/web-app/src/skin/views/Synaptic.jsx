@@ -1,4 +1,4 @@
-// @version 3.3.99
+// @version 3.3.100
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -710,35 +710,15 @@ const getProviderColor = (provider) => {
 ThoughtStreamBorder.displayName = 'ThoughtStreamBorder';
 
 // ============================================================================
-// INPUT BORDER ANIMATION - Wraps entire input section with animated border
+// INPUT BORDER ANIMATION - Simple, quiet border for input section
 // ============================================================================
 
 const InputBorderAnimation = memo(({ isActive = false }) => {
-  const [angle, setAngle] = useState(0);
-
-  useEffect(() => {
-    const speed = isActive ? 4 : 0.8;
-    const interval = setInterval(() => {
-      setAngle(prev => (prev + speed) % 360);
-    }, 20);
-    return () => clearInterval(interval);
-  }, [isActive]);
-
-  const thickness = isActive ? 3 : 1;
-
   return (
     <div 
-      className="absolute pointer-events-none rounded-xl transition-all duration-300"
-      style={{
-        inset: `-${thickness}px`,
-        background: `conic-gradient(from ${angle}deg at 50% 50%, 
-          ${isActive ? 'rgba(6,182,212,0.95)' : 'rgba(6,182,212,0.25)'} 0deg, 
-          ${isActive ? 'rgba(139,92,246,0.95)' : 'rgba(139,92,246,0.15)'} 90deg, 
-          ${isActive ? 'rgba(6,182,212,0.95)' : 'rgba(6,182,212,0.25)'} 180deg, 
-          ${isActive ? 'rgba(139,92,246,0.95)' : 'rgba(139,92,246,0.15)'} 270deg,
-          ${isActive ? 'rgba(6,182,212,0.95)' : 'rgba(6,182,212,0.25)'} 360deg
-        )`,
-      }}
+      className={`absolute inset-0 pointer-events-none rounded-xl transition-all duration-300 border ${
+        isActive ? 'border-white/20' : 'border-white/5'
+      }`}
     />
   );
 });
