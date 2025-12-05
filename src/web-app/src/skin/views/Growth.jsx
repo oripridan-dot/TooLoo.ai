@@ -1,4 +1,4 @@
-// @version 3.3.136
+// @version 3.3.137
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -1827,13 +1827,13 @@ Improvements:
                           📊 View Full Report
                         </button>
                         <button
-                          onClick={handleSetGoals}
+                          onClick={() => setModalState(prev => ({ ...prev, goals: true }))}
                           className="w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-gray-300 text-left transition-colors"
                         >
                           🎯 Set Learning Goals
                         </button>
                         <button
-                          onClick={handleResetMetrics}
+                          onClick={() => setModalState(prev => ({ ...prev, resetConfirm: true }))}
                           className="w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-gray-300 text-left transition-colors"
                         >
                           🔄 Reset Metrics
@@ -1899,7 +1899,7 @@ Improvements:
                       <h3 className="text-sm font-medium text-white mb-3">Curiosity Actions</h3>
                       <div className="space-y-2">
                         <button
-                          onClick={handleTriggerHypothesis}
+                          onClick={() => setModalState(prev => ({ ...prev, hypothesis: true }))}
                           className="w-full px-3 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-sm text-cyan-400 text-left transition-colors border border-cyan-500/20"
                         >
                           🧪 Test New Hypothesis
