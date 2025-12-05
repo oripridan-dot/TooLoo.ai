@@ -1,4 +1,4 @@
-// @version 3.3.50
+// @version 3.3.51
 // TooLoo.ai Liquid Chat Components
 // v3.3.44 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
 // v3.3.35 - Added Execute button for team-validated code execution in chat
@@ -8,6 +8,7 @@
 
 import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { LiveProvider, LivePreview, LiveError } from 'react-live';
 import { useLiquidEngine, EMOTIONS } from '../effects/LiquidEngine';
 import { useTooLooPresence, TooLooEye, TooLooBreath } from '../TooLooPresence';
 import { LiquidGlass, BreathIndicator } from '../effects/LiquidEngine';
@@ -548,9 +549,6 @@ const EXECUTABLE_LANGUAGES = ['javascript', 'js', 'typescript', 'ts', 'python', 
 
 // Languages that can be previewed client-side
 const PREVIEWABLE_LANGUAGES = ['jsx', 'react', 'tsx', 'svg', 'html'];
-
-// Import react-live for JSX preview
-import { LiveProvider, LivePreview, LiveError } from 'react-live';
 
 export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...props }) => {
   const [copied, setCopied] = useState(false);
