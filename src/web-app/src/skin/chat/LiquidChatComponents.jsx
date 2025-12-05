@@ -1,4 +1,4 @@
-// @version 3.3.60
+// @version 3.3.61
 // TooLoo.ai Liquid Chat Components
 // v3.3.53 - Complete LiquidCodeBlock rewrite: Live JSX/SVG/HTML preview, sandbox execution, artifact handoff
 // v3.3.48 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
@@ -728,6 +728,7 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: artifactType,
+          name: `${artifactType}-${Date.now()}`,
           content: codeString,
           language: lang,
           metadata: {
@@ -746,27 +747,45 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
     }
   };
 
-  // Render SVG directly
+  // Render SVG directly with sanitization
   const renderSVGPreview = () => {
     try {
+      // Basic sanitization - remove script tags and event handlers
+      let safeSvg = codeString
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/\bon\w+\s*=/gi, 'data-removed=');
+      
       return (
         <div 
-          className="p-4 bg-[#0a0a0a] flex items-center justify-center min-h-[150px]"
-          dangerouslySetInnerHTML={{ __html: codeString }}
+          className="p-4 bg-[#0a0a0a] flex items-center justify-center min-h-[100px] overflow-auto"
+          dangerouslySetInnerHTML={{ __html: safeSvg }}
         />
       );
     } catch (e) {
-      return <div className="p-4 text-red-400 text-sm">Failed to render SVG</div>;
+      return (
+        <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
+          ⚠️ Unable to preview SVG
+        </div>
+      );
     }
   };
 
-  // Render HTML in iframe
+  // Render HTML in sandboxed iframe
   const renderHTMLPreview = () => {
-    const htmlDoc = `<!DOCTYPE html><html><head><style>body{margin:0;background:#0a0a0a;color:#fff;font-family:sans-serif;padding:1rem;}</style></head><body>${codeString}</body></html>`;
+    const htmlDoc = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; background: #0a0a0a; color: #fff; font-family: system-ui, sans-serif; padding: 1rem; }
+    * { box-sizing: border-box; }
+  </style>
+</head>
+<body>${codeString}</body>
+</html>`;
     return (
       <iframe
         srcDoc={htmlDoc}
-        className="w-full h-48 border-0 bg-[#0a0a0a]"
+        className="w-full h-48 border-0 bg-[#0a0a0a] rounded"
         sandbox="allow-scripts"
         title="HTML Preview"
       />
@@ -840,12 +859,14 @@ render(<div style={{color: '#f87171', padding: '1rem'}}>Error: {e.message}</div>
         {/* Live Preview for JSX */}
         {isJSX && showPreview && (
           <div className="bg-[#0a0a0a] border-b border-white/10">
-            <LiveProvider code={cleanedCode} scope={liveScope} noInline>
-              <div className="p-4 min-h-[100px]">
-                <LivePreview />
-              </div>
-              <LiveError className="px-4 py-2 text-xs text-red-400 bg-red-500/10 font-mono" />
-            </LiveProvider>
+            <PreviewErrorBoundary>
+              <LiveProvider code={cleanedCode} scope={liveScope} noInline>
+                <div className="p-4 min-h-[80px]">
+                  <LivePreview />
+                </div>
+                <LiveError className="px-4 py-2 text-xs text-amber-400 bg-amber-500/10 font-mono whitespace-pre-wrap" />
+              </LiveProvider>
+            </PreviewErrorBoundary>
           </div>
         )}
 
