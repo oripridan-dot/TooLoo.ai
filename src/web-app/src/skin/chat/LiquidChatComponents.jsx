@@ -1,4 +1,4 @@
-// @version 3.3.121
+// @version 3.3.122
 // TooLoo.ai Liquid Chat Components
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
@@ -901,14 +901,56 @@ const isCodeHeavy = (content) => {
   return codeBlockCount > 0 && lines > 20;
 };
 
+// ============================================================================
+// VISUAL-FIRST MARKDOWN - Human-friendly response rendering
+// Shows insights and summaries prominently, hides code by default
+// ============================================================================
+
 export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
   // Clean the content first
   const cleanedContent = useMemo(() => cleanContent(content), [content]);
   
-  // Parse content into sections based on headers
+  // Detect response type for visual treatment
+  const responseType = useMemo(() => detectResponseType(cleanedContent), [cleanedContent]);
+  
+  // Extract key points for visual summary
+  const keyPoints = useMemo(() => extractKeyPoints(cleanedContent), [cleanedContent]);
+  
+  // Count code blocks
+  const codeCount = useMemo(() => countCodeBlocks(cleanedContent), [cleanedContent]);
+  
+  // Get conversational (non-code) content
+  const conversationalContent = useMemo(() => extractConversationalContent(cleanedContent), [cleanedContent]);
+  
+  // During streaming, show simple view
+  if (isStreaming) {
+    return <EnhancedMarkdown content={cleanedContent} isStreaming={true} />;
+  }
+  
+  // For code-heavy responses, show visual summary + hidden code
+  if (codeCount > 0) {
+    return (
+      <div className="space-y-2">
+        {/* Visual response type indicator */}
+        <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
+        
+        {/* Conversational content (no code) - always visible */}
+        {conversationalContent && (
+          <div className="text-gray-200">
+            <EnhancedMarkdown content={conversationalContent} isStreaming={false} />
+          </div>
+        )}
+        
+        {/* Code blocks hidden by default */}
+        <TechnicalDetails codeCount={codeCount}>
+          <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
+        </TechnicalDetails>
+      </div>
+    );
+  }
+  
+  // For non-code responses, check for sections
   const sections = useMemo(() => {
-    if (!cleanedContent) return [];
-    
     const lines = cleanedContent.split('\n');
     const result = [];
     let currentSection = null;
@@ -919,13 +961,10 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
       const headerMatch = line.match(/^(#{1,4})\s+(.+)$/);
       
       if (headerMatch) {
-        // Save previous section if exists
         if (currentSection) {
           currentSection.content = currentContent.join('\n').trim();
           result.push(currentSection);
         }
-        
-        // Start new section
         currentSection = {
           id: `section-${i}`,
           level: headerMatch[1].length,
@@ -938,12 +977,10 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
       }
     }
     
-    // Save last section
     if (currentSection) {
       currentSection.content = currentContent.join('\n').trim();
       result.push(currentSection);
     } else if (currentContent.length > 0) {
-      // No headers found - return single intro section
       result.push({
         id: 'intro',
         level: 0,
@@ -955,23 +992,33 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
     return result;
   }, [cleanedContent]);
   
-  // Check if we have meaningful sections (more than just intro)
   const hasSections = sections.some(s => s.level > 0);
   
-  // If no headers found or streaming, fall back to regular markdown
-  if (!hasSections || isStreaming) {
-    return <EnhancedMarkdown content={cleanedContent} isStreaming={isStreaming} />;
+  // Simple content without sections - show with visual card
+  if (!hasSections) {
+    return (
+      <div>
+        {/* Visual response type indicator for meaningful responses */}
+        {(responseType !== 'conversational' || keyPoints.length > 0) && (
+          <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
+        )}
+        <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
+      </div>
+    );
   }
   
-  // Render table of contents + collapsible sections
+  // Sectioned content - show visual summary + collapsible sections
   return (
-    <div className="space-y-1">
-      {/* Quick navigation - show all section titles */}
+    <div className="space-y-2">
+      {/* Visual response type indicator */}
+      <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
+      
+      {/* Quick navigation for many sections */}
       {sections.length > 3 && (
         <div className="mb-3 p-2 rounded-lg bg-white/[0.02] border border-white/5">
           <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Contents</p>
           <div className="flex flex-wrap gap-1">
-            {sections.filter(s => s.level > 0 && s.level <= 2).map((section, idx) => (
+            {sections.filter(s => s.level > 0 && s.level <= 2).map((section) => (
               <span 
                 key={section.id}
                 className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 cursor-default transition-colors"
@@ -983,10 +1030,9 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
         </div>
       )}
       
-      {/* Section list with collapsible content */}
+      {/* Section list */}
       {sections.map((section, idx) => {
         if (section.level === 0) {
-          // Intro content (no header)
           return (
             <div key={section.id} className="mb-4">
               <EnhancedMarkdown content={section.content} isStreaming={false} />
@@ -994,10 +1040,23 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
           );
         }
         
-        // Check if this section contains mostly code
         const hasCode = section.content.includes('```');
         
         return (
+          <CollapsibleSection
+            key={section.id}
+            title={section.title}
+            level={section.level}
+            defaultOpen={idx === 0 && section.level === 1 && !hasCode}
+            isFirst={idx === 0}
+          >
+            <EnhancedMarkdown content={section.content} isStreaming={false} />
+          </CollapsibleSection>
+        );
+      })}
+    </div>
+  );
+});
           <CollapsibleSection
             key={section.id}
             title={section.title}
