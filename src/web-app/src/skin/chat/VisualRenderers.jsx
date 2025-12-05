@@ -1,4 +1,4 @@
-// @version 3.0.0
+// @version 3.3.42
 // TooLoo.ai Visual Renderers
 // Rich visual components for rendering AI-generated visual content
 // Supports SVG, diagrams, charts, animations, and interactive elements
@@ -733,6 +733,229 @@ export const VisualBlockParser = memo(({ content, className = '' }) => {
 VisualBlockParser.displayName = 'VisualBlockParser';
 
 // ============================================================================
+// UNIVERSAL CODE SANDBOX - Renders any code type with execution capability
+// v3.3.40 - New component for dynamic code rendering
+// ============================================================================
+
+export const UniversalCodeSandbox = memo(({
+  code,
+  language,
+  title,
+  className = '',
+  showPreview = true,
+  showExecute = true,
+  onExecutionResult,
+}) => {
+  const [mode, setMode] = useState('preview'); // preview | code | result
+  const [executing, setExecuting] = useState(false);
+  const [result, setResult] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  // Detect language from code if not provided
+  const detectedLanguage = useMemo(() => {
+    if (language) return language.toLowerCase();
+    
+    const code_ = code || '';
+    if (code_.includes('import React') || code_.includes('useState') || code_.includes('function') && code_.includes('return')) {
+      return 'jsx';
+    }
+    if (code_.includes('<svg') || code_.includes('viewBox')) {
+      return 'svg';
+    }
+    if (code_.includes('def ') || code_.includes('import ') && !code_.includes('from \'react\'')) {
+      return 'python';
+    }
+    if (code_.includes('console.log') || code_.includes('const ') || code_.includes('let ')) {
+      return 'javascript';
+    }
+    return 'text';
+  }, [code, language]);
+
+  // Can this code be previewed live?
+  const canPreview = ['jsx', 'react', 'svg'].includes(detectedLanguage);
+  
+  // Can this code be executed server-side?
+  const canExecute = ['javascript', 'typescript', 'python', 'shell', 'bash'].includes(detectedLanguage);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExecute = async () => {
+    if (executing) return;
+    setExecuting(true);
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/v1/agent/task/team-execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'code_execution',
+          prompt: `Execute this ${detectedLanguage} code`,
+          code: code,
+          options: {
+            useTeam: true,
+            qualityThreshold: 0.8,
+          }
+        }),
+      });
+
+      const data = await response.json();
+      const newResult = {
+        success: data.ok,
+        output: data.data?.output || data.error || 'No output',
+        qualityScore: data.data?.qualityScore,
+      };
+      
+      setResult(newResult);
+      onExecutionResult?.(newResult);
+    } catch (err) {
+      setResult({ success: false, output: err.message });
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  // Clean JSX code for preview
+  const cleanedCode = useMemo(() => {
+    if (!['jsx', 'react'].includes(detectedLanguage)) return code;
+    
+    let cleaned = code || '';
+    // Remove imports
+    cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
+    // Remove exports
+    cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
+    cleaned = cleaned.replace(/^export\s+/gm, '');
+    // Add render call if missing
+    if (cleaned.includes('function') && !cleaned.includes('render(')) {
+      const match = cleaned.match(/function\s+(\w+)/);
+      if (match) {
+        cleaned += `\nrender(<${match[1]} />);`;
+      }
+    }
+    return cleaned.trim();
+  }, [code, detectedLanguage]);
+
+  const defaultScope = useMemo(() => ({
+    React,
+    useState: React.useState,
+    useEffect: React.useEffect,
+    useCallback: React.useCallback,
+    useMemo: React.useMemo,
+    useRef: React.useRef,
+    motion,
+  }), []);
+
+  return (
+    <div className={`rounded-xl overflow-hidden border border-white/10 bg-black/30 ${className}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-black/50 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-mono uppercase">{detectedLanguage}</span>
+          {title && <span className="text-sm text-gray-400">• {title}</span>}
+        </div>
+        
+        <div className="flex items-center gap-1">
+          {/* Mode toggles */}
+          {canPreview && (
+            <button
+              onClick={() => setMode('preview')}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                mode === 'preview' ? 'bg-cyan-500/20 text-cyan-400' : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              👁 Preview
+            </button>
+          )}
+          <button
+            onClick={() => setMode('code')}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              mode === 'code' ? 'bg-purple-500/20 text-purple-400' : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            </> Code
+          </button>
+          
+          {/* Actions */}
+          {canExecute && showExecute && (
+            <button
+              onClick={handleExecute}
+              disabled={executing}
+              className="px-2 py-1 text-xs rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors flex items-center gap-1"
+            >
+              {executing ? '⚡ Running...' : '▶ Run'}
+            </button>
+          )}
+          <button
+            onClick={handleCopy}
+            className="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
+          >
+            {copied ? '✓' : '📋'}
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="relative">
+        {/* Preview Mode */}
+        {mode === 'preview' && canPreview && (
+          <div className="p-4 min-h-[100px]">
+            {detectedLanguage === 'svg' ? (
+              <SVGRenderer code={code} />
+            ) : (
+              <LiveProvider code={cleanedCode} scope={defaultScope} noInline>
+                <LivePreview />
+                <LiveError className="text-red-400 text-xs mt-2 font-mono" />
+              </LiveProvider>
+            )}
+          </div>
+        )}
+
+        {/* Code Mode */}
+        {(mode === 'code' || (!canPreview && mode === 'preview')) && (
+          <pre className="p-4 overflow-x-auto text-xs bg-black/40 max-h-96">
+            <code className="text-gray-300 font-mono whitespace-pre-wrap">{code}</code>
+          </pre>
+        )}
+
+        {/* Execution Result */}
+        <AnimatePresence>
+          {result && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-t border-white/10 overflow-hidden"
+            >
+              <div className={`p-3 ${result.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs font-medium ${result.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {result.success ? '✓ Success' : '✕ Failed'}
+                  </span>
+                  {result.qualityScore && (
+                    <span className="text-xs text-cyan-400">
+                      Quality: {(result.qualityScore * 100).toFixed(0)}%
+                    </span>
+                  )}
+                </div>
+                <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-48 overflow-auto">
+                  {result.output}
+                </pre>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+});
+
+UniversalCodeSandbox.displayName = 'UniversalCodeSandbox';
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -745,4 +968,5 @@ export default {
   MindMapNode,
   DocumentPreview,
   VisualBlockParser,
+  UniversalCodeSandbox,
 };
