@@ -1,4 +1,4 @@
-// @version 3.3.155
+// @version 3.3.156
 /**
  * Comprehensive System Test
  * 
@@ -265,30 +265,30 @@ const testCases = [
         }),
       });
       // Even if it fails, we log the attempt
-      return result.success 
+      return isSuccess(result) 
         ? `Quality: ${(result.data?.quality?.score * 100).toFixed(1)}%`
         : `Attempted (${result.error?.substring(0, 50) || 'no response'})`;
     },
   },
 
   // --------------------------------------------------------------------------
-  // MEMORY & KNOWLEDGE
+  // CORTEX SYSTEMS (Memory via Cortex)
   // --------------------------------------------------------------------------
   {
-    name: 'Memory Status',
+    name: 'Cortex Memory Status',
     async run() {
-      const result = await fetchJSON(`${API}/memory/status`);
-      if (!result.success && !result.data) throw new Error(result.error || 'Memory status failed');
-      return `Episodic: ${result.data?.episodic || 'N/A'}, Semantic: ${result.data?.semantic || 'N/A'}`;
+      const result = await fetchJSON(`${API}/cortex/memory/status`);
+      if (!isSuccess(result)) throw new Error(result.error || 'Memory status failed');
+      return `Status: ${result.data?.status || 'active'}, Entries: ${result.data?.entryCount || result.data?.episodic || 'N/A'}`;
     },
   },
 
   {
-    name: 'Session Context',
+    name: 'Context Status',
     async run() {
-      const result = await fetchJSON(`${API}/session/context`);
-      if (!result.success) throw new Error(result.error || 'Session context failed');
-      return `Session: ${result.data?.sessionId?.substring(0, 8) || 'default'}`;
+      const result = await fetchJSON(`${API}/context/current`);
+      if (!isSuccess(result)) throw new Error(result.error || 'Context failed');
+      return `Session: ${result.data?.sessionId?.substring(0, 8) || result.data?.session || 'default'}`;
     },
   },
 
@@ -299,18 +299,19 @@ const testCases = [
     name: 'Exploration Status',
     async run() {
       const result = await fetchJSON(`${API}/exploration/status`);
-      if (!result.success) throw new Error(result.error || 'Exploration failed');
-      return `Hypotheses: ${result.data?.activeHypotheses || 0}, Discoveries: ${result.data?.discoveries || 0}`;
+      if (!isSuccess(result)) throw new Error(result.error || 'Exploration failed');
+      return `Active: ${result.data?.active?.count || 0}, Total: ${result.data?.total?.tested || 0}`;
     },
   },
 
   {
-    name: 'Curiosity Dimensions',
+    name: 'Curiosity Statistics',
     async run() {
-      const result = await fetchJSON(`${API}/curiosity/dimensions`);
-      if (!result.success) throw new Error(result.error || 'Curiosity failed');
-      const dims = result.data?.dimensions || {};
-      return `Novelty: ${(dims.novelty * 100).toFixed(0)}%, Exploration: ${(dims.exploration * 100).toFixed(0)}%`;
+      const result = await fetchJSON(`${API}/exploration/curiosity/statistics`);
+      if (!isSuccess(result)) throw new Error(result.error || 'Curiosity failed');
+      const dims = result.data?.dimensions || result.data || {};
+      const novelty = dims.novelty || dims.overall?.novelty || 0;
+      return `Novelty: ${(novelty * 100).toFixed(0)}%, Total Score: ${(result.data?.totalScore * 100 || 0).toFixed(0)}%`;
     },
   },
 
@@ -321,17 +322,18 @@ const testCases = [
     name: 'QA Guardian Status',
     async run() {
       const result = await fetchJSON(`${API}/qa/status`);
-      if (!result.success) throw new Error(result.error || 'QA status failed');
-      return `Running: ${result.data?.running}, Last Check: ${result.data?.lastCheck?.substring(11, 19) || 'never'}`;
+      if (!isSuccess(result)) throw new Error(result.error || 'QA status failed');
+      return `Overall: ${result.data?.overall || 'unknown'}, Last: ${result.data?.lastCheck?.substring(11, 19) || 'never'}`;
     },
   },
 
   {
-    name: 'QA Run Check',
+    name: 'QA Dashboard',
     async run() {
-      const result = await fetchJSON(`${API}/qa/check`, { method: 'POST' });
-      if (!result.success) throw new Error(result.error || 'QA check failed');
-      return `Score: ${result.data?.score?.toFixed(2) || 'N/A'}, Passed: ${result.data?.passed}`;
+      const result = await fetchJSON(`${API}/qa/dashboard`);
+      if (!isSuccess(result)) throw new Error(result.error || 'QA dashboard failed');
+      const metrics = result.data?.metrics || {};
+      return `Wiring: ${metrics.wiring?.coverage || 0}%, Issues: ${(metrics.wiring?.issues || 0) + (metrics.hygiene?.total || 0) + (metrics.legacy?.total || 0)}`;
     },
   },
 
@@ -342,7 +344,7 @@ const testCases = [
     name: 'Full Cognitive Dashboard',
     async run() {
       const result = await fetchJSON(`${API}/cognitive/dashboard`);
-      if (!result.success) throw new Error(result.error || 'Dashboard failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Dashboard failed');
       const data = result.data;
       return `Meta Cycles: ${data?.meta?.selfImprovementCycles}, Collab Score: ${data?.collaboration?.metrics?.collaborationScore}, Quality Pass: ${(data?.quality?.passRate * 100).toFixed(1)}%`;
     },
