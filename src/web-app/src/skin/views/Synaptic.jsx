@@ -1,4 +1,4 @@
-// @version 3.3.71
+// @version 3.3.72
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1455,10 +1455,17 @@ const Synaptic = memo(({ className = '' }) => {
         </div>
       </div>
 
-      {/* Side panel */}
-      <div className="w-72 border-l border-white/5 p-4 space-y-4 overflow-auto hidden lg:flex lg:flex-col flex-shrink-0">
-        <ThoughtStream thoughts={thoughts} isActive={isThinking || isStreaming} />
+      {/* Side panel - Enhanced with ThinkingProcessPanel */}
+      <div className="w-80 border-l border-white/5 p-4 space-y-4 overflow-auto hidden lg:flex lg:flex-col flex-shrink-0">
+        {/* TooLoo Thinking Process Panel - NEW */}
+        <ThinkingProcessPanel 
+          thoughts={thoughts} 
+          isActive={isThinking || isStreaming}
+          provider={lastUsedProvider}
+          model={selectedModel !== 'auto' ? AI_MODELS[selectedModel]?.model : null}
+        />
         
+        {/* Session Info */}
         <LiquidPanel variant="surface" className="p-4">
           <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
             Session Info
@@ -1475,6 +1482,12 @@ const Synaptic = memo(({ className = '' }) => {
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Duration</span>
               <SessionTimer startTime={sessionStart} />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Model</span>
+              <span className="text-cyan-400 text-xs truncate max-w-[120px]">
+                {selectedModel === 'auto' ? 'Auto' : AI_MODELS[selectedModel]?.label.split(' ').slice(1).join(' ')}
+              </span>
             </div>
           </div>
         </LiquidPanel>
