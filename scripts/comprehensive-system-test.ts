@@ -1,4 +1,4 @@
-// @version 3.3.152
+// @version 3.3.153
 /**
  * Comprehensive System Test
  * 
@@ -65,10 +65,20 @@ async function fetchJSON(url: string, options?: any): Promise<any> {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     });
-    return await response.json();
+    const data = await response.json();
+    // Normalize response format - some routes return {ok: true}, others {success: true}
+    if (data.ok !== undefined && data.success === undefined) {
+      data.success = data.ok;
+    }
+    return data;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
+}
+
+// Helper to check if response is successful (handles both ok and success)
+function isSuccess(result: any): boolean {
+  return result.success === true || result.ok === true;
 }
 
 // ============================================================================
