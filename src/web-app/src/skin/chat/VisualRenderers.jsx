@@ -1,4 +1,4 @@
-// @version 3.3.46
+// @version 3.3.47
 // TooLoo.ai Visual Renderers
 // v3.3.44 - Added UniversalCodeSandbox for dynamic code rendering + execution
 // Rich visual components for rendering AI-generated visual content
@@ -877,7 +877,7 @@ export const UniversalCodeSandbox = memo(({
               mode === 'code' ? 'bg-purple-500/20 text-purple-400' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
-            </> Code
+            {'</>'} Code
           </button>
           
           {/* Actions */}
