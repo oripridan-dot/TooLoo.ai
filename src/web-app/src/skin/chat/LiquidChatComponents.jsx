@@ -1,4 +1,4 @@
-// @version 3.3.111
+// @version 3.3.112
 // TooLoo.ai Liquid Chat Components
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
@@ -641,16 +641,22 @@ const cleanContent = (content) => {
   if (!content) return '';
   
   return content
-    // Remove connection interrupted messages (various formats)
+    // Remove connection interrupted messages (all variants)
     .replace(/_?\[Connection interrupted[^\]]*\]_?\.?/gi, '')
     .replace(/_?\[Response was interrupted[^\]]*\]_?\.?/gi, '')
+    .replace(/\*\*?Connection interrupted[^*]*\*\*?/gi, '')
+    .replace(/Connection interrupted\.?\.?\.?/gi, '')
     // Remove mocked/test response indicators
-    .replace(/This is a mocked V\d+ response\.?/gi, '')
+    .replace(/This is a mocked V\d+[\s\S]*?response\.?/gi, '')
     .replace(/\[mocked\s*response\]/gi, '')
+    .replace(/mocked response/gi, '')
+    // Remove debug/system messages
+    .replace(/\[DEBUG\][^\n]*/gi, '')
+    .replace(/\[SYSTEM\][^\n]*/gi, '')
     // Remove standalone underscores with brackets
     .replace(/^_\[.*?\]_$/gm, '')
-    // Clean up lines that are just underscores
-    .replace(/^_+$/gm, '')
+    // Clean up lines that are just underscores or dots
+    .replace(/^[_\.]+$/gm, '')
     // Clean up multiple blank lines
     .replace(/\n{3,}/g, '\n\n')
     // Remove leading/trailing whitespace from each line
