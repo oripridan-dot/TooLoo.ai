@@ -1,4 +1,4 @@
-// @version 3.3.31
+// @version 3.3.66
 // TooLoo.ai Creative Chat Module
 // Integrates Visual Response Engine and Creative Persona Engine
 // for maximally creative and visually rich chat experiences
@@ -294,3 +294,7 @@ export type {
   VisualEffect,
   AnimationSpec,
 } from './illustration-engine.js';
+
+// V3.3.68: Export enhanced visual generator for stunning outputs
+export { EnhancedVisualGenerator, enhancedVisualGenerator } from './enhanced-visual-generator.js';
+export { getVisualExample, getAvailableExamples } from './visual-examples.js';
