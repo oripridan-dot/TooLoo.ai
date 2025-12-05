@@ -1,4 +1,4 @@
-// @version 3.3.109
+// @version 3.3.110
 // TooLoo.ai Liquid Chat Components
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
@@ -832,10 +832,13 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   const [executing, setExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState(null);
   const [showPreview, setShowPreview] = useState(true);
+  const [showCode, setShowCode] = useState(false); // Default to collapsed for long code
   const [previewError, setPreviewError] = useState(null);
 
   const codeString = String(children).replace(/\n$/, '');
   const lang = (language || '').toLowerCase();
+  const lineCount = codeString.split('\n').length;
+  const isLongCode = lineCount > 15; // Collapse code blocks with more than 15 lines
 
   // Determine capabilities
   const canExecute = EXECUTABLE_LANGUAGES.includes(lang);
@@ -843,6 +846,18 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   const isJSX = ['jsx', 'react', 'tsx'].includes(lang);
   const isSVG = lang === 'svg';
   const isHTML = lang === 'html';
+  
+  // Extract a summary from the code (first comment or class/function name)
+  const codeSummary = useMemo(() => {
+    const lines = codeString.split('\n');
+    // Look for a comment at the start
+    const commentLine = lines.find(l => l.trim().startsWith('#') || l.trim().startsWith('//') || l.trim().startsWith('"""'));
+    if (commentLine) return commentLine.replace(/^[#/\s"]+/, '').substring(0, 60);
+    // Look for class or function definition
+    const defLine = lines.find(l => l.match(/^(class|def|function|const|export)\s+\w+/));
+    if (defLine) return defLine.trim().substring(0, 60);
+    return `${lineCount} lines of ${lang || 'code'}`;
+  }, [codeString, lineCount, lang]);
 
   // Clean and prepare JSX code for react-live preview
   const cleanedCode = useMemo(() => {
