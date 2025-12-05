@@ -1,4 +1,4 @@
-// @version 3.3.139
+// @version 3.3.140
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -582,9 +582,7 @@ const Command = memo(({ className = '' }) => {
 
           case 'cortex:config':
             addLog('info', 'Opening Cortex configuration...');
-            alert(
-              'Cortex Configuration:\n\n• Provider rotation: Auto\n• Fallback enabled: Yes\n• Session management: Active'
-            );
+            setModalState(prev => ({ ...prev, cortexConfig: true }));
             break;
 
           case 'memory:optimize':
@@ -595,12 +593,12 @@ const Command = memo(({ className = '' }) => {
             break;
 
           case 'memory:clear':
-            if (confirm('Clear all cached data?')) {
+            pendingAction.current = async () => {
               addLog('warn', 'Clearing cache...');
-              // There's no direct cache clear endpoint, but we can trigger optimization
               await fetch(`${API_BASE}/learning/optimize-memory`, { method: 'POST' });
               addLog('info', 'Cache cleared');
-            }
+            };
+            setModalState(prev => ({ ...prev, clearCache: true }));
             break;
 
           case 'qa:run':
