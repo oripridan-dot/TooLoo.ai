@@ -1,4 +1,4 @@
-// @version 3.3.148
+// @version 3.3.149
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -858,6 +858,13 @@ const Command = memo(({ className = '' }) => {
               <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
                 Configuration
               </h2>
+
+              {/* UI Preferences - Self-modification controls */}
+              <ConfigSection
+                title="🎛️ UI Preferences"
+                items={uiConfigItems}
+                onToggle={(id) => updateUiPref(id, !uiPrefs[id])}
+              />
 
               <ConfigSection
                 title="Visual Settings"
