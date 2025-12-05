@@ -1,4 +1,4 @@
-// @version 3.3.108
+// @version 3.3.109
 // TooLoo.ai Liquid Chat Components
 // v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
 // v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
@@ -708,19 +708,36 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
     }
     
     return result;
-  }, [content]);
+  }, [cleanedContent]);
   
   // Check if we have meaningful sections (more than just intro)
   const hasSections = sections.some(s => s.level > 0);
   
   // If no headers found or streaming, fall back to regular markdown
   if (!hasSections || isStreaming) {
-    return <EnhancedMarkdown content={content} isStreaming={isStreaming} />;
+    return <EnhancedMarkdown content={cleanedContent} isStreaming={isStreaming} />;
   }
   
   // Render table of contents + collapsible sections
   return (
     <div className="space-y-1">
+      {/* Quick navigation - show all section titles */}
+      {sections.length > 3 && (
+        <div className="mb-3 p-2 rounded-lg bg-white/[0.02] border border-white/5">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Contents</p>
+          <div className="flex flex-wrap gap-1">
+            {sections.filter(s => s.level > 0 && s.level <= 2).map((section, idx) => (
+              <span 
+                key={section.id}
+                className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 cursor-default transition-colors"
+              >
+                {section.title.replace(/\*\*/g, '').replace(/[🔍💭🎯❓🚀🧠⚡🎨🔧📊]/g, '').trim().substring(0, 30)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {/* Section list with collapsible content */}
       {sections.map((section, idx) => {
         if (section.level === 0) {
@@ -732,12 +749,15 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
           );
         }
         
+        // Check if this section contains mostly code
+        const hasCode = section.content.includes('```');
+        
         return (
           <CollapsibleSection
             key={section.id}
             title={section.title}
             level={section.level}
-            defaultOpen={idx === 0 && section.level === 1}
+            defaultOpen={idx === 0 && section.level === 1 && !hasCode}
             isFirst={idx === 0}
           >
             <EnhancedMarkdown content={section.content} isStreaming={false} />
