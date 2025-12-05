@@ -1,4 +1,4 @@
-// @version 3.3.154
+// @version 3.3.155
 /**
  * Comprehensive System Test
  * 
@@ -116,7 +116,7 @@ const testCases = [
     name: 'Meta-Learning State',
     async run() {
       const result = await fetchJSON(`${API}/cognitive/meta/state`);
-      if (!result.success) throw new Error(result.error || 'Meta state failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Meta state failed');
       return `Cycles: ${result.data?.selfImprovementCycles}, Velocity: ${result.data?.velocity?.current}`;
     },
   },
@@ -125,7 +125,7 @@ const testCases = [
     name: 'Cognitive Load Analysis',
     async run() {
       const result = await fetchJSON(`${API}/cognitive/meta/cognitive-load`);
-      if (!result.success) throw new Error(result.error || 'Cognitive load failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Cognitive load failed');
       return `Load: ${(result.data?.currentLoad * 100).toFixed(1)}%, Optimal: ${(result.data?.optimalLoad * 100).toFixed(1)}%`;
     },
   },
@@ -134,7 +134,7 @@ const testCases = [
     name: 'Learning Velocity',
     async run() {
       const result = await fetchJSON(`${API}/cognitive/meta/velocity`);
-      if (!result.success) throw new Error(result.error || 'Velocity failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Velocity failed');
       return `Current: ${result.data?.current}, Trend: ${result.data?.trend}`;
     },
   },
@@ -146,7 +146,7 @@ const testCases = [
     name: 'Collaboration Metrics',
     async run() {
       const result = await fetchJSON(`${API}/cognitive/collaboration/metrics`);
-      if (!result.success) throw new Error(result.error || 'Collab metrics failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Collab metrics failed');
       return `Messages: ${result.data?.totalMessages}, Score: ${result.data?.collaborationScore}`;
     },
   },
@@ -161,7 +161,7 @@ const testCases = [
           requiredCapabilities: ['typescript', 'react', 'testing'],
         }),
       });
-      if (!result.success) throw new Error(result.error || 'Team recommendation failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Team recommendation failed');
       return `Confidence: ${(result.data?.confidence * 100).toFixed(1)}%, Agents: ${result.data?.recommendedAgents?.length || 0}`;
     },
   },
@@ -185,7 +185,7 @@ const testCases = [
           context: { taskType: 'code-generation', domain: 'algorithms' },
         }),
       });
-      if (!result.success) throw new Error(result.error || 'Quality assessment failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Quality assessment failed');
       return `Score: ${(result.data?.overallScore * 100).toFixed(1)}%, Passed: ${result.data?.passed}`;
     },
   },
@@ -213,7 +213,7 @@ const testCases = [
           context: { taskType: 'documentation', domain: 'api' },
         }),
       });
-      if (!result.success) throw new Error(result.error || 'Doc quality failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Doc quality failed');
       return `Score: ${(result.data?.overallScore * 100).toFixed(1)}%, Clarity: ${(result.data?.dimensions?.find((d: any) => d.name === 'clarity')?.score * 100 || 0).toFixed(1)}%`;
     },
   },
@@ -222,7 +222,7 @@ const testCases = [
     name: 'Quality Trends',
     async run() {
       const result = await fetchJSON(`${API}/cognitive/quality/trends`);
-      if (!result.success) throw new Error(result.error || 'Quality trends failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Quality trends failed');
       return `Pass Rate: ${(result.data?.passRate * 100).toFixed(1)}%, Hour Trend: ${result.data?.trends?.hour?.trend}`;
     },
   },
@@ -234,8 +234,8 @@ const testCases = [
     name: 'Learning Report',
     async run() {
       const result = await fetchJSON(`${API}/learning/report`);
-      if (!result.success) throw new Error(result.error || 'Learning report failed');
-      return `Sessions: ${result.data?.totalSessions}, Success: ${(result.data?.improvements?.firstTrySuccess?.current * 100).toFixed(1)}%`;
+      if (!isSuccess(result)) throw new Error(result.error || 'Learning report failed');
+      return `Sessions: ${result.data?.totalSessions}, Patterns: ${result.data?.patternsLearned || 0}, Success: ${(result.data?.improvements?.firstTrySuccess?.current * 100).toFixed(1)}%`;
     },
   },
 
@@ -243,7 +243,7 @@ const testCases = [
     name: 'Pattern Storage',
     async run() {
       const result = await fetchJSON(`${API}/learning/patterns`);
-      if (!result.success) throw new Error(result.error || 'Patterns failed');
+      if (!isSuccess(result)) throw new Error(result.error || 'Patterns failed');
       const patternCount = result.data?.patterns?.length || 
                           ((result.data?.successful?.length || 0) + (result.data?.failed?.length || 0));
       return `Patterns: ${patternCount}`;
