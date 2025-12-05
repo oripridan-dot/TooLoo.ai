@@ -1,4 +1,4 @@
-// @version 3.3.73
+// @version 3.3.74
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1318,7 +1318,7 @@ const Synaptic = memo(({ className = '' }) => {
   const showWelcome = messages.length === 1 && !messages[0].isUser;
 
   return (
-    <div className={`h-full flex relative ${className}`}>
+    <div className={`h-full w-full flex relative overflow-hidden ${className}`}>
       {/* Background liquid effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <LiquidSurface variant="subtle" animated={isStreaming || isThinking} />
@@ -1329,28 +1329,29 @@ const Synaptic = memo(({ className = '' }) => {
 
       {/* Subtle aurora effect */}
       <PointerAurora size={200} intensity={0.2} blur={100} className="opacity-50" />
-      {/* Main chat area */}
-      <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        {/* Header with liquid glass effect - Now includes Model Selector & Preview Toggle */}
-        <div className="px-6 py-4 border-b border-white/5 bg-gradient-to-r from-transparent via-cyan-950/20 to-transparent backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center justify-between">
+      
+      {/* Main chat area - takes full width on mobile, leaves room for sidebar on xl */}
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 w-full">
+        {/* Header with liquid glass effect - Responsive layout */}
+        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-white/5 bg-gradient-to-r from-transparent via-cyan-950/20 to-transparent backdrop-blur-sm flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
               <TooLooAvatar 
-                size={40} 
+                size={36} 
                 state={isStreaming ? 'speaking' : isThinking ? 'thinking' : 'idle'} 
                 showBreath={false}
               />
               <div>
-                <h1 className="text-xl font-semibold text-white flex items-center gap-2">
+                <h1 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
                   Synaptic
                   <StatusLight status={status} size="sm" />
                 </h1>
-                <p className="text-sm text-gray-500">Neural conversation interface</p>
+                <p className="text-xs md:text-sm text-gray-500 hidden sm:block">Neural conversation interface</p>
               </div>
             </div>
             
-            {/* Model Selection & Controls */}
-            <div className="flex items-center gap-3">
+            {/* Model Selection & Controls - Responsive */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
               {/* Model Selector */}
               <ModelSelector 
                 selectedModel={selectedModel}
@@ -1358,42 +1359,44 @@ const Synaptic = memo(({ className = '' }) => {
                 disabled={isThinking || isStreaming}
               />
               
-              {/* Large Preview Toggle */}
-              <PreviewSizeToggle
-                largePreview={largePreview}
-                onToggle={() => setLargePreview(!largePreview)}
-              />
+              {/* Large Preview Toggle - Hidden on very small screens */}
+              <div className="hidden sm:block">
+                <PreviewSizeToggle
+                  largePreview={largePreview}
+                  onToggle={() => setLargePreview(!largePreview)}
+                />
+              </div>
               
-              {/* Status indicator */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+              {/* Status indicator - Simplified on mobile */}
+              <div className="flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
                 <StatusLight status={isStreaming ? 'streaming' : isThinking ? 'thinking' : 'active'} />
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 hidden sm:inline">
                   {isStreaming ? 'Streaming...' : isThinking ? 'Processing...' : 'Ready'}
                 </span>
               </div>
             </div>
           </div>
           
-          {/* Selected model info bar */}
+          {/* Selected model info bar - Hidden on mobile */}
           {selectedModel !== 'auto' && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 flex items-center gap-2 text-xs text-gray-500"
+              className="mt-2 sm:mt-3 flex items-center gap-2 text-xs text-gray-500 hidden sm:flex"
             >
               <span>Using:</span>
               <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                 {AI_MODELS[selectedModel]?.label}
               </span>
-              <span className="text-gray-600">•</span>
-              <span>{AI_MODELS[selectedModel]?.description}</span>
+              <span className="text-gray-600 hidden md:inline">•</span>
+              <span className="hidden md:inline">{AI_MODELS[selectedModel]?.description}</span>
             </motion.div>
           )}
         </div>
 
-        {/* Messages area with enhanced visuals - Large preview support */}
-        <div className={`flex-1 overflow-auto ${largePreview ? 'p-8' : 'p-6'}`}>
+        {/* Messages area - Responsive padding */}
+        <div className={`flex-1 overflow-auto ${largePreview ? 'p-4 md:p-8' : 'p-3 md:p-6'}`}>
           {showWelcome ? (
             <WelcomeMessage onQuickAction={handleQuickAction} />
           ) : (
@@ -1415,7 +1418,7 @@ const Synaptic = memo(({ className = '' }) => {
         </div>
 
         {/* Input with ThoughtStream Border wrapping the entire input area */}
-        <div className="px-6 py-4 border-t border-white/5 flex-shrink-0">
+        <div className="px-3 md:px-6 py-3 md:py-4 border-t border-white/5 flex-shrink-0">
           {/* Border wraps both status bar and input */}
           <div className="relative">
             {/* Animated border around entire input section */}
@@ -1430,16 +1433,16 @@ const Synaptic = memo(({ className = '' }) => {
             />
             
             {/* Input row */}
-            <div className="flex gap-3 p-3 bg-[#050505] rounded-b-xl">
+            <div className="flex gap-2 md:gap-3 p-2 md:p-3 bg-[#050505] rounded-b-xl">
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder="Type a message... (Enter to send)"
+                placeholder="Type a message..."
                 disabled={isThinking || isStreaming}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 
+                className="flex-1 px-3 md:px-4 py-2 md:py-3 rounded-xl bg-white/5 border border-white/10 
                            text-white placeholder-gray-500 text-sm
                            focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
                            transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1448,7 +1451,7 @@ const Synaptic = memo(({ className = '' }) => {
               onClick={handleSend}
               disabled={!input.trim() || isThinking || isStreaming}
               className={`
-                px-6 py-3 rounded-xl font-medium text-sm
+                px-4 md:px-6 py-2 md:py-3 rounded-xl font-medium text-sm
                 transition-all duration-200 flex items-center gap-2
                 ${input.trim() && !isThinking && !isStreaming
                   ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg shadow-cyan-500/20'
@@ -1468,8 +1471,8 @@ const Synaptic = memo(({ className = '' }) => {
         </div>
       </div>
 
-      {/* Side panel - Enhanced with ThinkingProcessPanel */}
-      <div className="w-80 border-l border-white/5 p-4 space-y-4 overflow-auto hidden lg:flex lg:flex-col flex-shrink-0">
+      {/* Side panel - Shows on xl screens (1280px+), hidden below */}
+      <div className="w-72 xl:w-80 border-l border-white/5 p-3 xl:p-4 space-y-3 xl:space-y-4 overflow-auto hidden xl:flex xl:flex-col flex-shrink-0">
         {/* TooLoo Thinking Process Panel - NEW */}
         <ThinkingProcessPanel 
           thoughts={thoughts} 
