@@ -1,4 +1,4 @@
-// @version 3.3.94
+// @version 3.3.95
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1653,7 +1653,7 @@ const Synaptic = memo(({ className = '' }) => {
               className="rounded-t-xl"
             />
             
-            {/* Input row */}
+            {/* Input row - Quiet, honest design with larger text */}
             <div className="flex gap-2 md:gap-3 p-2 md:p-3 bg-[#050505] rounded-b-xl">
               <input
                 ref={inputRef}
@@ -1661,28 +1661,26 @@ const Synaptic = memo(({ className = '' }) => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder="Type a message..."
+                placeholder="What would you like to explore?"
                 disabled={isThinking || isStreaming}
-                className="flex-1 px-3 md:px-4 py-2 md:py-3 rounded-xl bg-white/5 border border-white/10 
-                           text-white placeholder-gray-500 text-sm
-                           focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
+                className="flex-1 px-4 md:px-5 py-3 md:py-4 rounded-xl bg-white/5 border border-white/10 
+                           text-white placeholder-gray-500 text-base md:text-lg
+                           focus:outline-none focus:border-white/20 focus:bg-white/[0.03]
                            transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isThinking || isStreaming}
               className={`
-                px-4 md:px-6 py-2 md:py-3 rounded-xl font-medium text-sm
+                px-5 md:px-7 py-3 md:py-4 rounded-xl font-medium text-base
                 transition-all duration-200 flex items-center gap-2
                 ${input.trim() && !isThinking && !isStreaming
-                  ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg shadow-cyan-500/20'
-                  : 'bg-white/5 text-gray-500 cursor-not-allowed'}
+                  ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
+                  : 'bg-white/5 text-gray-600 cursor-not-allowed border border-white/5'}
               `}
             >
               {isThinking || isStreaming ? (
-                <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-                  ⏳
-                </motion.span>
+                <span className="animate-pulse">...</span>
               ) : (
                 'Send'
               )}
