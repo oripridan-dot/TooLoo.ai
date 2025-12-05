@@ -1,4 +1,4 @@
-// @version 3.3.115
+// @version 3.3.116
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1090,6 +1090,9 @@ const Synaptic = memo(({ className = '' }) => {
   
   const handleSend = useCallback(async () => {
     if (!input.trim() || isThinking || isStreaming) return;
+
+    // Reset scroll state when user sends a new message
+    userScrolledRef.current = false;
 
     const userMessage = {
       id: Date.now(),
