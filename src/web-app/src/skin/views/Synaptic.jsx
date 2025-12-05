@@ -1,4 +1,4 @@
-// @version 3.3.100
+// @version 3.3.101
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -259,8 +259,8 @@ const MessageBubble = memo(({ message, isUser, isLatest, isStreaming, onReact, f
 MessageBubble.displayName = 'MessageBubble';
 
 // ============================================================================
-// INLINE PROCESS PANEL - Quiet, honest design with colored stage progress
-// v3.3.92 - Simplified: removed heavy animations, added segmented progress bar
+// INLINE PROCESS PANEL - Calm, controlled thinking indicator
+// v3.3.95 - Ultra minimal: single line status, no jumping, smooth progress
 // ============================================================================
 
 const InlineProcessPanel = memo(({ 
@@ -271,133 +271,78 @@ const InlineProcessPanel = memo(({
   model,
   modelLabel
 }) => {
-  const containerRef = useRef(null);
-  const [stageTimings, setStageTimings] = useState({});
-  const [stageStartTime, setStageStartTime] = useState(Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const startTimeRef = useRef(Date.now());
   
-  // Track time spent in each stage
+  // Timer for elapsed time
   useEffect(() => {
-    const now = Date.now();
-    setStageTimings(prev => ({
-      ...prev,
-      [currentStage]: (prev[currentStage] || 0) + (now - stageStartTime)
-    }));
-    setStageStartTime(now);
-  }, [currentStage]);
+    if (!isActive) {
+      startTimeRef.current = Date.now();
+      setElapsedTime(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isActive]);
   
   // Get current stage info
   const stageInfo = THINKING_STAGES[currentStage] || THINKING_STAGES.processing;
   
-  // Auto-scroll
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [thoughts]);
-
-  // Stage order and colors for the segmented progress bar
-  const stages = [
-    { key: 'connecting', label: 'Connect', color: 'bg-slate-400' },
-    { key: 'analyzing', label: 'Analyze', color: 'bg-purple-500' },
-    { key: 'routing', label: 'Route', color: 'bg-blue-500' },
-    { key: 'processing', label: 'Process', color: 'bg-amber-500' },
-    { key: 'streaming', label: 'Stream', color: 'bg-cyan-500' },
-    { key: 'complete', label: 'Done', color: 'bg-emerald-500' },
-  ];
-
-  const currentStageIndex = stages.findIndex(s => s.key === currentStage);
-  const totalTime = Object.values(stageTimings).reduce((a, b) => a + b, 0) || 1;
+  // Stage order for progress calculation
+  const stageOrder = ['connecting', 'analyzing', 'routing', 'processing', 'streaming', 'complete'];
+  const currentIndex = stageOrder.indexOf(currentStage);
+  const progress = ((currentIndex + 1) / stageOrder.length) * 100;
+  
+  // Get latest thought (just one)
+  const latestThought = thoughts[thoughts.length - 1]?.text || '';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
-      className="w-full mb-4"
-    >
-      <div className="rounded-xl bg-[#0a0a0a]/80 border border-white/10 overflow-hidden">
-        {/* Simple header */}
-        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-lg">{stageInfo.icon}</span>
-            <div>
-              <span className="text-sm font-medium text-white">{stageInfo.title}</span>
-              <span className="text-xs text-gray-500 ml-2">{stageInfo.description}</span>
-            </div>
-          </div>
-          {(provider || modelLabel) && (
-            <span className="text-xs px-2 py-1 rounded bg-white/5 text-gray-400 border border-white/10">
-              {modelLabel || provider}
-            </span>
-          )}
+    <div className="w-full mb-3">
+      {/* Single compact status bar */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#0a0a0a]/60 border border-white/5">
+        {/* Subtle breathing dot */}
+        <span className={`w-2 h-2 rounded-full ${
+          currentStage === 'complete' ? 'bg-emerald-400' :
+          currentStage === 'streaming' ? 'bg-cyan-400' : 'bg-white/40'
+        } ${isActive && currentStage !== 'complete' ? 'animate-pulse' : ''}`} />
+        
+        {/* Stage icon + name */}
+        <span className="text-sm text-gray-300">
+          {stageInfo.icon} {stageInfo.title}
+        </span>
+        
+        {/* Mini progress bar */}
+        <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden max-w-32">
+          <div 
+            className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
         
-        {/* Colored segmented progress bar showing time per stage */}
-        <div className="px-4 py-3 border-b border-white/5">
-          <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-white/5">
-            {stages.map((stage, idx) => {
-              const isCompleted = idx < currentStageIndex;
-              const isCurrent = idx === currentStageIndex;
-              const stageTime = stageTimings[stage.key] || 0;
-              const widthPercent = isCompleted || isCurrent ? Math.max(stageTime / totalTime * 100, isCurrent ? 15 : 5) : 0;
-              
-              return (
-                <div
-                  key={stage.key}
-                  className={`
-                    ${stage.color} transition-all duration-300
-                    ${isCurrent ? 'opacity-100' : isCompleted ? 'opacity-70' : 'opacity-20'}
-                  `}
-                  style={{ width: isCompleted || isCurrent ? `${widthPercent}%` : '0%' }}
-                />
-              );
-            })}
-          </div>
-          
-          {/* Stage labels */}
-          <div className="flex justify-between mt-2 text-[10px] text-gray-600">
-            {stages.map((stage, idx) => {
-              const isCompleted = idx < currentStageIndex;
-              const isCurrent = idx === currentStageIndex;
-              const stageTime = stageTimings[stage.key];
-              
-              return (
-                <div 
-                  key={stage.key} 
-                  className={`flex flex-col items-center ${isCurrent ? 'text-white' : isCompleted ? 'text-gray-400' : ''}`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full mb-1 ${isCurrent || isCompleted ? stage.color : 'bg-white/10'}`} />
-                  <span>{stage.label}</span>
-                  {stageTime > 0 && (
-                    <span className="text-[9px] text-gray-500">{(stageTime / 1000).toFixed(1)}s</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Timer */}
+        <span className="text-xs text-gray-500 tabular-nums min-w-[32px]">
+          {elapsedTime}s
+        </span>
         
-        {/* Minimal thought log - only show latest 3 */}
-        {thoughts.length > 0 && (
-          <div ref={containerRef} className="px-4 py-2 max-h-24 overflow-auto">
-            {thoughts.slice(-3).map((thought, i) => (
-              <div
-                key={thought.id || i}
-                className="flex items-center gap-2 text-xs py-1 text-gray-400"
-              >
-                <span className={`w-1 h-1 rounded-full ${
-                  thought.type === 'success' ? 'bg-emerald-400' : 
-                  thought.type === 'error' ? 'bg-red-400' : 'bg-gray-500'
-                }`} />
-                <span className="truncate">{thought.text}</span>
-              </div>
-            ))}
-          </div>
+        {/* Provider badge (optional) */}
+        {modelLabel && (
+          <span className="text-[10px] text-gray-500 px-1.5 py-0.5 rounded bg-white/5">
+            {modelLabel}
+          </span>
         )}
       </div>
-    </motion.div>
+      
+      {/* Latest thought - single line, no jumping */}
+      {latestThought && (
+        <p className="text-[11px] text-gray-500 mt-1.5 px-4 truncate">
+          {latestThought}
+        </p>
+      )}
+    </div>
   );
+});
 });
 
 InlineProcessPanel.displayName = 'InlineProcessPanel';
