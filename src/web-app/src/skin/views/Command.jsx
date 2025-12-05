@@ -1,4 +1,4 @@
-// @version 3.3.138
+// @version 3.3.139
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -409,6 +409,15 @@ const Command = memo(({ className = '' }) => {
   const [systems, setSystems] = useState([]);
   const [allSystemsOnline, setAllSystemsOnline] = useState(true);
   const [loading, setLoading] = useState(true);
+
+  // Modal state for better UX
+  const [modalState, setModalState] = useState({
+    cortexConfig: false,
+    clearCache: false,
+    forceRestart: false,
+    clearData: false,
+  });
+  const pendingAction = useRef(null);
 
   const [visualConfig, setVisualConfig] = useState([
     { id: 'animations', label: 'Animations', description: 'Enable all animations', enabled: true },
