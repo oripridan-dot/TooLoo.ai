@@ -1,4 +1,4 @@
-// @version 3.3.135
+// @version 3.3.136
 // TooLoo.ai Growth View - Learning & Health Monitoring
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -1589,6 +1589,42 @@ Improvements:
 
   return (
     <div className={`h-full flex flex-col ${className}`}>
+      {/* Modals - replace browser dialogs */}
+      <AnimatePresence>
+        <InputModal
+          isOpen={modalState.hypothesis}
+          onClose={() => setModalState(prev => ({ ...prev, hypothesis: false }))}
+          onSubmit={handleTriggerHypothesis}
+          title="🔬 New Hypothesis"
+          placeholder="Enter a hypothesis to explore..."
+          defaultValue="Testing temperature variation improves creativity"
+        />
+        <InputModal
+          isOpen={modalState.goals}
+          onClose={() => setModalState(prev => ({ ...prev, goals: false }))}
+          onSubmit={handleSetGoals}
+          title="🎯 Set Learning Goal"
+          placeholder="Enter your learning goal..."
+          defaultValue="Improve first-try success rate to 90%"
+        />
+        <InfoModal
+          isOpen={modalState.report}
+          onClose={() => setModalState(prev => ({ ...prev, report: false }))}
+          title="📊 Learning Report"
+          content={reportData || 'Loading...'}
+          type="info"
+        />
+        <ConfirmModal
+          isOpen={modalState.resetConfirm}
+          onClose={() => setModalState(prev => ({ ...prev, resetConfirm: false }))}
+          onConfirm={handleResetMetrics}
+          title="⚠️ Reset Metrics"
+          message="Are you sure you want to reset all learning metrics? This action cannot be undone."
+          confirmText="Reset All"
+          danger={true}
+        />
+      </AnimatePresence>
+
       {/* Celebration overlay */}
       <AnimatePresence>
         {celebrating && (
