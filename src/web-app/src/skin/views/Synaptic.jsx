@@ -1,4 +1,4 @@
-// @version 3.3.146
+// @version 3.3.150
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -1155,7 +1155,22 @@ const Synaptic = memo(({ className = '' }) => {
 
   // Function to update UI preferences (can be called from within TooLoo)
   const updateUiPreference = useCallback((key, value) => {
-    setUiPreferences(prev => ({ ...prev, [key]: value }));
+    setUiPreferences(prev => {
+      const updated = { ...prev, [key]: value };
+      localStorage.setItem('tooloo-ui-preferences', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+  // Listen for UI preference changes from other components (e.g., Command view)
+  useEffect(() => {
+    const handlePrefsChange = (e) => {
+      if (e.detail) {
+        setUiPreferences(e.detail);
+      }
+    };
+    window.addEventListener('tooloo-ui-prefs-changed', handlePrefsChange);
+    return () => window.removeEventListener('tooloo-ui-prefs-changed', handlePrefsChange);
   }, []);
 
   // Thought stream state
