@@ -17,7 +17,7 @@
  * - CuriosityEngine for curiosity-driven learning windows
  */
 
-import { bus } from '../../core/event-bus.js';
+import { bus, SynapsysEvent } from '../../core/event-bus.js';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -419,29 +419,27 @@ export class LearningScheduler {
       ...SCHEDULE_TEMPLATES['evening_consolidation'],
       enabled: false,
     } as Partial<LearningSchedule>);
-
-    console.log('[LearningScheduler] Created default schedules (disabled by default)');
   }
 
   private setupListeners(): void {
     // Listen for emergence events to potentially override schedules
-    bus.on('emergence', 'discovery:emergence_detected', (payload: unknown) => {
-      this.handleEmergenceEvent(payload as Record<string, unknown>);
+    bus.on('discovery:emergence_detected', (event: SynapsysEvent) => {
+      this.handleEmergenceEvent(event.payload as Record<string, unknown>);
     });
 
     // Listen for learning events
-    bus.on('cortex', 'learning:*', (payload: unknown) => {
-      this.handleLearningEvent(payload as Record<string, unknown>);
+    bus.on('learning:reward_received', (event: SynapsysEvent) => {
+      this.handleLearningEvent(event.payload as Record<string, unknown>);
     });
 
     // Listen for system load changes
-    bus.on('system', 'metrics:load_update', (payload: unknown) => {
-      this.handleLoadUpdate(payload as { load: number });
+    bus.on('metrics:load_update', (event: SynapsysEvent) => {
+      this.handleLoadUpdate(event.payload as { load: number });
     });
 
     // Listen for goal progress
-    bus.on('learning', 'goal:progress', (payload: unknown) => {
-      this.handleGoalProgress(payload as Record<string, unknown>);
+    bus.on('goal:progress', (event: SynapsysEvent) => {
+      this.handleGoalProgress(event.payload as Record<string, unknown>);
     });
   }
 
@@ -489,15 +487,15 @@ export class LearningScheduler {
     console.log('[LearningScheduler] ⏹️ Scheduler stopped');
   }
 
-  pause(reason: string): void {
+  pause(reason?: string): void {
     this.state.status = 'paused';
 
     bus.publish('precog', 'scheduler:paused', {
-      reason,
+      reason: reason || 'API request',
       timestamp: new Date().toISOString(),
     });
 
-    console.log(`[LearningScheduler] ⏸️ Scheduler paused: ${reason}`);
+    console.log(`[LearningScheduler] ⏸️ Scheduler paused: ${reason || 'API request'}`);
   }
 
   resume(): void {
@@ -512,6 +510,66 @@ export class LearningScheduler {
     });
 
     console.log('[LearningScheduler] ▶️ Scheduler resumed');
+  }
+
+  /**
+   * Enter boost mode for intensive learning
+   */
+  setBoostMode(durationMs: number = 300000, multiplier: number = 1.5): void {
+    this.state.currentMultiplier = multiplier;
+    this.state.status = 'running';
+    this.state.metrics.totalBurstMinutes += durationMs / 60000;
+
+    bus.publish('precog', 'scheduler:boost_started', {
+      duration: durationMs,
+      multiplier,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(
+      `[LearningScheduler] 🚀 Boost mode: ${multiplier}x for ${durationMs / 60000} minutes`
+    );
+
+    // Reset after duration
+    setTimeout(() => {
+      if (this.state.currentMultiplier === multiplier) {
+        this.state.currentMultiplier = 1.0;
+        this.state.status = 'stopped';
+        bus.publish('precog', 'scheduler:boost_ended', {
+          timestamp: new Date().toISOString(),
+        });
+        console.log('[LearningScheduler] Boost mode ended');
+      }
+    }, durationMs);
+  }
+
+  /**
+   * Enter quiet mode for reduced learning
+   */
+  setQuietMode(durationMs: number = 600000): void {
+    this.state.currentMultiplier = this.policy.defaultQuietMultiplier;
+    this.state.status = 'running';
+    this.state.metrics.totalQuietMinutes += durationMs / 60000;
+
+    bus.publish('precog', 'scheduler:quiet_started', {
+      duration: durationMs,
+      multiplier: this.policy.defaultQuietMultiplier,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(`[LearningScheduler] 🌙 Quiet mode for ${durationMs / 60000} minutes`);
+
+    // Reset after duration
+    setTimeout(() => {
+      if (this.state.currentMultiplier === this.policy.defaultQuietMultiplier) {
+        this.state.currentMultiplier = 1.0;
+        this.state.status = 'stopped';
+        bus.publish('precog', 'scheduler:quiet_ended', {
+          timestamp: new Date().toISOString(),
+        });
+        console.log('[LearningScheduler] Quiet mode ended');
+      }
+    }, durationMs);
   }
 
   // ============================================================================
@@ -653,7 +711,7 @@ export class LearningScheduler {
 
     // If this schedule is active, end it
     if (this.state.activeSchedules.includes(id)) {
-      await this.endExecution('cancelled', 'Schedule disabled');
+      await this.endExecution('interrupted', 'Schedule disabled');
     }
 
     await this.saveState();
@@ -711,8 +769,7 @@ export class LearningScheduler {
 
     // Check for schedules that should end
     if (this.activeExecution) {
-      const elapsed =
-        (now.getTime() - this.activeExecution.startedAt.getTime()) / 60000; // minutes
+      const elapsed = (now.getTime() - this.activeExecution.startedAt.getTime()) / 60000; // minutes
       const schedule = this.schedules.get(this.activeExecution.scheduleId);
 
       if (schedule && elapsed >= schedule.timing.durationMinutes) {
@@ -729,9 +786,7 @@ export class LearningScheduler {
   private async tryStartSchedule(schedule: LearningSchedule): Promise<boolean> {
     // Check quota
     if (!this.hasQuota(schedule.timing.durationMinutes)) {
-      console.log(
-        `[LearningScheduler] Skipping ${schedule.name}: Insufficient quota`
-      );
+      console.log(`[LearningScheduler] Skipping ${schedule.name}: Insufficient quota`);
       schedule.nextRunAt = this.calculateNextRunTime(schedule);
       return false;
     }
@@ -753,13 +808,8 @@ export class LearningScheduler {
     if (this.activeExecution) {
       const activeSchedule = this.schedules.get(this.activeExecution.scheduleId);
       if (activeSchedule) {
-        if (
-          this.policy.allowPreemption &&
-          schedule.priority > activeSchedule.priority
-        ) {
-          console.log(
-            `[LearningScheduler] Preempting ${activeSchedule.name} for ${schedule.name}`
-          );
+        if (this.policy.allowPreemption && schedule.priority > activeSchedule.priority) {
+          console.log(`[LearningScheduler] Preempting ${activeSchedule.name} for ${schedule.name}`);
           await this.endExecution('interrupted', 'Preempted by higher priority schedule');
           this.state.metrics.preemptions++;
         } else {
@@ -836,8 +886,7 @@ export class LearningScheduler {
     execution.status = status;
     execution.reason = reason;
 
-    const durationMinutes =
-      (execution.endedAt.getTime() - execution.startedAt.getTime()) / 60000;
+    const durationMinutes = (execution.endedAt.getTime() - execution.startedAt.getTime()) / 60000;
 
     // Update quota
     this.useQuota(durationMinutes);
@@ -1027,8 +1076,7 @@ export class LearningScheduler {
       const value = (payload['value'] as number) || 0;
       const current = this.activeExecution.metricsCollected;
       current.avgReward =
-        (current.avgReward * (current.rewardsReceived - 1) + value) /
-        current.rewardsReceived;
+        (current.avgReward * (current.rewardsReceived - 1) + value) / current.rewardsReceived;
     } else if (type?.includes('exploration')) {
       this.activeExecution.metricsCollected.explorations++;
     } else {
@@ -1046,10 +1094,7 @@ export class LearningScheduler {
         `[LearningScheduler] High system load detected (${(payload.load * 100).toFixed(1)}%), pausing scheduler`
       );
       this.pause('High system load');
-    } else if (
-      this.state.status === 'paused' &&
-      payload.load < this.policy.loadThreshold * 0.8
-    ) {
+    } else if (this.state.status === 'paused' && payload.load < this.policy.loadThreshold * 0.8) {
       console.log(
         `[LearningScheduler] System load normalized (${(payload.load * 100).toFixed(1)}%), resuming scheduler`
       );
@@ -1120,11 +1165,7 @@ export class LearningScheduler {
 
     // Day/time based
     if (timing.daysOfWeek?.length && timing.customHours?.length) {
-      return this.calculateDayTimeNext(
-        timing.daysOfWeek,
-        timing.customHours,
-        now
-      );
+      return this.calculateNextDayWindow(timing.daysOfWeek, timing.customHours, now);
     }
 
     // Default: run at next hour
@@ -1138,7 +1179,8 @@ export class LearningScheduler {
     // Simplified cron parser (minute hour dayOfMonth month dayOfWeek)
     // This is a basic implementation - production would use a library like 'cron-parser'
     const parts = pattern.split(' ');
-    const [minute, hour] = parts;
+    const minute = parts[0] ?? '*';
+    const hour = parts[1] ?? '*';
 
     const next = new Date(after);
 
@@ -1161,11 +1203,7 @@ export class LearningScheduler {
     return next;
   }
 
-  private calculateDayTimeNext(
-    days: DayOfWeek[],
-    hours: number[],
-    after: Date
-  ): Date {
+  private calculateNextDayWindow(days: DayOfWeek[], hours: number[], after: Date): Date {
     const dayMap: Record<DayOfWeek, number> = {
       sun: 0,
       mon: 1,
@@ -1362,8 +1400,9 @@ export class LearningScheduler {
             schedule.createdAt = new Date(schedule.createdAt);
             if (schedule.lastRunAt) schedule.lastRunAt = new Date(schedule.lastRunAt);
             if (schedule.nextRunAt) schedule.nextRunAt = new Date(schedule.nextRunAt);
-            if (schedule.goal?.deadline)
+            if (schedule.goal?.deadline) {
               schedule.goal.deadline = new Date(schedule.goal.deadline);
+            }
           }
         }
 

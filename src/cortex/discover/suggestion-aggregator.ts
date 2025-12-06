@@ -345,7 +345,7 @@ export class SuggestionAggregator {
       targetArea,
       success,
       shouldIntegrate,
-      findings,
+      findings: rawFindings,
       confidence,
       status,
     } = payload as {
@@ -354,10 +354,19 @@ export class SuggestionAggregator {
       targetArea: string;
       success: boolean;
       shouldIntegrate: boolean;
-      findings: string[];
+      findings: unknown;
       confidence: number;
       status: string;
     };
+
+    // Normalize findings to string array (may come as object, string, or array)
+    const findings: string[] = Array.isArray(rawFindings)
+      ? rawFindings.filter((f): f is string => typeof f === 'string')
+      : typeof rawFindings === 'string'
+        ? [rawFindings]
+        : typeof rawFindings === 'object' && rawFindings !== null
+          ? Object.values(rawFindings).filter((f): f is string => typeof f === 'string')
+          : [];
 
     // Only create suggestions for validated explorations
     if (status !== 'validated' && !shouldIntegrate) return;

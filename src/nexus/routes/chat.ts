@@ -1,4 +1,4 @@
-// @version 3.3.183
+// @version 3.3.198
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -24,9 +24,11 @@ import {
 } from '../../cortex/creative/index.js';
 import type { IllustrationStyle, IllustrationMood } from '../../cortex/creative/index.js';
 // V3.3.17: System Execution Hub for code execution
-import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
+import { systemExecutionHub, teamRegistry, smartOrchestrator } from '../../cortex/agent/index.js';
 // V3.3.181: Autonomous self-modification
 import { autonomousMod, parseCodeSuggestions } from '../../cortex/motor/autonomous-modifier.js';
+// V3.3.197: Automated execution pipeline
+import { automatedPipeline } from '../../cortex/agent/automated-execution-pipeline.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -311,6 +313,18 @@ IMPORTANT: You ARE the system. You have direct access to execute code, create fi
       '- When you DO generate visuals (only when asked): wrap SVG in ```svg blocks, React in ```jsx blocks.\n' +
       '- Keep visuals responsive and dark-theme compatible.\n' +
       '⚠️ DEFAULT BEHAVIOR: Respond with plain text unless visuals are explicitly requested.';
+
+    // V3.3.198: UX-OPTIMIZED RESPONSE STYLE
+    systemPrompt +=
+      '\n\n📱 RESPONSE UX GUIDELINES (CRITICAL):\n' +
+      '- Be CONCISE. Skip verbose explanations of what you are about to do.\n' +
+      '- DO NOT narrate your process step-by-step (e.g., "First, I will...", "Phase 1:", "Let me...").\n' +
+      '- When executing code: show the result directly, not the process.\n' +
+      '- When answering questions: give the answer first, then brief context if needed.\n' +
+      '- Avoid unnecessary headers, numbered phases, or procedural explanations.\n' +
+      '- Keep the screen stable - minimize scrolling with focused, compact responses.\n' +
+      '- For execution results: just show the output in a clean code block.\n' +
+      '- NEVER say "Alright, let\'s execute..." or "I will now..." - just DO IT and show results.';
 
     let taskType = 'general';
 
@@ -716,46 +730,38 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
     }
 
     // ============================================
-    // V3.3.80: REAL-TIME THINKING PROCESS EVENTS
+    // V3.3.198: MINIMAL THINKING EVENTS (UX-OPTIMIZED)
+    // Only emit essential status - avoid scrolling/verbose output
     // ============================================
 
-    // Helper to emit thinking events
+    // Helper to emit minimal thinking events (consolidated, non-intrusive)
     const emitThinking = (
       stage: string,
       message: string,
-      type: 'info' | 'success' | 'error' = 'info'
+      type: 'info' | 'success' | 'error' = 'info',
+      silent = false
     ) => {
-      res.write(
-        `data: ${JSON.stringify({
-          thinking: { stage, message, type, timestamp: Date.now() },
-        })}\n\n`
-      );
+      // Only emit if not silent - most thinking is now silent for clean UX
+      if (!silent) {
+        res.write(
+          `data: ${JSON.stringify({
+            thinking: { stage, message, type, timestamp: Date.now() },
+          })}\n\n`
+        );
+      }
     };
 
-    // Stage 1: Analyzing request
-    emitThinking(
-      'analyzing',
-      `📥 Analyzing: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`
-    );
-
-    // Determine complexity and optimal routing
+    // Determine complexity and optimal routing (silently)
     const complexity =
       message.length > 500 || /code|implement|build|create|design|architect/i.test(message)
         ? 'high'
         : 'standard';
 
-    emitThinking('analyzing', `🔍 Task complexity: ${complexity}`);
-
-    // Stage 2: Routing decision
-    emitThinking('routing', `🧠 Evaluating available providers...`);
-
-    // Determine ensemble strategy based on task
+    // Determine ensemble strategy based on task (minimal status output)
     const availableProviders = precog.providers.getProviderStatus();
     const activeProviders = Object.entries(availableProviders)
       .filter(([_, status]: [string, any]) => status.available)
       .map(([name]) => name);
-
-    emitThinking('routing', `✅ Active providers: ${activeProviders.join(', ')}`);
 
     // V3.3.80: Smart ensemble selection based on task type
     let selectedProviders: string[] = [];
@@ -767,10 +773,7 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         // Use ensemble for complex/creative tasks
         selectedProviders = activeProviders.slice(0, 3); // Top 3 available
         routingStrategy = 'ensemble';
-        emitThinking(
-          'routing',
-          `🎯 Ensemble mode: Using ${selectedProviders.join(' + ')} for optimal results`
-        );
+        // Silent - no verbose output
       } else if (/code|debug|fix|implement/i.test(message)) {
         // Prefer DeepSeek for code, fallback to others
         selectedProviders = activeProviders.includes('deepseek')
@@ -778,34 +781,28 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
           : activeProviders.includes('anthropic')
             ? ['anthropic']
             : [activeProviders[0] || 'gemini'];
-        emitThinking('routing', `💻 Code task → Primary: ${selectedProviders[0]}`);
+        // Silent - no verbose output
       } else if (/explain|summarize|analyze/i.test(message)) {
         // Prefer Claude for analysis
         selectedProviders = activeProviders.includes('anthropic')
           ? ['anthropic']
           : [activeProviders[0] || 'gemini'];
-        emitThinking('routing', `🎭 Analysis task → Primary: ${selectedProviders[0]}`);
+        // Silent - no verbose output
       } else {
         // Default: Use fastest available (Gemini Flash)
         selectedProviders = activeProviders.includes('gemini')
           ? ['gemini']
           : [activeProviders[0] || 'gemini'];
-        emitThinking('routing', `⚡ Quick response → Primary: ${selectedProviders[0]}`);
+        // Silent - no verbose output
       }
     } else {
       // User selected specific provider
       selectedProviders = [requestedProvider];
-      emitThinking(
-        'routing',
-        `👤 User selected: ${requestedProvider}${requestedModel ? ` (${requestedModel})` : ''}`
-      );
+      // Silent - no verbose output
     }
 
-    // Stage 3: Processing
-    emitThinking(
-      'processing',
-      `⚡ Initiating ${routingStrategy === 'ensemble' ? 'ensemble' : 'single-provider'} generation...`
-    );
+    // V3.3.198: Single minimal status indicator instead of verbose processing steps
+    emitThinking('processing', `⚡ ${selectedProviders[0]}`, 'info');
 
     let fullResponse = '';
     let result: any;
@@ -817,49 +814,16 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
     // ============================================
 
     if (routingStrategy === 'ensemble' && selectedProviders.length > 1) {
-      // 🚀 ENSEMBLE MODE: Query all providers in parallel
-      emitThinking(
-        'processing',
-        `🌐 Querying ${selectedProviders.length} providers in parallel...`
-      );
-
+      // 🚀 ENSEMBLE MODE: Query all providers in parallel (silent processing)
       const parallelResult = await parallelOrchestrator.hyperParallelGenerate(enhancedMessage, {
         system: systemPrompt,
         sessionId: sessionId,
         maxTokens: 2048,
       });
 
-      // Report individual provider results
+      // Report individual provider results (silent - just log)
       const successfulProviders = parallelResult.results.filter((r) => r.success);
-      const failedProviders = parallelResult.results.filter((r) => !r.success);
-
-      emitThinking(
-        'processing',
-        `✅ Got ${successfulProviders.length}/${parallelResult.results.length} responses`
-      );
-
-      // Show which providers responded
-      for (const provResult of parallelResult.results) {
-        if (provResult.success) {
-          emitThinking(
-            'processing',
-            `  └─ ${provResult.provider}: ${provResult.latency}ms ✓`,
-            'success'
-          );
-        } else {
-          emitThinking(
-            'processing',
-            `  └─ ${provResult.provider}: ${provResult.error || 'failed'} ✗`,
-            'error'
-          );
-        }
-      }
-
-      // Stream the synthesized consensus response
-      emitThinking(
-        'processing',
-        `🧠 Synthesizing consensus from ${successfulProviders.length} providers...`
-      );
+      console.log(`[Chat Stream] Ensemble: ${successfulProviders.length}/${parallelResult.results.length} providers responded`);
 
       fullResponse = parallelResult.consensus;
 
@@ -879,11 +843,7 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         reasoning: `Parallel ensemble: queried ${parallelResult.results.length} providers, synthesized from ${successfulProviders.length} responses in ${parallelResult.timing.total}ms`,
       };
 
-      emitThinking(
-        'complete',
-        `✅ Ensemble complete: ${successfulProviders.length} providers synthesized`,
-        'success'
-      );
+      // Silent - completion indicated by done:true in final event
     } else {
       // Single provider mode (original behavior)
       result = await precog.providers.stream({
@@ -898,12 +858,9 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
           fullResponse += chunk;
           res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
         },
-        onComplete: (fullText) => {
-          emitThinking(
-            'complete',
-            `✅ Response complete via ${result?.provider || selectedProviders[0]}`,
-            'success'
-          );
+        onComplete: (_fullText) => {
+          // V3.3.198: Silent completion - no verbose output
+          console.log(`[Chat Stream] Response complete via ${result?.provider || selectedProviders[0]}`);
         },
       });
     }
@@ -951,18 +908,21 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
     // All changes require explicit user approval via /api/v1/system/autonomous/approve
     const codeSuggestions = parseCodeSuggestions(fullResponse);
     if (codeSuggestions.length > 0) {
-      console.log(`[Chat Stream] 🧬 Found ${codeSuggestions.length} self-modification suggestions (awaiting approval)`);
-      
+      console.log(
+        `[Chat Stream] 🧬 Found ${codeSuggestions.length} self-modification suggestions (awaiting approval)`
+      );
+
       // Queue suggestions for approval - DO NOT auto-apply
       bus.publish('cortex', 'self-mod:suggestions-detected', {
         sessionId,
         count: codeSuggestions.length,
-        suggestions: codeSuggestions.map(s => ({
+        suggestions: codeSuggestions.map((s) => ({
           filePath: s.filePath,
           operation: s.operation,
           confidence: s.confidence,
         })),
-        message: 'Code suggestions detected. Use /api/v1/system/autonomous/process with autoApply=false to review, then /approve to apply.',
+        message:
+          'Code suggestions detected. Use /api/v1/system/autonomous/process with autoApply=false to review, then /approve to apply.',
       });
     }
 
@@ -1225,6 +1185,283 @@ router.get('/illustration-types', (req, res) => {
       ],
     })
   );
+});
+
+// ============================================================================
+// SMART EXECUTION - V3.3.196
+// Intelligent execution with human-friendly progress and quality optimization
+// ============================================================================
+
+/**
+ * @route POST /api/v1/chat/command/smart
+ * @description Smart execution with full TooLoo orchestration
+ * This is the flagship execution endpoint that uses:
+ * - Sprint-based execution cycles
+ * - Human-friendly progress updates
+ * - Quality > Performance > Efficiency > Cost optimization
+ * - Multi-phase validation
+ * V3.3.196: Smart execution orchestrator
+ */
+router.post('/command/smart', async (req, res) => {
+  const {
+    objective,
+    code,
+    language = 'javascript',
+    context,
+    qualityThreshold = 0.85,
+    maxSprints = 5,
+    verbose = true,
+  } = req.body;
+
+  if (!objective && !code) {
+    return res.status(400).json(errorResponse('Objective or code is required'));
+  }
+
+  const startTime = Date.now();
+  const requestId = `smart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  try {
+    console.log(`[Chat Smart] 🧠 Starting smart execution (${requestId})...`);
+    console.log(`[Chat Smart] Objective: ${(objective || 'code execution').substring(0, 100)}...`);
+
+    // Publish execution start event
+    bus.publish('cortex', 'chat:smart:start', {
+      requestId,
+      objective: objective || 'code execution',
+      hasCode: !!code,
+      timestamp: Date.now(),
+    });
+
+    // Execute through Smart Orchestrator
+    const response = await smartOrchestrator.execute({
+      id: requestId,
+      objective: objective || `Execute ${language} code`,
+      type: code ? 'execute' : 'generate',
+      code,
+      language,
+      context: {
+        ...context,
+        source: 'chat',
+      },
+      qualityThreshold,
+      maxSprints,
+      verbose,
+    });
+
+    const duration = Date.now() - startTime;
+
+    // Publish completion event
+    bus.publish('cortex', 'chat:smart:complete', {
+      requestId,
+      success: response.success,
+      qualityScore: response.qualityScore,
+      sprints: response.totalSprints,
+      duration,
+      timestamp: Date.now(),
+    });
+
+    // Save to history with rich context
+    await saveMessage({
+      id: requestId,
+      type: 'smart-execution',
+      content: `[Smart Execution] ${objective || 'Code Execution'}\n${code ? `\`\`\`${language}\n${code}\n\`\`\`` : ''}`,
+      result: response.output,
+      success: response.success,
+      qualityScore: response.qualityScore,
+      sprints: response.totalSprints,
+      optimization: response.optimization,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Build human-friendly response
+    const humanResponse = buildHumanFriendlyResponse(response);
+
+    res.json(
+      successResponse({
+        requestId,
+        success: response.success,
+        output: response.output,
+        
+        // Human-friendly summary
+        summary: humanResponse.summary,
+        explanation: humanResponse.explanation,
+        
+        // Execution details
+        sprints: response.sprints.map((s) => ({
+          number: s.number,
+          objective: s.objective,
+          status: s.status,
+          qualityScore: s.qualityScore,
+          durationMs: s.durationMs,
+        })),
+        totalSprints: response.totalSprints,
+        
+        // Quality metrics
+        qualityScore: response.qualityScore,
+        optimization: response.optimization,
+        
+        // Status info
+        finalStatus: response.finalStatus,
+        
+        // Artifacts
+        artifacts: response.artifacts,
+        
+        // Performance
+        durationMs: duration,
+        
+        // Recommendations for user
+        recommendations: response.recommendations,
+        
+        // Team info
+        teamId: response.teamId,
+      })
+    );
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[Chat Smart] Error:', error);
+
+    bus.publish('cortex', 'chat:smart:error', {
+      requestId,
+      error: error instanceof Error ? error.message : String(error),
+      duration,
+      timestamp: Date.now(),
+    });
+
+    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
+  }
+});
+
+/**
+ * Build a human-friendly response from the smart execution result
+ */
+function buildHumanFriendlyResponse(response: any): { summary: string; explanation: string } {
+  const { success, qualityScore, totalSprints, optimization, recommendations } = response;
+  
+  let summary: string;
+  let explanation: string;
+  
+  if (success) {
+    const qualityPercent = (qualityScore * 100).toFixed(1);
+    summary = `✅ Task completed successfully with ${qualityPercent}% quality`;
+    
+    explanation = `I completed your task in ${totalSprints} sprint${totalSprints > 1 ? 's' : ''}. `;
+    
+    if (qualityScore >= 0.95) {
+      explanation += `The output quality is excellent! `;
+    } else if (qualityScore >= 0.85) {
+      explanation += `The output quality is good and meets the threshold. `;
+    } else {
+      explanation += `The output quality is acceptable but could be improved. `;
+    }
+    
+    if (optimization.efficiencyRatio > 0.7) {
+      explanation += `Execution was highly efficient. `;
+    }
+    
+    if (recommendations.length > 0) {
+      explanation += `\n\nSuggestions for next time:\n• ${recommendations.slice(0, 3).join('\n• ')}`;
+    }
+  } else {
+    summary = `⚠️ Task completed but did not meet quality threshold`;
+    
+    explanation = `I attempted ${totalSprints} sprint${totalSprints > 1 ? 's' : ''} but achieved ${(qualityScore * 100).toFixed(1)}% quality. `;
+    
+    if (recommendations.length > 0) {
+      explanation += `\n\nHere's what might help:\n• ${recommendations.join('\n• ')}`;
+    }
+  }
+  
+  return { summary, explanation };
+}
+
+// ============================================================================
+// AUTOMATED EXECUTION - V3.3.197
+// Fully automated, self-correcting execution pipeline
+// This is the recommended execution endpoint for TooLoo
+// ============================================================================
+
+/**
+ * @route POST /api/v1/chat/command/auto
+ * @description Fully automated code execution with self-correction
+ * This is TooLoo's streamlined execution - it handles everything automatically:
+ * - Code generation from objectives
+ * - Proper file-based execution (no eval issues)
+ * - Auto-retry with intelligent error fixing
+ * - Clean result packaging
+ *
+ * V3.3.197: New automated execution pipeline
+ */
+router.post('/command/auto', async (req, res) => {
+  const {
+    code,
+    objective,
+    language = 'javascript',
+    timeout = 30000,
+    maxRetries = 3,
+  } = req.body;
+
+  if (!code && !objective) {
+    return res.status(400).json(errorResponse('Code or objective is required'));
+  }
+
+  const startTime = Date.now();
+  const requestId = `auto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  try {
+    console.log(`[Chat Auto] 🤖 Starting automated execution (${requestId})...`);
+
+    // Execute through automated pipeline
+    const result = await automatedPipeline.execute({
+      code,
+      objective,
+      language: language as any,
+      timeout,
+      maxRetries,
+    });
+
+    const duration = Date.now() - startTime;
+
+    // Save to history
+    await saveMessage({
+      id: requestId,
+      type: 'auto-execution',
+      content: `[Auto Execution] ${objective || 'Code'}\n\`\`\`${result.language}\n${result.executedCode}\n\`\`\``,
+      result: result.success ? result.output : result.error,
+      success: result.success,
+      attempts: result.attempts,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Build response
+    res.json(
+      successResponse({
+        requestId,
+        success: result.success,
+        output: result.output,
+        error: result.error,
+        exitCode: result.exitCode,
+        
+        // Execution details
+        executedCode: result.executedCode,
+        language: result.language,
+        attempts: result.attempts,
+        
+        // Performance
+        durationMs: duration,
+        
+        // Phases completed
+        phases: result.phases,
+        
+        // Human-friendly summary
+        summary: result.success
+          ? `✅ Executed successfully${result.attempts > 1 ? ` (after ${result.attempts} attempts)` : ''}`
+          : `❌ Execution failed after ${result.attempts} attempt(s)`,
+      })
+    );
+  } catch (error) {
+    console.error('[Chat Auto] Error:', error);
+    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
+  }
 });
 
 // ============================================================================

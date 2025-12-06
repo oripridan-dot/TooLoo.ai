@@ -1,9 +1,11 @@
-// @version 2.2.152
+// @version 2.2.153
 import { Router } from 'express';
 import fs from 'fs-extra';
 import path from 'path';
 import { qaGuardianAgent } from '../../qa/agent/qa-guardian-agent.js';
 import { learner } from '../../precog/learning/learner.js';
+import { bus } from '../../core/event-bus.js';
+import { precog } from '../../precog/index.js';
 
 const router = Router();
 const METRICS_PATH = path.join(process.cwd(), 'data', 'learning-metrics.json');
@@ -484,6 +486,32 @@ router.post('/goals', async (req, res) => {
       data: newGoal,
     });
   } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * @description Harvest content from a URL using advanced extraction with truth verification
+ */
+router.post('/harvest', async (req, res) => {
+  const { url, type = 'static' } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'URL is required' });
+  }
+
+  try {
+    // Use Harvester directly for advanced extraction
+    const result = await precog.harvester.harvest({
+      url,
+      type: type as 'static' | 'dynamic' | 'media',
+    });
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    console.error('[Learning] Harvest Error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

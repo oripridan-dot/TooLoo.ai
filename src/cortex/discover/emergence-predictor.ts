@@ -18,7 +18,7 @@
  * - ExplorationEngine for hypothesis success patterns
  */
 
-import { bus } from '../../core/event-bus.js';
+import { bus, SynapsysEvent } from '../../core/event-bus.js';
 import { EmergenceSignature, EmergenceEvent, EmergenceSignal } from './emergence-amplifier.js';
 import fs from 'fs-extra';
 import path from 'path';
@@ -329,7 +329,7 @@ export class EmergencePredictor {
     // Start prediction cycle
     this.start();
 
-    bus.publish('discovery', 'predictor:initialized', {
+    bus.publish('cortex', 'predictor:initialized', {
       policy: this.policy,
       patternCount: this.state.historicalPatterns.length,
       activePredicitions: this.state.activePredictions.length,
@@ -343,19 +343,19 @@ export class EmergencePredictor {
 
   private setupListeners(): void {
     // Listen for emergence signals
-    bus.on('cortex', 'emergence:signal_received', (payload: unknown) => {
-      this.recordSignal(payload as EmergenceSignal);
+    bus.on('emergence:signal_received', (event: SynapsysEvent) => {
+      this.recordSignal(event.payload as EmergenceSignal);
     });
 
     // Listen for actual emergences (to validate predictions)
-    bus.on('discovery', 'emergence:detected', (payload: unknown) => {
-      this.validatePredictions(payload as EmergenceEvent);
-      this.learnFromEmergence(payload as EmergenceEvent);
+    bus.on('emergence:detected', (event: SynapsysEvent) => {
+      this.validatePredictions(event.payload as EmergenceEvent);
+      this.learnFromEmergence(event.payload as EmergenceEvent);
     });
 
     // Listen for curiosity signals
-    bus.on('curiosity', 'signal:*', (payload: unknown) => {
-      const data = payload as Record<string, unknown>;
+    bus.on('curiosity:signal', (event: SynapsysEvent) => {
+      const data = event.payload as Record<string, unknown>;
       this.recordSignal({
         id: `curiosity-${Date.now()}`,
         source: 'curiosity',
@@ -367,8 +367,8 @@ export class EmergencePredictor {
     });
 
     // Listen for learning events
-    bus.on('cortex', 'learning:reward_received', (payload: unknown) => {
-      const data = payload as Record<string, unknown>;
+    bus.on('learning:reward_received', (event: SynapsysEvent) => {
+      const data = event.payload as Record<string, unknown>;
       this.recordSignal({
         id: `learning-${Date.now()}`,
         source: 'learning',
@@ -380,8 +380,8 @@ export class EmergencePredictor {
     });
 
     // Listen for exploration results
-    bus.on('exploration', 'hypothesis:validated', (payload: unknown) => {
-      const data = payload as Record<string, unknown>;
+    bus.on('hypothesis:validated', (event: SynapsysEvent) => {
+      const data = event.payload as Record<string, unknown>;
       this.recordSignal({
         id: `exploration-${Date.now()}`,
         source: 'exploration',
@@ -403,10 +403,7 @@ export class EmergencePredictor {
     }
 
     this.state.status = 'active';
-    this.updateInterval = setInterval(
-      () => this.updatePredictions(),
-      this.policy.updateIntervalMs
-    );
+    this.updateInterval = setInterval(() => this.updatePredictions(), this.policy.updateIntervalMs);
     this.updatePredictions(); // Initial update
 
     console.log('[EmergencePredictor] ▶️ Prediction engine started');
@@ -493,7 +490,7 @@ export class EmergencePredictor {
         this.state.activePredictions.push(prediction);
         this.state.metrics.totalPredictions++;
 
-        bus.publish('discovery', 'prediction:created', {
+        bus.publish('cortex', 'prediction:created', {
           prediction: this.sanitizePrediction(prediction),
           timestamp: new Date().toISOString(),
         });
@@ -520,7 +517,8 @@ export class EmergencePredictor {
 
       // Calculate confidence from multiple sources
       const precursorConfidence = this.calculatePrecursorConfidence(precursors);
-      const patternConfidence = patterns.length > 0 ? patterns[0].confidence : 0;
+      const firstPattern = patterns[0];
+      const patternConfidence = patterns.length > 0 && firstPattern ? firstPattern.confidence : 0;
       const trendConfidence = this.calculateTrendConfidence(trends);
 
       // Weighted combination
@@ -575,9 +573,7 @@ export class EmergencePredictor {
     const recentSignals = this.state.recentSignals;
 
     for (const pattern of patterns) {
-      const relevantSignals = recentSignals.filter((s) =>
-        this.matchesPrecursorPattern(s, pattern)
-      );
+      const relevantSignals = recentSignals.filter((s) => this.matchesPrecursorPattern(s, pattern));
 
       if (relevantSignals.length === 0) {
         precursors.push({
@@ -725,7 +721,7 @@ export class EmergencePredictor {
       }
 
       // Simple linear forecast
-      const lastValue = values[values.length - 1];
+      const lastValue = values[values.length - 1] ?? 0;
       const forecast = Math.max(0, Math.min(1, lastValue + velocity * 60000)); // 1 minute ahead
 
       trends.push({
@@ -760,8 +756,8 @@ export class EmergencePredictor {
 
     const n = values.length;
     const lastIdx = n - 1;
-    const deltaValue = values[lastIdx] - values[0];
-    const deltaTime = times[lastIdx] - times[0];
+    const deltaValue = (values[lastIdx] ?? 0) - (values[0] ?? 0);
+    const deltaTime = (times[lastIdx] ?? 0) - (times[0] ?? 0);
 
     return deltaTime > 0 ? deltaValue / deltaTime : 0;
   }
@@ -775,16 +771,14 @@ export class EmergencePredictor {
     const velocity1 = this.calculateVelocity(values.slice(0, midIdx), times.slice(0, midIdx));
     const velocity2 = this.calculateVelocity(values.slice(midIdx), times.slice(midIdx));
 
-    const deltaTime = times[n - 1] - times[0];
+    const deltaTime = (times[n - 1] ?? 0) - (times[0] ?? 0);
     return deltaTime > 0 ? (velocity2 - velocity1) / deltaTime : 0;
   }
 
   private calculateTrendConfidence(trends: TrendAnalysis[]): number {
     if (trends.length === 0) return 0;
 
-    const positiveTrends = trends.filter(
-      (t) => t.direction === 'increasing' && t.velocity > 0.001
-    );
+    const positiveTrends = trends.filter((t) => t.direction === 'increasing' && t.velocity > 0.001);
 
     return Math.min(1, positiveTrends.length / trends.length + 0.2);
   }
@@ -820,12 +814,8 @@ export class EmergencePredictor {
   }
 
   private calculateCorrelation(typeA: string, typeB: string): SignalCorrelation {
-    const signalsA = this.signalHistory.filter(
-      (s) => `${s.source}:${s.type}` === typeA
-    );
-    const signalsB = this.signalHistory.filter(
-      (s) => `${s.source}:${s.type}` === typeB
-    );
+    const signalsA = this.signalHistory.filter((s) => `${s.source}:${s.type}` === typeA);
+    const signalsB = this.signalHistory.filter((s) => `${s.source}:${s.type}` === typeB);
 
     if (signalsA.length < 5 || signalsB.length < 5) {
       return {
@@ -861,14 +851,12 @@ export class EmergencePredictor {
 
     const sumX = x.reduce((a, b) => a + b, 0);
     const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
+    const sumXY = x.reduce((total, xi, i) => total + xi * (y[i] ?? 0), 0);
     const sumX2 = x.reduce((a, b) => a + b * b, 0);
     const sumY2 = y.reduce((a, b) => a + b * b, 0);
 
     const numerator = n * sumXY - sumX * sumY;
-    const denominator = Math.sqrt(
-      (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)
-    );
+    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
     return denominator === 0 ? 0 : numerator / denominator;
   }
@@ -922,8 +910,7 @@ export class EmergencePredictor {
     }
 
     // Adjust based on signal strength
-    const avgStrength =
-      precursors.reduce((sum, p) => sum + p.currentValue, 0) / precursors.length;
+    const avgStrength = precursors.reduce((sum, p) => sum + p.currentValue, 0) / precursors.length;
     if (avgStrength > 0.8) {
       estimatedMs *= 0.5; // High strength = imminent
     }
@@ -931,10 +918,7 @@ export class EmergencePredictor {
     return Math.max(60000, Math.min(this.policy.predictionWindowMs, estimatedMs));
   }
 
-  private estimateStrength(
-    precursors: PrecursorSignal[],
-    patterns: HistoricalPattern[]
-  ): number {
+  private estimateStrength(precursors: PrecursorSignal[], patterns: HistoricalPattern[]): number {
     const avgPrecursorValue =
       precursors.reduce((sum, p) => sum + p.currentValue, 0) / precursors.length;
     const patternConfidence =
@@ -942,7 +926,7 @@ export class EmergencePredictor {
         ? patterns.reduce((sum, p) => sum + p.successRate, 0) / patterns.length
         : 0.5;
 
-    return (avgPrecursorValue * 0.6 + patternConfidence * 0.4);
+    return avgPrecursorValue * 0.6 + patternConfidence * 0.4;
   }
 
   private getConfidenceLevel(confidence: number): PredictionConfidence {
@@ -979,8 +963,9 @@ export class EmergencePredictor {
 
     // Pattern-based reasoning
     if (patterns.length > 0) {
+      const firstPattern = patterns[0];
       reasons.push(
-        `Matches ${patterns.length} historical pattern(s) with ${(patterns[0].successRate * 100).toFixed(0)}% success rate`
+        `Matches ${patterns.length} historical pattern(s) with ${((firstPattern?.successRate ?? 0) * 100).toFixed(0)}% success rate`
       );
     }
 
@@ -1021,7 +1006,7 @@ export class EmergencePredictor {
             leadTime) /
           this.state.metrics.correctPredictions;
 
-        bus.publish('discovery', 'prediction:validated', {
+        bus.publish('cortex', 'prediction:validated', {
           predictionId: prediction.id,
           emergenceId: emergence.id,
           leadTimeMs: leadTime,
@@ -1073,8 +1058,7 @@ export class EmergencePredictor {
       existingPattern.occurrences++;
       existingPattern.lastSeen = new Date();
       existingPattern.averageLeadTime =
-        (existingPattern.averageLeadTime * (existingPattern.occurrences - 1) +
-          leadTimeWindow / 2) /
+        (existingPattern.averageLeadTime * (existingPattern.occurrences - 1) + leadTimeWindow / 2) /
         existingPattern.occurrences;
       existingPattern.successRate = Math.min(1, existingPattern.successRate + 0.05);
       existingPattern.confidence = Math.min(1, existingPattern.confidence + 0.02);
@@ -1108,9 +1092,7 @@ export class EmergencePredictor {
     }
 
     // Remove very low confidence patterns
-    this.state.historicalPatterns = this.state.historicalPatterns.filter(
-      (p) => p.confidence > 0.1
-    );
+    this.state.historicalPatterns = this.state.historicalPatterns.filter((p) => p.confidence > 0.1);
   }
 
   private arraysOverlap(a: string[], b: string[]): boolean {
@@ -1213,21 +1195,17 @@ export class EmergencePredictor {
         }
 
         if (data.historicalPatterns) {
-          this.state.historicalPatterns = data.historicalPatterns.map(
-            (p: HistoricalPattern) => ({
-              ...p,
-              lastSeen: new Date(p.lastSeen),
-            })
-          );
+          this.state.historicalPatterns = data.historicalPatterns.map((p: HistoricalPattern) => ({
+            ...p,
+            lastSeen: new Date(p.lastSeen),
+          }));
         }
 
         if (data.metrics) {
           this.state.metrics = { ...this.state.metrics, ...data.metrics };
         }
 
-        console.log(
-          `[EmergencePredictor] Loaded ${this.state.historicalPatterns.length} patterns`
-        );
+        console.log(`[EmergencePredictor] Loaded ${this.state.historicalPatterns.length} patterns`);
       }
     } catch (error) {
       console.error('[EmergencePredictor] Failed to load state:', error);
@@ -1237,6 +1215,15 @@ export class EmergencePredictor {
   // ============================================================================
   // PUBLIC API
   // ============================================================================
+
+  /**
+   * Force an immediate prediction cycle
+   */
+  runPredictionCycle(): void {
+    this.updatePredictions().catch((err: Error) => {
+      console.error('[EmergencePredictor] Error in forced prediction cycle:', err);
+    });
+  }
 
   getPolicy(): PredictorPolicy {
     return { ...this.policy };
@@ -1296,9 +1283,7 @@ export class EmergencePredictor {
     accuracy: number;
     topPrediction: EmergencePrediction | null;
   } {
-    const sorted = [...this.state.activePredictions].sort(
-      (a, b) => b.confidence - a.confidence
-    );
+    const sorted = [...this.state.activePredictions].sort((a, b) => b.confidence - a.confidence);
 
     return {
       status: this.state.status,

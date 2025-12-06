@@ -666,6 +666,12 @@ export class PerfectionEnforcer {
       serendipity: '/serendipity',
       suggestions: '/suggestions',
       assets: '/assets',
+      'growth-engine': '/growth',
+      configuration: '/config',
+      cognitive: '/cognitive',
+      agent: '/agent',
+      'self-mod': '/system/self',
+      'autonomous-mod': '/system/autonomous',
     };
     return pathMap[name] !== undefined ? pathMap[name] : `/${name}`;
   }

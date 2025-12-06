@@ -136,7 +136,7 @@ Be thorough but fair. Consider context. Flag genuine issues but don't over-inter
 
     try {
       const response = await this.anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2048,
         temperature: 0.3, // Lower temperature for consistency
         messages: [

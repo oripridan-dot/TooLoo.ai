@@ -1,8 +1,9 @@
-// @version 2.2.99
+// @version 2.2.100
 import path from 'path';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { EventEmitter } from 'events';
+import { bus } from '../../core/event-bus.js';
 
 // Engines
 import TrainingCamp from '../engine/training-camp.js';
@@ -555,6 +556,20 @@ export class TrainingService extends EventEmitter {
     }
     this.feedbackStore.count = this.feedbackStore.feedback.length;
     this.feedbackStore.lastUpdated = Date.now();
+
+    // Publish to ReinforcementLearner and SerendipityInjector
+    bus.publish('precog', 'user:feedback', {
+      sessionId: responseId,
+      action: helpful ? 'thumbs_up' : helpful === false ? 'thumbs_down' : 'rating',
+      context: {
+        provider,
+        quality,
+        relevance,
+        clarity,
+        averageScore: feedbackEntry.averageScore,
+        comment,
+      },
+    });
 
     return {
       message: 'Feedback recorded',

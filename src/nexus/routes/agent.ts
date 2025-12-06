@@ -1,4 +1,4 @@
-// @version 3.3.178
+// @version 3.3.196
 /**
  * Agent API Routes
  *
@@ -10,6 +10,9 @@
  * V3.3.17: Integrated with System Execution Hub and Team Framework
  * - All tasks now go through team validation (executor + validator pairs)
  * - Cross-system execution support
+ * V3.3.196: Added Smart Execution Orchestrator endpoints
+ * - Full sprint-based execution with progress streaming
+ * - Quality > Performance > Efficiency > Cost optimization
  *
  * @module nexus/routes/agent
  */
@@ -18,7 +21,7 @@ import { Router, Request, Response } from 'express';
 import { executionAgent } from '../../cortex/agent/execution-agent.js';
 import { taskProcessor } from '../../cortex/agent/task-processor.js';
 import { artifactManager } from '../../cortex/agent/artifact-manager.js';
-import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
+import { systemExecutionHub, teamRegistry, smartOrchestrator } from '../../cortex/agent/index.js';
 import type { TaskType, TaskInput, ProcessDefinition } from '../../cortex/agent/types.js';
 
 const router = Router();
@@ -673,7 +676,8 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         success: task.result?.success,
         duration: task.result?.metrics?.durationMs,
         output:
-          task.result?.output?.substring(0, 200) + ((task.result?.output?.length || 0) > 200 ? '...' : ''),
+          task.result?.output?.substring(0, 200) +
+          ((task.result?.output?.length || 0) > 200 ? '...' : ''),
         completedAt: task.completedAt,
       })),
 
@@ -685,7 +689,8 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         description: artifact.description,
         language: artifact.language,
         contentPreview:
-          artifact.content?.substring(0, 300) + ((artifact.content?.length || 0) > 300 ? '...' : ''),
+          artifact.content?.substring(0, 300) +
+          ((artifact.content?.length || 0) > 300 ? '...' : ''),
         createdAt: artifact.createdAt,
         tags: artifact.tags,
       })),
@@ -797,6 +802,225 @@ router.get('/executions', async (req: Request, res: Response) => {
         executions,
         count: executions.length,
         hasMore: taskHistory.length >= limit,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
+// ============================================================================
+// SMART EXECUTION ORCHESTRATOR ENDPOINTS - V3.3.196
+// Intelligent execution with human-friendly progress and sprint-based approach
+// ============================================================================
+
+/**
+ * @route POST /api/v1/agent/smart-execute
+ * @description Execute a task with full smart orchestration
+ * Uses sprint-based execution with quality > performance > efficiency > cost optimization
+ * Returns detailed progress updates and comprehensive results
+ */
+router.post('/smart-execute', async (req: Request, res: Response) => {
+  try {
+    const {
+      objective,
+      type = 'execute',
+      code,
+      language,
+      context,
+      priorities,
+      qualityThreshold = 0.85,
+      maxSprints = 5,
+      timeout = 120000,
+      verbose = true,
+    } = req.body;
+
+    if (!objective && !code) {
+      res.status(400).json({
+        ok: false,
+        error: 'Missing required field: objective or code',
+      });
+      return;
+    }
+
+    console.log(`[Agent API] Smart execution request: ${objective?.substring(0, 100) || 'code execution'}...`);
+
+    const response = await smartOrchestrator.execute({
+      objective: objective || `Execute ${language || 'code'}: ${code?.substring(0, 100)}...`,
+      type: type as TaskType,
+      code,
+      language,
+      context,
+      priorities,
+      qualityThreshold,
+      maxSprints,
+      timeout,
+      verbose,
+    });
+
+    res.json({
+      ok: response.success,
+      data: {
+        id: response.id,
+        success: response.success,
+        output: response.output,
+        sprints: response.sprints.map((s) => ({
+          number: s.number,
+          objective: s.objective,
+          status: s.status,
+          qualityScore: s.qualityScore,
+          durationMs: s.durationMs,
+        })),
+        totalSprints: response.totalSprints,
+        qualityScore: response.qualityScore,
+        artifacts: response.artifacts,
+        totalDurationMs: response.totalDurationMs,
+        finalStatus: response.finalStatus,
+        optimization: response.optimization,
+        teamId: response.teamId,
+        recommendations: response.recommendations,
+        errors: response.errors,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Agent API] Smart execution error:', error);
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route POST /api/v1/agent/smart-execute/stream
+ * @description Execute with streaming progress updates (Server-Sent Events)
+ * Real-time human-friendly status updates throughout execution
+ */
+router.post('/smart-execute/stream', async (req: Request, res: Response) => {
+  try {
+    const {
+      objective,
+      type = 'execute',
+      code,
+      language,
+      context,
+      priorities,
+      qualityThreshold = 0.85,
+      maxSprints = 5,
+      timeout = 120000,
+    } = req.body;
+
+    if (!objective && !code) {
+      res.status(400).json({
+        ok: false,
+        error: 'Missing required field: objective or code',
+      });
+      return;
+    }
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const executionId = `smart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Subscribe to progress updates
+    smartOrchestrator.subscribeToProgress(executionId, (update) => {
+      res.write(`event: progress\n`);
+      res.write(`data: ${JSON.stringify(update)}\n\n`);
+    });
+
+    // Start execution
+    const response = await smartOrchestrator.execute({
+      id: executionId,
+      objective: objective || `Execute ${language || 'code'}: ${code?.substring(0, 100)}...`,
+      type: type as TaskType,
+      code,
+      language,
+      context,
+      priorities,
+      qualityThreshold,
+      maxSprints,
+      timeout,
+      verbose: true,
+      streamProgress: true,
+    });
+
+    // Send final result
+    res.write(`event: complete\n`);
+    res.write(`data: ${JSON.stringify({
+      success: response.success,
+      output: response.output,
+      qualityScore: response.qualityScore,
+      totalSprints: response.totalSprints,
+      totalDurationMs: response.totalDurationMs,
+      recommendations: response.recommendations,
+    })}\n\n`);
+
+    res.end();
+  } catch (error: any) {
+    res.write(`event: error\n`);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+/**
+ * @route GET /api/v1/agent/smart-execute/active
+ * @description Get all active smart executions
+ */
+router.get('/smart-execute/active', (_req: Request, res: Response) => {
+  try {
+    const active = smartOrchestrator.getActiveExecutions();
+
+    res.json({
+      ok: true,
+      data: {
+        executions: active.map((e) => ({
+          id: e.id,
+          objective: e.objective?.substring(0, 200),
+          type: e.type,
+          qualityThreshold: e.qualityThreshold,
+          maxSprints: e.maxSprints,
+        })),
+        count: active.length,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route GET /api/v1/agent/smart-execute/history
+ * @description Get smart execution history
+ */
+router.get('/smart-execute/history', (req: Request, res: Response) => {
+  try {
+    const limit = parseInt((req.query['limit'] as string) || '20', 10);
+    const history = smartOrchestrator.getExecutionHistory(limit);
+
+    res.json({
+      ok: true,
+      data: {
+        executions: history.map((h) => ({
+          id: h.id,
+          success: h.success,
+          qualityScore: h.qualityScore,
+          totalSprints: h.totalSprints,
+          totalDurationMs: h.totalDurationMs,
+          finalStatus: h.finalStatus,
+          recommendations: h.recommendations,
+        })),
+        count: history.length,
       },
     });
   } catch (error: any) {

@@ -291,12 +291,12 @@ export class WireVerifier {
    */
   async scanBackendRoutes(): Promise<BackendRoute[]> {
     console.log('[WireVerifier] 📜 Loading backend routes from API Contracts...');
-    return Object.values(API_CONTRACTS).map(contract => ({
+    return Object.values(API_CONTRACTS).map((contract) => ({
       file: `${contract.owner} (contract)`,
       method: contract.method,
       path: contract.path,
       fullPath: contract.path,
-      handler: 'contract-defined'
+      handler: 'contract-defined',
     }));
   }
 

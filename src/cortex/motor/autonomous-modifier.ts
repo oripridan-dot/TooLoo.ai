@@ -1,4 +1,4 @@
-// @version 3.3.183
+// @version 3.3.194
 /**
  * TooLoo Autonomous Self-Modification System
  *
@@ -13,12 +13,18 @@
  * 4. SelfModificationEngine applies changes with backups
  * 5. Post-modification verification ensures system stability
  *
+ * V3.3.194 SANDBOXED EXECUTION:
+ * - New sandboxedApply() routes changes through reflection sandbox first
+ * - Execute→Test→Refine loop validates changes before production
+ * - Handoff protocol promotes validated changes safely
+ *
  * SAFETY LAYERS:
  * - Pre-flight: TypeScript compilation check
  * - Protected files require explicit approval
  * - Automatic rollback on test failures
  * - Full modification audit log
  * - Git integration for version control
+ * - Sandbox validation for high-risk changes
  *
  * @module cortex/motor/autonomous-modifier
  */
@@ -26,6 +32,11 @@
 import { selfMod, SelfModResult, CodeEdit } from './self-modification.js';
 import { bus } from '../../core/event-bus.js';
 import { execSync } from 'child_process';
+import {
+  reflectionLoop,
+  ReflectionResult,
+  CodeChange,
+} from '../self-modification/reflection-loop.js';
 
 // ============================================================================
 // TYPES
@@ -60,6 +71,29 @@ export interface ModificationResult {
   validationPassed: boolean;
   testsPassed?: boolean;
   error?: string;
+}
+
+export interface SandboxedModificationResult {
+  /** Overall success */
+  success: boolean;
+  /** Status from reflection loop */
+  status: 'success' | 'partial' | 'failed' | 'aborted';
+  /** Number of refinement iterations */
+  iterations: number;
+  /** Tests that passed */
+  testsPassed: number;
+  /** Total tests run */
+  testsTotal: number;
+  /** Commit hash in sandbox */
+  commitHash: string | null;
+  /** Ready to promote to production? */
+  readyForPromotion: boolean;
+  /** Git diff of changes */
+  diff: string | null;
+  /** Summary message */
+  summary: string;
+  /** Full reflection result */
+  reflectionResult: ReflectionResult;
 }
 
 export interface ApprovalStatus {
@@ -121,8 +155,7 @@ export function parseCodeSuggestions(aiResponse: string): CodeSuggestion[] {
 
   // Pattern 1: Explicit file path in code block header
   // ```typescript:src/path/to/file.ts or ```ts // filepath: src/path/to/file.ts
-  const explicitPathPattern =
-    /```(\w+)(?::|[\s]*\/\/\s*filepath:\s*)([^\n`]+)\n([\s\S]*?)```/gi;
+  const explicitPathPattern = /```(\w+)(?::|[\s]*\/\/\s*filepath:\s*)([^\n`]+)\n([\s\S]*?)```/gi;
 
   let match;
   while ((match = explicitPathPattern.exec(aiResponse)) !== null) {
@@ -172,7 +205,13 @@ export function parseCodeSuggestions(aiResponse: string): CodeSuggestion[] {
     const language = match[2];
     const oldCode = match[3];
     const newCode = match[4];
-    if (filePath && language && oldCode && newCode && !suggestions.some((s) => s.filePath === filePath.trim())) {
+    if (
+      filePath &&
+      language &&
+      oldCode &&
+      newCode &&
+      !suggestions.some((s) => s.filePath === filePath.trim())
+    ) {
       suggestions.push({
         filePath: filePath.trim(),
         language: language.toLowerCase(),
@@ -449,7 +488,11 @@ export class AutonomousModifier {
 
       try {
         if (suggestion.operation === 'create') {
-          result = await selfMod.createFile(suggestion.filePath, suggestion.code, suggestion.reason);
+          result = await selfMod.createFile(
+            suggestion.filePath,
+            suggestion.code,
+            suggestion.reason
+          );
         } else if (suggestion.operation === 'edit' && suggestion.oldCode) {
           result = await selfMod.editFile({
             filePath: suggestion.filePath,
@@ -703,10 +746,176 @@ export class AutonomousModifier {
       userQuery: 'Direct API call',
     });
 
-    return result.results[0]?.result || {
-      success: false,
-      message: 'No result returned',
+    return (
+      result.results[0]?.result || {
+        success: false,
+        message: 'No result returned',
+      }
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // SANDBOXED EXECUTION (V3.3.194)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Apply modifications through reflection sandbox first
+   * Uses execute→test→refine loop before promoting to production
+   */
+  async sandboxedApply(
+    suggestions: CodeSuggestion[],
+    context: {
+      sessionId: string;
+      userQuery: string;
+      objective?: string;
+      maxIterations?: number;
+      autoPromote?: boolean;
+    }
+  ): Promise<SandboxedModificationResult> {
+    console.log(`[AutonomousMod] Sandboxed apply: ${suggestions.length} suggestions`);
+
+    // Convert suggestions to CodeChange format for reflection loop
+    const changes: CodeChange[] = suggestions.map((s) => ({
+      filePath: s.filePath,
+      operation: s.operation === 'replace' ? 'edit' : s.operation,
+      oldContent: s.oldCode,
+      newContent: s.code,
+      reason: s.reason,
+    }));
+
+    // Build context string with code blocks
+    const contextString = changes
+      .map((c) => `\`\`\`typescript:${c.filePath}\n${c.newContent}\n\`\`\``)
+      .join('\n\n');
+
+    // Execute reflection loop
+    const result = await reflectionLoop.execute({
+      objective: context.objective || context.userQuery,
+      targetFiles: suggestions.map((s) => s.filePath),
+      context: contextString,
+      maxIterations: context.maxIterations || 3,
+      autoPromote: context.autoPromote ?? false,
+    });
+
+    // Convert to SandboxedModificationResult
+    const sandboxResult: SandboxedModificationResult = {
+      success: result.status === 'success',
+      status: result.status,
+      iterations: result.totalIterations,
+      testsPassed: result.finalTestResult
+        ? result.finalTestResult.total - result.finalTestResult.failed
+        : 0,
+      testsTotal: result.finalTestResult?.total || 0,
+      commitHash: result.commitHash,
+      readyForPromotion: result.readyForPromotion,
+      diff: result.diff,
+      summary: result.summary,
+      reflectionResult: result,
     };
+
+    // Emit event
+    bus.publish('cortex', 'self-mod:sandboxed-complete', {
+      sessionId: context.sessionId,
+      status: result.status,
+      readyForPromotion: result.readyForPromotion,
+      commitHash: result.commitHash,
+    });
+
+    return sandboxResult;
+  }
+
+  /**
+   * Promote sandboxed changes to production
+   * Only call after sandboxedApply returns readyForPromotion: true
+   */
+  async promoteFromSandbox(
+    commitHash: string,
+    context: { sessionId: string; reason: string }
+  ): Promise<ModificationResult> {
+    console.log(`[AutonomousMod] Promoting sandbox commit: ${commitHash}`);
+
+    // Get diff from sandbox
+    const diff = await reflectionLoop.getDiff(commitHash);
+    if (!diff) {
+      return {
+        success: false,
+        applied: 0,
+        failed: 0,
+        rolledBack: false,
+        results: [],
+        validationPassed: false,
+        error: 'Could not retrieve diff from sandbox',
+      };
+    }
+
+    // Parse diff to extract file changes
+    const suggestions = this.parseDiffToSuggestions(diff);
+
+    // Apply to production using standard flow (with backups)
+    const result = await this.applySuggestions(suggestions, {
+      sessionId: context.sessionId,
+      userQuery: `Promoted from sandbox: ${context.reason}`,
+    });
+
+    if (result.success) {
+      bus.publish('cortex', 'self-mod:promoted', {
+        sessionId: context.sessionId,
+        commitHash,
+        filesApplied: result.applied,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Parse git diff output to code suggestions
+   */
+  private parseDiffToSuggestions(diff: string): CodeSuggestion[] {
+    const suggestions: CodeSuggestion[] = [];
+
+    // Split by file headers
+    const filePattern = /diff --git a\/(.+?) b\/(.+?)[\r\n]/g;
+    const files = diff.split(/(?=diff --git)/);
+
+    for (const fileDiff of files) {
+      const headerMatch = /diff --git a\/(.+?) b\/(.+?)/.exec(fileDiff);
+      if (!headerMatch) continue;
+
+      const filePath = headerMatch[2];
+
+      // Extract new file content (lines starting with +, excluding header)
+      const lines = fileDiff.split('\n');
+      const newLines: string[] = [];
+      let inContent = false;
+
+      for (const line of lines) {
+        if (line.startsWith('@@')) {
+          inContent = true;
+          continue;
+        }
+        if (!inContent) continue;
+
+        if (line.startsWith('+') && !line.startsWith('+++')) {
+          newLines.push(line.slice(1));
+        } else if (!line.startsWith('-')) {
+          newLines.push(line);
+        }
+      }
+
+      if (newLines.length > 0) {
+        suggestions.push({
+          filePath,
+          language: filePath.split('.').pop() || 'txt',
+          code: newLines.join('\n'),
+          operation: 'replace',
+          confidence: 1.0,
+          reason: 'Promoted from sandbox',
+        });
+      }
+    }
+
+    return suggestions;
   }
 
   // --------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-// @version 3.3.0 - Added Agent Execution System
+// @version 3.3.1 - Architecture cleanup: moved nexus/engine to proper homes
 import 'dotenv/config';
 import * as readline from 'readline';
 import { bus } from './core/event-bus.js';
@@ -6,7 +6,7 @@ import './core/quality/Critic.js'; // Initialize The Critic (Synapsys V3)
 import { cortex } from './cortex/index.js';
 import { precog } from './precog/index.js';
 import { startNexus } from './nexus/index.js';
-import { VersionManager } from './nexus/engine/version-manager.js';
+import { VersionManager } from './core/version-manager.js';
 import { SYSTEM_VERSION, SYSTEM_ID, SYSTEM_NAME } from './core/system-info.js';
 import { registry } from './core/module-registry.js';
 import { smartFS } from './core/fs-manager.js';

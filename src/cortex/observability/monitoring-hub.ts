@@ -18,7 +18,7 @@
  * - System: resources, health, performance
  */
 
-import { bus } from '../../core/event-bus.js';
+import { bus, SynapsysEvent } from '../../core/event-bus.js';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -36,6 +36,7 @@ export type SystemComponent =
   | 'curiosity'
   | 'scheduler'
   | 'predictor'
+  | 'growth-engine'
   | 'system';
 
 export interface Metric {
@@ -394,7 +395,7 @@ export class MonitoringHub {
     // Start monitoring
     this.start();
 
-    bus.publish('monitoring', 'hub:initialized', {
+    bus.publish('system', 'hub:initialized', {
       policy: this.policy,
       alertRules: this.alertRules.size,
       components: this.COMPONENTS.length,
@@ -408,36 +409,36 @@ export class MonitoringHub {
 
   private setupListeners(): void {
     // Learning system metrics
-    bus.on('cortex', 'learning:*', (payload: unknown) => {
-      this.handleLearningEvent(payload as Record<string, unknown>);
+    bus.on('learning:reward_received', (event: SynapsysEvent) => {
+      this.handleLearningEvent(event.payload as Record<string, unknown>);
     });
 
-    bus.on('precog', 'scheduler:*', (payload: unknown) => {
-      this.handleSchedulerEvent(payload as Record<string, unknown>);
+    bus.on('scheduler:window_started', (event: SynapsysEvent) => {
+      this.handleSchedulerEvent(event.payload as Record<string, unknown>);
     });
 
     // Emergence system metrics
-    bus.on('discovery', 'emergence:*', (payload: unknown) => {
-      this.handleEmergenceEvent(payload as Record<string, unknown>);
+    bus.on('emergence:detected', (event: SynapsysEvent) => {
+      this.handleEmergenceEvent(event.payload as Record<string, unknown>);
     });
 
-    bus.on('discovery', 'prediction:*', (payload: unknown) => {
-      this.handlePredictorEvent(payload as Record<string, unknown>);
+    bus.on('prediction:created', (event: SynapsysEvent) => {
+      this.handlePredictorEvent(event.payload as Record<string, unknown>);
     });
 
     // Exploration system metrics
-    bus.on('exploration', '*', (payload: unknown) => {
-      this.handleExplorationEvent(payload as Record<string, unknown>);
+    bus.on('hypothesis:validated', (event: SynapsysEvent) => {
+      this.handleExplorationEvent(event.payload as Record<string, unknown>);
     });
 
     // Curiosity metrics
-    bus.on('curiosity', '*', (payload: unknown) => {
-      this.handleCuriosityEvent(payload as Record<string, unknown>);
+    bus.on('curiosity:signal', (event: SynapsysEvent) => {
+      this.handleCuriosityEvent(event.payload as Record<string, unknown>);
     });
 
     // System metrics
-    bus.on('system', 'metrics:*', (payload: unknown) => {
-      this.handleSystemEvent(payload as Record<string, unknown>);
+    bus.on('system:health', (event: SynapsysEvent) => {
+      this.handleSystemEvent(event.payload as Record<string, unknown>);
     });
   }
 
@@ -567,7 +568,7 @@ export class MonitoringHub {
       });
 
       // Load average
-      const loadAvg = os.loadavg()[0] / cpus.length;
+      const loadAvg = (os.loadavg()[0] ?? 0) / cpus.length;
       metrics.push({
         id: `sys-load-${now.getTime()}`,
         name: 'system.loadAverage',
@@ -711,7 +712,10 @@ export class MonitoringHub {
         value: payload['value'] as number,
         unit: 'score',
         timestamp: now,
-        labels: { source: (payload['context'] as Record<string, unknown>)?.['taskType'] as string || 'unknown' },
+        labels: {
+          source:
+            ((payload['context'] as Record<string, unknown>)?.['taskType'] as string) || 'unknown',
+        },
       });
     }
   }
@@ -961,9 +965,7 @@ export class MonitoringHub {
     // Check duration if specified
     if (conditionMet && condition.duration) {
       const windowStart = Date.now() - condition.duration;
-      const windowPoints = series.dataPoints.filter(
-        (dp) => dp.timestamp.getTime() > windowStart
-      );
+      const windowPoints = series.dataPoints.filter((dp) => dp.timestamp.getTime() > windowStart);
 
       // All points in window must meet condition
       conditionMet = windowPoints.every((dp) => {
@@ -1027,14 +1029,12 @@ export class MonitoringHub {
       }
     }
 
-    bus.publish('monitoring', 'alert:triggered', {
+    bus.publish('system', 'alert:triggered', {
       alert: this.sanitizeAlert(alert),
       timestamp: new Date().toISOString(),
     });
 
-    console.log(
-      `[MonitoringHub] 🚨 Alert: ${alert.name} (${alert.severity}) - ${alert.message}`
-    );
+    console.log(`[MonitoringHub] 🚨 Alert: ${alert.name} (${alert.severity}) - ${alert.message}`);
   }
 
   private formatAlertMessage(rule: AlertRule, currentValue: number): string {
@@ -1049,7 +1049,7 @@ export class MonitoringHub {
         alert.acknowledgedAt = new Date();
         alert.acknowledgedBy = acknowledgedBy;
 
-        bus.publish('monitoring', 'alert:acknowledged', {
+        bus.publish('system', 'alert:acknowledged', {
           alertId: alert.id,
           acknowledgedBy,
           timestamp: new Date().toISOString(),
@@ -1077,7 +1077,7 @@ export class MonitoringHub {
         }
       }
 
-      bus.publish('monitoring', 'alert:resolved', {
+      bus.publish('system', 'alert:resolved', {
         alertId: alert.id,
         reason,
         timestamp: new Date().toISOString(),
@@ -1111,20 +1111,21 @@ export class MonitoringHub {
 
     for (let i = 0; i < seriesNames.length; i++) {
       for (let j = i + 1; j < seriesNames.length; j++) {
-        const seriesA = this.metricSeries.get(seriesNames[i])!;
-        const seriesB = this.metricSeries.get(seriesNames[j])!;
+        const nameA = seriesNames[i];
+        const nameB = seriesNames[j];
+        if (!nameA || !nameB) continue;
 
-        if (
-          seriesA.dataPoints.length < 10 ||
-          seriesB.dataPoints.length < 10
-        ) {
+        const seriesA = this.metricSeries.get(nameA)!;
+        const seriesB = this.metricSeries.get(nameB)!;
+
+        if (seriesA.dataPoints.length < 10 || seriesB.dataPoints.length < 10) {
           continue;
         }
 
         const correlation = this.calculateCorrelation(seriesA, seriesB);
 
         if (Math.abs(correlation.correlation) >= this.policy.minCorrelationStrength) {
-          const key = `${seriesNames[i]}|${seriesNames[j]}`;
+          const key = `${nameA}|${nameB}`;
           this.correlations.set(key, correlation);
           this.state.metrics.correlationsFound = this.correlations.size;
         }
@@ -1132,10 +1133,7 @@ export class MonitoringHub {
     }
   }
 
-  private calculateCorrelation(
-    seriesA: MetricSeries,
-    seriesB: MetricSeries
-  ): MetricCorrelation {
+  private calculateCorrelation(seriesA: MetricSeries, seriesB: MetricSeries): MetricCorrelation {
     // Align data points by time
     const aligned = this.alignSeries(seriesA.dataPoints, seriesB.dataPoints);
 
@@ -1193,21 +1191,17 @@ export class MonitoringHub {
 
     const sumX = x.reduce((a, b) => a + b, 0);
     const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
+    const sumXY = x.reduce((total, xi, i) => total + xi * (y[i] ?? 0), 0);
     const sumX2 = x.reduce((a, b) => a + b * b, 0);
     const sumY2 = y.reduce((a, b) => a + b * b, 0);
 
     const numerator = n * sumXY - sumX * sumY;
-    const denominator = Math.sqrt(
-      (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)
-    );
+    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
     return denominator === 0 ? 0 : numerator / denominator;
   }
 
-  private getCorrelationStrength(
-    correlation: number
-  ): MetricCorrelation['strength'] {
+  private getCorrelationStrength(correlation: number): MetricCorrelation['strength'] {
     const abs = Math.abs(correlation);
     if (abs >= 0.8) return 'very_strong';
     if (abs >= 0.6) return 'strong';
@@ -1232,17 +1226,18 @@ export class MonitoringHub {
     const n = values.length;
     const sumX = times.reduce((a, b) => a + b, 0);
     const sumY = values.reduce((a, b) => a + b, 0);
-    const sumXY = times.reduce((total, xi, i) => total + xi * values[i], 0);
+    const sumXY = times.reduce((total, xi, i) => total + xi * (values[i] ?? 0), 0);
     const sumX2 = times.reduce((a, b) => a + b * b, 0);
 
     const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     const intercept = (sumY - slope * sumX) / n;
 
-    const currentValue = values[values.length - 1];
+    const currentValue = values[values.length - 1] ?? 0;
     const forecastTime = Date.now() + forecastMs;
     const forecastValue = slope * forecastTime + intercept;
 
-    const changePercent = ((forecastValue - currentValue) / currentValue) * 100;
+    const changePercent =
+      currentValue > 0 ? ((forecastValue - currentValue) / currentValue) * 100 : 0;
 
     return {
       metric: metricName,
@@ -1323,7 +1318,7 @@ export class MonitoringHub {
     }
 
     const total = this.COMPONENTS.length;
-    const score = Math.round(((healthy * 100 + degraded * 50) / total));
+    const score = Math.round((healthy * 100 + degraded * 50) / total);
 
     let overallStatus: OverallHealth['status'];
     if (score >= 90) overallStatus = 'excellent';
@@ -1345,9 +1340,7 @@ export class MonitoringHub {
     const metrics: Metric[] = [];
 
     for (const series of this.metricSeries.values()) {
-      const recent = series.dataPoints
-        .filter((dp) => dp.timestamp.getTime() > cutoff)
-        .slice(-1)[0];
+      const recent = series.dataPoints.filter((dp) => dp.timestamp.getTime() > cutoff).slice(-1)[0];
 
       if (recent) {
         metrics.push({
@@ -1391,10 +1384,7 @@ export class MonitoringHub {
   }
 
   getAllComponentStatus(): Record<SystemComponent, ComponentStatus> {
-    return Object.fromEntries(this.componentStatus) as Record<
-      SystemComponent,
-      ComponentStatus
-    >;
+    return Object.fromEntries(this.componentStatus) as Record<SystemComponent, ComponentStatus>;
   }
 
   // ============================================================================

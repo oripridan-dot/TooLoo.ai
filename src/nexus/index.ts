@@ -1,4 +1,4 @@
-// @version 3.1.0
+// @version 3.3.195
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -31,7 +31,11 @@ import costRoutes from './routes/cost.js';
 import { generateRoutes } from './routes/generate.js';
 import agentRoutes from './routes/agent.js';
 import selfModRoutes from './routes/self-mod.js';
+import autonomousModRoutes from './routes/autonomous-mod.js';
 import cognitiveRoutes from './routes/cognitive.js';
+import { growthEngineRoutes } from './routes/growth-engine.js';
+import { configurationRoutes } from './routes/configuration.js';
+import { reflectionRoutes } from './routes/reflection.js';
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
@@ -73,7 +77,11 @@ export function createNexusApp() {
   app.use('/api/v1/generate', generateRoutes);
   app.use('/api/v1/agent', agentRoutes);
   app.use('/api/v1/system/self', selfModRoutes);
+  app.use('/api/v1/system/autonomous', autonomousModRoutes);
   app.use('/api/v1/cognitive', cognitiveRoutes);
+  app.use('/api/v1/growth', growthEngineRoutes);
+  app.use('/api/v1/config', configurationRoutes);
+  app.use('/api/v1/reflection', reflectionRoutes);
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)

@@ -569,11 +569,11 @@ Here are the key points in response:
     await this.sensory.initialize();
     await this.prefrontal.initialize();
 
-    // Start autonomous systems (development environment only)
+    // Start autonomous systems
     // 1. Exploration Lab - hypothesis testing
-    // await this.explorationEngine.initialize();
+    await this.explorationEngine.initialize();
     // 2. DisCover Agent - emergence coordination
-    // await this.discoverAgent.initialize();
+    await this.discoverAgent.initialize();
 
     console.log('[Cortex] Autonomous systems activated:');
     console.log('  - Exploration Lab (hypothesis testing)');

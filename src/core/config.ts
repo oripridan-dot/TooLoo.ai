@@ -11,7 +11,7 @@ const envSchema = z.object({
 
   // Models
   DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
-  ANTHROPIC_MODEL: z.string().default('claude-3-5-haiku-20241022'),
+  ANTHROPIC_MODEL: z.string().default('claude-3-5-haiku-latest'),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   GEMINI_MODEL: z.string().default('gemini-2.0-pro-exp-02-05'),
   LOCALAI_MODEL: z.string().default('gpt-4'),

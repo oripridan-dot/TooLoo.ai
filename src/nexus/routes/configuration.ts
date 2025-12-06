@@ -1,8 +1,8 @@
-// @version 3.3.189
+// @version 3.3.194
 /**
- * TooLoo.ai Synapsys V3.3.185
+ * TooLoo.ai Synapsys V3.3.194
  * Configuration API - Centralized Configuration Management
- * 
+ *
  * Provides comprehensive configuration management:
  * - Version-controlled configuration changes
  * - Rollback capability to previous configurations
@@ -10,12 +10,12 @@
  * - Runtime updates without restart
  * - Configuration validation and schema checking
  * - Audit trail of all configuration changes
- * 
+ *
  * This is the single source of truth for all TooLoo configurations.
  */
 
 import { Router, Request, Response } from 'express';
-import { bus } from '../../shared/bus.js';
+import { bus } from '../../core/event-bus.js';
 import fs from 'fs-extra';
 import path from 'path';
 import { config as systemConfig } from '../../core/config.js';
@@ -99,17 +99,19 @@ async function loadConfigState(): Promise<ConfigurationState> {
   // Initialize default state
   configState = {
     currentVersion: 1,
-    versions: [{
-      version: 1,
-      timestamp: new Date().toISOString(),
-      author: 'system',
-      message: 'Initial configuration',
-      changes: [],
-      config: getDefaultConfiguration()
-    }],
+    versions: [
+      {
+        version: 1,
+        timestamp: new Date().toISOString(),
+        author: 'system',
+        message: 'Initial configuration',
+        changes: [],
+        config: getDefaultConfiguration(),
+      },
+    ],
     domains: initializeDomains(),
     runtimeOverrides: {},
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
   };
 
   await saveConfigState();
@@ -118,7 +120,7 @@ async function loadConfigState(): Promise<ConfigurationState> {
 
 async function saveConfigState(): Promise<void> {
   if (!configState) return;
-  
+
   await fs.ensureDir(path.dirname(CONFIG_FILE));
   await fs.writeJson(CONFIG_FILE, configState, { spaces: 2 });
 }
@@ -140,7 +142,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         epsilon: {
           type: 'number',
@@ -149,7 +151,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         epsilonDecay: {
           type: 'number',
@@ -158,7 +160,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.9, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         minEpsilon: {
           type: 'number',
@@ -167,7 +169,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0, max: 0.5 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         learningRate: {
           type: 'number',
@@ -176,7 +178,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.001, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         discountFactor: {
           type: 'number',
@@ -185,7 +187,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         batchSize: {
           type: 'number',
@@ -194,7 +196,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 256 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         replayBufferSize: {
           type: 'number',
@@ -203,7 +205,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 100, max: 100000 },
           runtimeUpdateable: false,
-          requiresRestart: true
+          requiresRestart: true,
         },
         autoBoostThreshold: {
           type: 'number',
@@ -212,11 +214,11 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: false,
           validation: { min: 0.5, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
-        }
+          requiresRestart: false,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     emergence: {
@@ -230,7 +232,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         signalThreshold: {
           type: 'number',
@@ -239,7 +241,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.1, max: 0.9 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         amplificationFactor: {
           type: 'number',
@@ -248,7 +250,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 5 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         patternWindow: {
           type: 'number',
@@ -257,7 +259,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 60000, max: 86400000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         safetyGateEnabled: {
           type: 'boolean',
@@ -265,7 +267,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         maxEmergenceLevel: {
           type: 'number',
@@ -274,7 +276,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.5, max: 2 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         knowledgeGraphPersistence: {
           type: 'boolean',
@@ -282,17 +284,18 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: false,
           runtimeUpdateable: false,
-          requiresRestart: true
-        }
+          requiresRestart: true,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     exploration: {
       id: 'exploration',
       name: 'Exploration & Curiosity',
-      description: 'Configuration for hypothesis generation, experimentation, and curiosity-driven learning',
+      description:
+        'Configuration for hypothesis generation, experimentation, and curiosity-driven learning',
       schema: {
         enabled: {
           type: 'boolean',
@@ -300,7 +303,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         maxActiveHypotheses: {
           type: 'number',
@@ -309,7 +312,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 50 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         experimentTimeout: {
           type: 'number',
@@ -318,7 +321,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 5000, max: 300000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         sandboxEnabled: {
           type: 'boolean',
@@ -326,15 +329,23 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: false,
-          requiresRestart: true
+          requiresRestart: true,
         },
         curiosityDimensions: {
           type: 'array',
           description: 'Active curiosity dimensions',
-          default: ['novelty', 'complexity', 'uncertainty', 'contradiction', 'analogy', 'boundary', 'meta'],
+          default: [
+            'novelty',
+            'complexity',
+            'uncertainty',
+            'contradiction',
+            'analogy',
+            'boundary',
+            'meta',
+          ],
           required: false,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         intrinsicRewardWeight: {
           type: 'number',
@@ -343,7 +354,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         hypothesisConfidenceThreshold: {
           type: 'number',
@@ -352,11 +363,11 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.5, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
-        }
+          requiresRestart: false,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     scheduling: {
@@ -370,7 +381,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         defaultBurstDuration: {
           type: 'number',
@@ -379,7 +390,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 60000, max: 3600000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         defaultQuietDuration: {
           type: 'number',
@@ -388,7 +399,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 300000, max: 86400000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         burstIntensity: {
           type: 'number',
@@ -397,7 +408,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 3 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         maxConcurrentGoals: {
           type: 'number',
@@ -406,7 +417,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 20 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         goalCheckInterval: {
           type: 'number',
@@ -415,11 +426,11 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 10000, max: 600000 },
           runtimeUpdateable: true,
-          requiresRestart: false
-        }
+          requiresRestart: false,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     monitoring: {
@@ -433,7 +444,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         metricsRetentionDays: {
           type: 'number',
@@ -442,7 +453,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 90 },
           runtimeUpdateable: false,
-          requiresRestart: false
+          requiresRestart: false,
         },
         alertCooldownMs: {
           type: 'number',
@@ -451,7 +462,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 60000, max: 3600000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         correlationMinSamples: {
           type: 'number',
@@ -460,7 +471,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 5, max: 100 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         correlationThreshold: {
           type: 'number',
@@ -469,7 +480,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.5, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         streamHeartbeatInterval: {
           type: 'number',
@@ -478,11 +489,11 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 5000, max: 60000 },
           runtimeUpdateable: true,
-          requiresRestart: false
-        }
+          requiresRestart: false,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     predictions: {
@@ -496,7 +507,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         predictionInterval: {
           type: 'number',
@@ -505,7 +516,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 60000, max: 3600000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         minConfidenceToReport: {
           type: 'number',
@@ -514,7 +525,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.1, max: 0.8 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         maxPredictions: {
           type: 'number',
@@ -523,7 +534,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 5, max: 100 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         recencyWeight: {
           type: 'number',
@@ -532,7 +543,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         strengthWeight: {
           type: 'number',
@@ -541,11 +552,11 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
-        }
+          requiresRestart: false,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     agents: {
@@ -560,7 +571,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { enum: ['openai', 'anthropic', 'gemini', 'ollama'] },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         maxConcurrentTasks: {
           type: 'number',
@@ -569,7 +580,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1, max: 20 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         taskTimeout: {
           type: 'number',
@@ -578,7 +589,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 10000, max: 600000 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         teamValidationThreshold: {
           type: 'number',
@@ -587,7 +598,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 0.5, max: 1 },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         enableCodeExecution: {
           type: 'boolean',
@@ -595,7 +606,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         sandboxExecution: {
           type: 'boolean',
@@ -603,11 +614,11 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: true,
           runtimeUpdateable: false,
-          requiresRestart: true
-        }
+          requiresRestart: true,
+        },
       },
       currentValues: {},
-      defaultValues: {}
+      defaultValues: {},
     },
 
     system: {
@@ -622,7 +633,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { enum: ['debug', 'info', 'warn', 'error'] },
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         dataDirectory: {
           type: 'string',
@@ -630,7 +641,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: './data',
           required: true,
           runtimeUpdateable: false,
-          requiresRestart: true
+          requiresRestart: true,
         },
         apiPort: {
           type: 'number',
@@ -639,7 +650,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           required: true,
           validation: { min: 1024, max: 65535 },
           runtimeUpdateable: false,
-          requiresRestart: true
+          requiresRestart: true,
         },
         corsOrigins: {
           type: 'array',
@@ -647,7 +658,7 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: ['http://localhost:5173'],
           required: false,
           runtimeUpdateable: true,
-          requiresRestart: false
+          requiresRestart: false,
         },
         enableMetrics: {
           type: 'boolean',
@@ -655,12 +666,149 @@ function initializeDomains(): Record<string, ConfigurationDomain> {
           default: true,
           required: false,
           runtimeUpdateable: false,
-          requiresRestart: true
-        }
+          requiresRestart: true,
+        },
       },
       currentValues: {},
-      defaultValues: {}
-    }
+      defaultValues: {},
+    },
+
+    reflection: {
+      id: 'reflection',
+      name: 'Reflection Sandbox',
+      description:
+        'Configuration for the sandboxed self-reflection and autonomous development system',
+      schema: {
+        enabled: {
+          type: 'boolean',
+          description: 'Enable/disable reflection sandbox',
+          default: true,
+          required: true,
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        persistent: {
+          type: 'boolean',
+          description: 'Keep sandbox container running between sessions',
+          default: true,
+          required: true,
+          runtimeUpdateable: false,
+          requiresRestart: true,
+        },
+        dockerImage: {
+          type: 'string',
+          description: 'Docker image for sandbox container',
+          default: 'node:20-bookworm',
+          required: true,
+          runtimeUpdateable: false,
+          requiresRestart: true,
+        },
+        maxMemoryMB: {
+          type: 'number',
+          description: 'Maximum memory for sandbox (MB)',
+          default: 2048,
+          required: true,
+          validation: { min: 512, max: 8192 },
+          runtimeUpdateable: false,
+          requiresRestart: true,
+        },
+        maxCpuPercent: {
+          type: 'number',
+          description: 'Maximum CPU percentage for sandbox',
+          default: 80,
+          required: true,
+          validation: { min: 10, max: 100 },
+          runtimeUpdateable: false,
+          requiresRestart: true,
+        },
+        maxIterations: {
+          type: 'number',
+          description: 'Maximum refinement iterations in reflection loop',
+          default: 5,
+          required: true,
+          validation: { min: 1, max: 20 },
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        requiredPassRate: {
+          type: 'number',
+          description: 'Required test pass rate for promotion (0-1)',
+          default: 1.0,
+          required: true,
+          validation: { min: 0.5, max: 1.0 },
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        autoPromote: {
+          type: 'boolean',
+          description: 'Automatically promote successful reflection results',
+          default: false,
+          required: true,
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        requireApproval: {
+          type: 'boolean',
+          description: 'Require human approval before handoff',
+          default: true,
+          required: true,
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        sandboxServerPort: {
+          type: 'number',
+          description: 'Port for TooLoo server running in sandbox',
+          default: 4100,
+          required: true,
+          validation: { min: 1024, max: 65535 },
+          runtimeUpdateable: false,
+          requiresRestart: true,
+        },
+        artifactExpirationHours: {
+          type: 'number',
+          description: 'Hours before handoff artifacts expire',
+          default: 24,
+          required: true,
+          validation: { min: 1, max: 168 },
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        enableNetwork: {
+          type: 'boolean',
+          description: 'Allow network access in sandbox (for npm install)',
+          default: true,
+          required: true,
+          runtimeUpdateable: false,
+          requiresRestart: true,
+        },
+        autoStartServer: {
+          type: 'boolean',
+          description: 'Auto-start TooLoo server in sandbox for integration testing',
+          default: false,
+          required: false,
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        runProductionTests: {
+          type: 'boolean',
+          description: 'Run production tests after handoff',
+          default: true,
+          required: true,
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+        autoRollbackOnFailure: {
+          type: 'boolean',
+          description: 'Automatically rollback if production tests fail',
+          default: true,
+          required: true,
+          runtimeUpdateable: true,
+          requiresRestart: false,
+        },
+      },
+      currentValues: {},
+      defaultValues: {},
+    },
   };
 }
 
@@ -710,14 +858,20 @@ function validateConfigValue(field: ConfigField, value: any): { valid: boolean; 
       if (field.validation?.pattern) {
         const regex = new RegExp(field.validation.pattern);
         if (!regex.test(value)) {
-          return { valid: false, error: `Value does not match pattern ${field.validation.pattern}` };
+          return {
+            valid: false,
+            error: `Value does not match pattern ${field.validation.pattern}`,
+          };
         }
       }
       break;
 
     case 'enum':
       if (!field.validation?.enum?.includes(value)) {
-        return { valid: false, error: `Value must be one of: ${field.validation?.enum?.join(', ')}` };
+        return {
+          valid: false,
+          error: `Value must be one of: ${field.validation?.enum?.join(', ')}`,
+        };
       }
       break;
 
@@ -748,7 +902,8 @@ function validateConfigValue(field: ConfigField, value: any): { valid: boolean; 
 router.get('/', async (_req: Request, res: Response) => {
   try {
     const state = await loadConfigState();
-    const currentConfig = state.versions.find(v => v.version === state.currentVersion)?.config || {};
+    const currentConfig =
+      state.versions.find((v) => v.version === state.currentVersion)?.config || {};
 
     res.json({
       success: true,
@@ -757,15 +912,14 @@ router.get('/', async (_req: Request, res: Response) => {
         lastUpdated: state.lastUpdated,
         domains: Object.keys(state.domains),
         config: currentConfig,
-        runtimeOverrides: state.runtimeOverrides
-      }
+        runtimeOverrides: state.runtimeOverrides,
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Get config error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get configuration'
+      error: error instanceof Error ? error.message : 'Failed to get configuration',
     });
   }
 });
@@ -780,22 +934,21 @@ router.get('/domains', async (_req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: Object.values(state.domains).map(domain => ({
+      data: Object.values(state.domains).map((domain) => ({
         id: domain.id,
         name: domain.name,
         description: domain.description,
         fields: Object.entries(domain.schema).map(([key, field]) => ({
           key,
-          ...field
-        }))
-      }))
+          ...field,
+        })),
+      })),
     });
-
   } catch (error) {
     console.error('[Configuration] Get domains error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get domains'
+      error: error instanceof Error ? error.message : 'Failed to get domains',
     });
   }
 });
@@ -805,22 +958,23 @@ router.get('/domains', async (_req: Request, res: Response) => {
  * Get specific domain configuration
  */
 router.get('/domain/:domainId', async (req: Request, res: Response) => {
-  const { domainId } = req.params;
+  const domainId = req.params['domainId'] ?? '';
 
   try {
     const state = await loadConfigState();
 
-    if (!state.domains[domainId]) {
+    if (!domainId || !state.domains[domainId]) {
       return res.status(404).json({
         success: false,
         error: `Domain '${domainId}' not found`,
-        availableDomains: Object.keys(state.domains)
+        availableDomains: Object.keys(state.domains),
       });
     }
 
     const domain = state.domains[domainId];
-    const currentConfig = state.versions.find(v => v.version === state.currentVersion)?.config || {};
-    const domainConfig = currentConfig[domainId] || {};
+    const currentConfig =
+      state.versions.find((v) => v.version === state.currentVersion)?.config || {};
+    const domainConfig = (currentConfig as Record<string, Record<string, unknown>>)[domainId] || {};
     const runtimeOverrides = state.runtimeOverrides[domainId] || {};
 
     res.json({
@@ -829,15 +983,14 @@ router.get('/domain/:domainId', async (req: Request, res: Response) => {
         ...domain,
         currentValues: domainConfig,
         runtimeOverrides,
-        effectiveValues: { ...domainConfig, ...runtimeOverrides }
-      }
+        effectiveValues: { ...domainConfig, ...runtimeOverrides },
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Get domain error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get domain configuration'
+      error: error instanceof Error ? error.message : 'Failed to get domain configuration',
     });
   }
 });
@@ -847,31 +1000,33 @@ router.get('/domain/:domainId', async (req: Request, res: Response) => {
  * Update domain configuration (creates new version)
  */
 router.put('/domain/:domainId', async (req: Request, res: Response) => {
-  const { domainId } = req.params;
+  const domainId = req.params['domainId'] ?? '';
   const { values, author, message } = req.body;
 
   if (!values || typeof values !== 'object') {
     return res.status(400).json({
       success: false,
-      error: 'Configuration values object required'
+      error: 'Configuration values object required',
     });
   }
 
   try {
     const state = await loadConfigState();
 
-    if (!state.domains[domainId]) {
+    if (!domainId || !state.domains[domainId]) {
       return res.status(404).json({
         success: false,
-        error: `Domain '${domainId}' not found`
+        error: `Domain '${domainId}' not found`,
       });
     }
 
     const domain = state.domains[domainId];
-    const currentConfig = state.versions.find(v => v.version === state.currentVersion)?.config || {};
-    const oldDomainConfig = currentConfig[domainId] || {};
+    const currentConfig =
+      state.versions.find((v) => v.version === state.currentVersion)?.config || {};
+    const oldDomainConfig =
+      (currentConfig as Record<string, Record<string, unknown>>)[domainId] || {};
     const changes: ConfigChange[] = [];
-    const newDomainConfig = { ...oldDomainConfig };
+    const newDomainConfig: Record<string, unknown> = { ...oldDomainConfig };
 
     // Validate and apply changes
     for (const [key, value] of Object.entries(values)) {
@@ -879,7 +1034,7 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
       if (!field) {
         return res.status(400).json({
           success: false,
-          error: `Unknown configuration key: ${key}`
+          error: `Unknown configuration key: ${key}`,
         });
       }
 
@@ -887,7 +1042,7 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
       if (!validation.valid) {
         return res.status(400).json({
           success: false,
-          error: `Validation failed for ${key}: ${validation.error}`
+          error: `Validation failed for ${key}: ${validation.error}`,
         });
       }
 
@@ -896,7 +1051,7 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
           domain: domainId,
           key,
           oldValue: oldDomainConfig[key],
-          newValue: value
+          newValue: value,
         });
         newDomainConfig[key] = value;
       }
@@ -906,7 +1061,7 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
       return res.json({
         success: true,
         message: 'No changes detected',
-        data: { version: state.currentVersion }
+        data: { version: state.currentVersion },
       });
     }
 
@@ -919,8 +1074,8 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
       changes,
       config: {
         ...currentConfig,
-        [domainId]: newDomainConfig
-      }
+        [domainId]: newDomainConfig,
+      },
     };
 
     state.versions.push(newVersion);
@@ -935,10 +1090,10 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
     await saveConfigState();
 
     // Publish change event
-    bus.publish('config:updated', {
+    bus.publish('nexus', 'config:updated', {
       domain: domainId,
       version: newVersion.version,
-      changes
+      changes,
     });
 
     // Apply runtime-updateable changes
@@ -950,17 +1105,14 @@ router.put('/domain/:domainId', async (req: Request, res: Response) => {
       data: {
         version: newVersion.version,
         changes,
-        requiresRestart: changes.some(c => 
-          domain.schema[c.key]?.requiresRestart
-        )
-      }
+        requiresRestart: changes.some((c) => domain.schema[c.key]?.requiresRestart),
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Update domain error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update configuration'
+      error: error instanceof Error ? error.message : 'Failed to update configuration',
     });
   }
 });
@@ -975,7 +1127,7 @@ router.post('/override', async (req: Request, res: Response) => {
   if (!domain || !key || value === undefined) {
     return res.status(400).json({
       success: false,
-      error: 'domain, key, and value are required'
+      error: 'domain, key, and value are required',
     });
   }
 
@@ -985,7 +1137,7 @@ router.post('/override', async (req: Request, res: Response) => {
     if (!state.domains[domain]) {
       return res.status(404).json({
         success: false,
-        error: `Domain '${domain}' not found`
+        error: `Domain '${domain}' not found`,
       });
     }
 
@@ -993,14 +1145,14 @@ router.post('/override', async (req: Request, res: Response) => {
     if (!field) {
       return res.status(404).json({
         success: false,
-        error: `Key '${key}' not found in domain '${domain}'`
+        error: `Key '${key}' not found in domain '${domain}'`,
       });
     }
 
     if (!field.runtimeUpdateable) {
       return res.status(400).json({
         success: false,
-        error: `Key '${key}' cannot be updated at runtime`
+        error: `Key '${key}' cannot be updated at runtime`,
       });
     }
 
@@ -1008,7 +1160,7 @@ router.post('/override', async (req: Request, res: Response) => {
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
-        error: `Validation failed: ${validation.error}`
+        error: `Validation failed: ${validation.error}`,
       });
     }
 
@@ -1022,26 +1174,31 @@ router.post('/override', async (req: Request, res: Response) => {
     await saveConfigState();
 
     // Apply immediately
-    applyRuntimeChanges(domain, [{
+    applyRuntimeChanges(
       domain,
-      key,
-      oldValue: undefined,
-      newValue: value
-    }], state.domains[domain].schema);
+      [
+        {
+          domain,
+          key,
+          oldValue: undefined,
+          newValue: value,
+        },
+      ],
+      state.domains[domain].schema
+    );
 
-    bus.publish('config:override', { domain, key, value });
+    bus.publish('nexus', 'config:override', { domain, key, value });
 
     res.json({
       success: true,
       message: `Runtime override set for ${domain}.${key}`,
-      data: { domain, key, value }
+      data: { domain, key, value },
     });
-
   } catch (error) {
     console.error('[Configuration] Set override error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to set override'
+      error: error instanceof Error ? error.message : 'Failed to set override',
     });
   }
 });
@@ -1051,37 +1208,37 @@ router.post('/override', async (req: Request, res: Response) => {
  * Remove runtime override
  */
 router.delete('/override/:domain/:key', async (req: Request, res: Response) => {
-  const { domain, key } = req.params;
+  const domain = req.params['domain'] ?? '';
+  const key = req.params['key'] ?? '';
 
   try {
     const state = await loadConfigState();
 
-    if (state.runtimeOverrides[domain]?.[key] !== undefined) {
+    if (domain && key && state.runtimeOverrides[domain]?.[key] !== undefined) {
       delete state.runtimeOverrides[domain][key];
-      if (Object.keys(state.runtimeOverrides[domain]).length === 0) {
+      if (Object.keys(state.runtimeOverrides[domain] || {}).length === 0) {
         delete state.runtimeOverrides[domain];
       }
       state.lastUpdated = new Date().toISOString();
       await saveConfigState();
 
-      bus.publish('config:override_removed', { domain, key });
+      bus.publish('nexus', 'config:override_removed', { domain, key });
 
       res.json({
         success: true,
-        message: `Runtime override removed for ${domain}.${key}`
+        message: `Runtime override removed for ${domain}.${key}`,
       });
     } else {
       res.status(404).json({
         success: false,
-        error: `No override found for ${domain}.${key}`
+        error: `No override found for ${domain}.${key}`,
       });
     }
-
   } catch (error) {
     console.error('[Configuration] Remove override error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to remove override'
+      error: error instanceof Error ? error.message : 'Failed to remove override',
     });
   }
 });
@@ -1091,7 +1248,7 @@ router.delete('/override/:domain/:key', async (req: Request, res: Response) => {
  * Get configuration version history
  */
 router.get('/versions', async (req: Request, res: Response) => {
-  const limit = parseInt(req.query.limit as string) || 20;
+  const limit = parseInt((req.query['limit'] as string) || '20', 10);
 
   try {
     const state = await loadConfigState();
@@ -1099,13 +1256,13 @@ router.get('/versions', async (req: Request, res: Response) => {
     const versions = state.versions
       .slice(-limit)
       .reverse()
-      .map(v => ({
+      .map((v) => ({
         version: v.version,
         timestamp: v.timestamp,
         author: v.author,
         message: v.message,
         changeCount: v.changes.length,
-        isCurrent: v.version === state.currentVersion
+        isCurrent: v.version === state.currentVersion,
       }));
 
     res.json({
@@ -1113,15 +1270,14 @@ router.get('/versions', async (req: Request, res: Response) => {
       data: {
         currentVersion: state.currentVersion,
         totalVersions: state.versions.length,
-        versions
-      }
+        versions,
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Get versions error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get versions'
+      error: error instanceof Error ? error.message : 'Failed to get versions',
     });
   }
 });
@@ -1131,36 +1287,35 @@ router.get('/versions', async (req: Request, res: Response) => {
  * Get specific version details
  */
 router.get('/version/:version', async (req: Request, res: Response) => {
-  const version = parseInt(req.params.version);
+  const version = parseInt(req.params['version'] ?? '0', 10);
 
   if (isNaN(version)) {
     return res.status(400).json({
       success: false,
-      error: 'Invalid version number'
+      error: 'Invalid version number',
     });
   }
 
   try {
     const state = await loadConfigState();
-    const versionData = state.versions.find(v => v.version === version);
+    const versionData = state.versions.find((v) => v.version === version);
 
     if (!versionData) {
       return res.status(404).json({
         success: false,
-        error: `Version ${version} not found`
+        error: `Version ${version} not found`,
       });
     }
 
     res.json({
       success: true,
-      data: versionData
+      data: versionData,
     });
-
   } catch (error) {
     console.error('[Configuration] Get version error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get version'
+      error: error instanceof Error ? error.message : 'Failed to get version',
     });
   }
 });
@@ -1170,24 +1325,24 @@ router.get('/version/:version', async (req: Request, res: Response) => {
  * Rollback to a previous version
  */
 router.post('/rollback/:version', async (req: Request, res: Response) => {
-  const targetVersion = parseInt(req.params.version);
+  const targetVersion = parseInt(req.params['version'] ?? '0', 10);
   const { author, reason } = req.body;
 
   if (isNaN(targetVersion)) {
     return res.status(400).json({
       success: false,
-      error: 'Invalid version number'
+      error: 'Invalid version number',
     });
   }
 
   try {
     const state = await loadConfigState();
-    const targetVersionData = state.versions.find(v => v.version === targetVersion);
+    const targetVersionData = state.versions.find((v) => v.version === targetVersion);
 
     if (!targetVersionData) {
       return res.status(404).json({
         success: false,
-        error: `Version ${targetVersion} not found`
+        error: `Version ${targetVersion} not found`,
       });
     }
 
@@ -1195,11 +1350,12 @@ router.post('/rollback/:version', async (req: Request, res: Response) => {
       return res.json({
         success: true,
         message: 'Already at this version',
-        data: { version: targetVersion }
+        data: { version: targetVersion },
       });
     }
 
-    const currentConfig = state.versions.find(v => v.version === state.currentVersion)?.config || {};
+    const currentConfig =
+      state.versions.find((v) => v.version === state.currentVersion)?.config || {};
     const changes: ConfigChange[] = [];
 
     // Calculate changes for rollback
@@ -1211,7 +1367,7 @@ router.post('/rollback/:version', async (req: Request, res: Response) => {
             domain,
             key,
             oldValue: currentDomainConfig[key],
-            newValue: value
+            newValue: value,
           });
         }
       }
@@ -1224,7 +1380,7 @@ router.post('/rollback/:version', async (req: Request, res: Response) => {
       author: author || 'api',
       message: reason || `Rollback to version ${targetVersion}`,
       changes,
-      config: { ...targetVersionData.config }
+      config: { ...targetVersionData.config },
     };
 
     state.versions.push(newVersion);
@@ -1239,10 +1395,10 @@ router.post('/rollback/:version', async (req: Request, res: Response) => {
 
     await saveConfigState();
 
-    bus.publish('config:rollback', {
+    bus.publish('nexus', 'config:rollback', {
       fromVersion: state.currentVersion - 1,
       toVersion: targetVersion,
-      newVersion: newVersion.version
+      newVersion: newVersion.version,
     });
 
     res.json({
@@ -1252,15 +1408,14 @@ router.post('/rollback/:version', async (req: Request, res: Response) => {
         version: newVersion.version,
         rolledBackFrom: state.currentVersion - 1,
         rolledBackTo: targetVersion,
-        changes
-      }
+        changes,
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Rollback error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to rollback'
+      error: error instanceof Error ? error.message : 'Failed to rollback',
     });
   }
 });
@@ -1270,25 +1425,25 @@ router.post('/rollback/:version', async (req: Request, res: Response) => {
  * Compare two versions
  */
 router.get('/diff/:version1/:version2', async (req: Request, res: Response) => {
-  const version1 = parseInt(req.params.version1);
-  const version2 = parseInt(req.params.version2);
+  const version1 = parseInt(req.params['version1'] ?? '0', 10);
+  const version2 = parseInt(req.params['version2'] ?? '0', 10);
 
   if (isNaN(version1) || isNaN(version2)) {
     return res.status(400).json({
       success: false,
-      error: 'Invalid version numbers'
+      error: 'Invalid version numbers',
     });
   }
 
   try {
     const state = await loadConfigState();
-    const v1Data = state.versions.find(v => v.version === version1);
-    const v2Data = state.versions.find(v => v.version === version2);
+    const v1Data = state.versions.find((v) => v.version === version1);
+    const v2Data = state.versions.find((v) => v.version === version2);
 
     if (!v1Data || !v2Data) {
       return res.status(404).json({
         success: false,
-        error: 'One or both versions not found'
+        error: 'One or both versions not found',
       });
     }
 
@@ -1306,7 +1461,7 @@ router.get('/diff/:version1/:version2', async (req: Request, res: Response) => {
             domain,
             key,
             oldValue: config1[key],
-            newValue: config2[key]
+            newValue: config2[key],
           });
         }
       }
@@ -1317,22 +1472,21 @@ router.get('/diff/:version1/:version2', async (req: Request, res: Response) => {
       data: {
         version1: {
           version: v1Data.version,
-          timestamp: v1Data.timestamp
+          timestamp: v1Data.timestamp,
         },
         version2: {
           version: v2Data.version,
-          timestamp: v2Data.timestamp
+          timestamp: v2Data.timestamp,
         },
         differenceCount: differences.length,
-        differences
-      }
+        differences,
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Diff error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to compare versions'
+      error: error instanceof Error ? error.message : 'Failed to compare versions',
     });
   }
 });
@@ -1353,16 +1507,16 @@ router.post('/export', async (req: Request, res: Response) => {
         exportedAt: new Date().toISOString(),
         currentVersion: state.currentVersion,
         versions: state.versions,
-        domains: Object.keys(state.domains)
+        domains: Object.keys(state.domains),
       };
     } else {
       const targetVersion = version || state.currentVersion;
-      const versionData = state.versions.find(v => v.version === targetVersion);
-      
+      const versionData = state.versions.find((v) => v.version === targetVersion);
+
       if (!versionData) {
         return res.status(404).json({
           success: false,
-          error: `Version ${targetVersion} not found`
+          error: `Version ${targetVersion} not found`,
         });
       }
 
@@ -1370,20 +1524,19 @@ router.post('/export', async (req: Request, res: Response) => {
         exportedAt: new Date().toISOString(),
         version: versionData.version,
         timestamp: versionData.timestamp,
-        config: versionData.config
+        config: versionData.config,
       };
     }
 
     res.json({
       success: true,
-      data: exportData
+      data: exportData,
     });
-
   } catch (error) {
     console.error('[Configuration] Export error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export configuration'
+      error: error instanceof Error ? error.message : 'Failed to export configuration',
     });
   }
 });
@@ -1398,13 +1551,14 @@ router.post('/import', async (req: Request, res: Response) => {
   if (!config || typeof config !== 'object') {
     return res.status(400).json({
       success: false,
-      error: 'Configuration object required'
+      error: 'Configuration object required',
     });
   }
 
   try {
     const state = await loadConfigState();
-    const currentConfig = state.versions.find(v => v.version === state.currentVersion)?.config || {};
+    const currentConfig =
+      state.versions.find((v) => v.version === state.currentVersion)?.config || {};
     const changes: ConfigChange[] = [];
 
     // Validate and collect changes
@@ -1412,7 +1566,7 @@ router.post('/import', async (req: Request, res: Response) => {
       if (!state.domains[domain]) {
         return res.status(400).json({
           success: false,
-          error: `Unknown domain: ${domain}`
+          error: `Unknown domain: ${domain}`,
         });
       }
 
@@ -1422,7 +1576,7 @@ router.post('/import', async (req: Request, res: Response) => {
         if (!field) {
           return res.status(400).json({
             success: false,
-            error: `Unknown key ${key} in domain ${domain}`
+            error: `Unknown key ${key} in domain ${domain}`,
           });
         }
 
@@ -1430,7 +1584,7 @@ router.post('/import', async (req: Request, res: Response) => {
         if (!validation.valid) {
           return res.status(400).json({
             success: false,
-            error: `Validation failed for ${domain}.${key}: ${validation.error}`
+            error: `Validation failed for ${domain}.${key}: ${validation.error}`,
           });
         }
 
@@ -1440,7 +1594,7 @@ router.post('/import', async (req: Request, res: Response) => {
             domain,
             key,
             oldValue: currentValue,
-            newValue: value
+            newValue: value,
           });
         }
       }
@@ -1450,7 +1604,7 @@ router.post('/import', async (req: Request, res: Response) => {
       return res.json({
         success: true,
         message: 'No changes from import',
-        data: { version: state.currentVersion }
+        data: { version: state.currentVersion },
       });
     }
 
@@ -1459,7 +1613,7 @@ router.post('/import', async (req: Request, res: Response) => {
     for (const [domain, domainConfig] of Object.entries(config)) {
       mergedConfig[domain] = {
         ...mergedConfig[domain],
-        ...(domainConfig as Record<string, any>)
+        ...(domainConfig as Record<string, any>),
       };
     }
 
@@ -1469,7 +1623,7 @@ router.post('/import', async (req: Request, res: Response) => {
       author: author || 'import',
       message: message || 'Configuration import',
       changes,
-      config: mergedConfig
+      config: mergedConfig,
     };
 
     state.versions.push(newVersion);
@@ -1482,9 +1636,9 @@ router.post('/import', async (req: Request, res: Response) => {
 
     await saveConfigState();
 
-    bus.publish('config:imported', {
+    bus.publish('nexus', 'config:imported', {
       version: newVersion.version,
-      changeCount: changes.length
+      changeCount: changes.length,
     });
 
     res.json({
@@ -1493,15 +1647,14 @@ router.post('/import', async (req: Request, res: Response) => {
       data: {
         version: newVersion.version,
         changeCount: changes.length,
-        changes
-      }
+        changes,
+      },
     });
-
   } catch (error) {
     console.error('[Configuration] Import error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to import configuration'
+      error: error instanceof Error ? error.message : 'Failed to import configuration',
     });
   }
 });
@@ -1520,9 +1673,9 @@ function applyRuntimeChanges(
     if (!field || !field.runtimeUpdateable) continue;
 
     // Publish domain-specific events
-    bus.publish(`config:${domain}:${change.key}`, {
+    bus.publish('nexus', `config:${domain}:${change.key}`, {
       oldValue: change.oldValue,
-      newValue: change.newValue
+      newValue: change.newValue,
     });
 
     // Handle specific runtime updates
@@ -1536,29 +1689,38 @@ function applyRuntimeChanges(
       case 'monitoring':
         handleMonitoringConfigChange(change);
         break;
-      // Add more domain handlers as needed
+      case 'reflection':
+        handleReflectionConfigChange(change);
+        break;
     }
   }
 }
 
 function handleLearningConfigChange(change: ConfigChange): void {
-  bus.publish('learning:config_update', {
+  bus.publish('precog', 'learning:config_update', {
     key: change.key,
-    value: change.newValue
+    value: change.newValue,
   });
 }
 
 function handleEmergenceConfigChange(change: ConfigChange): void {
-  bus.publish('emergence:config_update', {
+  bus.publish('cortex', 'emergence:config_update', {
     key: change.key,
-    value: change.newValue
+    value: change.newValue,
   });
 }
 
 function handleMonitoringConfigChange(change: ConfigChange): void {
-  bus.publish('monitoring:config_update', {
+  bus.publish('system', 'monitoring:config_update', {
     key: change.key,
-    value: change.newValue
+    value: change.newValue,
+  });
+}
+
+function handleReflectionConfigChange(change: ConfigChange): void {
+  bus.publish('cortex', 'reflection:config_update', {
+    key: change.key,
+    value: change.newValue,
   });
 }
 

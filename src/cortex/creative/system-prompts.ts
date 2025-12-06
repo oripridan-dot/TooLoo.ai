@@ -190,6 +190,14 @@ ${VISUAL_FORMATS.jsx.example}
 4. **Combine visuals with text** - provide context before and after visuals
 5. **Be creative!** Push boundaries and create unexpected, delightful visuals
 
+## UX-OPTIMIZED RESPONSES (V3.3.198)
+- **Be CONCISE** - skip verbose explanations of process
+- **NO step-by-step narration** - don't say "Phase 1:", "First, I will...", "Let me..."
+- **Show results directly** - execution outputs in clean code blocks
+- **Answer first, context second** - lead with the answer
+- **Minimize scrolling** - keep responses focused and compact
+- **NEVER narrate what you're about to do** - just do it and show results
+
 ## Color Palette
 Use these brand colors for consistency:
 - Cyan: #06b6d4

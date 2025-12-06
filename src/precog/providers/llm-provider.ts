@@ -1,10 +1,11 @@
-// @version 3.3.90
+// @version 3.3.91
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
  * Fallback chain: DeepSeek → Anthropic Claude → OpenAI → Google Gemini.
  * If no keys are available, returns a clear configuration message.
  *
+ * V3.3.91: Moved domain-expertise and continuous-learning to proper locations.
  * V3.3.90: Improved mid-stream error handling with graceful failover.
  * - When a provider fails mid-stream, attempts continuation with next provider
  * - User-friendly error messages instead of raw system errors
@@ -15,11 +16,11 @@
  * and capabilities are always asserted first.
  */
 
-import DomainExpertise from '../../nexus/engine/domain-expertise.js';
-import ContinuousLearning from '../../nexus/engine/continuous-learning.js';
+import DomainExpertise from './domain-router.js';
+import ContinuousLearning from '../learning/provider-metrics.js';
 import { TOOLOO_PERSONA } from '../../cortex/persona.js';
 import fetch from 'node-fetch';
-import ensureEnvLoaded from '../../nexus/engine/env-loader.js';
+import ensureEnvLoaded from '../../core/env-loader.js';
 import { amygdala, AmygdalaState } from '../../cortex/amygdala/index.js';
 import { bus } from '../../core/event-bus.js';
 
@@ -1405,7 +1406,7 @@ const providerBuilders = {
   },
   claude: () => {
     const key = (process.env['ANTHROPIC_API_KEY'] || '').trim();
-    const model = env('ANTHROPIC_MODEL', 'claude-3-5-haiku-20241022');
+    const model = env('ANTHROPIC_MODEL', 'claude-3-5-haiku-latest');
     return {
       name: 'claude',
       url: 'https://api.anthropic.com/v1/messages',

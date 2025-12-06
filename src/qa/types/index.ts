@@ -420,3 +420,5 @@ export const EventSchemas = {
 
 export type EventType = keyof typeof EventSchemas;
 
+// Re-export generated API contracts
+export { API_CONTRACTS } from '../contracts-generated.js';

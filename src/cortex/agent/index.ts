@@ -1,4 +1,4 @@
-// @version 3.3.23
+// @version 3.3.196
 /**
  * Agent Execution System - Main Export
  *
@@ -12,6 +12,10 @@
  *
  * V3.3.23 additions:
  * - Collaboration Hub: Inter-agent communication and knowledge sharing
+ *
+ * V3.3.196 additions:
+ * - Smart Execution Orchestrator: Intelligent execution with sprints,
+ *   human-friendly progress, and quality>performance>efficiency>cost optimization
  *
  * @module cortex/agent
  */
@@ -56,6 +60,27 @@ export {
   type SkillComplementarity,
   type TeamRecommendation,
 } from './collaboration-hub.js';
+
+// Smart Execution Orchestrator - Intelligent execution with human-friendly progress
+export {
+  SmartExecutionOrchestrator,
+  smartOrchestrator,
+  type SmartExecutionRequest,
+  type SmartExecutionResponse,
+  type HumanStatusUpdate,
+  type ExecutionSprint,
+  type OptimizationPriorities,
+  type ExecutionPhase,
+  type ProgressCallback,
+} from './smart-execution-orchestrator.js';
+
+// Automated Execution Pipeline - Streamlined self-correcting execution
+export {
+  AutomatedExecutionPipeline,
+  automatedPipeline,
+  type ExecutionInput,
+  type ExecutionOutput,
+} from './automated-execution-pipeline.js';
 
 // Types
 export * from './types.js';

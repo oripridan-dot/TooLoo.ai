@@ -1,8 +1,8 @@
-// @version 2.1.28
+// @version 2.1.29
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
-import { EventBus } from '../../core/event-bus.js';
+import { EventBus } from './event-bus.js';
 
 interface Version {
   major: number;
