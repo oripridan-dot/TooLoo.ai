@@ -1,11 +1,12 @@
-// @version 3.3.28
+// @version 3.3.178
 /**
  * Agent API Routes
  *
  * REST API for the Agent Execution System.
  * Enables external systems and UI to submit tasks,
  * run processes, and manage artifacts.
- * 
+ *
+ * V3.3.54: Added POST /artifacts endpoint for creating artifacts from chat
  * V3.3.17: Integrated with System Execution Hub and Team Framework
  * - All tasks now go through team validation (executor + validator pairs)
  * - Cross-system execution support
@@ -27,6 +28,11 @@ const router = Router();
 /**
  * @route POST /api/v1/agent/task
  * @description Submit a task for execution
+ * @param {string} type - Task type
+ * @param {string} name - Task name
+ * @param {object} input - Task input data
+ * @param {string} [description] - Optional description
+ * @param {object} [options] - Optional execution options
  */
 router.post('/task', async (req: Request, res: Response) => {
   try {
@@ -204,7 +210,7 @@ router.get('/teams', (_req: Request, res: Response) => {
     res.json({
       ok: true,
       data: {
-        teams: teams.map(t => ({
+        teams: teams.map((t) => ({
           id: t.id,
           name: t.name,
           specialization: t.specialization,
@@ -390,6 +396,45 @@ router.post('/process', async (req: Request, res: Response) => {
 // ============= Artifact Endpoints =============
 
 /**
+ * @route POST /api/v1/agent/artifacts
+ * @description Create a new artifact
+ */
+router.post('/artifacts', async (req: Request, res: Response) => {
+  try {
+    const { type, name, content, language, description, metadata, tags } = req.body;
+
+    if (!type || !content) {
+      res.status(400).json({
+        ok: false,
+        error: 'Missing required fields: type, content',
+      });
+      return;
+    }
+
+    const artifact = await artifactManager.createArtifact({
+      type,
+      name: name || `artifact-${Date.now()}`,
+      content,
+      language,
+      description,
+      createdBy: 'chat-ui',
+      metadata,
+      tags,
+    });
+
+    res.json({
+      ok: true,
+      data: artifact,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
  * @route GET /api/v1/agent/artifacts
  * @description List artifacts
  */
@@ -557,6 +602,205 @@ router.post('/stop', (_req: Request, res: Response) => {
     res.json({
       ok: true,
       message: 'Agent stopped',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
+// ============= Execution Dashboard =============
+
+/**
+ * @route GET /api/v1/agent/dashboard
+ * @description Get comprehensive execution activity across all systems
+ * Shows all executed code, artifacts, teams, and system-wide metrics
+ */
+router.get('/dashboard', async (_req: Request, res: Response) => {
+  try {
+    // Get agent state
+    const agentState = executionAgent.getState();
+
+    // Get all teams
+    const teams = teamRegistry.getAllTeams();
+
+    // Get system hub stats
+    const hubStats = systemExecutionHub.getStats();
+
+    // Get artifacts
+    const artifactStats = artifactManager.getStats();
+    const recentArtifacts = await artifactManager.listArtifacts({ limit: 10 });
+
+    // Get task history
+    const taskHistory = taskProcessor.getHistory(20);
+
+    // Get queue status
+    const queueStatus = taskProcessor.getQueueStatus();
+
+    // Build comprehensive dashboard
+    const dashboard = {
+      // Overall Status
+      status: {
+        agentRunning: agentState.running,
+        currentTask: agentState.currentTask,
+        queueLength: queueStatus.pending,
+        activeTeams: teams.filter((t) => t.status !== 'idle').length,
+        totalTeams: teams.length,
+      },
+
+      // Execution Metrics
+      metrics: {
+        totalTasksExecuted: agentState.totalTasksExecuted,
+        successRate: (agentState.successRate * 100).toFixed(1) + '%',
+        totalArtifacts: artifactStats.totalArtifacts,
+        hubRequests: hubStats.totalRequests,
+        hubSuccessRate:
+          hubStats.totalRequests > 0
+            ? ((hubStats.successfulRequests / hubStats.totalRequests) * 100).toFixed(1) + '%'
+            : 'N/A',
+        avgDurationMs: hubStats.avgDurationMs.toFixed(0),
+        avgQualityScore: hubStats.avgQualityScore.toFixed(2),
+      },
+
+      // Recent Executions (Last 10 tasks)
+      recentExecutions: taskHistory.map((task) => ({
+        id: task.id,
+        type: task.type,
+        name: task.name,
+        status: task.status,
+        success: task.result?.success,
+        duration: task.result?.metrics?.durationMs,
+        output:
+          task.result?.output?.substring(0, 200) + (task.result?.output?.length > 200 ? '...' : ''),
+        completedAt: task.completedAt,
+      })),
+
+      // Recent Artifacts (Code generated/executed)
+      recentArtifacts: recentArtifacts.map((artifact) => ({
+        id: artifact.id,
+        type: artifact.type,
+        name: artifact.name,
+        description: artifact.description,
+        language: artifact.language,
+        contentPreview:
+          artifact.content?.substring(0, 300) + (artifact.content?.length > 300 ? '...' : ''),
+        createdAt: artifact.createdAt,
+        tags: artifact.tags,
+      })),
+
+      // Active Teams
+      activeTeams: teams
+        .filter((t) => t.status !== 'idle')
+        .map((team) => ({
+          id: team.id,
+          name: team.name,
+          specialization: team.specialization,
+          status: team.status,
+          currentTask: team.currentTask,
+          metrics: team.metrics,
+        })),
+
+      // By Source Breakdown (which systems are using execution)
+      bySource: hubStats.bySource,
+
+      // By Type Breakdown (what kinds of tasks)
+      byType: hubStats.byType,
+
+      // Current Queue
+      queue:
+        queueStatus.pending > 0
+          ? taskProcessor.getQueue().map((task) => ({
+              id: task.id,
+              type: task.type,
+              name: task.name,
+              status: task.status,
+              priority: task.priority,
+              createdAt: task.createdAt,
+            }))
+          : [],
+    };
+
+    res.json({
+      ok: true,
+      data: dashboard,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route GET /api/v1/agent/executions
+ * @description Get detailed execution logs with full code content
+ */
+router.get('/executions', async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query['limit'] as string) || 20;
+    const includeCode = req.query['includeCode'] !== 'false';
+
+    // Get task history
+    const taskHistory = taskProcessor.getHistory(limit);
+
+    // Get artifacts for code content
+    const artifactsList = await artifactManager.listArtifacts({ limit: limit * 2 });
+
+    // Build detailed executions list
+    const executions = taskHistory.map((task) => {
+      // Find related artifacts
+      const relatedArtifacts = task.result?.artifacts || [];
+      const artifactDetails = relatedArtifacts
+        .map((artifactId: string) => {
+          const artifact = artifactsList.find((a) => a.id === artifactId);
+          return artifact
+            ? {
+                id: artifact.id,
+                type: artifact.type,
+                name: artifact.name,
+                language: artifact.language,
+                content: includeCode ? artifact.content : undefined,
+                path: artifact.path,
+              }
+            : null;
+        })
+        .filter(Boolean);
+
+      return {
+        id: task.id,
+        type: task.type,
+        name: task.name,
+        description: task.description,
+        status: task.status,
+        input: {
+          prompt: task.input?.prompt?.substring(0, 500),
+          code: includeCode ? task.input?.code : task.input?.code ? '[code present]' : undefined,
+          language: task.input?.language,
+        },
+        result: {
+          success: task.result?.success,
+          output: task.result?.output,
+          logs: task.result?.logs,
+          metrics: task.result?.metrics,
+        },
+        artifacts: artifactDetails,
+        createdAt: task.createdAt,
+        startedAt: task.startedAt,
+        completedAt: task.completedAt,
+      };
+    });
+
+    res.json({
+      ok: true,
+      data: {
+        executions,
+        count: executions.length,
+        hasMore: taskHistory.length >= limit,
+      },
     });
   } catch (error: any) {
     res.status(500).json({
