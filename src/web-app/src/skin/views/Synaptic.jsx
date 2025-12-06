@@ -1,4 +1,4 @@
-// @version 3.3.201
+// @version 3.3.202
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -2074,6 +2074,20 @@ const Synaptic = memo(({ className = '' }) => {
             />
           </div>
         </LiquidPanel>
+
+        {/* Test Prompts Panel - V3.3.200 */}
+        <TestPromptsPanel
+          onSelectPrompt={(prompt) => {
+            setInput(prompt);
+            // Optionally auto-send after short delay
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+              }
+            }, 100);
+          }}
+          isDisabled={isThinking || isStreaming}
+        />
 
         {/* Quick Mood Buttons */}
         <div className="pt-2 border-t border-white/5">
