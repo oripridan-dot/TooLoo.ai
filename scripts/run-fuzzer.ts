@@ -1,11 +1,11 @@
-// @version 3.3.177
+// @version 3.3.179
 import { ContractFuzzer } from '../src/qa/fuzzing/contract-fuzzer.js';
 
 async function main() {
   const fuzzer = new ContractFuzzer('http://localhost:4000');
   
-  // Fuzz the system status endpoint we enhanced earlier
-  const target = 'GET /api/v1/system/fuzz-test';
+  // Fuzz the agent task endpoint which has required parameters
+  const target = 'POST /api/v1/agent/task';
   
   try {
     const results = await fuzzer.fuzzContract(target);
