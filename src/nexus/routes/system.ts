@@ -1,4 +1,4 @@
-// @version 2.2.58
+// @version 3.3.176
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { successResponse, errorResponse } from '../utils.js';
@@ -24,6 +24,11 @@ async function execCommand(command: string, cwd: string = process.cwd()) {
 }
 
 // System Status
+/**
+ * @description Get system status and version information
+ * @auth
+ * @param {string} [detail] - Optional detail level (basic|full)
+ */
 router.get('/status', (req, res) => {
   // In Synapsys, we are always "active" if this code runs
   res.json(
@@ -42,6 +47,15 @@ router.get('/status', (req, res) => {
       },
     })
   );
+});
+
+/**
+ * @description Endpoint for fuzz testing
+ * @param {number} id - A required numeric ID
+ * @param {string} name - A required string name
+ */
+router.get('/fuzz-test', (req, res) => {
+  res.json(successResponse({ message: 'You passed validation!' }));
 });
 
 // System Health - Real metrics for Cortex view
