@@ -1,4 +1,4 @@
-// @version 3.3.198
+// @version 3.3.199
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -221,9 +221,9 @@ const useChatAPI = () => {
               // The UI already shows provider info elsewhere
             }
 
-            // Visual enhancement notification
+            // Visual enhancement notification (only for explicit visual requests)
             if (data.visualEnhanced) {
-              onThought?.(`✨ Enhanced for ${data.visualType || 'visual'} generation`);
+              // V3.3.198: Silent - visual enhancement is internal detail
             }
 
             if (data.chunk) {
@@ -240,9 +240,8 @@ const useChatAPI = () => {
                 cost_usd: data.cost_usd,
                 reasoning: data.reasoning,
               };
-              onThought?.(`✅ Completed via ${data.provider}`, 'success');
-              if (data.cost_usd) onThought?.(`💰 Cost: $${data.cost_usd.toFixed(4)}`);
-              if (data.reasoning) onThought?.(`📝 ${data.reasoning}`);
+              // V3.3.198: Silent completion - UI shows provider badge instead
+              // Only emit thought on error or explicit cost display request
               onStageChange?.('complete');
             }
           } catch (e) {
@@ -1303,8 +1302,8 @@ const Synaptic = memo(({ className = '' }) => {
     // Get selected model config
     const modelConfig = AI_MODELS[selectedModel] || AI_MODELS.auto;
 
-    // Initial thought - will be replaced by real backend events
-    addThought(`📥 Sending: "${input.substring(0, 40)}${input.length > 40 ? '...' : ''}"`);
+    // V3.3.198: Minimal initial thought - silent processing
+    // Don't add verbose "Sending: ..." thought
 
     // Show initial provider info
     if (selectedModel !== 'auto') {
