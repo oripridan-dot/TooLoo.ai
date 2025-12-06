@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.183",
+  "version": "3.3.184",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -11,9 +11,11 @@
     "prebuild:frontend": "node scripts/check-working-directory.cjs",
     "start": "concurrently \"npm run start:synapsys\" \"npm run dev:frontend\"",
     "start:synapsys": "tsx src/main.ts",
+    "start:rnd": "bash scripts/dev-rnd.sh",
     "dev:all": "bash scripts/start-clean.sh",
     "dev:ensure": "bash scripts/ensure-running.sh",
     "dev": "bash scripts/dev.sh",
+    "dev:rnd": "bash scripts/dev-rnd.sh",
     "dev:frontend": "vite --config src/web-app/vite.config.ts",
     "build:frontend": "vite build --config src/web-app/vite.config.ts",
     "preview:frontend": "vite preview --config src/web-app/vite.config.ts",
