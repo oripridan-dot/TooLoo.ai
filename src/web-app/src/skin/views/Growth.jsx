@@ -1,4 +1,4 @@
-// @version 3.3.190
+// @version 3.3.191
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -806,6 +806,835 @@ const EmergenceTimeline = memo(({ events = [], className = '' }) => {
 });
 
 EmergenceTimeline.displayName = 'EmergenceTimeline';
+
+// ============================================================================
+// SCHEDULER CONTROL PANEL - Learning scheduling management
+// ============================================================================
+
+const SchedulerPanel = memo(({ className = '' }) => {
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/growth/schedule`);
+      const data = await res.json();
+      if (data.success) {
+        setStatus(data.data);
+      }
+    } catch (error) {
+      console.error('[Scheduler] Failed to fetch:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 15000);
+    return () => clearInterval(interval);
+  }, [fetchStatus]);
+
+  const handleBurst = async () => {
+    setActionLoading('burst');
+    try {
+      await fetch(`${API_BASE}/growth/schedule/burst`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: 300000, intensity: 1.5 }),
+      });
+      await fetchStatus();
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleQuiet = async () => {
+    setActionLoading('quiet');
+    try {
+      await fetch(`${API_BASE}/growth/schedule/quiet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: 1800000, reason: 'manual' }),
+      });
+      await fetchStatus();
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <LiquidPanel variant="elevated" className={`p-6 ${className}`}>
+        <div className="flex items-center justify-center py-12">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>⏳</motion.div>
+        </div>
+      </LiquidPanel>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      {/* Current Status */}
+      <LiquidPanel variant="elevated" className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-white flex items-center gap-2">
+            <span className="text-xl">📅</span>
+            Learning Scheduler
+          </h3>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+            status?.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+            status?.status === 'paused' ? 'bg-amber-500/20 text-amber-400' :
+            'bg-gray-500/20 text-gray-400'
+          }`}>
+            {status?.status || 'unknown'}
+          </span>
+        </div>
+
+        {/* Current Window */}
+        {status?.currentWindow && (
+          <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-cyan-400 font-medium">Current Window</span>
+              <span className="text-xs text-cyan-300 capitalize">{status.currentWindow.type}</span>
+            </div>
+            <p className="text-white text-lg font-semibold">{status.currentWindow.name || status.currentWindow.type}</p>
+            {status.currentWindow.endTime && (
+              <p className="text-xs text-gray-500 mt-1">
+                Ends: {new Date(status.currentWindow.endTime).toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleBurst}
+            disabled={actionLoading === 'burst'}
+            className="px-4 py-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 transition-colors disabled:opacity-50"
+          >
+            {actionLoading === 'burst' ? '⏳' : '🚀'} Start Burst
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleQuiet}
+            disabled={actionLoading === 'quiet'}
+            className="px-4 py-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 transition-colors disabled:opacity-50"
+          >
+            {actionLoading === 'quiet' ? '⏳' : '🌙'} Quiet Period
+          </motion.button>
+        </div>
+      </LiquidPanel>
+
+      {/* Upcoming Windows */}
+      <LiquidPanel variant="surface" className="p-4">
+        <h4 className="text-sm font-medium text-white mb-3">Upcoming Windows</h4>
+        <div className="space-y-2">
+          {(status?.upcomingWindows || []).map((window, i) => (
+            <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${
+                  window.type === 'burst' ? 'bg-emerald-500' :
+                  window.type === 'quiet' ? 'bg-amber-500' :
+                  window.type === 'maintenance' ? 'bg-purple-500' :
+                  'bg-cyan-500'
+                }`} />
+                <span className="text-sm text-gray-300 capitalize">{window.type}</span>
+              </div>
+              <span className="text-xs text-gray-500">
+                {new Date(window.startTime).toLocaleTimeString()}
+              </span>
+            </div>
+          ))}
+          {(!status?.upcomingWindows || status.upcomingWindows.length === 0) && (
+            <p className="text-sm text-gray-500 italic text-center py-4">No scheduled windows</p>
+          )}
+        </div>
+      </LiquidPanel>
+
+      {/* Active Goals */}
+      <LiquidPanel variant="surface" className="p-4">
+        <h4 className="text-sm font-medium text-white mb-3">Learning Goals</h4>
+        <div className="space-y-2">
+          {(status?.goals?.active || 0) > 0 ? (
+            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-purple-400">{status.goals.active} Active Goals</span>
+                <span className="text-xs text-emerald-400">{status.goals.achieved || 0} Achieved</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic text-center py-4">No active goals</p>
+          )}
+        </div>
+      </LiquidPanel>
+
+      {/* Stats */}
+      {status?.stats && (
+        <LiquidPanel variant="glass" className="p-4">
+          <h4 className="text-sm font-medium text-white mb-3">Schedule Stats</h4>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <p className="text-xl font-bold text-cyan-400">{status.stats.windowsCompleted || 0}</p>
+              <p className="text-xs text-gray-500">Windows</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-emerald-400">{status.stats.burstsTriggered || 0}</p>
+              <p className="text-xs text-gray-500">Bursts</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-purple-400">{status.stats.goalsAchieved || 0}</p>
+              <p className="text-xs text-gray-500">Goals Met</p>
+            </div>
+          </div>
+        </LiquidPanel>
+      )}
+    </div>
+  );
+});
+
+SchedulerPanel.displayName = 'SchedulerPanel';
+
+// ============================================================================
+// PREDICTIONS PANEL - Emergence predictions viewer
+// ============================================================================
+
+const PredictionsPanel = memo(({ className = '' }) => {
+  const [predictions, setPredictions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPredictions = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/growth/predictions`);
+      const data = await res.json();
+      if (data.success) {
+        setPredictions(data.data.predictions || []);
+      }
+    } catch (error) {
+      console.error('[Predictions] Failed to fetch:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPredictions();
+    const interval = setInterval(fetchPredictions, 30000);
+    return () => clearInterval(interval);
+  }, [fetchPredictions]);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      await fetch(`${API_BASE}/growth/predictions/refresh`, { method: 'POST' });
+      await fetchPredictions();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getHorizonColor = (horizon) => {
+    switch (horizon) {
+      case 'immediate': return { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400' };
+      case 'short_term': return { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400' };
+      case 'medium_term': return { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', text: 'text-cyan-400' };
+      case 'long_term': return { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-400' };
+      default: return { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-400' };
+    }
+  };
+
+  if (loading) {
+    return (
+      <LiquidPanel variant="elevated" className={`p-6 ${className}`}>
+        <div className="flex items-center justify-center py-12">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>🔮</motion.div>
+        </div>
+      </LiquidPanel>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      {/* Header */}
+      <LiquidPanel variant="elevated" className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-white flex items-center gap-2">
+            <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}>🔮</motion.span>
+            Emergence Predictions
+          </h3>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleRefresh}
+            className="px-3 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 text-sm"
+          >
+            🔄 Refresh
+          </motion.button>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="p-3 rounded-lg bg-white/5 text-center">
+            <p className="text-2xl font-bold text-white">{predictions.length}</p>
+            <p className="text-xs text-gray-500">Total</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 text-center">
+            <p className="text-2xl font-bold text-emerald-400">
+              {predictions.filter(p => p.confidence > 0.7).length}
+            </p>
+            <p className="text-xs text-gray-500">High Conf.</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 text-center">
+            <p className="text-2xl font-bold text-rose-400">
+              {predictions.filter(p => p.timeHorizon === 'immediate' || p.timeHorizon === 'short_term').length}
+            </p>
+            <p className="text-xs text-gray-500">Imminent</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 text-center">
+            <p className="text-2xl font-bold text-purple-400">
+              {predictions.filter(p => p.type === 'breakthrough').length}
+            </p>
+            <p className="text-xs text-gray-500">Breakthroughs</p>
+          </div>
+        </div>
+      </LiquidPanel>
+
+      {/* Predictions List */}
+      <div className="space-y-3">
+        {predictions.length === 0 ? (
+          <LiquidPanel variant="surface" className="p-8 text-center">
+            <motion.span className="text-4xl block mb-4" animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+              🔭
+            </motion.span>
+            <p className="text-gray-400">No predictions yet</p>
+            <p className="text-xs text-gray-500 mt-1">The system is analyzing patterns...</p>
+          </LiquidPanel>
+        ) : (
+          predictions.map((pred, i) => {
+            const colors = getHorizonColor(pred.timeHorizon);
+            return (
+              <motion.div
+                key={pred.id || i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <LiquidPanel variant="surface" className={`p-4 border ${colors.border}`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">
+                        {pred.type === 'breakthrough' ? '⚡' :
+                         pred.type === 'pattern' ? '🔮' :
+                         pred.type === 'capability' ? '🚀' :
+                         pred.type === 'insight' ? '💡' : '◆'}
+                      </span>
+                      <span className="text-sm font-medium text-white">{pred.type}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${colors.bg} ${colors.text}`}>
+                        {pred.timeHorizon?.replace('_', ' ')}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {(pred.confidence * 100).toFixed(0)}% conf
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-300 mb-2">{pred.description}</p>
+
+                  {/* Confidence bar */}
+                  <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <motion.div
+                      className={`h-full rounded-full ${
+                        pred.confidence > 0.7 ? 'bg-emerald-500' :
+                        pred.confidence > 0.5 ? 'bg-amber-500' :
+                        'bg-gray-500'
+                      }`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pred.confidence * 100}%` }}
+                      transition={{ duration: 0.5, delay: i * 0.05 }}
+                    />
+                  </div>
+
+                  {/* Precursors */}
+                  {pred.precursors && pred.precursors.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {pred.precursors.slice(0, 3).map((p, j) => (
+                        <span key={j} className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-400">
+                          {p.type}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </LiquidPanel>
+              </motion.div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+});
+
+PredictionsPanel.displayName = 'PredictionsPanel';
+
+// ============================================================================
+// CONFIGURATION PANEL - System configuration management
+// ============================================================================
+
+const ConfigurationPanel = memo(({ className = '' }) => {
+  const [domains, setDomains] = useState([]);
+  const [selectedDomain, setSelectedDomain] = useState(null);
+  const [domainConfig, setDomainConfig] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editValues, setEditValues] = useState({});
+
+  const fetchDomains = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/config/domains`);
+      const data = await res.json();
+      if (data.success) {
+        setDomains(data.data || []);
+        if (!selectedDomain && data.data?.length > 0) {
+          setSelectedDomain(data.data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('[Config] Failed to fetch domains:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDomain]);
+
+  const fetchDomainConfig = useCallback(async (domainId) => {
+    if (!domainId) return;
+    try {
+      const res = await fetch(`${API_BASE}/config/domain/${domainId}`);
+      const data = await res.json();
+      if (data.success) {
+        setDomainConfig(data.data);
+        setEditValues(data.data.effectiveValues || {});
+      }
+    } catch (error) {
+      console.error('[Config] Failed to fetch domain config:', error);
+    }
+  }, []);
+
+  const fetchVersions = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/config/versions?limit=10`);
+      const data = await res.json();
+      if (data.success) {
+        setVersions(data.data.versions || []);
+      }
+    } catch (error) {
+      console.error('[Config] Failed to fetch versions:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDomains();
+    fetchVersions();
+  }, [fetchDomains, fetchVersions]);
+
+  useEffect(() => {
+    if (selectedDomain) {
+      fetchDomainConfig(selectedDomain);
+    }
+  }, [selectedDomain, fetchDomainConfig]);
+
+  const handleSave = async () => {
+    if (!selectedDomain) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/config/domain/${selectedDomain}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          values: editValues,
+          author: 'user',
+          message: `Updated ${selectedDomain} via UI`
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchDomainConfig(selectedDomain);
+        await fetchVersions();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRollback = async (version) => {
+    if (!window.confirm(`Rollback to version ${version}?`)) return;
+    try {
+      await fetch(`${API_BASE}/config/rollback/${version}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: 'user', reason: 'Manual rollback' })
+      });
+      await fetchDomainConfig(selectedDomain);
+      await fetchVersions();
+    } catch (error) {
+      console.error('[Config] Rollback failed:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <LiquidPanel variant="elevated" className={`p-6 ${className}`}>
+        <div className="flex items-center justify-center py-12">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>⚙️</motion.div>
+        </div>
+      </LiquidPanel>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      {/* Domain Selector */}
+      <LiquidPanel variant="elevated" className="p-4">
+        <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+          <span>⚙️</span>
+          Configuration
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {domains.map(domain => (
+            <motion.button
+              key={domain.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedDomain(domain.id)}
+              className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                selectedDomain === domain.id
+                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+            >
+              {domain.name}
+            </motion.button>
+          ))}
+        </div>
+      </LiquidPanel>
+
+      {/* Domain Config Editor */}
+      {domainConfig && (
+        <LiquidPanel variant="surface" className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-sm font-medium text-white">{domainConfig.name}</h4>
+              <p className="text-xs text-gray-500">{domainConfig.description}</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-sm disabled:opacity-50"
+            >
+              {saving ? '⏳ Saving...' : '💾 Save Changes'}
+            </motion.button>
+          </div>
+
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {(domainConfig.fields || []).map(field => (
+              <div key={field.key} className="p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-gray-300">{field.key}</span>
+                  <div className="flex items-center gap-2">
+                    {field.runtimeUpdateable && (
+                      <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">live</span>
+                    )}
+                    {field.requiresRestart && (
+                      <span className="px-1.5 py-0.5 rounded text-xs bg-amber-500/20 text-amber-400">restart</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mb-2">{field.description}</p>
+                
+                {field.type === 'boolean' ? (
+                  <button
+                    onClick={() => setEditValues(prev => ({ ...prev, [field.key]: !prev[field.key] }))}
+                    className={`px-3 py-1 rounded text-xs ${
+                      editValues[field.key]
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}
+                  >
+                    {editValues[field.key] ? 'Enabled' : 'Disabled'}
+                  </button>
+                ) : field.type === 'enum' ? (
+                  <select
+                    value={editValues[field.key] || ''}
+                    onChange={(e) => setEditValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  >
+                    {(field.validation?.enum || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : field.type === 'number' ? (
+                  <input
+                    type="number"
+                    value={editValues[field.key] ?? field.default}
+                    onChange={(e) => setEditValues(prev => ({ ...prev, [field.key]: parseFloat(e.target.value) }))}
+                    min={field.validation?.min}
+                    max={field.validation?.max}
+                    step={field.validation?.max <= 1 ? 0.01 : 1}
+                    className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={editValues[field.key] ?? ''}
+                    onChange={(e) => setEditValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </LiquidPanel>
+      )}
+
+      {/* Version History */}
+      <LiquidPanel variant="glass" className="p-4">
+        <h4 className="text-sm font-medium text-white mb-3">Version History</h4>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {versions.map(v => (
+            <div key={v.version} className={`flex items-center justify-between p-2 rounded-lg ${
+              v.isCurrent ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-white/5'
+            }`}>
+              <div>
+                <span className="text-sm text-gray-300">v{v.version}</span>
+                <span className="text-xs text-gray-500 ml-2">{v.message}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">{new Date(v.timestamp).toLocaleString()}</span>
+                {!v.isCurrent && (
+                  <button
+                    onClick={() => handleRollback(v.version)}
+                    className="text-xs text-amber-400 hover:text-amber-300"
+                  >
+                    ↩ Rollback
+                  </button>
+                )}
+                {v.isCurrent && <span className="text-xs text-cyan-400">Current</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </LiquidPanel>
+    </div>
+  );
+});
+
+ConfigurationPanel.displayName = 'ConfigurationPanel';
+
+// ============================================================================
+// ANALYTICS PANEL - Growth analytics and metrics
+// ============================================================================
+
+const AnalyticsPanel = memo(({ className = '' }) => {
+  const [dashboard, setDashboard] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [correlations, setCorrelations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const [dashRes, alertRes, corrRes] = await Promise.all([
+        fetch(`${API_BASE}/growth/dashboard`),
+        fetch(`${API_BASE}/growth/alerts?limit=10`),
+        fetch(`${API_BASE}/growth/analytics/correlations`)
+      ]);
+      
+      const [dashData, alertData, corrData] = await Promise.all([
+        dashRes.json(),
+        alertRes.json(),
+        corrRes.json()
+      ]);
+
+      if (dashData.success) setDashboard(dashData.data);
+      if (alertData.success) setAlerts(alertData.data.alerts || []);
+      if (corrData.success) setCorrelations(corrData.data || []);
+    } catch (error) {
+      console.error('[Analytics] Failed to fetch:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+    const interval = setInterval(fetchAnalytics, 30000);
+    return () => clearInterval(interval);
+  }, [fetchAnalytics]);
+
+  const handleAction = async (action) => {
+    try {
+      await fetch(`${API_BASE}/growth/controls/${action}`, { method: 'POST' });
+      await fetchAnalytics();
+    } catch (error) {
+      console.error(`[Analytics] Action ${action} failed:`, error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <LiquidPanel variant="elevated" className={`p-6 ${className}`}>
+        <div className="flex items-center justify-center py-12">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>📊</motion.div>
+        </div>
+      </LiquidPanel>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      {/* Overall Health */}
+      <LiquidPanel variant="elevated" className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-white flex items-center gap-2">
+            <span>📊</span>
+            Growth Analytics
+          </h3>
+          {dashboard?.overallHealth && (
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              dashboard.overallHealth.status === 'excellent' ? 'bg-emerald-500/20 text-emerald-400' :
+              dashboard.overallHealth.status === 'good' ? 'bg-cyan-500/20 text-cyan-400' :
+              dashboard.overallHealth.status === 'fair' ? 'bg-amber-500/20 text-amber-400' :
+              'bg-rose-500/20 text-rose-400'
+            }`}>
+              {(dashboard.overallHealth.score * 100).toFixed(0)}% Health
+            </span>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {(dashboard?.quickActions || []).slice(0, 6).map(action => (
+            <motion.button
+              key={action.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleAction(action.id)}
+              disabled={!action.available}
+              className={`px-3 py-2 rounded-lg text-xs transition-colors ${
+                action.available
+                  ? 'bg-white/5 hover:bg-white/10 text-gray-300'
+                  : 'bg-white/5 text-gray-600 cursor-not-allowed'
+              }`}
+            >
+              {action.icon} {action.label}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* System Status Grid */}
+        {dashboard?.systems && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {Object.entries(dashboard.systems).slice(0, 4).map(([key, sys]) => (
+              <div key={key} className="p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-400 capitalize">{key}</span>
+                  <span className={`w-2 h-2 rounded-full ${
+                    sys.status === 'active' || sys.status === 'healthy' ? 'bg-emerald-500' :
+                    sys.status === 'paused' ? 'bg-amber-500' :
+                    'bg-gray-500'
+                  }`} />
+                </div>
+                {sys.metrics && (
+                  <div className="text-sm text-white">
+                    {Object.entries(sys.metrics).slice(0, 2).map(([mk, mv]) => (
+                      <div key={mk} className="flex justify-between text-xs">
+                        <span className="text-gray-500">{mk}</span>
+                        <span>{typeof mv === 'number' ? mv.toFixed?.(2) || mv : String(mv)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </LiquidPanel>
+
+      {/* Active Alerts */}
+      <LiquidPanel variant="surface" className="p-4">
+        <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <span>🔔</span>
+          Active Alerts ({alerts.length})
+        </h4>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+          {alerts.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No active alerts ✓</p>
+          ) : (
+            alerts.map((alert, i) => (
+              <div key={alert.id || i} className={`p-2 rounded-lg border ${
+                alert.severity === 'critical' ? 'bg-rose-500/10 border-rose-500/20' :
+                alert.severity === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
+                'bg-white/5 border-white/10'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">{alert.name}</span>
+                  <span className={`text-xs ${
+                    alert.severity === 'critical' ? 'text-rose-400' :
+                    alert.severity === 'warning' ? 'text-amber-400' :
+                    'text-gray-400'
+                  }`}>
+                    {alert.severity}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{alert.message}</p>
+              </div>
+            ))
+          )}
+        </div>
+      </LiquidPanel>
+
+      {/* Correlations */}
+      <LiquidPanel variant="glass" className="p-4">
+        <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <span>🔗</span>
+          Detected Correlations
+        </h4>
+        <div className="space-y-2">
+          {correlations.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">Analyzing patterns...</p>
+          ) : (
+            correlations.slice(0, 5).map((corr, i) => (
+              <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{corr.metric1}</span>
+                  <span className="text-xs text-gray-600">↔</span>
+                  <span className="text-xs text-gray-400">{corr.metric2}</span>
+                </div>
+                <span className={`text-xs font-mono ${
+                  corr.correlation > 0.7 ? 'text-emerald-400' :
+                  corr.correlation > 0.5 ? 'text-cyan-400' :
+                  'text-gray-400'
+                }`}>
+                  {(corr.correlation * 100).toFixed(0)}%
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </LiquidPanel>
+    </div>
+  );
+});
+
+AnalyticsPanel.displayName = 'AnalyticsPanel';
 
 // ============================================================================
 // LEARNING VELOCITY GRAPH - Shows learning acceleration over time
