@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.179",
+  "version": "3.3.180",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -22,6 +22,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:fuzz": "npx tsx scripts/run-fuzzer.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"src/web-app/**\" && echo '✨ Linting passed!'",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md}\"",
