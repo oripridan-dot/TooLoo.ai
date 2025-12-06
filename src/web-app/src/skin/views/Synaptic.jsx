@@ -1,4 +1,4 @@
-// @version 3.3.200
+// @version 3.3.201
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -953,6 +953,161 @@ const ModelSelector = memo(({ selectedModel, onChange, disabled = false }) => {
 });
 
 ModelSelector.displayName = 'ModelSelector';
+
+// ============================================================================
+// TEST PROMPTS PANEL - V3.3.200
+// Quick test prompts with auto-refresh and categories
+// ============================================================================
+
+// Test prompts data - organized by category
+const TEST_PROMPTS_DATA = {
+  execution: {
+    icon: '⚡',
+    label: 'Execution',
+    prompts: [
+      { text: 'console.log(2 + 2)', desc: 'Simple math' },
+      { text: 'fibonacci(10)', desc: 'Fibonacci test' },
+      { text: 'Array.from({length: 5}, (_, i) => i * 2)', desc: 'Array ops' },
+    ],
+  },
+  code: {
+    icon: '💻',
+    label: 'Code Gen',
+    prompts: [
+      { text: 'Create a function that reverses a string', desc: 'String util' },
+      { text: 'Write a React button component', desc: 'React comp' },
+      { text: 'Generate a REST API endpoint for users', desc: 'API code' },
+    ],
+  },
+  creative: {
+    icon: '🎨',
+    label: 'Creative',
+    prompts: [
+      { text: 'Visualize a neural network diagram', desc: 'SVG diagram' },
+      { text: 'Create a progress bar chart for 75%', desc: 'Chart' },
+      { text: 'Design a loading animation', desc: 'Animation' },
+    ],
+  },
+  reasoning: {
+    icon: '🧠',
+    label: 'Reasoning',
+    prompts: [
+      { text: 'Explain how async/await works', desc: 'Concept' },
+      { text: 'Compare REST vs GraphQL', desc: 'Compare' },
+      { text: 'Analyze this codebase structure', desc: 'Analysis' },
+    ],
+  },
+  quick: {
+    icon: '🚀',
+    label: 'Quick',
+    prompts: [
+      { text: 'What time is it?', desc: 'Time query' },
+      { text: 'Generate a UUID', desc: 'UUID' },
+      { text: 'Random number between 1-100', desc: 'Random' },
+    ],
+  },
+};
+
+const TestPromptsPanel = memo(({ onSelectPrompt, isDisabled = false }) => {
+  const [activeCategory, setActiveCategory] = useState('execution');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+
+  // Auto-refresh prompts every 30 seconds if enabled
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      setRefreshKey((k) => k + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
+  // Get current category prompts
+  const category = TEST_PROMPTS_DATA[activeCategory];
+  const prompts = category?.prompts || [];
+
+  return (
+    <LiquidPanel variant="surface" className="p-3">
+      {/* Header with auto-refresh toggle */}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+          Test Prompts
+        </h3>
+        <button
+          onClick={() => setAutoRefresh(!autoRefresh)}
+          className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+            autoRefresh
+              ? 'bg-cyan-500/20 text-cyan-400'
+              : 'bg-white/5 text-gray-500 hover:text-gray-400'
+          }`}
+          title={autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
+        >
+          {autoRefresh ? '🔄 Auto' : '⏸️ Manual'}
+        </button>
+      </div>
+
+      {/* Category tabs */}
+      <div className="flex gap-1 mb-2 overflow-x-auto pb-1 scrollbar-none">
+        {Object.entries(TEST_PROMPTS_DATA).map(([key, cat]) => (
+          <button
+            key={key}
+            onClick={() => setActiveCategory(key)}
+            className={`flex-shrink-0 px-2 py-1 rounded text-[10px] transition-all ${
+              activeCategory === key
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                : 'bg-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-400'
+            }`}
+          >
+            <span className="mr-1">{cat.icon}</span>
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Prompts list */}
+      <div className="space-y-1.5" key={refreshKey}>
+        {prompts.map((prompt, i) => (
+          <motion.button
+            key={`${activeCategory}-${i}-${refreshKey}`}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05 }}
+            onClick={() => !isDisabled && onSelectPrompt?.(prompt.text)}
+            disabled={isDisabled}
+            className={`w-full text-left p-2 rounded-lg transition-all group ${
+              isDisabled
+                ? 'opacity-50 cursor-not-allowed bg-white/3'
+                : 'bg-white/5 hover:bg-cyan-500/10 hover:border-cyan-500/30 border border-transparent cursor-pointer'
+            }`}
+          >
+            <div className="flex items-start gap-2">
+              <span className="text-gray-600 group-hover:text-cyan-400 transition-colors text-sm flex-shrink-0">
+                →
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-300 group-hover:text-white transition-colors truncate">
+                  {prompt.text}
+                </p>
+                <p className="text-[10px] text-gray-600 mt-0.5">{prompt.desc}</p>
+              </div>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Quick refresh button */}
+      <button
+        onClick={() => setRefreshKey((k) => k + 1)}
+        className="w-full mt-2 py-1.5 rounded text-[10px] text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all flex items-center justify-center gap-1"
+      >
+        <span>🔄</span>
+        <span>Refresh Prompts</span>
+      </button>
+    </LiquidPanel>
+  );
+});
+
+TestPromptsPanel.displayName = 'TestPromptsPanel';
 
 // ============================================================================
 // PREVIEW SIZE TOGGLE - Large preview option
