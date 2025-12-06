@@ -180,7 +180,7 @@ router.post('/meta/record-strategy', async (req: Request, res: Response) => {
     const { strategyId, domain, success, metrics } = req.body;
 
     // Record the strategy result in the meta-learner
-    const result = metaLearner.recordStrategyUsage?.(
+    const result = (metaLearner as any).recordStrategyUsage?.(
       strategyId || 'unknown',
       domain || 'general',
       success ?? true,
@@ -189,7 +189,7 @@ router.post('/meta/record-strategy', async (req: Request, res: Response) => {
 
     // Also publish to event bus for learning system integration
     const { bus } = await import('../../core/event-bus.js');
-    bus.publish('strategy:recorded', {
+    bus.publish('nexus', 'strategy:recorded', {
       strategyId,
       domain,
       success,

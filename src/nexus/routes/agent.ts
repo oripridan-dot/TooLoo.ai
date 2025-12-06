@@ -213,7 +213,7 @@ router.get('/teams', (_req: Request, res: Response) => {
         teams: teams.map((t) => ({
           id: t.id,
           name: t.name,
-          specialization: t.specialization,
+          specialization: t.purpose,
           status: t.status,
           roles: {
             executor: t.executor,
@@ -673,7 +673,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         success: task.result?.success,
         duration: task.result?.metrics?.durationMs,
         output:
-          task.result?.output?.substring(0, 200) + (task.result?.output?.length > 200 ? '...' : ''),
+          task.result?.output?.substring(0, 200) + ((task.result?.output?.length || 0) > 200 ? '...' : ''),
         completedAt: task.completedAt,
       })),
 
@@ -685,7 +685,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         description: artifact.description,
         language: artifact.language,
         contentPreview:
-          artifact.content?.substring(0, 300) + (artifact.content?.length > 300 ? '...' : ''),
+          artifact.content?.substring(0, 300) + ((artifact.content?.length || 0) > 300 ? '...' : ''),
         createdAt: artifact.createdAt,
         tags: artifact.tags,
       })),
@@ -696,7 +696,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         .map((team) => ({
           id: team.id,
           name: team.name,
-          specialization: team.specialization,
+          specialization: team.purpose,
           status: team.status,
           currentTask: team.currentTask,
           metrics: team.metrics,
@@ -716,7 +716,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
               type: task.type,
               name: task.name,
               status: task.status,
-              priority: task.priority,
+              priority: (task as any).priority,
               createdAt: task.createdAt,
             }))
           : [],
@@ -755,18 +755,15 @@ router.get('/executions', async (req: Request, res: Response) => {
       // Find related artifacts
       const relatedArtifacts = task.result?.artifacts || [];
       const artifactDetails = relatedArtifacts
-        .map((artifactId: string) => {
-          const artifact = artifactsList.find((a) => a.id === artifactId);
-          return artifact
-            ? {
-                id: artifact.id,
-                type: artifact.type,
-                name: artifact.name,
-                language: artifact.language,
-                content: includeCode ? artifact.content : undefined,
-                path: artifact.path,
-              }
-            : null;
+        .map((artifact) => {
+          return {
+            id: artifact.id,
+            type: artifact.type,
+            name: artifact.name,
+            language: artifact.language,
+            content: artifact.content,
+            path: artifact.path,
+          };
         })
         .filter(Boolean);
 

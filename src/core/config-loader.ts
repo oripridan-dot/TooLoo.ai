@@ -338,7 +338,6 @@ export const config = configLoader.get();
 
 // Export loader for async initialization
 export { configLoader };
-export type { TooLooConfig };
 
 // Auto-load on import (async, will update config object)
 configLoader.load().catch((err) => {

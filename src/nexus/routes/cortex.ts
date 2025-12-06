@@ -240,13 +240,13 @@ router.get('/memory/status', async (_req: Request, res: Response) => {
   try {
     const defaultSession = cortex.sessionContextService.getOrCreateSession('default');
     const memory = cortex.memoryAutoFiller.getSerializableMemory('default');
-    const hippocampusState = cortex.hippocampus.getState?.() || {};
+    const hippocampusState = (cortex.hippocampus as any).getState?.() || {};
 
     res.json({
       ok: true,
       data: {
         status: 'active',
-        sessionId: defaultSession.id,
+        sessionId: (defaultSession as any).id,
         shortTermCount: memory?.shortTerm?.length || 0,
         longTermCount: memory?.longTerm?.length || 0,
         episodic: hippocampusState.episodicCount || memory?.shortTerm?.length || 0,

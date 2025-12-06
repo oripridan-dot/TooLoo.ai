@@ -11,8 +11,9 @@ import { z } from 'zod';
 // ============= API Contract Types =============
 
 export interface APIContract {
-  method: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   path: string;
+  request?: z.ZodType;
   response: z.ZodType<any>;
   intent: string;
   owner: 'cortex' | 'precog' | 'nexus' | 'qa';
@@ -419,74 +420,3 @@ export const EventSchemas = {
 
 export type EventType = keyof typeof EventSchemas;
 
-// ============= API Contract Registry =============
-
-export interface APIContract {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  path: string;
-  request?: z.ZodType;
-  response: z.ZodType;
-  intent: string;
-  owner: 'cortex' | 'precog' | 'nexus' | 'qa';
-}
-
-export const API_CONTRACTS: Record<string, APIContract> = {
-  'GET /health': {
-    method: 'GET',
-    path: '/health',
-    response: z.object({
-      status: z.string(),
-      timestamp: z.string(),
-    }),
-    intent: 'Check if the system is alive',
-    owner: 'nexus',
-  },
-  'GET /api/v1/system/status': {
-    method: 'GET',
-    path: '/api/v1/system/status',
-    response: SystemStatusResponseSchema,
-    intent: 'Get detailed system status including all modules',
-    owner: 'nexus',
-  },
-  'POST /api/v1/chat/message': {
-    method: 'POST',
-    path: '/api/v1/chat/message',
-    request: ChatMessageRequestSchema,
-    response: ChatMessageResponseSchema,
-    intent: 'Send a message to the AI and receive a response',
-    owner: 'cortex',
-  },
-  'GET /api/v1/providers/status': {
-    method: 'GET',
-    path: '/api/v1/providers/status',
-    response: z.object({
-      ok: z.boolean(),
-      data: z.object({
-        providers: z.array(
-          z.object({
-            name: z.string(),
-            status: z.string(),
-            hasKey: z.boolean(),
-          })
-        ),
-      }),
-    }),
-    intent: 'Get status of all AI providers',
-    owner: 'precog',
-  },
-  'GET /api/v1/qa/dashboard': {
-    method: 'GET',
-    path: '/api/v1/qa/dashboard',
-    response: z.object({
-      ok: z.boolean(),
-      data: z.object({
-        status: z.enum(['healthy', 'degraded', 'critical']),
-        lastCheck: z.string(),
-        quickStats: z.record(z.string(), z.string()),
-        alerts: z.array(z.any()),
-      }),
-    }),
-    intent: 'Get QA Guardian dashboard overview',
-    owner: 'qa',
-  },
-};

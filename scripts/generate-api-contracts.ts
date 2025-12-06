@@ -311,7 +311,36 @@ async function generateContracts(): Promise<ContractEntry[]> {
   }
 
   // Generate contract entries
-  const contracts: ContractEntry[] = allEndpoints.map((ep) => ({
+  const uniqueEndpoints = new Map<string, ExtractedEndpoint>();
+
+  for (const ep of allEndpoints) {
+    const key = `${ep.method} ${ep.fullPath}`;
+    if (uniqueEndpoints.has(key)) {
+      const existing = uniqueEndpoints.get(key)!;
+      // Conflict resolution strategy:
+      // 1. Prefer 'cortex' owner over 'nexus' (since nexus often proxies)
+      // 2. Prefer non-default intent over default 'API endpoint'
+
+      let replace = false;
+
+      if (existing.owner === 'nexus' && ep.owner === 'cortex') {
+        replace = true;
+      } else if (existing.intent === 'API endpoint' && ep.intent !== 'API endpoint') {
+        replace = true;
+      }
+
+      if (replace) {
+        console.log(`[Generator] Replacing duplicate ${key} (Owner: ${existing.owner} -> ${ep.owner})`);
+        uniqueEndpoints.set(key, ep);
+      } else {
+        console.log(`[Generator] Skipping duplicate ${key} from ${ep.file} (Owner: ${ep.owner})`);
+      }
+    } else {
+      uniqueEndpoints.set(key, ep);
+    }
+  }
+
+  const contracts: ContractEntry[] = Array.from(uniqueEndpoints.values()).map((ep) => ({
     key: `'${ep.method} ${ep.fullPath}'`,
     method: ep.method,
     path: ep.fullPath,

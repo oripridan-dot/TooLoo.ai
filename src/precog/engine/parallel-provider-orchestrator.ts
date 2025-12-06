@@ -128,7 +128,7 @@ export default class ParallelProviderOrchestrator {
     const timing: Record<string, number> = {};
 
     results.forEach((result, idx) => {
-      const provider = providers[idx];
+      const provider = providers[idx]!;
       if (result.status === 'fulfilled') {
         processedResults.push(result.value);
         timing[provider] = result.value.latency;
@@ -162,7 +162,7 @@ export default class ParallelProviderOrchestrator {
         ? await this.synthesizeConsensus(prompt, successful, options)
         : successful[0]?.response || '';
     } else if (successful.length === 1) {
-      consensus = successful[0].response;
+      consensus = successful[0]!.response;
     } else {
       consensus = 'No providers returned a valid response.';
     }
@@ -230,7 +230,7 @@ export default class ParallelProviderOrchestrator {
     options: { system?: string; sessionId?: string }
   ): Promise<string> {
     if (results.length === 1) {
-      return results[0].response;
+      return results[0]!.response;
     }
 
     // Use the fastest successful provider to synthesize
@@ -265,7 +265,7 @@ Return ONLY the synthesized response.`;
       return consensus;
     } catch {
       // Fallback to first response if synthesis fails
-      return results[0].response;
+      return results[0]!.response;
     }
   }
 

@@ -11,7 +11,8 @@
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { bus } from '../../core/event-bus.js';
-import { API_CONTRACTS, APIContract, EventSchemas, EventType } from '../types/index.js';
+import { APIContract, EventSchemas, EventType } from '../types/index.js';
+import { API_CONTRACTS } from '../contracts-generated.js';
 
 interface ValidationResult {
   valid: boolean;

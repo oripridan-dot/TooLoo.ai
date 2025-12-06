@@ -195,9 +195,7 @@ export class TrainingService extends EventEmitter {
       workspaceRoot: this.workspaceRoot,
       trainingCamp: this.trainingCamp,
     });
-    this.orchestrator = new ParallelProviderOrchestrator({
-      workspaceRoot: this.workspaceRoot,
-    });
+    this.orchestrator = new ParallelProviderOrchestrator({});
     this.validationFramework = createValidationFramework('training');
   }
 

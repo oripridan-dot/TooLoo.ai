@@ -437,7 +437,7 @@ export class SelfModificationEngine {
 
       for (const line of lines) {
         const match = line.match(/^([^:]+):(\d+):(.*)$/);
-        if (match) {
+        if (match && match[1] && match[2] && match[3] !== undefined) {
           results.push({
             filePath: match[1],
             lineNumber: parseInt(match[2], 10),
@@ -562,7 +562,7 @@ export class SelfModificationEngine {
       // Extract original filename from backup name
       const basename = path.basename(backupPath);
       const match = basename.match(/^(.+)\.\d+\.bak$/);
-      if (!match) {
+      if (!match || !match[1]) {
         return { success: false, message: 'Invalid backup filename' };
       }
 

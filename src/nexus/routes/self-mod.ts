@@ -58,7 +58,7 @@ router.get('/file', async (req: Request, res: Response) => {
  * @query path - Relative directory path (default: src)
  */
 router.get('/files', async (req: Request, res: Response) => {
-  const dirPath = (req.query.path as string) || 'src';
+  const dirPath = (req.query['path'] as string) || 'src';
 
   try {
     const files = await selfMod.listFiles(dirPath);
@@ -257,7 +257,7 @@ router.get('/git/status', async (_req: Request, res: Response) => {
  * @query path - Optional file path
  */
 router.get('/git/diff', async (req: Request, res: Response) => {
-  const filePath = req.query.path as string | undefined;
+  const filePath = req.query['path'] as string | undefined;
   const diff = await selfMod.getGitDiff(filePath);
   res.json(successResponse({ diff }));
 });
