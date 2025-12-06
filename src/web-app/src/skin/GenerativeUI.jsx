@@ -1,4 +1,4 @@
-// @version 2.2.434
+// @version 3.3.204
 // TooLoo.ai Generative UI - Component Generator
 // LLM-powered component generation with sandboxed preview
 
@@ -106,7 +106,42 @@ export const DesignInstruction = {
     variants: [], // Visual variants
     states: [], // Interactive states
     animations: [], // Motion requirements
-    accessibility: {}, // A11y requirements
+    
+    // A11y requirements - all components must meet these standards
+    accessibility: {
+      // WCAG 2.1 AA compliance
+      wcagLevel: 'AA',
+      
+      // Keyboard navigation requirements
+      keyboard: {
+        focusable: true, // Must be focusable via Tab
+        enterActivates: true, // Enter key triggers action
+        escapeCloses: true, // Escape closes modals/dropdowns
+        arrowNavigation: false, // For menus/lists only
+      },
+      
+      // Screen reader requirements
+      screenReader: {
+        role: '', // ARIA role (button, dialog, alert, etc.)
+        label: '', // aria-label or aria-labelledby
+        describedBy: '', // aria-describedby for additional context
+        liveRegion: '', // aria-live (polite, assertive) for dynamic content
+      },
+      
+      // Visual requirements
+      visual: {
+        colorContrastRatio: 4.5, // Minimum contrast ratio
+        focusIndicator: true, // Visible focus ring
+        motionReduceRespect: true, // prefers-reduced-motion support
+        noColorOnly: true, // Don't use color alone to convey meaning
+      },
+      
+      // Touch targets
+      touch: {
+        minTapTarget: 44, // Minimum tap target size (px)
+        spacing: 8, // Minimum spacing between targets
+      },
+    },
 
     // Context constraints
     constraints: {
