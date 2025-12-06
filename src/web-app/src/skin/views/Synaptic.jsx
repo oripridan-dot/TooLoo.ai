@@ -1,8 +1,9 @@
-// @version 3.3.199
+// @version 3.3.200
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
 // Enhanced with Liquid Skin visual capabilities
+// V3.3.200: Added Test Prompts panel with auto-refresh
 // V3.3.120: Reader-centric scroll - user stays at top while content streams below
 // V3.3.107: Stable streaming - removed layout animations, folded sections, cleaned imports
 
@@ -147,7 +148,7 @@ const useChatAPI = () => {
     } = options;
 
     try {
-      // Emit initial connection thought
+      // V3.3.198: Emit initial connection thought (kept minimal)
       onThought?.('🔌 Connecting to TooLoo API...');
       onStageChange?.('connecting');
 
