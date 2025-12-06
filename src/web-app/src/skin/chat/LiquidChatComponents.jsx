@@ -1,4 +1,4 @@
-// @version 3.3.172
+// @version 3.3.205
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -228,7 +228,7 @@ export const LiquidMessageBubble = memo(
           `}
           >
             {/* Message content */}
-            <div className={`text-sm ${isUser ? 'text-cyan-100' : 'text-gray-200'}`}>
+            <div className={`text-base leading-relaxed ${isUser ? 'text-cyan-100' : 'text-gray-200'}`}>
               {isUser ? (
                 <p className="break-words">{message.content}</p>
               ) : (
@@ -393,7 +393,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
   }, [content]);
 
   return (
-    <div className="prose prose-invert prose-sm max-w-none break-words">
+    <div className="prose prose-invert prose-base max-w-none break-words">
       {textParts.map((part, index) => {
         if (part.type === 'svg') {
           return (
