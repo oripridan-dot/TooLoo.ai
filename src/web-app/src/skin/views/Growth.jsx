@@ -1,11 +1,13 @@
-// @version 3.3.157
-// TooLoo.ai Growth View - Learning & Health Monitoring
+// @version 3.3.190
+// TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
 // Fully wired with real API connections + WebSocket real-time updates
 // v2.3.0: Fixed API paths, added mock mode indicators, symbiotic integration
 // v2.3.1: Fixed WebSocket protocol for secure connections (wss:// vs ws://)
 // v2.3.2: Replaced browser dialogs with proper modal UI components
+// v3.0.0: Added Control Center tabs - Scheduler, Predictions, Configuration, Analytics
+//         Integrated with Growth Engine unified API for system-wide controls
 
 import React, { memo, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
