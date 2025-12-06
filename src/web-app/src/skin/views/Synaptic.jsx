@@ -1,4 +1,4 @@
-// @version 3.3.167
+// @version 3.3.198
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -191,10 +191,16 @@ const useChatAPI = () => {
               throw new Error(data.error);
             }
 
-            // V3.3.80: Handle REAL thinking events from backend
+            // V3.3.198: Handle REAL thinking events from backend (MINIMAL UX)
+            // Only show essential status updates, not verbose process details
             if (data.thinking) {
               const { stage, message: thinkingMsg, type } = data.thinking;
-              onThought?.(thinkingMsg, type);
+              
+              // V3.3.198: Only show critical thinking events, skip verbose ones
+              const isEssential = stage === 'processing' || stage === 'complete' || type === 'error';
+              if (isEssential && thinkingMsg && !thinkingMsg.includes('Analyzing') && !thinkingMsg.includes('Evaluating')) {
+                onThought?.(thinkingMsg, type);
+              }
 
               // Map backend stages to frontend stages
               const stageMap = {
@@ -209,11 +215,10 @@ const useChatAPI = () => {
               }
             }
 
-            // Emit meta info as thinking steps
+            // V3.3.198: Skip verbose meta info - only show on explicit visual mode
             if (data.meta) {
-              if (data.meta.persona) onThought?.(`🎭 Persona: ${data.meta.persona}`);
-              if (data.meta.visualEnabled)
-                onThought?.(`🎨 Visual mode: ${data.meta.visualType || 'enabled'}`);
+              // Skip persona and visual mode announcements for cleaner UX
+              // The UI already shows provider info elsewhere
             }
 
             // Visual enhancement notification
