@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-// @version 1.0.0
+// @version 3.3.193
 /**
  * API Contracts Generator
  *
@@ -56,6 +56,8 @@ const ROUTE_FILE_OWNERS: Record<string, 'cortex' | 'precog' | 'nexus' | 'qa'> = 
   'learning.ts': 'cortex',
   'emergence.ts': 'cortex',
   'cortex.ts': 'cortex',
+  'growth-engine.ts': 'cortex',
+  'configuration.ts': 'cortex',
   'orchestrator.ts': 'cortex',
   'serendipity.ts': 'cortex',
   'capabilities.ts': 'cortex',
@@ -67,6 +69,7 @@ const ROUTE_FILE_OWNERS: Record<string, 'cortex' | 'precog' | 'nexus' | 'qa'> = 
   // Nexus endpoints
   'system.ts': 'nexus',
   'self-mod.ts': 'nexus',
+  'autonomous-mod.ts': 'nexus',
   'api.ts': 'nexus',
   'projects.ts': 'nexus',
   'design.ts': 'nexus',
@@ -97,6 +100,8 @@ const ROUTE_BASE_PATHS: Record<string, string> = {
   'emergence.ts': '/api/v1/emergence',
   'exploration.ts': '/api/v1/exploration',
   'generate.ts': '/api/v1/generate',
+  'growth-engine.ts': '/api/v1/growth',
+  'configuration.ts': '/api/v1/config',
   'github.ts': '/api/v1/github',
   'learning.ts': '/api/v1/learning',
   'observability.ts': '/api/v1/observability',
@@ -105,6 +110,7 @@ const ROUTE_BASE_PATHS: Record<string, string> = {
   'providers.ts': '/api/v1/providers',
   'qa.ts': '/api/v1/qa',
   'self-mod.ts': '/api/v1/system/self',
+  'autonomous-mod.ts': '/api/v1/system/autonomous',
   'serendipity.ts': '/api/v1/serendipity',
   'suggestions.ts': '/api/v1/suggestions',
   'system.ts': '/api/v1/system',
@@ -149,7 +155,8 @@ function extractMetadataFromComment(comment: string) {
   let intent = 'API endpoint';
   let auth = false;
   let deprecated = false;
-  const parameters: Array<{ name: string; type: string; description: string; required: boolean }> = [];
+  const parameters: Array<{ name: string; type: string; description: string; required: boolean }> =
+    [];
 
   // Extract Intent
   const descMatch = comment.match(/@description\s+(.+?)(?=\n|$)/);
@@ -161,7 +168,9 @@ function extractMetadataFromComment(comment: string) {
       intent = intentMatch[1].trim();
     } else {
       // Fallback: first line of comment
-      const cleanLines = lines.filter((l) => l.trim() && !l.includes('*') && !l.trim().startsWith('@'));
+      const cleanLines = lines.filter(
+        (l) => l.trim() && !l.includes('*') && !l.trim().startsWith('@')
+      );
       if (cleanLines.length > 0) {
         intent = cleanLines[0].trim();
       }
@@ -330,7 +339,9 @@ async function generateContracts(): Promise<ContractEntry[]> {
       }
 
       if (replace) {
-        console.log(`[Generator] Replacing duplicate ${key} (Owner: ${existing.owner} -> ${ep.owner})`);
+        console.log(
+          `[Generator] Replacing duplicate ${key} (Owner: ${existing.owner} -> ${ep.owner})`
+        );
         uniqueEndpoints.set(key, ep);
       } else {
         console.log(`[Generator] Skipping duplicate ${key} from ${ep.file} (Owner: ${ep.owner})`);
