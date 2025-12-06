@@ -8,6 +8,19 @@
 
 import { z } from 'zod';
 
+// ============= API Contract Types =============
+
+export interface APIContract {
+  method: string;
+  path: string;
+  response: z.ZodType<any>;
+  intent: string;
+  owner: 'cortex' | 'precog' | 'nexus' | 'qa';
+  auth: boolean;
+  deprecated: boolean;
+  parameters: Array<{ name: string; type: string; description: string; required: boolean }>;
+}
+
 // ============= API Schema Types =============
 
 /**

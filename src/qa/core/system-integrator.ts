@@ -132,12 +132,17 @@ export class SystemIntegrator {
    * Record an event in the log
    */
   private recordEvent(event: SynapsysEvent) {
+    // Guard against malformed events
+    if (!event || typeof event.type !== 'string') {
+      return;
+    }
+
     const entry: EventLogEntry = {
       id: event.id || crypto.randomUUID(),
       type: event.type,
-      source: event.source,
-      timestamp: event.timestamp,
-      payloadSize: JSON.stringify(event.payload).length,
+      source: event.source || 'unknown',
+      timestamp: event.timestamp || Date.now(),
+      payloadSize: event.payload ? JSON.stringify(event.payload).length : 0,
     };
 
     this.eventLog.push(entry);
@@ -149,7 +154,7 @@ export class SystemIntegrator {
       avgLatency: 0,
     };
     stats.count++;
-    stats.lastSeen = event.timestamp;
+    stats.lastSeen = event.timestamp || Date.now();
     this.eventStats.set(event.type, stats);
 
     // Update module metrics

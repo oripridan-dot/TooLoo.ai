@@ -96,7 +96,8 @@ export type ArtifactType =
   | 'config' // Configuration file
   | 'documentation' // Doc file
   | 'data' // Data/JSON file
-  | 'binary'; // Binary file
+  | 'binary' // Binary file
+  | 'deployment'; // Deployment artifact
 
 export interface Artifact {
   id: string;

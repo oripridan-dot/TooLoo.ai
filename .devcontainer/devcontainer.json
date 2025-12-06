@@ -1,0 +1,34 @@
+{
+  "name": "TooLoo.ai V3.3 Synapsys",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [5173, 3000],
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  },
+  "remoteEnv": {
+    "TOOLOO_ENV": "development"
+  },
+  // ⚠️ CRITICAL WARNING FOR AI ASSISTANTS
+  // DO NOT USE: pkill -f "node" - This will kill the Codespace connection!
+  // SAFE: pkill -f "tsx.*main" or pkill -f "vite" for process management
+  "postAttachCommand": "echo '⚠️ WARNING: Never use pkill -f node in Codespaces - it kills the connection!'"
+}

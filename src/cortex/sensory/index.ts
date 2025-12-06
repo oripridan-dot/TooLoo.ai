@@ -69,8 +69,8 @@ export class SensoryCortex {
       this.bus.publish('cortex', 'sensory:focus:list:response', {
         focusTargets: Array.from(this.focusTargets.entries()).map(([id, target]) => ({
           id,
-          ...target
-        }))
+          ...target,
+        })),
       });
     });
 
@@ -105,7 +105,7 @@ export class SensoryCortex {
       paths,
       priority = 'normal',
       reason = 'Manual focus request',
-      ttlMs
+      ttlMs,
     } = payload;
 
     if (!paths || !Array.isArray(paths) || paths.length === 0) {
@@ -118,18 +118,20 @@ export class SensoryCortex {
       priority,
       reason,
       addedAt: Date.now(),
-      expiresAt: ttlMs ? Date.now() + ttlMs : undefined
+      expiresAt: ttlMs ? Date.now() + ttlMs : undefined,
     };
 
     this.focusTargets.set(id, focusTarget);
-    console.log(`[SensoryCortex] 🎯 Focus added: "${id}" -> ${paths.join(', ')} (${priority} priority)`);
+    console.log(
+      `[SensoryCortex] 🎯 Focus added: "${id}" -> ${paths.join(', ')} (${priority} priority)`
+    );
 
     // Update watcher with new combined paths
     this.updateWatchPaths();
 
     this.bus.publish('cortex', 'sensory:focus:added', {
       id,
-      ...focusTarget
+      ...focusTarget,
     });
   }
 
@@ -150,7 +152,7 @@ export class SensoryCortex {
     } else if (paths) {
       // Remove any focus targets that contain these paths
       for (const [focusId, target] of this.focusTargets) {
-        const hasMatchingPath = target.paths.some(p => paths.includes(p));
+        const hasMatchingPath = target.paths.some((p) => paths.includes(p));
         if (hasMatchingPath) {
           this.focusTargets.delete(focusId);
           console.log(`[SensoryCortex] 🎯 Focus removed: "${focusId}" (path match)`);
@@ -166,13 +168,12 @@ export class SensoryCortex {
   private async updateWatchPaths() {
     // Combine default paths with all focus target paths
     const allPaths = new Set<string>(this.defaultWatchPaths);
-    
+
     // Sort focus targets by priority to handle high-priority first
-    const sortedTargets = Array.from(this.focusTargets.values())
-      .sort((a, b) => {
-        const priorityOrder = { high: 0, normal: 1, low: 2 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      });
+    const sortedTargets = Array.from(this.focusTargets.values()).sort((a, b) => {
+      const priorityOrder = { high: 0, normal: 1, low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
 
     for (const target of sortedTargets) {
       for (const p of target.paths) {
@@ -228,7 +229,7 @@ export class SensoryCortex {
       paths: [path],
       priority: 'high',
       reason,
-      ttlMs
+      ttlMs,
     });
     return id;
   }
@@ -285,7 +286,7 @@ export class SensoryCortex {
           paths: [`**/${file}`],
           priority: 'high',
           reason: `Mentioned in input: "${input.substring(0, 50)}..."`,
-          ttlMs: 5 * 60 * 1000 // 5 minute focus
+          ttlMs: 5 * 60 * 1000, // 5 minute focus
         });
       }
     }

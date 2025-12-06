@@ -197,7 +197,10 @@ export class SVGBuilder {
     return this.addLinearGradient({
       id,
       ...directionCoords[direction],
-      stops: presets[preset],
+      stops: presets[preset] ?? [
+        { offset: 0, color: '#667eea' },
+        { offset: 100, color: '#764ba2' },
+      ],
     });
   }
 
@@ -209,7 +212,15 @@ export class SVGBuilder {
    * Add a filter effect to defs
    */
   addFilter(spec: FilterSpec): this {
-    const { id, type, color = '#000000', intensity = 1, spread = 4, offsetX = 0, offsetY = 4 } = spec;
+    const {
+      id,
+      type,
+      color = '#000000',
+      intensity = 1,
+      spread = 4,
+      offsetX = 0,
+      offsetY = 4,
+    } = spec;
 
     let filterContent: string;
 
@@ -372,12 +383,7 @@ export class SVGBuilder {
       class?: string;
     } = {}
   ): this {
-    const attrs: string[] = [
-      `x="${x}"`,
-      `y="${y}"`,
-      `width="${width}"`,
-      `height="${height}"`,
-    ];
+    const attrs: string[] = [`x="${x}"`, `y="${y}"`, `width="${width}"`, `height="${height}"`];
 
     if (options.fill) attrs.push(`fill="${options.fill}"`);
     if (options.stroke) attrs.push(`stroke="${options.stroke}"`);
@@ -626,13 +632,15 @@ export class SVGBuilder {
   /**
    * Start a group
    */
-  startGroup(options: {
-    transform?: string;
-    filter?: string;
-    opacity?: number;
-    class?: string;
-    id?: string;
-  } = {}): this {
+  startGroup(
+    options: {
+      transform?: string;
+      filter?: string;
+      opacity?: number;
+      class?: string;
+      id?: string;
+    } = {}
+  ): this {
     const attrs: string[] = [];
 
     if (options.id) attrs.push(`id="${options.id}"`);
@@ -764,14 +772,16 @@ export class SVGGenerationEngine {
   /**
    * Create a styled background SVG
    */
-  createBackground(options: {
-    width?: number;
-    height?: number;
-    theme?: 'dark' | 'light' | 'gradient' | 'pattern';
-    primaryColor?: string;
-    secondaryColor?: string;
-    pattern?: PatternSpec['type'];
-  } = {}): string {
+  createBackground(
+    options: {
+      width?: number;
+      height?: number;
+      theme?: 'dark' | 'light' | 'gradient' | 'pattern';
+      primaryColor?: string;
+      secondaryColor?: string;
+      pattern?: PatternSpec['type'];
+    } = {}
+  ): string {
     const {
       width = 800,
       height = 600,
@@ -819,16 +829,18 @@ export class SVGGenerationEngine {
   /**
    * Create a card component SVG
    */
-  createCard(options: {
-    width?: number;
-    height?: number;
-    title?: string;
-    subtitle?: string;
-    icon?: string;
-    value?: string | number;
-    theme?: 'dark' | 'light';
-    accentColor?: string;
-  } = {}): string {
+  createCard(
+    options: {
+      width?: number;
+      height?: number;
+      title?: string;
+      subtitle?: string;
+      icon?: string;
+      value?: string | number;
+      theme?: 'dark' | 'light';
+      accentColor?: string;
+    } = {}
+  ): string {
     const {
       width = 300,
       height = 180,
@@ -893,18 +905,15 @@ export class SVGGenerationEngine {
   /**
    * Create a badge/tag SVG
    */
-  createBadge(options: {
-    text: string;
-    color?: string;
-    textColor?: string;
-    size?: 'sm' | 'md' | 'lg';
-  } = { text: 'Badge' }): string {
-    const {
-      text,
-      color = '#6366f1',
-      textColor = '#ffffff',
-      size = 'md',
-    } = options;
+  createBadge(
+    options: {
+      text: string;
+      color?: string;
+      textColor?: string;
+      size?: 'sm' | 'md' | 'lg';
+    } = { text: 'Badge' }
+  ): string {
+    const { text, color = '#6366f1', textColor = '#ffffff', size = 'md' } = options;
 
     const sizes = {
       sm: { height: 20, fontSize: 10, paddingX: 8, rx: 4 },
@@ -933,19 +942,23 @@ export class SVGGenerationEngine {
   /**
    * Create an icon placeholder SVG
    */
-  createIcon(options: {
-    type: 'circle' | 'square' | 'hexagon' | 'star';
-    size?: number;
-    color?: string;
-    strokeOnly?: boolean;
-  } = { type: 'circle' }): string {
+  createIcon(
+    options: {
+      type: 'circle' | 'square' | 'hexagon' | 'star';
+      size?: number;
+      color?: string;
+      strokeOnly?: boolean;
+    } = { type: 'circle' }
+  ): string {
     const { type, size = 48, color = '#6366f1', strokeOnly = false } = options;
 
     const builder = this.create(size, size);
     const center = size / 2;
     const radius = size * 0.4;
 
-    const fillOption = strokeOnly ? { stroke: color, strokeWidth: 2, fill: 'none' } : { fill: color };
+    const fillOption = strokeOnly
+      ? { stroke: color, strokeWidth: 2, fill: 'none' }
+      : { fill: color };
 
     switch (type) {
       case 'circle':
@@ -954,13 +967,10 @@ export class SVGGenerationEngine {
 
       case 'square':
         const squareSize = radius * 1.6;
-        builder.rect(
-          center - squareSize / 2,
-          center - squareSize / 2,
-          squareSize,
-          squareSize,
-          { ...fillOption, rx: 4 }
-        );
+        builder.rect(center - squareSize / 2, center - squareSize / 2, squareSize, squareSize, {
+          ...fillOption,
+          rx: 4,
+        });
         break;
 
       case 'hexagon':
@@ -1009,7 +1019,9 @@ export class SVGGenerationEngine {
         case 'background':
           return {
             success: true,
-            svg: this.createBackground(request.options as Parameters<typeof this.createBackground>[0]),
+            svg: this.createBackground(
+              request.options as Parameters<typeof this.createBackground>[0]
+            ),
             type: 'background',
           };
 

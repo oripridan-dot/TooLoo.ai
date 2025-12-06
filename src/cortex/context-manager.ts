@@ -68,11 +68,11 @@ export class ContextManager {
       // 3. Build context from matched goals
       for (const matched of topGoals) {
         const summary = this.knowledgeGraph.getGoalPerformanceSummary(matched.goal);
-        
+
         // Add goal context
         context.push(
           `Goal "${matched.goal}": ${summary.totalAttempts} attempts, ` +
-          `${(summary.avgSuccessRate * 100).toFixed(1)}% success rate`
+            `${(summary.avgSuccessRate * 100).toFixed(1)}% success rate`
         );
 
         // Add best provider context
@@ -80,24 +80,24 @@ export class ContextManager {
         if (bestProvider && bestProvider.attempts > 0) {
           context.push(
             `Best provider for ${matched.goal}: ${bestProvider.provider} ` +
-            `(${(bestProvider.successRate * 100).toFixed(1)}% success, ` +
-            `${bestProvider.avgTime.toFixed(0)}ms avg)`
+              `(${(bestProvider.successRate * 100).toFixed(1)}% success, ` +
+              `${bestProvider.avgTime.toFixed(0)}ms avg)`
           );
         }
       }
 
       // 4. Get provider recommendations if query implies a task
       const taskKeywords = ['generate', 'create', 'analyze', 'code', 'write', 'help'];
-      const isTaskQuery = taskKeywords.some(kw => query.toLowerCase().includes(kw));
-      
+      const isTaskQuery = taskKeywords.some((kw) => query.toLowerCase().includes(kw));
+
       if (isTaskQuery && topGoals.length > 0 && topGoals[0]) {
         const recommendations = this.knowledgeGraph.getProviderRecommendations(topGoals[0].goal);
         if (recommendations.length > 0 && recommendations[0]) {
           const topRec = recommendations[0];
           context.push(
             `Recommended provider: ${topRec.provider} ` +
-            `(confidence: ${(topRec.confidence * 100).toFixed(0)}%, ` +
-            `quality: ${(topRec.metrics.avgQuality * 100).toFixed(0)}%)`
+              `(confidence: ${(topRec.confidence * 100).toFixed(0)}%, ` +
+              `quality: ${(topRec.metrics.avgQuality * 100).toFixed(0)}%)`
           );
         }
       }
@@ -107,11 +107,10 @@ export class ContextManager {
       if (graphStats.learningHistory > 0) {
         context.push(
           `Knowledge base: ${graphStats.nodes.tasks} tasks, ` +
-          `${graphStats.nodes.providers} providers, ` +
-          `${graphStats.learningHistory} learning entries`
+            `${graphStats.nodes.providers} providers, ` +
+            `${graphStats.learningHistory} learning entries`
         );
       }
-
     } catch (error) {
       console.warn('[ContextManager] Graph context retrieval failed:', error);
     }
@@ -124,30 +123,102 @@ export class ContextManager {
    */
   private extractEntities(query: string): string[] {
     // Normalize and tokenize
-    const normalized = query.toLowerCase()
+    const normalized = query
+      .toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
 
     const words = normalized.split(' ');
-    
+
     // Common stop words to filter out
     const stopWords = new Set([
-      'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-      'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-      'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
-      'i', 'me', 'my', 'we', 'our', 'you', 'your', 'it', 'its', 'what',
-      'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every',
-      'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'not',
-      'only', 'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but',
-      'or', 'if', 'then', 'else', 'for', 'of', 'to', 'in', 'on', 'at',
-      'by', 'from', 'up', 'down', 'with', 'about', 'into', 'through'
+      'a',
+      'an',
+      'the',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'will',
+      'would',
+      'could',
+      'should',
+      'may',
+      'might',
+      'can',
+      'this',
+      'that',
+      'these',
+      'those',
+      'i',
+      'me',
+      'my',
+      'we',
+      'our',
+      'you',
+      'your',
+      'it',
+      'its',
+      'what',
+      'which',
+      'who',
+      'when',
+      'where',
+      'why',
+      'how',
+      'all',
+      'each',
+      'every',
+      'both',
+      'few',
+      'more',
+      'most',
+      'other',
+      'some',
+      'such',
+      'no',
+      'not',
+      'only',
+      'same',
+      'so',
+      'than',
+      'too',
+      'very',
+      'just',
+      'and',
+      'but',
+      'or',
+      'if',
+      'then',
+      'else',
+      'for',
+      'of',
+      'to',
+      'in',
+      'on',
+      'at',
+      'by',
+      'from',
+      'up',
+      'down',
+      'with',
+      'about',
+      'into',
+      'through',
     ]);
 
     // Filter meaningful words (2+ chars, not stop words)
-    const entities = words.filter(word => 
-      word.length >= 2 && !stopWords.has(word)
-    );
+    const entities = words.filter((word) => word.length >= 2 && !stopWords.has(word));
 
     // Deduplicate
     return [...new Set(entities)];
@@ -175,11 +246,14 @@ export class ContextManager {
   /**
    * Get enriched context with both vector and graph data merged intelligently.
    */
-  async getEnrichedContext(query: string, options: {
-    vectorLimit?: number;
-    graphLimit?: number;
-    includeRecommendations?: boolean;
-  } = {}): Promise<{
+  async getEnrichedContext(
+    query: string,
+    options: {
+      vectorLimit?: number;
+      graphLimit?: number;
+      includeRecommendations?: boolean;
+    } = {}
+  ): Promise<{
     semantic: string[];
     graph: string[];
     recommendations: Array<{ provider: string; score: number; reason: string }>;
@@ -190,13 +264,13 @@ export class ContextManager {
 
     const semantic = await this.getVectorContext(query, vectorLimit);
     const graph = await this.getGraphContext(query, graphLimit);
-    
+
     const recommendations: Array<{ provider: string; score: number; reason: string }> = [];
-    
+
     if (options.includeRecommendations) {
       const entities = this.extractEntities(query);
       const goalStats = this.knowledgeGraph.getGoalStatistics();
-      
+
       // Find best matching goal
       let bestGoal = '';
       let bestScore = 0;
@@ -214,7 +288,7 @@ export class ContextManager {
           recommendations.push({
             provider: rec.provider,
             score: rec.score,
-            reason: `Best for ${bestGoal}: ${(rec.metrics.successRate * 100).toFixed(0)}% success rate`
+            reason: `Best for ${bestGoal}: ${(rec.metrics.successRate * 100).toFixed(0)}% success rate`,
           });
         }
       }
@@ -230,8 +304,8 @@ export class ContextManager {
       metadata: {
         vectorHits: semantic.length,
         graphHits: graph.length,
-        confidence
-      }
+        confidence,
+      },
     };
   }
 }

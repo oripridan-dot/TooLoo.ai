@@ -68,9 +68,29 @@ router.get('/report', async (req, res) => {
     // Load stored metrics for targets/baselines
     const storedData = await fs.readJson(METRICS_PATH);
 
+    // Load patterns to generate recent learnings
+    let patterns: any = { patterns: [], successful: [], failed: [] };
+    try {
+      patterns = await fs.readJson(PATTERNS_PATH);
+    } catch (e) {
+      // Use defaults
+    }
+
     // Calculate real success rate
     const firstTrySuccess = realMetrics.firstTrySuccessRate;
     const repeatProblems = repeatAnalysis.repeatRate;
+
+    // Generate recent learnings from patterns
+    const recentPatterns = (patterns.patterns || patterns.successful || []).slice(-10).reverse();
+
+    const recentLearnings = recentPatterns
+      .filter((p: any) => p.comment && p.comment.length > 0)
+      .slice(0, 5)
+      .map((p: any) => {
+        const taskType = p.taskType || 'task';
+        const comment = p.comment || 'Pattern recorded';
+        return `${taskType}: ${comment}`;
+      });
 
     // Merge real data with stored targets
     const data = {
@@ -79,6 +99,9 @@ router.get('/report', async (req, res) => {
       totalSessions: realMetrics.totalSessions,
       successfulGenerations: realMetrics.successfulGenerations,
       failedGenerations: realMetrics.failedGenerations,
+      patternsLearned: (patterns.patterns || []).length,
+      recentLearnings:
+        recentLearnings.length > 0 ? recentLearnings : storedData.recentLearnings || [],
       improvements: {
         ...storedData.improvements,
         firstTrySuccess: {
@@ -326,6 +349,139 @@ router.post('/optimize-memory', async (req, res) => {
         duplicatesRemoved: 0, // We don't have this count easily from here
         indexesOptimized: 0,
       },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// PATTERN RECORDING ENDPOINT
+// ============================================================================
+
+/**
+ * Record a learning pattern from task execution
+ * This is the key endpoint that enables TooLoo to learn from interactions
+ */
+router.post('/record', async (req, res) => {
+  try {
+    const { taskId, positive, taskType, comment, context } = req.body;
+
+    if (!taskId) {
+      return res.status(400).json({ success: false, error: 'taskId is required' });
+    }
+
+    // Load current patterns
+    let patterns: any = { patterns: [], successful: [], failed: [] };
+    try {
+      if (await fs.pathExists(PATTERNS_PATH)) {
+        patterns = await fs.readJson(PATTERNS_PATH);
+        // Migrate old format if needed
+        if (!patterns.successful) patterns.successful = [];
+        if (!patterns.failed) patterns.failed = [];
+        if (!patterns.patterns) patterns.patterns = [];
+      }
+    } catch (e) {
+      // Initialize fresh
+    }
+
+    // Create pattern entry
+    const entry = {
+      id: `pattern-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      taskId,
+      taskType: taskType || 'unknown',
+      positive: positive !== false,
+      comment: comment || '',
+      context: context || {},
+      timestamp: new Date().toISOString(),
+      usageCount: 1,
+    };
+
+    // Add to appropriate list
+    if (positive !== false) {
+      patterns.successful.push(entry);
+      patterns.patterns.push({
+        ...entry,
+        type: 'success',
+        confidence: 0.8,
+      });
+    } else {
+      patterns.failed.push(entry);
+      patterns.patterns.push({
+        ...entry,
+        type: 'failure',
+        confidence: 0.8,
+      });
+    }
+
+    // Limit sizes
+    if (patterns.successful.length > 1000) patterns.successful = patterns.successful.slice(-1000);
+    if (patterns.failed.length > 1000) patterns.failed = patterns.failed.slice(-1000);
+    if (patterns.patterns.length > 2000) patterns.patterns = patterns.patterns.slice(-2000);
+
+    // Save
+    await fs.writeJson(PATTERNS_PATH, patterns, { spaces: 2 });
+
+    console.log(
+      `[Learning] Recorded ${positive !== false ? 'positive' : 'negative'} pattern: ${taskId}`
+    );
+
+    res.json({
+      success: true,
+      message: 'Pattern recorded successfully',
+      data: entry,
+      stats: {
+        totalPatterns: patterns.patterns.length,
+        successful: patterns.successful.length,
+        failed: patterns.failed.length,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Learning] Failed to record pattern:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Learning Goals Endpoint
+const GOALS_PATH = path.join(process.cwd(), 'data', 'learning-goals.json');
+
+// Initialize goals file if missing
+if (!fs.existsSync(GOALS_PATH)) {
+  fs.writeJsonSync(GOALS_PATH, { goals: [], createdAt: new Date().toISOString() }, { spaces: 2 });
+}
+
+router.get('/goals', async (req, res) => {
+  try {
+    const data = await fs.readJson(GOALS_PATH);
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/goals', async (req, res) => {
+  try {
+    const { goal } = req.body;
+    if (!goal) {
+      return res.status(400).json({ success: false, error: 'Goal is required' });
+    }
+
+    const currentData = await fs.readJson(GOALS_PATH);
+    const newGoal = {
+      id: `goal-${Date.now()}`,
+      text: goal,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      progress: 0,
+    };
+
+    currentData.goals.push(newGoal);
+    await fs.writeJson(GOALS_PATH, currentData, { spaces: 2 });
+
+    res.json({
+      success: true,
+      message: 'Goal set successfully',
+      data: newGoal,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

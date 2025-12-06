@@ -1,22 +1,28 @@
 // @version 3.3.18
 /**
  * System Execution Hub
- * 
+ *
  * Connects the Execution Agent and Team Framework to ALL TooLoo systems:
  * - Synaptic (Chat): Execute code from conversation
  * - Creative Space: Bring creative ideas to life
  * - Learning/Growth: Execute learning experiments
  * - Emergence: Act on discovered opportunities
  * - Cortex: Core cognitive functions
- * 
+ *
  * This is the central nervous system for execution across TooLoo.
- * 
+ *
  * @module cortex/agent/system-hub
  */
 
 import { bus, SynapsysEvent } from '../../core/event-bus.js';
 import { v4 as uuidv4 } from 'uuid';
-import { teamRegistry, teamExecutor, initializeTeamFramework, AgentTeam, TeamTaskResult } from './team-framework.js';
+import {
+  teamRegistry,
+  teamExecutor,
+  initializeTeamFramework,
+  AgentTeam,
+  TeamTaskResult,
+} from './team-framework.js';
 import { executionAgent } from './execution-agent.js';
 import type { TaskType, AgentTask } from './types.js';
 
@@ -24,16 +30,16 @@ import type { TaskType, AgentTask } from './types.js';
 // TYPES
 // ============================================================================
 
-export type SystemSource = 
-  | 'synaptic'     // Chat interface
-  | 'creative'     // Creative space
-  | 'growth'       // Learning & monitoring
-  | 'emergence'    // DisCover/Emergence
-  | 'cortex'       // Core cortex
-  | 'command'      // Command center
-  | 'studio'       // Design studio
-  | 'api'          // External API
-  | 'internal';    // System internal
+export type SystemSource =
+  | 'synaptic' // Chat interface
+  | 'creative' // Creative space
+  | 'growth' // Learning & monitoring
+  | 'emergence' // DisCover/Emergence
+  | 'cortex' // Core cortex
+  | 'command' // Command center
+  | 'studio' // Design studio
+  | 'api' // External API
+  | 'internal'; // System internal
 
 export interface ExecutionRequest {
   id: string;
@@ -480,7 +486,9 @@ export class SystemExecutionHub {
   async handleExecution(request: ExecutionRequest): Promise<ExecutionResponse> {
     const startTime = Date.now();
 
-    console.log(`[SystemExecutionHub] Handling ${request.type} from ${request.source}: ${request.prompt.slice(0, 50)}...`);
+    console.log(
+      `[SystemExecutionHub] Handling ${request.type} from ${request.source}: ${request.prompt.slice(0, 50)}...`
+    );
 
     // Update stats
     this.stats.totalRequests++;
@@ -510,12 +518,14 @@ export class SystemExecutionHub {
       }
 
       // Update avg duration
-      const totalDuration = this.stats.avgDurationMs * (this.stats.totalRequests - 1) + response.durationMs;
+      const totalDuration =
+        this.stats.avgDurationMs * (this.stats.totalRequests - 1) + response.durationMs;
       this.stats.avgDurationMs = totalDuration / this.stats.totalRequests;
 
       // Update avg quality
       if (response.qualityScore !== undefined) {
-        const totalQuality = this.stats.avgQualityScore * (this.stats.totalRequests - 1) + response.qualityScore;
+        const totalQuality =
+          this.stats.avgQualityScore * (this.stats.totalRequests - 1) + response.qualityScore;
         this.stats.avgQualityScore = totalQuality / this.stats.totalRequests;
       }
 
@@ -523,10 +533,9 @@ export class SystemExecutionHub {
       this.responseCache.set(request.id, response);
 
       return response;
-
     } catch (error) {
       this.stats.failedRequests++;
-      
+
       const errorResponse: ExecutionResponse = {
         requestId: request.id,
         success: false,
@@ -546,11 +555,10 @@ export class SystemExecutionHub {
    * Execute with team (executor + validator)
    */
   private async executeWithTeam(request: ExecutionRequest): Promise<ExecutionResponse> {
-    const specialization = request.options?.teamSpecialization || 
-      this.inferSpecialization(request);
+    const specialization = request.options?.teamSpecialization || this.inferSpecialization(request);
 
     const team = teamRegistry.findOrCreateTeam(specialization);
-    this.stats.activeTeams = teamRegistry.getAllTeams().filter(t => t.status !== 'idle').length;
+    this.stats.activeTeams = teamRegistry.getAllTeams().filter((t) => t.status !== 'idle').length;
 
     const result = await teamExecutor.executeWithTeam(team, {
       id: request.id,
@@ -635,7 +643,7 @@ export class SystemExecutionHub {
 
       const checkInterval = setInterval(() => {
         const status = executionAgent.getTaskStatus(taskId);
-        
+
         if (status?.status === 'completed' || status?.status === 'failed') {
           clearInterval(checkInterval);
           resolve(status.result);
@@ -703,7 +711,9 @@ export class SystemExecutionHub {
     // Handle team completions
     bus.on('team:task:completed', (event: SynapsysEvent) => {
       const { teamId, taskId, result } = event.payload;
-      console.log(`[SystemExecutionHub] Team ${teamId} completed task ${taskId}: ${result.success ? '✅' : '❌'}`);
+      console.log(
+        `[SystemExecutionHub] Team ${teamId} completed task ${taskId}: ${result.success ? '✅' : '❌'}`
+      );
     });
 
     // Handle execution agent events
@@ -720,7 +730,7 @@ export class SystemExecutionHub {
    * Get execution statistics
    */
   getStats(): SystemExecutionStats {
-    this.stats.activeTeams = teamRegistry.getAllTeams().filter(t => t.status !== 'idle').length;
+    this.stats.activeTeams = teamRegistry.getAllTeams().filter((t) => t.status !== 'idle').length;
     return { ...this.stats };
   }
 

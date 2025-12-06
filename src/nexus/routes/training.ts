@@ -10,6 +10,12 @@ const PATTERNS_PATH = path.join(process.cwd(), 'data', 'patterns.json');
 
 // ============= GitHub Sources =============
 
+/**
+ * @description Sync GitHub issues for training
+ * @param {string} [repo] - Repository name (owner/repo)
+ * @param {string} [token] - GitHub token
+ * @param {boolean} [force] - Force sync even if recent
+ */
 router.post('/sources/github/issues/sync', async (req, res) => {
   try {
     const {
@@ -27,6 +33,9 @@ router.post('/sources/github/issues/sync', async (req, res) => {
   }
 });
 
+/**
+ * @description Get GitHub source status
+ */
 router.get('/sources/github/:repo/status', (req, res) => {
   try {
     const result = precog.training.getGithubSourceStatus(req.params.repo);
@@ -38,6 +47,12 @@ router.get('/sources/github/:repo/status', (req, res) => {
 
 // ============= Training =============
 
+/**
+ * @description Start a training session
+ * @param {string} [userId] - User ID for personalized training
+ * @param {string} [focusArea] - Specific area to focus on
+ * @param {number} [roundCount] - Number of rounds
+ */
 router.post('/training/start', async (req, res) => {
   try {
     const { userId, focusArea, roundCount } = req.body || {};
@@ -59,6 +74,9 @@ router.post('/training/start', async (req, res) => {
   }
 });
 
+/**
+ * @description Get training status
+ */
 router.get('/training/status', (req, res) => {
   try {
     res.json({ ok: true, status: precog.training.getStatus() });
@@ -67,6 +85,12 @@ router.get('/training/status', (req, res) => {
   }
 });
 
+/**
+ * @description Submit a training round response
+ * @param {string} [roundId] - Round ID
+ * @param {string} [response] - User response
+ * @param {number} [score] - Self-reported score
+ */
 router.post('/training/round', async (req, res) => {
   try {
     const { roundId, response, score } = req.body || {};

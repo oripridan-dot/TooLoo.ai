@@ -21,6 +21,9 @@ async function execCommand(command: string, cwd: string = process.cwd()) {
 
 // --- Health & Info ---
 
+/**
+ * @description Check GitHub CLI health status
+ */
 router.get('/health', async (req, res) => {
   try {
     await execCommand('gh --version');
@@ -40,6 +43,9 @@ router.get('/health', async (req, res) => {
   }
 });
 
+/**
+ * @description Get GitHub repository info
+ */
 router.get('/info', async (req, res) => {
   try {
     const { stdout } = await execCommand(
@@ -52,6 +58,10 @@ router.get('/info', async (req, res) => {
   }
 });
 
+/**
+ * @description List GitHub issues
+ * @param {number} [limit] - Max number of issues to return (default: 10)
+ */
 router.get('/issues', async (req, res) => {
   try {
     const limit = req.query['limit'] || 10;
@@ -67,6 +77,10 @@ router.get('/issues', async (req, res) => {
 
 // --- File Operations ---
 
+/**
+ * @description Read a file from the repository
+ * @param {string} path - Relative path to the file
+ */
 router.post('/file', async (req, res) => {
   const { path: filePath } = req.body;
   if (!filePath) {
@@ -91,6 +105,10 @@ router.post('/file', async (req, res) => {
   }
 });
 
+/**
+ * @description Read multiple files from the repository
+ * @param {string[]} paths - Array of relative paths
+ */
 router.post('/files', async (req, res) => {
   const { paths } = req.body;
   if (!Array.isArray(paths)) {

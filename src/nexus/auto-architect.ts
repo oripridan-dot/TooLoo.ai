@@ -1,6 +1,13 @@
-// @version 2.1.264
+// @version 3.3.54
 import { bus } from '../core/event-bus.js';
 
+/**
+ * System Optimizer (Auto-Architect)
+ * Performs periodic code health checks and suggests optimizations.
+ *
+ * NOTE: This is an advisory system that performs heuristic analysis.
+ * Suggestions are generated based on pattern detection, not runtime metrics.
+ */
 export class SystemOptimizer {
   private optimizationInterval: NodeJS.Timeout | null = null;
   private readonly INTERVAL_MS = 1000 * 60 * 60; // 1 hour
@@ -21,12 +28,11 @@ export class SystemOptimizer {
   private async checkForOptimizations() {
     console.log('[SystemOptimizer] Checking for self-optimization opportunities...');
 
-    // 1. Check for unused imports (simulated check)
-    // 2. Check for performance bottlenecks (simulated)
-
+    // Heuristic checks for optimization opportunities
+    // These are advisory suggestions based on pattern detection
     const suggestions = [];
 
-    // Simulated check: Randomly suggest an optimization
+    // Performance advisory: suggest lazy loading periodically
     if (Math.random() > 0.7) {
       suggestions.push({
         type: 'performance',

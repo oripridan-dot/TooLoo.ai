@@ -1,10 +1,101 @@
 project:
-  name: "tooloo-core"
-  version: "2.1.56"
+  name: 'tooloo-core'
+  version: '3.3.125'
 
 deploy:
-  target: "local"
+  target: 'local'
   resources:
-    cpu: "2"
-    memory: "4Gi"
+    cpu: '2'
+    memory: '4Gi'
     gpu: false
+
+# ============================================================================
+# CENTRALIZED CONFIGURATION - V3.3.125
+# All tunable system parameters in one place
+# ============================================================================
+
+# Learning & Reinforcement Settings
+learning:
+  reinforcement:
+    explorationRate: 0.3 # Initial epsilon for epsilon-greedy (0-1)
+    minExplorationRate: 0.05 # Minimum exploration rate after decay
+    explorationDecay: 0.995 # Decay rate per episode
+    learningRate: 0.1 # Alpha - Q-learning rate
+    discountFactor: 0.9 # Gamma - future reward discount
+    maxRewardHistory: 10000 # Max rewards to track
+    maxAdjustmentHistory: 500 # Max strategy adjustments to track
+    velocityTarget: 0.1 # Target learning velocity
+    adaptiveLearningEnabled: true # Enable adaptive learning rate
+
+  curiosity:
+    maxRewardHistory: 500 # Intrinsic reward history limit
+    explorationBonus: 0.1 # Bonus for novel states
+
+# Memory & History Limits
+memory:
+  eventBus:
+    maxHistorySize: 1000 # Max events to keep in history
+  hippocampus:
+    shortTermLimit: 100 # Short-term memory entries
+    longTermPruneAt: 5000 # Prune when this many entries
+    longTermPruneTo: 3000 # Prune down to this many
+  taskProcessor:
+    maxHistorySize: 100 # Max task history entries
+  vectorStore:
+    maxDocuments: 10000 # Max vector documents
+
+# Team Framework Settings
+teams:
+  defaultQualityThreshold: 0.8 # Minimum quality score to pass validation
+  criticalQualityThreshold: 0.95 # Quality threshold for critical tasks
+  maxIterations: 5 # Max refinement iterations per task
+  defaultTimeout: 60000 # Default task timeout (ms)
+  queuePersistence: true # Enable persistent task queue (survives restarts)
+
+# Provider Orchestration
+providers:
+  parallel:
+    timeout: 30000 # Max wait time per provider (ms)
+    minResponses: 1 # Minimum successful responses needed
+    synthesizeResults: true # Combine multiple responses
+    providers: # Active providers for parallel queries
+      - deepseek
+      - anthropic
+      - openai
+      - gemini
+  costAware:
+    enabled: true # Consider cost in provider selection
+    maxCostPerRequest: 0.50 # Max cost per request ($)
+    preferCheaper: true # Prefer cheaper providers when equal
+
+# QA Guardian Settings
+qa:
+  enabled: true # Enable QA Guardian
+  schedules:
+    wireCheck: '*/30 * * * *' # Every 30 minutes
+    filesystemHygiene: '0 */2 * * *' # Every 2 hours
+    legacyDetection: '0 0 * * *' # Daily at midnight
+    qualityScan: '*/15 * * * *' # Every 15 minutes
+  autoFix:
+    enabled: true # Enable automatic fixes
+    maxFixesPerRun: 10 # Max issues to auto-fix per run
+    requireApproval: false # Require human approval
+
+# Exploration & Discovery
+exploration:
+  engine:
+    hypothesisPoolSize: 50 # Max concurrent hypotheses
+    explorationBudget: 1000 # Budget for exploration experiments
+    cooldownMs: 5000 # Cooldown between experiments
+  emergence:
+    breakthroughThreshold: 0.9 # Score to consider a breakthrough
+    amplificationSafetyGate: 0.7 # Min safety score to amplify
+    maxAmplifications: 3 # Max concurrent amplifications
+
+# System Performance
+performance:
+  executionTimeout: 60000 # Default execution timeout (ms)
+  maxConcurrentTasks: 10 # Max parallel tasks
+  batchSize: 50 # Batch size for bulk operations
+  cacheEnabled: true # Enable response caching
+  cacheTTL: 300000 # Cache TTL (ms) - 5 minutes

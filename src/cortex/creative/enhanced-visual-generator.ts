@@ -10,20 +10,56 @@ import { getVisualExample } from './visual-examples.js';
  */
 const VISUAL_KEYWORDS = [
   // Explicit visual requests
-  'svg', 'chart', 'graph', 'diagram', 'visualization', 'visual',
-  'image', 'picture', 'drawing', 'illustration', 'graphic',
-  'logo', 'icon', 'banner', 'infographic', 'animation',
+  'svg',
+  'chart',
+  'graph',
+  'diagram',
+  'visualization',
+  'visual',
+  'image',
+  'picture',
+  'drawing',
+  'illustration',
+  'graphic',
+  'logo',
+  'icon',
+  'banner',
+  'infographic',
+  'animation',
   // Common visual tasks
-  'draw', 'create a visual', 'show me', 'visualize', 'render',
-  'design', 'generate an image', 'make a chart', 'plot',
+  'draw',
+  'create a visual',
+  'show me',
+  'visualize',
+  'render',
+  'design',
+  'generate an image',
+  'make a chart',
+  'plot',
   // Data visualization
-  'pie chart', 'bar chart', 'line graph', 'scatter plot',
-  'histogram', 'dashboard', 'metrics', 'analytics',
+  'pie chart',
+  'bar chart',
+  'line graph',
+  'scatter plot',
+  'histogram',
+  'dashboard',
+  'metrics',
+  'analytics',
   // Diagrams
-  'flowchart', 'flow diagram', 'architecture diagram', 'sequence diagram',
-  'erd', 'uml', 'wireframe', 'mockup', 'prototype',
+  'flowchart',
+  'flow diagram',
+  'architecture diagram',
+  'sequence diagram',
+  'erd',
+  'uml',
+  'wireframe',
+  'mockup',
+  'prototype',
   // Abstract/creative
-  'abstract', 'artistic', 'creative visual', 'artwork'
+  'abstract',
+  'artistic',
+  'creative visual',
+  'artwork',
 ];
 
 /**
@@ -37,51 +73,55 @@ type VisualType = 'chart' | 'diagram' | 'abstract' | 'dashboard' | 'general';
  */
 export class EnhancedVisualGenerator {
   private static instance: EnhancedVisualGenerator;
-  
+
   static getInstance(): EnhancedVisualGenerator {
     if (!this.instance) {
       this.instance = new EnhancedVisualGenerator();
     }
     return this.instance;
   }
-  
+
   /**
    * Detect if a prompt is requesting visual output
    */
   detectVisualRequest(prompt: string): boolean {
     const lowerPrompt = prompt.toLowerCase();
-    return VISUAL_KEYWORDS.some(keyword => lowerPrompt.includes(keyword));
+    return VISUAL_KEYWORDS.some((keyword) => lowerPrompt.includes(keyword));
   }
-  
+
   /**
    * Determine the type of visual being requested
    */
   detectVisualType(prompt: string): VisualType {
     const lowerPrompt = prompt.toLowerCase();
-    
+
     // Chart/Graph detection
-    if (/chart|graph|plot|histogram|pie|bar|line|scatter|data viz|analytics|metrics/.test(lowerPrompt)) {
+    if (
+      /chart|graph|plot|histogram|pie|bar|line|scatter|data viz|analytics|metrics/.test(lowerPrompt)
+    ) {
       return 'chart';
     }
-    
+
     // Diagram detection
-    if (/diagram|flow|architecture|sequence|erd|uml|wireframe|mockup|system|process/.test(lowerPrompt)) {
+    if (
+      /diagram|flow|architecture|sequence|erd|uml|wireframe|mockup|system|process/.test(lowerPrompt)
+    ) {
       return 'diagram';
     }
-    
+
     // Dashboard/Widget detection
     if (/dashboard|widget|card|stats|kpi|metric card|status/.test(lowerPrompt)) {
       return 'dashboard';
     }
-    
+
     // Abstract/Art detection
     if (/abstract|art|creative|artistic|logo|brand|icon|generative/.test(lowerPrompt)) {
       return 'abstract';
     }
-    
+
     return 'general';
   }
-  
+
   /**
    * Get relevant example for the visual type
    */
@@ -99,14 +139,14 @@ export class EnhancedVisualGenerator {
         return getVisualExample('chart');
     }
   }
-  
+
   /**
    * Enhance a visual request with detailed instructions
    */
   enhancePrompt(originalPrompt: string): string {
     const visualType = this.detectVisualType(originalPrompt);
     const example = this.getRelevantExample(visualType);
-    
+
     const enhancedPrompt = `
 ${originalPrompt}
 
@@ -164,7 +204,7 @@ Match or EXCEED the quality of the example above.
 
     return enhancedPrompt;
   }
-  
+
   /**
    * Validate visual output quality
    */
@@ -177,58 +217,58 @@ Match or EXCEED the quality of the example above.
     const issues: string[] = [];
     const suggestions: string[] = [];
     let score = 100;
-    
+
     // Check for viewBox
     if (!svgContent.includes('viewBox')) {
       issues.push('Missing viewBox attribute');
       score -= 15;
     }
-    
+
     // Check for gradients
     if (!svgContent.includes('Gradient')) {
       issues.push('No gradients defined');
       suggestions.push('Add linearGradient or radialGradient for depth');
       score -= 20;
     }
-    
+
     // Check for filters
     if (!svgContent.includes('<filter')) {
       suggestions.push('Consider adding filter effects (shadows, glows)');
       score -= 10;
     }
-    
+
     // Check for animations
     if (!svgContent.includes('<animate') && !svgContent.includes('<animateTransform')) {
       issues.push('No animations found');
       suggestions.push('Add animations for visual appeal');
       score -= 15;
     }
-    
+
     // Check for defs section
     if (!svgContent.includes('<defs')) {
       issues.push('Missing <defs> section');
       score -= 10;
     }
-    
+
     // Check for rounded corners usage
     if (!svgContent.includes('rx=')) {
       suggestions.push('Consider using rounded corners (rx attribute)');
       score -= 5;
     }
-    
+
     // Check for proper font-family
     if (svgContent.includes('<text') && !svgContent.includes('font-family')) {
       suggestions.push('Add font-family for consistent typography');
       score -= 5;
     }
-    
+
     // Check for color richness (multiple colors)
     const colorMatches = svgContent.match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\(/g) || [];
     if (colorMatches.length < 4) {
       suggestions.push('Use a richer color palette');
       score -= 10;
     }
-    
+
     // Bonus for advanced features
     if (svgContent.includes('stroke-dasharray')) {
       score += 5;
@@ -239,15 +279,15 @@ Match or EXCEED the quality of the example above.
     if (svgContent.includes('feDropShadow') || svgContent.includes('feGaussianBlur')) {
       score += 5;
     }
-    
+
     // Cap score at 100
     score = Math.min(100, Math.max(0, score));
-    
+
     return {
       isValid: score >= 60,
       score,
       issues,
-      suggestions
+      suggestions,
     };
   }
 }

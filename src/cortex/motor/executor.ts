@@ -38,7 +38,8 @@ export interface SpawnOptions {
 }
 
 export class Executor extends EventEmitter {
-  private managedProcesses: Map<string, { process: ChildProcess; meta: ManagedProcess }> = new Map();
+  private managedProcesses: Map<string, { process: ChildProcess; meta: ManagedProcess }> =
+    new Map();
   private readonly DEFAULT_MAX_RESTARTS = 3;
   private readonly DEFAULT_RESTART_DELAY = 1000;
   private readonly DEFAULT_MAX_OUTPUT_LINES = 100;
@@ -112,7 +113,10 @@ export class Executor extends EventEmitter {
 
       if (child.stdout) {
         child.stdout.on('data', (data) => {
-          const lines = data.toString().split('\n').filter((l: string) => l.trim());
+          const lines = data
+            .toString()
+            .split('\n')
+            .filter((l: string) => l.trim());
           meta.stdout.push(...lines);
           if (meta.stdout.length > maxOutputLines) {
             meta.stdout = meta.stdout.slice(-maxOutputLines);
@@ -123,7 +127,10 @@ export class Executor extends EventEmitter {
 
       if (child.stderr) {
         child.stderr.on('data', (data) => {
-          const lines = data.toString().split('\n').filter((l: string) => l.trim());
+          const lines = data
+            .toString()
+            .split('\n')
+            .filter((l: string) => l.trim());
           meta.stderr.push(...lines);
           if (meta.stderr.length > maxOutputLines) {
             meta.stderr = meta.stderr.slice(-maxOutputLines);
@@ -141,15 +148,17 @@ export class Executor extends EventEmitter {
       child.on('exit', (code, signal) => {
         console.log(`[Motor:Executor] Process ${id} exited with code ${code}, signal ${signal}`);
         meta.stoppedAt = Date.now();
-        
+
         const maxRestarts = options.maxRestarts ?? this.DEFAULT_MAX_RESTARTS;
         const shouldRestart = options.autoRestart && meta.restartCount < maxRestarts && code !== 0;
 
         if (shouldRestart) {
           meta.status = 'starting';
           meta.restartCount++;
-          console.log(`[Motor:Executor] Auto-restarting ${id} (attempt ${meta.restartCount}/${maxRestarts})`);
-          
+          console.log(
+            `[Motor:Executor] Auto-restarting ${id} (attempt ${meta.restartCount}/${maxRestarts})`
+          );
+
           setTimeout(() => {
             startProcess();
           }, options.restartDelayMs ?? this.DEFAULT_RESTART_DELAY);
@@ -179,7 +188,7 @@ export class Executor extends EventEmitter {
 
     // Disable auto-restart before killing
     entry.meta.restartCount = Infinity;
-    
+
     if (entry.process.pid) {
       console.log(`[Motor:Executor] Stopping process ${id} (PID: ${entry.process.pid})`);
       entry.process.kill(signal);

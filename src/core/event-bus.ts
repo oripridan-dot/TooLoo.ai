@@ -138,15 +138,15 @@ export class EventBus extends EventEmitter {
     // Emit to specific type listeners
     this.emit(event.type, event);
 
-    // Emit visual updates if present
-    const payload = event.payload as EnhancedEventPayload;
-    if (payload.visual) {
+    // Emit visual updates if present (guard against undefined payload)
+    const payload = event.payload as EnhancedEventPayload | undefined;
+    if (payload?.visual) {
       this.emit('visual:update', event);
       this.emit(`visual:${payload.visual.type}`, event);
     }
 
     // Emit designer updates if present
-    if (payload.designerAction) {
+    if (payload?.designerAction) {
       this.emit('designer:action', event);
       this.emit(`designer:${payload.designerAction.target}`, event);
     }

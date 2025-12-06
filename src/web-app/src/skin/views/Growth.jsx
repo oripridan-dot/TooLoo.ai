@@ -617,73 +617,75 @@ const HypothesisStatusBadge = memo(({ status }) => {
   );
 });
 
-const ExplorationQueue = memo(({ hypotheses = [], onTriggerExploration, onOpenHypothesisModal, className = '' }) => {
-  return (
-    <LiquidPanel variant="elevated" className={`p-4 ${className}`}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-white flex items-center gap-2">
-          <span className="text-lg">🔬</span>
-          Exploration Queue
-        </h3>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onOpenHypothesisModal}
-          className="text-xs px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 transition-colors"
-        >
-          + New Hypothesis
-        </motion.button>
-      </div>
+const ExplorationQueue = memo(
+  ({ hypotheses = [], onTriggerExploration, onOpenHypothesisModal, className = '' }) => {
+    return (
+      <LiquidPanel variant="elevated" className={`p-4 ${className}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-white flex items-center gap-2">
+            <span className="text-lg">🔬</span>
+            Exploration Queue
+          </h3>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onOpenHypothesisModal}
+            className="text-xs px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 transition-colors"
+          >
+            + New Hypothesis
+          </motion.button>
+        </div>
 
-      <div className="space-y-2 max-h-[240px] overflow-y-auto">
-        {hypotheses.length === 0 ? (
-          <p className="text-sm text-gray-600 italic py-4 text-center">
-            No active hypotheses. Click above to explore!
-          </p>
-        ) : (
-          hypotheses.map((h, i) => (
-            <motion.div
-              key={h.id || i}
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className={`p-3 rounded-lg border ${
-                h.status === 'running'
-                  ? 'bg-cyan-500/5 border-cyan-500/30'
-                  : 'bg-white/5 border-white/10'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-1">
-                <span className="text-sm text-gray-300 font-medium truncate flex-1 mr-2">
-                  {h.title || h.hypothesis}
-                </span>
-                <HypothesisStatusBadge status={h.status} />
-              </div>
+        <div className="space-y-2 max-h-[240px] overflow-y-auto">
+          {hypotheses.length === 0 ? (
+            <p className="text-sm text-gray-600 italic py-4 text-center">
+              No active hypotheses. Click above to explore!
+            </p>
+          ) : (
+            hypotheses.map((h, i) => (
+              <motion.div
+                key={h.id || i}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className={`p-3 rounded-lg border ${
+                  h.status === 'running'
+                    ? 'bg-cyan-500/5 border-cyan-500/30'
+                    : 'bg-white/5 border-white/10'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-1">
+                  <span className="text-sm text-gray-300 font-medium truncate flex-1 mr-2">
+                    {h.title || h.hypothesis}
+                  </span>
+                  <HypothesisStatusBadge status={h.status} />
+                </div>
 
-              <div className="flex items-center gap-3 text-xs text-gray-500">
-                <span className="capitalize">{h.type || 'experiment'}</span>
-                {h.confidence !== undefined && (
-                  <span>Confidence: {(h.confidence * 100).toFixed(0)}%</span>
-                )}
-                {h.progress !== undefined && (
-                  <div className="flex-1">
-                    <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full bg-cyan-500"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${h.progress * 100}%` }}
-                      />
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="capitalize">{h.type || 'experiment'}</span>
+                  {h.confidence !== undefined && (
+                    <span>Confidence: {(h.confidence * 100).toFixed(0)}%</span>
+                  )}
+                  {h.progress !== undefined && (
+                    <div className="flex-1">
+                      <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                        <motion.div
+                          className="h-full rounded-full bg-cyan-500"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${h.progress * 100}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
-    </LiquidPanel>
-  );
-});
+                  )}
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+      </LiquidPanel>
+    );
+  }
+);
 
 ExplorationQueue.displayName = 'ExplorationQueue';
 
@@ -1896,6 +1898,9 @@ Improvements:
                     <ExplorationQueue
                       hypotheses={hypothesisQueue}
                       onTriggerExploration={handleTriggerHypothesis}
+                      onOpenHypothesisModal={() =>
+                        setModalState((prev) => ({ ...prev, hypothesis: true }))
+                      }
                     />
 
                     <LiquidPanel variant="surface" className="p-4">

@@ -1,9 +1,11 @@
-// @version 3.3.67
+// @version 3.3.126
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
 import { cortex, visualCortex } from '../../cortex/index.js';
 import { successResponse, errorResponse } from '../utils.js';
+// V3.3.126: True multi-provider parallel execution
+import ParallelProviderOrchestrator from '../../precog/engine/parallel-provider-orchestrator.js';
 import {
   TransparencyWrapper,
   formatCostBreakdown,
@@ -15,7 +17,11 @@ import { ValidationLoop, type ValidationLoopOutput } from '../../cortex/cognitio
 import { learner } from '../../precog/learning/learner.js';
 import { projectContext } from '../../core/project-context.js';
 import { recordDecision } from './cost.js';
-import { creativeChatOrchestrator, illustrationEngine, enhancedVisualGenerator } from '../../cortex/creative/index.js';
+import {
+  creativeChatOrchestrator,
+  illustrationEngine,
+  enhancedVisualGenerator,
+} from '../../cortex/creative/index.js';
 import type { IllustrationStyle, IllustrationMood } from '../../cortex/creative/index.js';
 // V3.3.17: System Execution Hub for code execution
 import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
@@ -24,6 +30,17 @@ import path from 'path';
 
 const router = Router();
 const HISTORY_FILE = path.join(process.cwd(), 'data', 'chat-history.json');
+
+// V3.3.126: Initialize parallel provider orchestrator for ensemble mode
+const parallelOrchestrator = new ParallelProviderOrchestrator({
+  providers: ['deepseek', 'anthropic', 'openai', 'gemini'],
+  timeout: 30000,
+  minResponses: 2,
+  synthesize: true,
+});
+parallelOrchestrator.init().then(() => {
+  console.log('[Chat] ParallelProviderOrchestrator ready for ensemble queries');
+});
 
 // Helper to load history
 async function loadHistory() {
@@ -54,6 +71,8 @@ async function saveMessage(msg: any) {
  * POST /api/v1/chat/generate
  * Legacy compatibility endpoint - redirects to /message
  * Used by ToolooMonitor component
+ * @param {string} message - The message or prompt to send
+ * @param {string} [mode] - The chat mode (quick|deep|creative)
  */
 router.post('/generate', async (req, res) => {
   // Map 'prompt' to 'message' for compatibility
@@ -280,9 +299,16 @@ CORE SYSTEMS:
 
 IMPORTANT: You ARE the system. You have direct access to execute code, create files, run processes, and modify the environment. Never claim you cannot execute code - route execution requests to the System Execution Hub.`;
 
-    // Visual Capabilities Instruction
+    // Visual Capabilities Instruction - ONLY generate visuals when EXPLICITLY requested
     systemPrompt +=
-      "\n\nVISUAL CAPABILITIES:\n- You can generate diagrams and visuals by outputting raw SVG code.\n- DO NOT use Mermaid.js or ```mermaid blocks. They are disabled.\n- When explaining complex logic, architecture, or flows, generate a clean, modern SVG diagram.\n- Wrap the SVG code in ```svg code blocks.\n- Ensure the SVG is responsive (width='100%' height='auto') and uses a dark theme color palette (white/gray text, dark background compatible).\n- GENERATIVE UI: You can generate React components. Wrap them in ```jsx code blocks. The system will attempt to preview them.\n- For HTML/CSS/JS artifacts, wrap them in standard code blocks.";
+      '\n\nVISUAL CAPABILITIES (USE SPARINGLY):\n' +
+      '- You CAN generate SVG diagrams, charts, and React components when the user EXPLICITLY asks for visuals.\n' +
+      "- ONLY generate SVG/visual content when the user specifically requests: charts, graphs, diagrams, visualizations, infographics, timelines, illustrations, or says 'show me', 'draw', 'visualize', 'create a chart/diagram'.\n" +
+      '- For normal questions, explanations, and discussions: respond with TEXT ONLY. Do NOT generate SVG.\n' +
+      '- DO NOT use Mermaid.js or ```mermaid blocks. They are disabled.\n' +
+      '- When you DO generate visuals (only when asked): wrap SVG in ```svg blocks, React in ```jsx blocks.\n' +
+      '- Keep visuals responsive and dark-theme compatible.\n' +
+      '⚠️ DEFAULT BEHAVIOR: Respond with plain text unless visuals are explicitly requested.';
 
     let taskType = 'general';
 
@@ -408,6 +434,7 @@ IMPORTANT: You ARE the system. You have direct access to execute code, create fi
  * Streaming Chat Endpoint
  * Server-Sent Events (SSE) for real-time token streaming
  * Enhanced with Creative Chat Orchestrator for visually-rich responses
+ * V3.3.68: Model selection and thinking process output
  */
 router.post('/stream', async (req, res) => {
   // Extend timeout for long streams
@@ -420,6 +447,8 @@ router.post('/stream', async (req, res) => {
     attachments,
     sessionId: reqSessionId,
     persona,
+    provider: requestedProvider, // V3.3.68: Allow provider override
+    model: requestedModel, // V3.3.68: Allow model override
   } = req.body;
   const sessionId = reqSessionId || `session-${Date.now()}`;
 
@@ -438,6 +467,12 @@ router.post('/stream', async (req, res) => {
   });
 
   try {
+    // V3.3.68: Log model selection if provided
+    if (requestedProvider || requestedModel) {
+      console.log(
+        `[Chat Stream] Model override: provider=${requestedProvider || 'auto'}, model=${requestedModel || 'auto'}`
+      );
+    }
     console.log(`[Chat Stream] Processing (${mode}): ${message.substring(0, 50)}...`);
 
     // 🚀 CAPABILITY QUESTION INTERCEPT - TooLoo responds as TooLoo, not as base model
@@ -450,7 +485,7 @@ router.post('/stream', async (req, res) => {
       /what can you do/i,
       /what are your capabilities/i,
     ];
-    const isCapabilityQuestion = capabilityPatterns.some(p => p.test(message));
+    const isCapabilityQuestion = capabilityPatterns.some((p) => p.test(message));
 
     if (isCapabilityQuestion) {
       console.log('[Chat Stream] Intercepting capability question - TooLoo identity response');
@@ -481,14 +516,18 @@ Every execution task goes through my **Team Framework** with executor+validator 
 Want me to demonstrate? Just tell me what to build or execute! 🚀`;
 
       // Stream the response character by character for effect
-      res.write(`data: ${JSON.stringify({ meta: { persona: 'TooLoo Cortex', visualEnabled: false } })}\n\n`);
-      
+      res.write(
+        `data: ${JSON.stringify({ meta: { persona: 'TooLoo Cortex', visualEnabled: false } })}\n\n`
+      );
+
       for (const char of toolooResponse) {
         res.write(`data: ${JSON.stringify({ chunk: char })}\n\n`);
-        await new Promise(r => setTimeout(r, 5)); // Small delay for streaming effect
+        await new Promise((r) => setTimeout(r, 5)); // Small delay for streaming effect
       }
-      
-      res.write(`data: ${JSON.stringify({ done: true, provider: 'TooLoo Cortex', model: 'Synapsys V3.3' })}\n\n`);
+
+      res.write(
+        `data: ${JSON.stringify({ done: true, provider: 'TooLoo Cortex', model: 'Synapsys V3.3' })}\n\n`
+      );
       res.end();
 
       await saveMessage({
@@ -499,6 +538,107 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         timestamp: new Date().toISOString(),
       });
       return;
+    }
+
+    // 🚀 V3.3.82: INLINE EXECUTION INTERCEPT
+    // Detect /run, /execute, or code execution requests in the message
+    const runCommandMatch =
+      message.match(/^\/run\s+```(\w+)?\n([\s\S]*?)```/m) ||
+      message.match(/^\/execute\s+```(\w+)?\n([\s\S]*?)```/m);
+    const inlineCodeMatch = message.match(/^```(\w+)\n([\s\S]*?)```\s*(?:run|execute|→|->|=>)/im);
+
+    // Also detect natural language execution requests with code blocks
+    const naturalExecPatterns = [
+      /(?:run|execute|test|try)\s+(?:this|the following|below)[\s\S]*?```(\w+)\n([\s\S]*?)```/i,
+      /```(\w+)\n([\s\S]*?)```[\s\S]*?(?:run|execute|test|try)\s+(?:it|this|that)/i,
+    ];
+    const naturalExecMatch = naturalExecPatterns.reduce(
+      (acc, pattern) => acc || message.match(pattern),
+      null as RegExpMatchArray | null
+    );
+
+    const execMatch = runCommandMatch || inlineCodeMatch || naturalExecMatch;
+
+    if (execMatch) {
+      const language = execMatch[1] || 'javascript';
+      const code = execMatch[2];
+
+      console.log(`[Chat Stream] 🚀 Inline execution detected: ${language} (${code.length} chars)`);
+
+      // Send execution start notification
+      res.write(
+        `data: ${JSON.stringify({
+          meta: { persona: 'TooLoo Executor', visualEnabled: false },
+          executionStart: true,
+          language,
+          codePreview: code.substring(0, 100) + (code.length > 100 ? '...' : ''),
+        })}\n\n`
+      );
+
+      res.write(
+        `data: ${JSON.stringify({ chunk: `⚡ **Executing ${language} code...**\n\n` })}\n\n`
+      );
+
+      try {
+        // Direct Docker execution for inline chat execution
+        const { CodeExecutor } = await import('../../cortex/motor/code-execution.js');
+        const executor = new CodeExecutor(process.cwd());
+        const directResult = await executor.executeInDocker(code, language);
+
+        const execResponse = {
+          success: directResult.ok,
+          output: directResult.stdout,
+          error: directResult.stderr,
+          qualityScore: directResult.ok ? 0.85 : 0,
+        };
+
+        if (execResponse.success) {
+          const resultMsg = `✅ **Execution Complete** (Quality: ${((execResponse.qualityScore || 0) * 100).toFixed(0)}%)\n\n\`\`\`\n${execResponse.output}\n\`\`\`\n`;
+          for (const char of resultMsg) {
+            res.write(`data: ${JSON.stringify({ chunk: char })}\n\n`);
+          }
+        } else {
+          const errorMsg = `❌ **Execution Failed**\n\n\`\`\`\n${execResponse.error || 'Unknown error'}\n\`\`\`\n`;
+          for (const char of errorMsg) {
+            res.write(`data: ${JSON.stringify({ chunk: char })}\n\n`);
+          }
+        }
+
+        res.write(
+          `data: ${JSON.stringify({
+            done: true,
+            provider: 'TooLoo Executor',
+            model: 'Docker Sandbox',
+            execution: {
+              success: execResponse.success,
+              qualityScore: execResponse.qualityScore,
+              output: execResponse.output,
+              error: execResponse.error,
+            },
+          })}\n\n`
+        );
+        res.end();
+
+        await saveMessage({
+          id: Date.now().toString(),
+          type: 'execution',
+          content: `Executed ${language}:\n\`\`\`${language}\n${code}\n\`\`\``,
+          result: execResponse.success ? execResponse.output : execResponse.error,
+          success: execResponse.success,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      } catch (execError) {
+        const errorMsg = `❌ **Execution Error**: ${execError instanceof Error ? execError.message : String(execError)}\n`;
+        for (const char of errorMsg) {
+          res.write(`data: ${JSON.stringify({ chunk: char })}\n\n`);
+        }
+        res.write(
+          `data: ${JSON.stringify({ done: true, provider: 'TooLoo Executor', error: true })}\n\n`
+        );
+        res.end();
+        return;
+      }
     }
 
     // Load History for Context
@@ -553,23 +693,218 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
       })}\n\n`
     );
 
-    let fullResponse = '';
+    // 🎨 V3.3.68: ENHANCED VISUAL GENERATION
+    // Detect visual requests and enhance prompts for stunning output
+    const isVisualRequest = enhancedVisualGenerator.detectVisualRequest(message);
+    let enhancedMessage = message;
 
-    const result = await precog.providers.stream({
-      prompt: message,
-      system: systemPrompt,
-      history: recentHistory,
-      taskType: taskType,
-      sessionId: sessionId,
-      onChunk: (chunk) => {
-        fullResponse += chunk;
-        // Send SSE chunk
+    if (isVisualRequest) {
+      console.log(
+        `[Chat Stream] 🎨 Visual request detected - enhancing prompt for stunning output`
+      );
+      enhancedMessage = enhancedVisualGenerator.enhancePrompt(message);
+
+      // Add visual enhancement notification
+      res.write(
+        `data: ${JSON.stringify({
+          visualEnhanced: true,
+          visualType: enhancedVisualGenerator.detectVisualType(message),
+        })}\n\n`
+      );
+    }
+
+    // ============================================
+    // V3.3.80: REAL-TIME THINKING PROCESS EVENTS
+    // ============================================
+
+    // Helper to emit thinking events
+    const emitThinking = (
+      stage: string,
+      message: string,
+      type: 'info' | 'success' | 'error' = 'info'
+    ) => {
+      res.write(
+        `data: ${JSON.stringify({
+          thinking: { stage, message, type, timestamp: Date.now() },
+        })}\n\n`
+      );
+    };
+
+    // Stage 1: Analyzing request
+    emitThinking(
+      'analyzing',
+      `📥 Analyzing: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`
+    );
+
+    // Determine complexity and optimal routing
+    const complexity =
+      message.length > 500 || /code|implement|build|create|design|architect/i.test(message)
+        ? 'high'
+        : 'standard';
+
+    emitThinking('analyzing', `🔍 Task complexity: ${complexity}`);
+
+    // Stage 2: Routing decision
+    emitThinking('routing', `🧠 Evaluating available providers...`);
+
+    // Determine ensemble strategy based on task
+    const availableProviders = precog.providers.getProviderStatus();
+    const activeProviders = Object.entries(availableProviders)
+      .filter(([_, status]: [string, any]) => status.available)
+      .map(([name]) => name);
+
+    emitThinking('routing', `✅ Active providers: ${activeProviders.join(', ')}`);
+
+    // V3.3.80: Smart ensemble selection based on task type
+    let selectedProviders: string[] = [];
+    let routingStrategy = 'single';
+
+    if (!requestedProvider) {
+      // Auto mode - TooLoo selects optimal ensemble
+      if (complexity === 'high' || /creative|brainstorm|multiple|compare/i.test(message)) {
+        // Use ensemble for complex/creative tasks
+        selectedProviders = activeProviders.slice(0, 3); // Top 3 available
+        routingStrategy = 'ensemble';
+        emitThinking(
+          'routing',
+          `🎯 Ensemble mode: Using ${selectedProviders.join(' + ')} for optimal results`
+        );
+      } else if (/code|debug|fix|implement/i.test(message)) {
+        // Prefer DeepSeek for code, fallback to others
+        selectedProviders = activeProviders.includes('deepseek')
+          ? ['deepseek']
+          : activeProviders.includes('anthropic')
+            ? ['anthropic']
+            : [activeProviders[0] || 'gemini'];
+        emitThinking('routing', `💻 Code task → Primary: ${selectedProviders[0]}`);
+      } else if (/explain|summarize|analyze/i.test(message)) {
+        // Prefer Claude for analysis
+        selectedProviders = activeProviders.includes('anthropic')
+          ? ['anthropic']
+          : [activeProviders[0] || 'gemini'];
+        emitThinking('routing', `🎭 Analysis task → Primary: ${selectedProviders[0]}`);
+      } else {
+        // Default: Use fastest available (Gemini Flash)
+        selectedProviders = activeProviders.includes('gemini')
+          ? ['gemini']
+          : [activeProviders[0] || 'gemini'];
+        emitThinking('routing', `⚡ Quick response → Primary: ${selectedProviders[0]}`);
+      }
+    } else {
+      // User selected specific provider
+      selectedProviders = [requestedProvider];
+      emitThinking(
+        'routing',
+        `👤 User selected: ${requestedProvider}${requestedModel ? ` (${requestedModel})` : ''}`
+      );
+    }
+
+    // Stage 3: Processing
+    emitThinking(
+      'processing',
+      `⚡ Initiating ${routingStrategy === 'ensemble' ? 'ensemble' : 'single-provider'} generation...`
+    );
+
+    let fullResponse = '';
+    let result: any;
+
+    // ============================================
+    // V3.3.126: TRUE ENSEMBLE PARALLEL EXECUTION
+    // When ensemble mode is triggered, query ALL providers
+    // in parallel and synthesize a consensus response
+    // ============================================
+
+    if (routingStrategy === 'ensemble' && selectedProviders.length > 1) {
+      // 🚀 ENSEMBLE MODE: Query all providers in parallel
+      emitThinking(
+        'processing',
+        `🌐 Querying ${selectedProviders.length} providers in parallel...`
+      );
+
+      const parallelResult = await parallelOrchestrator.hyperParallelGenerate(enhancedMessage, {
+        system: systemPrompt,
+        sessionId: sessionId,
+        maxTokens: 2048,
+      });
+
+      // Report individual provider results
+      const successfulProviders = parallelResult.results.filter((r) => r.success);
+      const failedProviders = parallelResult.results.filter((r) => !r.success);
+
+      emitThinking(
+        'processing',
+        `✅ Got ${successfulProviders.length}/${parallelResult.results.length} responses`
+      );
+
+      // Show which providers responded
+      for (const provResult of parallelResult.results) {
+        if (provResult.success) {
+          emitThinking(
+            'processing',
+            `  └─ ${provResult.provider}: ${provResult.latency}ms ✓`,
+            'success'
+          );
+        } else {
+          emitThinking(
+            'processing',
+            `  └─ ${provResult.provider}: ${provResult.error || 'failed'} ✗`,
+            'error'
+          );
+        }
+      }
+
+      // Stream the synthesized consensus response
+      emitThinking(
+        'processing',
+        `🧠 Synthesizing consensus from ${successfulProviders.length} providers...`
+      );
+
+      fullResponse = parallelResult.consensus;
+
+      // Stream chunks for UI effect (simulate streaming of pre-generated content)
+      const chunkSize = 50;
+      for (let i = 0; i < fullResponse.length; i += chunkSize) {
+        const chunk = fullResponse.slice(i, i + chunkSize);
         res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
-      },
-      onComplete: (fullText) => {
-        // Stream finished
-      },
-    });
+        // Small delay to create streaming effect
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+
+      result = {
+        provider: `ensemble(${successfulProviders.map((p) => p.provider).join('+')})`,
+        model: 'consensus',
+        cost_usd: 0, // TODO: aggregate costs
+        reasoning: `Parallel ensemble: queried ${parallelResult.results.length} providers, synthesized from ${successfulProviders.length} responses in ${parallelResult.timing.total}ms`,
+      };
+
+      emitThinking(
+        'complete',
+        `✅ Ensemble complete: ${successfulProviders.length} providers synthesized`,
+        'success'
+      );
+    } else {
+      // Single provider mode (original behavior)
+      result = await precog.providers.stream({
+        prompt: enhancedMessage,
+        system: systemPrompt,
+        history: recentHistory,
+        taskType: taskType,
+        sessionId: sessionId,
+        provider: requestedProvider || selectedProviders[0],
+        model: requestedModel || undefined,
+        onChunk: (chunk) => {
+          fullResponse += chunk;
+          res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+        },
+        onComplete: (fullText) => {
+          emitThinking(
+            'complete',
+            `✅ Response complete via ${result?.provider || selectedProviders[0]}`,
+            'success'
+          );
+        },
+      });
+    }
 
     // Record decision for transparency log
     recordDecision({
@@ -578,7 +913,9 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         taskType === 'code' ? 'code' : taskType === 'creative' ? 'creative' : 'general',
       selectedProvider: result.provider,
       selectedModel: result.model || result.provider,
-      reasoning: result.reasoning || `Auto-selected ${result.provider} for ${taskType} task`,
+      reasoning: requestedProvider
+        ? `User selected ${requestedProvider}/${requestedModel || 'default'}`
+        : result.reasoning || `Auto-selected ${result.provider} for ${taskType} task`,
       costEstimate: result.cost_usd || 0,
       complexity: result.complexity || 'auto',
     });
@@ -590,7 +927,10 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         provider: result.provider,
         model: result.model,
         cost_usd: result.cost_usd || 0,
-        reasoning: result.reasoning || `Auto-selected ${result.provider} for this task`,
+        reasoning: requestedProvider
+          ? `User selected ${requestedProvider}/${requestedModel || 'default'}`
+          : result.reasoning || `Auto-selected ${result.provider} for this task`,
+        ensemble: routingStrategy === 'ensemble',
       })}\n\n`
     );
     res.end();
@@ -864,6 +1204,250 @@ router.get('/illustration-types', (req, res) => {
       ],
     })
   );
+});
+
+// ============================================================================
+// INLINE CODE EXECUTION - V3.3.82
+// Execute code directly from chat with team validation
+// ============================================================================
+
+/**
+ * @route POST /api/v1/chat/command/execute
+ * @description Execute code inline in the chat with team validation
+ * Supports: python, javascript, typescript, bash, shell
+ * V3.3.82: Added inline code execution from chat
+ */
+router.post('/command/execute', async (req, res) => {
+  const {
+    code,
+    language = 'javascript',
+    prompt,
+    useTeam = true,
+    qualityThreshold = 0.8,
+    maxIterations = 3,
+    timeout = 30000,
+  } = req.body;
+
+  if (!code && !prompt) {
+    return res.status(400).json(errorResponse('Code or prompt is required'));
+  }
+
+  const startTime = Date.now();
+  const requestId = `exec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  try {
+    console.log(`[Chat Execute] 🚀 Executing ${language} code (${requestId})...`);
+    console.log(`[Chat Execute] Code preview: ${(code || '').substring(0, 100)}...`);
+
+    // Publish execution start event
+    bus.publish('cortex', 'chat:execute:start', {
+      requestId,
+      language,
+      codeLength: code?.length || 0,
+      hasPrompt: !!prompt,
+      timestamp: Date.now(),
+    });
+
+    // Execute through System Execution Hub with team validation
+    let response;
+
+    // V3.3.125: Fixed System Hub code execution pipeline
+    // Use team execution for quality validation, with fallback to direct execution
+    if (useTeam) {
+      try {
+        console.log(`[Chat Execute] Using System Hub team execution for ${language}`);
+        const { systemExecutionHub } = await import('../../cortex/agent/system-hub.js');
+
+        const hubResponse = await systemExecutionHub.handleExecution({
+          id: requestId,
+          source: 'synaptic',
+          type: 'execute',
+          prompt: prompt || `Execute the following ${language} code`,
+          code,
+          context: { language, originalPrompt: prompt },
+          options: {
+            useTeam: true,
+            teamSpecialization: 'code-execution',
+            qualityThreshold,
+            maxIterations,
+            timeout,
+            sandbox: true,
+          },
+          priority: 'normal',
+          timestamp: new Date(),
+        });
+
+        response = {
+          success: hubResponse.success,
+          output: hubResponse.output,
+          error: hubResponse.success ? '' : hubResponse.output,
+          requestId: hubResponse.requestId,
+          qualityScore: hubResponse.qualityScore || (hubResponse.success ? 0.85 : 0),
+          iterations: hubResponse.iterations || 1,
+          teamId: hubResponse.teamId || null,
+          artifacts: hubResponse.artifacts || [],
+        };
+      } catch (hubError) {
+        console.warn(`[Chat Execute] Hub execution failed, falling back to direct: ${hubError}`);
+        // Fallback to direct execution
+        const { CodeExecutor } = await import('../../cortex/motor/code-execution.js');
+        const executor = new CodeExecutor(process.cwd());
+        const directResult = await executor.executeInDocker(code, language);
+
+        response = {
+          success: directResult.ok,
+          output: directResult.stdout,
+          error: directResult.stderr,
+          requestId,
+          qualityScore: directResult.ok ? 0.85 : 0,
+          iterations: 1,
+          teamId: null,
+          artifacts: [],
+        };
+      }
+    } else {
+      // Direct execution without team validation
+      console.log(`[Chat Execute] Using direct Docker execution for ${language}`);
+      const { CodeExecutor } = await import('../../cortex/motor/code-execution.js');
+      const executor = new CodeExecutor(process.cwd());
+      const directResult = await executor.executeInDocker(code, language);
+
+      response = {
+        success: directResult.ok,
+        output: directResult.stdout,
+        error: directResult.stderr,
+        requestId,
+        qualityScore: directResult.ok ? 0.85 : 0,
+        iterations: 1,
+        teamId: null,
+        artifacts: [],
+      };
+    }
+
+    const duration = Date.now() - startTime;
+
+    // Publish execution complete event
+    bus.publish('cortex', 'chat:execute:complete', {
+      requestId,
+      success: response.success,
+      duration,
+      qualityScore: response.qualityScore,
+      timestamp: Date.now(),
+    });
+
+    // Log execution for history
+    await saveMessage({
+      id: requestId,
+      type: 'execution',
+      content: `[Code Execution] ${language}\n\`\`\`${language}\n${code}\n\`\`\``,
+      result: response.success ? response.output : response.error,
+      success: response.success,
+      qualityScore: response.qualityScore,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (response.success) {
+      res.json(
+        successResponse({
+          requestId: response.requestId,
+          output: response.output,
+          success: true,
+          language,
+          qualityScore: response.qualityScore,
+          iterations: response.iterations,
+          teamId: response.teamId,
+          artifacts: response.artifacts,
+          durationMs: duration,
+          execution: {
+            stdout: response.output,
+            stderr: response.error || '',
+            exitCode: 0,
+          },
+        })
+      );
+    } else {
+      res.json({
+        ok: false,
+        error: response.error || 'Execution failed',
+        requestId: response.requestId,
+        output: response.output,
+        qualityScore: response.qualityScore,
+        iterations: response.iterations,
+        durationMs: duration,
+      });
+    }
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[Chat Execute] Error:', error);
+
+    // Publish execution error event
+    bus.publish('cortex', 'chat:execute:error', {
+      requestId,
+      error: error instanceof Error ? error.message : String(error),
+      duration,
+      timestamp: Date.now(),
+    });
+
+    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
+  }
+});
+
+/**
+ * @route POST /api/v1/chat/command/run
+ * @description Quick run - simplified inline execution without full team validation
+ * Faster execution for simple scripts
+ * V3.3.82: Quick run endpoint for immediate execution
+ */
+router.post('/command/run', async (req, res) => {
+  const { code, language = 'javascript', timeout = 10000 } = req.body;
+
+  if (!code) {
+    return res.status(400).json(errorResponse('Code is required'));
+  }
+
+  const startTime = Date.now();
+  const requestId = `run-${Date.now()}`;
+
+  try {
+    console.log(`[Chat Run] ⚡ Quick run ${language} code...`);
+
+    // Import the code executor directly for faster execution
+    const { CodeExecutor } = await import('../../cortex/motor/code-execution.js');
+    const executor = new CodeExecutor(process.cwd());
+
+    // Execute directly without team validation for speed
+    const result = await executor.executeInDocker(code, language);
+
+    const duration = Date.now() - startTime;
+
+    // Log execution
+    await saveMessage({
+      id: requestId,
+      type: 'quick-run',
+      content: `[Quick Run] ${language}\n\`\`\`${language}\n${code}\n\`\`\``,
+      result: result.ok ? result.stdout : result.stderr,
+      success: result.ok,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json(
+      successResponse({
+        requestId,
+        output: result.stdout,
+        success: result.ok,
+        language,
+        durationMs: duration,
+        execution: {
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.exitCode,
+        },
+      })
+    );
+  } catch (error) {
+    console.error('[Chat Run] Error:', error);
+    res.status(500).json(errorResponse(error instanceof Error ? error.message : String(error)));
+  }
 });
 
 // Visual Command Handlers

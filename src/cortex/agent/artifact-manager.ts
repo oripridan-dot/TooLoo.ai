@@ -244,7 +244,10 @@ export class ArtifactManager {
     }
 
     if (filters?.tags && filters.tags.length > 0) {
-      results = results.filter((a) => a.tags && (filters.tags as string[]).some((tag) => (a.tags as string[]).includes(tag)));
+      results = results.filter(
+        (a) =>
+          a.tags && (filters.tags as string[]).some((tag) => (a.tags as string[]).includes(tag))
+      );
     }
 
     if (filters?.createdBy) {

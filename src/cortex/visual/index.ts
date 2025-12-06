@@ -17,7 +17,10 @@ export {
   type DataPoint,
   type DataSeries,
   type ChartOptions,
-  type SVGBuilder,
 } from './visual-cortex-2.js';
 
-export default visualCortex2;
+export { SVGBuilder } from '../creative/svg-generation-engine.js';
+
+// Re-export the singleton for default import
+import { visualCortex2 as vc2 } from './visual-cortex-2.js';
+export default vc2;

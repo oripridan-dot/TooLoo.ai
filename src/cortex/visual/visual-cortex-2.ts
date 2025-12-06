@@ -4,9 +4,26 @@
 // Unifies SVG Generation, Animation, Data Visualization, and Design System
 
 import { bus } from '../../core/event-bus.js';
-import { animationEngine, AnimationEngine, ANIMATION_PRESETS, EASING_CURVES, TIMING_PRESETS } from '../creative/animation-engine.js';
-import { dataVizEngine, DataVizEngine, DataPoint, DataSeries, ChartOptions, CHART_PALETTES } from '../creative/data-viz-engine.js';
-import { svgGenerationEngine, SVGGenerationEngine, SVGBuilder } from '../creative/svg-generation-engine.js';
+import {
+  animationEngine,
+  AnimationEngine,
+  ANIMATION_PRESETS,
+  EASING_CURVES,
+  TIMING_PRESETS,
+} from '../creative/animation-engine.js';
+import {
+  dataVizEngine,
+  DataVizEngine,
+  DataPoint,
+  DataSeries,
+  ChartOptions,
+  CHART_PALETTES,
+} from '../creative/data-viz-engine.js';
+import {
+  svgGenerationEngine,
+  SVGGenerationEngine,
+  SVGBuilder,
+} from '../creative/svg-generation-engine.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -174,10 +191,10 @@ export interface VisualCortex2Response {
 
 /**
  * VisualCortex2 - Enhanced Design Engine
- * 
+ *
  * The central orchestrator for all visual generation in TooLoo.ai
  * Integrates four core modules:
- * 
+ *
  * 1. SVG Generation Engine - Programmatic SVG building
  * 2. Animation Engine - Motion design system
  * 3. Data Viz Engine - Charts and graphs
@@ -292,7 +309,8 @@ export class VisualCortex2 {
    */
   async updateTokens(updates: Partial<DesignTokens>): Promise<DesignTokens> {
     const system = this.getDesignSystem();
-    system.tokens = this.deepMerge(system.tokens, updates) as DesignTokens;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    system.tokens = this.deepMerge(system.tokens as any, updates as any) as unknown as DesignTokens;
     await this.saveDesignSystem(system);
     return system.tokens;
   }
@@ -460,13 +478,17 @@ export class VisualCortex2 {
    */
   private mergeWithDefaults(parsed: Partial<DesignSystem>): DesignSystem {
     const defaults = this.getDefaultDesignSystem();
-    return this.deepMerge(defaults, parsed) as DesignSystem;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.deepMerge(defaults as any, parsed as any) as unknown as DesignSystem;
   }
 
   /**
    * Deep merge utility
    */
-  private deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
+  private deepMerge(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>
+  ): Record<string, unknown> {
     const result = { ...target };
 
     for (const key in source) {
@@ -553,8 +575,8 @@ export class VisualCortex2 {
 
       case 'custom':
         // Allow passing a builder callback
-        const width = (options.width as number) || 800;
-        const height = (options.height as number) || 600;
+        const width = (options['width'] as number) || 800;
+        const height = (options['height'] as number) || 600;
         const builder = this.svg.create(width, height);
         svg = builder.build();
         break;
@@ -567,8 +589,8 @@ export class VisualCortex2 {
       success: true,
       svg,
       metadata: {
-        width: (request.options?.width as number) || 800,
-        height: (request.options?.height as number) || 600,
+        width: (request.options?.['width'] as number) || 800,
+        height: (request.options?.['height'] as number) || 600,
         type: `svg-${subtype}`,
         elements: 1,
         animated: false,
@@ -641,7 +663,7 @@ export class VisualCortex2 {
    */
   private generateAnimation(request: VisualCortex2Request): VisualCortex2Response {
     const subtype = request.subtype || 'css';
-    const presetName = request.options?.preset as keyof typeof ANIMATION_PRESETS;
+    const presetName = request.options?.['preset'] as keyof typeof ANIMATION_PRESETS | undefined;
 
     if (!presetName || !ANIMATION_PRESETS[presetName]) {
       return { success: false, error: `Unknown animation preset: ${presetName}` };
@@ -706,8 +728,8 @@ export class VisualCortex2 {
           success: true,
           svg: this.svg.createCard(options as Parameters<typeof this.svg.createCard>[0]),
           metadata: {
-            width: (options.width as number) || 300,
-            height: (options.height as number) || 180,
+            width: (options['width'] as number) || 300,
+            height: (options['height'] as number) || 180,
             type: 'component-card',
             elements: 1,
             animated: false,
@@ -817,7 +839,10 @@ export class VisualCortex2 {
   /**
    * Quick sparkline generation
    */
-  sparkline(values: number[], options?: { width?: number; height?: number; color?: string }): string {
+  sparkline(
+    values: number[],
+    options?: { width?: number; height?: number; color?: string }
+  ): string {
     return this.dataViz.generateSparkline(values, options);
   }
 
@@ -864,11 +889,6 @@ export const visualCortex2 = VisualCortex2.getInstance();
 export { animationEngine, dataVizEngine, svgGenerationEngine };
 
 // Re-export types
-export type {
-  DataPoint,
-  DataSeries,
-  ChartOptions,
-  SVGBuilder,
-};
+export type { DataPoint, DataSeries, ChartOptions, SVGBuilder };
 
 export default visualCortex2;

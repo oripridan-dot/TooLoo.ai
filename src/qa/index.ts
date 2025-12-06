@@ -42,6 +42,9 @@ export { AutonomousFixer, autonomousFixer } from './agent/autonomous-fixer.js';
 // Types
 export * from './types/index.js';
 
+// Contracts
+export { API_CONTRACTS } from './contracts-generated.js';
+
 // Routes
 export { default as qaRoutes } from './routes/qa.js';
 

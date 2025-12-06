@@ -105,7 +105,10 @@ export class Learner {
   /**
    * Fetch content from a URL with proper error handling and content extraction
    */
-  private async fetchUrlContent(url: string, options: FetchOptions = {}): Promise<{
+  private async fetchUrlContent(
+    url: string,
+    options: FetchOptions = {}
+  ): Promise<{
     content: string;
     title?: string;
     contentType: string;
@@ -129,7 +132,7 @@ export class Learner {
         redirect: followRedirects ? 'follow' : 'manual',
         headers: {
           'User-Agent': 'TooLoo-Learner/3.3.0 (Knowledge Ingestion Bot)',
-          'Accept': 'text/html,application/json,text/plain,*/*',
+          Accept: 'text/html,application/json,text/plain,*/*',
         },
       });
 
@@ -178,7 +181,7 @@ export class Learner {
       };
     } catch (error: any) {
       clearTimeout(timeoutId);
-      
+
       if (error.name === 'AbortError') {
         throw new Error(`Fetch timeout after ${timeout}ms`);
       }
@@ -192,23 +195,34 @@ export class Learner {
   private extractTextFromHtml(html: string): { text: string; title?: string } {
     try {
       const $ = cheerio.load(html);
-      
+
       // Get title
-      const title = $('title').first().text().trim() || 
-                    $('h1').first().text().trim() ||
-                    $('meta[property="og:title"]').attr('content');
+      const title =
+        $('title').first().text().trim() ||
+        $('h1').first().text().trim() ||
+        $('meta[property="og:title"]').attr('content');
 
       // Remove script, style, and other non-content elements
       $('script, style, nav, footer, header, aside, iframe, noscript').remove();
-      
+
       // Get meta description
-      const metaDesc = $('meta[name="description"]').attr('content') ||
-                       $('meta[property="og:description"]').attr('content') || '';
+      const metaDesc =
+        $('meta[name="description"]').attr('content') ||
+        $('meta[property="og:description"]').attr('content') ||
+        '';
 
       // Extract main content (prefer article, main, or body)
       let mainContent = '';
-      const contentSelectors = ['article', 'main', '.content', '#content', '.post', '.article', 'body'];
-      
+      const contentSelectors = [
+        'article',
+        'main',
+        '.content',
+        '#content',
+        '.post',
+        '.article',
+        'body',
+      ];
+
       for (const selector of contentSelectors) {
         const element = $(selector).first();
         if (element.length) {
@@ -219,14 +233,12 @@ export class Learner {
 
       // Clean up the text
       const cleanText = mainContent
-        .replace(/\s+/g, ' ')  // Normalize whitespace
-        .replace(/\n\s*\n/g, '\n\n')  // Normalize line breaks
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .replace(/\n\s*\n/g, '\n\n') // Normalize line breaks
         .trim();
 
       // Combine meta description with content
-      const finalText = metaDesc 
-        ? `${metaDesc}\n\n${cleanText}` 
-        : cleanText;
+      const finalText = metaDesc ? `${metaDesc}\n\n${cleanText}` : cleanText;
 
       return {
         text: finalText.slice(0, this.MAX_CONTENT_LENGTH),
@@ -234,7 +246,12 @@ export class Learner {
       };
     } catch (error) {
       console.warn('[Learner] HTML extraction failed, using raw text');
-      return { text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() };
+      return {
+        text: html
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim(),
+      };
     }
   }
 
@@ -301,9 +318,12 @@ export class Learner {
   /**
    * Ingest content from a URL into the learning system
    */
-  async ingest(url: string, options?: FetchOptions): Promise<{ 
-    success: boolean; 
-    id?: string; 
+  async ingest(
+    url: string,
+    options?: FetchOptions
+  ): Promise<{
+    success: boolean;
+    id?: string;
     error?: string;
     metadata?: Record<string, any>;
   }> {
@@ -346,20 +366,20 @@ export class Learner {
       };
 
       this.memory.sources.push(source);
-      
+
       // Keep only last 100 sources to prevent bloat
       if (this.memory.sources.length > 100) {
         this.memory.sources = this.memory.sources.slice(-100);
       }
-      
+
       await this.saveMemory();
 
       console.log(`[Learner] ✅ Ingested "${title || url}" (${length} chars)`);
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         id,
-        metadata: source.metadata
+        metadata: source.metadata,
       };
     } catch (error: any) {
       console.error(`[Learner] ❌ Failed to ingest ${url}:`, error.message);
@@ -382,7 +402,7 @@ export class Learner {
     for (const url of urls) {
       const result = await this.ingest(url);
       results.push({ url, ...result });
-      
+
       if (result.success) {
         successful++;
       } else {
@@ -390,7 +410,7 @@ export class Learner {
       }
 
       // Small delay between requests to be polite
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     return { successful, failed, results };
@@ -481,7 +501,7 @@ export class Learner {
    * Delete a source by ID
    */
   async deleteSource(id: string): Promise<boolean> {
-    const index = this.memory.sources.findIndex(s => s.id === id);
+    const index = this.memory.sources.findIndex((s) => s.id === id);
     if (index !== -1) {
       this.memory.sources.splice(index, 1);
       await this.saveMemory();
@@ -496,10 +516,11 @@ export class Learner {
   searchSources(query: string, limit: number = 10): Source[] {
     const lowerQuery = query.toLowerCase();
     return this.memory.sources
-      .filter(s => 
-        s.url.toLowerCase().includes(lowerQuery) ||
-        s.content.toLowerCase().includes(lowerQuery) ||
-        (s.metadata.title && s.metadata.title.toLowerCase().includes(lowerQuery))
+      .filter(
+        (s) =>
+          s.url.toLowerCase().includes(lowerQuery) ||
+          s.content.toLowerCase().includes(lowerQuery) ||
+          (s.metadata['title'] && String(s.metadata['title']).toLowerCase().includes(lowerQuery))
       )
       .slice(0, limit);
   }

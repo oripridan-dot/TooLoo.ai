@@ -1,4 +1,4 @@
-// @version 3.3.21
+// @version 3.3.22
 import { bus, SynapsysEvent } from '../core/event-bus.js';
 import { amygdala } from './amygdala/index.js';
 import { orchestrator } from './orchestrator.js';
@@ -31,12 +31,17 @@ import { DisCoverAgent } from './discover/index.js';
 import { ReinforcementLearner } from './learning/reinforcement-learner.js';
 import { EmergenceAmplifier } from './discover/emergence-amplifier.js';
 // V3.3.17: Agent Team Framework & System Execution Hub
-import { 
-  systemExecutionHub, 
+import {
+  systemExecutionHub,
   initializeSystemExecutionHub,
   teamRegistry,
   initializeTeamFramework,
 } from './agent/index.js';
+// V3.3.22: Cognitive Enhancement Systems
+import { metaLearner, MetaLearner } from './cognition/meta-learner.js';
+import { collaborationHub, CollaborationHub } from './agent/collaboration-hub.js';
+// V3.3.157: Visual Cortex 2.0 Enhanced Design Engine
+import { visualCortex2, VisualCortex2 } from './visual/index.js';
 
 import { validationLoop, ValidationLoopOutput } from './cognition/index.js';
 
@@ -93,6 +98,9 @@ export class Cortex {
     metaprogrammer;
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     visualCortex;
+    // V3.3.157: Initialize Visual Cortex 2.0 Enhanced Design Engine
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    visualCortex2;
 
     this.motor = new MotorCortex(bus, process.cwd());
     this.sensory = new SensoryCortex(bus, process.cwd());
@@ -141,7 +149,7 @@ export class Cortex {
     // V3.3.17: Initialize Team Framework & System Execution Hub
     // This connects execution to ALL TooLoo systems
     initializeTeamFramework();
-    initializeSystemExecutionHub().catch(err => {
+    initializeSystemExecutionHub().catch((err) => {
       console.error('[Cortex] Failed to initialize System Execution Hub:', err);
     });
 
@@ -155,7 +163,51 @@ export class Cortex {
       console.log('[Cortex] Processing chat request:', requestId);
       const startTime = Date.now();
 
-      // 1. Quick Intent Analysis (Heuristic for now)
+      const lowerMessage = message.toLowerCase();
+
+      // 0. Capability Questions - Intercept questions about TooLoo's abilities
+      const capabilityPatterns = [
+        /can you (execute|run|compile|build)/i,
+        /do you have (access|ability|capability)/i,
+        /are you able to (execute|run|code)/i,
+        /can you (directly|actually) (execute|run)/i,
+        /(execute|run|compile) code/i,
+      ];
+      const isCapabilityQuestion = capabilityPatterns.some((p) => p.test(message));
+
+      if (isCapabilityQuestion) {
+        console.log('[Cortex] Detected capability question - responding with TooLoo identity');
+        const responseText = `**Yes, absolutely!** I'm TooLoo.ai, and I have full execution capabilities.
+
+🔧 **My Execution Systems:**
+- **System Execution Hub**: Central router for all execution tasks
+- **Motor Cortex**: Spawns processes, runs shell commands, manages daemons
+- **Execution Agent**: Generates AND executes code through validated pipelines
+- **Team Framework**: Every task gets validated by executor+validator agent pairs
+
+⚡ **What I Can Do:**
+- Execute code in multiple languages (Python, JavaScript, TypeScript, etc.)
+- Run shell commands and system processes
+- Create, modify, and delete files
+- Interact with databases and APIs
+- Deploy services and manage infrastructure
+
+I'm not just an AI that talks about code - I'm a system that **does** things. Want me to demonstrate? Just tell me what to execute!`;
+
+        bus.publish('cortex', 'cortex:response', {
+          requestId,
+          data: {
+            response: responseText,
+            provider: 'TooLoo Cortex',
+            timestamp: new Date().toISOString(),
+            meta: { type: 'capability_response' },
+            confidence: 100,
+          },
+        });
+        return;
+      }
+
+      // 1. Quick Intent Analysis (Improved - checks whole message, not just start)
       const actionKeywords = [
         'create',
         'make',
@@ -169,7 +221,9 @@ export class Cortex {
         'modify',
         'write',
       ];
-      const isAction = actionKeywords.some((k) => message.toLowerCase().startsWith(k));
+      const isAction =
+        actionKeywords.some((k) => lowerMessage.startsWith(k)) ||
+        (lowerMessage.includes('please') && actionKeywords.some((k) => lowerMessage.includes(k)));
 
       let responseText = '';
       let provider = '';
@@ -534,6 +588,8 @@ Here are the key points in response:
 }
 
 export { visualCortex } from './imagination/visual-cortex.js';
+// V3.3.157: Visual Cortex 2.0 Enhanced Design Engine
+export { visualCortex2, type VisualCortex2 } from './visual/index.js';
 export {
   ValidationLoop,
   validationLoop,

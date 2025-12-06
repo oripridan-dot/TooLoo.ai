@@ -444,20 +444,28 @@ export const DASHBOARD_WIDGET_EXAMPLE = `
  */
 export function getVisualExample(type: string): string {
   const lowerType = type.toLowerCase();
-  
+
   if (lowerType.includes('chart') || lowerType.includes('graph') || lowerType.includes('data')) {
     return DATA_VISUALIZATION_EXAMPLE;
   }
-  if (lowerType.includes('flow') || lowerType.includes('diagram') || lowerType.includes('architecture')) {
+  if (
+    lowerType.includes('flow') ||
+    lowerType.includes('diagram') ||
+    lowerType.includes('architecture')
+  ) {
     return FLOW_DIAGRAM_EXAMPLE;
   }
   if (lowerType.includes('abstract') || lowerType.includes('art') || lowerType.includes('logo')) {
     return ABSTRACT_ART_EXAMPLE;
   }
-  if (lowerType.includes('dashboard') || lowerType.includes('widget') || lowerType.includes('card')) {
+  if (
+    lowerType.includes('dashboard') ||
+    lowerType.includes('widget') ||
+    lowerType.includes('card')
+  ) {
     return DASHBOARD_WIDGET_EXAMPLE;
   }
-  
+
   // Default to chart example
   return DATA_VISUALIZATION_EXAMPLE;
 }
@@ -466,10 +474,5 @@ export function getVisualExample(type: string): string {
  * Get all example names
  */
 export function getAvailableExamples(): string[] {
-  return [
-    'data-visualization',
-    'flow-diagram', 
-    'abstract-art',
-    'dashboard-widget'
-  ];
+  return ['data-visualization', 'flow-diagram', 'abstract-art', 'dashboard-widget'];
 }

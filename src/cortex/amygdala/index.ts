@@ -159,6 +159,11 @@ export class Amygdala {
     bus.addInterceptor(async (event: SynapsysEvent) => {
       this.eventCount++;
 
+      // Guard against malformed events
+      if (!event || typeof event.type !== 'string') {
+        return true; // Allow but don't process
+      }
+
       // Always allow system/amygdala events to pass (so we don't block our own recovery)
       if (event.type.startsWith('amygdala:') || event.type.startsWith('system:')) {
         return true;

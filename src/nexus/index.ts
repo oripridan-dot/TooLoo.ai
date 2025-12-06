@@ -30,17 +30,23 @@ import diagnosticRoutes from './routes/diagnostic.js';
 import costRoutes from './routes/cost.js';
 import { generateRoutes } from './routes/generate.js';
 import agentRoutes from './routes/agent.js';
+import selfModRoutes from './routes/self-mod.js';
+import cognitiveRoutes from './routes/cognitive.js';
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
 import { NexusInterface } from './interface.js';
 import { precog } from '../precog/index.js';
 import { suggestionAggregator } from '../cortex/discover/suggestion-aggregator.js';
+import { contractEnforcer } from './middleware/contract-enforcer.js';
 
 export function createNexusApp() {
   const app = express();
 
   app.use(express.json());
+
+  // Hard-wire API Contracts
+  app.use(contractEnforcer);
 
   // System Routes
   app.use('/api/v1/system', systemRoutes);
@@ -66,6 +72,8 @@ export function createNexusApp() {
   app.use('/api/v1/cost', costRoutes);
   app.use('/api/v1/generate', generateRoutes);
   app.use('/api/v1/agent', agentRoutes);
+  app.use('/api/v1/system/self', selfModRoutes);
+  app.use('/api/v1/cognitive', cognitiveRoutes);
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)

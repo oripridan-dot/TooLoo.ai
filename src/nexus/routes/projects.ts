@@ -34,6 +34,12 @@ router.get('/', async (req, res) => {
 });
 
 // Create Project
+/**
+ * @description Create a new project
+ * @param {string} name - Project name
+ * @param {string} [description] - Project description
+ * @param {string} [type] - Project type (default: general)
+ */
 router.post('/', async (req, res) => {
   const { name, description, type } = req.body;
   if (!name) return res.status(400).json({ ok: false, error: 'Name required' });

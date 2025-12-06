@@ -295,7 +295,10 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
 
     // Debug: Log content for SVG detection
     if (processedContent.includes('svg') || processedContent.includes('SVG')) {
-      console.log('[EnhancedMarkdown] Content contains SVG-related text, length:', processedContent.length);
+      console.log(
+        '[EnhancedMarkdown] Content contains SVG-related text, length:',
+        processedContent.length
+      );
     }
 
     // PHASE 1: Extract embedded React code from various formats
@@ -1209,7 +1212,10 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
     if (!children) return '';
     if (typeof children === 'string') return children.replace(/\n$/, '');
     if (Array.isArray(children)) {
-      return children.map(c => typeof c === 'string' ? c : String(c || '')).join('').replace(/\n$/, '');
+      return children
+        .map((c) => (typeof c === 'string' ? c : String(c || '')))
+        .join('')
+        .replace(/\n$/, '');
     }
     return String(children).replace(/\n$/, '');
   }, [children]);
@@ -1226,7 +1232,7 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
         codeLength: codeString.length,
         hasContent: codeString.trim().length > 0,
         startsWithSvg: codeString.trim().startsWith('<svg'),
-        preview: codeString.substring(0, 100)
+        preview: codeString.substring(0, 100),
       });
     }
   }, [lang, codeString]);
@@ -2298,7 +2304,8 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
       label: 'Charts & Graphs',
       desc: 'Bar, line, pie charts',
       color: 'cyan',
-      action: 'Create an animated bar chart showing quarterly revenue: Q1: $2.1M, Q2: $2.8M, Q3: $3.2M, Q4: $4.1M',
+      action:
+        'Create an animated bar chart showing quarterly revenue: Q1: $2.1M, Q2: $2.8M, Q3: $3.2M, Q4: $4.1M',
       examples: ['Bar charts', 'Line graphs', 'Pie & donut', 'Gauges', 'Sparklines'],
     },
     {
@@ -2306,7 +2313,8 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
       label: 'Diagrams',
       desc: 'Flow & architecture',
       color: 'purple',
-      action: 'Draw a clean SVG architecture diagram showing a microservices system with API Gateway, Auth Service, and Database layers',
+      action:
+        'Draw a clean SVG architecture diagram showing a microservices system with API Gateway, Auth Service, and Database layers',
       examples: ['Flow diagrams', 'Architecture', 'Mind maps', 'Process flows'],
     },
     {
@@ -2314,7 +2322,8 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
       label: 'Timelines',
       desc: 'Visual histories',
       color: 'emerald',
-      action: 'Create an animated timeline showing the evolution of AI: 1950 Turing Test, 1997 Deep Blue, 2012 ImageNet, 2022 ChatGPT, 2024 GPT-4V',
+      action:
+        'Create an animated timeline showing the evolution of AI: 1950 Turing Test, 1997 Deep Blue, 2012 ImageNet, 2022 ChatGPT, 2024 GPT-4V',
       examples: ['Project milestones', 'Historical events', 'Roadmaps', 'Gantt charts'],
     },
     {
@@ -2322,7 +2331,8 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
       label: 'Infographics',
       desc: 'Data visualization',
       color: 'pink',
-      action: 'Create a beautiful infographic about AI adoption: 75% of enterprises use AI, 45% productivity boost, $500B market by 2025',
+      action:
+        'Create a beautiful infographic about AI adoption: 75% of enterprises use AI, 45% productivity boost, $500B market by 2025',
       examples: ['Statistics', 'Comparisons', 'Metrics', 'KPI dashboards'],
     },
     {
@@ -2330,7 +2340,8 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
       label: 'Animations',
       desc: 'Dynamic visuals',
       color: 'amber',
-      action: 'Show me different animation presets: fadeInUp, bounce, pulse, glow, float, and spin with CSS code',
+      action:
+        'Show me different animation presets: fadeInUp, bounce, pulse, glow, float, and spin with CSS code',
       examples: ['Entrance effects', 'Transitions', 'Loading states', 'Micro-interactions'],
     },
     {
@@ -2338,7 +2349,8 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
       label: 'Components',
       desc: 'Live React code',
       color: 'blue',
-      action: 'Create a React component: an animated stats card showing user growth metrics with a sparkline and percentage change indicator',
+      action:
+        'Create a React component: an animated stats card showing user growth metrics with a sparkline and percentage change indicator',
       examples: ['Cards', 'Badges', 'Buttons', 'Interactive widgets'],
     },
   ];
@@ -2372,10 +2384,13 @@ export const WelcomeMessage = memo(({ onQuickAction }) => {
 
   const colorClasses = {
     cyan: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400/50',
-    purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400/50',
-    emerald: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-400/50',
+    purple:
+      'bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400/50',
+    emerald:
+      'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-400/50',
     pink: 'bg-pink-500/10 border-pink-500/30 text-pink-400 hover:bg-pink-500/20 hover:border-pink-400/50',
-    amber: 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-400/50',
+    amber:
+      'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-400/50',
     blue: 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-400/50',
   };
 

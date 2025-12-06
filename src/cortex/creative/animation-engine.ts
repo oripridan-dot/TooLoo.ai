@@ -637,17 +637,10 @@ export class AnimationEngine {
   /**
    * Generate floating animation
    */
-  generateFloatAnimation(
-    amplitude: number = 10,
-    duration: number = 3000
-  ): string {
+  generateFloatAnimation(amplitude: number = 10, duration: number = 3000): string {
     return this.generateSVGAnimate({
       attributeName: 'transform',
-      values: [
-        'translate(0, 0)',
-        `translate(0, -${amplitude})`,
-        'translate(0, 0)',
-      ],
+      values: ['translate(0, 0)', `translate(0, -${amplitude})`, 'translate(0, 0)'],
       dur: `${duration}ms`,
       repeatCount: 'indefinite',
       calcMode: 'spline',
@@ -694,9 +687,7 @@ export class AnimationEngine {
       `${animation.duration}ms`,
       easing,
       animation.delay ? `${animation.delay}ms` : '',
-      animation.iterations === 'infinite'
-        ? 'infinite'
-        : animation.iterations?.toString() || '1',
+      animation.iterations === 'infinite' ? 'infinite' : animation.iterations?.toString() || '1',
       animation.direction || 'normal',
       animation.fillMode || 'both',
     ].filter(Boolean);
@@ -728,14 +719,40 @@ export class AnimationEngine {
    * Get animation preset by name
    */
   getPreset(name: AnimationPresetName): AnimationDefinition {
-    return { ...ANIMATION_PRESETS[name] } as AnimationDefinition;
+    const preset = ANIMATION_PRESETS[name];
+    return {
+      name: preset.name,
+      keyframes: preset.keyframes.map((kf) => ({ ...kf, properties: { ...kf.properties } })),
+      duration: preset.duration,
+      easing: preset.easing,
+      delay: 'delay' in preset ? (preset as { delay?: number }).delay : undefined,
+      iterations:
+        'iterations' in preset
+          ? (preset as { iterations?: number | 'infinite' }).iterations
+          : undefined,
+      direction:
+        'direction' in preset
+          ? (preset as { direction?: AnimationDefinition['direction'] }).direction
+          : undefined,
+      fillMode:
+        'fillMode' in preset
+          ? (preset as { fillMode?: AnimationDefinition['fillMode'] }).fillMode
+          : undefined,
+    };
   }
 
   /**
    * Get transition preset by name
    */
   getTransitionPreset(name: TransitionPresetName): TransitionSpec {
-    return { ...TRANSITION_PRESETS[name] };
+    const preset = TRANSITION_PRESETS[name];
+    const prop = preset.property;
+    return {
+      property: Array.isArray(prop) ? ([...prop] as string[]) : (prop as string),
+      duration: preset.duration,
+      easing: preset.easing,
+      delay: 'delay' in preset ? (preset as { delay?: number }).delay : undefined,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -745,20 +762,17 @@ export class AnimationEngine {
   /**
    * Create staggered animation delays for a list of elements
    */
-  createStaggerDelays(
-    count: number,
-    staggerMs: number = 100,
-    baseDelay: number = 0
-  ): number[] {
+  createStaggerDelays(count: number, staggerMs: number = 100, baseDelay: number = 0): number[] {
     return Array.from({ length: count }, (_, i) => baseDelay + i * staggerMs);
   }
 
   /**
    * Create animation sequence from multiple animations
    */
-  createSequence(
-    animations: { animation: AnimationDefinition; startAfter?: number }[]
-  ): { animations: AnimationDefinition[]; totalDuration: number } {
+  createSequence(animations: { animation: AnimationDefinition; startAfter?: number }[]): {
+    animations: AnimationDefinition[];
+    totalDuration: number;
+  } {
     let currentTime = 0;
     const sequencedAnimations: AnimationDefinition[] = [];
 
@@ -792,7 +806,8 @@ export class AnimationEngine {
       fade: 'fadeIn',
     };
 
-    return this.getPreset(directionMap[direction]);
+    const presetName = directionMap[direction] ?? 'fadeIn';
+    return this.getPreset(presetName);
   }
 
   // -------------------------------------------------------------------------

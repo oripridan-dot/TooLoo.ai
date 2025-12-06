@@ -131,30 +131,62 @@ const STUB_PATTERNS = [
 const ACCEPTABLE_PLACEHOLDERS: Array<{ file: string; line: number; reason: string }> = [
   // Design routes - Figma node data not available in this context
   { file: 'src/nexus/routes/design.ts', line: 181, reason: 'Figma node data not accessible here' },
-  { file: 'src/nexus/routes/routes/design.ts', line: 181, reason: 'Figma node data not accessible here' },
-  
+  {
+    file: 'src/nexus/routes/routes/design.ts',
+    line: 181,
+    reason: 'Figma node data not accessible here',
+  },
+
   // Cortex synthesizer - latency tracking not yet implemented
-  { file: 'src/cortex/index.ts', line: 354, reason: 'Synthesizer latency tracking planned for v3.4' },
-  
+  {
+    file: 'src/cortex/index.ts',
+    line: 354,
+    reason: 'Synthesizer latency tracking planned for v3.4',
+  },
+
   // PerfectionEnforcer itself - these are pattern definitions and messages, not stubs
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 72, reason: 'Pattern definition comment' },
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 85, reason: 'Pattern definition regex' },
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 818, reason: 'Error message template' },
   { file: 'src/qa/guards/perfection-enforcer.ts', line: 820, reason: 'Error message template' },
-  { file: 'src/qa/guards/perfection-enforcer.ts', line: 862, reason: 'Recommendation message string' },
-  { file: 'src/qa/guards/perfection-enforcer.ts', line: 865, reason: 'Recommendation message string' },
-  
+  {
+    file: 'src/qa/guards/perfection-enforcer.ts',
+    line: 862,
+    reason: 'Recommendation message string',
+  },
+  {
+    file: 'src/qa/guards/perfection-enforcer.ts',
+    line: 865,
+    reason: 'Recommendation message string',
+  },
+
   // Autonomous fixer - template for generated stubs (intentional)
-  { file: 'src/qa/agent/autonomous-fixer.ts', line: 468, reason: 'Template for auto-generated route stubs' },
-  
+  {
+    file: 'src/qa/agent/autonomous-fixer.ts',
+    line: 468,
+    reason: 'Template for auto-generated route stubs',
+  },
+
   // Training camp - mastery calculation is gradual
-  { file: 'src/precog/engine/training-camp.ts', line: 1394, reason: 'Mastery scoring system in development' },
-  
+  {
+    file: 'src/precog/engine/training-camp.ts',
+    line: 1394,
+    reason: 'Mastery scoring system in development',
+  },
+
   // System orchestrator - PID/uptime tracking not critical
-  { file: 'src/cortex/system-model/orchestrator.ts', line: 295, reason: 'Process tracking non-essential' },
-  
+  {
+    file: 'src/cortex/system-model/orchestrator.ts',
+    line: 295,
+    reason: 'Process tracking non-essential',
+  },
+
   // Hippocampus - response time tracking planned
-  { file: 'src/cortex/memory/hippocampus.ts', line: 129, reason: 'Response time metrics planned for v3.4' },
+  {
+    file: 'src/cortex/memory/hippocampus.ts',
+    line: 129,
+    reason: 'Response time metrics planned for v3.4',
+  },
 ];
 
 // API call patterns for future use
@@ -348,8 +380,10 @@ export class PerfectionEnforcer {
     }
 
     // Filter out acceptable placeholders (documented limitations)
-    const filteredStubs = stubs.filter((stub) => !this.isAcceptablePlaceholder(stub.file, stub.line));
-    
+    const filteredStubs = stubs.filter(
+      (stub) => !this.isAcceptablePlaceholder(stub.file, stub.line)
+    );
+
     return filteredStubs;
   }
 

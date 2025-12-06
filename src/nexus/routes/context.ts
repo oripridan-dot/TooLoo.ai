@@ -1,4 +1,4 @@
-// @version 2.1.239
+// @version 2.2.0
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -24,6 +24,37 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// Session context store (simple in-memory for now)
+let currentSessionId = 'default';
+
+// GET /api/v1/context/current
+router.get('/current', (req, res) => {
+  res.json({
+    ok: true,
+    success: true,
+    data: {
+      sessionId: currentSessionId,
+      session: currentSessionId,
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
+// POST /api/v1/context/session
+router.post('/session', (req, res) => {
+  const { sessionId } = req.body;
+  if (sessionId) {
+    currentSessionId = sessionId;
+  }
+  res.json({
+    ok: true,
+    success: true,
+    data: {
+      sessionId: currentSessionId,
+    },
+  });
+});
 
 // POST /api/v1/context/upload
 router.post('/upload', upload.single('file'), (req, res) => {

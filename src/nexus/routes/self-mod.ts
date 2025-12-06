@@ -1,12 +1,12 @@
 // @version 3.3.92
 /**
  * TooLoo Self-Modification API Routes
- * 
+ *
  * Allows TooLoo to read, edit, and create its own source code through the chat interface.
  * All modifications are logged, backed up, and can be reverted.
- * 
+ *
  * ⚠️ This is a powerful capability that should be used responsibly!
- * 
+ *
  * @module nexus/routes/self-mod
  */
 
@@ -31,20 +31,22 @@ const errorResponse = (message: string, code?: string) => ({ ok: false, error: m
  */
 router.get('/file', async (req: Request, res: Response) => {
   const { path: filePath } = req.query;
-  
+
   if (!filePath || typeof filePath !== 'string') {
     return res.status(400).json(errorResponse('Path is required'));
   }
-  
+
   console.log(`[SelfMod API] Reading file: ${filePath}`);
   const result = await selfMod.readFile(filePath);
-  
+
   if (result.success) {
-    res.json(successResponse({
-      path: filePath,
-      content: (result as any).content,
-      message: result.message,
-    }));
+    res.json(
+      successResponse({
+        path: filePath,
+        content: (result as any).content,
+        message: result.message,
+      })
+    );
   } else {
     res.status(400).json(errorResponse(result.message, result.error));
   }
@@ -57,14 +59,16 @@ router.get('/file', async (req: Request, res: Response) => {
  */
 router.get('/files', async (req: Request, res: Response) => {
   const dirPath = (req.query.path as string) || 'src';
-  
+
   try {
     const files = await selfMod.listFiles(dirPath);
-    res.json(successResponse({ 
-      directory: dirPath, 
-      files,
-      count: files.length,
-    }));
+    res.json(
+      successResponse({
+        directory: dirPath,
+        files,
+        count: files.length,
+      })
+    );
   } catch (error: any) {
     res.status(500).json(errorResponse(error.message));
   }
@@ -79,21 +83,23 @@ router.get('/files', async (req: Request, res: Response) => {
  */
 router.get('/search', async (req: Request, res: Response) => {
   const { pattern, regex, filePattern } = req.query;
-  
+
   if (!pattern || typeof pattern !== 'string') {
     return res.status(400).json(errorResponse('Search pattern is required'));
   }
-  
+
   const results = await selfMod.searchCode(pattern, {
     isRegex: regex === 'true',
     filePattern: (filePattern as string) || '*.ts',
   });
-  
-  res.json(successResponse({
-    pattern,
-    results,
-    count: results.length,
-  }));
+
+  res.json(
+    successResponse({
+      pattern,
+      results,
+      count: results.length,
+    })
+  );
 });
 
 // ============================================================================
@@ -110,23 +116,21 @@ router.get('/search', async (req: Request, res: Response) => {
  */
 router.post('/edit', async (req: Request, res: Response) => {
   const { filePath, oldCode, newCode, reason } = req.body;
-  
+
   if (!filePath || !oldCode || newCode === undefined || !reason) {
-    return res.status(400).json(errorResponse(
-      'Required: filePath, oldCode, newCode, reason'
-    ));
+    return res.status(400).json(errorResponse('Required: filePath, oldCode, newCode, reason'));
   }
-  
+
   console.log(`[SelfMod API] Editing file: ${filePath}`);
   console.log(`[SelfMod API] Reason: ${reason}`);
-  
+
   const result = await selfMod.editFile({
     filePath,
     oldCode,
     newCode,
     reason,
   });
-  
+
   // Emit event for dashboard
   bus.publish('cortex', 'self-mod:api-edit', {
     filePath,
@@ -134,14 +138,16 @@ router.post('/edit', async (req: Request, res: Response) => {
     success: result.success,
     timestamp: new Date().toISOString(),
   });
-  
+
   if (result.success) {
-    res.json(successResponse({
-      message: result.message,
-      filePath: result.filePath,
-      backup: result.backup,
-      diff: result.diff,
-    }));
+    res.json(
+      successResponse({
+        message: result.message,
+        filePath: result.filePath,
+        backup: result.backup,
+        diff: result.diff,
+      })
+    );
   } else {
     res.status(400).json(errorResponse(result.message, result.error));
   }
@@ -154,21 +160,25 @@ router.post('/edit', async (req: Request, res: Response) => {
  */
 router.post('/multi-edit', async (req: Request, res: Response) => {
   const { edits } = req.body;
-  
+
   if (!Array.isArray(edits) || edits.length === 0) {
     return res.status(400).json(errorResponse('Edits array is required'));
   }
-  
+
   console.log(`[SelfMod API] Multi-edit: ${edits.length} edits`);
-  
+
   const results = await selfMod.multiEdit(edits);
-  const allSuccess = results.every(r => r.success);
-  
-  res.json(allSuccess ? successResponse({ results }) : { 
-    ok: false, 
-    results,
-    message: 'Some edits failed - rolled back',
-  });
+  const allSuccess = results.every((r) => r.success);
+
+  res.json(
+    allSuccess
+      ? successResponse({ results })
+      : {
+          ok: false,
+          results,
+          message: 'Some edits failed - rolled back',
+        }
+  );
 });
 
 /**
@@ -180,22 +190,22 @@ router.post('/multi-edit', async (req: Request, res: Response) => {
  */
 router.post('/create', async (req: Request, res: Response) => {
   const { path: filePath, content, reason } = req.body;
-  
+
   if (!filePath || content === undefined || !reason) {
-    return res.status(400).json(errorResponse(
-      'Required: path, content, reason'
-    ));
+    return res.status(400).json(errorResponse('Required: path, content, reason'));
   }
-  
+
   console.log(`[SelfMod API] Creating file: ${filePath}`);
-  
+
   const result = await selfMod.createFile(filePath, content, reason);
-  
+
   if (result.success) {
-    res.json(successResponse({
-      message: result.message,
-      filePath: result.filePath,
-    }));
+    res.json(
+      successResponse({
+        message: result.message,
+        filePath: result.filePath,
+      })
+    );
   } else {
     res.status(400).json(errorResponse(result.message, result.error));
   }
@@ -209,18 +219,20 @@ router.post('/create', async (req: Request, res: Response) => {
  */
 router.delete('/file', async (req: Request, res: Response) => {
   const { path: filePath, reason } = req.body;
-  
+
   if (!filePath || !reason) {
     return res.status(400).json(errorResponse('Required: path, reason'));
   }
-  
+
   const result = await selfMod.deleteFile(filePath, reason);
-  
+
   if (result.success) {
-    res.json(successResponse({
-      message: result.message,
-      backup: result.backup,
-    }));
+    res.json(
+      successResponse({
+        message: result.message,
+        backup: result.backup,
+      })
+    );
   } else {
     res.status(400).json(errorResponse(result.message, result.error));
   }
@@ -257,13 +269,13 @@ router.get('/git/diff', async (req: Request, res: Response) => {
  */
 router.post('/git/commit', async (req: Request, res: Response) => {
   const { message } = req.body;
-  
+
   if (!message) {
     return res.status(400).json(errorResponse('Commit message is required'));
   }
-  
+
   const result = await selfMod.commitChanges(message);
-  
+
   if (result.success) {
     res.json(successResponse({ message: result.message }));
   } else {
@@ -291,13 +303,13 @@ router.get('/backups', async (_req: Request, res: Response) => {
  */
 router.post('/restore', async (req: Request, res: Response) => {
   const { backupPath } = req.body;
-  
+
   if (!backupPath) {
     return res.status(400).json(errorResponse('Backup path is required'));
   }
-  
+
   const result = await selfMod.restoreBackup(backupPath);
-  
+
   if (result.success) {
     res.json(successResponse({ message: result.message }));
   } else {
@@ -316,14 +328,16 @@ router.post('/restore', async (req: Request, res: Response) => {
  */
 router.post('/test', async (req: Request, res: Response) => {
   const { pattern } = req.body;
-  
+
   console.log('[SelfMod API] Running tests...');
   const result = await selfMod.runTests(pattern);
-  
-  res.json(successResponse({
-    passed: result.passed,
-    message: result.message,
-  }));
+
+  res.json(
+    successResponse({
+      passed: result.passed,
+      message: result.message,
+    })
+  );
 });
 
 // ============================================================================
@@ -348,27 +362,29 @@ router.get('/log', (_req: Request, res: Response) => {
  * @description Get info about self-modification capabilities
  */
 router.get('/capabilities', (_req: Request, res: Response) => {
-  res.json(successResponse({
-    capabilities: [
-      { name: 'readFile', description: 'Read source code files' },
-      { name: 'editFile', description: 'Edit files with find/replace' },
-      { name: 'createFile', description: 'Create new files' },
-      { name: 'deleteFile', description: 'Delete files (with backup)' },
-      { name: 'searchCode', description: 'Search codebase for patterns' },
-      { name: 'listFiles', description: 'List files in directories' },
-      { name: 'gitCommit', description: 'Commit changes to git' },
-      { name: 'runTests', description: 'Run tests after changes' },
-      { name: 'restoreBackup', description: 'Restore from backups' },
-    ],
-    safetyFeatures: [
-      'Automatic backups before edits',
-      'Protected directories (node_modules, .git)',
-      'Critical file warnings',
-      'Atomic multi-edit with rollback',
-      'Full modification log',
-    ],
-    version: '3.3.90',
-  }));
+  res.json(
+    successResponse({
+      capabilities: [
+        { name: 'readFile', description: 'Read source code files' },
+        { name: 'editFile', description: 'Edit files with find/replace' },
+        { name: 'createFile', description: 'Create new files' },
+        { name: 'deleteFile', description: 'Delete files (with backup)' },
+        { name: 'searchCode', description: 'Search codebase for patterns' },
+        { name: 'listFiles', description: 'List files in directories' },
+        { name: 'gitCommit', description: 'Commit changes to git' },
+        { name: 'runTests', description: 'Run tests after changes' },
+        { name: 'restoreBackup', description: 'Restore from backups' },
+      ],
+      safetyFeatures: [
+        'Automatic backups before edits',
+        'Protected directories (node_modules, .git)',
+        'Critical file warnings',
+        'Atomic multi-edit with rollback',
+        'Full modification log',
+      ],
+      version: '3.3.90',
+    })
+  );
 });
 
 export default router;

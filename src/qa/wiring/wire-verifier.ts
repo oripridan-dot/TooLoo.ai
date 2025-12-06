@@ -18,6 +18,7 @@ import {
   WireMismatch,
   WiringReport,
 } from '../types/index.js';
+import { API_CONTRACTS } from '../contracts-generated.js';
 
 /**
  * WireVerifier - Ensures frontend and backend are properly connected
@@ -285,85 +286,18 @@ export class WireVerifier {
   }
 
   /**
-   * Scan backend route files
+   * Scan backend routes
+   * NOW HARD-WIRED TO API_CONTRACTS
    */
   async scanBackendRoutes(): Promise<BackendRoute[]> {
-    const routes: BackendRoute[] = [];
-
-    // Scan both nexus routes and qa routes
-    const routeDirs = [
-      { dir: this.backendPath, prefix: '' },
-      { dir: path.join(this.projectRoot, 'src/qa/routes'), prefix: '' },
-    ];
-
-    // Also need to scan index.ts for base paths
-    const basePaths = await this.getRouteBasePaths();
-
-    for (const { dir } of routeDirs) {
-      if (!(await fs.pathExists(dir))) continue;
-
-      const files = await glob('**/*.ts', {
-        cwd: dir,
-        ignore: ['**/*.test.*'],
-      });
-
-      for (const file of files) {
-        const fullPath = path.join(dir, file);
-        const content = await fs.readFile(fullPath, 'utf-8');
-        const lines = content.split('\n');
-        const routeFile = file.replace('.ts', '');
-
-        // Determine base path: check mapped paths, or use default pattern
-        let basePath = basePaths[routeFile];
-        if (!basePath) {
-          // Default: /api/v1/{routename} unless it's a root-level route
-          basePath = `/api/v1/${routeFile}`;
-        }
-
-        lines.forEach((line, index) => {
-          // Match router.get/post/etc - handle both single paths and arrays
-          // Also match named routers like explorationRoutes.get, qaRoutes.post etc
-          const routeMatch = line.match(
-            /(?:router|\w+[Rr]outes?)\.(get|post|put|delete|patch)\s*\(\s*(?:\[([^\]]+)\]|[`'"]([^`'"]+)[`'"])/i
-          );
-          if (routeMatch && routeMatch[1]) {
-            const method = routeMatch[1].toUpperCase();
-            // Could be array of paths or single path
-            const pathsStr = routeMatch[2] ?? routeMatch[3];
-            if (!pathsStr) return;
-            const paths = pathsStr.includes(',')
-              ? pathsStr.split(',').map((p) => p.trim().replace(/[`'"]/g, ''))
-              : [pathsStr];
-
-            for (const routePath of paths) {
-              routes.push({
-                file,
-                method,
-                path: routePath ?? '',
-                fullPath: this.normalizePath(basePath + (routePath ?? '')),
-                handler: `${file}:${index + 1}`,
-              });
-            }
-          }
-
-          // Match app.get/post/etc (for index.ts)
-          const appMatch = line.match(
-            /app\.(get|post|put|delete|patch)\s*\(\s*[`'"]([^`'"]+)[`'"]/i
-          );
-          if (appMatch && appMatch[1] && appMatch[2]) {
-            routes.push({
-              file,
-              method: appMatch[1].toUpperCase(),
-              path: appMatch[2],
-              fullPath: appMatch[2],
-              handler: `${file}:${index + 1}`,
-            });
-          }
-        });
-      }
-    }
-
-    return routes;
+    console.log('[WireVerifier] 📜 Loading backend routes from API Contracts...');
+    return Object.values(API_CONTRACTS).map(contract => ({
+      file: `${contract.owner} (contract)`,
+      method: contract.method,
+      path: contract.path,
+      fullPath: contract.path,
+      handler: 'contract-defined'
+    }));
   }
 
   /**

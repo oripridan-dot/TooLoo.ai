@@ -54,7 +54,7 @@ const CortexCore = memo(({ activeProvider, processingState, className = '' }) =>
       >
         <div className="w-full h-full rounded-full border border-dashed border-white/5" />
       </motion.div>
-      
+
       {/* Core circle */}
       <motion.div
         ref={coreRef}
@@ -91,15 +91,7 @@ CortexCore.displayName = 'CortexCore';
 // PROVIDER NODE - Individual provider in the orbital (simplified)
 // ============================================================================
 
-const ProviderNode = memo(({ 
-  provider, 
-  angle, 
-  radius, 
-  isActive, 
-  isHovered,
-  onClick,
-  onHover,
-}) => {
+const ProviderNode = memo(({ provider, angle, radius, isActive, isHovered, onClick, onHover }) => {
   const config = PROVIDERS[provider];
   if (!config) return null;
 
@@ -130,22 +122,26 @@ const ProviderNode = memo(({
           ${isActive ? 'bg-black/80' : 'bg-black/40 hover:bg-black/60'}
         `}
         style={{
-          borderColor: isActive ? config.color : isHovered ? `${config.color}80` : 'rgba(255,255,255,0.1)',
-          boxShadow: isActive 
+          borderColor: isActive
+            ? config.color
+            : isHovered
+              ? `${config.color}80`
+              : 'rgba(255,255,255,0.1)',
+          boxShadow: isActive
             ? `0 0 30px ${config.color}80, 0 0 60px ${config.color}40, inset 0 0 20px ${config.color}20`
             : isHovered
-            ? `0 0 20px ${config.color}40`
-            : 'none',
+              ? `0 0 20px ${config.color}40`
+              : 'none',
         }}
       >
-        <span 
+        <span
           className="text-lg transition-colors"
           style={{ color: isActive || isHovered ? config.color : 'rgba(255,255,255,0.5)' }}
         >
           {config.icon}
         </span>
       </motion.div>
-      
+
       {/* Label */}
       <AnimatePresence>
         {(isActive || isHovered) && (
@@ -155,7 +151,7 @@ const ProviderNode = memo(({
             exit={{ opacity: 0, y: -5 }}
             className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap"
           >
-            <span 
+            <span
               className="text-xs font-medium px-2 py-1 rounded-full bg-black/80 border border-white/10"
               style={{ color: config.color }}
             >
@@ -180,7 +176,7 @@ const MetricsPanel = memo(({ metrics, className = '' }) => {
       <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
         Processing Metrics
       </h3>
-      
+
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">Requests/min</span>
@@ -196,7 +192,9 @@ const MetricsPanel = memo(({ metrics, className = '' }) => {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">Cost Today</span>
-          <span className="text-sm font-mono text-amber-400">${metrics?.costToday?.toFixed(4) || '0.0000'}</span>
+          <span className="text-sm font-mono text-amber-400">
+            ${metrics?.costToday?.toFixed(4) || '0.0000'}
+          </span>
         </div>
       </div>
     </LiquidPanel>
@@ -257,66 +255,73 @@ const Cortex = memo(({ className = '' }) => {
 
   // Quick action handlers
   const handleRefreshProviders = useCallback(async () => {
-    setActionFeedback(prev => ({ ...prev, refresh: 'loading' }));
+    setActionFeedback((prev) => ({ ...prev, refresh: 'loading' }));
     try {
       await fetch('/api/v1/providers/refresh', { method: 'POST' });
-      setActionFeedback(prev => ({ ...prev, refresh: 'success' }));
-      setTimeout(() => setActionFeedback(prev => ({ ...prev, refresh: null })), 2000);
+      setActionFeedback((prev) => ({ ...prev, refresh: 'success' }));
+      setTimeout(() => setActionFeedback((prev) => ({ ...prev, refresh: null })), 2000);
     } catch (e) {
-      setActionFeedback(prev => ({ ...prev, refresh: null }));
+      setActionFeedback((prev) => ({ ...prev, refresh: null }));
     }
   }, []);
 
   const handleViewHistory = useCallback(async () => {
-    setActionFeedback(prev => ({ ...prev, history: 'loading' }));
+    setActionFeedback((prev) => ({ ...prev, history: 'loading' }));
     try {
       const res = await fetch('/api/v1/cortex/history');
       const data = await res.json();
-      setActionFeedback(prev => ({ ...prev, history: 'success' }));
-      
+      setActionFeedback((prev) => ({ ...prev, history: 'success' }));
+
       // Show history in a more user-friendly way
       if (data.ok && data.data) {
         const { providers, totalInteractions, recentActivity } = data.data;
         console.log('[Cortex] History:', data.data);
-        
+
         // Could open a modal here, for now show summary
-        const summary = providers.map(p => 
-          `${p.provider}: ${p.interactions} calls, ${Math.round(p.successRate * 100)}% success`
-        ).join('\n');
-        
+        const summary = providers
+          .map(
+            (p) =>
+              `${p.provider}: ${p.interactions} calls, ${Math.round(p.successRate * 100)}% success`
+          )
+          .join('\n');
+
         // Dispatch event for modal system or sidebar
-        window.dispatchEvent(new CustomEvent('cortex:history', { 
-          detail: { providers, totalInteractions, recentActivity } 
-        }));
+        window.dispatchEvent(
+          new CustomEvent('cortex:history', {
+            detail: { providers, totalInteractions, recentActivity },
+          })
+        );
       }
-      setTimeout(() => setActionFeedback(prev => ({ ...prev, history: null })), 2000);
+      setTimeout(() => setActionFeedback((prev) => ({ ...prev, history: null })), 2000);
     } catch (e) {
       console.error('[Cortex] History fetch failed:', e);
-      setActionFeedback(prev => ({ ...prev, history: null }));
+      setActionFeedback((prev) => ({ ...prev, history: null }));
     }
   }, []);
 
   const handleRunBenchmark = useCallback(async () => {
-    setActionFeedback(prev => ({ ...prev, benchmark: 'loading' }));
+    setActionFeedback((prev) => ({ ...prev, benchmark: 'loading' }));
     try {
       const res = await fetch('/api/v1/cortex/benchmark', { method: 'POST' });
       const data = await res.json();
-      
+
       if (data.ok && data.data) {
         console.log('[Cortex] Benchmark results:', data.data);
-        setActionFeedback(prev => ({ ...prev, benchmark: 'success' }));
-        
+        setActionFeedback((prev) => ({ ...prev, benchmark: 'success' }));
+
         // Dispatch event for results display
-        window.dispatchEvent(new CustomEvent('cortex:benchmark', { 
-          detail: data.data 
-        }));
+        window.dispatchEvent(
+          new CustomEvent('cortex:benchmark', {
+            detail: data.data,
+          })
+        );
       } else {
-        setActionFeedback(prev => ({ ...prev, benchmark: null }));
+        setActionFeedback((prev) => ({ ...prev, benchmark: null }));
       }
-      setTimeout(() => setActionFeedback(prev => ({ ...prev, benchmark: null })), 3000);
+      setTimeout(() => setActionFeedback((prev) => ({ ...prev, benchmark: null })), 3000);
     } catch (e) {
       console.error('[Cortex] Benchmark failed:', e);
-      setActionFeedback(prev => ({ ...prev, benchmark: null }));
+      setActionFeedback((prev) => ({ ...prev, benchmark: null }));
     }
   }, []);
 
@@ -341,12 +346,18 @@ const Cortex = memo(({ className = '' }) => {
             />
             <span className="text-xs text-gray-400">{Object.keys(PROVIDERS).length} Providers</span>
           </div>
-          <span className={`
+          <span
+            className={`
             px-2 py-1 rounded-full text-xs font-medium
-            ${processingState === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 
-              processingState === 'thinking' ? 'bg-purple-500/20 text-purple-400 animate-pulse' :
-              'bg-gray-500/20 text-gray-400'}
-          `}>
+            ${
+              processingState === 'active'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : processingState === 'thinking'
+                  ? 'bg-purple-500/20 text-purple-400 animate-pulse'
+                  : 'bg-gray-500/20 text-gray-400'
+            }
+          `}
+          >
             {processingState.charAt(0).toUpperCase() + processingState.slice(1)}
           </span>
         </div>
@@ -356,9 +367,12 @@ const Cortex = memo(({ className = '' }) => {
       <div className="flex-1 flex">
         {/* Orbital visualization */}
         <div className="flex-1 flex items-center justify-center relative">
-          <div className="relative" style={{ width: orbitRadius * 2 + 100, height: orbitRadius * 2 + 100 }}>
+          <div
+            className="relative"
+            style={{ width: orbitRadius * 2 + 100, height: orbitRadius * 2 + 100 }}
+          >
             {/* Orbit ring */}
-            <div 
+            <div
               className="absolute border border-white/5 rounded-full"
               style={{
                 width: orbitRadius * 2,
@@ -368,13 +382,10 @@ const Cortex = memo(({ className = '' }) => {
                 transform: 'translate(-50%, -50%)',
               }}
             />
-            
+
             {/* Core */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <CortexCore 
-                activeProvider={activeProvider} 
-                processingState={processingState}
-              />
+              <CortexCore activeProvider={activeProvider} processingState={processingState} />
             </div>
 
             {/* Provider nodes */}
@@ -399,16 +410,14 @@ const Cortex = memo(({ className = '' }) => {
         {/* Side panel */}
         <div className="w-80 border-l border-white/5 p-4 space-y-4 overflow-auto">
           <MetricsPanel metrics={metrics} />
-          
+
           {/* Active provider details */}
           {activeProvider && (
             <LiquidPanel variant="elevated" className="p-4">
               <h3 className="text-sm font-medium text-white mb-2">
                 {PROVIDERS[activeProvider]?.name}
               </h3>
-              <p className="text-xs text-gray-500 mb-3">
-                Currently selected for processing
-              </p>
+              <p className="text-xs text-gray-500 mb-3">Currently selected for processing</p>
               <div className="flex gap-2">
                 <button className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition-colors">
                   Test
@@ -426,35 +435,55 @@ const Cortex = memo(({ className = '' }) => {
               Quick Actions
             </h3>
             <div className="space-y-2">
-              <button 
+              <button
                 onClick={handleRefreshProviders}
                 className={`w-full px-3 py-2 rounded-lg text-sm text-left transition-colors flex items-center gap-2 ${
-                  actionFeedback.refresh === 'success' 
-                    ? 'bg-emerald-500/20 text-emerald-300' 
+                  actionFeedback.refresh === 'success'
+                    ? 'bg-emerald-500/20 text-emerald-300'
                     : 'bg-white/5 hover:bg-white/10 text-gray-300'
                 }`}
               >
                 {actionFeedback.refresh === 'loading' ? (
-                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>🔄</motion.span>
-                ) : actionFeedback.refresh === 'success' ? '✓' : '🔄'} Refresh Providers
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    🔄
+                  </motion.span>
+                ) : actionFeedback.refresh === 'success' ? (
+                  '✓'
+                ) : (
+                  '🔄'
+                )}{' '}
+                Refresh Providers
               </button>
-              <button 
+              <button
                 onClick={handleViewHistory}
                 className="w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-gray-300 text-left transition-colors"
               >
                 📊 View History
               </button>
-              <button 
+              <button
                 onClick={handleRunBenchmark}
                 className={`w-full px-3 py-2 rounded-lg text-sm text-left transition-colors flex items-center gap-2 ${
-                  actionFeedback.benchmark === 'success' 
-                    ? 'bg-emerald-500/20 text-emerald-300' 
+                  actionFeedback.benchmark === 'success'
+                    ? 'bg-emerald-500/20 text-emerald-300'
                     : 'bg-white/5 hover:bg-white/10 text-gray-300'
                 }`}
               >
                 {actionFeedback.benchmark === 'loading' ? (
-                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>⚡</motion.span>
-                ) : actionFeedback.benchmark === 'success' ? '✓' : '⚡'} Run Benchmark
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    ⚡
+                  </motion.span>
+                ) : actionFeedback.benchmark === 'success' ? (
+                  '✓'
+                ) : (
+                  '⚡'
+                )}{' '}
+                Run Benchmark
               </button>
             </div>
           </LiquidPanel>

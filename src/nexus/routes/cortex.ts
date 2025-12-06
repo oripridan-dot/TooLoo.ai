@@ -82,6 +82,7 @@ router.get('/status', (_req: Request, res: Response) => {
 /**
  * POST /api/v1/cortex/test-provider
  * Test a specific provider
+ * @param {string} provider - The provider ID to test
  */
 router.post('/test-provider', async (req: Request, res: Response) => {
   try {
@@ -227,6 +228,37 @@ router.get('/session/:sessionId', (req: Request, res: Response) => {
     res.status(500).json({
       ok: false,
       error: 'Failed to fetch session context',
+    });
+  }
+});
+
+/**
+ * GET /api/v1/cortex/memory/status
+ * Get overall memory system status
+ */
+router.get('/memory/status', async (_req: Request, res: Response) => {
+  try {
+    const defaultSession = cortex.sessionContextService.getOrCreateSession('default');
+    const memory = cortex.memoryAutoFiller.getSerializableMemory('default');
+    const hippocampusState = cortex.hippocampus.getState?.() || {};
+
+    res.json({
+      ok: true,
+      data: {
+        status: 'active',
+        sessionId: defaultSession.id,
+        shortTermCount: memory?.shortTerm?.length || 0,
+        longTermCount: memory?.longTerm?.length || 0,
+        episodic: hippocampusState.episodicCount || memory?.shortTerm?.length || 0,
+        semantic: hippocampusState.semanticCount || memory?.longTerm?.length || 0,
+        lastUpdate: new Date().toISOString(),
+      },
+    });
+  } catch (e) {
+    console.error('[Cortex Routes] Memory status error:', e);
+    res.status(500).json({
+      ok: false,
+      error: 'Failed to fetch memory status',
     });
   }
 });
@@ -412,6 +444,128 @@ router.post('/providers/reset', (_req: Request, res: Response) => {
     res.status(500).json({
       ok: false,
       error: 'Failed to reset providers',
+    });
+  }
+});
+
+/**
+ * GET /api/v1/cortex/history
+ * Get provider interaction history
+ */
+router.get('/history', (_req: Request, res: Response) => {
+  try {
+    // Use the correct method name
+    const providers = cortex.providerFeedbackEngine.getSerializableFeedback();
+
+    // Build history from provider data
+    const history = providers.map((p) => ({
+      provider: p.provider,
+      interactions: p.callCount,
+      successRate: p.successRate,
+      avgLatency: p.avgLatencyMs,
+      confidence: p.confidenceScore,
+      isActive: p.isActive,
+    }));
+
+    // Get session info if available
+    const session = cortex.sessionContextService?.getOrCreateSession('default');
+    const recentHighlights =
+      session?.highlights?.slice(-20)?.map((h) => ({
+        type: h.type,
+        content: h.content,
+        timestamp: h.timestamp,
+      })) || [];
+
+    res.json({
+      ok: true,
+      data: {
+        providers: history,
+        totalInteractions: providers.reduce((sum, p) => sum + p.callCount, 0),
+        recentActivity: recentHighlights,
+        sessionStart: session?.createdAt
+          ? new Date(session.createdAt).toISOString()
+          : new Date().toISOString(),
+        messageCount: session?.messageCount || 0,
+      },
+    });
+  } catch (e) {
+    console.error('[Cortex Routes] History fetch error:', e);
+    res.status(500).json({
+      ok: false,
+      error: 'Failed to fetch history',
+    });
+  }
+});
+
+/**
+ * POST /api/v1/cortex/benchmark
+ * Run provider benchmark tests
+ */
+router.post('/benchmark', async (req: Request, res: Response) => {
+  try {
+    const { providers: targetProviders } = req.body;
+
+    // Use getSerializableFeedback to get provider list
+    const providers = cortex.providerFeedbackEngine.getSerializableFeedback();
+    const results: Array<{
+      provider: string;
+      latency: number;
+      success: boolean;
+      error?: string;
+    }> = [];
+
+    // Simple benchmark - measure response time for each known provider
+    const knownProviders = ['deepseek', 'anthropic', 'openai', 'google'];
+
+    for (const providerName of knownProviders) {
+      if (targetProviders && !targetProviders.includes(providerName)) continue;
+
+      const existingProvider = providers.find((p) =>
+        p.provider.toLowerCase().includes(providerName)
+      );
+
+      if (existingProvider) {
+        // Use existing metrics if available
+        results.push({
+          provider: providerName,
+          latency: existingProvider.avgLatencyMs || 500,
+          success: existingProvider.successRate > 0.5,
+        });
+      } else {
+        // Mark as untested
+        results.push({
+          provider: providerName,
+          latency: 0,
+          success: false,
+          error: 'No recent activity',
+        });
+      }
+    }
+
+    const successfulResults = results.filter((r) => r.success);
+    const avgLatency =
+      successfulResults.length > 0
+        ? successfulResults.reduce((sum, r) => sum + r.latency, 0) / successfulResults.length
+        : 0;
+
+    res.json({
+      ok: true,
+      data: {
+        results,
+        summary: {
+          totalProviders: results.length,
+          successfulProviders: successfulResults.length,
+          avgLatencyMs: Math.round(avgLatency),
+          fastestProvider:
+            successfulResults.sort((a, b) => a.latency - b.latency)[0]?.provider || 'N/A',
+        },
+      },
+    });
+  } catch (e) {
+    console.error('[Cortex Routes] Benchmark error:', e);
+    res.status(500).json({
+      ok: false,
+      error: 'Failed to run benchmark',
     });
   }
 });

@@ -248,7 +248,7 @@ export class ExecutionAgent {
 
         if (result.success) {
           execution.completedSteps.push(step.id);
-          
+
           // Store artifacts in variables for next steps
           if (result.artifacts && result.artifacts.length > 0) {
             execution.variables[`${step.id}_artifacts`] = result.artifacts;
@@ -333,29 +333,29 @@ export class ExecutionAgent {
    */
   getTaskStatus(taskId: string): { status: string; result?: TaskResult } | null {
     const queueStatus = this.processor.getQueueStatus();
-    
+
     // Check if currently processing
     if (queueStatus.currentTask?.id === taskId) {
       return { status: 'processing' };
     }
-    
+
     // Check if in queue
     const queue = this.processor.getQueue();
-    const inQueue = queue.find(t => t.id === taskId);
+    const inQueue = queue.find((t) => t.id === taskId);
     if (inQueue) {
       return { status: inQueue.status };
     }
-    
+
     // Check history for completion
     const history = this.processor.getHistory(100);
-    const completed = history.find(t => t.id === taskId);
+    const completed = history.find((t) => t.id === taskId);
     if (completed) {
-      return { 
+      return {
         status: completed.status,
         result: completed.result,
       };
     }
-    
+
     return null;
   }
 
@@ -464,7 +464,8 @@ export class ExecutionAgent {
 
       const response = await precog.providers.generate({
         prompt: prompt || `Analyze the following code and provide insights:\n\n${analysisInput}`,
-        system: 'You are a code analysis expert. Provide detailed analysis including:\n1. Code quality assessment\n2. Potential issues\n3. Improvement suggestions\n4. Architecture observations',
+        system:
+          'You are a code analysis expert. Provide detailed analysis including:\n1. Code quality assessment\n2. Potential issues\n3. Improvement suggestions\n4. Architecture observations',
         taskType: 'analysis',
       });
 
@@ -557,14 +558,14 @@ export class ExecutionAgent {
   }
 
   private async executeDeploy(task: AgentTask, logs: string[]): Promise<TaskResult> {
-    const { 
-      target = 'local', 
+    const {
+      target = 'local',
       script,
       directory,
       buildCommand,
       deployCommand,
       environment = {},
-      dryRun = false
+      dryRun = false,
     } = task.input;
 
     logs.push(`Starting deployment to target: ${target}`);
@@ -572,7 +573,7 @@ export class ExecutionAgent {
     try {
       // Step 1: Validate deployment configuration
       logs.push('Validating deployment configuration...');
-      
+
       if (!deployCommand && !script) {
         return {
           success: false,
@@ -581,11 +582,11 @@ export class ExecutionAgent {
       }
 
       const workDir = directory || process.cwd();
-      
+
       // Step 2: Optional build step
       if (buildCommand) {
         logs.push(`Running build: ${buildCommand}`);
-        
+
         if (!dryRun) {
           const buildResult = await this.runShellCommand(buildCommand, workDir, environment);
           if (!buildResult.success) {
@@ -638,7 +639,7 @@ export class ExecutionAgent {
       }
 
       logs.push(`Deployment to ${target} completed successfully`);
-      
+
       // Emit deployment event
       bus.publish('cortex', 'agent:deployment:completed', {
         taskId: task.id,
@@ -649,20 +650,22 @@ export class ExecutionAgent {
       return {
         success: true,
         output: `Successfully deployed to ${target}`,
-        artifacts: [{
-          id: uuidv4(),
-          type: 'deployment' as const,
-          name: `deployment-${target}-${Date.now()}`,
-          path: workDir,
-          version: '1.0.0',
-          createdAt: new Date(),
-          createdBy: task.id,
-          metadata: {
-            target,
-            deployedAt: new Date().toISOString(),
-            logs: logs.join('\n'),
-          }
-        }]
+        artifacts: [
+          {
+            id: uuidv4(),
+            type: 'deployment' as const,
+            name: `deployment-${target}-${Date.now()}`,
+            path: workDir,
+            version: '1.0.0',
+            createdAt: new Date(),
+            createdBy: task.id,
+            metadata: {
+              target,
+              deployedAt: new Date().toISOString(),
+              logs: logs.join('\n'),
+            },
+          },
+        ],
       };
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -673,7 +676,7 @@ export class ExecutionAgent {
 
   private async deployLocal(
     command: string,
-    workDir: string, 
+    workDir: string,
     environment: Record<string, string>,
     logs: string[]
   ): Promise<{ success: boolean; stdout: string; stderr: string; output?: string }> {
@@ -682,25 +685,26 @@ export class ExecutionAgent {
   }
 
   private async deployDocker(
-    input: TaskInput, 
-    workDir: string, 
+    input: TaskInput,
+    workDir: string,
     logs: string[]
   ): Promise<{ success: boolean; stdout: string; stderr: string; output?: string }> {
     const { imageName, containerName, ports = [], volumes = [] } = input;
-    
+
     if (!imageName) {
-      return { success: false, stdout: '', stderr: 'No Docker image specified', output: 'No Docker image specified' };
+      return {
+        success: false,
+        stdout: '',
+        stderr: 'No Docker image specified',
+        output: 'No Docker image specified',
+      };
     }
 
     logs.push(`Building Docker image: ${imageName}`);
-    
+
     // Build the image
-    const buildResult = await this.runShellCommand(
-      `docker build -t ${imageName} .`,
-      workDir,
-      {}
-    );
-    
+    const buildResult = await this.runShellCommand(`docker build -t ${imageName} .`, workDir, {});
+
     if (!buildResult.success) {
       return buildResult;
     }
@@ -713,34 +717,34 @@ export class ExecutionAgent {
 
     // Build run command
     let runCmd = `docker run -d --name ${name}`;
-    
+
     for (const port of ports) {
       runCmd += ` -p ${port}`;
     }
-    
+
     for (const volume of volumes) {
       runCmd += ` -v ${volume}`;
     }
-    
+
     runCmd += ` ${imageName}`;
 
     logs.push(`Starting container: ${name}`);
     const runResult = await this.runShellCommand(runCmd, workDir, {});
-    
+
     if (runResult.success) {
       logs.push(`Container ${name} started successfully`);
     }
-    
+
     return runResult;
   }
 
   private async deployGit(
-    input: TaskInput, 
-    workDir: string, 
+    input: TaskInput,
+    workDir: string,
     logs: string[]
   ): Promise<{ success: boolean; stdout: string; stderr: string; output?: string }> {
     const { branch = 'main', remote = 'origin', commitMessage } = input;
-    
+
     logs.push(`Deploying via git push to ${remote}/${branch}`);
 
     // Add all changes
@@ -765,7 +769,7 @@ export class ExecutionAgent {
     if (pushResult.success) {
       logs.push(`Pushed to ${remote}/${branch}`);
     }
-    
+
     return pushResult;
   }
 

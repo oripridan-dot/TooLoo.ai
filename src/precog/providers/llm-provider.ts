@@ -1,13 +1,23 @@
-// @version 2.2.246
+// @version 3.3.90
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
  * Fallback chain: DeepSeek → Anthropic Claude → OpenAI → Google Gemini.
  * If no keys are available, returns a clear configuration message.
+ *
+ * V3.3.90: Improved mid-stream error handling with graceful failover.
+ * - When a provider fails mid-stream, attempts continuation with next provider
+ * - User-friendly error messages instead of raw system errors
+ * - Returns partial content if no fallback providers available
+ *
+ * V2.2.250: CRITICAL FIX - TooLoo identity is now preserved. Domain expertise
+ * is APPENDED to system prompts, not prepended, ensuring TooLoo's core identity
+ * and capabilities are always asserted first.
  */
 
 import DomainExpertise from '../../nexus/engine/domain-expertise.js';
 import ContinuousLearning from '../../nexus/engine/continuous-learning.js';
+import { TOOLOO_PERSONA } from '../../cortex/persona.js';
 import fetch from 'node-fetch';
 import ensureEnvLoaded from '../../nexus/engine/env-loader.js';
 import { amygdala, AmygdalaState } from '../../cortex/amygdala/index.js';
@@ -268,11 +278,17 @@ export default class LLMProvider {
     const detectedDomain = this.domainExpertise.detectDomain(prompt, context);
 
     // Get domain-specific system prompt
-    let enhancedSystem = system;
+    // CRITICAL FIX V3.3.35: TooLoo identity MUST come FIRST, domain expertise SECOND
+    // The original system prompt contains TooLoo's identity assertion
+    // Domain expertise is ADDITIVE, not identity-replacing
+    // If no system prompt provided, use TOOLOO_PERSONA as baseline
+    const baseSystem = system || TOOLOO_PERSONA;
+    let enhancedSystem = baseSystem;
     if (detectedDomain !== 'general') {
       const domainPrompt = this.domainExpertise.getDomainPrompt(detectedDomain);
       if (domainPrompt) {
-        enhancedSystem = domainPrompt + (system ? '\n\n' + system : '');
+        // Domain expertise is APPENDED to preserve TooLoo identity
+        enhancedSystem = `${baseSystem}\n\n🎯 DOMAIN EXPERTISE ACTIVATED [${detectedDomain.toUpperCase()}]:\n${domainPrompt}`;
       }
     }
 
@@ -378,6 +394,8 @@ export default class LLMProvider {
     }
 
     // Re-implementing the loop logic properly
+    let accumulatedText = ''; // V3.3.90: Track accumulated text across providers for mid-stream recovery
+
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
 
@@ -395,6 +413,7 @@ export default class LLMProvider {
         let fullText = '';
         const collectingOnChunk = (chunk: string) => {
           fullText += chunk;
+          accumulatedText += chunk; // V3.3.90: Also track in accumulated
           safeOnChunk(chunk);
         };
 
@@ -441,8 +460,42 @@ export default class LLMProvider {
         console.warn(`[LLMProvider] Provider ${p} stream failed: ${errorMessage}.`);
 
         if (hasStreamed) {
-          onChunk(`\n\n[System Error: Provider ${p} failed mid-stream]`);
-          throw err;
+          // V3.3.90: Improved mid-stream error handling
+          // Log detailed error for debugging but show user-friendly message
+          console.error(`[LLMProvider] Mid-stream failure from ${p}:`, errorMessage);
+
+          // Find remaining providers we could potentially use for continuation
+          const currentIdx = tryOrder.indexOf(p);
+          const remainingProviders = tryOrder
+            .slice(currentIdx + 1)
+            .filter((rp) => this.providers[rp] && rp !== p);
+
+          if (remainingProviders.length > 0) {
+            // Attempt continuation with another provider
+            onChunk(`\n\n_[Connection interrupted - attempting to continue...]_\n\n`);
+
+            // Reset hasStreamed to allow failover attempt
+            hasStreamed = false;
+            updateMetrics(p, 0, false);
+            lastError = err;
+
+            // Continue loop to try next provider
+            continue;
+          } else {
+            // No more providers available - show graceful error
+            onChunk(`\n\n_[Response was interrupted. Please try again.]_`);
+            updateMetrics(p, 0, false);
+
+            // Return partial content instead of throwing
+            if (onComplete) onComplete(accumulatedText);
+            return {
+              content: accumulatedText,
+              provider: p,
+              domain: detectedDomain,
+              partial: true,
+              error: 'mid-stream-failure',
+            };
+          }
         }
 
         updateMetrics(p, 0, false);
@@ -832,11 +885,15 @@ export default class LLMProvider {
     const detectedDomain = this.domainExpertise.detectDomain(prompt, context);
 
     // Get domain-specific system prompt if available
-    let enhancedSystem = system;
+    // CRITICAL FIX V3.3.35: TooLoo identity MUST come FIRST, domain expertise SECOND
+    // If no system prompt provided, use TOOLOO_PERSONA as baseline
+    const baseSystem = system || TOOLOO_PERSONA;
+    let enhancedSystem = baseSystem;
     if (detectedDomain !== 'general') {
       const domainPrompt = this.domainExpertise.getDomainPrompt(detectedDomain);
       if (domainPrompt) {
-        enhancedSystem = domainPrompt + (system ? '\n\n' + system : '');
+        // Domain expertise is APPENDED to preserve TooLoo identity
+        enhancedSystem = `${baseSystem}\n\n🎯 DOMAIN EXPERTISE ACTIVATED [${detectedDomain.toUpperCase()}]:\n${domainPrompt}`;
       }
     }
 

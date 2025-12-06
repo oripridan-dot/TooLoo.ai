@@ -1,7 +1,8 @@
-// @version 2.2.624
+// @version 2.2.625
 // TooLoo.ai Liquid Chat Module
 // Rich visual chat components with liquid skin integration
 // Now with emergent thought visualization and Gestalt-based design
+// v2.2.625: Added CollapsibleMarkdown for structured response display
 
 // ============================================================================
 // CORE CHAT COMPONENTS
@@ -13,6 +14,7 @@ export {
   LiquidThinkingIndicator,
   WelcomeMessage,
   EnhancedMarkdown,
+  CollapsibleMarkdown,
   LiquidCodeBlock,
   ProviderBadge,
   StreamingIndicator,

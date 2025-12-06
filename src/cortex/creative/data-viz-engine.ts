@@ -47,24 +47,48 @@ export interface ChartOptions {
 
 export const CHART_PALETTES = {
   vibrant: [
-    '#667eea', '#764ba2', '#f093fb', '#f5576c',
-    '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
-    '#fa709a', '#fee140', '#a8edea', '#fed6e3',
+    '#667eea',
+    '#764ba2',
+    '#f093fb',
+    '#f5576c',
+    '#4facfe',
+    '#00f2fe',
+    '#43e97b',
+    '#38f9d7',
+    '#fa709a',
+    '#fee140',
+    '#a8edea',
+    '#fed6e3',
   ],
   dark: [
-    '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-    '#ec4899', '#f43f5e', '#f97316', '#eab308',
-    '#84cc16', '#22c55e', '#14b8a6', '#06b6d4',
+    '#6366f1',
+    '#8b5cf6',
+    '#a855f7',
+    '#d946ef',
+    '#ec4899',
+    '#f43f5e',
+    '#f97316',
+    '#eab308',
+    '#84cc16',
+    '#22c55e',
+    '#14b8a6',
+    '#06b6d4',
   ],
   light: [
-    '#818cf8', '#a78bfa', '#c084fc', '#e879f9',
-    '#f472b6', '#fb7185', '#fb923c', '#fbbf24',
-    '#a3e635', '#4ade80', '#2dd4bf', '#22d3ee',
+    '#818cf8',
+    '#a78bfa',
+    '#c084fc',
+    '#e879f9',
+    '#f472b6',
+    '#fb7185',
+    '#fb923c',
+    '#fbbf24',
+    '#a3e635',
+    '#4ade80',
+    '#2dd4bf',
+    '#22d3ee',
   ],
-  minimal: [
-    '#3b82f6', '#64748b', '#94a3b8', '#cbd5e1',
-    '#1e293b', '#475569', '#6b7280', '#9ca3af',
-  ],
+  minimal: ['#3b82f6', '#64748b', '#94a3b8', '#cbd5e1', '#1e293b', '#475569', '#6b7280', '#9ca3af'],
   gradient: [
     ['#667eea', '#764ba2'],
     ['#f093fb', '#f5576c'],
@@ -211,10 +235,7 @@ export class DataVizEngine {
   /**
    * Generate a beautiful bar chart SVG
    */
-  generateBarChart(
-    data: DataPoint[],
-    options: ChartOptions = {}
-  ): string {
+  generateBarChart(data: DataPoint[], options: ChartOptions = {}): string {
     const {
       width = 800,
       height = 500,
@@ -245,7 +266,10 @@ export class DataVizEngine {
     const gradients = data
       .map((_, i) => {
         const gradient = CHART_PALETTES.gradient[i % CHART_PALETTES.gradient.length];
-        return generateGradient(`barGradient${i}`, gradient as string[]);
+        return generateGradient(
+          `barGradient${i}`,
+          gradient ? Array.from(gradient) : ['#667eea', '#764ba2']
+        );
       })
       .join('\n    ');
 
@@ -276,7 +300,7 @@ export class DataVizEngine {
         const valueLabel = showValues
           ? `<text x="${x + barWidth / 2}" y="${y - 10}" fill="${themeColors.textColor}" font-size="12" text-anchor="middle" opacity="0">
               ${point.value}
-              ${animate ? `<animate attributeName="opacity" from="0" to="1" dur="200ms" begin="${(i * animationStagger) + animationDuration}ms" fill="freeze"/>` : ''}
+              ${animate ? `<animate attributeName="opacity" from="0" to="1" dur="200ms" begin="${i * animationStagger + animationDuration}ms" fill="freeze"/>` : ''}
             </text>`
           : '';
 
@@ -351,10 +375,7 @@ export class DataVizEngine {
   /**
    * Generate a beautiful line chart SVG
    */
-  generateLineChart(
-    series: DataSeries[],
-    options: ChartOptions = {}
-  ): string {
+  generateLineChart(series: DataSeries[], options: ChartOptions = {}): string {
     const {
       width = 800,
       height = 500,
@@ -377,15 +398,16 @@ export class DataVizEngine {
     const allValues = series.flatMap((s) => s.data.map((d) => d.value));
     const maxValue = Math.max(...allValues) * 1.1;
     const minValue = Math.min(0, ...allValues);
-    const valueRange = maxValue - minValue;
+    const valueRange = maxValue - minValue || 1;
 
-    const labels = series[0]?.data.map((d) => d.label) || [];
-    const pointCount = labels.length;
+    const firstSeries = series[0];
+    const labels = firstSeries?.data.map((d) => d.label) ?? [];
+    const pointCount = Math.max(1, labels.length);
 
     // Generate gradient definitions for lines
     const gradients = series
       .map((s, i) => {
-        const color = s.color || palette[i % palette.length];
+        const color = s.color ?? palette[i % palette.length] ?? '#667eea';
         return generateGradient(`lineGradient${i}`, [color, color], 'horizontal');
       })
       .join('\n    ');
@@ -421,17 +443,28 @@ export class DataVizEngine {
         });
 
         // Path for line
-        const linePath = points.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
+        const linePath = points
+          .map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`))
+          .join(' ');
 
-        // Path for area
-        const areaPath = `${linePath} L${points[points.length - 1].x},${padding.top + chartHeight} L${points[0].x},${padding.top + chartHeight} Z`;
+        // Path for area (with null safety)
+        const lastPoint = points[points.length - 1];
+        const firstPoint = points[0];
+        const areaPath =
+          lastPoint && firstPoint
+            ? `${linePath} L${lastPoint.x},${padding.top + chartHeight} L${firstPoint.x},${padding.top + chartHeight} Z`
+            : linePath;
 
         // Calculate path length for animation
         let pathLength = 0;
         for (let i = 1; i < points.length; i++) {
-          const dx = points[i].x - points[i - 1].x;
-          const dy = points[i].y - points[i - 1].y;
-          pathLength += Math.sqrt(dx * dx + dy * dy);
+          const prevPoint = points[i - 1];
+          const currPoint = points[i];
+          if (prevPoint && currPoint) {
+            const dx = currPoint.x - prevPoint.x;
+            const dy = currPoint.y - prevPoint.y;
+            pathLength += Math.sqrt(dx * dx + dy * dy);
+          }
         }
 
         const animationAttrs = animate
@@ -591,7 +624,7 @@ export class DataVizEngine {
       }
 
       // Label position
-      const midAngle = ((startAngle + endAngle) / 2 * Math.PI) / 180;
+      const midAngle = (((startAngle + endAngle) / 2) * Math.PI) / 180;
       const labelRadius = donut ? (radius + innerRadius) / 2 : radius * 0.65;
       const labelX = centerX + labelRadius * Math.cos(midAngle);
       const labelY = centerY + labelRadius * Math.sin(midAngle);
@@ -613,7 +646,10 @@ export class DataVizEngine {
     const gradients = data
       .map((_, i) => {
         const gradient = CHART_PALETTES.gradient[i % CHART_PALETTES.gradient.length];
-        return generateGradient(`pieGradient${i}`, gradient as string[]);
+        return generateGradient(
+          `pieGradient${i}`,
+          gradient ? Array.from(gradient) : ['#667eea', '#764ba2']
+        );
       })
       .join('\n    ');
 
@@ -746,7 +782,8 @@ export class DataVizEngine {
     const angle = (percentage / 100) * 180;
 
     // Find current color based on percentage
-    let currentColor = colorStops[0].color;
+    const firstStop = colorStops[0];
+    let currentColor = firstStop?.color ?? '#22c55e';
     for (const stop of colorStops) {
       if (percentage >= stop.value) {
         currentColor = stop.color;
@@ -819,8 +856,12 @@ export class DataVizEngine {
   
   <!-- Value arc -->
   <path d="${valuePath}" stroke="${currentColor}" stroke-width="${strokeWidth}" fill="none" stroke-linecap="round" filter="url(#glow)"
-    ${animate ? `stroke-dasharray="${arcLength}" stroke-dashoffset="${arcLength}">
-    <animate attributeName="stroke-dashoffset" from="${arcLength}" to="0" dur="${animationDuration}ms" fill="freeze" calcMode="spline" keySplines="0.645 0.045 0.355 1"/>` : '>'}
+    ${
+      animate
+        ? `stroke-dasharray="${arcLength}" stroke-dashoffset="${arcLength}">
+    <animate attributeName="stroke-dashoffset" from="${arcLength}" to="0" dur="${animationDuration}ms" fill="freeze" calcMode="spline" keySplines="0.645 0.045 0.355 1"/>`
+        : '>'
+    }
   </path>
   
   <!-- Center value -->
@@ -847,7 +888,13 @@ export class DataVizEngine {
    */
   generateSparkline(
     values: number[],
-    options: { width?: number; height?: number; color?: string; showDots?: boolean; fill?: boolean } = {}
+    options: {
+      width?: number;
+      height?: number;
+      color?: string;
+      showDots?: boolean;
+      fill?: boolean;
+    } = {}
   ): string {
     const { width = 120, height = 40, color = '#6366f1', showDots = false, fill = true } = options;
 
@@ -865,11 +912,16 @@ export class DataVizEngine {
       return { x, y };
     });
 
-    const linePath = points.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
+    const linePath = points
+      .map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`))
+      .join(' ');
 
-    const areaPath = fill
-      ? `${linePath} L${points[points.length - 1].x},${height - padding} L${points[0].x},${height - padding} Z`
-      : '';
+    const lastPoint = points[points.length - 1];
+    const firstPoint = points[0];
+    const areaPath =
+      fill && lastPoint && firstPoint
+        ? `${linePath} L${lastPoint.x},${height - padding} L${firstPoint.x},${height - padding} Z`
+        : '';
 
     const dotsMarkup = showDots
       ? points.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="${color}"/>`).join('\n  ')

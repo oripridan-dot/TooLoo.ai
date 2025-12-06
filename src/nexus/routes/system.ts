@@ -49,15 +49,6 @@ router.get('/status', (req, res) => {
   );
 });
 
-/**
- * @description Endpoint for fuzz testing
- * @param {number} id - A required numeric ID
- * @param {string} name - A required string name
- */
-router.get('/fuzz-test', (req, res) => {
-  res.json(successResponse({ message: 'You passed validation!' }));
-});
-
 // System Health - Real metrics for Cortex view
 router.get('/health', async (req, res) => {
   try {

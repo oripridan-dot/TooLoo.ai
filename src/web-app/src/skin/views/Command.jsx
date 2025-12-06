@@ -55,51 +55,53 @@ InfoModal.displayName = 'InfoModal';
 // CONFIRM MODAL - Replaces browser confirm() for better UX
 // ============================================================================
 
-const ConfirmModal = memo(({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', danger = false }) => {
-  if (!isOpen) return null;
+const ConfirmModal = memo(
+  ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', danger = false }) => {
+    if (!isOpen) return null;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    return (
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${danger ? 'border-rose-500/30' : 'border-white/10'}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
       >
-        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-        <p className="text-gray-400 text-sm mb-4">{message}</p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-              danger 
-                ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400' 
-                : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400'
-            }`}
-          >
-            {confirmText}
-          </button>
-        </div>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          className={`w-full max-w-md p-6 rounded-xl bg-[#0a0a0a] border shadow-2xl ${danger ? 'border-rose-500/30' : 'border-white/10'}`}
+        >
+          <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+          <p className="text-gray-400 text-sm mb-4">{message}</p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                danger
+                  ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400'
+                  : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400'
+              }`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
-});
+    );
+  }
+);
 
 ConfirmModal.displayName = 'ConfirmModal';
 
@@ -424,12 +426,14 @@ const Command = memo(({ className = '' }) => {
   const [uiPrefs, setUiPrefs] = useState(() => {
     try {
       const saved = localStorage.getItem('tooloo-ui-preferences');
-      return saved ? JSON.parse(saved) : {
-        showLargePreviewToggle: false,
-        showModelSelector: true,
-        showStatusIndicator: true,
-        compactMode: false,
-      };
+      return saved
+        ? JSON.parse(saved)
+        : {
+            showLargePreviewToggle: false,
+            showModelSelector: true,
+            showStatusIndicator: true,
+            compactMode: false,
+          };
     } catch {
       return {
         showLargePreviewToggle: false,
@@ -442,7 +446,7 @@ const Command = memo(({ className = '' }) => {
 
   // Save UI prefs and notify other components
   const updateUiPref = useCallback((key, value) => {
-    setUiPrefs(prev => {
+    setUiPrefs((prev) => {
       const updated = { ...prev, [key]: value };
       localStorage.setItem('tooloo-ui-preferences', JSON.stringify(updated));
       // Trigger window event for other components
@@ -464,12 +468,35 @@ const Command = memo(({ className = '' }) => {
   ]);
 
   // UI Config items (separate from visual)
-  const uiConfigItems = useMemo(() => [
-    { id: 'showLargePreviewToggle', label: 'Large Preview Button', description: 'Show in Synaptic header', enabled: uiPrefs.showLargePreviewToggle },
-    { id: 'showModelSelector', label: 'Model Selector', description: 'Show AI model picker', enabled: uiPrefs.showModelSelector },
-    { id: 'showStatusIndicator', label: 'Status Indicator', description: 'Show ready/streaming status', enabled: uiPrefs.showStatusIndicator },
-    { id: 'compactMode', label: 'Compact Mode', description: 'Reduce spacing and padding', enabled: uiPrefs.compactMode },
-  ], [uiPrefs]);
+  const uiConfigItems = useMemo(
+    () => [
+      {
+        id: 'showLargePreviewToggle',
+        label: 'Large Preview Button',
+        description: 'Show in Synaptic header',
+        enabled: uiPrefs.showLargePreviewToggle,
+      },
+      {
+        id: 'showModelSelector',
+        label: 'Model Selector',
+        description: 'Show AI model picker',
+        enabled: uiPrefs.showModelSelector,
+      },
+      {
+        id: 'showStatusIndicator',
+        label: 'Status Indicator',
+        description: 'Show ready/streaming status',
+        enabled: uiPrefs.showStatusIndicator,
+      },
+      {
+        id: 'compactMode',
+        label: 'Compact Mode',
+        description: 'Reduce spacing and padding',
+        enabled: uiPrefs.compactMode,
+      },
+    ],
+    [uiPrefs]
+  );
 
   // Add log entry
   const addLog = useCallback((level, message) => {
@@ -622,7 +649,7 @@ const Command = memo(({ className = '' }) => {
 
           case 'cortex:config':
             addLog('info', 'Opening Cortex configuration...');
-            setModalState(prev => ({ ...prev, cortexConfig: true }));
+            setModalState((prev) => ({ ...prev, cortexConfig: true }));
             break;
 
           case 'memory:optimize':
@@ -638,7 +665,7 @@ const Command = memo(({ className = '' }) => {
               await fetch(`${API_BASE}/learning/optimize-memory`, { method: 'POST' });
               addLog('info', 'Cache cleared');
             };
-            setModalState(prev => ({ ...prev, clearCache: true }));
+            setModalState((prev) => ({ ...prev, clearCache: true }));
             break;
 
           case 'qa:run':
@@ -725,7 +752,7 @@ const Command = memo(({ className = '' }) => {
   );
 
   const handleForceRestart = useCallback(() => {
-    setModalState(prev => ({ ...prev, forceRestart: true }));
+    setModalState((prev) => ({ ...prev, forceRestart: true }));
   }, []);
 
   const doForceRestart = useCallback(async () => {
@@ -739,7 +766,7 @@ const Command = memo(({ className = '' }) => {
   }, [addLog]);
 
   const handleClearData = useCallback(() => {
-    setModalState(prev => ({ ...prev, clearData: true }));
+    setModalState((prev) => ({ ...prev, clearData: true }));
   }, []);
 
   const doClearData = useCallback(async () => {
@@ -753,7 +780,7 @@ const Command = memo(({ className = '' }) => {
       <AnimatePresence>
         <InfoModal
           isOpen={modalState.cortexConfig}
-          onClose={() => setModalState(prev => ({ ...prev, cortexConfig: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, cortexConfig: false }))}
           title="⚙️ Cortex Configuration"
           content={`• Provider rotation: Auto
 • Fallback enabled: Yes
@@ -764,7 +791,7 @@ const Command = memo(({ className = '' }) => {
         />
         <ConfirmModal
           isOpen={modalState.clearCache}
-          onClose={() => setModalState(prev => ({ ...prev, clearCache: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, clearCache: false }))}
           onConfirm={() => pendingAction.current?.()}
           title="🗑️ Clear Cache"
           message="Clear all cached data? This will remove temporary files and may briefly impact performance."
@@ -772,7 +799,7 @@ const Command = memo(({ className = '' }) => {
         />
         <ConfirmModal
           isOpen={modalState.forceRestart}
-          onClose={() => setModalState(prev => ({ ...prev, forceRestart: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, forceRestart: false }))}
           onConfirm={doForceRestart}
           title="🔄 Force Restart"
           message="Force restart ALL systems? This may cause brief downtime."
@@ -781,7 +808,7 @@ const Command = memo(({ className = '' }) => {
         />
         <ConfirmModal
           isOpen={modalState.clearData}
-          onClose={() => setModalState(prev => ({ ...prev, clearData: false }))}
+          onClose={() => setModalState((prev) => ({ ...prev, clearData: false }))}
           onConfirm={doClearData}
           title="⚠️ Clear All Data"
           message="WARNING: This will clear ALL data including learning metrics, memories, and configurations. This action cannot be undone! For safety, destructive operations are limited to CLI access."

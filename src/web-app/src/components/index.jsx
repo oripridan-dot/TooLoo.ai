@@ -1,4 +1,4 @@
-// @version 3.3.7
+// @version 3.3.8
 /**
  * @description Legacy component stubs for backwards compatibility
  * @intent These are placeholder components that allow the app to build
@@ -6,6 +6,7 @@
  *         these should be properly implemented.
  */
 import React from 'react';
+import CognitiveDashboard from './CognitiveDashboard.jsx';
 
 // Reusable placeholder component
 const PlaceholderComponent = ({ name }) => (
@@ -134,3 +135,6 @@ export const EmergenceRoom = () => <PlaceholderComponent name="Emergence Room" /
 
 // Liquid Skin Demo Component
 export const LiquidSkinDemo = () => <PlaceholderComponent name="Liquid Skin Demo" />;
+
+// Cognitive Dashboard Component (Meta-Learning, Collaboration, Quality)
+export { CognitiveDashboard };

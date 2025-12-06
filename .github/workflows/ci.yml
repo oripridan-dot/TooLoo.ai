@@ -42,9 +42,25 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  build:
+  fuzz:
     runs-on: ubuntu-latest
     needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Start Server and Fuzz
+        run: |
+          npm run start:synapsys > /dev/null 2>&1 &
+          timeout 60s bash -c 'until curl -s http://localhost:4000/api/v1/system/status > /dev/null; do sleep 1; done'
+          npm run test:fuzz
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [fuzz]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -89,8 +89,6 @@ async function bootstrap() {
     }
 
     // Initialize QA Guardian (Synapsys QA System)
-    // DISABLED by user request
-    /*
     try {
       await initQAGuardian();
       registry.updateStatus('qa-guardian', 'ready');
@@ -99,7 +97,6 @@ async function bootstrap() {
       console.warn('[System] QA Guardian failed to initialize:', qaError);
       // Non-critical - continue boot
     }
-    */
 
     bus.publish('system', 'system:boot_complete', { version: SYSTEM_VERSION });
     registry.updateStatus('system', 'ready');

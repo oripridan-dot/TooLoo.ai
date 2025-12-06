@@ -1,47 +1,50 @@
-// @version 3.3.24
+// @version 3.3.125
 /**
  * Agent Team Framework
- * 
+ *
  * Creates automatic agent pairings where every specialized agent
  * is coupled with a validator colleague. Teams work in perfect
  * harmony to ensure 100% validated and refined results with
  * top quality and efficiency.
- * 
+ *
  * Architecture:
  * - Every agent automatically gets a validator partner
  * - Teams have defined roles: executor + validator
  * - Validation loops ensure quality before output
  * - Cross-system integration with chat, creative, learning, emergence
- * 
+ * - V3.3.125: Added persistent task queue that survives restarts
+ *
  * @module cortex/agent/team-framework
  */
 
 import { bus } from '../../core/event-bus.js';
 import { v4 as uuidv4 } from 'uuid';
 import { executionAgent, ExecutionAgent } from './execution-agent.js';
+import fs from 'fs-extra';
+import path from 'path';
 import type { AgentTask, TaskResult, TaskType } from './types.js';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type AgentRole = 
-  | 'executor'      // Primary task executor
-  | 'validator'     // Quality validator
-  | 'planner'       // Strategy and planning
-  | 'critic'        // Critical analysis
-  | 'optimizer'     // Performance optimization
-  | 'guardian'      // Safety and ethics
-  | 'researcher'    // Knowledge gathering
-  | 'creative';     // Creative generation
+export type AgentRole =
+  | 'executor' // Primary task executor
+  | 'validator' // Quality validator
+  | 'planner' // Strategy and planning
+  | 'critic' // Critical analysis
+  | 'optimizer' // Performance optimization
+  | 'guardian' // Safety and ethics
+  | 'researcher' // Knowledge gathering
+  | 'creative'; // Creative generation
 
-export type TeamStatus = 
-  | 'idle' 
-  | 'planning' 
-  | 'executing' 
-  | 'validating' 
-  | 'refining' 
-  | 'completed' 
+export type TeamStatus =
+  | 'idle'
+  | 'planning'
+  | 'executing'
+  | 'validating'
+  | 'refining'
+  | 'completed'
   | 'failed';
 
 export interface AgentProfile {
@@ -275,7 +278,7 @@ export class TeamRegistry {
     // Handle team task requests
     bus.on('team:task:submit', async (event) => {
       const { teamId, specialization, input } = event.payload;
-      
+
       // Find or create team
       let team: AgentTeam | undefined;
       if (teamId) {
@@ -285,9 +288,9 @@ export class TeamRegistry {
       }
 
       if (team) {
-        bus.publish('cortex', 'team:task:accepted', { 
-          teamId: team.id, 
-          taskId: input.taskId || uuidv4() 
+        bus.publish('cortex', 'team:task:accepted', {
+          teamId: team.id,
+          taskId: input.taskId || uuidv4(),
         });
       }
     });
@@ -339,7 +342,7 @@ export class TeamRegistry {
    */
   findOrCreateTeam(specialization: string): AgentTeam {
     const teamIds = this.specializationIndex.get(specialization);
-    
+
     if (teamIds && teamIds.length > 0) {
       // Find idle team
       for (const id of teamIds) {
@@ -373,7 +376,7 @@ export class TeamRegistry {
    */
   getTeamsBySpecialization(specialization: string): AgentTeam[] {
     const teamIds = this.specializationIndex.get(specialization) || [];
-    return teamIds.map(id => this.teams.get(id)).filter((t): t is AgentTeam => t !== undefined);
+    return teamIds.map((id) => this.teams.get(id)).filter((t): t is AgentTeam => t !== undefined);
   }
 
   /**
@@ -388,7 +391,8 @@ export class TeamRegistry {
 
     m.successRate = (m.successRate * m.tasksCompleted + (taskResult.success ? 1 : 0)) / totalTasks;
     m.avgIterations = (m.avgIterations * m.tasksCompleted + taskResult.iterations) / totalTasks;
-    m.avgDurationMs = (m.avgDurationMs * m.tasksCompleted + taskResult.totalDurationMs) / totalTasks;
+    m.avgDurationMs =
+      (m.avgDurationMs * m.tasksCompleted + taskResult.totalDurationMs) / totalTasks;
     m.qualityScore = (m.qualityScore * m.tasksCompleted + taskResult.qualityScore) / totalTasks;
     m.tasksCompleted = totalTasks;
 
@@ -407,6 +411,8 @@ export class TeamExecutor {
   private registry: TeamRegistry;
   private executionAgent: ExecutionAgent;
   private activeExecutions: Map<string, TeamTask> = new Map();
+  private pendingQueue: TeamTask[] = [];
+  private queueFilePath: string;
 
   private readonly DEFAULT_MAX_ITERATIONS = 3;
   private readonly DEFAULT_QUALITY_THRESHOLD = 0.8;
@@ -414,7 +420,9 @@ export class TeamExecutor {
   private constructor() {
     this.registry = TeamRegistry.getInstance();
     this.executionAgent = executionAgent;
+    this.queueFilePath = path.join(process.cwd(), 'data', 'task-queue.json');
     this.setupEventListeners();
+    this.loadPersistentQueue();
     console.log('[TeamExecutor] Initialized');
   }
 
@@ -425,17 +433,139 @@ export class TeamExecutor {
     return TeamExecutor.instance;
   }
 
+  /**
+   * Load persistent queue from disk on startup
+   */
+  private async loadPersistentQueue(): Promise<void> {
+    try {
+      if (await fs.pathExists(this.queueFilePath)) {
+        const data = await fs.readJson(this.queueFilePath);
+        if (Array.isArray(data.queue)) {
+          // Restore pending tasks (convert date strings back to Date objects)
+          this.pendingQueue = data.queue.map((task: any) => ({
+            ...task,
+            startedAt: new Date(task.startedAt),
+            completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
+          }));
+          console.log(
+            `[TeamExecutor] Restored ${this.pendingQueue.length} pending tasks from queue`
+          );
+
+          // Resume processing if we have pending tasks
+          if (this.pendingQueue.length > 0) {
+            this.processQueue();
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[TeamExecutor] Could not load persistent queue:', error);
+    }
+  }
+
+  /**
+   * Save queue to disk for persistence
+   */
+  private async savePersistentQueue(): Promise<void> {
+    try {
+      await fs.ensureDir(path.dirname(this.queueFilePath));
+      await fs.writeJson(
+        this.queueFilePath,
+        {
+          queue: this.pendingQueue,
+          savedAt: new Date().toISOString(),
+          version: '3.3.125',
+        },
+        { spaces: 2 }
+      );
+    } catch (error) {
+      console.warn('[TeamExecutor] Could not save persistent queue:', error);
+    }
+  }
+
+  /**
+   * Add task to persistent queue
+   */
+  async enqueue(task: TeamTask): Promise<void> {
+    this.pendingQueue.push(task);
+    await this.savePersistentQueue();
+
+    bus.publish('cortex', 'team:task:queued', {
+      taskId: task.id,
+      teamId: task.teamId,
+      queueLength: this.pendingQueue.length,
+    });
+
+    console.log(`[TeamExecutor] Task ${task.id} queued (${this.pendingQueue.length} pending)`);
+  }
+
+  /**
+   * Remove completed task from queue
+   */
+  private async dequeue(taskId: string): Promise<void> {
+    this.pendingQueue = this.pendingQueue.filter((t) => t.id !== taskId);
+    await this.savePersistentQueue();
+  }
+
+  /**
+   * Process queued tasks
+   */
+  private async processQueue(): Promise<void> {
+    while (this.pendingQueue.length > 0) {
+      const task = this.pendingQueue[0];
+      if (!task) break;
+
+      console.log(`[TeamExecutor] Processing queued task: ${task.id}`);
+
+      try {
+        const team =
+          this.registry.getTeam(task.teamId) || this.registry.findOrCreateTeam('general');
+
+        await this.executeWithTeam(team, task);
+        await this.dequeue(task.id);
+      } catch (error) {
+        console.error(`[TeamExecutor] Failed to process queued task ${task.id}:`, error);
+        // Move to end of queue for retry
+        this.pendingQueue.shift();
+        this.pendingQueue.push(task);
+        await this.savePersistentQueue();
+        break; // Avoid infinite loop on persistent failures
+      }
+    }
+  }
+
+  /**
+   * Get queue status
+   */
+  getQueueStatus(): { pending: number; active: number; tasks: string[] } {
+    return {
+      pending: this.pendingQueue.length,
+      active: this.activeExecutions.size,
+      tasks: this.pendingQueue.map((t) => t.id),
+    };
+  }
+
   private setupEventListeners() {
     // Listen for execution requests from various sources
     bus.on('chat:execute:request', (event) => this.handleExecutionRequest(event.payload, 'chat'));
-    bus.on('creative:execute:request', (event) => this.handleExecutionRequest(event.payload, 'creative'));
-    bus.on('learning:execute:request', (event) => this.handleExecutionRequest(event.payload, 'learning'));
-    bus.on('emergence:execute:request', (event) => this.handleExecutionRequest(event.payload, 'emergence'));
+    bus.on('creative:execute:request', (event) =>
+      this.handleExecutionRequest(event.payload, 'creative')
+    );
+    bus.on('learning:execute:request', (event) =>
+      this.handleExecutionRequest(event.payload, 'learning')
+    );
+    bus.on('emergence:execute:request', (event) =>
+      this.handleExecutionRequest(event.payload, 'emergence')
+    );
     bus.on('api:execute:request', (event) => this.handleExecutionRequest(event.payload, 'api'));
   }
 
   private async handleExecutionRequest(
-    payload: { prompt: string; type?: TaskType; context?: Record<string, unknown>; requestId?: string },
+    payload: {
+      prompt: string;
+      type?: TaskType;
+      context?: Record<string, unknown>;
+      requestId?: string;
+    },
     source: TeamTaskInput['source']
   ): Promise<void> {
     const { prompt, type = 'execute', context, requestId } = payload;
@@ -478,7 +608,11 @@ export class TeamExecutor {
     });
   }
 
-  private inferSpecialization(prompt: string, type: TaskType, context?: Record<string, unknown>): string {
+  private inferSpecialization(
+    prompt: string,
+    type: TaskType,
+    context?: Record<string, unknown>
+  ): string {
     const lower = prompt.toLowerCase();
 
     // Check for explicit specialization in context
@@ -554,14 +688,18 @@ export class TeamExecutor {
 
       // Check if quality threshold met
       if (finalValidation.passed && finalValidation.score >= qualityThreshold) {
-        console.log(`[TeamExecutor] Quality threshold met (${finalValidation.score.toFixed(2)} >= ${qualityThreshold})`);
+        console.log(
+          `[TeamExecutor] Quality threshold met (${finalValidation.score.toFixed(2)} >= ${qualityThreshold})`
+        );
         break;
       }
 
       // Check if we should continue refining
       if (!finalValidation.passed && task.currentIteration < task.maxIterations) {
         task.status = 'refining';
-        console.log(`[TeamExecutor] Refining output based on ${finalValidation.issues.length} issues`);
+        console.log(
+          `[TeamExecutor] Refining output based on ${finalValidation.issues.length} issues`
+        );
       }
     }
 
@@ -613,14 +751,16 @@ export class TeamExecutor {
       result,
     });
 
-    console.log(`[TeamExecutor] Team ${team.name} completed task: ${result.success ? '✅' : '❌'} (${result.iterations} iterations, ${totalDurationMs}ms)`);
+    console.log(
+      `[TeamExecutor] Team ${team.name} completed task: ${result.success ? '✅' : '❌'} (${result.iterations} iterations, ${totalDurationMs}ms)`
+    );
 
     return result;
   }
 
   private buildExecutorInput(
-    task: TeamTask, 
-    previousOutput: TaskResult | null, 
+    task: TeamTask,
+    previousOutput: TaskResult | null,
     previousValidation: ValidationResult | null
   ): { prompt: string; code?: string; context: Record<string, unknown> } {
     let prompt = task.input.prompt;
@@ -628,9 +768,9 @@ export class TeamExecutor {
     // Add refinement instructions if we have previous results
     if (previousOutput && previousValidation && !previousValidation.passed) {
       const issues = previousValidation.issues
-        .map(i => `- ${i.type.toUpperCase()}: ${i.description}${i.fix ? ` (Fix: ${i.fix})` : ''}`)
+        .map((i) => `- ${i.type.toUpperCase()}: ${i.description}${i.fix ? ` (Fix: ${i.fix})` : ''}`)
         .join('\n');
-      
+
       const suggestions = previousValidation.suggestions.join('\n- ');
 
       prompt = `REFINEMENT REQUIRED:
@@ -657,7 +797,10 @@ Please address these issues and improve the output.`;
     };
   }
 
-  private async runExecutor(type: TaskType, input: { prompt: string; code?: string; context: Record<string, unknown> }): Promise<TaskResult> {
+  private async runExecutor(
+    type: TaskType,
+    input: { prompt: string; code?: string; context: Record<string, unknown> }
+  ): Promise<TaskResult> {
     // Use the execution agent to run the task
     const agentTask = await this.executionAgent.submitTask({
       type,
@@ -693,7 +836,10 @@ Please address these issues and improve the output.`;
     });
   }
 
-  private async runValidator(task: TeamTask, executorResult: TaskResult): Promise<ValidationResult> {
+  private async runValidator(
+    task: TeamTask,
+    executorResult: TaskResult
+  ): Promise<ValidationResult> {
     const issues: ValidationIssue[] = [];
     const suggestions: string[] = [];
 
@@ -718,7 +864,7 @@ Please address these issues and improve the output.`;
 
     // Code quality checks
     const output = executorResult.output || '';
-    
+
     if (output.includes('TODO')) {
       issues.push({
         type: 'warning',
@@ -738,16 +884,19 @@ Please address these issues and improve the output.`;
     }
 
     // Check for error handling
-    if ((task.type === 'generate' || task.type === 'execute') && 
-        !output.includes('try') && !output.includes('catch') && 
-        output.includes('async')) {
+    if (
+      (task.type === 'generate' || task.type === 'execute') &&
+      !output.includes('try') &&
+      !output.includes('catch') &&
+      output.includes('async')
+    ) {
       suggestions.push('Consider adding error handling (try/catch) for async operations');
     }
 
     // Calculate score
-    const errorCount = issues.filter(i => i.type === 'error').length;
-    const warningCount = issues.filter(i => i.type === 'warning').length;
-    const improvementCount = issues.filter(i => i.type === 'improvement').length;
+    const errorCount = issues.filter((i) => i.type === 'error').length;
+    const warningCount = issues.filter((i) => i.type === 'warning').length;
+    const improvementCount = issues.filter((i) => i.type === 'improvement').length;
 
     let score = 1.0;
     score -= errorCount * 0.3;
@@ -768,7 +917,7 @@ Please address these issues and improve the output.`;
       score,
       issues,
       suggestions,
-      confidence: 0.9 - (issues.length * 0.1),
+      confidence: 0.9 - issues.length * 0.1,
     };
   }
 
