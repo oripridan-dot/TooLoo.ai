@@ -1,4 +1,4 @@
-// @version 3.3.126
+// @version 3.3.183
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -25,6 +25,8 @@ import {
 import type { IllustrationStyle, IllustrationMood } from '../../cortex/creative/index.js';
 // V3.3.17: System Execution Hub for code execution
 import { systemExecutionHub, teamRegistry } from '../../cortex/agent/index.js';
+// V3.3.181: Autonomous self-modification
+import { autonomousMod, parseCodeSuggestions } from '../../cortex/motor/autonomous-modifier.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -944,6 +946,25 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
       model: result.model,
       timestamp: new Date().toISOString(),
     });
+
+    // V3.3.182: Detect self-modification suggestions but DO NOT auto-apply
+    // All changes require explicit user approval via /api/v1/system/autonomous/approve
+    const codeSuggestions = parseCodeSuggestions(fullResponse);
+    if (codeSuggestions.length > 0) {
+      console.log(`[Chat Stream] 🧬 Found ${codeSuggestions.length} self-modification suggestions (awaiting approval)`);
+      
+      // Queue suggestions for approval - DO NOT auto-apply
+      bus.publish('cortex', 'self-mod:suggestions-detected', {
+        sessionId,
+        count: codeSuggestions.length,
+        suggestions: codeSuggestions.map(s => ({
+          filePath: s.filePath,
+          operation: s.operation,
+          confidence: s.confidence,
+        })),
+        message: 'Code suggestions detected. Use /api/v1/system/autonomous/process with autoApply=false to review, then /approve to apply.',
+      });
+    }
 
     // Add response to session highlights
     cortex.sessionContextService.addHighlight(sessionId, {
