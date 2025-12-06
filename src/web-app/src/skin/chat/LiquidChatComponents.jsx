@@ -1,4 +1,4 @@
-// @version 3.3.205
+// @version 3.3.206
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -230,9 +230,13 @@ export const LiquidMessageBubble = memo(
             {/* Message content */}
             <div className={`text-base leading-relaxed ${isUser ? 'text-cyan-100' : 'text-gray-200'}`}>
               {isUser ? (
-                <p className="break-words">{message.content}</p>
-              ) : (
+                <p className="break-words">{message.content || ''}</p>
+              ) : textContent && textContent.trim() ? (
                 <CollapsibleMarkdown content={textContent} isStreaming={isStreaming} />
+              ) : isStreaming ? (
+                <span className="text-gray-400 animate-pulse">Generating response...</span>
+              ) : (
+                <span className="text-gray-500 italic">No response received</span>
               )}
             </div>
 
@@ -657,7 +661,8 @@ CollapsibleSection.displayName = 'CollapsibleSection';
 
 // Clean up content by removing noise patterns
 const cleanContent = (content) => {
-  if (!content) return '';
+  if (!content || content === 'undefined' || content === 'null') return '';
+  if (typeof content !== 'string') return String(content);
 
   return (
     content
