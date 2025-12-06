@@ -1,4 +1,4 @@
-// @version 3.3.191
+// @version 3.3.192
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2522,11 +2522,15 @@ Improvements:
         </div>
 
         {/* Tab navigation */}
-        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg w-fit">
+        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg w-fit overflow-x-auto">
           {[
             { id: 'overview', label: '📊 Overview', icon: '📊' },
             { id: 'curiosity', label: '🧠 Curiosity', icon: '🧠' },
             { id: 'emergence', label: '✨ Emergence', icon: '✨' },
+            { id: 'scheduler', label: '📅 Scheduler', icon: '📅' },
+            { id: 'predictions', label: '🔮 Predictions', icon: '🔮' },
+            { id: 'config', label: '⚙️ Config', icon: '⚙️' },
+            { id: 'analytics', label: '📈 Analytics', icon: '📈' },
           ].map((tab) => (
             <motion.button
               key={tab.id}
@@ -2816,6 +2820,73 @@ Improvements:
                         </div>
                       </div>
                     </LiquidPanel>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* SCHEDULER TAB */}
+            {activeTab === 'scheduler' && (
+              <motion.div
+                key="scheduler"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <SchedulerPanel />
+                  <div className="space-y-6">
+                    <LearningVelocityGraph dataPoints={learningVelocity} />
+                    <SerendipityMonitor metrics={serendipityMetrics} />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* PREDICTIONS TAB */}
+            {activeTab === 'predictions' && (
+              <motion.div
+                key="predictions"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <PredictionsPanel />
+                  <div className="space-y-6">
+                    <EmergenceTimeline events={emergenceEvents} />
+                    <CuriosityHeatmap dimensions={curiosityDimensions} />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* CONFIGURATION TAB */}
+            {activeTab === 'config' && (
+              <motion.div
+                key="config"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <ConfigurationPanel />
+              </motion.div>
+            )}
+
+            {/* ANALYTICS TAB */}
+            {activeTab === 'analytics' && (
+              <motion.div
+                key="analytics"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AnalyticsPanel />
+                  <div className="space-y-6">
+                    <LearningVelocityGraph dataPoints={learningVelocity} />
+                    <HealthIndicator systems={healthSystems} />
+                    <ExplorationGrid providers={providers} />
                   </div>
                 </div>
               </motion.div>
