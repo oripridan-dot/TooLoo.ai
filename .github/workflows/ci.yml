@@ -1,5 +1,4 @@
 name: TooLoo Synapsys CI
-version: 3.3.0
 
 on:
   push:
@@ -68,8 +67,8 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
-      - run: npm run build
+      - run: npm run build:frontend
       - uses: actions/upload-artifact@v4
         with:
           name: build
-          path: dist/
+          path: src/web-app/dist/
