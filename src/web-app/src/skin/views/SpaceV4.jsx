@@ -1,4 +1,4 @@
-// @version 3.3.261
+// @version 3.3.262
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1018,10 +1018,29 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
         >
           {approach.icon}
         </div>
+        {/* Live status indicator */}
+        {approach.live && (
+          <motion.div
+            className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+            title={`${approach.status || 'active'}`}
+          />
+        )}
       </div>
       
-      {/* Title */}
-      <h3 className="font-bold text-white text-base mb-1.5">{approach.title}</h3>
+      {/* Title with module badge */}
+      <div className="flex items-center gap-2 mb-1.5">
+        <h3 className="font-bold text-white text-base">{approach.title}</h3>
+        {approach.module && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500 font-mono">
+            {approach.module}
+          </span>
+        )}
+      </div>
       
       {/* Description */}
       <p className="text-sm text-gray-400 mb-4 leading-relaxed">{approach.description}</p>
@@ -1030,9 +1049,8 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
       <motion.div 
         className="flex items-center gap-2 text-xs font-semibold"
         style={{ color: approach.color }}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 0 }}
-        whileHover={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0.5 }}
+        whileHover={{ opacity: 1 }}
       >
         <motion.span
           animate={{ x: [0, 5, 0] }}
@@ -2258,8 +2276,8 @@ const TooLooSpaceV4 = memo(() => {
         collectedCount={collected.length}
       />
 
-      {/* Main content */}
-      <main className={`relative pt-20 pb-32 px-6 ${collected.length > 0 ? 'pr-80' : ''}`}>
+      {/* Main content - scrollable */}
+      <main className={`relative pt-20 pb-32 px-6 overflow-y-auto ${collected.length > 0 ? 'pr-80' : ''}`} style={{ height: 'calc(100vh - 5rem)' }}>
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {/* Phase 1: Discovery - Empty state with input */}
@@ -2267,13 +2285,14 @@ const TooLooSpaceV4 = memo(() => {
               <EmptyState key="empty" isThinking={false} />
             )}
 
-            {/* Phase 2: Explore - Choose approach */}
+            {/* Phase 2: Explore - Choose TooLoo capability */}
             {phase === 'explore' && (
               <ExplorePhase
                 key="explore"
                 prompt={prompt}
                 onApproachSelect={handleApproachSelect}
                 isProcessing={isThinking}
+                capabilities={systemCapabilities}
               />
             )}
 
