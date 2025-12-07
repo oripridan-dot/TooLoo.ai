@@ -1,4 +1,4 @@
-// @version 3.3.326
+// @version 3.3.327
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -1498,29 +1498,17 @@ render(<${componentName} />);`;
 
   return (
     <div className="relative group my-3 rounded-xl overflow-hidden border border-white/10">
-      {/* Header bar */}
+      {/* Header bar - simplified */}
       <div className="flex items-center justify-between px-3 py-2 bg-black/60 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-mono uppercase">{language || 'code'}</span>
-          {canPreview && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400">Live</span>
-          )}
+          {/* Friendly output type instead of language code */}
+          <span className="text-xs text-cyan-400/70">
+            {isSVG ? 'Diagram' : isJSX ? 'Interactive' : isHTML ? 'Preview' : ''}
+          </span>
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Preview toggle for previewable languages */}
-          {canPreview && (
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className={`text-xs px-2 py-1 rounded transition-colors ${
-                showPreview ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-gray-400'
-              }`}
-            >
-              {showPreview ? '👁 Preview' : '📝 Code'}
-            </button>
-          )}
-
-          {/* Execute button */}
+          {/* Execute button for executable */}
           {(canExecute || canPreview) && (
             <button
               onClick={handleExecute}
@@ -1535,7 +1523,7 @@ render(<${componentName} />);`;
             </button>
           )}
 
-          {/* Create Artifact button */}
+          {/* Save artifact button */}
           {canPreview && (
             <button
               onClick={handleCreateArtifact}
@@ -1545,14 +1533,6 @@ render(<${componentName} />);`;
               📦 Save
             </button>
           )}
-
-          {/* Copy button */}
-          <button
-            onClick={handleCopy}
-            className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
-          >
-            {copied ? '✓' : '📋'}
-          </button>
         </div>
       </div>
 
