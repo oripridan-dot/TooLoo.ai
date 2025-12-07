@@ -1,4 +1,4 @@
-// @version 3.3.255
+// @version 3.3.256
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -250,30 +250,6 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 });
 
 ToolooInlineHint.displayName = 'ToolooInlineHint';
-              <span className="inline-block w-1 h-1 rounded-full bg-current opacity-60" />
-              {guidance.hint}
-            </motion.p>
-          </div>
-          
-          {/* Phase indicator */}
-          <div 
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5"
-            style={{ 
-              backgroundColor: `${phaseConfig.color}15`,
-              color: phaseConfig.color,
-              border: `1px solid ${phaseConfig.color}30`,
-            }}
-          >
-            <span>{phaseConfig.icon}</span>
-            <span>{phaseConfig.label}</span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-});
-
-ToolooGuidancePanel.displayName = 'ToolooGuidancePanel';
 
 // ============================================================================
 // HEADER BAR - Enhanced with typography hierarchy and glow
