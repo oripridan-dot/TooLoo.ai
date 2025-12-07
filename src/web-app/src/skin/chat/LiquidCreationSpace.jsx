@@ -1,4 +1,4 @@
-// @version 3.3.298
+// @version 3.3.333
 // TooLoo.ai Liquid Creation Space
 // Where thought becomes visual reality
 //
@@ -567,18 +567,10 @@ export const ArtifactCard = memo(
             {children}
           </motion.div>
 
-          {/* Metadata footer */}
-          {(metadata.timestamp || metadata.confidence) && (
-            <div className="flex items-center justify-between px-4 py-2 border-t border-white/5 text-xs text-gray-500">
-              {metadata.timestamp && (
-                <span>{new Date(metadata.timestamp).toLocaleTimeString()}</span>
-              )}
-              {metadata.confidence && (
-                <span className="flex items-center gap-1">
-                  <span className={`w-2 h-2 rounded-full bg-${config.accent}-400`} />
-                  {Math.round(metadata.confidence * 100)}% confidence
-                </span>
-              )}
+          {/* Metadata footer - timestamp only */}
+          {metadata.timestamp && (
+            <div className="flex items-center px-4 py-2 border-t border-white/5 text-xs text-gray-500">
+              <span>{new Date(metadata.timestamp).toLocaleTimeString()}</span>
             </div>
           )}
         </div>
