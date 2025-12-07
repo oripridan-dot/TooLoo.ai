@@ -1,4 +1,4 @@
-// @version 3.3.334
+// @version 3.3.336
 // TooLoo.ai Liquid Chat Components
 // v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
 // Rich visual display capabilities for chat responses
@@ -1460,8 +1460,8 @@ render(<${componentName} />);`;
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Execute button for executable */}
-          {(canExecute || canPreview) && (
+          {/* Execute button - only for executable code (not SVG/HTML which are just displayed) */}
+          {(canExecute || isJSX) && (
             <button
               onClick={handleExecute}
               disabled={executing}
