@@ -1,4 +1,4 @@
-// @version 3.3.338 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.339 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2003,26 +2003,60 @@ const Growth = memo(({ className = '' }) => {
   // WebSocket ref for real-time updates
   const wsRef = useRef(null);
 
-  // Fetch learning report
+  // Fetch learning report - NO FAKE FALLBACKS!
   const fetchLearningReport = useCallback(async () => {
     try {
+      // Fetch from real metrics endpoint first
+      const realMetricsRes = await fetch(`${API_BASE}/metrics/real`);
+      const realMetrics = await realMetricsRes.json();
+      
+      // Fetch learning report for additional details
       const res = await fetch(`${API_BASE}/learning/report`);
       const data = await res.json();
+      
+      if (realMetrics.ok) {
+        // Use REAL data from metrics/real endpoint
+        const rm = realMetrics;
+        const firstTrySuccess = rm.metrics?.learning?.firstTrySuccess?.current;
+        const repeatProblems = rm.metrics?.learning?.repeatProblems?.current;
+        
+        setMetrics({
+          // NO FALLBACKS - show actual values or 0
+          learningScore: firstTrySuccess !== undefined 
+            ? Math.round(firstTrySuccess * 100) 
+            : null, // null = no data
+          patternsFound: rm.counts?.patterns || 0,
+          decisionsLogged: rm.counts?.experiments || 0,
+          qualityScore: repeatProblems !== undefined 
+            ? Math.round((1 - repeatProblems) * 100) 
+            : null,
+          // NEW: Real counts from aggregator
+          sessions: rm.counts?.sessions || 0,
+          discoveries: rm.counts?.emergenceEvents || 0,
+          artifacts: rm.counts?.artifacts || 0,
+          conversations: rm.counts?.conversations || 0,
+        });
+        
+        // Use real emergence events
+        if (rm.recentEmergence && rm.recentEmergence.length > 0) {
+          setEmergenceEvents(rm.recentEmergence.map((e, i) => ({
+            id: e.id || `emergence-${i}`,
+            type: e.type || 'synergy',
+            strength: e.strength || 0,
+            timestamp: e.timestamp,
+            title: `${e.type || 'Emergence'} Event`,
+            description: `Strength: ${Math.round((e.strength || 0) * 100)}%`,
+          })));
+        }
+      }
+      
       if (data.success && data.data) {
         const report = data.data;
-        setMetrics({
-          learningScore: Math.round((report.improvements?.firstTrySuccess?.current || 0.75) * 100),
-          patternsFound: report.totalSessions || 0,
-          decisionsLogged: report.successfulGenerations || 0,
-          qualityScore: Math.round(
-            (1 - (report.improvements?.repeatProblems?.current || 0.15)) * 100
-          ),
-        });
-
+        
         // Build learning events from recent learnings
         const recentLearnings = report.recentLearnings || [];
         const events = recentLearnings.map((learning, i) => ({
-          id: i + 1,
+          id: `learning-${i}-${Date.now()}`,
           type: i === 0 ? 'insight' : i === 1 ? 'pattern' : 'skill',
           title: learning,
           description: 'Learned from system analysis',
@@ -2033,7 +2067,7 @@ const Growth = memo(({ className = '' }) => {
         if (report.commonFailures) {
           report.commonFailures.slice(0, 2).forEach((failure, i) => {
             events.push({
-              id: events.length + i + 1,
+              id: `failure-${i}-${Date.now()}`,
               type: 'insight',
               title: `Issue detected: ${failure.task}`,
               description: failure.error,
@@ -2046,6 +2080,12 @@ const Growth = memo(({ className = '' }) => {
       }
     } catch (error) {
       console.error('[Growth] Failed to fetch learning report:', error);
+      // Set metrics to null to show "No data" state instead of fake values
+      setMetrics(prev => ({
+        ...prev,
+        learningScore: null,
+        qualityScore: null,
+      }));
     }
   }, []);
 
