@@ -1,4 +1,4 @@
-// @version 3.3.316
+// @version 3.3.317
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -2029,7 +2029,7 @@ const TooLooSpaceV4 = memo(() => {
     }
     
     setIsThinking(false);
-  }, [prompt, session]);
+  }, [prompt, session, resetThinkingState, handleThinkingEvent]);
 
   // Handle chat with a specific card
   const handleChat = useCallback(async (cardId, message) => {
