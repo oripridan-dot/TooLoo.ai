@@ -1,4 +1,4 @@
-// @version 3.3.264
+// @version 3.3.265
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2762,6 +2762,32 @@ const generateCards = (prompt, approach = null) => {
   
   if (approach) {
     switch (approach.id) {
+      // New capability-based IDs
+      case 'visuals':
+        dimensions = ['design', 'user'];
+        cardCount = 3;
+        break;
+      case 'diagrams':
+        dimensions = ['technical', 'design'];
+        cardCount = 3;
+        break;
+      case 'analytics':
+        dimensions = ['business', 'technical', 'user'];
+        cardCount = 2;
+        break;
+      case 'summarization':
+        dimensions = ['user', 'business'];
+        cardCount = 2;
+        break;
+      case 'code':
+        dimensions = ['technical', 'design'];
+        cardCount = 3;
+        break;
+      case 'exploration':
+        dimensions = ['design', 'technical', 'user', 'business', 'ethical'];
+        cardCount = 2;
+        break;
+      // Legacy IDs for backward compatibility
       case 'deep-dive':
         dimensions = ['technical', 'design', 'user'];
         cardCount = 3;
