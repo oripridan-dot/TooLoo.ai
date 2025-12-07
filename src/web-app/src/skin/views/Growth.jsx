@@ -1,4 +1,4 @@
-// @version 3.3.340 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.341 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2723,20 +2723,40 @@ Improvements:
                   />
                   <MetricCard
                     icon="📝"
-                    label="Generations"
-                    value={metrics.decisionsLogged}
+                    label="Experiments"
+                    value={metrics.decisionsLogged || 0}
                     color="amber"
                     index={2}
                   />
                   <MetricCard
                     icon="✅"
                     label="Quality Score"
-                    value={`${metrics.qualityScore}%`}
-                    trend="up"
-                    trendValue="2%"
+                    value={metrics.qualityScore !== null ? `${metrics.qualityScore}%` : 'No data'}
+                    trend={metrics.qualityScore !== null ? "up" : null}
+                    trendValue={metrics.qualityScore !== null ? "real" : ""}
                     color="emerald"
                     index={3}
                   />
+                </div>
+
+                {/* NEW: Real Data Counts Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-cyan-400">{metrics.discoveries || 0}</div>
+                    <div className="text-xs text-gray-400">Discoveries</div>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-purple-400">{metrics.artifacts || 0}</div>
+                    <div className="text-xs text-gray-400">Artifacts</div>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-emerald-400">{metrics.conversations || 0}</div>
+                    <div className="text-xs text-gray-400">Conversations</div>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-amber-400">{metrics.patternsFound || 0}</div>
+                    <div className="text-xs text-gray-400">Patterns</div>
+                  </div>
                 </div>
 
                 {/* Main grid */}
@@ -2747,13 +2767,13 @@ Improvements:
                       <h3 className="text-sm font-medium text-white mb-6">Growth Metrics</h3>
                       <div className="flex flex-wrap justify-center gap-6">
                         <GrowthRing
-                          value={metrics.learningScore}
+                          value={metrics.learningScore || 0}
                           label="Learning"
                           color="purple"
                           size={100}
                         />
                         <GrowthRing
-                          value={metrics.qualityScore}
+                          value={metrics.qualityScore || 0}
                           label="Quality"
                           color="emerald"
                           size={100}
