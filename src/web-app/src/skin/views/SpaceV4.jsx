@@ -1,4 +1,4 @@
-// @version 3.3.271
+// @version 3.3.272
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -263,6 +263,189 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 });
 
 ToolooInlineHint.displayName = 'ToolooInlineHint';
+
+// ============================================================================
+// TOOLOO ADVENTURES - Fun comic-style loading animation
+// ============================================================================
+
+const TOOLOO_ADVENTURES = [
+  { scene: '🚀', text: "TooLoo is launching into the knowledge cosmos...", subtext: "Fastening neural seatbelts" },
+  { scene: '🔭', text: "Scanning infinite possibility space...", subtext: "Found 42 interesting dimensions" },
+  { scene: '🧠', text: "Neurons are having a brainstorm party...", subtext: "Ideas are RSVPing" },
+  { scene: '⚡', text: "Charging up the creativity capacitors...", subtext: "Pew pew pew!" },
+  { scene: '🎨', text: "Mixing colors in the imagination lab...", subtext: "No beige allowed" },
+  { scene: '🌀', text: "Swirling through the vortex of possibilities...", subtext: "Wheeeee!" },
+  { scene: '🔮', text: "The crystal ball is warming up...", subtext: "Future looks... interesting" },
+  { scene: '🎪', text: "Setting up the idea circus...", subtext: "Concepts are doing backflips" },
+  { scene: '🏄', text: "Surfing the waves of innovation...", subtext: "Hang ten, dude!" },
+  { scene: '🎭', text: "Auditioning different perspectives...", subtext: "All the world's a stage" },
+  { scene: '🔬', text: "Examining your idea under the genius microscope...", subtext: "Magnification: Maximum" },
+  { scene: '🌈', text: "Painting possibilities across dimensions...", subtext: "ROY G. BIV says hi" },
+];
+
+const TooLooAdventuresLoader = memo(({ approach }) => {
+  const [adventureIndex, setAdventureIndex] = useState(0);
+  const [dots, setDots] = useState('');
+  
+  // Cycle through adventures
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAdventureIndex(prev => (prev + 1) % TOOLOO_ADVENTURES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Animate dots
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+  
+  const adventure = TOOLOO_ADVENTURES[adventureIndex];
+  
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] px-8">
+      {/* Comic panel frame */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative max-w-md w-full"
+      >
+        {/* Speech bubble background */}
+        <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-3xl blur-xl" />
+        
+        {/* Main panel */}
+        <div className="relative bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-800 overflow-hidden">
+          {/* Comic header strip */}
+          <div className="bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 px-4 py-2 border-b border-gray-800">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-400 tracking-wider">TOOLOO ADVENTURES</span>
+              <div className="flex items-center gap-1">
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500"
+                    animate={{ 
+                      scale: [1, 1.3, 1],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{ 
+                      duration: 1, 
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Scene area */}
+          <div className="p-8 text-center">
+            {/* Animated character/scene */}
+            <motion.div
+              key={adventureIndex}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="relative w-24 h-24 mx-auto mb-6"
+            >
+              {/* Glow ring */}
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{ 
+                  background: `radial-gradient(circle, ${approach?.color || '#6366f1'}30 0%, transparent 70%)`,
+                }}
+                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              
+              {/* Spinning orbit */}
+              <motion.div
+                className="absolute inset-2 rounded-full border-2 border-dashed"
+                style={{ borderColor: `${approach?.color || '#6366f1'}40` }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Scene emoji */}
+              <div className="absolute inset-0 flex items-center justify-center text-5xl">
+                <motion.span
+                  animate={{ 
+                    y: [0, -8, 0],
+                    rotate: [0, 5, -5, 0],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {adventure.scene}
+                </motion.span>
+              </div>
+            </motion.div>
+            
+            {/* Speech bubble */}
+            <motion.div
+              key={`text-${adventureIndex}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative"
+            >
+              {/* Main text */}
+              <h3 className="text-lg font-semibold text-white mb-1">
+                {adventure.text}
+              </h3>
+              
+              {/* Subtext / punchline */}
+              <motion.p 
+                className="text-sm text-gray-400 italic"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                "{adventure.subtext}"
+              </motion.p>
+            </motion.div>
+            
+            {/* Progress indicator */}
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <motion.div
+                className="h-1 rounded-full overflow-hidden bg-gray-800 w-32"
+              >
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ 
+                    background: `linear-gradient(90deg, ${approach?.color || '#6366f1'}, #a855f7)`,
+                  }}
+                  animate={{ width: ['0%', '100%'] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </motion.div>
+            </div>
+            
+            {/* Capability badge */}
+            {approach && (
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/50 border border-gray-700/50">
+                <span className="text-lg">{approach.icon}</span>
+                <span className="text-sm text-gray-300">{approach.title}</span>
+                <span className="text-xs text-gray-500">{dots}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Comic footer */}
+          <div className="px-4 py-2 bg-gray-950/50 border-t border-gray-800 flex items-center justify-between">
+            <span className="text-[10px] text-gray-600">Episode #{adventureIndex + 1} of ∞</span>
+            <span className="text-[10px] text-gray-600">Powered by TooLoo's Imagination Engine™</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+});
+
+TooLooAdventuresLoader.displayName = 'TooLooAdventuresLoader';
 
 // ============================================================================
 // HEADER BAR - Enhanced with typography hierarchy and glow
