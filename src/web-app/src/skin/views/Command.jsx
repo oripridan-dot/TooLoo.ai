@@ -1,4 +1,4 @@
-// @version 3.3.149
+// @version 3.3.294
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -221,7 +221,7 @@ const LogViewer = memo(({ logs = [], className = '' }) => {
       <div className="h-48 overflow-auto font-mono text-xs space-y-1 bg-black/30 rounded-lg p-3">
         {logs.map((log, i) => (
           <div
-            key={log.id || i}
+            key={log.id || `log-${log.timestamp || log.time}-${i}`}
             className={`animate-fadeIn
               ${
                 log.level === 'error'
