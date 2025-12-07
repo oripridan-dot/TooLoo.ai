@@ -1,4 +1,4 @@
-// @version 3.3.278
+// @version 3.3.279
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -1837,6 +1837,15 @@ const CollectedSidebar = memo(({
               </motion.div>
             );
           })}
+        </div>
+
+        {/* Proactive Advisor - AI-powered synthesis suggestions */}
+        <div className="px-3 py-2 border-t border-gray-800/50">
+          <TooLooProactiveAdvisor 
+            collected={collected} 
+            onAdvice={onAdvice}
+            isProcessing={isProcessing}
+          />
         </div>
 
         {/* Action buttons - enhanced with active states */}
