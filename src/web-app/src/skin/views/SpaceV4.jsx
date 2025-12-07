@@ -1,4 +1,4 @@
-// @version 3.3.238
+// @version 3.3.239
 // TooLoo.ai Space V4 - Two-Step Creative Flow
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -965,25 +965,26 @@ CollectedSidebar.displayName = 'CollectedSidebar';
 const TooLooSpaceV4 = memo(() => {
   const [session, setSession] = useState(null);
   const [prompt, setPrompt] = useState('');
-  const [phase, setPhase] = useState('discovery');
+  const [phase, setPhase] = useState('discovery'); // discovery -> explore -> options -> refinement -> build
   const [isThinking, setIsThinking] = useState(false);
   const [cards, setCards] = useState([]);
   const [expandedCard, setExpandedCard] = useState(null);
   const [collected, setCollected] = useState([]);
   const [streamingContent, setStreamingContent] = useState('');
   const [processingCardId, setProcessingCardId] = useState(null);
+  const [selectedApproach, setSelectedApproach] = useState(null);
 
   // Get dimensions that have cards
   const activeDimensions = useMemo(() => {
     return [...new Set(cards.map(c => c.dimension))];
   }, [cards]);
 
-  // Handle initial prompt submission
+  // Handle initial prompt submission - goes to explore phase
   const handleSubmit = useCallback(async ({ message }) => {
     if (!message.trim()) return;
     
-    setIsThinking(true);
     setPrompt(message);
+    setPhase('explore'); // Go to exploration phase first
 
     try {
       // Create session
@@ -997,19 +998,24 @@ const TooLooSpaceV4 = memo(() => {
       });
       const data = await response.json();
       if (data.ok) setSession(data.session);
-
-      // Generate cards (simulated - would call AI)
-      setTimeout(() => {
-        const newCards = generateCards(message);
-        setCards(newCards);
-        setPhase('exploration');
-        setIsThinking(false);
-      }, 2000);
     } catch (error) {
-      console.error('Submit failed:', error);
-      setIsThinking(false);
+      console.error('Session creation failed:', error);
     }
   }, []);
+
+  // Handle approach selection from explore phase
+  const handleApproachSelect = useCallback(async (approach) => {
+    setSelectedApproach(approach);
+    setIsThinking(true);
+    setPhase('options');
+
+    // Generate cards based on approach
+    setTimeout(() => {
+      const newCards = generateCards(prompt, approach);
+      setCards(newCards);
+      setIsThinking(false);
+    }, 1500);
+  }, [prompt]);
 
   // Handle chat with a specific card
   const handleChat = useCallback(async (cardId, message) => {
