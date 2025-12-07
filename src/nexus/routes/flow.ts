@@ -1,4 +1,4 @@
-// @version 3.3.285
+// @version 3.3.286
 // TooLoo Flow API Routes
 // Unified thinking and creation endpoints
 
@@ -217,7 +217,7 @@ router.post('/sessions/:id/dismiss', async (req: Request, res: Response) => {
     if (!optionId || !nodeId) {
       return res.status(400).json({ ok: false, error: 'optionId and nodeId are required' });
     }
-    await flowSessionManager.dismissOption(req.params.id, optionId, nodeId, reason || 'No reason given');
+    await flowSessionManager.dismissOption(req.params['id'] as string, optionId, nodeId, reason || 'No reason given');
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -227,7 +227,7 @@ router.post('/sessions/:id/dismiss', async (req: Request, res: Response) => {
 // Get all decisions for session
 router.get('/sessions/:id/decisions', async (req: Request, res: Response) => {
   try {
-    const session = await flowSessionManager.getSession(req.params.id);
+    const session = await flowSessionManager.getSession(req.params['id'] as string);
     if (!session) {
       return res.status(404).json({ ok: false, error: 'Session not found' });
     }
@@ -248,12 +248,23 @@ router.post('/sessions/:id/phase', async (req: Request, res: Response) => {
     if (!phase) {
       return res.status(400).json({ ok: false, error: 'Phase is required' });
     }
-    await flowSessionManager.setPhase(req.params.id, phase as FlowPhase);
+    await flowSessionManager.setPhase(req.params['id'] as string, phase as FlowPhase);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
   }
 });
+
+// Suggest next phase
+router.get('/sessions/:id/phase/suggest', async (req: Request, res: Response) => {
+  try {
+    const suggestion = await flowSessionManager.suggestNextPhase(req.params['id'] as string);
+    res.json({ ok: true, suggestion });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error) });
+  }
+});
+
 
 // Get suggested next phase
 router.get('/sessions/:id/suggest-phase', async (req: Request, res: Response) => {
