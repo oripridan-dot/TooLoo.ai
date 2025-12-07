@@ -1,4 +1,4 @@
-// @version 3.3.262
+// @version 3.3.263
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1614,19 +1614,134 @@ const TooLooSpaceV4 = memo(() => {
     }
   }, []);
 
-  // Handle approach selection from explore phase
+  // Handle capability selection from explore phase - REAL API CALLS
   const handleApproachSelect = useCallback(async (approach) => {
     setSelectedApproach(approach);
     setIsThinking(true);
     setPhase('options');
 
-    // Generate cards based on approach
-    setTimeout(() => {
+    // Skip means show all options with default exploration
+    if (approach.id === 'skip') {
+      try {
+        // Real multi-dimension exploration via chat API
+        const response = await fetch(`${API_BASE}/chat/stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Analyze this from multiple perspectives: "${prompt}". Provide concrete options for: 1) Design approaches 2) Technical implementation 3) User experience. Format each as a distinct recommendation.`,
+            mode: 'deep',
+            sessionId: session?.id || 'default',
+            context: { route: 'explore-all', originalPrompt: prompt },
+          }),
+        });
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        while (reader) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.chunk) fullContent += data.chunk;
+            } catch {}
+          }
+        }
+
+        // Parse response into cards
+        const realCards = parseResponseIntoCards(fullContent, prompt);
+        setCards(realCards);
+      } catch (error) {
+        console.error('Exploration failed:', error);
+        // Fallback to generated cards if API fails
+        const newCards = generateCards(prompt, approach);
+        setCards(newCards);
+      }
+      setIsThinking(false);
+      return;
+    }
+
+    // Capability-specific API calls
+    try {
+      let apiPrompt = prompt;
+      let apiEndpoint = `${API_BASE}/chat/stream`;
+      let requestBody = {};
+
+      // Configure request based on capability
+      switch (approach.id) {
+        case 'visuals':
+          apiPrompt = `Create visual representations for: "${prompt}". Generate: 1) Conceptual diagram 2) UI mockup idea 3) Infographic concept. Include SVG specifications where helpful.`;
+          break;
+        case 'diagrams':
+          apiPrompt = `Create diagrams and charts for: "${prompt}". Provide: 1) Architecture diagram 2) Flow chart 3) Data visualization concept. Include chart data structures.`;
+          break;
+        case 'analytics':
+          apiPrompt = `Provide deep analytics and insights for: "${prompt}". Include: 1) Key metrics to track 2) Pattern analysis 3) Predictive insights 4) Data-driven recommendations.`;
+          break;
+        case 'summarization':
+          apiPrompt = `Provide comprehensive summarization of: "${prompt}". Create: 1) Executive summary 2) Key points extraction 3) Action items 4) Critical insights.`;
+          break;
+        case 'code':
+          apiPrompt = `Generate code solutions for: "${prompt}". Provide: 1) Clean implementation 2) Alternative approach 3) Optimized version. Include TypeScript/JavaScript examples.`;
+          break;
+        case 'exploration':
+          apiPrompt = `Deeply explore this concept: "${prompt}". Analyze from: 1) Multiple perspectives 2) Creative angles 3) Unconventional approaches 4) Future possibilities.`;
+          break;
+        default:
+          apiPrompt = `Explore this comprehensively: "${prompt}"`;
+      }
+
+      requestBody = {
+        message: apiPrompt,
+        mode: 'deep',
+        sessionId: session?.id || 'default',
+        context: { 
+          route: approach.id,
+          capability: approach.module,
+          originalPrompt: prompt,
+        },
+      };
+
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+
+      // Parse real response into cards
+      const realCards = parseResponseIntoCards(fullContent, prompt, approach.id);
+      setCards(realCards);
+
+    } catch (error) {
+      console.error('Capability API call failed:', error);
+      // Fallback to generated cards
       const newCards = generateCards(prompt, approach);
       setCards(newCards);
-      setIsThinking(false);
-    }, 1500);
-  }, [prompt]);
+    }
+    
+    setIsThinking(false);
+  }, [prompt, session]);
 
   // Handle chat with a specific card
   const handleChat = useCallback(async (cardId, message) => {
