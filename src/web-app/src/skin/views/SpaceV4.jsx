@@ -1,4 +1,4 @@
-// @version 3.3.246
+// @version 3.3.247
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1399,6 +1399,500 @@ const TooLooSpaceV4 = memo(() => {
   const handleBuild = useCallback(() => {
     setPhase('build');
   }, []);
+
+  // ============================================================================
+  // ACTION HANDLERS - Validate, Optimize, Expand, Challenge
+  // ============================================================================
+
+  const handleValidate = useCallback(async () => {
+    if (!prompt.trim() || isThinking) return;
+    
+    setIsThinking(true);
+    
+    try {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Validate this idea critically: "${prompt}". Check for: 1) Technical feasibility 2) Potential issues 3) Missing considerations 4) Strengths. Be thorough but constructive.`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'validate', originalPrompt: prompt },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      // Add validation as a new card
+      if (fullContent) {
+        const validationCard = {
+          id: `validation-${Date.now()}`,
+          dimension: 'ethical',
+          title: 'Validation Analysis',
+          description: 'Critical review of your concept',
+          direction: 'Identify issues and confirm strengths',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.9,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: false,
+        };
+        setCards(prev => [validationCard, ...prev]);
+        if (phase === 'discovery' || phase === 'explore') setPhase('options');
+      }
+    } catch (error) {
+      console.error('Validation failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [prompt, session, isThinking, phase]);
+
+  const handleOptimize = useCallback(async () => {
+    if (!prompt.trim() || isThinking) return;
+    
+    setIsThinking(true);
+    
+    try {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Optimize this idea for maximum impact: "${prompt}". Focus on: 1) Performance improvements 2) User experience optimization 3) Resource efficiency 4) Scalability considerations. Provide specific actionable improvements.`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'optimize', originalPrompt: prompt },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const optimizeCard = {
+          id: `optimize-${Date.now()}`,
+          dimension: 'technical',
+          title: 'Optimization Strategy',
+          description: 'Performance and efficiency improvements',
+          direction: 'Maximize impact and efficiency',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.88,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: false,
+        };
+        setCards(prev => [optimizeCard, ...prev]);
+        if (phase === 'discovery' || phase === 'explore') setPhase('options');
+      }
+    } catch (error) {
+      console.error('Optimization failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [prompt, session, isThinking, phase]);
+
+  const handleExpandIdea = useCallback(async () => {
+    if (!prompt.trim() || isThinking) return;
+    
+    setIsThinking(true);
+    
+    try {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Expand this idea to its full potential: "${prompt}". Explore: 1) Advanced features 2) Future possibilities 3) Related concepts 4) Integration opportunities 5) Ambitious variations. Think big and creative.`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'expand', originalPrompt: prompt },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const expandCard = {
+          id: `expand-${Date.now()}`,
+          dimension: 'business',
+          title: 'Expanded Vision',
+          description: 'Ambitious possibilities and future potential',
+          direction: 'Think bigger and explore possibilities',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.85,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: false,
+        };
+        setCards(prev => [expandCard, ...prev]);
+        if (phase === 'discovery' || phase === 'explore') setPhase('options');
+      }
+    } catch (error) {
+      console.error('Expand failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [prompt, session, isThinking, phase]);
+
+  const handleChallenge = useCallback(async () => {
+    if (!prompt.trim() || isThinking) return;
+    
+    setIsThinking(true);
+    
+    try {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Challenge this idea rigorously: "${prompt}". Play devil's advocate: 1) What could go wrong? 2) Edge cases and failures 3) Hidden assumptions 4) Alternative approaches 5) Counter-arguments. Be constructively critical.`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'challenge', originalPrompt: prompt },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const challengeCard = {
+          id: `challenge-${Date.now()}`,
+          dimension: 'ethical',
+          title: 'Critical Challenge',
+          description: 'Adversarial analysis and edge cases',
+          direction: 'Identify weaknesses and risks',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.92,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: false,
+        };
+        setCards(prev => [challengeCard, ...prev]);
+        if (phase === 'discovery' || phase === 'explore') setPhase('options');
+      }
+    } catch (error) {
+      console.error('Challenge failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [prompt, session, isThinking, phase]);
+
+  // ============================================================================
+  // SIDEBAR ACTION HANDLERS
+  // ============================================================================
+
+  const handleNextIteration = useCallback(async () => {
+    if (collected.length === 0) return;
+    
+    setIsThinking(true);
+    const collectedTitles = collected.map(c => c.title).join(', ');
+    
+    try {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Based on these collected artifacts: [${collectedTitles}], generate the next iteration of ideas. Build upon these foundations with: 1) Enhanced versions 2) Combinations 3) New directions. Original concept: "${prompt}"`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'iterate', collected: collected.map(c => ({ title: c.title, dimension: c.dimension })) },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      // Generate new cards based on iteration
+      const newCards = generateCards(prompt + ' (iteration based on: ' + collectedTitles + ')', selectedApproach);
+      setCards(prev => [...newCards, ...prev]);
+      
+    } catch (error) {
+      console.error('Next iteration failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [collected, prompt, session, selectedApproach]);
+
+  const handleSummarize = useCallback(async () => {
+    if (collected.length === 0) return;
+    
+    setIsThinking(true);
+    
+    try {
+      const collectedData = collected.map(c => ({
+        title: c.title,
+        dimension: c.dimension,
+        description: c.description,
+        direction: c.direction,
+      }));
+      
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Synthesize and summarize these collected artifacts into a cohesive overview: ${JSON.stringify(collectedData)}. Provide: 1) Executive summary 2) Key themes 3) Recommended priorities 4) Action items`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'summarize', collected: collectedData },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const summaryCard = {
+          id: `summary-${Date.now()}`,
+          dimension: 'business',
+          title: '📋 Synthesis Summary',
+          description: 'Unified overview of collected artifacts',
+          direction: 'Cohesive action plan',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.95,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: false,
+        };
+        setCards(prev => [summaryCard, ...prev]);
+      }
+    } catch (error) {
+      console.error('Summarize failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [collected, session]);
+
+  const handleCompare = useCallback(async () => {
+    if (collected.length < 2) return;
+    
+    setIsThinking(true);
+    
+    try {
+      const collectedData = collected.map(c => ({
+        title: c.title,
+        dimension: c.dimension,
+        description: c.description,
+      }));
+      
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Compare and contrast these collected options: ${JSON.stringify(collectedData)}. Provide: 1) Side-by-side comparison 2) Trade-offs 3) Complementary aspects 4) Recommendation for combination`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'compare', collected: collectedData },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const compareCard = {
+          id: `compare-${Date.now()}`,
+          dimension: 'user',
+          title: '⚖️ Comparison Analysis',
+          description: 'Side-by-side evaluation of options',
+          direction: 'Make informed decisions',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.9,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: false,
+        };
+        setCards(prev => [compareCard, ...prev]);
+      }
+    } catch (error) {
+      console.error('Compare failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [collected, session]);
+
+  const handleExport = useCallback(() => {
+    const exportData = {
+      session: { id: session?.id, prompt, phase },
+      collected: collected.map(c => ({
+        title: c.title,
+        dimension: c.dimension,
+        description: c.description,
+        direction: c.direction,
+        content: c.content,
+        confidence: c.confidence,
+      })),
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tooloo-artifacts-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [collected, session, prompt, phase]);
+
+  const handleMergeAndSynthesize = useCallback(async () => {
+    if (collected.length < 2) return;
+    
+    setIsThinking(true);
+    setPhase('build');
+    
+    try {
+      const collectedData = collected.map(c => ({
+        title: c.title,
+        dimension: c.dimension,
+        content: c.content || c.description,
+      }));
+      
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Merge and synthesize these artifacts into a unified implementation plan: ${JSON.stringify(collectedData)}. Create: 1) Integrated architecture 2) Implementation steps 3) Component breakdown 4) Dependencies map 5) Timeline estimate`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'synthesize', collected: collectedData },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const synthesisCard = {
+          id: `synthesis-${Date.now()}`,
+          dimension: 'technical',
+          title: '🔮 Merged Synthesis',
+          description: 'Unified implementation from all collected artifacts',
+          direction: 'Ready to build',
+          toolooSuggestion: fullContent.slice(0, 300) + '...',
+          confidence: 0.95,
+          content: fullContent,
+          refinements: [{ role: 'assistant', content: fullContent }],
+          collected: true, // Auto-collect the synthesis
+        };
+        setCards(prev => [synthesisCard, ...prev]);
+        setCollected(prev => [synthesisCard, ...prev]);
+      }
+    } catch (error) {
+      console.error('Merge & Synthesize failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [collected, session]);
 
   const expandedCardData = expandedCard ? cards.find(c => c.id === expandedCard) : null;
 
