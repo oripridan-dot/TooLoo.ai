@@ -1,4 +1,4 @@
-// @version 3.3.235
+// @version 3.3.236
 // TooLoo.ai Space V4 - Professional Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -307,25 +307,6 @@ const OptionCard = memo(({
 });
 
 OptionCard.displayName = 'OptionCard';
-          {isCollected && (
-            <div className="absolute top-3 right-3">
-              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Expanded view (modal)
-  return null; // Rendered via ExpandedCardModal
-});
-
-OptionCard.displayName = 'OptionCard';
 
 // ============================================================================
 // EXPANDED CARD MODAL - Full chat interface
@@ -604,27 +585,20 @@ const DimensionSection = memo(({
     <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-8"
+      className="mb-6"
     >
-      {/* Section header */}
-      <div className="flex items-center gap-3 mb-4 px-1">
-        <div 
-          className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: `${config.color}15` }}
-        >
-          <span className="text-lg">{config.icon}</span>
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold text-white">{config.label}</h2>
-          <p className="text-xs text-gray-500">{config.description}</p>
-        </div>
-        <div className="ml-auto px-2 py-0.5 rounded-full bg-gray-800 text-xs text-gray-500">
+      {/* Section header - compact */}
+      <div className="flex items-center gap-2 mb-3 px-1">
+        <span className="text-base">{config.icon}</span>
+        <h2 className="text-sm font-medium text-white">{config.label}</h2>
+        <span className="text-xs text-gray-500">• {config.description}</span>
+        <span className="ml-auto px-1.5 py-0.5 rounded bg-gray-800 text-xs text-gray-500">
           {sectionCards.length}
-        </div>
+        </span>
       </div>
 
-      {/* Cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Cards grid - more columns, tighter spacing */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {sectionCards.map((card, index) => (
           <OptionCard
             key={card.id}
