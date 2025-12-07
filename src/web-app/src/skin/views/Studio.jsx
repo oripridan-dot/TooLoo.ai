@@ -1,4 +1,4 @@
-// @version 3.3.212
+// @version 3.3.213
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // Fully wired with real API connections
@@ -221,8 +221,8 @@ const Studio = memo(({ className = '' }) => {
   const [loading, setLoading] = useState(false);
   const [previewActive, setPreviewActive] = useState(false);
   
-  // NEW: Tab state for switching between Studio and Liquid Skin Showcase
-  const [activeTab, setActiveTab] = useState('studio'); // 'studio' | 'showcase'
+  // NEW: Tab state for switching between Studio, Liquid Skin Showcase, and Figma Copilot
+  const [activeTab, setActiveTab] = useState('studio'); // 'studio' | 'showcase' | 'figma'
 
   // Fetch emergence artifacts from API
   const fetchEmergences = useCallback(async () => {
@@ -375,6 +375,45 @@ const Studio = memo(({ className = '' }) => {
 
   // Color palette
   const colorHues = [0, 30, 60, 120, 180, 200, 260, 300, 330];
+
+  // If figma tab is active, render the FigmaCopilot
+  if (activeTab === 'figma') {
+    return (
+      <div className={`h-full flex flex-col ${className}`}>
+        {/* Tab Header */}
+        <div className="px-6 py-3 border-b border-white/5 flex items-center gap-4 bg-gradient-to-r from-transparent via-purple-950/10 to-transparent">
+          <button
+            onClick={() => setActiveTab('studio')}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10"
+          >
+            ← Back to Studio
+          </button>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-white">🎨 Figma Copilot</h1>
+            <p className="text-xs text-gray-500">Design to code in one click</p>
+          </div>
+        </div>
+        
+        {/* FigmaCopilot Content */}
+        <div className="flex-1 overflow-auto">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="w-12 h-12 border-2 border-purple-500/30 border-t-purple-500 rounded-full mx-auto mb-4"
+                />
+                <p className="text-gray-400">Loading Figma Copilot...</p>
+              </div>
+            </div>
+          }>
+            <FigmaCopilot />
+          </Suspense>
+        </div>
+      </div>
+    );
+  }
 
   // If showcase tab is active, render the full showcase
   if (activeTab === 'showcase') {
