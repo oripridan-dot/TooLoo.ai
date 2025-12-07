@@ -1,4 +1,4 @@
-// @version 3.3.233
+// @version 3.3.234
 // TooLoo.ai Space V4 - Professional Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -19,7 +19,6 @@ import React, {
   useEffect,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import UniversalInput from '../components/UniversalInput';
 
 const API_BASE = '/api/v1';
 
