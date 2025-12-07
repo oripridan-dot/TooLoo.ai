@@ -1,4 +1,4 @@
-// @version 3.3.249
+// @version 3.3.250
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2125,59 +2125,106 @@ const TooLooSpaceV4 = memo(() => {
       <CollectedSidebar 
         collected={collected} 
         onBuild={handleBuild}
-        onNextIteration={() => {
-          setPhase('exploration');
-          // Generate new variations based on collected
-          console.log('Next iteration with:', collected);
-        }}
-        onSummarize={() => {
-          console.log('Summarizing artifacts:', collected);
-        }}
-        onCompare={() => {
-          console.log('Comparing artifacts:', collected);
-        }}
-        onExport={() => {
-          const exportData = JSON.stringify(collected, null, 2);
-          const blob = new Blob([exportData], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `tooloo-artifacts-${Date.now()}.json`;
-          a.click();
-        }}
+        onNextIteration={handleNextIteration}
+        onSummarize={handleSummarize}
+        onCompare={handleCompare}
+        onExport={handleExport}
+        onMergeAndSynthesize={handleMergeAndSynthesize}
+        isProcessing={isThinking}
       />
 
-      {/* Fixed input - Chat style */}
+      {/* Fixed input - Enhanced with behind-glass glow */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
+        {/* TooLoo Guidance Panel - shown above input */}
+        <ToolooGuidancePanel phase={phase} isThinking={isThinking} />
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-800 p-3 shadow-2xl"
+          className="relative"
         >
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              const input = e.target.elements.spaceInput;
-              if (input.value.trim()) {
-                handleSubmit({ message: input.value.trim() });
-                input.value = '';
-              }
+          {/* Behind-the-glass glow for input */}
+          <motion.div
+            className="absolute -inset-2 rounded-3xl opacity-40 blur-xl"
+            animate={{
+              background: [
+                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)',
+                'radial-gradient(ellipse at 70% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 30% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)',
+                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)',
+              ],
             }}
-            className="flex gap-3"
-          >
-            <input
-              name="spaceInput"
-              type="text"
-              placeholder="What are we creating today?"
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3
-                       text-white placeholder-gray-500 focus:outline-none focus:ring-2
-                       focus:ring-cyan-500/50 focus:border-transparent transition-all"
-              disabled={isThinking}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            style={{ zIndex: -1 }}
+          />
+          
+          <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-2xl overflow-hidden">
+            {/* Animated light streak */}
+            <motion.div
+              className="absolute top-0 left-0 w-40 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent"
+              animate={{ x: [-160, 700] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear", repeatDelay: 3 }}
             />
-            <button
-              type="submit"
-              disabled={isThinking}
-              className="px-5 py-3 rounded-xl font-medium text-white transition-all
+            
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const input = e.target.elements.spaceInput;
+                if (input.value.trim()) {
+                  handleSubmit({ message: input.value.trim() });
+                  input.value = '';
+                }
+              }}
+              className="relative flex gap-3"
+            >
+              <input
+                name="spaceInput"
+                type="text"
+                placeholder="What are we creating today?"
+                className="flex-1 bg-gray-800/80 border border-gray-700/50 rounded-xl px-4 py-3
+                         text-white placeholder-gray-500 focus:outline-none focus:ring-2
+                         focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all"
+                disabled={isThinking}
+              />
+              <motion.button
+                type="submit"
+                disabled={isThinking}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative px-6 py-3 rounded-xl font-semibold text-white transition-all
+                         disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
+                  boxShadow: '0 4px 20px rgba(6, 182, 212, 0.3)',
+                }}
+              >
+                {/* Button glow animation */}
+                <motion.div
+                  className="absolute inset-0"
+                  animate={!isThinking ? {
+                    boxShadow: [
+                      'inset 0 0 20px rgba(255, 255, 255, 0.1)',
+                      'inset 0 0 30px rgba(255, 255, 255, 0.2)',
+                      'inset 0 0 20px rgba(255, 255, 255, 0.1)',
+                    ],
+                  } : {}}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                {isThinking ? (
+                  <motion.svg 
+                    className="w-5 h-5 relative" 
+                    fill="none" 
+                    viewBox="0 0 24 24"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </motion.svg>
+                ) : (
+                  <span className="relative">Think</span>
+                )}
+              </motion.button>
+            </form>
                        disabled:opacity-50 disabled:cursor-not-allowed
                        hover:opacity-90 active:scale-95
                        bg-gradient-to-r from-cyan-500 to-purple-500"
