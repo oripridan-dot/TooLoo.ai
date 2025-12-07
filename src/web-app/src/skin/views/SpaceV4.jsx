@@ -1,4 +1,4 @@
-// @version 3.3.251
+// @version 3.3.252
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -434,7 +434,7 @@ const ChatMessage = memo(({ message, isUser, color }) => (
 ChatMessage.displayName = 'ChatMessage';
 
 // ============================================================================
-// OPTION CARD - Professional card with real chat
+// OPTION CARD - Enhanced with glow effects and visual polish
 // ============================================================================
 
 const OptionCard = memo(({
@@ -472,88 +472,145 @@ const OptionCard = memo(({
     return (
       <motion.div
         layout
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ delay: index * 0.03 }}
+        transition={{ delay: index * 0.05, type: "spring", stiffness: 300 }}
+        whileHover={{ y: -4, transition: { duration: 0.2 } }}
         className={`
-          group relative bg-gray-900/60 backdrop-blur-sm rounded-xl 
-          border ${config.border} overflow-hidden cursor-pointer
-          hover:bg-gray-900/80 hover:border-opacity-40 transition-all duration-200
-          ${isCollected ? 'ring-1 ring-emerald-500/30' : ''}
+          group relative rounded-xl overflow-hidden cursor-pointer
+          ${isCollected ? 'ring-2 ring-emerald-500/40' : ''}
         `}
         onClick={() => onExpand(card.id)}
       >
-        {/* Gradient accent line */}
-        <div 
-          className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${config.solidGradient}`}
+        {/* Behind-the-glass glow on hover */}
+        <motion.div
+          className="absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-md"
+          style={{ 
+            background: `radial-gradient(ellipse at center, ${config.color}40 0%, transparent 70%)`,
+          }}
         />
+        
+        {/* Card body */}
+        <div 
+          className="relative bg-gray-900/70 backdrop-blur-sm border border-white/5 
+                     group-hover:bg-gray-900/90 group-hover:border-white/10 
+                     transition-all duration-200 rounded-xl"
+          style={{ 
+            borderColor: isCollected ? `${config.color}30` : undefined,
+          }}
+        >
+          {/* Gradient accent line with animation */}
+          <motion.div 
+            className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${config.solidGradient}`}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: index * 0.05 + 0.2 }}
+            style={{ transformOrigin: 'left' }}
+          />
+          
+          {/* Animated shimmer on hover */}
+          <motion.div
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            style={{
+              background: `linear-gradient(135deg, transparent 40%, ${config.color}08 50%, transparent 60%)`,
+            }}
+          />
 
-        <div className="p-3">
-          {/* Header row - compact */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-base">{config.icon}</span>
-            <h3 className="font-medium text-white text-sm flex-1 truncate">
-              {card.title}
-            </h3>
-            <span 
-              className="text-xs font-medium px-1.5 py-0.5 rounded"
-              style={{ 
-                backgroundColor: `${config.color}15`,
-                color: card.confidence > 0.8 ? config.color : '#9ca3af'
-              }}
-            >
-              {Math.round(card.confidence * 100)}%
-            </span>
-          </div>
+          <div className="relative p-3">
+            {/* Header row - enhanced */}
+            <div className="flex items-center gap-2 mb-1.5">
+              <div 
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                style={{ 
+                  backgroundColor: `${config.color}15`,
+                  border: `1px solid ${config.color}20`,
+                }}
+              >
+                {config.icon}
+              </div>
+              <h3 className="font-semibold text-white text-sm flex-1 truncate leading-tight">
+                {card.title}
+              </h3>
+              <motion.span 
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ 
+                  backgroundColor: `${config.color}15`,
+                  color: card.confidence > 0.8 ? config.color : '#9ca3af',
+                  border: `1px solid ${config.color}20`,
+                }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: index * 0.05 + 0.3 }}
+              >
+                {Math.round(card.confidence * 100)}%
+              </motion.span>
+            </div>
 
-          {/* Direction - inline and compact */}
-          {card.direction && (
-            <p className="text-xs text-gray-400 mb-1.5 flex items-center gap-1">
-              <span style={{ color: config.color }}>→</span>
-              <span className="truncate">{card.direction}</span>
+            {/* Direction - with icon */}
+            {card.direction && (
+              <p className="text-xs text-gray-400 mb-1.5 flex items-center gap-1.5">
+                <motion.span 
+                  style={{ color: config.color }}
+                  animate={{ x: [0, 3, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >→</motion.span>
+                <span className="truncate">{card.direction}</span>
+              </p>
+            )}
+
+            {/* Description - improved */}
+            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+              {card.description}
             </p>
-          )}
 
-          {/* Description - single line */}
-          <p className="text-xs text-gray-500 line-clamp-1">
-            {card.description}
-          </p>
-
-          {/* Hover actions */}
-          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {!isCollected && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onCollect(); }}
-                className="p-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
-                title="Collect"
+            {/* Hover actions - enhanced */}
+            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+              {!isCollected && (
+                <motion.button
+                  onClick={(e) => { e.stopPropagation(); onCollect(); }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 
+                           border border-emerald-500/30 backdrop-blur-sm"
+                  title="Collect"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </motion.button>
+              )}
+              <motion.button
+                onClick={(e) => { e.stopPropagation(); onExpand(card.id); }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-1.5 rounded-lg bg-gray-700/70 hover:bg-gray-600/70 text-gray-300 
+                         border border-gray-600/30 backdrop-blur-sm"
+                title="Expand"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
-              </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onExpand(card.id); }}
-              className="p-1 rounded bg-gray-700/50 hover:bg-gray-600/50 text-gray-400"
-              title="Expand"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Collected badge */}
-          {isCollected && (
-            <div className="absolute top-2 right-2">
-              <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
+              </motion.button>
             </div>
-          )}
+
+            {/* Collected badge - enhanced */}
+            {isCollected && (
+              <motion.div 
+                className="absolute top-2 right-2"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 
+                              flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
       </motion.div>
     );
