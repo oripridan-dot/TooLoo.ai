@@ -1,4 +1,4 @@
-// @version 3.3.279
+// @version 3.3.280
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -2815,6 +2815,68 @@ const TooLooSpaceV4 = memo(() => {
       setIsThinking(false);
     }
   }, [collected, session]);
+
+  // Proactive advisor action handler
+  const handleAdvice = useCallback(async ({ mode, collected: collectedItems }) => {
+    setIsThinking(true);
+    
+    const modePrompts = {
+      synthesize: 'Synthesize these collected insights into a unified strategy with clear next steps:',
+      priorities: 'Analyze these items and identify the highest-impact priorities, ranking them by value:',
+      gaps: 'Analyze this collection and identify what\'s missing - what perspectives or aspects haven\'t been explored:',
+      conflicts: 'Identify any contradictions or conflicts between these items and suggest resolutions:',
+      roadmap: 'Create a step-by-step implementation roadmap from these items, with dependencies and timeline:',
+    };
+    
+    try {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `${modePrompts[mode] || modePrompts.synthesize} ${JSON.stringify(collectedItems)}`,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: { route: 'advisor', mode, items: collectedItems },
+        }),
+      });
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) fullContent += data.chunk;
+          } catch {}
+        }
+      }
+      
+      if (fullContent) {
+        const advisorCard = {
+          id: `advisor-${mode}-${Date.now()}`,
+          dimension: mode === 'priorities' ? 'strategic' : mode === 'roadmap' ? 'technical' : 'strategic',
+          title: `🔮 TooLoo ${mode.charAt(0).toUpperCase() + mode.slice(1)}`,
+          description: fullContent.slice(0, 200) + '...',
+          direction: 'Proactive insight from your collection',
+          content: fullContent,
+          confidence: 0.92,
+          source: 'api',
+          refinements: [{ role: 'assistant', content: fullContent }],
+        };
+        setCards(prev => [advisorCard, ...prev]);
+      }
+    } catch (error) {
+      console.error('Advisor action failed:', error);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [session]);
 
   const expandedCardData = expandedCard ? cards.find(c => c.id === expandedCard) : null;
 
