@@ -1,4 +1,4 @@
-// @version 3.3.288
+// @version 3.3.289
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2280,19 +2280,71 @@ const Growth = memo(({ className = '' }) => {
     });
   }, []);
 
-  // NEW: Setup WebSocket for real-time updates
+  // Setup Socket.IO for real-time updates (v3.3.300: Fixed Socket.IO integration)
   useEffect(() => {
-    if (!WS_URL) return;
+    // Connect to Socket.IO server
+    const socket = io({
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
+    });
 
-    let reconnectAttempts = 0;
-    const MAX_RECONNECT_ATTEMPTS = 3;
-    let reconnectTimeout = null;
+    // Store socket reference for cleanup
+    wsRef.current = socket;
 
-    const connectWebSocket = () => {
-      // Don't attempt to reconnect if we've exceeded max attempts
-      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-        console.log('[Growth] WebSocket max reconnect attempts reached, using polling fallback');
-        return;
+    socket.on('connect', () => {
+      console.log('[Growth] Socket.IO connected:', socket.id);
+    });
+
+    // Listen for Synapsys events (broadcast from server)
+    socket.on('synapsys:event', (event) => {
+      try {
+        // Handle different event types from the Synapsys nervous system
+        if (event.type?.startsWith('curiosity:')) {
+          if (event.payload?.dimensions) {
+            setCuriosityDimensions(event.payload.dimensions);
+          }
+        } else if (event.type?.startsWith('exploration:')) {
+          if (event.payload?.hypothesis) {
+            setHypothesisQueue((prev) => {
+              const updated = prev.filter((h) => h.id !== event.payload.hypothesis.id);
+              return [event.payload.hypothesis, ...updated].slice(0, 10);
+            });
+          }
+        } else if (event.type?.startsWith('emergence:')) {
+          if (event.payload?.event) {
+            setEmergenceEvents((prev) =>
+              [
+                { ...event.payload.event, new: true },
+                ...prev.map((e) => ({ ...e, new: false })),
+              ].slice(0, 20)
+            );
+          }
+        } else if (event.type?.startsWith('serendipity:')) {
+          if (event.payload?.metrics) {
+            setSerendipityMetrics(event.payload.metrics);
+          }
+        }
+      } catch (e) {
+        // Ignore parse errors silently
+      }
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log(`[Growth] Socket.IO disconnected: ${reason}`);
+    });
+
+    socket.on('connect_error', (error) => {
+      // Silent error - Socket.IO handles reconnection automatically
+      console.log('[Growth] Socket.IO connection error, falling back to polling');
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socket) {
+        socket.disconnect();
       }
 
       try {
