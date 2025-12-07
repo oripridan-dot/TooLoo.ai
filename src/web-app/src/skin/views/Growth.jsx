@@ -1,4 +1,4 @@
-// @version 3.3.339 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.340 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2701,23 +2701,23 @@ Improvements:
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                {/* Top metrics row */}
+                {/* Top metrics row - REAL DATA ONLY */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   <MetricCard
                     icon="📚"
                     label="Learning Score"
-                    value={`${metrics.learningScore}%`}
-                    trend="up"
-                    trendValue="5%"
+                    value={metrics.learningScore !== null ? `${metrics.learningScore}%` : 'No data'}
+                    trend={metrics.learningScore !== null ? "up" : null}
+                    trendValue={metrics.learningScore !== null ? "real" : ""}
                     color="purple"
                     index={0}
                   />
                   <MetricCard
                     icon="🔍"
                     label="Sessions"
-                    value={metrics.patternsFound}
+                    value={metrics.sessions || metrics.patternsFound || 0}
                     trend="up"
-                    trendValue="12"
+                    trendValue="real"
                     color="cyan"
                     index={1}
                   />
