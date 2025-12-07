@@ -1,4 +1,4 @@
-// @version 3.3.319
+// @version 3.3.320
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -1945,8 +1945,8 @@ const TooLooSpaceV4 = memo(() => {
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
-              // Capture thinking/meta events for process display
-              if (data.meta || data.thinking || data.done || data.provider || data.model) {
+              // Capture thinking/meta/routing events for process display
+              if (data.meta || data.thinking || data.routing || data.done || data.visualEnhanced) {
                 handleThinkingEvent(data);
               }
               if (data.chunk) fullContent += data.chunk;
