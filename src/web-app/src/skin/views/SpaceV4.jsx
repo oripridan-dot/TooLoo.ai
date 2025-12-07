@@ -1,4 +1,4 @@
-// @version 3.3.258
+// @version 3.3.259
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2412,9 +2412,8 @@ const TooLooSpaceV4 = memo(() => {
                 disabled={isThinking || !prompt.trim()}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 
-                         border border-purple-500/20 text-purple-400 text-xs font-medium 
-                         transition-all flex items-center gap-1.5
+                className="px-2 py-1 rounded-md bg-purple-500/10 hover:bg-purple-500/20 
+                         text-purple-400 text-[10px] font-medium transition-all flex items-center gap-1
                          disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span>↗</span> Expand
@@ -2425,9 +2424,8 @@ const TooLooSpaceV4 = memo(() => {
                 disabled={isThinking || !prompt.trim()}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 
-                         border border-rose-500/20 text-rose-400 text-xs font-medium 
-                         transition-all flex items-center gap-1.5
+                className="px-2 py-1 rounded-md bg-rose-500/10 hover:bg-rose-500/20 
+                         text-rose-400 text-[10px] font-medium transition-all flex items-center gap-1
                          disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span>?</span> Challenge
