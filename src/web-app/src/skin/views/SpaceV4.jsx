@@ -1,4 +1,4 @@
-// @version 3.3.325
+// @version 3.3.335
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -3070,6 +3070,50 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
 
   const primaryDimension = capabilityToDimension[capabilityId] || 'technical';
 
+  // Helper: Extract clean title from text (skip code blocks, SVG, etc.)
+  const extractCleanTitle = (text) => {
+    // Skip code block markers and content
+    let clean = text
+      .replace(/```[\w]*\n[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/<svg[\s\S]*?<\/svg>/gi, '[Diagram]') // Replace SVG with placeholder
+      .replace(/<[^>]+>/g, '') // Remove HTML tags
+      .replace(/^[\d\.\)\#\*\-]+\s*/gm, '') // Remove list markers
+      .trim();
+    
+    // Get first meaningful line
+    const lines = clean.split('\n').filter(l => l.trim().length > 5);
+    const firstLine = lines[0] || 'Visual Analysis';
+    
+    // Clean up and truncate
+    return firstLine.slice(0, 50) + (firstLine.length > 50 ? '...' : '');
+  };
+
+  // Helper: Extract clean description (human-readable text only)
+  const extractCleanDescription = (text, maxLen = 150) => {
+    // Remove code blocks and SVG
+    let clean = text
+      .replace(/```[\w]*\n[\s\S]*?```/g, '') // Remove code blocks
+      .replace(/<svg[\s\S]*?<\/svg>/gi, '') // Remove SVG
+      .replace(/<[^>]+>/g, '') // Remove HTML tags
+      .replace(/^[\d\.\)\#\*\-]+\s*/gm, '') // Remove list markers
+      .replace(/\n+/g, ' ') // Normalize whitespace
+      .trim();
+    
+    // Skip first line (used as title) and get description
+    const parts = clean.split(/[.!?]\s+/);
+    const desc = parts.slice(1).join('. ').trim() || parts[0] || '';
+    
+    return desc.slice(0, maxLen) + (desc.length > maxLen ? '...' : '');
+  };
+
+  // Helper: Check if section is primarily code/SVG
+  const isPrimarylyCode = (text) => {
+    const codeBlockMatch = text.match(/```[\w]*\n[\s\S]*?```/g) || [];
+    const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/gi) || [];
+    const codeLen = codeBlockMatch.join('').length + svgMatch.join('').length;
+    return codeLen > text.length * 0.5; // More than half is code
+  };
+
   // Split content into sections (look for numbered items, headers, or natural breaks)
   const sections = content
     .split(/(?=\d+[\.\)]\s|#{1,3}\s|(?:\n\n)(?=[A-Z]))/g)
@@ -3085,16 +3129,18 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
   const dimensions = ['design', 'technical', 'user', 'business', 'ethical'];
 
   sections.slice(0, 6).forEach((section, index) => {
-    // Extract title from section (first line or first sentence)
-    const firstLine = section
-      .split('\n')[0]
-      .replace(/^[\d\.\)\#\*\-]+\s*/, '')
-      .trim();
-    const title = firstLine.slice(0, 50) + (firstLine.length > 50 ? '...' : '');
-
-    // Extract description (next few lines)
-    const lines = section.split('\n').slice(1).join(' ').trim();
-    const description = lines.slice(0, 150) + (lines.length > 150 ? '...' : '');
+    // Extract clean title and description (skip code/SVG in display)
+    const title = extractCleanTitle(section);
+    const description = extractCleanDescription(section);
+    
+    // If this section is mostly code/SVG, use a generic title
+    const isCodeSection = isPrimarylyCode(section);
+    const displayTitle = isCodeSection 
+      ? `Visual Output ${index + 1}` 
+      : (title || `Analysis ${index + 1}`);
+    const displayDesc = isCodeSection
+      ? 'Generated visual content ready for viewing'
+      : (description || `Analysis of "${originalPrompt.slice(0, 30)}..."`);
 
     // Assign dimension based on content keywords or cycle through
     let dimension = primaryDimension;
@@ -3139,12 +3185,12 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
     cards.push({
       id: `real-${Date.now()}-${index}`,
       dimension,
-      title: title || `${config?.label || 'Option'} ${index + 1}`,
-      description: description || `Analysis of "${originalPrompt}"`,
+      title: displayTitle,
+      description: displayDesc,
       direction: config?.suggestionPrefix || 'Explore this approach',
       toolooSuggestion: section.slice(0, 300),
       confidence: 0.75 + Math.random() * 0.2, // Real response = high confidence
-      content: section,
+      content: section, // Keep full content for EnhancedMarkdown to render
       refinements: [{ role: 'assistant', content: section }],
       collected: false,
       source: 'api', // Mark as real data
