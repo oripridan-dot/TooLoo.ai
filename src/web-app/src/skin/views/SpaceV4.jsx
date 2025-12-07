@@ -1,4 +1,4 @@
-// @version 3.3.232
+// @version 3.3.233
 // TooLoo.ai Space V4 - Professional Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -722,7 +722,7 @@ EmptyState.displayName = 'EmptyState';
 // COLLECTED SIDEBAR
 // ============================================================================
 
-const CollectedSidebar = memo(({ collected, onBuild }) => {
+const CollectedSidebar = memo(({ collected, onBuild, onNextIteration, onSummarize, onExport, onCompare }) => {
   if (collected.length === 0) return null;
 
   return (
@@ -771,20 +771,76 @@ const CollectedSidebar = memo(({ collected, onBuild }) => {
           })}
         </div>
 
-        {/* Build button */}
-        {collected.length >= 2 && (
-          <div className="p-3 border-t border-gray-800">
+        {/* Action buttons */}
+        <div className="p-3 border-t border-gray-800 space-y-2">
+          {/* Quick actions row */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={onNextIteration}
+              className="px-3 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 
+                       border border-purple-500/20 text-purple-400 text-xs font-medium 
+                       transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>↻</span>
+              Next Iteration
+            </button>
+            <button
+              onClick={onSummarize}
+              className="px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 
+                       border border-cyan-500/20 text-cyan-400 text-xs font-medium 
+                       transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>≡</span>
+              Summarize
+            </button>
+          </div>
+          
+          {/* Secondary actions row */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={onCompare}
+              className="px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 
+                       border border-amber-500/20 text-amber-400 text-xs font-medium 
+                       transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>↔</span>
+              Compare
+            </button>
+            <button
+              onClick={onExport}
+              className="px-3 py-2 rounded-xl bg-gray-700/50 hover:bg-gray-600/50 
+                       border border-gray-600/30 text-gray-400 text-xs font-medium 
+                       transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>↓</span>
+              Export
+            </button>
+          </div>
+
+          {/* Merge & Synthesize */}
+          <button
+            onClick={() => console.log('Merge artifacts')}
+            className="w-full px-3 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 
+                     border border-indigo-500/20 text-indigo-400 text-xs font-medium 
+                     transition-all flex items-center justify-center gap-1.5"
+          >
+            <span>✨</span>
+            Merge & Synthesize
+          </button>
+
+          {/* Build button - only show when 2+ collected */}
+          {collected.length >= 2 && (
             <button
               onClick={onBuild}
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500
                        text-white font-medium text-sm hover:opacity-90 transition-opacity
-                       flex items-center justify-center gap-2"
+                       flex items-center justify-center gap-2 mt-2"
             >
               <span>🔨</span>
               Start Building
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </motion.aside>
   );
@@ -1024,16 +1080,113 @@ const TooLooSpaceV4 = memo(() => {
       </main>
 
       {/* Collected sidebar */}
-      <CollectedSidebar collected={collected} onBuild={handleBuild} />
+      <CollectedSidebar 
+        collected={collected} 
+        onBuild={handleBuild}
+        onNextIteration={() => {
+          setPhase('exploration');
+          // Generate new variations based on collected
+          console.log('Next iteration with:', collected);
+        }}
+        onSummarize={() => {
+          console.log('Summarizing artifacts:', collected);
+        }}
+        onCompare={() => {
+          console.log('Comparing artifacts:', collected);
+        }}
+        onExport={() => {
+          const exportData = JSON.stringify(collected, null, 2);
+          const blob = new Blob([exportData], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `tooloo-artifacts-${Date.now()}.json`;
+          a.click();
+        }}
+      />
 
-      {/* Fixed input */}
+      {/* Fixed input - Chat style */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
-        <UniversalInput
-          route="main"
-          onSubmit={handleSubmit}
-          isProcessing={isThinking}
-          sessionPhase={phase}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-800 p-3 shadow-2xl"
+        >
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const input = e.target.elements.spaceInput;
+              if (input.value.trim()) {
+                handleSubmit({ message: input.value.trim() });
+                input.value = '';
+              }
+            }}
+            className="flex gap-3"
+          >
+            <input
+              name="spaceInput"
+              type="text"
+              placeholder="What are we creating today?"
+              className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3
+                       text-white placeholder-gray-500 focus:outline-none focus:ring-2
+                       focus:ring-cyan-500/50 focus:border-transparent transition-all"
+              disabled={isThinking}
+            />
+            <button
+              type="submit"
+              disabled={isThinking}
+              className="px-5 py-3 rounded-xl font-medium text-white transition-all
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       hover:opacity-90 active:scale-95
+                       bg-gradient-to-r from-cyan-500 to-purple-500"
+            >
+              {isThinking ? (
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <span>Think</span>
+              )}
+            </button>
+          </form>
+          
+          {/* Quick action chips */}
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-800">
+            <button 
+              type="button"
+              className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
+                       text-emerald-400 text-xs font-medium transition-colors flex items-center gap-1.5"
+              onClick={() => console.log('Validate')}
+            >
+              <span>✓</span> Validate
+            </button>
+            <button 
+              type="button"
+              className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 
+                       text-amber-400 text-xs font-medium transition-colors flex items-center gap-1.5"
+              onClick={() => console.log('Optimize')}
+            >
+              <span>⚙</span> Optimize
+            </button>
+            <button 
+              type="button"
+              className="px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 
+                       text-purple-400 text-xs font-medium transition-colors flex items-center gap-1.5"
+              onClick={() => console.log('Expand')}
+            >
+              <span>↗</span> Expand
+            </button>
+            <button 
+              type="button"
+              className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 
+                       text-rose-400 text-xs font-medium transition-colors flex items-center gap-1.5"
+              onClick={() => console.log('Challenge')}
+            >
+              <span>?</span> Challenge
+            </button>
+          </div>
+        </motion.div>
       </div>
 
       {/* Expanded card modal */}
