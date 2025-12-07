@@ -1,14 +1,6 @@
-// @version 3.3.327
+// @version 3.3.328
 // TooLoo.ai Liquid Chat Components
-// v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
-// v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
-// v3.3.98 - Added CollapsibleMarkdown: Headers become expandable sections for better readability
-// v3.3.88 - Fixed inline code execution to use /chat/command/execute endpoint
-// v3.3.82 - Added inline code execution support via /run and /execute commands
-// v3.3.62 - Fixed JSX live preview: better code cleaning, error boundary, scope expansion
-// v3.3.53 - Complete LiquidCodeBlock rewrite: Live JSX/SVG/HTML preview, sandbox execution, artifact handoff
-// v3.3.48 - Enhanced EnhancedMarkdown to parse Python/Executor code formats
-// v3.3.35 - Added Execute button for team-validated code execution in chat
+// v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
 // Rich visual display capabilities for chat responses
 // Integrates liquid skin throughout the chat experience
 // Enhanced with Visual Renderers for creative AI responses
