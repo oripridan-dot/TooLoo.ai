@@ -1,8 +1,9 @@
-// @version 3.3.242
-// TooLoo.ai Space V4 - Two-Step Creative Flow
+// @version 3.3.243
+// TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
 // Step 2: Options Phase - Dimension-organized options to collect
+// ENHANCED: Typography hierarchy, behind-the-glass glow effects, TooLoo guidance
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, {
@@ -14,6 +15,38 @@ import React, {
   useEffect,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// ============================================================================
+// TOOLOO GUIDANCE MESSAGES - Contextual hints and suggestions
+// ============================================================================
+
+const TOOLOO_GUIDANCE = {
+  discovery: {
+    message: "What shall we create together? Describe your vision and I'll explore it across multiple dimensions.",
+    hint: "Be specific about your goals — I work best with clear intentions.",
+    mood: 'curious',
+  },
+  explore: {
+    message: "Interesting idea! Let me understand how you'd like to approach this.",
+    hint: "Each approach reveals different insights about your concept.",
+    mood: 'thinking',
+  },
+  options: {
+    message: "Here are the possibilities I see. Collect the ones that resonate with you.",
+    hint: "Click any card to dive deeper or collect it to your synthesis panel.",
+    mood: 'creative',
+  },
+  refinement: {
+    message: "Great choices! Let's refine these together.",
+    hint: "Ask me questions about any card to explore it further.",
+    mood: 'focused',
+  },
+  build: {
+    message: "Ready to synthesize your collected artifacts into reality.",
+    hint: "I'll combine your selections into a cohesive implementation.",
+    mood: 'excited',
+  },
+};
 
 const API_BASE = '/api/v1';
 
