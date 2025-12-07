@@ -1,4 +1,4 @@
-// @version 3.3.304
+// @version 3.3.305
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -546,29 +546,13 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
       <div className="relative max-w-7xl mx-auto flex items-center justify-between">
         {/* Left: Session info with hierarchy */}
         <div className="flex items-center gap-5">
-          {/* TooLoo branding */}
-          <motion.div 
-            className="flex items-center gap-2"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="relative">
-              <motion.div
-                className="absolute -inset-1 rounded-xl opacity-60"
-                animate={{
-                  boxShadow: [
-                    `0 0 15px ${phaseConfig.glowColor}`,
-                    `0 0 25px ${phaseConfig.glowColor}`,
-                    `0 0 15px ${phaseConfig.glowColor}`,
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <div 
-                className="relative w-10 h-10 rounded-xl flex items-center justify-center text-xl 
-                          bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10"
-              >
-                {phaseConfig.icon}
-              </div>
+          {/* TooLoo branding - simplified */}
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-xl 
+                        bg-gray-800 border border-gray-700"
+            >
+              {phaseConfig.icon}
             </div>
             <div>
               <h1 className="text-lg font-bold text-white tracking-tight">
@@ -576,11 +560,7 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span 
-                  className="text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{ 
-                    backgroundColor: `${phaseConfig.color}20`,
-                    color: phaseConfig.color,
-                  }}
+                  className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-300"
                 >
                   {phaseConfig.label}
                 </span>
@@ -589,15 +569,13 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Right: Stats with visual indicators */}
-        <div className="flex items-center gap-5">
+        {/* Right: Stats - simplified */}
+        <div className="flex items-center gap-4">
           {cardCount > 0 && (
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/80 border border-gray-700/50"
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20"
             >
               <motion.span 
