@@ -1,4 +1,4 @@
-// @version 3.3.269
+// @version 3.3.270
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -15,6 +15,7 @@ import React, {
   useEffect,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EnhancedMarkdown } from '../chat/LiquidChatComponents';
 
 // ============================================================================
 // TOOLOO GUIDANCE MESSAGES - Contextual hints and suggestions
@@ -369,24 +370,46 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
 HeaderBar.displayName = 'HeaderBar';
 
 // ============================================================================
-// CHAT MESSAGE - Individual message in card chat
+// CHAT MESSAGE - TooLoo standard with markdown rendering
 // ============================================================================
 
 const ChatMessage = memo(({ message, isUser, color }) => (
   <motion.div
     initial={{ opacity: 0, y: 5 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+    className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}
   >
+    {!isUser && (
+      <div className="flex-shrink-0 mr-3">
+        <div 
+          className="w-8 h-8 rounded-xl flex items-center justify-center"
+          style={{ backgroundColor: `${color}20` }}
+        >
+          <span className="text-sm">✨</span>
+        </div>
+      </div>
+    )}
     <div
-      className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm ${
+      className={`max-w-[85%] rounded-2xl ${
         isUser
-          ? 'bg-gray-700 text-white rounded-br-md'
-          : 'bg-gray-800/80 text-gray-200 rounded-bl-md'
+          ? 'bg-gray-700 px-4 py-3 text-white rounded-br-sm'
+          : 'bg-gray-800/60 rounded-bl-sm overflow-hidden'
       }`}
-      style={!isUser ? { borderLeft: `2px solid ${color}` } : {}}
+      style={!isUser ? { borderLeft: `3px solid ${color}` } : {}}
     >
-      {message.content}
+      {isUser ? (
+        <p className="text-sm leading-relaxed">{message.content}</p>
+      ) : (
+        <div className="px-4 py-3 prose prose-invert prose-sm max-w-none
+                      prose-headings:text-white prose-headings:font-semibold prose-headings:mb-2 prose-headings:mt-3
+                      prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-2
+                      prose-strong:text-white prose-strong:font-semibold
+                      prose-ul:my-2 prose-li:text-gray-300 prose-li:my-0.5
+                      prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded
+                      prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700">
+          <EnhancedMarkdown content={message.content} isStreaming={false} />
+        </div>
+      )}
     </div>
   </motion.div>
 ));
@@ -741,14 +764,37 @@ const ExpandedCardModal = memo(({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex justify-start"
+              className="flex justify-start mb-3"
             >
+              <div className="flex-shrink-0 mr-3">
+                <div 
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: `${config.color}20` }}
+                >
+                  <motion.span 
+                    className="text-sm"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >✨</motion.span>
+                </div>
+              </div>
               <div
-                className="max-w-[85%] px-3 py-2 rounded-2xl rounded-bl-md text-sm bg-gray-800/80 text-gray-200"
-                style={{ borderLeft: `2px solid ${config.color}` }}
+                className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-800/60 overflow-hidden"
+                style={{ borderLeft: `3px solid ${config.color}` }}
               >
-                {streamingContent}
-                <span className="inline-block w-1.5 h-4 ml-0.5 bg-gray-400 animate-pulse" />
+                <div className="px-4 py-3 prose prose-invert prose-sm max-w-none
+                              prose-headings:text-white prose-headings:font-semibold
+                              prose-p:text-gray-300 prose-p:leading-relaxed
+                              prose-strong:text-white
+                              prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded">
+                  <EnhancedMarkdown content={streamingContent} isStreaming={true} />
+                  <motion.span 
+                    className="inline-block w-2 h-4 ml-1 bg-current rounded-sm"
+                    style={{ color: config.color }}
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity }}
+                  />
+                </div>
               </div>
             </motion.div>
           )}
