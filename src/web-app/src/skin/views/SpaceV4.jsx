@@ -1,4 +1,4 @@
-// @version 3.3.268
+// @version 3.3.269
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -427,162 +427,111 @@ const OptionCard = memo(({
     }
   };
 
-  // Compact view (in grid)
+  // Compact view (in grid) - Redesigned for readability
   if (!isExpanded) {
     return (
       <motion.div
         layout
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ delay: index * 0.05, type: "spring", stiffness: 300 }}
-        whileHover={{ y: -4, transition: { duration: 0.2 } }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ delay: index * 0.03 }}
+        whileHover={{ scale: 1.01 }}
         className={`
-          group relative rounded-xl overflow-hidden cursor-pointer
-          ${isCollected ? 'ring-2 ring-emerald-500/40' : ''}
+          group relative rounded-2xl overflow-hidden cursor-pointer
+          ${isCollected ? 'ring-2 ring-emerald-500/50' : ''}
         `}
         onClick={() => onExpand(card.id)}
       >
-        {/* Behind-the-glass glow on hover */}
-        <motion.div
-          className="absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-md"
-          style={{ 
-            background: `radial-gradient(ellipse at center, ${config.color}40 0%, transparent 70%)`,
-          }}
-        />
-        
-        {/* Card body */}
+        {/* Card body - cleaner design */}
         <div 
-          className="relative bg-gray-900/70 backdrop-blur-sm border border-white/5 
-                     group-hover:bg-gray-900/90 group-hover:border-white/10 
-                     transition-all duration-200 rounded-xl"
-          style={{ 
-            borderColor: isCollected ? `${config.color}30` : undefined,
-          }}
+          className="relative bg-gray-900/80 backdrop-blur-sm border border-gray-800/80 
+                     hover:border-gray-700/80 hover:bg-gray-900/95
+                     transition-all duration-200 rounded-2xl"
         >
-          {/* Gradient accent line with animation */}
-          <motion.div 
-            className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${config.solidGradient}`}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: index * 0.05 + 0.2 }}
-            style={{ transformOrigin: 'left' }}
-          />
-          
-          {/* Animated shimmer on hover */}
-          <motion.div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-            style={{
-              background: `linear-gradient(135deg, transparent 40%, ${config.color}08 50%, transparent 60%)`,
-            }}
+          {/* Left accent bar */}
+          <div 
+            className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+            style={{ backgroundColor: config.color }}
           />
 
-          <div className="relative p-3">
-            {/* Header row - enhanced */}
-            <div className="flex items-center gap-2 mb-1.5">
-              <div 
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                style={{ 
-                  backgroundColor: `${config.color}15`,
-                  border: `1px solid ${config.color}20`,
-                }}
-              >
-                {config.icon}
-              </div>
-              <h3 className="font-semibold text-white text-sm flex-1 truncate leading-tight">
+          <div className="relative p-4 pl-5">
+            {/* Top row: Title + Confidence */}
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="font-semibold text-white text-base leading-snug pr-2">
                 {card.title}
               </h3>
-              <motion.span 
-                className="text-xs font-medium px-2 py-0.5 rounded-full"
-                style={{ 
-                  backgroundColor: `${config.color}15`,
-                  color: card.confidence > 0.8 ? config.color : '#9ca3af',
-                  border: `1px solid ${config.color}20`,
-                }}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.05 + 0.3 }}
-              >
-                {Math.round(card.confidence * 100)}%
-              </motion.span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Confidence badge */}
+                <span 
+                  className="text-xs font-medium px-2 py-0.5 rounded-md"
+                  style={{ 
+                    backgroundColor: card.confidence > 0.85 ? `${config.color}20` : 'rgba(156,163,175,0.1)',
+                    color: card.confidence > 0.85 ? config.color : '#9ca3af',
+                  }}
+                >
+                  {Math.round(card.confidence * 100)}%
+                </span>
+                {/* Collect button - always visible */}
+                {!isCollected ? (
+                  <motion.button
+                    onClick={(e) => { e.stopPropagation(); onCollect(); }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 
+                             transition-colors"
+                    title="Add to collection"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </motion.button>
+                ) : (
+                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Direction - with icon */}
+            {/* Direction - clear call to action */}
             {card.direction && (
-              <p className="text-xs text-gray-400 mb-1.5 flex items-center gap-1.5">
-                <motion.span 
-                  style={{ color: config.color }}
-                  animate={{ x: [0, 3, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >→</motion.span>
-                <span className="truncate">{card.direction}</span>
+              <p className="text-sm text-gray-300 mb-2 flex items-center gap-2">
+                <span style={{ color: config.color }}>→</span>
+                <span>{card.direction}</span>
               </p>
             )}
 
-            {/* Description - improved */}
-            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+            {/* Description - readable */}
+            <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
               {card.description}
             </p>
 
-            {/* Real data indicator */}
-            {card.source === 'api' && (
-              <motion.div 
-                className="absolute bottom-2 left-2 flex items-center gap-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] text-emerald-500/70 font-medium">LIVE</span>
-              </motion.div>
-            )}
-
-            {/* Hover actions - enhanced */}
-            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-              {!isCollected && (
-                <motion.button
-                  onClick={(e) => { e.stopPropagation(); onCollect(); }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 
-                           border border-emerald-500/30 backdrop-blur-sm"
-                  title="Collect"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </motion.button>
-              )}
-              <motion.button
-                onClick={(e) => { e.stopPropagation(); onExpand(card.id); }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-1.5 rounded-lg bg-gray-700/70 hover:bg-gray-600/70 text-gray-300 
-                         border border-gray-600/30 backdrop-blur-sm"
-                title="Expand"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              </motion.button>
-            </div>
-
-            {/* Collected badge - enhanced */}
-            {isCollected && (
-              <motion.div 
-                className="absolute top-2 right-2"
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 400 }}
-              >
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 
-                              flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+            {/* Footer: Source + Expand hint */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800/50">
+              {/* Real data indicator */}
+              {card.source === 'api' ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-xs text-emerald-500/80 font-medium">Live data</span>
                 </div>
-              </motion.div>
-            )}
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-gray-600" />
+                  <span className="text-xs text-gray-500">Generated</span>
+                </div>
+              )}
+              
+              {/* Expand hint */}
+              <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors flex items-center gap-1">
+                Click to explore
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -872,65 +821,42 @@ const DimensionSection = memo(({
     <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-8 relative"
+      className="mb-10 relative"
     >
-      {/* Section header - enhanced typography */}
-      <div className="flex items-center gap-3 mb-4 px-1">
-        {/* Icon with glow */}
-        <div className="relative">
-          <motion.div
-            className="absolute -inset-2 rounded-lg opacity-40"
-            style={{ 
-              background: `radial-gradient(circle, ${config.color}40 0%, transparent 70%)`,
-            }}
-          />
-          <div 
-            className="relative w-9 h-9 rounded-lg flex items-center justify-center text-lg"
-            style={{ 
-              backgroundColor: `${config.color}15`,
-              border: `1px solid ${config.color}30`,
-            }}
-          >
-            {config.icon}
-          </div>
+      {/* Section header - clean and scannable */}
+      <div className="flex items-center gap-4 mb-5">
+        {/* Icon */}
+        <div 
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+          style={{ 
+            backgroundColor: `${config.color}15`,
+          }}
+        >
+          {config.icon}
         </div>
         
-        {/* Title with hierarchy */}
+        {/* Title */}
         <div className="flex-1">
-          <h2 className="text-base font-semibold text-white tracking-tight">
+          <h2 className="text-lg font-semibold text-white">
             {config.label}
           </h2>
-          <p className="text-xs text-gray-500">{config.description}</p>
+          <p className="text-sm text-gray-500">{config.description}</p>
         </div>
         
         {/* Count badge */}
         <div 
-          className="px-2.5 py-1 rounded-full text-xs font-medium"
+          className="px-3 py-1.5 rounded-lg text-sm font-medium"
           style={{ 
-            backgroundColor: `${config.color}10`,
+            backgroundColor: `${config.color}15`,
             color: config.color,
-            border: `1px solid ${config.color}20`,
           }}
         >
           {sectionCards.length} {sectionCards.length === 1 ? 'option' : 'options'}
         </div>
       </div>
 
-      {/* Decorative line with gradient */}
-      <div className="relative h-px mb-4 mx-1">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
-        <motion.div
-          className="absolute left-0 top-0 h-full w-20"
-          style={{ 
-            background: `linear-gradient(90deg, ${config.color}60 0%, transparent 100%)`,
-          }}
-          animate={{ x: [0, 200, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        />
-      </div>
-
-      {/* Cards grid - more columns, tighter spacing */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      {/* Cards grid - optimized for readability: 2 columns on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {sectionCards.map((card, index) => (
           <OptionCard
             key={card.id}
@@ -2456,14 +2382,21 @@ const TooLooSpaceV4 = memo(() => {
                     </motion.div>
                   </div>
                 ) : (
-                  <div className="pt-4">
-                    {/* Approach indicator */}
+                  <div className="pt-2">
+                    {/* Approach indicator - cleaner header */}
                     {selectedApproach && selectedApproach.id !== 'skip' && (
-                      <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30">
-                        <span className="text-xl">{selectedApproach.icon}</span>
-                        <div>
-                          <div className="text-sm font-medium text-white">{selectedApproach.title}</div>
-                          <div className="text-xs text-gray-500">{selectedApproach.description}</div>
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-800/50">
+                        <div className="flex items-center gap-4">
+                          <div 
+                            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                            style={{ backgroundColor: `${selectedApproach.color}15` }}
+                          >
+                            {selectedApproach.icon}
+                          </div>
+                          <div>
+                            <h1 className="text-xl font-bold text-white">{selectedApproach.title}</h1>
+                            <p className="text-sm text-gray-400">{selectedApproach.description}</p>
+                          </div>
                         </div>
                         <button
                           onClick={() => {
@@ -2471,12 +2404,28 @@ const TooLooSpaceV4 = memo(() => {
                             setCards([]);
                             setSelectedApproach(null);
                           }}
-                          className="ml-auto text-xs text-gray-500 hover:text-gray-400"
+                          className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 
+                                   rounded-lg transition-colors flex items-center gap-2"
                         >
-                          Change approach
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                          </svg>
+                          Change
                         </button>
                       </div>
                     )}
+                    
+                    {/* Results summary */}
+                    <div className="flex items-center justify-between mb-6">
+                      <p className="text-sm text-gray-400">
+                        Found <span className="text-white font-medium">{cards.length}</span> options across{' '}
+                        <span className="text-white font-medium">{activeDimensions.length}</span> dimensions
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        Click any card to explore details
+                      </div>
+                    </div>
                     
                     {/* Dimension sections */}
                     {activeDimensions.map(dimension => (
