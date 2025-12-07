@@ -1,4 +1,4 @@
-// @version 3.3.305
+// @version 3.3.306
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -575,32 +575,18 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
         {/* Right: Stats - simplified */}
         <div className="flex items-center gap-4">
           {cardCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/80 border border-gray-700/50"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20"
-            >
-              <motion.span 
-                className="w-2 h-2 rounded-full bg-cyan-400"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <span className="text-sm text-cyan-400 font-medium">{cardCount}</span>
-              <span className="text-xs text-cyan-400/70">options</span>
-            </motion.div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/80 border border-gray-700/50">
+              <span className="w-2 h-2 rounded-full bg-gray-400" />
+              <span className="text-sm text-gray-300 font-medium">{cardCount}</span>
+              <span className="text-xs text-gray-500">options</span>
+            </div>
           )}
           {collectedCount > 0 && (
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20"
-            >
-              <motion.span 
-                className="w-2 h-2 rounded-full bg-emerald-400"
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span className="text-sm text-emerald-400 font-medium">{collectedCount}</span>
               <span className="text-xs text-emerald-400/70">collected</span>
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
