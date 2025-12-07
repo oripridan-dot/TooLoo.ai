@@ -1,4 +1,4 @@
-// @version 3.3.250
+// @version 3.3.251
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2225,55 +2225,63 @@ const TooLooSpaceV4 = memo(() => {
                 )}
               </motion.button>
             </form>
-                       disabled:opacity-50 disabled:cursor-not-allowed
-                       hover:opacity-90 active:scale-95
-                       bg-gradient-to-r from-cyan-500 to-purple-500"
-            >
-              {isThinking ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <span>Think</span>
-              )}
-            </button>
-          </form>
           
-          {/* Quick action chips */}
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-800">
-            <button 
-              type="button"
-              className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
-                       text-emerald-400 text-xs font-medium transition-colors flex items-center gap-1.5"
-              onClick={() => console.log('Validate')}
-            >
-              <span>✓</span> Validate
-            </button>
-            <button 
-              type="button"
-              className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 
-                       text-amber-400 text-xs font-medium transition-colors flex items-center gap-1.5"
-              onClick={() => console.log('Optimize')}
-            >
-              <span>⚙</span> Optimize
-            </button>
-            <button 
-              type="button"
-              className="px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 
-                       text-purple-400 text-xs font-medium transition-colors flex items-center gap-1.5"
-              onClick={() => console.log('Expand')}
-            >
-              <span>↗</span> Expand
-            </button>
-            <button 
-              type="button"
-              className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 
-                       text-rose-400 text-xs font-medium transition-colors flex items-center gap-1.5"
-              onClick={() => console.log('Challenge')}
-            >
-              <span>?</span> Challenge
-            </button>
+            {/* Quick action chips - enhanced with active functionality */}
+            <div className="relative flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+              <span className="text-xs text-gray-500 mr-1">Quick:</span>
+              <motion.button 
+                type="button"
+                onClick={handleValidate}
+                disabled={isThinking || !prompt.trim()}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
+                         border border-emerald-500/20 text-emerald-400 text-xs font-medium 
+                         transition-all flex items-center gap-1.5
+                         disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span>✓</span> Validate
+              </motion.button>
+              <motion.button 
+                type="button"
+                onClick={handleOptimize}
+                disabled={isThinking || !prompt.trim()}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 
+                         border border-amber-500/20 text-amber-400 text-xs font-medium 
+                         transition-all flex items-center gap-1.5
+                         disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span>⚙</span> Optimize
+              </motion.button>
+              <motion.button 
+                type="button"
+                onClick={handleExpandIdea}
+                disabled={isThinking || !prompt.trim()}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 
+                         border border-purple-500/20 text-purple-400 text-xs font-medium 
+                         transition-all flex items-center gap-1.5
+                         disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span>↗</span> Expand
+              </motion.button>
+              <motion.button 
+                type="button"
+                onClick={handleChallenge}
+                disabled={isThinking || !prompt.trim()}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 
+                         border border-rose-500/20 text-rose-400 text-xs font-medium 
+                         transition-all flex items-center gap-1.5
+                         disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span>?</span> Challenge
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       </div>
