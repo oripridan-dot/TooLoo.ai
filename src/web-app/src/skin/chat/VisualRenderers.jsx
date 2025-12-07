@@ -1,4 +1,4 @@
-// @version 3.3.322
+// @version 3.3.323
 // TooLoo.ai Visual Renderers
 // v3.3.200 - Output-only UX: No code displays, graceful errors, clean interface
 // Rich visual components for rendering AI-generated visual content
@@ -752,8 +752,8 @@ export const VisualBlockParser = memo(({ content, className = '' }) => {
 VisualBlockParser.displayName = 'VisualBlockParser';
 
 // ============================================================================
-// UNIVERSAL CODE SANDBOX - Renders any code type with execution capability
-// v3.3.40 - New component for dynamic code rendering
+// UNIVERSAL CODE SANDBOX - Output-only visual renderer
+// v3.3.200 - Zero-code UX: Shows only rendered output, never source code
 // ============================================================================
 
 export const UniversalCodeSandbox = memo(
@@ -766,10 +766,9 @@ export const UniversalCodeSandbox = memo(
     showExecute = true,
     onExecutionResult,
   }) => {
-    const [mode, setMode] = useState('preview'); // preview | code | result
     const [executing, setExecuting] = useState(false);
     const [result, setResult] = useState(null);
-    const [copied, setCopied] = useState(false);
+    const [renderError, setRenderError] = useState(false);
 
     // Detect language from code if not provided
     const detectedLanguage = useMemo(() => {
@@ -806,11 +805,13 @@ export const UniversalCodeSandbox = memo(
       detectedLanguage
     );
 
-    const handleCopy = async () => {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    };
+    // Friendly output type labels instead of language codes
+    const outputTypeLabel = useMemo(() => {
+      if (['svg'].includes(detectedLanguage)) return 'Diagram';
+      if (['jsx', 'react'].includes(detectedLanguage)) return 'Interactive';
+      if (['python', 'javascript', 'typescript'].includes(detectedLanguage)) return 'Script';
+      return '';
+    }, [detectedLanguage]);
 
     const handleExecute = async () => {
       if (executing) return;
@@ -835,14 +836,13 @@ export const UniversalCodeSandbox = memo(
         const data = await response.json();
         const newResult = {
           success: data.ok,
-          output: data.data?.output || data.error || 'No output',
-          qualityScore: data.data?.qualityScore,
+          output: data.data?.output || (data.ok ? 'Completed' : 'Something went wrong'),
         };
 
         setResult(newResult);
         onExecutionResult?.(newResult);
-      } catch (err) {
-        setResult({ success: false, output: err.message });
+      } catch {
+        setResult({ success: false, output: 'Couldn\'t run this right now' });
       } finally {
         setExecuting(false);
       }
@@ -852,20 +852,25 @@ export const UniversalCodeSandbox = memo(
     const cleanedCode = useMemo(() => {
       if (!['jsx', 'react'].includes(detectedLanguage)) return code;
 
-      let cleaned = code || '';
-      // Remove imports
-      cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
-      // Remove exports
-      cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
-      cleaned = cleaned.replace(/^export\s+/gm, '');
-      // Add render call if missing
-      if (cleaned.includes('function') && !cleaned.includes('render(')) {
-        const match = cleaned.match(/function\s+(\w+)/);
-        if (match) {
-          cleaned += `\nrender(<${match[1]} />);`;
+      try {
+        let cleaned = code || '';
+        // Remove imports
+        cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
+        // Remove exports
+        cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
+        cleaned = cleaned.replace(/^export\s+/gm, '');
+        // Add render call if missing
+        if (cleaned.includes('function') && !cleaned.includes('render(')) {
+          const match = cleaned.match(/function\s+(\w+)/);
+          if (match) {
+            cleaned += `\nrender(<${match[1]} />);`;
+          }
         }
+        return cleaned.trim();
+      } catch {
+        setRenderError(true);
+        return '';
       }
-      return cleaned.trim();
     }, [code, detectedLanguage]);
 
     const defaultScope = useMemo(
@@ -881,41 +886,45 @@ export const UniversalCodeSandbox = memo(
       []
     );
 
+    // Graceful error display
+    const GracefulError = () => (
+      <div className="p-4 text-center">
+        <span className="text-2xl mb-2 block">⚠️</span>
+        <p className="text-sm text-gray-400">Couldn't display this content</p>
+      </div>
+    );
+
+    // If we can't render anything useful, show placeholder
+    if (renderError || (!canPreview && !canExecute)) {
+      return (
+        <div className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] p-4 ${className}`}>
+          {title && (
+            <div className="flex items-center gap-2 mb-3">
+              <span>📄</span>
+              <span className="text-sm text-gray-400">{title}</span>
+            </div>
+          )}
+          <div className="text-center py-4">
+            <span className="text-2xl mb-2 block">📋</span>
+            <p className="text-sm text-gray-400">Content ready</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={`rounded-xl overflow-hidden border border-white/10 bg-black/30 ${className}`}>
-        {/* Header */}
+        {/* Header - simplified, no code toggle */}
         <div className="flex items-center justify-between px-3 py-2 bg-black/50 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-mono uppercase">{detectedLanguage}</span>
-            {title && <span className="text-sm text-gray-400">• {title}</span>}
+            {outputTypeLabel && (
+              <span className="text-xs text-cyan-400/70">{outputTypeLabel}</span>
+            )}
+            {title && <span className="text-sm text-gray-400">{title}</span>}
           </div>
 
           <div className="flex items-center gap-1">
-            {/* Mode toggles */}
-            {canPreview && (
-              <button
-                onClick={() => setMode('preview')}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
-                  mode === 'preview'
-                    ? 'bg-cyan-500/20 text-cyan-400'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                👁 Preview
-              </button>
-            )}
-            <button
-              onClick={() => setMode('code')}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                mode === 'code'
-                  ? 'bg-purple-500/20 text-purple-400'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              {'</>'} Code
-            </button>
-
-            {/* Actions */}
+            {/* Execute button for runnable code */}
             {canExecute && showExecute && (
               <button
                 onClick={handleExecute}
@@ -925,39 +934,34 @@ export const UniversalCodeSandbox = memo(
                 {executing ? '⚡ Running...' : '▶ Run'}
               </button>
             )}
-            <button
-              onClick={handleCopy}
-              className="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
-            >
-              {copied ? '✓' : '📋'}
-            </button>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content - output only, no code view */}
         <div className="relative">
-          {/* Preview Mode */}
-          {mode === 'preview' && canPreview && (
+          {/* Visual Preview for SVG/JSX */}
+          {canPreview && (
             <div className="p-4 min-h-[100px]">
               {detectedLanguage === 'svg' ? (
                 <SVGRenderer code={code} />
               ) : (
                 <LiveProvider code={cleanedCode} scope={defaultScope} noInline>
                   <LivePreview />
-                  <LiveError className="text-red-400 text-xs mt-2 font-mono" />
+                  <LiveError component={GracefulError} />
                 </LiveProvider>
               )}
             </div>
           )}
 
-          {/* Code Mode */}
-          {(mode === 'code' || (!canPreview && mode === 'preview')) && (
-            <pre className="p-4 overflow-x-auto text-xs bg-black/40 max-h-96">
-              <code className="text-gray-300 font-mono whitespace-pre-wrap">{code}</code>
-            </pre>
+          {/* For non-previewable but executable code, show run prompt */}
+          {!canPreview && canExecute && !result && (
+            <div className="p-6 text-center">
+              <span className="text-2xl mb-2 block">⚡</span>
+              <p className="text-sm text-gray-400">Click Run to execute</p>
+            </div>
           )}
 
-          {/* Execution Result */}
+          {/* Execution Result - shown as output, not code */}
           <AnimatePresence>
             {result && (
               <motion.div
@@ -966,22 +970,18 @@ export const UniversalCodeSandbox = memo(
                 exit={{ height: 0, opacity: 0 }}
                 className="border-t border-white/10 overflow-hidden"
               >
-                <div className={`p-3 ${result.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`text-xs font-medium ${result.success ? 'text-emerald-400' : 'text-red-400'}`}
-                    >
-                      {result.success ? '✓ Success' : '✕ Failed'}
+                <div className={`p-3 ${result.success ? 'bg-emerald-500/10' : 'bg-orange-500/10'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={result.success ? 'text-emerald-400' : 'text-orange-400'}>
+                      {result.success ? '✓' : '⚠️'}
                     </span>
-                    {result.qualityScore && (
-                      <span className="text-xs text-cyan-400">
-                        Quality: {(result.qualityScore * 100).toFixed(0)}%
-                      </span>
-                    )}
+                    <span className={`text-xs font-medium ${result.success ? 'text-emerald-400' : 'text-orange-400'}`}>
+                      {result.success ? 'Done' : 'Hmm...'}
+                    </span>
                   </div>
-                  <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-48 overflow-auto">
+                  <p className="text-sm text-gray-300 whitespace-pre-wrap">
                     {result.output}
-                  </pre>
+                  </p>
                 </div>
               </motion.div>
             )}
