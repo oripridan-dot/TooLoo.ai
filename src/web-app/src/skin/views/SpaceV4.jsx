@@ -1,4 +1,4 @@
-// @version 3.3.244
+// @version 3.3.245
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -304,7 +304,7 @@ const ToolooGuidancePanel = memo(({ phase, isThinking }) => {
 ToolooGuidancePanel.displayName = 'ToolooGuidancePanel';
 
 // ============================================================================
-// HEADER BAR - Clean, minimal top bar
+// HEADER BAR - Enhanced with typography hierarchy and glow
 // ============================================================================
 
 const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
@@ -316,38 +316,89 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
       animate={{ opacity: 1, y: 0 }}
       className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left: Session info */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-              style={{ backgroundColor: `${phaseConfig.color}20` }}
-            >
-              {phaseConfig.icon}
+      {/* Subtle gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none" />
+      
+      <div className="relative max-w-7xl mx-auto flex items-center justify-between">
+        {/* Left: Session info with hierarchy */}
+        <div className="flex items-center gap-5">
+          {/* TooLoo branding */}
+          <motion.div 
+            className="flex items-center gap-2"
+            whileHover={{ scale: 1.02 }}
+          >
+            <div className="relative">
+              <motion.div
+                className="absolute -inset-1 rounded-xl opacity-60"
+                animate={{
+                  boxShadow: [
+                    `0 0 15px ${phaseConfig.glowColor}`,
+                    `0 0 25px ${phaseConfig.glowColor}`,
+                    `0 0 15px ${phaseConfig.glowColor}`,
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <div 
+                className="relative w-10 h-10 rounded-xl flex items-center justify-center text-xl 
+                          bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10"
+              >
+                {phaseConfig.icon}
+              </div>
             </div>
             <div>
-              <div className="text-sm font-medium text-white">
-                {prompt ? prompt.slice(0, 40) + (prompt.length > 40 ? '...' : '') : 'New Session'}
+              <h1 className="text-lg font-bold text-white tracking-tight">
+                {prompt ? prompt.slice(0, 35) + (prompt.length > 35 ? '...' : '') : 'TooLoo Space'}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span 
+                  className="text-xs font-medium px-2 py-0.5 rounded-full"
+                  style={{ 
+                    backgroundColor: `${phaseConfig.color}20`,
+                    color: phaseConfig.color,
+                  }}
+                >
+                  {phaseConfig.label}
+                </span>
+                {prompt && (
+                  <span className="text-xs text-gray-500 hidden sm:inline">• Session active</span>
+                )}
               </div>
-              <div className="text-xs text-gray-500">{phaseConfig.label}</div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Right: Stats */}
-        <div className="flex items-center gap-4">
+        {/* Right: Stats with visual indicators */}
+        <div className="flex items-center gap-5">
           {cardCount > 0 && (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-              {cardCount} options
-            </div>
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20"
+            >
+              <motion.span 
+                className="w-2 h-2 rounded-full bg-cyan-400"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span className="text-sm text-cyan-400 font-medium">{cardCount}</span>
+              <span className="text-xs text-cyan-400/70">options</span>
+            </motion.div>
           )}
           {collectedCount > 0 && (
-            <div className="flex items-center gap-2 text-sm text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              {collectedCount} collected
-            </div>
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20"
+            >
+              <motion.span 
+                className="w-2 h-2 rounded-full bg-emerald-400"
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+              <span className="text-sm text-emerald-400 font-medium">{collectedCount}</span>
+              <span className="text-xs text-emerald-400/70">collected</span>
+            </motion.div>
           )}
         </div>
       </div>
