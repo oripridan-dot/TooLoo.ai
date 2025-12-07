@@ -1,4 +1,4 @@
-// @version 3.3.309
+// @version 3.3.326
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -1556,7 +1556,7 @@ render(<${componentName} />);`;
         </div>
       </div>
 
-      {/* Content area */}
+      {/* Content area - output focused */}
       <div className="relative">
         {/* Live Preview for JSX */}
         {isJSX && showPreview && (
@@ -1572,7 +1572,15 @@ render(<${componentName} />);`;
                 <div className="p-4 min-h-[80px]">
                   <LivePreview />
                 </div>
-                <LiveError className="px-4 py-2 text-xs text-amber-400 bg-amber-500/10 font-mono whitespace-pre-wrap" />
+                {/* Graceful error instead of technical stack trace */}
+                <LiveError 
+                  component={() => (
+                    <div className="px-4 py-3 text-center">
+                      <span className="text-xl mb-2 block">⚠️</span>
+                      <p className="text-sm text-gray-400">Couldn't display this interactive element</p>
+                    </div>
+                  )} 
+                />
               </LiveProvider>
             </PreviewErrorBoundary>
           </div>
@@ -1584,53 +1592,18 @@ render(<${componentName} />);`;
         {/* HTML Preview */}
         {isHTML && showPreview && renderHTMLPreview()}
 
-        {/* Code view (always shown if preview is off, or as secondary for previewable) */}
-        {(!canPreview || !showPreview) &&
-          (isLongCode && !showCode ? (
-            // Collapsed view for long code
-            <div className="bg-black/40 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">📄 {codeSummary}...</span>
-                <button
-                  onClick={() => setShowCode(true)}
-                  className="text-xs px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 transition-colors"
-                >
-                  Show {lineCount} lines
-                </button>
-              </div>
+        {/* For non-previewable code, show simplified view */}
+        {!canPreview && (
+          <div className="bg-black/40 p-4">
+            <div className="flex items-center gap-2 text-center justify-center py-4">
+              <span className="text-xl">📋</span>
+              <span className="text-sm text-gray-400">Content ready</span>
             </div>
-          ) : (
-            <div className="relative">
-              <pre className="bg-black/40 p-4 overflow-x-auto text-xs max-h-96">
-                <code className={`language-${language} text-gray-300 font-mono`} {...props}>
-                  {children}
-                </code>
-              </pre>
-              {isLongCode && showCode && (
-                <button
-                  onClick={() => setShowCode(false)}
-                  className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-black/60 text-gray-400 hover:text-white transition-colors"
-                >
-                  Collapse
-                </button>
-              )}
-            </div>
-          ))}
-
-        {/* Show code toggle for previewable */}
-        {canPreview && showPreview && (
-          <details className="border-t border-white/10">
-            <summary className="px-3 py-2 text-xs text-gray-500 cursor-pointer hover:text-gray-300 bg-black/40">
-              View Source Code
-            </summary>
-            <pre className="bg-black/40 p-4 overflow-x-auto text-xs max-h-64">
-              <code className="text-gray-300 font-mono">{codeString}</code>
-            </pre>
-          </details>
+          </div>
         )}
       </div>
 
-      {/* Execution result panel */}
+      {/* Execution result panel - simplified */}
       <AnimatePresence>
         {executionResult && (
           <motion.div
@@ -1640,47 +1613,28 @@ render(<${componentName} />);`;
             className="border-t border-white/10 overflow-hidden"
           >
             <div
-              className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+              className={`p-3 ${executionResult.success ? 'bg-emerald-500/10' : 'bg-orange-500/10'}`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span
-                  className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-red-400'}`}
-                >
-                  {executionResult.success ? '✓ Execution Successful' : '✕ Execution Failed'}
+              <div className="flex items-center gap-2 mb-2">
+                <span className={executionResult.success ? 'text-emerald-400' : 'text-orange-400'}>
+                  {executionResult.success ? '✓' : '⚠️'}
                 </span>
-                <div className="flex items-center gap-2">
-                  {executionResult.qualityScore && (
-                    <span className="text-xs text-cyan-400">
-                      Quality: {(executionResult.qualityScore * 100).toFixed(0)}%
-                    </span>
-                  )}
-                  <button
-                    onClick={() => setExecutionResult(null)}
-                    className="text-xs text-gray-500 hover:text-white"
-                  >
-                    ✕
-                  </button>
-                </div>
+                <span
+                  className={`text-xs font-medium ${executionResult.success ? 'text-emerald-400' : 'text-orange-400'}`}
+                >
+                  {executionResult.success ? 'Done' : 'Hmm...'}
+                </span>
+                <div className="flex-1" />
+                <button
+                  onClick={() => setExecutionResult(null)}
+                  className="text-xs text-gray-500 hover:text-white"
+                >
+                  ✕
+                </button>
               </div>
-              <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">
                 {executionResult.success ? executionResult.output : executionResult.error}
-              </pre>
-
-              {/* Artifact buttons if execution produced artifacts */}
-              {executionResult.artifacts?.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-white/10 flex gap-2">
-                  <span className="text-xs text-gray-500">Artifacts:</span>
-                  {executionResult.artifacts.map((art, i) => (
-                    <button
-                      key={i}
-                      onClick={() => onArtifactCreate?.([art])}
-                      className="text-xs px-2 py-1 rounded bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
-                    >
-                      📦 {art.name || `Artifact ${i + 1}`}
-                    </button>
-                  ))}
-                </div>
-              )}
+              </p>
             </div>
           </motion.div>
         )}
