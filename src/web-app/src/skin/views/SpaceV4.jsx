@@ -1,4 +1,4 @@
-// @version 3.3.280
+// @version 3.3.281
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -265,203 +265,115 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 ToolooInlineHint.displayName = 'ToolooInlineHint';
 
 // ============================================================================
-// TOOLOO LIVE THINKING - Real-time cognitive process visualization
+// TOOLOO THINKING - Humble, solid progress indicator
 // ============================================================================
 
-const THINKING_PHASES = [
-  { phase: 'parsing', icon: '📖', text: "Parsing your intent", detail: "Understanding the core of what you're asking" },
-  { phase: 'context', icon: '🔗', text: "Building context graph", detail: "Connecting to relevant knowledge domains" },
-  { phase: 'exploring', icon: '🔍', text: "Exploring solution space", detail: "Evaluating multiple approaches" },
-  { phase: 'analyzing', icon: '⚡', text: "Running analysis", detail: "Applying domain expertise" },
-  { phase: 'synthesizing', icon: '🧬', text: "Synthesizing insights", detail: "Combining perspectives" },
-  { phase: 'structuring', icon: '📐', text: "Structuring response", detail: "Organizing for clarity" },
-  { phase: 'validating', icon: '✓', text: "Validating output", detail: "Quality checking results" },
-];
-
-const LIVE_THOUGHTS = [
-  "Identifying key concepts in your request...",
-  "Cross-referencing with design patterns...",
-  "Evaluating technical feasibility...",
-  "Considering user experience implications...",
-  "Checking for edge cases...",
-  "Applying best practices from similar projects...",
-  "Weighing trade-offs between approaches...",
-  "Structuring actionable recommendations...",
-  "Optimizing for your specific context...",
-  "Generating concrete next steps...",
+const THINKING_STAGES = [
+  { id: 'understand', label: 'Understanding request', duration: 2000 },
+  { id: 'analyze', label: 'Analyzing context', duration: 2500 },
+  { id: 'explore', label: 'Exploring options', duration: 3000 },
+  { id: 'synthesize', label: 'Synthesizing response', duration: 2000 },
 ];
 
 const TooLooThinkingProcess = memo(({ approach, prompt }) => {
-  const [phaseIndex, setPhaseIndex] = useState(0);
-  const [thoughtIndex, setThoughtIndex] = useState(0);
-  const [thoughts, setThoughts] = useState([]);
+  const [stageIndex, setStageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   
-  // Advance through phases
+  // Smooth progress through stages
   useEffect(() => {
+    let elapsed = 0;
+    const totalDuration = THINKING_STAGES.reduce((sum, s) => sum + s.duration, 0);
+    
     const interval = setInterval(() => {
-      setPhaseIndex(prev => Math.min(prev + 1, THINKING_PHASES.length - 1));
-      setProgress(prev => Math.min(prev + 14, 100));
-    }, 800);
+      elapsed += 100;
+      const newProgress = Math.min((elapsed / totalDuration) * 100, 99);
+      setProgress(newProgress);
+      
+      // Calculate current stage
+      let accumulated = 0;
+      for (let i = 0; i < THINKING_STAGES.length; i++) {
+        accumulated += THINKING_STAGES[i].duration;
+        if (elapsed < accumulated) {
+          setStageIndex(i);
+          break;
+        }
+      }
+    }, 100);
+    
     return () => clearInterval(interval);
   }, []);
   
-  // Stream thoughts
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setThoughtIndex(prev => {
-        const next = (prev + 1) % LIVE_THOUGHTS.length;
-        setThoughts(current => [...current.slice(-4), LIVE_THOUGHTS[next]]);
-        return next;
-      });
-    }, 600);
-    return () => clearInterval(interval);
-  }, []);
-  
-  const currentPhase = THINKING_PHASES[phaseIndex];
+  const currentStage = THINKING_STAGES[stageIndex];
   
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative"
-      >
-        {/* Background glow */}
-        <div className="absolute -inset-4 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl" />
-        
-        {/* Main container */}
-        <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-gray-800/80 overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-800/50 bg-gradient-to-r from-gray-900 via-gray-900/95 to-gray-900">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <motion.div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${approach?.color || '#6366f1'}20` }}
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <span className="text-xl">{approach?.icon || '🔮'}</span>
-                </motion.div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">TooLoo is thinking</h3>
-                  <p className="text-xs text-gray-500">{approach?.title || 'Deep Exploration'}</p>
-                </div>
-              </div>
-              
-              {/* Phase indicators */}
-              <div className="flex items-center gap-1">
-                {THINKING_PHASES.map((p, i) => (
-                  <motion.div
-                    key={i}
-                    className={`w-2 h-2 rounded-full ${i <= phaseIndex ? 'bg-cyan-500' : 'bg-gray-700'}`}
-                    animate={i === phaseIndex ? { scale: [1, 1.3, 1] } : {}}
-                    transition={{ duration: 0.5, repeat: Infinity }}
-                  />
-                ))}
-              </div>
-            </div>
+    <div className="w-full max-w-2xl mx-auto px-4 py-8">
+      <div className="bg-gray-900/80 rounded-xl border border-gray-800/60 p-6">
+        {/* Header - simple and clean */}
+        <div className="flex items-center gap-3 mb-6">
+          <div 
+            className="w-10 h-10 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: `${approach?.color || '#6366f1'}15` }}
+          >
+            <span className="text-lg">{approach?.icon || '🔮'}</span>
           </div>
-          
-          {/* Thinking visualization */}
-          <div className="p-6">
-            {/* Current phase */}
-            <div className="flex items-center gap-4 mb-6">
-              <motion.div
-                key={phaseIndex}
-                initial={{ scale: 0, rotate: -90 }}
-                animate={{ scale: 1, rotate: 0 }}
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
-                style={{ backgroundColor: `${approach?.color || '#6366f1'}15` }}
-              >
-                {currentPhase.icon}
-              </motion.div>
-              <div className="flex-1">
-                <motion.h4 
-                  key={`phase-${phaseIndex}`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="text-lg font-semibold text-white"
-                >
-                  {currentPhase.text}
-                </motion.h4>
-                <motion.p 
-                  key={`detail-${phaseIndex}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-sm text-gray-400"
-                >
-                  {currentPhase.detail}
-                </motion.p>
-              </div>
-              <div className="text-right">
-                <span className="text-2xl font-bold text-white">{progress}%</span>
-              </div>
-            </div>
-            
-            {/* Progress bar */}
-            <div className="h-1.5 rounded-full bg-gray-800 mb-6 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ 
-                  background: `linear-gradient(90deg, ${approach?.color || '#6366f1'}, #a855f7, #ec4899)`,
-                  width: `${progress}%`,
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-            
-            {/* Live thought stream */}
-            <div className="bg-gray-950/50 rounded-xl p-4 border border-gray-800/50">
-              <div className="flex items-center gap-2 mb-3">
-                <motion.div
-                  className="w-2 h-2 rounded-full bg-emerald-500"
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Live Process</span>
-              </div>
-              
-              <div className="space-y-1.5 font-mono text-sm">
-                <AnimatePresence mode="popLayout">
-                  {thoughts.map((thought, i) => (
-                    <motion.div
-                      key={`${thought}-${i}`}
-                      initial={{ opacity: 0, x: -20, height: 0 }}
-                      animate={{ opacity: i === thoughts.length - 1 ? 1 : 0.4, x: 0, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex items-center gap-2"
-                    >
-                      <span className="text-cyan-500">→</span>
-                      <span className={i === thoughts.length - 1 ? 'text-gray-200' : 'text-gray-600'}>
-                        {thought}
-                      </span>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                <motion.div
-                  className="flex items-center gap-2"
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
-                  <span className="text-purple-500">▸</span>
-                  <span className="text-gray-400">_</span>
-                </motion.div>
-              </div>
-            </div>
-            
-            {/* Context snippet */}
-            {prompt && (
-              <div className="mt-4 px-4 py-3 rounded-xl bg-gray-800/30 border border-gray-700/30">
-                <p className="text-xs text-gray-500 mb-1">Analyzing:</p>
-                <p className="text-sm text-gray-300 truncate">"{prompt}"</p>
-              </div>
-            )}
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-white">Processing</h3>
+            <p className="text-xs text-gray-500">{approach?.title || 'Deep Exploration'}</p>
           </div>
+          <span className="text-sm font-mono text-gray-400">{Math.round(progress)}%</span>
         </div>
-      </motion.div>
+        
+        {/* Progress bar - smooth, no jumping */}
+        <div className="h-1 rounded-full bg-gray-800 mb-6 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-200 ease-out"
+            style={{ 
+              width: `${progress}%`,
+              backgroundColor: approach?.color || '#6366f1',
+            }}
+          />
+        </div>
+        
+        {/* Current stage - minimal, informative */}
+        <div className="space-y-3">
+          {THINKING_STAGES.map((stage, i) => {
+            const isActive = i === stageIndex;
+            const isDone = i < stageIndex;
+            
+            return (
+              <div 
+                key={stage.id}
+                className={`flex items-center gap-3 text-sm transition-opacity duration-300 ${
+                  isActive ? 'opacity-100' : isDone ? 'opacity-40' : 'opacity-20'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs
+                  ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 
+                    isActive ? 'bg-gray-700' : 'bg-gray-800'}`}
+                >
+                  {isDone ? '✓' : isActive ? (
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+                  )}
+                </div>
+                <span className={isDone ? 'text-gray-500' : isActive ? 'text-white' : 'text-gray-600'}>
+                  {stage.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Query context - subtle reminder */}
+        {prompt && (
+          <div className="mt-6 pt-4 border-t border-gray-800/50">
+            <p className="text-xs text-gray-600 truncate">
+              "{prompt.length > 60 ? prompt.slice(0, 60) + '...' : prompt}"
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 });
@@ -3007,6 +2919,7 @@ const TooLooSpaceV4 = memo(() => {
         onCompare={handleCompare}
         onExport={handleExport}
         onMergeAndSynthesize={handleMergeAndSynthesize}
+        onAdvice={handleAdvice}
         isProcessing={isThinking}
       />
 
