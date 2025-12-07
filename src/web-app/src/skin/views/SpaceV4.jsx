@@ -1,4 +1,4 @@
-// @version 3.3.234
+// @version 3.3.235
 // TooLoo.ai Space V4 - Professional Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -220,7 +220,7 @@ const OptionCard = memo(({
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ delay: index * 0.03 }}
         className={`
-          group relative bg-gray-900/60 backdrop-blur-sm rounded-2xl 
+          group relative bg-gray-900/60 backdrop-blur-sm rounded-xl 
           border ${config.border} overflow-hidden cursor-pointer
           hover:bg-gray-900/80 hover:border-opacity-40 transition-all duration-200
           ${isCollected ? 'ring-1 ring-emerald-500/30' : ''}
@@ -232,92 +232,81 @@ const OptionCard = memo(({
           className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${config.solidGradient}`}
         />
 
-        <div className="p-4">
-          {/* Header row */}
-          <div className="flex items-start gap-3 mb-2">
-            <div 
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-              style={{ backgroundColor: `${config.color}15` }}
-            >
-              {config.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white text-sm leading-tight mb-0.5">
-                {card.title}
-              </h3>
-              <p className="text-xs text-gray-500 line-clamp-1">
-                {config.label}
-              </p>
-            </div>
-            {/* Confidence */}
-            <div 
-              className="px-2 py-1 rounded-lg text-xs font-medium"
+        <div className="p-3">
+          {/* Header row - compact */}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-base">{config.icon}</span>
+            <h3 className="font-medium text-white text-sm flex-1 truncate">
+              {card.title}
+            </h3>
+            <span 
+              className="text-xs font-medium px-1.5 py-0.5 rounded"
               style={{ 
                 backgroundColor: `${config.color}15`,
                 color: card.confidence > 0.8 ? config.color : '#9ca3af'
               }}
             >
               {Math.round(card.confidence * 100)}%
-            </div>
+            </span>
           </div>
 
-          {/* Direction badge - the optional direction */}
+          {/* Direction - inline and compact */}
           {card.direction && (
-            <div 
-              className="mb-2 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
-              style={{ 
-                backgroundColor: `${config.color}08`,
-                border: `1px solid ${config.color}25`,
-              }}
-            >
+            <p className="text-xs text-gray-400 mb-1.5 flex items-center gap-1">
               <span style={{ color: config.color }}>→</span>
-              <span className="text-gray-300">{card.direction}</span>
-            </div>
+              <span className="truncate">{card.direction}</span>
+            </p>
           )}
 
-          {/* Description */}
-          <p className="text-sm text-gray-400 line-clamp-2 mb-3">
+          {/* Description - single line */}
+          <p className="text-xs text-gray-500 line-clamp-1">
             {card.description}
           </p>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {card.refinements?.length > 0 && (
-                <span className="text-xs text-gray-500">
-                  💬 {Math.floor(card.refinements.length / 2)} messages
-                </span>
-              )}
-            </div>
-            
-            {/* Action buttons */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {!isCollected && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onCollect(); }}
-                  className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
-                           text-emerald-400 transition-colors"
-                  title="Collect"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-              )}
+          {/* Hover actions */}
+          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {!isCollected && (
               <button
-                onClick={(e) => { e.stopPropagation(); onExpand(card.id); }}
-                className="p-1.5 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 
-                         text-gray-400 transition-colors"
-                title="Expand"
+                onClick={(e) => { e.stopPropagation(); onCollect(); }}
+                className="p-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
+                title="Collect"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </button>
-            </div>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onExpand(card.id); }}
+              className="p-1 rounded bg-gray-700/50 hover:bg-gray-600/50 text-gray-400"
+              title="Expand"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
           </div>
 
           {/* Collected badge */}
+          {isCollected && (
+            <div className="absolute top-2 right-2">
+              <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Expanded view (modal)
+  return null; // Rendered via ExpandedCardModal
+});
+
+OptionCard.displayName = 'OptionCard';
           {isCollected && (
             <div className="absolute top-3 right-3">
               <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
