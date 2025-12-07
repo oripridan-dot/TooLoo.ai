@@ -1,6 +1,6 @@
-// @version 2.2.585
+// @version 3.3.212
 // TooLoo.ai Studio View - Design & Creation Space
-// Visual design, generative UI, emergence tracking
+// Visual design, generative UI, emergence tracking, Figma Make
 // Fully wired with real API connections
 
 import React, { memo, useState, useCallback, useEffect, lazy, Suspense } from 'react';
@@ -8,8 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SYNAPSYS_PRESETS, useSynapsynDNA } from '../synapsys';
 import { LiquidPanel } from '../shell/LiquidShell';
 
-// Lazy load the showcase for better initial load
+// Lazy load the showcase and FigmaCopilot for better initial load
 const LiquidSkinShowcase = lazy(() => import('./LiquidSkinShowcase'));
+const FigmaCopilot = lazy(() => import('../../components/FigmaCopilot'));
 
 const API_BASE = '/api/v1';
 
