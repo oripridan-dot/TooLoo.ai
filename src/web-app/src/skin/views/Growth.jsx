@@ -1,4 +1,4 @@
-// @version 3.3.289
+// @version 3.3.290
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2345,80 +2345,6 @@ const Growth = memo(({ className = '' }) => {
     return () => {
       if (socket) {
         socket.disconnect();
-      }
-
-      try {
-        const ws = new WebSocket(WS_URL);
-        wsRef.current = ws;
-
-        ws.onopen = () => {
-          console.log('[Growth] WebSocket connected');
-          reconnectAttempts = 0; // Reset on successful connection
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-
-            // Handle different event types
-            if (message.type?.startsWith('curiosity:')) {
-              if (message.payload?.dimensions) {
-                setCuriosityDimensions(message.payload.dimensions);
-              }
-            } else if (message.type?.startsWith('exploration:')) {
-              if (message.payload?.hypothesis) {
-                setHypothesisQueue((prev) => {
-                  const updated = prev.filter((h) => h.id !== message.payload.hypothesis.id);
-                  return [message.payload.hypothesis, ...updated].slice(0, 10);
-                });
-              }
-            } else if (message.type?.startsWith('emergence:')) {
-              if (message.payload?.event) {
-                setEmergenceEvents((prev) =>
-                  [
-                    { ...message.payload.event, new: true },
-                    ...prev.map((e) => ({ ...e, new: false })),
-                  ].slice(0, 20)
-                );
-              }
-            } else if (message.type?.startsWith('serendipity:')) {
-              if (message.payload?.metrics) {
-                setSerendipityMetrics(message.payload.metrics);
-              }
-            }
-          } catch (e) {
-            // Ignore parse errors
-          }
-        };
-
-        ws.onclose = (event) => {
-          // Only reconnect on unexpected close (not manual close)
-          if (event.code !== 1000 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-            reconnectAttempts++;
-            const delay = Math.min(3000 * reconnectAttempts, 10000); // Exponential backoff
-            console.log(
-              `[Growth] WebSocket disconnected, attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
-            );
-            reconnectTimeout = setTimeout(connectWebSocket, delay);
-          }
-        };
-
-        ws.onerror = () => {
-          // Silent error - onclose will handle reconnection
-        };
-      } catch (error) {
-        console.warn('[Growth] WebSocket not available, using polling fallback');
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'Component unmounting');
       }
     };
   }, []);
