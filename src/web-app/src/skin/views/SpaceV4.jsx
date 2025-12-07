@@ -1,4 +1,4 @@
-// @version 3.3.237
+// @version 3.3.238
 // TooLoo.ai Space V4 - Two-Step Creative Flow
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -668,6 +668,104 @@ const DimensionSection = memo(({
 });
 
 DimensionSection.displayName = 'DimensionSection';
+
+// ============================================================================
+// EXPLORE PHASE - Step 1: Interactive approach cards
+// ============================================================================
+
+const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
+  <motion.button
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+    onClick={() => onSelect(approach)}
+    disabled={isProcessing}
+    className={`
+      group relative p-4 rounded-xl border text-left
+      bg-gray-900/60 backdrop-blur-sm
+      hover:bg-gray-900/80 transition-all duration-200
+      disabled:opacity-50 disabled:cursor-not-allowed
+    `}
+    style={{ borderColor: `${approach.color}30` }}
+    whileHover={{ scale: 1.02, y: -2 }}
+    whileTap={{ scale: 0.98 }}
+  >
+    {/* Gradient accent */}
+    <div 
+      className="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl"
+      style={{ background: approach.color }}
+    />
+    
+    {/* Icon */}
+    <div 
+      className="w-10 h-10 rounded-lg flex items-center justify-center text-xl mb-3"
+      style={{ backgroundColor: `${approach.color}20` }}
+    >
+      {approach.icon}
+    </div>
+    
+    {/* Title */}
+    <h3 className="font-semibold text-white text-sm mb-1">{approach.title}</h3>
+    
+    {/* Description */}
+    <p className="text-xs text-gray-400 mb-3">{approach.description}</p>
+    
+    {/* Action hint */}
+    <div 
+      className="flex items-center gap-1.5 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+      style={{ color: approach.color }}
+    >
+      <span>→</span>
+      <span>{approach.action}</span>
+    </div>
+  </motion.button>
+));
+
+ExploreCard.displayName = 'ExploreCard';
+
+const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="max-w-4xl mx-auto pt-8"
+  >
+    {/* Prompt display */}
+    <div className="text-center mb-8">
+      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 border border-gray-700/50 mb-4">
+        <span className="text-cyan-400">💭</span>
+        <span className="text-sm text-gray-300">{prompt}</span>
+      </div>
+      <h2 className="text-xl font-semibold text-white mb-2">How would you like to explore this?</h2>
+      <p className="text-sm text-gray-500">Choose an approach to get started</p>
+    </div>
+
+    {/* Approach cards grid */}
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {EXPLORATION_APPROACHES.map((approach, index) => (
+        <ExploreCard
+          key={approach.id}
+          approach={approach}
+          index={index}
+          onSelect={onApproachSelect}
+          isProcessing={isProcessing}
+        />
+      ))}
+    </div>
+
+    {/* Skip option */}
+    <div className="text-center mt-6">
+      <button
+        onClick={() => onApproachSelect({ id: 'skip', action: 'Show all options' })}
+        className="text-sm text-gray-500 hover:text-gray-400 transition-colors"
+      >
+        or skip to see all options →
+      </button>
+    </div>
+  </motion.div>
+));
+
+ExplorePhase.displayName = 'ExplorePhase';
 
 // ============================================================================
 // EMPTY STATE
