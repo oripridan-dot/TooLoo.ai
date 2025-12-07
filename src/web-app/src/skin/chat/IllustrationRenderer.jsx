@@ -1,4 +1,4 @@
-// @version 3.1.0
+// @version 3.3.293
 // TooLoo.ai Illustration Renderer
 // Human-like AI illustration display with interactive features
 // Features: Zoom, download, regenerate, style switching, art effects
@@ -313,7 +313,7 @@ export const IllustrationGallery = memo(
       >
         {illustrations.map((illustration, index) => (
           <motion.div
-            key={illustration.id || index}
+            key={illustration.id || `illustration-${illustration.altText || ''}-${index}`}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1 }}
