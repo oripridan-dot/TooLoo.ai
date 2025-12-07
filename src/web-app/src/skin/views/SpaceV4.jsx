@@ -1,4 +1,4 @@
-// @version 3.3.277
+// @version 3.3.278
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -1733,6 +1733,7 @@ const CollectedSidebar = memo(({
   onExport, 
   onCompare,
   onMergeAndSynthesize,
+  onAdvice,
   isProcessing 
 }) => {
   if (collected.length === 0) return null;
