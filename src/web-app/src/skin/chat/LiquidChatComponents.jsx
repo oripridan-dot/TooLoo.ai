@@ -1,4 +1,4 @@
-// @version 3.3.206
+// @version 3.3.309
 // TooLoo.ai Liquid Chat Components
 // v3.3.121 - Visual-first responses: code hidden by default, insights highlighted, washing machine UX
 // v3.3.99 - Enhanced cleanContent() to remove all noise patterns (connection interrupted, mocked response)
@@ -228,7 +228,9 @@ export const LiquidMessageBubble = memo(
           `}
           >
             {/* Message content */}
-            <div className={`text-base leading-relaxed ${isUser ? 'text-cyan-100' : 'text-gray-200'}`}>
+            <div
+              className={`text-base leading-relaxed ${isUser ? 'text-cyan-100' : 'text-gray-200'}`}
+            >
               {isUser ? (
                 <p className="break-words">{message.content || ''}</p>
               ) : textContent && textContent.trim() ? (
@@ -1426,10 +1428,7 @@ render(<${componentName} />);`;
       if (!codeString || codeString.trim().length === 0) {
         return (
           <div className="p-4 flex items-center justify-center min-h-[80px] bg-[#0a0a0a]">
-            <div className="text-gray-500 text-xs flex items-center gap-2">
-              <span className="animate-pulse">⏳</span>
-              Waiting for SVG content...
-            </div>
+            <span className="text-gray-500 text-xs">Waiting for SVG content...</span>
           </div>
         );
       }
@@ -1441,26 +1440,17 @@ render(<${componentName} />);`;
 
       // Check if it looks like valid SVG
       if (!safeSvg.includes('<svg') || !safeSvg.includes('</svg>')) {
-        // Could be still streaming - show partial content
+        // Could be still streaming - show simple loading
         if (safeSvg.includes('<svg')) {
           return (
-            <div className="p-4 flex flex-col items-center justify-center min-h-[80px] bg-[#0a0a0a]">
-              <div className="text-cyan-400 text-xs flex items-center gap-2 mb-2">
-                <span className="animate-spin">◐</span>
-                Rendering SVG...
-              </div>
-              <pre className="text-[10px] text-gray-600 max-h-16 overflow-hidden">
-                {codeString.substring(0, 150)}...
-              </pre>
+            <div className="p-4 flex items-center justify-center min-h-[80px] bg-[#0a0a0a]">
+              <span className="text-gray-500 text-xs">Loading SVG...</span>
             </div>
           );
         }
         return (
           <div className="p-4 text-amber-400 text-xs bg-amber-500/10">
             ⚠️ Content doesn't appear to be valid SVG
-            <pre className="mt-2 text-[10px] text-gray-500 max-h-20 overflow-auto">
-              {codeString.substring(0, 200)}...
-            </pre>
           </div>
         );
       }
