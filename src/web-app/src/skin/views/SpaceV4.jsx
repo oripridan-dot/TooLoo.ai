@@ -1,4 +1,4 @@
-// @version 3.3.253
+// @version 3.3.254
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1163,7 +1163,7 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
 ExplorePhase.displayName = 'ExplorePhase';
 
 // ============================================================================
-// EMPTY STATE
+// EMPTY STATE - Enhanced with TooLoo presence and glow effects
 // ============================================================================
 
 const EmptyState = memo(({ isThinking }) => (
@@ -1178,44 +1178,126 @@ const EmptyState = memo(({ isThinking }) => (
         transition={{ duration: 2, repeat: Infinity }}
         className="text-center"
       >
-        <div className="relative w-20 h-20 mx-auto mb-6">
+        {/* Thinking animation with glow */}
+        <div className="relative w-24 h-24 mx-auto mb-8">
+          {/* Outer glow rings */}
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            animate={{ 
+              boxShadow: [
+                '0 0 30px rgba(6, 182, 212, 0.3), 0 0 60px rgba(168, 85, 247, 0.2)',
+                '0 0 50px rgba(6, 182, 212, 0.5), 0 0 80px rgba(168, 85, 247, 0.3)',
+                '0 0 30px rgba(6, 182, 212, 0.3), 0 0 60px rgba(168, 85, 247, 0.2)',
+              ],
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-500 border-r-purple-500"
           />
-          <div className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center">
-            <span className="text-2xl">🔮</span>
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-2 rounded-full border border-transparent border-b-cyan-400/50 border-l-purple-400/50"
+          />
+          <div className="absolute inset-4 rounded-full bg-gray-900 flex items-center justify-center">
+            <motion.span 
+              className="text-3xl"
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >🔮</motion.span>
           </div>
         </div>
-        <h3 className="text-lg font-medium text-white mb-2">Exploring dimensions...</h3>
-        <p className="text-sm text-gray-500">TooLoo is analyzing your idea</p>
+        <h3 className="text-xl font-semibold text-white mb-2">Exploring dimensions...</h3>
+        <p className="text-sm text-gray-500">TooLoo is analyzing your idea across multiple perspectives</p>
       </motion.div>
     ) : (
-      <div className="text-center max-w-lg">
-        <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
-          <span className="text-4xl">✨</span>
+      <div className="text-center max-w-xl">
+        {/* Hero icon with animated glow */}
+        <div className="relative mx-auto mb-8 w-32 h-32">
+          {/* Behind-the-glass glow */}
+          <motion.div
+            className="absolute inset-0 rounded-3xl blur-2xl"
+            animate={{
+              background: [
+                'radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, rgba(168, 85, 247, 0.2) 50%, transparent 70%)',
+                'radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(6, 182, 212, 0.2) 50%, transparent 70%)',
+                'radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, rgba(168, 85, 247, 0.2) 50%, transparent 70%)',
+              ],
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+          {/* Icon container */}
+          <motion.div 
+            className="relative w-full h-full rounded-3xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 
+                      border border-white/10 flex items-center justify-center backdrop-blur-sm"
+            animate={{
+              boxShadow: [
+                'inset 0 0 30px rgba(6, 182, 212, 0.1)',
+                'inset 0 0 40px rgba(168, 85, 247, 0.15)',
+                'inset 0 0 30px rgba(6, 182, 212, 0.1)',
+              ],
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            <motion.span 
+              className="text-5xl"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0],
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+            >✨</motion.span>
+          </motion.div>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-3">What are we building?</h2>
-        <p className="text-gray-400 mb-8">
+        
+        <motion.h2 
+          className="text-3xl font-bold text-white mb-4"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          What are we building?
+        </motion.h2>
+        <motion.p 
+          className="text-gray-400 mb-10 text-lg leading-relaxed"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           Describe your idea and TooLoo will explore it across multiple dimensions,
           giving you different perspectives to consider and refine.
-        </p>
-        <div className="flex justify-center gap-4 flex-wrap">
-          {['design', 'technical', 'user'].map(dim => {
+        </motion.p>
+        
+        {/* Dimension pills with staggered animation */}
+        <motion.div 
+          className="flex justify-center gap-3 flex-wrap"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          {['design', 'technical', 'user', 'business', 'ethical'].map((dim, i) => {
             const cfg = DIMENSION_CONFIGS[dim];
             return (
-              <div 
+              <motion.div 
                 key={dim}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                style={{ backgroundColor: `${cfg.color}10` }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5 + i * 0.1 }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border"
+                style={{ 
+                  backgroundColor: `${cfg.color}08`,
+                  borderColor: `${cfg.color}20`,
+                }}
               >
-                <span>{cfg.icon}</span>
+                <span className="text-base">{cfg.icon}</span>
                 <span className="text-sm text-gray-400">{cfg.label}</span>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     )}
   </motion.div>
