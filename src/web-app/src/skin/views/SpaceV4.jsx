@@ -1,4 +1,4 @@
-// @version 3.3.257
+// @version 3.3.258
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2356,28 +2356,15 @@ const TooLooSpaceV4 = memo(() => {
                 disabled={isThinking}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="relative px-6 py-3 rounded-xl font-semibold text-white transition-all
+                className="relative px-5 py-2.5 rounded-xl font-medium text-white text-sm transition-all
                          disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                 style={{
                   background: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
-                  boxShadow: '0 4px 20px rgba(6, 182, 212, 0.3)',
                 }}
               >
-                {/* Button glow animation */}
-                <motion.div
-                  className="absolute inset-0"
-                  animate={!isThinking ? {
-                    boxShadow: [
-                      'inset 0 0 20px rgba(255, 255, 255, 0.1)',
-                      'inset 0 0 30px rgba(255, 255, 255, 0.2)',
-                      'inset 0 0 20px rgba(255, 255, 255, 0.1)',
-                    ],
-                  } : {}}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
                 {isThinking ? (
                   <motion.svg 
-                    className="w-5 h-5 relative" 
+                    className="w-4 h-4 relative" 
                     fill="none" 
                     viewBox="0 0 24 24"
                     animate={{ rotate: 360 }}
@@ -2392,18 +2379,17 @@ const TooLooSpaceV4 = memo(() => {
               </motion.button>
             </form>
           
-            {/* Quick action chips - enhanced with active functionality */}
-            <div className="relative flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
-              <span className="text-xs text-gray-500 mr-1">Quick:</span>
+            {/* Quick action chips - compact */}
+            <div className="relative flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/5">
+              <span className="text-[10px] text-gray-500 mr-0.5">Quick:</span>
               <motion.button 
                 type="button"
                 onClick={handleValidate}
                 disabled={isThinking || !prompt.trim()}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
-                         border border-emerald-500/20 text-emerald-400 text-xs font-medium 
-                         transition-all flex items-center gap-1.5
+                className="px-2 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 
+                         text-emerald-400 text-[10px] font-medium transition-all flex items-center gap-1
                          disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span>✓</span> Validate
@@ -2414,9 +2400,8 @@ const TooLooSpaceV4 = memo(() => {
                 disabled={isThinking || !prompt.trim()}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 
-                         border border-amber-500/20 text-amber-400 text-xs font-medium 
-                         transition-all flex items-center gap-1.5
+                className="px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 
+                         text-amber-400 text-[10px] font-medium transition-all flex items-center gap-1
                          disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span>⚙</span> Optimize
