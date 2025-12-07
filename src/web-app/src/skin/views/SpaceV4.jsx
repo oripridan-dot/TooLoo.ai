@@ -1,4 +1,4 @@
-// @version 3.3.267
+// @version 3.3.268
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -523,6 +523,19 @@ const OptionCard = memo(({
             <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
               {card.description}
             </p>
+
+            {/* Real data indicator */}
+            {card.source === 'api' && (
+              <motion.div 
+                className="absolute bottom-2 left-2 flex items-center gap-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] text-emerald-500/70 font-medium">LIVE</span>
+              </motion.div>
+            )}
 
             {/* Hover actions - enhanced */}
             <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
