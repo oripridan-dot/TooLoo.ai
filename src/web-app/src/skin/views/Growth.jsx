@@ -1,4 +1,4 @@
-// @version 3.3.296
+// @version 3.3.338 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -643,7 +643,7 @@ const ExplorationQueue = memo(
           ) : (
             hypotheses.map((h, i) => (
               <motion.div
-                key={h.id || `hypothesis-${h.title?.slice(0,10) || h.status}-${i}`}
+                key={h.id || `hypothesis-${h.title?.slice(0, 10) || h.status}-${i}`}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: i * 0.05 }}
