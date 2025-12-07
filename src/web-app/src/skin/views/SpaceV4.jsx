@@ -1,4 +1,4 @@
-// @version 3.3.252
+// @version 3.3.253
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -979,53 +979,107 @@ const DimensionSection = memo(({
 DimensionSection.displayName = 'DimensionSection';
 
 // ============================================================================
-// EXPLORE PHASE - Step 1: Interactive approach cards
+// EXPLORE PHASE - Step 1: Interactive approach cards with enhanced visuals
 // ============================================================================
 
 const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
   <motion.button
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.1 }}
+    initial={{ opacity: 0, y: 30, scale: 0.9 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
     onClick={() => onSelect(approach)}
     disabled={isProcessing}
-    className={`
-      group relative p-4 rounded-xl border text-left
-      bg-gray-900/60 backdrop-blur-sm
-      hover:bg-gray-900/80 transition-all duration-200
-      disabled:opacity-50 disabled:cursor-not-allowed
-    `}
-    style={{ borderColor: `${approach.color}30` }}
-    whileHover={{ scale: 1.02, y: -2 }}
-    whileTap={{ scale: 0.98 }}
+    className="group relative p-5 rounded-2xl text-left overflow-hidden
+               disabled:opacity-50 disabled:cursor-not-allowed"
+    whileHover={{ scale: 1.03, y: -5 }}
+    whileTap={{ scale: 0.97 }}
   >
-    {/* Gradient accent */}
-    <div 
-      className="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl"
-      style={{ background: approach.color }}
+    {/* Behind-the-glass glow effect */}
+    <motion.div
+      className="absolute -inset-2 rounded-2xl opacity-0 group-hover:opacity-70 transition-all duration-300 blur-xl"
+      style={{ 
+        background: `radial-gradient(ellipse at center, ${approach.color}50 0%, transparent 60%)`,
+      }}
     />
     
-    {/* Icon */}
+    {/* Card background with glass effect */}
     <div 
-      className="w-10 h-10 rounded-lg flex items-center justify-center text-xl mb-3"
-      style={{ backgroundColor: `${approach.color}20` }}
+      className="absolute inset-0 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/60 
+                 backdrop-blur-sm border border-white/5 group-hover:border-white/10 transition-all"
+      style={{ 
+        boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.05)`,
+      }}
+    />
+    
+    {/* Animated gradient accent */}
+    <motion.div 
+      className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+      style={{ background: `linear-gradient(90deg, transparent, ${approach.color}, transparent)` }}
+      initial={{ scaleX: 0 }}
+      animate={{ scaleX: 1 }}
+      transition={{ delay: index * 0.1 + 0.3 }}
+    />
+    
+    {/* Light streak animation on hover */}
+    <motion.div
+      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+      initial={false}
     >
-      {approach.icon}
-    </div>
+      <motion.div
+        className="absolute top-0 left-0 w-24 h-full"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${approach.color}15, transparent)`,
+        }}
+        animate={{ x: [-96, 300] }}
+        transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
+      />
+    </motion.div>
     
-    {/* Title */}
-    <h3 className="font-semibold text-white text-sm mb-1">{approach.title}</h3>
-    
-    {/* Description */}
-    <p className="text-xs text-gray-400 mb-3">{approach.description}</p>
-    
-    {/* Action hint */}
-    <div 
-      className="flex items-center gap-1.5 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
-      style={{ color: approach.color }}
-    >
-      <span>→</span>
-      <span>{approach.action}</span>
+    <div className="relative">
+      {/* Icon with glow */}
+      <div className="relative mb-4">
+        <motion.div
+          className="absolute -inset-2 rounded-xl opacity-40"
+          style={{ 
+            background: `radial-gradient(circle, ${approach.color}40 0%, transparent 70%)`,
+          }}
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <div 
+          className="relative w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+          style={{ 
+            backgroundColor: `${approach.color}20`,
+            border: `1px solid ${approach.color}30`,
+          }}
+        >
+          {approach.icon}
+        </div>
+      </div>
+      
+      {/* Title */}
+      <h3 className="font-bold text-white text-base mb-1.5">{approach.title}</h3>
+      
+      {/* Description */}
+      <p className="text-sm text-gray-400 mb-4 leading-relaxed">{approach.description}</p>
+      
+      {/* Action hint with animation */}
+      <motion.div 
+        className="flex items-center gap-2 text-xs font-semibold"
+        style={{ color: approach.color }}
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 0 }}
+        whileHover={{ opacity: 1, x: 0 }}
+      >
+        <motion.span
+          animate={{ x: [0, 5, 0] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >→</motion.span>
+        <span>{approach.action}</span>
+      </motion.div>
     </div>
   </motion.button>
 ));
@@ -1039,14 +1093,38 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
     exit={{ opacity: 0 }}
     className="max-w-4xl mx-auto pt-8"
   >
-    {/* Prompt display */}
-    <div className="text-center mb-8">
-      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 border border-gray-700/50 mb-4">
-        <span className="text-cyan-400">💭</span>
-        <span className="text-sm text-gray-300">{prompt}</span>
-      </div>
-      <h2 className="text-xl font-semibold text-white mb-2">How would you like to explore this?</h2>
-      <p className="text-sm text-gray-500">Choose an approach to get started</p>
+    {/* Prompt display - enhanced */}
+    <div className="text-center mb-10">
+      <motion.div 
+        className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full 
+                   bg-gradient-to-r from-gray-800/80 to-gray-800/40 
+                   border border-white/10 backdrop-blur-sm mb-5"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+      >
+        <motion.span 
+          className="text-xl"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >💭</motion.span>
+        <span className="text-sm text-gray-200 font-medium">{prompt}</span>
+      </motion.div>
+      <motion.h2 
+        className="text-2xl font-bold text-white mb-3"
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+      >
+        How would you like to explore this?
+      </motion.h2>
+      <motion.p 
+        className="text-sm text-gray-500"
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        Each approach reveals different dimensions of your concept
+      </motion.p>
     </div>
 
     {/* Approach cards grid */}
@@ -1062,15 +1140,23 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
       ))}
     </div>
 
-    {/* Skip option */}
-    <div className="text-center mt-6">
-      <button
+    {/* Skip option - enhanced */}
+    <motion.div 
+      className="text-center mt-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.8 }}
+    >
+      <motion.button
         onClick={() => onApproachSelect({ id: 'skip', action: 'Show all options' })}
-        className="text-sm text-gray-500 hover:text-gray-400 transition-colors"
+        className="text-sm text-gray-500 hover:text-gray-300 transition-colors 
+                   px-4 py-2 rounded-lg hover:bg-white/5"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
         or skip to see all options →
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   </motion.div>
 ));
 
