@@ -1,4 +1,4 @@
-// @version 3.3.275
+// @version 3.3.276
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -654,7 +654,7 @@ const OptionCard = memo(({
     }
   };
 
-  // Compact view (in grid) - Redesigned for readability
+  // Full-width card view - redesigned for rich content display
   if (!isExpanded) {
     return (
       <motion.div
@@ -663,99 +663,141 @@ const OptionCard = memo(({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ delay: index * 0.03 }}
-        whileHover={{ scale: 1.01 }}
+        whileHover={{ y: -2 }}
         className={`
           group relative rounded-2xl overflow-hidden cursor-pointer
           ${isCollected ? 'ring-2 ring-emerald-500/50' : ''}
         `}
         onClick={() => onExpand(card.id)}
       >
-        {/* Card body - cleaner design */}
+        {/* Subtle glow on hover */}
+        <motion.div
+          className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 blur-xl"
+          style={{ background: `radial-gradient(ellipse at left, ${config.color}30 0%, transparent 60%)` }}
+        />
+        
+        {/* Card body - full-width horizontal layout */}
         <div 
-          className="relative bg-gray-900/80 backdrop-blur-sm border border-gray-800/80 
-                     hover:border-gray-700/80 hover:bg-gray-900/95
+          className="relative bg-gray-900/90 backdrop-blur-sm border border-gray-800/80 
+                     hover:border-gray-700/60 hover:bg-gray-900/95
                      transition-all duration-200 rounded-2xl"
         >
           {/* Left accent bar */}
           <div 
-            className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+            className="absolute left-0 top-4 bottom-4 w-1 rounded-full"
             style={{ backgroundColor: config.color }}
           />
 
-          <div className="relative p-4 pl-5">
-            {/* Top row: Title + Confidence */}
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <h3 className="font-semibold text-white text-base leading-snug pr-2">
-                {card.title}
-              </h3>
+          <div className="relative p-5 pl-6">
+            {/* Header row: Title, Direction & Actions */}
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="font-semibold text-white text-lg leading-tight">
+                    {card.title}
+                  </h3>
+                  {/* Confidence */}
+                  <span 
+                    className="text-xs font-medium px-2 py-0.5 rounded-md flex-shrink-0"
+                    style={{ 
+                      backgroundColor: card.confidence > 0.85 ? `${config.color}15` : 'rgba(156,163,175,0.1)',
+                      color: card.confidence > 0.85 ? config.color : '#9ca3af',
+                    }}
+                  >
+                    {Math.round(card.confidence * 100)}% match
+                  </span>
+                </div>
+                
+                {/* Direction as actionable insight */}
+                {card.direction && (
+                  <p className="text-base text-gray-300 flex items-center gap-2">
+                    <span 
+                      className="w-5 h-5 rounded flex items-center justify-center text-xs flex-shrink-0"
+                      style={{ backgroundColor: `${config.color}20`, color: config.color }}
+                    >
+                      →
+                    </span>
+                    <span className="font-medium">{card.direction}</span>
+                  </p>
+                )}
+              </div>
+              
+              {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Confidence badge */}
-                <span 
-                  className="text-xs font-medium px-2 py-0.5 rounded-md"
-                  style={{ 
-                    backgroundColor: card.confidence > 0.85 ? `${config.color}20` : 'rgba(156,163,175,0.1)',
-                    color: card.confidence > 0.85 ? config.color : '#9ca3af',
-                  }}
-                >
-                  {Math.round(card.confidence * 100)}%
-                </span>
-                {/* Collect button - always visible */}
                 {!isCollected ? (
                   <motion.button
                     onClick={(e) => { e.stopPropagation(); onCollect(); }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 
-                             transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
+                             text-emerald-400 transition-colors text-sm font-medium
+                             flex items-center gap-1.5"
                     title="Add to collection"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
+                    Collect
                   </motion.button>
                 ) : (
-                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                  <div className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 
+                                text-sm font-medium flex items-center gap-1.5">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
+                    Collected
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Direction - clear call to action */}
-            {card.direction && (
-              <p className="text-sm text-gray-300 mb-2 flex items-center gap-2">
-                <span style={{ color: config.color }}>→</span>
-                <span>{card.direction}</span>
-              </p>
+            {/* Description - full readable content with markdown */}
+            <div className="mb-4 text-sm text-gray-400 leading-relaxed prose prose-sm prose-invert max-w-none">
+              <EnhancedMarkdown content={card.description} />
+            </div>
+            
+            {/* Key details if available */}
+            {card.details && (
+              <div className="mb-4 p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">Details</div>
+                <div className="text-sm text-gray-300 leading-relaxed">
+                  <EnhancedMarkdown content={card.details} />
+                </div>
+              </div>
+            )}
+            
+            {/* Implementation hint if available */}
+            {card.implementation && (
+              <div className="mb-4 p-3 rounded-xl bg-gray-950/50 border border-gray-800/50">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium flex items-center gap-1.5">
+                  <span className="text-cyan-500">⚡</span> Implementation
+                </div>
+                <div className="text-sm text-gray-300 leading-relaxed font-mono">
+                  <EnhancedMarkdown content={card.implementation} />
+                </div>
+              </div>
             )}
 
-            {/* Description - readable */}
-            <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
-              {card.description}
-            </p>
-
             {/* Footer: Source + Expand hint */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800/50">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-800/40">
               {/* Real data indicator */}
               {card.source === 'api' ? (
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs text-emerald-500/80 font-medium">Live data</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs text-emerald-500/80 font-medium">Live from TooLoo</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-gray-600" />
-                  <span className="text-xs text-gray-500">Generated</span>
+                  <span className="w-2 h-2 rounded-full bg-purple-500" />
+                  <span className="text-xs text-purple-400/80 font-medium">AI Generated</span>
                 </div>
               )}
               
               {/* Expand hint */}
-              <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors flex items-center gap-1">
-                Click to explore
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <span className="text-sm text-gray-500 group-hover:text-gray-300 transition-colors flex items-center gap-2">
+                Expand to chat & refine
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </span>
             </div>
