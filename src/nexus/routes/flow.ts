@@ -1,4 +1,4 @@
-// @version 3.3.217
+// @version 3.3.283
 // TooLoo Flow API Routes
 // Unified thinking and creation endpoints
 
@@ -51,7 +51,10 @@ router.post('/sessions', async (req: Request, res: Response) => {
 // Get session by ID
 router.get('/sessions/:id', async (req: Request, res: Response) => {
   try {
-    const session = await flowSessionManager.getSession(req.params.id);
+    const id = req.params['id'];
+    if (!id) return res.status(400).json({ ok: false, error: 'ID required' });
+    
+    const session = await flowSessionManager.getSession(id);
     if (!session) {
       return res.status(404).json({ ok: false, error: 'Session not found' });
     }
