@@ -1,4 +1,4 @@
-// @version 3.3.294
+// @version 3.3.344
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -298,11 +298,12 @@ const TestRunner = memo(({ onRun }) => {
 
       try {
         const result = await onRun?.(testType);
+        // NO FAKE DATA - only show real test results
         setResults({
           type: testType,
-          passed: result?.passed || Math.floor(Math.random() * 10) + 5,
-          failed: result?.failed || Math.floor(Math.random() * 2),
-          duration: result?.duration || `${(Math.random() * 2 + 0.5).toFixed(2)}s`,
+          passed: result?.passed ?? 0,
+          failed: result?.failed ?? 0,
+          duration: result?.duration ?? '0s',
         });
       } catch (error) {
         setResults({
