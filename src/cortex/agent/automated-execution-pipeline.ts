@@ -1,4 +1,4 @@
-// @version 3.3.194
+// @version 3.3.282
 /* eslint-disable no-console */
 /**
  * TooLoo Automated Execution Pipeline
@@ -132,7 +132,7 @@ export class AutomatedExecutionPipeline {
         console.log(`[AutomatedPipeline] Generating code for: ${input.objective.substring(0, 50)}...`);
         const generated = await this.generateCode(input.objective, language);
         code = generated.code;
-        language = generated.language;
+        language = generated.language as any;
         
         phases.push({
           name: 'code-generation',
