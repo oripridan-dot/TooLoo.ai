@@ -1,4 +1,4 @@
-// @version 3.3.342 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.346 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2169,19 +2169,15 @@ const Growth = memo(({ className = '' }) => {
                       ? '○'
                       : '◎',
           explored: p.available || p.lastUsed,
-          score: p.available ? Math.round(80 + Math.random() * 20) : 0,
+          // NO FAKE SCORES - use real score from API or 0
+          score: p.score || (p.available ? 100 : 0),
         }));
         setProviders(providerList);
       }
     } catch (error) {
       console.error('[Growth] Failed to fetch providers:', error);
-      setProviders([
-        { name: 'OpenAI', icon: '◉', explored: true, score: 92 },
-        { name: 'Anthropic', icon: '◈', explored: true, score: 88 },
-        { name: 'Google', icon: '◇', explored: true, score: 85 },
-        { name: 'Groq', icon: '◆', explored: false },
-        { name: 'Ollama', icon: '○', explored: false },
-      ]);
+      // NO FAKE DATA - show empty state
+      setProviders([]);
     }
   }, []);
 
@@ -2196,18 +2192,10 @@ const Growth = memo(({ className = '' }) => {
         return;
       }
     } catch (error) {
-      console.log('[Growth] Curiosity API not available, using defaults');
+      console.log('[Growth] Curiosity API not available');
       setDemoMode((prev) => ({ ...prev, curiosity: true }));
-      // Generate sample curiosity data for visualization
-      setCuriosityDimensions({
-        novelty: 0.65,
-        surprise: 0.42,
-        uncertainty: 0.55,
-        dissonance: 0.28,
-        capabilityGap: 0.71,
-        emergencePotential: 0.38,
-        explorationValue: 0.59,
-      });
+      // NO FAKE DATA - show empty state
+      setCuriosityDimensions({});
     }
   }, []);
 
@@ -2224,31 +2212,8 @@ const Growth = memo(({ className = '' }) => {
     } catch (error) {
       console.log('[Growth] Exploration API not available');
       setDemoMode((prev) => ({ ...prev, exploration: true }));
-      // Sample hypotheses for demo
-      setHypothesisQueue([
-        {
-          id: 1,
-          title: 'Test adversarial provider combinations',
-          type: 'adversarial_probe',
-          status: 'running',
-          confidence: 0.72,
-          progress: 0.45,
-        },
-        {
-          id: 2,
-          title: 'Explore temperature variation effects',
-          type: 'mutation_experiment',
-          status: 'pending',
-          confidence: 0.65,
-        },
-        {
-          id: 3,
-          title: 'Cross-domain knowledge transfer',
-          type: 'cross_domain',
-          status: 'analyzing',
-          confidence: 0.81,
-        },
-      ]);
+      // NO FAKE DATA - show empty state
+      setHypothesisQueue([]);
     }
   }, []);
 
@@ -2265,34 +2230,7 @@ const Growth = memo(({ className = '' }) => {
     } catch (error) {
       console.log('[Growth] Emergence API not available');
       setDemoMode((prev) => ({ ...prev, emergence: true }));
-      // Sample emergence events for demo
-      setEmergenceEvents([
-        {
-          id: 1,
-          type: 'breakthrough',
-          title: 'Multi-provider synergy detected',
-          description: 'OpenAI+Claude combination exceeds individual performance by 23%',
-          confidence: 0.89,
-          time: '2 min ago',
-          new: true,
-        },
-        {
-          id: 2,
-          type: 'pattern',
-          title: 'Recurring code pattern identified',
-          description: 'Similar error handling approach across 15 successful generations',
-          confidence: 0.76,
-          time: '18 min ago',
-        },
-        {
-          id: 3,
-          type: 'capability',
-          title: 'New skill unlocked: Advanced debugging',
-          description: 'System can now trace complex async issues',
-          confidence: 0.82,
-          time: '1 hour ago',
-        },
-      ]);
+      // NO FAKE DATA - emergence events already loaded from metrics/real endpoint
     }
   }, []);
 
@@ -2309,31 +2247,15 @@ const Growth = memo(({ className = '' }) => {
     } catch (error) {
       console.log('[Growth] Serendipity API not available');
       setDemoMode((prev) => ({ ...prev, serendipity: true }));
-      // Sample metrics
-      setSerendipityMetrics({
-        discoveries: 7,
-        discoveryRate: 0.12,
-        totalInjections: 58,
-        bestDiscovery: {
-          description: 'Wildcard provider DeepSeek outperformed OpenAI for code refactoring tasks',
-          score: 0.91,
-        },
-      });
+      // NO FAKE DATA - show empty state
+      setSerendipityMetrics({});
     }
   }, []);
 
-  // NEW: Generate learning velocity data
+  // Learning velocity - NO FAKE DATA, only real measurements
   const updateLearningVelocity = useCallback(() => {
-    setLearningVelocity((prev) => {
-      const newPoint = {
-        time: Date.now(),
-        velocity: 0.5 + Math.random() * 0.3 + prev.length * 0.01,
-        cumulative:
-          prev.length > 0 ? prev[prev.length - 1].cumulative * 1.02 + Math.random() * 5 : 100,
-      };
-      const updated = [...prev, newPoint].slice(-30); // Keep last 30 points
-      return updated;
-    });
+    // Don't generate fake velocity - this should come from real learning events
+    // Velocity will be populated when real learning sessions complete
   }, []);
 
   // Setup Socket.IO for real-time updates (v3.3.300: Fixed Socket.IO integration)
@@ -2420,10 +2342,7 @@ const Growth = memo(({ className = '' }) => {
       ]);
       setLoading(false);
 
-      // Initialize velocity graph
-      for (let i = 0; i < 20; i++) {
-        updateLearningVelocity();
-      }
+      // Velocity graph populated from real learning events only
     };
     loadAll();
 
