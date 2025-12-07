@@ -1,4 +1,4 @@
-// @version 3.3.239
+// @version 3.3.240
 // TooLoo.ai Space V4 - Two-Step Creative Flow
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1174,24 +1174,94 @@ const TooLooSpaceV4 = memo(() => {
       {/* Main content */}
       <main className={`relative pt-20 pb-32 px-6 ${collected.length > 0 ? 'pr-80' : ''}`}>
         <div className="max-w-6xl mx-auto">
-          {cards.length === 0 ? (
-            <EmptyState isThinking={isThinking} />
-          ) : (
-            <div className="pt-8">
-              {activeDimensions.map(dimension => (
-                <DimensionSection
-                  key={dimension}
-                  dimension={dimension}
-                  cards={cards}
-                  expandedCard={expandedCard}
-                  onExpand={handleExpand}
-                  onCollect={handleCollect}
-                  onChat={handleChat}
-                  isProcessing={processingCardId !== null}
-                />
-              ))}
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {/* Phase 1: Discovery - Empty state with input */}
+            {phase === 'discovery' && (
+              <EmptyState key="empty" isThinking={false} />
+            )}
+
+            {/* Phase 2: Explore - Choose approach */}
+            {phase === 'explore' && (
+              <ExplorePhase
+                key="explore"
+                prompt={prompt}
+                onApproachSelect={handleApproachSelect}
+                isProcessing={isThinking}
+              />
+            )}
+
+            {/* Phase 3+: Options - Show dimension cards */}
+            {(phase === 'options' || phase === 'refinement' || phase === 'build') && (
+              <motion.div
+                key="options"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {isThinking ? (
+                  <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                    <motion.div
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="text-center"
+                    >
+                      <div className="relative w-20 h-20 mx-auto mb-6">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                          className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-500 border-r-purple-500"
+                        />
+                        <div className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center">
+                          <span className="text-2xl">{selectedApproach?.icon || '🔮'}</span>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-2">
+                        {selectedApproach?.title || 'Exploring'}...
+                      </h3>
+                      <p className="text-sm text-gray-500">Generating options for you</p>
+                    </motion.div>
+                  </div>
+                ) : (
+                  <div className="pt-4">
+                    {/* Approach indicator */}
+                    {selectedApproach && selectedApproach.id !== 'skip' && (
+                      <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30">
+                        <span className="text-xl">{selectedApproach.icon}</span>
+                        <div>
+                          <div className="text-sm font-medium text-white">{selectedApproach.title}</div>
+                          <div className="text-xs text-gray-500">{selectedApproach.description}</div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setPhase('explore');
+                            setCards([]);
+                            setSelectedApproach(null);
+                          }}
+                          className="ml-auto text-xs text-gray-500 hover:text-gray-400"
+                        >
+                          Change approach
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Dimension sections */}
+                    {activeDimensions.map(dimension => (
+                      <DimensionSection
+                        key={dimension}
+                        dimension={dimension}
+                        cards={cards}
+                        expandedCard={expandedCard}
+                        onExpand={handleExpand}
+                        onCollect={handleCollect}
+                        onChat={handleChat}
+                        isProcessing={processingCardId !== null}
+                      />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
 
