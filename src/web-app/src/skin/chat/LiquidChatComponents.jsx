@@ -1,4 +1,4 @@
-// @version 3.3.336
+// @version 3.3.337
 // TooLoo.ai Liquid Chat Components
 // v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
 // Rich visual display capabilities for chat responses
@@ -322,19 +322,19 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     // Reset for main parsing
     lastIndex = 0;
 
-    // PHASE 2: Find SVG blocks - ```svg format
-    const svgRegex = /```svg\n([\s\S]*?)```/g;
+    // PHASE 2: Find SVG blocks - ```svg format (with or without newline)
+    const svgRegex = /```svg\s*([\s\S]*?)```/g;
     while ((match = svgRegex.exec(processedContent)) !== null) {
       if (match.index > lastIndex) {
         parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
       }
-      visuals.push({ type: 'svg', code: match[1], index: parts.length });
-      parts.push({ type: 'svg', code: match[1] });
+      visuals.push({ type: 'svg', code: match[1].trim(), index: parts.length });
+      parts.push({ type: 'svg', code: match[1].trim() });
       lastIndex = match.index + match[0].length;
     }
 
     // PHASE 3: Find JSX/React blocks - ```jsx or ```react format
-    const jsxRegex = /```(?:jsx|react|javascript)\n([\s\S]*?)```/g;
+    const jsxRegex = /```(?:jsx|react|javascript)\s*([\s\S]*?)```/g;
     processedContent = content || ''; // Reset
     while ((match = jsxRegex.exec(processedContent)) !== null) {
       // Check if this overlaps with already processed parts
@@ -349,25 +349,42 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
         if (match.index > lastIndex) {
           parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
         }
-        visuals.push({ type: 'jsx', code: match[1], index: parts.length });
-        parts.push({ type: 'jsx', code: match[1] });
+        visuals.push({ type: 'jsx', code: match[1].trim(), index: parts.length });
+        parts.push({ type: 'jsx', code: match[1].trim() });
         lastIndex = match.index + match[0].length;
       }
     }
 
-    // PHASE 4: Extract raw SVG code (not in code blocks)
-    const rawSvgRegex = /(<svg[^>]*>[\s\S]*?<\/svg>)/gi;
+    // PHASE 4: Extract raw SVG code (not in code blocks) and RENDER as SVG
     processedContent = content || '';
-    while ((match = rawSvgRegex.exec(processedContent)) !== null) {
-      const alreadyProcessed = parts.some((p) => p.type === 'svg' && p.code === match[1]);
-      if (!alreadyProcessed) {
-        // Only add if it looks like a complete SVG
-        if (match[1].includes('viewBox') || match[1].includes('width')) {
-          visuals.push({ type: 'svg', code: match[1], index: parts.length, raw: true });
-          // Don't add to parts - let it render inline for now
+    // Reset lastIndex for raw SVG scan of remaining text parts
+    parts.forEach((part, idx) => {
+      if (part.type === 'text' && part.content) {
+        const rawSvgRegex = /(<svg[^>]*>[\s\S]*?<\/svg>)/gi;
+        let textContent = part.content;
+        let hasRawSvg = false;
+        let svgMatch;
+        const subParts = [];
+        let subLastIndex = 0;
+        
+        while ((svgMatch = rawSvgRegex.exec(textContent)) !== null) {
+          hasRawSvg = true;
+          if (svgMatch.index > subLastIndex) {
+            subParts.push({ type: 'text', content: textContent.substring(subLastIndex, svgMatch.index) });
+          }
+          subParts.push({ type: 'svg', code: svgMatch[1] });
+          subLastIndex = svgMatch.index + svgMatch[0].length;
+        }
+        
+        if (hasRawSvg) {
+          if (subLastIndex < textContent.length) {
+            subParts.push({ type: 'text', content: textContent.substring(subLastIndex) });
+          }
+          // Replace original part with sub-parts
+          parts.splice(idx, 1, ...subParts);
         }
       }
-    }
+    });
 
     // Add remaining text
     if (lastIndex < (content?.length || 0)) {
