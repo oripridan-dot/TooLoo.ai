@@ -1,4 +1,4 @@
-// @version 3.3.308
+// @version 3.3.310
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -2654,70 +2654,44 @@ const TooLooSpaceV4 = memo(() => {
         isProcessing={isThinking}
       />
 
-      {/* Fixed input - Compact with inline hint */}
+      {/* Fixed input - Clean, minimal */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative"
-        >
-          {/* Subtle glow for input */}
-          <motion.div
-            className="absolute -inset-1 rounded-2xl opacity-30 blur-lg"
-            animate={{
-              background: [
-                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.2) 0%, transparent 60%)',
-                'radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 60%)',
-                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.2) 0%, transparent 60%)',
-              ],
-            }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            style={{ zIndex: -1 }}
-          />
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-3 shadow-xl">
+          {/* Inline TooLoo hint - compact */}
+          <ToolooInlineHint phase={phase} isThinking={isThinking} />
           
-          <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-white/10 p-3 shadow-2xl overflow-hidden">
-            {/* Inline TooLoo hint - compact */}
-            <ToolooInlineHint phase={phase} isThinking={isThinking} />
-            
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = e.target.elements.spaceInput;
-                if (input.value.trim()) {
-                  handleSubmit({ message: input.value.trim() });
-                  input.value = '';
-                }
-              }}
-              className="relative flex gap-3"
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const input = e.target.elements.spaceInput;
+              if (input.value.trim()) {
+                handleSubmit({ message: input.value.trim() });
+                input.value = '';
+              }
+            }}
+            className="flex gap-3"
+          >
+            <input
+              name="spaceInput"
+              type="text"
+              placeholder="What are we creating today?"
+              className="flex-1 bg-gray-800/80 border border-gray-700/50 rounded-xl px-4 py-2.5
+                       text-white placeholder-gray-500 focus:outline-none focus:ring-1
+                       focus:ring-gray-600 focus:border-gray-600 transition-colors text-sm"
+              disabled={isThinking}
+            />
+            <button
+              type="submit"
+              disabled={isThinking}
+              className="px-5 py-2.5 rounded-xl font-medium text-white text-sm transition-colors
+                       bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <input
-                name="spaceInput"
-                type="text"
-                placeholder="What are we creating today?"
-                className="flex-1 bg-gray-800/80 border border-gray-700/50 rounded-xl px-4 py-2.5
-                         text-white placeholder-gray-500 focus:outline-none focus:ring-2
-                         focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all text-sm"
-                disabled={isThinking}
-              />
-              <motion.button
-                type="submit"
-                disabled={isThinking}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative px-5 py-2.5 rounded-xl font-medium text-white text-sm transition-all
-                         disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-                style={{
-                  background: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
-                }}
-              >
-                {isThinking ? (
-                  <motion.svg 
-                    className="w-4 h-4 relative" 
-                    fill="none" 
-                    viewBox="0 0 24 24"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
+              {isThinking ? (
+                <svg 
+                  className="w-4 h-4 animate-spin" 
+                  fill="none" 
+                  viewBox="0 0 24 24"
+                >
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </motion.svg>
