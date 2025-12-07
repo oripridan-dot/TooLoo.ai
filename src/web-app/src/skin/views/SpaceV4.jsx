@@ -1,4 +1,4 @@
-// @version 3.3.248
+// @version 3.3.249
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1260,28 +1260,57 @@ const CollectedSidebar = memo(({
             </motion.button>
           </div>
 
-          {/* Merge & Synthesize */}
-          <button
-            onClick={() => console.log('Merge artifacts')}
-            className="w-full px-3 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 
+          {/* Merge & Synthesize - with glow effect */}
+          <motion.button
+            onClick={onMergeAndSynthesize}
+            disabled={isProcessing || collected.length < 2}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative w-full px-3 py-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 
                      border border-indigo-500/20 text-indigo-400 text-xs font-medium 
-                     transition-all flex items-center justify-center gap-1.5"
+                     transition-all flex items-center justify-center gap-1.5 overflow-hidden
+                     disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span>✨</span>
-            Merge & Synthesize
-          </button>
+            {/* Animated shimmer */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-400/10 to-transparent"
+              animate={{ x: [-200, 200] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            />
+            <span className="relative">✨</span>
+            <span className="relative">Merge & Synthesize</span>
+          </motion.button>
 
-          {/* Build button - only show when 2+ collected */}
+          {/* Build button - enhanced with glow */}
           {collected.length >= 2 && (
-            <button
+            <motion.button
               onClick={onBuild}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500
-                       text-white font-medium text-sm hover:opacity-90 transition-opacity
-                       flex items-center justify-center gap-2 mt-2"
+              disabled={isProcessing}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative w-full py-3 rounded-xl text-white font-semibold text-sm 
+                       transition-all flex items-center justify-center gap-2 mt-2 overflow-hidden
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
+                boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
+              }}
             >
-              <span>🔨</span>
-              Start Building
-            </button>
+              {/* Animated glow pulse */}
+              <motion.div
+                className="absolute inset-0"
+                animate={{
+                  boxShadow: [
+                    'inset 0 0 20px rgba(255, 255, 255, 0.1)',
+                    'inset 0 0 40px rgba(255, 255, 255, 0.2)',
+                    'inset 0 0 20px rgba(255, 255, 255, 0.1)',
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span className="relative text-lg">🔨</span>
+              <span className="relative">Start Building</span>
+            </motion.button>
           )}
         </div>
       </div>
