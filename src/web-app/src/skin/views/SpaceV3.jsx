@@ -1,4 +1,4 @@
-// @version 3.3.331
+// @version 3.3.332
 // TooLoo.ai Space V3 - Organized Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -904,7 +904,6 @@ const TooLooSpaceV3 = memo(() => {
                           <h4 className="text-sm font-medium text-white truncate">{item.title}</h4>
                           <p className="text-xs text-gray-400 truncate">{item.description}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-500">{Math.round(item.confidence * 100)}%</span>
                             {item.refinements?.length > 0 && (
                               <span className="text-xs text-purple-400">
                                 +{item.refinements.length / 2} refined
