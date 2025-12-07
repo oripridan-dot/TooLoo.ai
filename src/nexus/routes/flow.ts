@@ -1,4 +1,4 @@
-// @version 3.3.284
+// @version 3.3.285
 // TooLoo Flow API Routes
 // Unified thinking and creation endpoints
 
@@ -168,19 +168,47 @@ router.post('/sessions/:id/branches', async (req: Request, res: Response) => {
 // OPTIONS & DECISIONS
 // ============================================================================
 
-// Collect an option
-router.post('/sessions/:id/collect', async (req: Request, res: Response) => {
+// Collect option (make decision)
+router.post('/sessions/:id/decisions', async (req: Request, res: Response) => {
   try {
     const { optionId, nodeId } = req.body;
-    if (!optionId || !nodeId) {
-      return res.status(400).json({ ok: false, error: 'optionId and nodeId are required' });
+    if (!optionId) {
+      return res.status(400).json({ ok: false, error: 'Option ID is required' });
     }
-    const decision = await flowSessionManager.collectOption(req.params.id, optionId, nodeId);
+    const decision = await flowSessionManager.collectOption(req.params['id'] as string, optionId, nodeId);
     res.json({ ok: true, decision });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
   }
 });
+
+// Dismiss option
+router.post('/sessions/:id/dismiss', async (req: Request, res: Response) => {
+  try {
+    const { optionId, nodeId, reason } = req.body;
+    if (!optionId) {
+      return res.status(400).json({ ok: false, error: 'Option ID is required' });
+    }
+    await flowSessionManager.dismissOption(req.params['id'] as string, optionId, nodeId, reason || 'No reason given');
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error) });
+  }
+});
+
+// Get decisions
+router.get('/sessions/:id/decisions', async (req: Request, res: Response) => {
+  try {
+    const session = await flowSessionManager.getSession(req.params['id'] as string);
+    if (!session) {
+      return res.status(404).json({ ok: false, error: 'Session not found' });
+    }
+    res.json({ ok: true, decisions: session.decisions });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error) });
+  }
+});
+
 
 // Dismiss an option
 router.post('/sessions/:id/dismiss', async (req: Request, res: Response) => {
