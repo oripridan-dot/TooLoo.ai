@@ -1,9 +1,12 @@
-// @version 3.3.220
+// @version 3.3.224
 // TooLoo.ai Views Index
-// The views of TooLoo - with new unified Space V2 paradigm
+// The views of TooLoo - with organized Space V3 paradigm
 
-// Space V2 - NEW: Infinite canvas with free-moving cards
-export { default as Space } from './SpaceV2';
+// Space V3 - NEW: Organized cards with brief & suggestions
+export { default as Space } from './SpaceV3';
+
+// Previous versions (preserved)
+export { default as SpaceV2 } from './SpaceV2';
 
 // Cortex - TooLoo's brain visualization (providers, processing)
 export { default as Cortex } from './Cortex';
@@ -90,7 +93,7 @@ export const VIEWS = {
 
 // View component map for dynamic rendering
 export const VIEW_COMPONENTS = {
-  space: () => import('./Space').then((m) => m.default),
+  space: () => import('./SpaceV3').then((m) => m.default),
   cortex: () => import('./Cortex').then((m) => m.default),
   synaptic: () => import('./Synaptic').then((m) => m.default),
   creationspace: () => import('./CreationSpaceView').then((m) => m.default),
