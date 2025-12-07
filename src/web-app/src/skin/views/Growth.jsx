@@ -1,4 +1,4 @@
-// @version 3.3.290
+// @version 3.3.296
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -349,7 +349,7 @@ const LearningTimeline = memo(({ events = [], className = '' }) => {
       <div className="space-y-4">
         {events.map((event, i) => (
           <div
-            key={event.id || i}
+            key={event.id || `timeline-${event.type}-${event.timestamp || Date.now()}-${i}`}
             className="flex gap-3 animate-fadeIn"
             style={{ animationDelay: `${i * 100}ms` }}
           >
@@ -643,7 +643,7 @@ const ExplorationQueue = memo(
           ) : (
             hypotheses.map((h, i) => (
               <motion.div
-                key={h.id || i}
+                key={h.id || `hypothesis-${h.title?.slice(0,10) || h.status}-${i}`}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: i * 0.05 }}
@@ -767,7 +767,7 @@ const EmergenceTimeline = memo(({ events = [], className = '' }) => {
 
             return (
               <motion.div
-                key={event.id || i}
+                key={event.id || `emergence-${event.type}-${event.timestamp || Date.now()}-${i}`}
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: i * 0.1 }}
@@ -1161,7 +1161,7 @@ const PredictionsPanel = memo(({ className = '' }) => {
             const colors = getHorizonColor(pred.timeHorizon);
             return (
               <motion.div
-                key={pred.id || i}
+                key={pred.id || `pred-${pred.type}-${pred.timeHorizon}-${i}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
@@ -1681,7 +1681,7 @@ const AnalyticsPanel = memo(({ className = '' }) => {
           ) : (
             alerts.map((alert, i) => (
               <div
-                key={alert.id || i}
+                key={alert.id || `alert-${alert.name}-${alert.severity}-${i}`}
                 className={`p-2 rounded-lg border ${
                   alert.severity === 'critical'
                     ? 'bg-rose-500/10 border-rose-500/20'
