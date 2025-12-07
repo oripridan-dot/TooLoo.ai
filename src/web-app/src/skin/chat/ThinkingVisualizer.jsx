@@ -1,4 +1,4 @@
-// @version 2.2.616
+// @version 3.3.297
 // TooLoo.ai Thinking Visualizer
 // Manifests the thinking process as visual artifacts
 //
@@ -80,7 +80,7 @@ export const NeuralConstellation = memo(
           {/* Background grid */}
           <g opacity="0.1">
             {[...Array(10)].map((_, i) => (
-              <React.Fragment key={i}>
+              <React.Fragment key={`grid-line-${i}`}>
                 <line
                   x1={(i * width) / 10}
                   y1="0"
@@ -472,7 +472,7 @@ export const InsightEmergence = memo(
             >
               {subInsights.map((sub, i) => (
                 <motion.span
-                  key={i}
+                  key={`sub-insight-${sub.slice(0,10)}-${i}`}
                   className="px-2 py-1 text-xs bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -534,7 +534,7 @@ export const ProcessFlowVisualizer = memo(
 
             return (
               <motion.div
-                key={step.id || i}
+                key={step.id || `step-${step.title || step.type}-${i}`}
                 className="flex items-start gap-3"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -626,7 +626,7 @@ export const IdeaConstellation = memo(
         <svg className="absolute inset-0 w-full h-full">
           {[30, 50, 70].map((r, i) => (
             <circle
-              key={i}
+              key={`orbit-ring-${r}`}
               cx="50%"
               cy="50%"
               r={`${r}%`}
@@ -665,7 +665,7 @@ export const IdeaConstellation = memo(
 
           return (
             <motion.div
-              key={i}
+              key={`orbiting-idea-${idea.type}-${idea.label?.slice(0,10) || i}`}
               className="absolute z-10"
               style={{
                 left: `${x}%`,
@@ -779,7 +779,7 @@ export const VisualSynthesis = memo(
         {/* Elements */}
         {positionedElements.map((el, i) => (
           <motion.div
-            key={i}
+            key={`positioned-el-${el.type}-${el.content?.slice(0,10) || i}`}
             className="absolute"
             style={{
               left: `${el.x}%`,
