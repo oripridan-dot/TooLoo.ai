@@ -1,4 +1,4 @@
-// @version 3.3.242
+// @version 3.3.331
 // TooLoo.ai Space V3 - Organized Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -293,16 +293,6 @@ const OptionCard = memo(({
           <h3 className="font-medium text-white text-sm leading-snug pr-2">
             {card.title}
           </h3>
-          {/* Confidence badge */}
-          <div 
-            className="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium"
-            style={{ 
-              backgroundColor: `${config.color}20`, 
-              color: card.confidence > 0.8 ? config.color : '#9ca3af' 
-            }}
-          >
-            {Math.round(card.confidence * 100)}%
-          </div>
         </div>
 
         {/* Description */}
