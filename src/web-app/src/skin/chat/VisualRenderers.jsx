@@ -1,8 +1,8 @@
-// @version 3.3.299
+// @version 3.3.322
 // TooLoo.ai Visual Renderers
-// v3.3.127 - Fixed SVG sanitization (height="auto" invalid, invalid transforms)
+// v3.3.200 - Output-only UX: No code displays, graceful errors, clean interface
 // Rich visual components for rendering AI-generated visual content
-// Supports SVG, diagrams, charts, animations, and interactive elements
+// User sees ONLY rendered output - never source code
 
 import React, { memo, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,10 +66,11 @@ export const SVGRenderer = memo(
       setScale((prev) => Math.max(0.5, Math.min(3, prev + direction * 0.25)));
     };
 
-    if (error) {
+    if (error || !sanitizedSVG) {
       return (
-        <div className={`p-4 rounded-xl bg-red-500/10 border border-red-500/30 ${className}`}>
-          <p className="text-red-400 text-sm">Failed to render SVG: {error}</p>
+        <div className={`p-6 rounded-xl bg-gray-900/50 border border-white/10 text-center ${className}`}>
+          <span className="text-3xl mb-2 block">🎨</span>
+          <p className="text-sm text-gray-400">Couldn't display this diagram</p>
         </div>
       );
     }
@@ -144,8 +145,7 @@ SVGRenderer.displayName = 'SVGRenderer';
 // ============================================================================
 
 export const ReactComponentRenderer = memo(({ code, title, className = '', scope = {} }) => {
-  const [error, setError] = useState(null);
-  const [showCode, setShowCode] = useState(false);
+  const [renderError, setRenderError] = useState(false);
 
   // Default scope for generated components
   const defaultScope = useMemo(
@@ -164,55 +164,66 @@ export const ReactComponentRenderer = memo(({ code, title, className = '', scope
 
   // Clean code - extract component
   const cleanCode = useMemo(() => {
-    let cleaned = code;
+    try {
+      let cleaned = code || '';
 
-    // Remove import statements
-    cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
+      // Remove import statements
+      cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
 
-    // Remove export statements but keep the component
-    cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
-    cleaned = cleaned.replace(/^export\s+/gm, '');
+      // Remove export statements but keep the component
+      cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
+      cleaned = cleaned.replace(/^export\s+/gm, '');
 
-    // If it's a function component, make sure it renders
-    if (cleaned.includes('function') && !cleaned.includes('render(')) {
-      const match = cleaned.match(/function\s+(\w+)/);
-      if (match) {
-        cleaned += `\nrender(<${match[1]} />);`;
+      // If it's a function component, make sure it renders
+      if (cleaned.includes('function') && !cleaned.includes('render(')) {
+        const match = cleaned.match(/function\s+(\w+)/);
+        if (match) {
+          cleaned += `\nrender(<${match[1]} />);`;
+        }
       }
-    }
 
-    return cleaned.trim();
+      return cleaned.trim();
+    } catch {
+      setRenderError(true);
+      return '';
+    }
   }, [code]);
+
+  // Graceful error display
+  const GracefulError = () => (
+    <div className="p-4 text-center">
+      <span className="text-2xl mb-2 block">⚠️</span>
+      <p className="text-sm text-gray-400">Couldn't display this interactive element</p>
+    </div>
+  );
+
+  if (renderError || !cleanCode) {
+    return (
+      <div className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] ${className}`}>
+        <GracefulError />
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-xl overflow-hidden border border-white/10 ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-black/40 border-b border-white/10">
-        <span className="text-sm text-gray-400 flex items-center gap-2">
-          <span>⚛️</span>
-          {title || 'Interactive Component'}
-        </span>
-        <button
-          onClick={() => setShowCode(!showCode)}
-          className="text-xs text-gray-500 hover:text-cyan-400 transition-colors"
-        >
-          {showCode ? 'Hide Code' : 'Show Code'}
-        </button>
-      </div>
+      {/* Header - simplified, no code toggle */}
+      {title && (
+        <div className="flex items-center px-3 py-2 bg-black/40 border-b border-white/10">
+          <span className="text-sm text-gray-400 flex items-center gap-2">
+            <span>✨</span>
+            {title}
+          </span>
+        </div>
+      )}
 
-      {/* Live Preview */}
+      {/* Live Preview only - no code view */}
       <LiveProvider code={cleanCode} scope={defaultScope} noInline>
         <div className="p-4 bg-[#0a0a0a] min-h-[100px]">
           <LivePreview />
-          <LiveError className="text-red-400 text-sm mt-2 font-mono" />
+          {/* Graceful error instead of technical stack trace */}
+          <LiveError component={GracefulError} />
         </div>
-
-        {/* Code view */}
-        {showCode && (
-          <div className="border-t border-white/10 bg-black/60 p-4 max-h-64 overflow-auto">
-            <pre className="text-xs text-gray-400 font-mono whitespace-pre-wrap">{cleanCode}</pre>
-          </div>
-        )}
       </LiveProvider>
     </div>
   );
@@ -458,7 +469,7 @@ export const ComparisonTable = memo(({ items = [], criteria = [], title, classNa
 
                   return (
                     <td
-                      key={ii}
+                      key={`compare-cell-${ii}-${ci}`}
                       className="px-4 py-3 text-center text-sm"
                       style={{
                         background: isHighlighted ? 'rgba(6, 182, 212, 0.1)' : 'transparent',
@@ -544,7 +555,12 @@ export const MindMapNode = memo(
               className="ml-8 mt-2 space-y-2 border-l border-white/10 pl-4"
             >
               {data.children.map((child, i) => (
-                <MindMapNode key={`mind-${child.label || child.id || i}-${level}`} data={child} level={level + 1} expanded={level < 1} />
+                <MindMapNode
+                  key={`mind-${child.label || child.id || i}-${level}`}
+                  data={child}
+                  level={level + 1}
+                  expanded={level < 1}
+                />
               ))}
             </motion.div>
           )}
