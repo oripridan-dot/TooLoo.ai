@@ -1,4 +1,4 @@
-// @version 3.3.344
+// @version 3.3.345
 // TooLoo.ai Command View - System Control & Settings
 // System management, testing, configuration
 // Fully wired with real API connections
@@ -727,10 +727,11 @@ const Command = memo(({ className = '' }) => {
           const res = await fetch(`${API_BASE}/system/maintenance/tests`, { method: 'POST' });
           const data = await res.json();
           addLog('info', `Tests complete: ${data.data?.status || 'done'}`);
+          // Return REAL test results from API
           return {
-            passed: Math.floor(Math.random() * 10) + 5,
-            failed: Math.floor(Math.random() * 2),
-            duration: `${(Math.random() * 2 + 0.5).toFixed(2)}s`,
+            passed: data.data?.passed ?? 0,
+            failed: data.data?.failed ?? 0,
+            duration: data.data?.duration ?? '0s',
           };
         }
 
