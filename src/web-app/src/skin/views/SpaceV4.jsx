@@ -1,4 +1,4 @@
-// @version 3.3.241
+// @version 3.3.242
 // TooLoo.ai Space V4 - Two-Step Creative Flow
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
