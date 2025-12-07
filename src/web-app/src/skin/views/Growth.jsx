@@ -1,24 +1,21 @@
-// @version 3.3.192
+// @version 3.3.288
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
-// Fully wired with real API connections + WebSocket real-time updates
+// Fully wired with real API connections + Socket.IO real-time updates
 // v2.3.0: Fixed API paths, added mock mode indicators, symbiotic integration
 // v2.3.1: Fixed WebSocket protocol for secure connections (wss:// vs ws://)
 // v2.3.2: Replaced browser dialogs with proper modal UI components
 // v3.0.0: Added Control Center tabs - Scheduler, Predictions, Configuration, Analytics
 //         Integrated with Growth Engine unified API for system-wide controls
+// v3.3.300: Fixed Socket.IO integration, removed native WebSocket, fixed duplicate keys
 
 import React, { memo, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { io } from 'socket.io-client';
 import { LiquidPanel } from '../shell/LiquidShell';
 
 const API_BASE = '/api/v1';
-// Use wss:// for secure connections (HTTPS), ws:// for HTTP
-const WS_URL =
-  typeof window !== 'undefined'
-    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
-    : '';
 
 // ============================================================================
 // INPUT MODAL - Replaces browser prompt() for better UX
