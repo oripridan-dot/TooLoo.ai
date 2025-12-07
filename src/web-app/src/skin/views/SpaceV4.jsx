@@ -1,4 +1,4 @@
-// @version 3.3.259
+// @version 3.3.260
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -51,57 +51,69 @@ const TOOLOO_GUIDANCE = {
 const API_BASE = '/api/v1';
 
 // ============================================================================
-// EXPLORATION APPROACHES - Step 1 cards
+// TOOLOO CAPABILITIES - Real system capabilities as exploration cards
 // ============================================================================
 
-const EXPLORATION_APPROACHES = [
+const TOOLOO_CAPABILITIES = [
   {
-    id: 'deep-dive',
-    icon: '🔬',
-    title: 'Deep Dive',
-    description: 'Thorough analysis with technical details',
-    color: '#06b6d4',
-    action: 'Analyze in depth',
-  },
-  {
-    id: 'quick-start',
-    icon: '⚡',
-    title: 'Quick Start',
-    description: 'Get building fast with practical steps',
-    color: '#f59e0b',
-    action: 'Show me how to start',
-  },
-  {
-    id: 'explore-options',
-    icon: '🔀',
-    title: 'Explore Options',
-    description: 'See multiple approaches and variations',
-    color: '#a855f7',
-    action: 'Show me alternatives',
-  },
-  {
-    id: 'challenge',
-    icon: '🎯',
-    title: 'Challenge It',
-    description: 'Find potential issues and edge cases',
+    id: 'visuals',
+    icon: '🎨',
+    title: 'Visual Generation',
+    description: 'Create SVG diagrams, illustrations, and visual representations',
     color: '#f43f5e',
-    action: 'What could go wrong?',
+    action: 'Generate visuals',
+    endpoint: '/chat/command/illustration',
+    module: 'visual-cortex',
   },
   {
-    id: 'simplify',
-    icon: '✨',
-    title: 'Simplify',
-    description: 'Break it down to essentials',
+    id: 'diagrams',
+    icon: '📊',
+    title: 'Diagrams & Charts',
+    description: 'Data visualization, flowcharts, architecture diagrams',
+    color: '#06b6d4',
+    action: 'Create diagrams',
+    endpoint: '/visuals/v2/chart',
+    module: 'data-viz-engine',
+  },
+  {
+    id: 'analytics',
+    icon: '📈',
+    title: 'Analytics & Insights',
+    description: 'Deep analysis with metrics, patterns, and predictions',
+    color: '#a855f7',
+    action: 'Analyze data',
+    endpoint: '/cognitive/meta/analyze',
+    module: 'meta-learner',
+  },
+  {
+    id: 'summarization',
+    icon: '📝',
+    title: 'Smart Summarization',
+    description: 'Concise summaries, key points extraction, and synthesis',
     color: '#10b981',
-    action: 'Make it simpler',
+    action: 'Summarize content',
+    endpoint: '/chat/stream',
+    module: 'cognitive-core',
   },
   {
-    id: 'expand',
-    icon: '🚀',
-    title: 'Think Bigger',
-    description: 'Explore ambitious possibilities',
+    id: 'code',
+    icon: '💻',
+    title: 'Code Generation',
+    description: 'Write, refactor, and optimize code across languages',
+    color: '#f59e0b',
+    action: 'Generate code',
+    endpoint: '/chat/command/component',
+    module: 'code-engine',
+  },
+  {
+    id: 'exploration',
+    icon: '🔮',
+    title: 'Deep Exploration',
+    description: 'Multi-dimensional analysis with creative insights',
     color: '#ec4899',
-    action: 'What else is possible?',
+    action: 'Explore deeply',
+    endpoint: '/cognitive/curiosity/explore',
+    module: 'curiosity-engine',
   },
 ];
 
@@ -1034,19 +1046,19 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
 
 ExploreCard.displayName = 'ExploreCard';
 
-const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
+const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing, capabilities }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="max-w-4xl mx-auto pt-8"
+    className="max-w-5xl mx-auto pt-8 overflow-y-auto"
   >
     {/* Prompt display - enhanced */}
-    <div className="text-center mb-10">
+    <div className="text-center mb-8">
       <motion.div 
         className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full 
                    bg-gradient-to-r from-gray-800/80 to-gray-800/40 
-                   border border-white/10 backdrop-blur-sm mb-5"
+                   border border-white/10 backdrop-blur-sm mb-4"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
@@ -1058,12 +1070,12 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
         <span className="text-sm text-gray-200 font-medium">{prompt}</span>
       </motion.div>
       <motion.h2 
-        className="text-2xl font-bold text-white mb-3"
+        className="text-2xl font-bold text-white mb-2"
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        How would you like to explore this?
+        TooLoo's Capabilities
       </motion.h2>
       <motion.p 
         className="text-sm text-gray-500"
@@ -1071,16 +1083,16 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        Each approach reveals different dimensions of your concept
+        Choose how you want me to help — all modules are live and ready
       </motion.p>
     </div>
 
-    {/* Approach cards grid */}
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {EXPLORATION_APPROACHES.map((approach, index) => (
+    {/* Capability cards grid - 2x3 for TooLoo capabilities */}
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+      {(capabilities || TOOLOO_CAPABILITIES).map((capability, index) => (
         <ExploreCard
-          key={approach.id}
-          approach={approach}
+          key={capability.id}
+          approach={capability}
           index={index}
           onSelect={onApproachSelect}
           isProcessing={isProcessing}
@@ -1090,7 +1102,7 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing }) => (
 
     {/* Skip option - enhanced */}
     <motion.div 
-      className="text-center mt-8"
+      className="text-center mt-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.8 }}
