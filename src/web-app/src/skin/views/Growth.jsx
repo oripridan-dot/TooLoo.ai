@@ -1,4 +1,4 @@
-// @version 3.3.347 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.348 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -2123,7 +2123,7 @@ const Growth = memo(({ className = '' }) => {
     }
   }, []);
 
-  // Fetch system health
+  // Fetch system health - REAL DATA ONLY
   const fetchSystemHealth = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/system/status`);
@@ -2131,10 +2131,11 @@ const Growth = memo(({ className = '' }) => {
       if (data.data) {
         const status = data.data;
         const memory = status.memory || {};
+        // NO FAKE DATA - show actual memory or null
         const memoryPercent =
           memory.heapUsed && memory.heapTotal
             ? Math.round((memory.heapUsed / memory.heapTotal) * 100)
-            : 50;
+            : null;
 
         setHealthSystems([
           {
@@ -2144,11 +2145,11 @@ const Growth = memo(({ className = '' }) => {
           },
           {
             name: 'Memory Usage',
-            status: memoryPercent > 80 ? 'warning' : 'healthy',
-            value: `${memoryPercent}%`,
+            status: memoryPercent === null ? 'warning' : memoryPercent > 80 ? 'warning' : 'healthy',
+            value: memoryPercent !== null ? `${memoryPercent}%` : 'Unknown',
           },
           { name: 'Architecture', status: 'healthy', value: status.architecture || 'Synapsys' },
-          { name: 'Services Active', status: 'healthy', value: `${status.services || 3} running` },
+          { name: 'Services Active', status: 'healthy', value: `${status.services || 0} running` },
           {
             name: 'System Status',
             status: status.active ? 'healthy' : 'error',
