@@ -1,13 +1,8 @@
-// @version 3.3.236
-// TooLoo.ai Space V4 - Professional Intelligent Canvas
+// @version 3.3.237
+// TooLoo.ai Space V4 - Two-Step Creative Flow
 // ═══════════════════════════════════════════════════════════════════════════
-// Features:
-// - Professional, polished UI design
-// - Real chat interface in cards with conversation history
-// - Dimension-specific AI responses with direction suggestions
-// - Expandable cards (modal/fullscreen mode) with TooLoo suggestions
-// - Smooth animations and transitions
-// - Better UX patterns
+// Step 1: Explore Phase - Interactive cards to choose how to approach
+// Step 2: Options Phase - Dimension-organized options to collect
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, {
@@ -21,6 +16,61 @@ import React, {
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_BASE = '/api/v1';
+
+// ============================================================================
+// EXPLORATION APPROACHES - Step 1 cards
+// ============================================================================
+
+const EXPLORATION_APPROACHES = [
+  {
+    id: 'deep-dive',
+    icon: '🔬',
+    title: 'Deep Dive',
+    description: 'Thorough analysis with technical details',
+    color: '#06b6d4',
+    action: 'Analyze in depth',
+  },
+  {
+    id: 'quick-start',
+    icon: '⚡',
+    title: 'Quick Start',
+    description: 'Get building fast with practical steps',
+    color: '#f59e0b',
+    action: 'Show me how to start',
+  },
+  {
+    id: 'explore-options',
+    icon: '🔀',
+    title: 'Explore Options',
+    description: 'See multiple approaches and variations',
+    color: '#a855f7',
+    action: 'Show me alternatives',
+  },
+  {
+    id: 'challenge',
+    icon: '🎯',
+    title: 'Challenge It',
+    description: 'Find potential issues and edge cases',
+    color: '#f43f5e',
+    action: 'What could go wrong?',
+  },
+  {
+    id: 'simplify',
+    icon: '✨',
+    title: 'Simplify',
+    description: 'Break it down to essentials',
+    color: '#10b981',
+    action: 'Make it simpler',
+  },
+  {
+    id: 'expand',
+    icon: '🚀',
+    title: 'Think Bigger',
+    description: 'Explore ambitious possibilities',
+    color: '#ec4899',
+    action: 'What else is possible?',
+  },
+];
 
 // ============================================================================
 // DIMENSION CONFIGS - Professional styling
