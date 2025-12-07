@@ -1,4 +1,4 @@
-// @version 3.3.313
+// @version 3.3.314
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -1744,6 +1744,81 @@ const TooLooSpaceV4 = memo(() => {
   const [selectedApproach, setSelectedApproach] = useState(null);
   const [systemCapabilities, setSystemCapabilities] = useState(null);
   const [capabilityStatus, setCapabilityStatus] = useState({});
+  
+  // Thinking state for rich process visualization
+  const [thinkingState, setThinkingState] = useState({
+    stage: 'initializing',
+    provider: null,
+    model: null,
+    routingStrategy: null,
+    selectedProviders: [],
+    complexity: null,
+    persona: null,
+    visualEnabled: false,
+    visualType: null,
+    events: [],
+  });
+  
+  // Reset thinking state
+  const resetThinkingState = useCallback(() => {
+    setThinkingState({
+      stage: 'initializing',
+      provider: null,
+      model: null,
+      routingStrategy: null,
+      selectedProviders: [],
+      complexity: null,
+      persona: null,
+      visualEnabled: false,
+      visualType: null,
+      events: [],
+    });
+  }, []);
+  
+  // Update thinking state from SSE events
+  const handleThinkingEvent = useCallback((data) => {
+    if (data.meta) {
+      setThinkingState(prev => ({
+        ...prev,
+        persona: data.meta.persona,
+        visualEnabled: data.meta.visualEnabled,
+        visualType: data.meta.visualType,
+      }));
+    }
+    if (data.thinking) {
+      setThinkingState(prev => ({
+        ...prev,
+        stage: data.thinking.stage,
+        events: [...prev.events.slice(-10), data.thinking],
+      }));
+      // Parse provider info from thinking message
+      if (data.thinking.message?.includes('⚡')) {
+        const providerMatch = data.thinking.message.match(/⚡\s*(\w+)/);
+        if (providerMatch) {
+          setThinkingState(prev => ({
+            ...prev,
+            provider: providerMatch[1],
+            selectedProviders: [providerMatch[1]],
+          }));
+        }
+      }
+    }
+    if (data.visualEnhanced) {
+      setThinkingState(prev => ({
+        ...prev,
+        visualEnabled: true,
+        visualType: data.visualType,
+      }));
+    }
+    if (data.done) {
+      setThinkingState(prev => ({
+        ...prev,
+        stage: 'complete',
+        provider: data.provider,
+        model: data.model,
+      }));
+    }
+  }, []);
 
   // Fetch real system capabilities on mount
   useEffect(() => {
