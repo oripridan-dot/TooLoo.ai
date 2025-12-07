@@ -1,4 +1,4 @@
-// @version 3.3.270
+// @version 3.3.271
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -712,26 +712,42 @@ const ExpandedCardModal = memo(({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-sm font-semibold text-white">TooLoo Suggestion</span>
+                    <span className="text-sm font-semibold text-white">TooLoo's Analysis</span>
                     <span 
                       className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                       style={{ backgroundColor: `${config.color}20`, color: config.color }}
                     >
                       {config.label}
                     </span>
+                    {card.source === 'api' && (
+                      <span className="flex items-center gap-1 text-[10px] text-emerald-500">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Live
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-300 leading-relaxed">
-                    {card?.toolooSuggestion || `${config.suggestionPrefix || 'This direction offers'} ${card?.description?.toLowerCase() || 'a unique approach to your requirements'}. Consider how this aligns with your goals.`}
-                  </p>
+                  <div className="prose prose-invert prose-sm max-w-none
+                                prose-headings:text-white prose-headings:font-semibold prose-headings:mb-2 prose-headings:mt-3 prose-headings:text-base
+                                prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-2
+                                prose-strong:text-white prose-strong:font-semibold
+                                prose-ul:my-2 prose-li:text-gray-300 prose-li:my-0.5
+                                prose-ol:my-2
+                                prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded
+                                prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700 prose-pre:my-3">
+                    <EnhancedMarkdown 
+                      content={card?.toolooSuggestion || card?.content || `${config.suggestionPrefix || 'This direction offers'} ${card?.description?.toLowerCase() || 'a unique approach to your requirements'}. Consider how this aligns with your goals.`} 
+                      isStreaming={false} 
+                    />
+                  </div>
                   {card?.direction && (
                     <div 
-                      className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
                       style={{ 
                         backgroundColor: `${config.color}15`,
                         border: `1px solid ${config.color}30`,
                       }}
                     >
-                      <span style={{ color: config.color }}>Direction:</span>
+                      <span style={{ color: config.color }}>→</span>
                       <span className="text-gray-200">{card.direction}</span>
                     </div>
                   )}
