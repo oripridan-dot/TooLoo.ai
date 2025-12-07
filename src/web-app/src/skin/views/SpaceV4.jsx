@@ -1,4 +1,4 @@
-// @version 3.3.312
+// @version 3.3.313
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -267,13 +267,13 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 ToolooInlineHint.displayName = 'ToolooInlineHint';
 
 // ============================================================================
-// TOOLOO THINKING - Minimal, honest processing indicator
+// TOOLOO THINKING - Informative processing indicator with model decisions
 // ============================================================================
 
-const TooLooThinkingProcess = memo(({ approach, prompt }) => {
+const TooLooThinkingProcess = memo(({ approach, prompt, thinkingState }) => {
   const [elapsed, setElapsed] = useState(0);
   
-  // Simple elapsed timer - no fake progress
+  // Timer for elapsed time
   useEffect(() => {
     const interval = setInterval(() => {
       setElapsed(e => e + 1);
@@ -283,10 +283,36 @@ const TooLooThinkingProcess = memo(({ approach, prompt }) => {
   
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
   
+  // Extract thinking state info
+  const {
+    stage = 'initializing',
+    provider = null,
+    model = null,
+    routingStrategy = null,
+    selectedProviders = [],
+    complexity = null,
+    persona = null,
+    visualEnabled = false,
+    visualType = null,
+    events = [],
+  } = thinkingState || {};
+  
+  // Derive current activity based on events and state
+  const getActivityDescription = () => {
+    if (events.length > 0) {
+      const latest = events[events.length - 1];
+      return latest.message || latest.stage;
+    }
+    if (provider) return `Generating with ${provider}`;
+    if (routingStrategy === 'ensemble') return `Querying ${selectedProviders.length} models in parallel`;
+    if (selectedProviders.length > 0) return `Routing to ${selectedProviders[0]}`;
+    return 'Analyzing request...';
+  };
+  
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8">
       <div className="bg-gray-900/80 rounded-xl border border-gray-800/60 p-6">
-        {/* Header - simple and clean */}
+        {/* Header with approach info */}
         <div className="flex items-center gap-3 mb-4">
           <div 
             className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -296,18 +322,16 @@ const TooLooThinkingProcess = memo(({ approach, prompt }) => {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-medium text-white">Processing</h3>
-            <p className="text-xs text-gray-500">{approach?.title || 'Thinking...'}</p>
+            <p className="text-xs text-gray-500">{approach?.title || 'Analyzing...'}</p>
           </div>
           <span className="text-xs font-mono text-gray-500">{formatTime(elapsed)}</span>
         </div>
         
-        {/* Simple indeterminate progress - no fake percentages */}
-        <div className="h-1 rounded-full bg-gray-800 overflow-hidden">
+        {/* Indeterminate progress */}
+        <div className="h-1 rounded-full bg-gray-800 overflow-hidden mb-4">
           <div
-            className="h-full w-1/3 rounded-full bg-gray-600"
-            style={{ 
-              animation: 'indeterminate 1.5s ease-in-out infinite',
-            }}
+            className="h-full w-1/3 rounded-full bg-cyan-600/60"
+            style={{ animation: 'indeterminate 1.5s ease-in-out infinite' }}
           />
         </div>
         <style>{`
@@ -317,15 +341,102 @@ const TooLooThinkingProcess = memo(({ approach, prompt }) => {
           }
         `}</style>
         
-        {/* Status - honest messaging */}
-        <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
-          <span className="w-2 h-2 rounded-full bg-cyan-500/60" />
-          <span>Working on your request...</span>
+        {/* Current activity */}
+        <div className="flex items-center gap-2 text-sm text-gray-300 mb-4">
+          <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+          <span>{getActivityDescription()}</span>
         </div>
         
-        {/* Query context - subtle reminder */}
+        {/* Decision details panel */}
+        <div className="space-y-3 pt-4 border-t border-gray-800/50">
+          {/* Model Selection */}
+          {(provider || selectedProviders.length > 0) && (
+            <div className="flex items-start gap-3">
+              <span className="text-gray-600 text-xs w-20 flex-shrink-0 pt-0.5">Model</span>
+              <div className="flex-1">
+                {routingStrategy === 'ensemble' ? (
+                  <div>
+                    <span className="text-xs text-purple-400 font-medium">Ensemble Mode</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedProviders.map((p, i) => (
+                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-xs text-white font-medium">
+                    {provider || selectedProviders[0] || 'Auto-selecting...'}
+                    {model && model !== provider && <span className="text-gray-500 ml-1">({model})</span>}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Complexity Assessment */}
+          {complexity && (
+            <div className="flex items-center gap-3">
+              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Complexity</span>
+              <span className={`text-xs font-medium ${
+                complexity === 'high' ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {complexity === 'high' ? '⚡ High' : '● Standard'}
+              </span>
+            </div>
+          )}
+          
+          {/* Routing Strategy */}
+          {routingStrategy && (
+            <div className="flex items-center gap-3">
+              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Strategy</span>
+              <span className="text-xs text-gray-300">
+                {routingStrategy === 'ensemble' ? '🔄 Parallel Consensus' : '→ Direct Route'}
+              </span>
+            </div>
+          )}
+          
+          {/* Creative Persona */}
+          {persona && (
+            <div className="flex items-center gap-3">
+              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Persona</span>
+              <span className="text-xs text-gray-300">{persona}</span>
+            </div>
+          )}
+          
+          {/* Visual Generation */}
+          {visualEnabled && (
+            <div className="flex items-center gap-3">
+              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Visual</span>
+              <span className="text-xs text-cyan-400">
+                🎨 {visualType || 'Enabled'}
+              </span>
+            </div>
+          )}
+        </div>
+        
+        {/* Recent thinking events log */}
+        {events.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-gray-800/50">
+            <div className="text-[10px] text-gray-600 uppercase tracking-wider mb-2">Decision Log</div>
+            <div className="space-y-1 max-h-20 overflow-y-auto">
+              {events.slice(-4).map((evt, i) => (
+                <div key={i} className="flex items-center gap-2 text-[11px]">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    evt.type === 'success' ? 'bg-emerald-500' : 
+                    evt.type === 'error' ? 'bg-red-500' : 'bg-gray-500'
+                  }`} />
+                  <span className="text-gray-500 truncate">{evt.message || evt.stage}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Query context */}
         {prompt && (
-          <div className="mt-4 pt-4 border-t border-gray-800/50">
+          <div className="mt-4 pt-3 border-t border-gray-800/50">
             <p className="text-xs text-gray-600 truncate">
               "{prompt.length > 60 ? prompt.slice(0, 60) + '...' : prompt}"
             </p>
