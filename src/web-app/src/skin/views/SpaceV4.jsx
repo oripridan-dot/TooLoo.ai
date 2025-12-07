@@ -1,4 +1,4 @@
-// @version 3.3.256
+// @version 3.3.257
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2308,33 +2308,28 @@ const TooLooSpaceV4 = memo(() => {
 
       {/* Fixed input - Compact with inline hint */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
-        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative"
         >
-          {/* Behind-the-glass glow for input */}
+          {/* Subtle glow for input */}
           <motion.div
-            className="absolute -inset-2 rounded-3xl opacity-40 blur-xl"
+            className="absolute -inset-1 rounded-2xl opacity-30 blur-lg"
             animate={{
               background: [
-                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)',
-                'radial-gradient(ellipse at 70% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 30% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)',
-                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)',
+                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.2) 0%, transparent 60%)',
+                'radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 60%)',
+                'radial-gradient(ellipse at 30% 50%, rgba(6, 182, 212, 0.2) 0%, transparent 60%)',
               ],
             }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             style={{ zIndex: -1 }}
           />
           
-          <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-2xl overflow-hidden">
-            {/* Animated light streak */}
-            <motion.div
-              className="absolute top-0 left-0 w-40 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent"
-              animate={{ x: [-160, 700] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear", repeatDelay: 3 }}
-            />
+          <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-white/10 p-3 shadow-2xl overflow-hidden">
+            {/* Inline TooLoo hint - compact */}
+            <ToolooInlineHint phase={phase} isThinking={isThinking} />
             
             <form 
               onSubmit={(e) => {
@@ -2351,9 +2346,9 @@ const TooLooSpaceV4 = memo(() => {
                 name="spaceInput"
                 type="text"
                 placeholder="What are we creating today?"
-                className="flex-1 bg-gray-800/80 border border-gray-700/50 rounded-xl px-4 py-3
+                className="flex-1 bg-gray-800/80 border border-gray-700/50 rounded-xl px-4 py-2.5
                          text-white placeholder-gray-500 focus:outline-none focus:ring-2
-                         focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all"
+                         focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all text-sm"
                 disabled={isThinking}
               />
               <motion.button
