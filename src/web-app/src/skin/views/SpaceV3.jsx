@@ -1,4 +1,4 @@
-// @version 3.3.222
+// @version 3.3.226
 // TooLoo.ai Space V3 - Organized Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -195,6 +195,7 @@ const DimensionColumn = memo(({
   focusedCard,
   onCardClick,
   onCardFocus,
+  onCollect,
   onRefine,
   isProcessing,
 }) => {
@@ -224,8 +225,10 @@ const DimensionColumn = memo(({
             card={card}
             index={index}
             isFocused={focusedCard === card.id}
+            isCollected={card.collected}
             onClick={() => onCardClick(card.id)}
             onFocus={() => onCardFocus(card.id)}
+            onCollect={() => onCollect(card.id)}
             onRefine={(msg) => onRefine(card.id, msg)}
             isProcessing={isProcessing}
           />
@@ -245,8 +248,10 @@ const OptionCard = memo(({
   card,
   index,
   isFocused,
+  isCollected,
   onClick,
   onFocus,
+  onCollect,
   onRefine,
   isProcessing,
 }) => {
@@ -330,6 +335,15 @@ const OptionCard = memo(({
             </div>
           </div>
         )}
+
+        {/* Collected indicator */}
+        {isCollected && (
+          <div className="mt-2 pt-2 border-t border-emerald-500/30">
+            <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+              <span>✓</span> Collected as artifact
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Focused state: inline refine */}
@@ -369,20 +383,45 @@ const OptionCard = memo(({
         )}
       </AnimatePresence>
 
-      {/* Focus indicator */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onFocus?.();
-        }}
-        className={`
-          absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center
-          transition-all opacity-0 group-hover:opacity-100
-          ${isFocused ? 'opacity-100 bg-white/20' : 'bg-gray-800/50 hover:bg-gray-700/50'}
-        `}
-      >
-        <span className="text-xs">{isFocused ? '✓' : '+'}</span>
-      </button>
+      {/* Action buttons */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Collect button */}
+        {!isCollected && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCollect?.();
+            }}
+            className="w-6 h-6 rounded-full flex items-center justify-center
+                     bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400
+                     transition-all"
+            title="Collect as artifact"
+          >
+            <span className="text-xs">⚑</span>
+          </button>
+        )}
+        {/* Focus/expand button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onFocus?.();
+          }}
+          className={`
+            w-6 h-6 rounded-full flex items-center justify-center transition-all
+            ${isFocused ? 'bg-white/20' : 'bg-gray-800/50 hover:bg-gray-700/50'}
+          `}
+        >
+          <span className="text-xs">{isFocused ? '✓' : '+'}</span>
+        </button>
+      </div>
+
+      {/* Collected badge */}
+      {isCollected && (
+        <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center
+                      bg-emerald-500/30 text-emerald-400">
+          <span className="text-xs">✓</span>
+        </div>
+      )}
     </motion.div>
   );
 });
