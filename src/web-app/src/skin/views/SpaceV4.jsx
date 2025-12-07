@@ -1,4 +1,4 @@
-// @version 3.3.273
+// @version 3.3.274
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -2625,7 +2625,7 @@ const TooLooSpaceV4 = memo(() => {
                 exit={{ opacity: 0 }}
               >
                 {isThinking ? (
-                  <TooLooAdventuresLoader approach={selectedApproach} />
+                  <TooLooThinkingProcess approach={selectedApproach} prompt={prompt} />
                 ) : (
                   <div className="pt-2">
                     {/* Approach indicator - cleaner header */}
