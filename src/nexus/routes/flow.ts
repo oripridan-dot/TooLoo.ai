@@ -1,4 +1,4 @@
-// @version 3.3.283
+// @version 3.3.284
 // TooLoo Flow API Routes
 // Unified thinking and creation endpoints
 
@@ -77,7 +77,7 @@ router.get('/sessions/active', async (req: Request, res: Response) => {
 // Set active session
 router.post('/sessions/:id/activate', async (req: Request, res: Response) => {
   try {
-    await flowSessionManager.setActiveSession(req.params.id);
+    await flowSessionManager.setActiveSession(req.params['id'] as string);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -87,7 +87,7 @@ router.post('/sessions/:id/activate', async (req: Request, res: Response) => {
 // Delete session
 router.delete('/sessions/:id', async (req: Request, res: Response) => {
   try {
-    await flowSessionManager.deleteSession(req.params.id);
+    await flowSessionManager.deleteSession(req.params['id'] as string);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -105,12 +105,27 @@ router.post('/sessions/:id/messages', async (req: Request, res: Response) => {
     if (!content) {
       return res.status(400).json({ ok: false, error: 'Content is required' });
     }
-    const message = await flowSessionManager.addUserMessage(req.params.id, content, nodeId);
+    const message = await flowSessionManager.addUserMessage(req.params['id'] as string, content, nodeId);
     res.json({ ok: true, message });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
   }
 });
+
+// Add TooLoo response (manual injection or system generated)
+router.post('/sessions/:id/responses', async (req: Request, res: Response) => {
+  try {
+    const { response, nodeId } = req.body;
+    if (!response) {
+      return res.status(400).json({ ok: false, error: 'Response is required' });
+    }
+    const message = await flowSessionManager.addToolooResponse(req.params['id'] as string, response, nodeId);
+    res.json({ ok: true, message });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: String(error) });
+  }
+});
+
 
 // Add TooLoo response (called by AI processing)
 router.post('/sessions/:id/responses', async (req: Request, res: Response) => {
