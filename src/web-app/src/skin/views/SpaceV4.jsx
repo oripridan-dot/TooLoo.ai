@@ -1,4 +1,4 @@
-// @version 3.3.318
+// @version 3.3.319
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -1785,6 +1785,22 @@ const TooLooSpaceV4 = memo(() => {
         persona: data.meta.persona,
         visualEnabled: data.meta.visualEnabled,
         visualType: data.meta.visualType,
+      }));
+    }
+    if (data.routing) {
+      // V3.3.318: Capture routing decision from backend
+      setThinkingState(prev => ({
+        ...prev,
+        routingStrategy: data.routing.strategy,
+        selectedProviders: data.routing.selectedProviders,
+        complexity: data.routing.complexity,
+        provider: data.routing.selectedProviders?.[0] || prev.provider,
+        events: [...prev.events.slice(-10), {
+          stage: 'routing',
+          message: data.routing.reasoning,
+          type: 'info',
+          timestamp: Date.now(),
+        }],
       }));
     }
     if (data.thinking) {
