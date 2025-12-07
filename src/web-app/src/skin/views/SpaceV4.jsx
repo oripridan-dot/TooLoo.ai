@@ -1,4 +1,4 @@
-// @version 3.3.266
+// @version 3.3.267
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -2371,9 +2371,9 @@ const TooLooSpaceV4 = memo(() => {
   const expandedCardData = expandedCard ? cards.find(c => c.id === expandedCard) : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen max-h-screen overflow-hidden bg-[#0a0a0f] text-white">
       {/* Background */}
-      <div className="fixed inset-0 opacity-30">
+      <div className="fixed inset-0 opacity-30 pointer-events-none">
         <div 
           className="absolute inset-0"
           style={{
@@ -2391,8 +2391,8 @@ const TooLooSpaceV4 = memo(() => {
         collectedCount={collected.length}
       />
 
-      {/* Main content - scrollable */}
-      <main className={`relative pt-20 pb-32 px-6 overflow-y-auto ${collected.length > 0 ? 'pr-80' : ''}`} style={{ height: 'calc(100vh - 5rem)' }}>
+      {/* Main content - scrollable container */}
+      <main className={`relative pt-20 pb-40 px-6 overflow-y-auto scroll-smooth ${collected.length > 0 ? 'pr-80' : ''}`} style={{ height: 'calc(100vh - 80px)' }}>
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {/* Phase 1: Discovery - Empty state with input */}
