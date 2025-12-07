@@ -1,4 +1,4 @@
-// @version 3.3.127
+// @version 3.3.299
 // TooLoo.ai Visual Renderers
 // v3.3.127 - Fixed SVG sanitization (height="auto" invalid, invalid transforms)
 // Rich visual components for rendering AI-generated visual content
@@ -260,7 +260,7 @@ export const InfographicCard = memo(
 
         <div className="space-y-4">
           {stats.map((stat, i) => (
-            <div key={i} className="space-y-2">
+            <div key={`stat-${stat.label}-${i}`} className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">{stat.label}</span>
                 <span className="text-lg font-bold" style={{ color: colors.main }}>
@@ -348,7 +348,7 @@ export const AnimatedTimeline = memo(
             {/* Events */}
             {events.map((event, i) => (
               <motion.div
-                key={i}
+                key={`timeline-v-${event.title || event.date}-${i}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.15 }}
@@ -383,7 +383,7 @@ export const AnimatedTimeline = memo(
           <div className="flex items-start overflow-x-auto pb-4">
             {events.map((event, i) => (
               <motion.div
-                key={i}
+                key={`timeline-h-${event.title || event.date}-${i}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
@@ -434,7 +434,7 @@ export const ComparisonTable = memo(({ items = [], criteria = [], title, classNa
               <th className="px-4 py-3 text-left text-sm text-gray-400 font-medium">Criteria</th>
               {items.map((item, i) => (
                 <th
-                  key={i}
+                  key={`compare-header-${item.name}-${i}`}
                   className="px-4 py-3 text-center text-sm font-medium"
                   style={{
                     color: highlightedItem === i ? '#06b6d4' : 'white',
@@ -474,7 +474,7 @@ export const ComparisonTable = memo(({ items = [], criteria = [], title, classNa
                         <div className="flex items-center justify-center gap-1">
                           {Array.from({ length: 5 }, (_, i) => (
                             <span
-                              key={i}
+                              key={`star-${ci}-${ii}-${i}`}
                               className={i < value ? 'text-amber-400' : 'text-gray-700'}
                             >
                               ★
@@ -544,7 +544,7 @@ export const MindMapNode = memo(
               className="ml-8 mt-2 space-y-2 border-l border-white/10 pl-4"
             >
               {data.children.map((child, i) => (
-                <MindMapNode key={i} data={child} level={level + 1} expanded={level < 1} />
+                <MindMapNode key={`mind-${child.label || child.id || i}-${level}`} data={child} level={level + 1} expanded={level < 1} />
               ))}
             </motion.div>
           )}
