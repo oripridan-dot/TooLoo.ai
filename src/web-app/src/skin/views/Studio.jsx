@@ -1,4 +1,4 @@
-// @version 3.3.213
+// @version 3.3.214
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // Fully wired with real API connections
@@ -478,6 +478,14 @@ const Studio = memo(({ className = '' }) => {
           <p className="text-sm text-gray-500">Design & visual customization</p>
         </div>
         <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setActiveTab('figma')}
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-purple-300 text-sm font-medium transition-colors border border-purple-500/30"
+          >
+            🎨 Figma Copilot
+          </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
