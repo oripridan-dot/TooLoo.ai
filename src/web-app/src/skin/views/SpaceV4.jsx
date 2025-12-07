@@ -1,4 +1,4 @@
-// @version 3.3.272
+// @version 3.3.273
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -265,179 +265,200 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 ToolooInlineHint.displayName = 'ToolooInlineHint';
 
 // ============================================================================
-// TOOLOO ADVENTURES - Fun comic-style loading animation
+// TOOLOO LIVE THINKING - Real-time cognitive process visualization
 // ============================================================================
 
-const TOOLOO_ADVENTURES = [
-  { scene: '🚀', text: "TooLoo is launching into the knowledge cosmos...", subtext: "Fastening neural seatbelts" },
-  { scene: '🔭', text: "Scanning infinite possibility space...", subtext: "Found 42 interesting dimensions" },
-  { scene: '🧠', text: "Neurons are having a brainstorm party...", subtext: "Ideas are RSVPing" },
-  { scene: '⚡', text: "Charging up the creativity capacitors...", subtext: "Pew pew pew!" },
-  { scene: '🎨', text: "Mixing colors in the imagination lab...", subtext: "No beige allowed" },
-  { scene: '🌀', text: "Swirling through the vortex of possibilities...", subtext: "Wheeeee!" },
-  { scene: '🔮', text: "The crystal ball is warming up...", subtext: "Future looks... interesting" },
-  { scene: '🎪', text: "Setting up the idea circus...", subtext: "Concepts are doing backflips" },
-  { scene: '🏄', text: "Surfing the waves of innovation...", subtext: "Hang ten, dude!" },
-  { scene: '🎭', text: "Auditioning different perspectives...", subtext: "All the world's a stage" },
-  { scene: '🔬', text: "Examining your idea under the genius microscope...", subtext: "Magnification: Maximum" },
-  { scene: '🌈', text: "Painting possibilities across dimensions...", subtext: "ROY G. BIV says hi" },
+const THINKING_PHASES = [
+  { phase: 'parsing', icon: '📖', text: "Parsing your intent", detail: "Understanding the core of what you're asking" },
+  { phase: 'context', icon: '🔗', text: "Building context graph", detail: "Connecting to relevant knowledge domains" },
+  { phase: 'exploring', icon: '🔍', text: "Exploring solution space", detail: "Evaluating multiple approaches" },
+  { phase: 'analyzing', icon: '⚡', text: "Running analysis", detail: "Applying domain expertise" },
+  { phase: 'synthesizing', icon: '🧬', text: "Synthesizing insights", detail: "Combining perspectives" },
+  { phase: 'structuring', icon: '📐', text: "Structuring response", detail: "Organizing for clarity" },
+  { phase: 'validating', icon: '✓', text: "Validating output", detail: "Quality checking results" },
 ];
 
-const TooLooAdventuresLoader = memo(({ approach }) => {
-  const [adventureIndex, setAdventureIndex] = useState(0);
-  const [dots, setDots] = useState('');
+const LIVE_THOUGHTS = [
+  "Identifying key concepts in your request...",
+  "Cross-referencing with design patterns...",
+  "Evaluating technical feasibility...",
+  "Considering user experience implications...",
+  "Checking for edge cases...",
+  "Applying best practices from similar projects...",
+  "Weighing trade-offs between approaches...",
+  "Structuring actionable recommendations...",
+  "Optimizing for your specific context...",
+  "Generating concrete next steps...",
+];
+
+const TooLooThinkingProcess = memo(({ approach, prompt }) => {
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [thoughtIndex, setThoughtIndex] = useState(0);
+  const [thoughts, setThoughts] = useState([]);
+  const [progress, setProgress] = useState(0);
   
-  // Cycle through adventures
+  // Advance through phases
   useEffect(() => {
     const interval = setInterval(() => {
-      setAdventureIndex(prev => (prev + 1) % TOOLOO_ADVENTURES.length);
-    }, 2500);
+      setPhaseIndex(prev => Math.min(prev + 1, THINKING_PHASES.length - 1));
+      setProgress(prev => Math.min(prev + 14, 100));
+    }, 800);
     return () => clearInterval(interval);
   }, []);
   
-  // Animate dots
+  // Stream thoughts
   useEffect(() => {
     const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 400);
+      setThoughtIndex(prev => {
+        const next = (prev + 1) % LIVE_THOUGHTS.length;
+        setThoughts(current => [...current.slice(-4), LIVE_THOUGHTS[next]]);
+        return next;
+      });
+    }, 600);
     return () => clearInterval(interval);
   }, []);
   
-  const adventure = TOOLOO_ADVENTURES[adventureIndex];
+  const currentPhase = THINKING_PHASES[phaseIndex];
   
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] px-8">
-      {/* Comic panel frame */}
+    <div className="w-full max-w-4xl mx-auto px-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative max-w-md w-full"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative"
       >
-        {/* Speech bubble background */}
-        <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-3xl blur-xl" />
+        {/* Background glow */}
+        <div className="absolute -inset-4 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl blur-2xl" />
         
-        {/* Main panel */}
-        <div className="relative bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-800 overflow-hidden">
-          {/* Comic header strip */}
-          <div className="bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 px-4 py-2 border-b border-gray-800">
+        {/* Main container */}
+        <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-gray-800/80 overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-800/50 bg-gradient-to-r from-gray-900 via-gray-900/95 to-gray-900">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-400 tracking-wider">TOOLOO ADVENTURES</span>
+              <div className="flex items-center gap-3">
+                <motion.div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: `${approach?.color || '#6366f1'}20` }}
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <span className="text-xl">{approach?.icon || '🔮'}</span>
+                </motion.div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">TooLoo is thinking</h3>
+                  <p className="text-xs text-gray-500">{approach?.title || 'Deep Exploration'}</p>
+                </div>
+              </div>
+              
+              {/* Phase indicators */}
               <div className="flex items-center gap-1">
-                {[...Array(3)].map((_, i) => (
+                {THINKING_PHASES.map((p, i) => (
                   <motion.div
                     key={i}
-                    className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500"
-                    animate={{ 
-                      scale: [1, 1.3, 1],
-                      opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{ 
-                      duration: 1, 
-                      repeat: Infinity,
-                      delay: i * 0.2,
-                    }}
+                    className={`w-2 h-2 rounded-full ${i <= phaseIndex ? 'bg-cyan-500' : 'bg-gray-700'}`}
+                    animate={i === phaseIndex ? { scale: [1, 1.3, 1] } : {}}
+                    transition={{ duration: 0.5, repeat: Infinity }}
                   />
                 ))}
               </div>
             </div>
           </div>
           
-          {/* Scene area */}
-          <div className="p-8 text-center">
-            {/* Animated character/scene */}
-            <motion.div
-              key={adventureIndex}
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="relative w-24 h-24 mx-auto mb-6"
-            >
-              {/* Glow ring */}
+          {/* Thinking visualization */}
+          <div className="p-6">
+            {/* Current phase */}
+            <div className="flex items-center gap-4 mb-6">
               <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{ 
-                  background: `radial-gradient(circle, ${approach?.color || '#6366f1'}30 0%, transparent 70%)`,
-                }}
-                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              
-              {/* Spinning orbit */}
-              <motion.div
-                className="absolute inset-2 rounded-full border-2 border-dashed"
-                style={{ borderColor: `${approach?.color || '#6366f1'}40` }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              />
-              
-              {/* Scene emoji */}
-              <div className="absolute inset-0 flex items-center justify-center text-5xl">
-                <motion.span
-                  animate={{ 
-                    y: [0, -8, 0],
-                    rotate: [0, 5, -5, 0],
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  {adventure.scene}
-                </motion.span>
-              </div>
-            </motion.div>
-            
-            {/* Speech bubble */}
-            <motion.div
-              key={`text-${adventureIndex}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative"
-            >
-              {/* Main text */}
-              <h3 className="text-lg font-semibold text-white mb-1">
-                {adventure.text}
-              </h3>
-              
-              {/* Subtext / punchline */}
-              <motion.p 
-                className="text-sm text-gray-400 italic"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                key={phaseIndex}
+                initial={{ scale: 0, rotate: -90 }}
+                animate={{ scale: 1, rotate: 0 }}
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl"
+                style={{ backgroundColor: `${approach?.color || '#6366f1'}15` }}
               >
-                "{adventure.subtext}"
-              </motion.p>
-            </motion.div>
-            
-            {/* Progress indicator */}
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <motion.div
-                className="h-1 rounded-full overflow-hidden bg-gray-800 w-32"
-              >
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ 
-                    background: `linear-gradient(90deg, ${approach?.color || '#6366f1'}, #a855f7)`,
-                  }}
-                  animate={{ width: ['0%', '100%'] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                />
+                {currentPhase.icon}
               </motion.div>
+              <div className="flex-1">
+                <motion.h4 
+                  key={`phase-${phaseIndex}`}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-lg font-semibold text-white"
+                >
+                  {currentPhase.text}
+                </motion.h4>
+                <motion.p 
+                  key={`detail-${phaseIndex}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-sm text-gray-400"
+                >
+                  {currentPhase.detail}
+                </motion.p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-white">{progress}%</span>
+              </div>
             </div>
             
-            {/* Capability badge */}
-            {approach && (
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/50 border border-gray-700/50">
-                <span className="text-lg">{approach.icon}</span>
-                <span className="text-sm text-gray-300">{approach.title}</span>
-                <span className="text-xs text-gray-500">{dots}</span>
+            {/* Progress bar */}
+            <div className="h-1.5 rounded-full bg-gray-800 mb-6 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ 
+                  background: `linear-gradient(90deg, ${approach?.color || '#6366f1'}, #a855f7, #ec4899)`,
+                  width: `${progress}%`,
+                }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+            
+            {/* Live thought stream */}
+            <div className="bg-gray-950/50 rounded-xl p-4 border border-gray-800/50">
+              <div className="flex items-center gap-2 mb-3">
+                <motion.div
+                  className="w-2 h-2 rounded-full bg-emerald-500"
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                />
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Live Process</span>
+              </div>
+              
+              <div className="space-y-1.5 font-mono text-sm">
+                <AnimatePresence mode="popLayout">
+                  {thoughts.map((thought, i) => (
+                    <motion.div
+                      key={`${thought}-${i}`}
+                      initial={{ opacity: 0, x: -20, height: 0 }}
+                      animate={{ opacity: i === thoughts.length - 1 ? 1 : 0.4, x: 0, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-cyan-500">→</span>
+                      <span className={i === thoughts.length - 1 ? 'text-gray-200' : 'text-gray-600'}>
+                        {thought}
+                      </span>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                <motion.div
+                  className="flex items-center gap-2"
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  <span className="text-purple-500">▸</span>
+                  <span className="text-gray-400">_</span>
+                </motion.div>
+              </div>
+            </div>
+            
+            {/* Context snippet */}
+            {prompt && (
+              <div className="mt-4 px-4 py-3 rounded-xl bg-gray-800/30 border border-gray-700/30">
+                <p className="text-xs text-gray-500 mb-1">Analyzing:</p>
+                <p className="text-sm text-gray-300 truncate">"{prompt}"</p>
               </div>
             )}
-          </div>
-          
-          {/* Comic footer */}
-          <div className="px-4 py-2 bg-gray-950/50 border-t border-gray-800 flex items-center justify-between">
-            <span className="text-[10px] text-gray-600">Episode #{adventureIndex + 1} of ∞</span>
-            <span className="text-[10px] text-gray-600">Powered by TooLoo's Imagination Engine™</span>
           </div>
         </div>
       </motion.div>
@@ -445,7 +466,7 @@ const TooLooAdventuresLoader = memo(({ approach }) => {
   );
 });
 
-TooLooAdventuresLoader.displayName = 'TooLooAdventuresLoader';
+TooLooThinkingProcess.displayName = 'TooLooThinkingProcess';
 
 // ============================================================================
 // HEADER BAR - Enhanced with typography hierarchy and glow
@@ -2604,28 +2625,7 @@ const TooLooSpaceV4 = memo(() => {
                 exit={{ opacity: 0 }}
               >
                 {isThinking ? (
-                  <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                    <motion.div
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="text-center"
-                    >
-                      <div className="relative w-20 h-20 mx-auto mb-6">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                          className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-500 border-r-purple-500"
-                        />
-                        <div className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center">
-                          <span className="text-2xl">{selectedApproach?.icon || '🔮'}</span>
-                        </div>
-                      </div>
-                      <h3 className="text-lg font-medium text-white mb-2">
-                        {selectedApproach?.title || 'Exploring'}...
-                      </h3>
-                      <p className="text-sm text-gray-500">Generating options for you</p>
-                    </motion.div>
-                  </div>
+                  <TooLooAdventuresLoader approach={selectedApproach} />
                 ) : (
                   <div className="pt-2">
                     {/* Approach indicator - cleaner header */}
