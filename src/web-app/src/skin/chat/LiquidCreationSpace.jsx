@@ -1,4 +1,4 @@
-// @version 2.2.615
+// @version 3.3.298
 // TooLoo.ai Liquid Creation Space
 // Where thought becomes visual reality
 //
@@ -256,7 +256,7 @@ export const ThoughtStream = memo(
           {/* Flowing thought lines */}
           {[...Array(3)].map((_, i) => (
             <motion.path
-              key={i}
+              key={`thought-line-${i}`}
               d={`M0,${20 + i * 15} Q50,${10 + i * 15} 100,${20 + i * 15} T200,${20 + i * 15}`}
               stroke="url(#streamGrad)"
               strokeWidth="1"
@@ -683,7 +683,7 @@ export const LiquidResponseSurface = memo(
             <g opacity={config.meshOpacity * 0.5}>
               {[...Array(5)].map((_, i) => (
                 <motion.line
-                  key={i}
+                  key={`connection-line-${i}`}
                   x1={`${10 + i * 20}%`}
                   y1="50%"
                   x2={`${20 + i * 20}%`}
@@ -922,7 +922,7 @@ export const CreativeComposition = memo(
 
             return (
               <motion.div
-                key={i}
+                key={`artifact-circle-${i}`}
                 className="absolute w-48"
                 style={{
                   left: `calc(${x}% - 96px)`,
@@ -946,7 +946,7 @@ export const CreativeComposition = memo(
 
               return (
                 <motion.line
-                  key={i}
+                  key={`artifact-line-${i}`}
                   x1={`${centerX}%`}
                   y1={`${centerY}%`}
                   x2={`${x}%`}
@@ -969,7 +969,7 @@ export const CreativeComposition = memo(
       <div className={`${layoutStyles[layout]} ${className}`}>
         {artifacts.map((artifact, i) => (
           <motion.div
-            key={i}
+            key={`artifact-list-${i}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
