@@ -1,4 +1,4 @@
-// @version 3.3.226
+// @version 3.3.227
 // TooLoo.ai Space V3 - Organized Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -711,6 +711,67 @@ const TooLooSpaceV3 = memo(() => {
       setIsThinking(false);
     }
   }, [cards, session, phase]);
+
+  // Handle collecting a card as an artifact
+  const handleCollect = useCallback(async (cardId) => {
+    const card = cards.find(c => c.id === cardId);
+    if (!card || card.collected) return;
+
+    try {
+      // Call the artifact creation API
+      const response = await fetch(`${API_BASE}/agent/artifacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: card.title,
+          type: card.dimension === 'design' ? 'component' : 'code',
+          content: card.content || `// ${card.title}\n// ${card.description}\n\n${JSON.stringify(card, null, 2)}`,
+          metadata: {
+            dimension: card.dimension,
+            confidence: card.confidence,
+            tags: card.tags,
+            refinements: card.refinements?.length || 0,
+            sessionId: session?.id,
+            collectedAt: new Date().toISOString(),
+          },
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.ok || data.artifact) {
+        // Update card as collected
+        setCards(prev => prev.map(c => {
+          if (c.id === cardId) {
+            return { ...c, collected: true, artifactId: data.artifact?.id };
+          }
+          return c;
+        }));
+        
+        // Add to collected list
+        setCollected(prev => [...prev, { 
+          ...card, 
+          collected: true, 
+          artifactId: data.artifact?.id,
+          collectedAt: new Date().toISOString(),
+        }]);
+
+        // Also record in flow session if exists
+        if (session?.id) {
+          await fetch(`${API_BASE}/flow/sessions/${session.id}/collect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              optionId: cardId,
+              nodeId: card.dimension,
+            }),
+          }).catch(() => {}); // Non-critical
+        }
+      }
+    } catch (error) {
+      console.error('Collect failed:', error);
+    }
+  }, [cards, session]);
 
   // Handle card focus for routable input
   const handleCardFocus = useCallback((cardId) => {
