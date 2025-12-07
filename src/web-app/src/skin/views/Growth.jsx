@@ -1,4 +1,4 @@
-// @version 3.3.341 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.342 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -1757,16 +1757,28 @@ AnalyticsPanel.displayName = 'AnalyticsPanel';
 const LearningVelocityGraph = memo(({ dataPoints = [], className = '' }) => {
   const graphRef = useRef(null);
 
-  // Generate sample data if empty
+  // NO FAKE DATA - only show what's been measured
   const data = useMemo(() => {
     if (dataPoints.length > 0) return dataPoints;
-    // Generate simulated velocity curve
-    return Array.from({ length: 20 }, (_, i) => ({
-      time: i,
-      velocity: 0.3 + Math.sin(i * 0.3) * 0.2 + Math.random() * 0.1 + i * 0.02,
-      cumulative: Math.pow(1.1, i) * 10,
-    }));
+    // Return empty array instead of generating fake data
+    return [];
   }, [dataPoints]);
+
+  // Show "no data" state if empty
+  if (data.length === 0) {
+    return (
+      <div className={`bg-white/[0.02] rounded-lg p-4 border border-white/5 ${className}`}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs text-gray-500 uppercase tracking-wider">
+            Learning Velocity
+          </span>
+        </div>
+        <div className="h-20 flex items-center justify-center text-gray-500 text-sm">
+          No velocity data yet - will appear as you use TooLoo
+        </div>
+      </div>
+    );
+  }
 
   // Safeguard against empty data or zero values to prevent NaN in SVG attributes
   const maxVelocity = Math.max(0.1, ...data.map((d) => d.velocity || 0));
@@ -1961,12 +1973,16 @@ SerendipityMonitor.displayName = 'SerendipityMonitor';
 // ============================================================================
 
 const Growth = memo(({ className = '' }) => {
-  // Real data from APIs
+  // Real data from APIs - NO FAKE VALUES
   const [metrics, setMetrics] = useState({
-    learningScore: 0,
+    learningScore: null, // null = no data yet, 0 = measured zero
     patternsFound: 0,
     decisionsLogged: 0,
-    qualityScore: 0,
+    qualityScore: null,
+    sessions: 0,
+    discoveries: 0,
+    artifacts: 0,
+    conversations: 0,
   });
 
   const [learningEvents, setLearningEvents] = useState([]);
