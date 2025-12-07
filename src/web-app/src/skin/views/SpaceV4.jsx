@@ -1,11 +1,11 @@
-// @version 3.3.229
+// @version 3.3.232
 // TooLoo.ai Space V4 - Professional Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
 // - Professional, polished UI design
 // - Real chat interface in cards with conversation history
-// - Dimension-specific AI responses
-// - Expandable cards (modal/fullscreen mode)
+// - Dimension-specific AI responses with direction suggestions
+// - Expandable cards (modal/fullscreen mode) with TooLoo suggestions
 // - Smooth animations and transitions
 // - Better UX patterns
 // ═══════════════════════════════════════════════════════════════════════════
@@ -38,6 +38,7 @@ const DIMENSION_CONFIGS = {
     label: 'Design',
     description: 'Visual & UX approaches',
     systemPrompt: 'You are a design expert. Focus on visual aesthetics, user experience, UI patterns, accessibility, and design systems. Provide specific, actionable design recommendations.',
+    suggestionPrefix: 'This design direction focuses on',
   },
   technical: { 
     icon: '⚙️', 
@@ -49,6 +50,7 @@ const DIMENSION_CONFIGS = {
     label: 'Technical',
     description: 'Architecture & implementation',
     systemPrompt: 'You are a technical architect. Focus on code architecture, performance, scalability, security, and best practices. Provide specific implementation guidance with code examples when helpful.',
+    suggestionPrefix: 'This technical approach implements',
   },
   user: { 
     icon: '👤', 
@@ -60,6 +62,7 @@ const DIMENSION_CONFIGS = {
     label: 'User Experience',
     description: 'Workflows & journeys',
     systemPrompt: 'You are a UX researcher and product designer. Focus on user needs, workflows, pain points, and user journeys. Provide insights about user behavior and practical UX improvements.',
+    suggestionPrefix: 'This user experience path provides',
   },
   business: { 
     icon: '💼', 
@@ -71,6 +74,7 @@ const DIMENSION_CONFIGS = {
     label: 'Business',
     description: 'Value & strategy',
     systemPrompt: 'You are a business strategist. Focus on market fit, value proposition, revenue models, and competitive advantage. Provide actionable business insights and growth strategies.',
+    suggestionPrefix: 'This business strategy delivers',
   },
   ethical: { 
     icon: '⚖️', 
@@ -82,6 +86,7 @@ const DIMENSION_CONFIGS = {
     label: 'Ethics',
     description: 'Responsibility & impact',
     systemPrompt: 'You are an ethics advisor. Focus on privacy, accessibility, inclusivity, environmental impact, and responsible AI. Provide thoughtful guidance on ethical considerations.',
+    suggestionPrefix: 'This ethical consideration addresses',
   },
 };
 
@@ -230,7 +235,7 @@ const OptionCard = memo(({
 
         <div className="p-4">
           {/* Header row */}
-          <div className="flex items-start gap-3 mb-3">
+          <div className="flex items-start gap-3 mb-2">
             <div 
               className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
               style={{ backgroundColor: `${config.color}15` }}
@@ -256,6 +261,20 @@ const OptionCard = memo(({
               {Math.round(card.confidence * 100)}%
             </div>
           </div>
+
+          {/* Direction badge - the optional direction */}
+          {card.direction && (
+            <div 
+              className="mb-2 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+              style={{ 
+                backgroundColor: `${config.color}08`,
+                border: `1px solid ${config.color}25`,
+              }}
+            >
+              <span style={{ color: config.color }}>→</span>
+              <span className="text-gray-300">{card.direction}</span>
+            </div>
+          )}
 
           {/* Description */}
           <p className="text-sm text-gray-400 line-clamp-2 mb-3">
@@ -443,16 +462,59 @@ const ExpandedCardModal = memo(({
 
         {/* Chat area */}
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
-          {/* Initial context */}
-          {messages.length === 0 && (
-            <div className="text-center py-8">
-              <div 
-                className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-3xl"
-                style={{ backgroundColor: `${config.color}15` }}
-              >
-                {config.icon}
+          {/* TooLoo Suggestion - always shown at the start */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative mb-4"
+          >
+            <div 
+              className="p-4 rounded-2xl border"
+              style={{ 
+                background: `linear-gradient(135deg, ${config.color}08 0%, transparent 60%)`,
+                borderColor: `${config.color}20`,
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `linear-gradient(135deg, ${config.color}30 0%, ${config.color}10 100%)` }}
+                >
+                  <span className="text-lg">✨</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-sm font-semibold text-white">TooLoo Suggestion</span>
+                    <span 
+                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      style={{ backgroundColor: `${config.color}20`, color: config.color }}
+                    >
+                      {config.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    {card?.toolooSuggestion || `${config.suggestionPrefix || 'This direction offers'} ${card?.description?.toLowerCase() || 'a unique approach to your requirements'}. Consider how this aligns with your goals.`}
+                  </p>
+                  {card?.direction && (
+                    <div 
+                      className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ 
+                        backgroundColor: `${config.color}15`,
+                        border: `1px solid ${config.color}30`,
+                      }}
+                    >
+                      <span style={{ color: config.color }}>Direction:</span>
+                      <span className="text-gray-200">{card.direction}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Chat with this option</h3>
+            </div>
+          </motion.div>
+
+          {/* Initial context if no messages yet */}
+          {messages.length === 0 && (
+            <div className="text-center py-4">
               <p className="text-sm text-gray-500 max-w-sm mx-auto">
                 Ask questions, request changes, or dive deeper into this {config.label.toLowerCase()} approach.
               </p>
@@ -1025,6 +1087,44 @@ const generateCards = (prompt) => {
     ],
   };
 
+  // Suggested directions for each option
+  const directions = {
+    design: [
+      'Focus on clarity and simplicity',
+      'Emphasize engagement and delight',
+      'Build trust through professionalism',
+    ],
+    technical: [
+      'Prioritize developer experience and type safety',
+      'Optimize for performance and scalability',
+      'Enable global reach with low latency',
+    ],
+    user: [
+      'Reduce friction for new users',
+      'Empower experienced users',
+      'Ensure universal accessibility',
+    ],
+  };
+
+  // TooLoo suggestions per option
+  const toolooSuggestions = {
+    design: [
+      'This minimalist approach creates breathing room for your content. Consider using a 8px grid system and a limited color palette of 3-4 colors to maintain visual harmony.',
+      'Bold design choices can differentiate your product. Consider using micro-interactions on key actions and a vibrant accent color to guide user attention.',
+      'Enterprise users expect familiarity and trust. This approach uses established patterns like left-nav, data tables, and clear action hierarchies.',
+    ],
+    technical: [
+      'Modern tooling with TypeScript provides excellent IDE support and catches errors early. This stack works well with teams of all sizes.',
+      'Server-first architecture reduces client bundle size and improves SEO. Consider React Server Components with streaming for optimal perceived performance.',
+      'Edge computing puts your code closer to users worldwide. This is ideal for latency-sensitive applications or global audiences.',
+    ],
+    user: [
+      'Progressive onboarding reduces cognitive load. Show features contextually as users need them rather than front-loading all information.',
+      'Power users appreciate efficiency. Consider implementing vim-style keyboard navigation and command palette (Cmd+K) patterns.',
+      'Accessibility is both ethical and practical. WCAG compliance opens your product to 15% more users and improves SEO.',
+    ],
+  };
+
   dimensions.forEach((dim, di) => {
     const count = 2 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count && i < 3; i++) {
@@ -1033,6 +1133,8 @@ const generateCards = (prompt) => {
         dimension: dim,
         title: titles[dim][i] || `Option ${i + 1}`,
         description: descriptions[dim][i] || `A ${dim} approach for: ${prompt}`,
+        direction: directions[dim][i] || `Explore this ${dim} direction`,
+        toolooSuggestion: toolooSuggestions[dim][i],
         confidence: 0.70 + Math.random() * 0.25,
         content: `// ${dim.toUpperCase()}: ${titles[dim][i]}\n// ${prompt}`,
         refinements: [],
