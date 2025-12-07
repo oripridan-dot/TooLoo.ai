@@ -1,4 +1,4 @@
-// @version 3.3.132
+// @version 3.3.343
 // TooLoo.ai Cortex View - The Brain
 // Provider visualization, processing status, neural activity
 // Enhanced with visual polish and subtle animations
@@ -219,18 +219,19 @@ const Cortex = memo(({ className = '' }) => {
   });
   const [actionFeedback, setActionFeedback] = useState({});
 
-  // Fetch real metrics from API
+  // Fetch real metrics from API - NO FAKE FALLBACKS!
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
         const response = await fetch('/api/v1/system/health');
         if (response.ok) {
           const data = await response.json();
+          // Only use REAL values - show 0 if not available
           setMetrics({
-            requestsPerMin: data.data?.metrics?.requestsPerMin || 12,
-            avgLatency: data.data?.metrics?.avgLatency || 245,
-            tokenUsage: data.data?.metrics?.tokenUsage || 15420,
-            costToday: data.data?.metrics?.costToday || 0.0842,
+            requestsPerMin: data.data?.metrics?.requestsPerMin || 0,
+            avgLatency: data.data?.metrics?.avgLatency || 0,
+            tokenUsage: data.data?.metrics?.tokenUsage || 0,
+            costToday: data.data?.metrics?.costToday || 0,
           });
         }
       } catch (e) {
