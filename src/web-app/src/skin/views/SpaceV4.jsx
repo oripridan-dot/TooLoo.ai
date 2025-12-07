@@ -1,4 +1,4 @@
-// @version 3.3.260
+// @version 3.3.261
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1520,6 +1520,52 @@ const TooLooSpaceV4 = memo(() => {
   const [streamingContent, setStreamingContent] = useState('');
   const [processingCardId, setProcessingCardId] = useState(null);
   const [selectedApproach, setSelectedApproach] = useState(null);
+  const [systemCapabilities, setSystemCapabilities] = useState(null);
+  const [capabilityStatus, setCapabilityStatus] = useState({});
+
+  // Fetch real system capabilities on mount
+  useEffect(() => {
+    const fetchCapabilities = async () => {
+      try {
+        // Fetch system status for real capability data
+        const [healthRes, capabilitiesRes, visualRes] = await Promise.all([
+          fetch(`${API_BASE}/health`).catch(() => null),
+          fetch(`${API_BASE}/capabilities/status`).catch(() => null),
+          fetch(`${API_BASE}/visuals/v2/status`).catch(() => null),
+        ]);
+        
+        const health = healthRes?.ok ? await healthRes.json() : null;
+        const capabilities = capabilitiesRes?.ok ? await capabilitiesRes.json() : null;
+        const visual = visualRes?.ok ? await visualRes.json() : null;
+        
+        // Build real status from API responses
+        const status = {
+          visuals: visual?.ok ? 'active' : 'ready',
+          diagrams: visual?.ok ? 'active' : 'ready',
+          analytics: capabilities?.ok ? 'active' : 'ready',
+          summarization: health?.ok ? 'active' : 'ready',
+          code: health?.ok ? 'active' : 'ready',
+          exploration: capabilities?.ok ? 'active' : 'ready',
+        };
+        
+        setCapabilityStatus(status);
+        
+        // Enhance capabilities with live status
+        const enhancedCapabilities = TOOLOO_CAPABILITIES.map(cap => ({
+          ...cap,
+          status: status[cap.id] || 'ready',
+          live: true,
+        }));
+        
+        setSystemCapabilities(enhancedCapabilities);
+      } catch (error) {
+        console.log('Using default capabilities');
+        setSystemCapabilities(TOOLOO_CAPABILITIES.map(cap => ({ ...cap, status: 'ready', live: true })));
+      }
+    };
+    
+    fetchCapabilities();
+  }, []);
 
   // Get dimensions that have cards
   const activeDimensions = useMemo(() => {
