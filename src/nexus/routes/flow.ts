@@ -1,4 +1,4 @@
-// @version 3.3.286
+// @version 3.3.287
 // TooLoo Flow API Routes
 // Unified thinking and creation endpoints
 
@@ -269,7 +269,7 @@ router.get('/sessions/:id/phase/suggest', async (req: Request, res: Response) =>
 // Get suggested next phase
 router.get('/sessions/:id/suggest-phase', async (req: Request, res: Response) => {
   try {
-    const suggestion = await flowSessionManager.suggestNextPhase(req.params.id);
+    const suggestion = await flowSessionManager.suggestNextPhase(req.params['id'] as string);
     res.json({ ok: true, suggestion });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -283,7 +283,7 @@ router.get('/sessions/:id/suggest-phase', async (req: Request, res: Response) =>
 // Hand off to QA
 router.post('/sessions/:id/qa/handoff', async (req: Request, res: Response) => {
   try {
-    const handoff = await flowSessionManager.handoffToQA(req.params.id);
+    const handoff = await flowSessionManager.handoffToQA(req.params['id'] as string);
     res.json({ ok: true, handoff });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -297,7 +297,7 @@ router.post('/sessions/:id/qa/status', async (req: Request, res: Response) => {
     if (!status) {
       return res.status(400).json({ ok: false, error: 'Status is required' });
     }
-    await flowSessionManager.updateQAStatus(req.params.id, status, results, feedback);
+    await flowSessionManager.updateQAStatus(req.params['id'] as string, status, results, feedback);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -311,7 +311,7 @@ router.post('/sessions/:id/qa/status', async (req: Request, res: Response) => {
 // Get AI context for session
 router.get('/sessions/:id/context', async (req: Request, res: Response) => {
   try {
-    const session = await flowSessionManager.getSession(req.params.id);
+    const session = await flowSessionManager.getSession(req.params['id'] as string);
     if (!session) {
       return res.status(404).json({ ok: false, error: 'Session not found' });
     }
@@ -325,7 +325,7 @@ router.get('/sessions/:id/context', async (req: Request, res: Response) => {
 // Get readiness status
 router.get('/sessions/:id/readiness', async (req: Request, res: Response) => {
   try {
-    const session = await flowSessionManager.getSession(req.params.id);
+    const session = await flowSessionManager.getSession(req.params['id'] as string);
     if (!session) {
       return res.status(404).json({ ok: false, error: 'Session not found' });
     }
