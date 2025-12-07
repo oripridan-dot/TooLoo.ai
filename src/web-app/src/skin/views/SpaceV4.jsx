@@ -1,4 +1,4 @@
-// @version 3.3.321
+// @version 3.3.324
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -10,14 +10,7 @@
 //           provider routing, persona info, and decision-making visibility
 // ═══════════════════════════════════════════════════════════════════════════
 
-import React, {
-  memo,
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useEffect,
-} from 'react';
+import React, { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EnhancedMarkdown } from '../chat/LiquidChatComponents';
 
@@ -27,27 +20,28 @@ import { EnhancedMarkdown } from '../chat/LiquidChatComponents';
 
 const TOOLOO_GUIDANCE = {
   discovery: {
-    message: "What shall we create together? Describe your vision and I'll explore it across multiple dimensions.",
-    hint: "Be specific about your goals — I work best with clear intentions.",
+    message:
+      "What shall we create together? Describe your vision and I'll explore it across multiple dimensions.",
+    hint: 'Be specific about your goals — I work best with clear intentions.',
     mood: 'curious',
   },
   explore: {
     message: "Interesting idea! Let me understand how you'd like to approach this.",
-    hint: "Each approach reveals different insights about your concept.",
+    hint: 'Each approach reveals different insights about your concept.',
     mood: 'thinking',
   },
   options: {
-    message: "Here are the possibilities I see. Collect the ones that resonate with you.",
-    hint: "Click any card to dive deeper or collect it to your synthesis panel.",
+    message: 'Here are the possibilities I see. Collect the ones that resonate with you.',
+    hint: 'Click any card to dive deeper or collect it to your synthesis panel.',
     mood: 'creative',
   },
   refinement: {
     message: "Great choices! Let's refine these together.",
-    hint: "Ask me questions about any card to explore it further.",
+    hint: 'Ask me questions about any card to explore it further.',
     mood: 'focused',
   },
   build: {
-    message: "Ready to synthesize your collected artifacts into reality.",
+    message: 'Ready to synthesize your collected artifacts into reality.',
     hint: "I'll combine your selections into a cohesive implementation.",
     mood: 'excited',
   },
@@ -127,8 +121,8 @@ const TOOLOO_CAPABILITIES = [
 // ============================================================================
 
 const DIMENSION_CONFIGS = {
-  design: { 
-    icon: '🎨', 
+  design: {
+    icon: '🎨',
     color: '#f43f5e',
     lightColor: '#fda4af',
     gradient: 'from-rose-500/10 to-pink-500/10',
@@ -136,11 +130,12 @@ const DIMENSION_CONFIGS = {
     border: 'border-rose-500/20',
     label: 'Design',
     description: 'Visual & UX approaches',
-    systemPrompt: 'You are a design expert. Focus on visual aesthetics, user experience, UI patterns, accessibility, and design systems. Provide specific, actionable design recommendations.',
+    systemPrompt:
+      'You are a design expert. Focus on visual aesthetics, user experience, UI patterns, accessibility, and design systems. Provide specific, actionable design recommendations.',
     suggestionPrefix: 'This design direction focuses on',
   },
-  technical: { 
-    icon: '⚙️', 
+  technical: {
+    icon: '⚙️',
     color: '#06b6d4',
     lightColor: '#67e8f9',
     gradient: 'from-cyan-500/10 to-blue-500/10',
@@ -148,11 +143,12 @@ const DIMENSION_CONFIGS = {
     border: 'border-cyan-500/20',
     label: 'Technical',
     description: 'Architecture & implementation',
-    systemPrompt: 'You are a technical architect. Focus on code architecture, performance, scalability, security, and best practices. Provide specific implementation guidance with code examples when helpful.',
+    systemPrompt:
+      'You are a technical architect. Focus on code architecture, performance, scalability, security, and best practices. Provide specific implementation guidance with code examples when helpful.',
     suggestionPrefix: 'This technical approach implements',
   },
-  user: { 
-    icon: '👤', 
+  user: {
+    icon: '👤',
     color: '#a855f7',
     lightColor: '#d8b4fe',
     gradient: 'from-purple-500/10 to-indigo-500/10',
@@ -160,11 +156,12 @@ const DIMENSION_CONFIGS = {
     border: 'border-purple-500/20',
     label: 'User Experience',
     description: 'Workflows & journeys',
-    systemPrompt: 'You are a UX researcher and product designer. Focus on user needs, workflows, pain points, and user journeys. Provide insights about user behavior and practical UX improvements.',
+    systemPrompt:
+      'You are a UX researcher and product designer. Focus on user needs, workflows, pain points, and user journeys. Provide insights about user behavior and practical UX improvements.',
     suggestionPrefix: 'This user experience path provides',
   },
-  business: { 
-    icon: '💼', 
+  business: {
+    icon: '💼',
     color: '#f59e0b',
     lightColor: '#fcd34d',
     gradient: 'from-amber-500/10 to-orange-500/10',
@@ -172,11 +169,12 @@ const DIMENSION_CONFIGS = {
     border: 'border-amber-500/20',
     label: 'Business',
     description: 'Value & strategy',
-    systemPrompt: 'You are a business strategist. Focus on market fit, value proposition, revenue models, and competitive advantage. Provide actionable business insights and growth strategies.',
+    systemPrompt:
+      'You are a business strategist. Focus on market fit, value proposition, revenue models, and competitive advantage. Provide actionable business insights and growth strategies.',
     suggestionPrefix: 'This business strategy delivers',
   },
-  ethical: { 
-    icon: '⚖️', 
+  ethical: {
+    icon: '⚖️',
     color: '#10b981',
     lightColor: '#6ee7b7',
     gradient: 'from-emerald-500/10 to-green-500/10',
@@ -184,17 +182,38 @@ const DIMENSION_CONFIGS = {
     border: 'border-emerald-500/20',
     label: 'Ethics',
     description: 'Responsibility & impact',
-    systemPrompt: 'You are an ethics advisor. Focus on privacy, accessibility, inclusivity, environmental impact, and responsible AI. Provide thoughtful guidance on ethical considerations.',
+    systemPrompt:
+      'You are an ethics advisor. Focus on privacy, accessibility, inclusivity, environmental impact, and responsible AI. Provide thoughtful guidance on ethical considerations.',
     suggestionPrefix: 'This ethical consideration addresses',
   },
 };
 
 const PHASES = {
-  discovery: { icon: '💡', color: '#f59e0b', label: 'Discovery', glowColor: 'rgba(245, 158, 11, 0.3)' },
-  exploration: { icon: '🔍', color: '#06b6d4', label: 'Exploring', glowColor: 'rgba(6, 182, 212, 0.3)' },
-  explore: { icon: '🔍', color: '#06b6d4', label: 'Exploring', glowColor: 'rgba(6, 182, 212, 0.3)' },
+  discovery: {
+    icon: '💡',
+    color: '#f59e0b',
+    label: 'Discovery',
+    glowColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  exploration: {
+    icon: '🔍',
+    color: '#06b6d4',
+    label: 'Exploring',
+    glowColor: 'rgba(6, 182, 212, 0.3)',
+  },
+  explore: {
+    icon: '🔍',
+    color: '#06b6d4',
+    label: 'Exploring',
+    glowColor: 'rgba(6, 182, 212, 0.3)',
+  },
   options: { icon: '✨', color: '#a855f7', label: 'Options', glowColor: 'rgba(168, 85, 247, 0.3)' },
-  refinement: { icon: '✨', color: '#a855f7', label: 'Refining', glowColor: 'rgba(168, 85, 247, 0.3)' },
+  refinement: {
+    icon: '✨',
+    color: '#a855f7',
+    label: 'Refining',
+    glowColor: 'rgba(168, 85, 247, 0.3)',
+  },
   build: { icon: '🔨', color: '#10b981', label: 'Building', glowColor: 'rgba(16, 185, 129, 0.3)' },
   ship: { icon: '🚀', color: '#f43f5e', label: 'Shipping', glowColor: 'rgba(244, 63, 94, 0.3)' },
 };
@@ -206,7 +225,7 @@ const PHASES = {
 const ToolooInlineHint = memo(({ phase, isThinking }) => {
   const guidance = TOOLOO_GUIDANCE[phase] || TOOLOO_GUIDANCE.discovery;
   const phaseConfig = PHASES[phase] || PHASES.discovery;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -224,38 +243,38 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
               `0 0 8px ${phaseConfig.glowColor}`,
             ],
           }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <div 
+        <div
           className="relative w-6 h-6 rounded-full flex items-center justify-center text-xs"
-          style={{ 
+          style={{
             backgroundColor: `${phaseConfig.color}20`,
             border: `1px solid ${phaseConfig.color}30`,
           }}
         >
           <motion.span
             animate={isThinking ? { rotate: [0, 360] } : {}}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
           >
             {isThinking ? '🔮' : '✨'}
           </motion.span>
         </div>
       </div>
-      
+
       {/* Compact hint text */}
-      <motion.p 
+      <motion.p
         key={guidance.hint}
         initial={{ opacity: 0, x: -5 }}
         animate={{ opacity: 1, x: 0 }}
         className="text-xs text-gray-400 flex-1 truncate"
       >
-        {isThinking ? "Thinking..." : guidance.hint}
+        {isThinking ? 'Thinking...' : guidance.hint}
       </motion.p>
-      
+
       {/* Phase badge */}
-      <span 
+      <span
         className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0"
-        style={{ 
+        style={{
           backgroundColor: `${phaseConfig.color}15`,
           color: phaseConfig.color,
         }}
@@ -269,70 +288,69 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 ToolooInlineHint.displayName = 'ToolooInlineHint';
 
 // ============================================================================
-// TOOLOO THINKING - Informative processing indicator with model decisions
+// TOOLOO THINKING - Clean, minimal processing indicator
+// v3.3.200 - Zero-noise UX: Simple status, no technical details
 // ============================================================================
 
-const TooLooThinkingProcess = memo(({ approach, prompt, thinkingState }) => {
+const TooLooThinkingProcess = memo(({ approach, prompt }) => {
   const [elapsed, setElapsed] = useState(0);
-  
+  const [dots, setDots] = useState('');
+
   // Timer for elapsed time
   useEffect(() => {
     const interval = setInterval(() => {
-      setElapsed(e => e + 1);
+      setElapsed((e) => e + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  
+
+  // Animated dots
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((d) => (d.length >= 3 ? '' : d + '.'));
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-  
-  // Extract thinking state info
-  const {
-    stage = 'initializing',
-    provider = null,
-    model = null,
-    routingStrategy = null,
-    selectedProviders = [],
-    complexity = null,
-    persona = null,
-    visualEnabled = false,
-    visualType = null,
-    events = [],
-  } = thinkingState || {};
-  
-  // Derive current activity based on events and state
-  const getActivityDescription = () => {
-    if (events.length > 0) {
-      const latest = events[events.length - 1];
-      return latest.message || latest.stage;
-    }
-    if (provider) return `Generating with ${provider}`;
-    if (routingStrategy === 'ensemble') return `Querying ${selectedProviders.length} models in parallel`;
-    if (selectedProviders.length > 0) return `Routing to ${selectedProviders[0]}`;
-    return 'Analyzing request...';
+
+  // Simple, friendly status messages that rotate
+  const getStatusMessage = () => {
+    const messages = [
+      'Thinking',
+      'Working on it',
+      'Putting it together',
+      'Almost there',
+    ];
+    return messages[Math.floor(elapsed / 8) % messages.length];
   };
-  
+
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8">
       <div className="bg-gray-900/80 rounded-xl border border-gray-800/60 p-6">
-        {/* Header with approach info */}
+        {/* Header - minimal */}
         <div className="flex items-center gap-3 mb-4">
-          <div 
+          <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
             style={{ backgroundColor: `${approach?.color || '#6366f1'}15` }}
           >
             <span className="text-lg">{approach?.icon || '🔮'}</span>
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-white">Processing</h3>
-            <p className="text-xs text-gray-500">{approach?.title || 'Analyzing...'}</p>
+            <h3 className="text-sm font-medium text-white">
+              {getStatusMessage()}{dots}
+            </h3>
+            {approach?.title && (
+              <p className="text-xs text-gray-500">{approach.title}</p>
+            )}
           </div>
-          <span className="text-xs font-mono text-gray-500">{formatTime(elapsed)}</span>
+          <span className="text-xs font-mono text-gray-600">{formatTime(elapsed)}</span>
         </div>
-        
-        {/* Indeterminate progress */}
+
+        {/* Simple progress indicator */}
         <div className="h-1 rounded-full bg-gray-800 overflow-hidden mb-4">
           <div
-            className="h-full w-1/3 rounded-full bg-cyan-600/60"
+            className="h-full w-1/3 rounded-full bg-gradient-to-r from-cyan-600/60 to-purple-600/60"
             style={{ animation: 'indeterminate 1.5s ease-in-out infinite' }}
           />
         </div>
@@ -342,107 +360,12 @@ const TooLooThinkingProcess = memo(({ approach, prompt, thinkingState }) => {
             100% { transform: translateX(400%); }
           }
         `}</style>
-        
-        {/* Current activity */}
-        <div className="flex items-center gap-2 text-sm text-gray-300 mb-4">
-          <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-          <span>{getActivityDescription()}</span>
-        </div>
-        
-        {/* Decision details panel */}
-        <div className="space-y-3 pt-4 border-t border-gray-800/50">
-          {/* Model Selection */}
-          {(provider || selectedProviders.length > 0) && (
-            <div className="flex items-start gap-3">
-              <span className="text-gray-600 text-xs w-20 flex-shrink-0 pt-0.5">Model</span>
-              <div className="flex-1">
-                {routingStrategy === 'ensemble' ? (
-                  <div>
-                    <span className="text-xs text-purple-400 font-medium">Ensemble Mode</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedProviders.map((p, i) => (
-                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-xs text-white font-medium">
-                    {provider || selectedProviders[0] || 'Auto-selecting...'}
-                    {model && model !== provider && <span className="text-gray-500 ml-1">({model})</span>}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Complexity Assessment */}
-          {complexity && (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Complexity</span>
-              <span className={`text-xs font-medium ${
-                complexity === 'high' ? 'text-amber-400' : 'text-emerald-400'
-              }`}>
-                {complexity === 'high' ? '⚡ High' : '● Standard'}
-              </span>
-            </div>
-          )}
-          
-          {/* Routing Strategy */}
-          {routingStrategy && (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Strategy</span>
-              <span className="text-xs text-gray-300">
-                {routingStrategy === 'ensemble' ? '🔄 Parallel Consensus' : '→ Direct Route'}
-              </span>
-            </div>
-          )}
-          
-          {/* Creative Persona */}
-          {persona && (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Persona</span>
-              <span className="text-xs text-gray-300">{persona}</span>
-            </div>
-          )}
-          
-          {/* Visual Generation */}
-          {visualEnabled && (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-600 text-xs w-20 flex-shrink-0">Visual</span>
-              <span className="text-xs text-cyan-400">
-                🎨 {visualType || 'Enabled'}
-              </span>
-            </div>
-          )}
-        </div>
-        
-        {/* Recent thinking events log */}
-        {events.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-gray-800/50">
-            <div className="text-[10px] text-gray-600 uppercase tracking-wider mb-2">Decision Log</div>
-            <div className="space-y-1 max-h-20 overflow-y-auto">
-              {events.slice(-4).map((evt, i) => (
-                <div key={i} className="flex items-center gap-2 text-[11px]">
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    evt.type === 'success' ? 'bg-emerald-500' : 
-                    evt.type === 'error' ? 'bg-red-500' : 'bg-gray-500'
-                  }`} />
-                  <span className="text-gray-500 truncate">{evt.message || evt.stage}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Query context */}
+
+        {/* Query context - what we're working on */}
         {prompt && (
-          <div className="mt-4 pt-3 border-t border-gray-800/50">
-            <p className="text-xs text-gray-600 truncate">
-              "{prompt.length > 60 ? prompt.slice(0, 60) + '...' : prompt}"
-            </p>
-          </div>
+          <p className="text-xs text-gray-500 truncate">
+            "{prompt.length > 80 ? prompt.slice(0, 80) + '...' : prompt}"
+          </p>
         )}
       </div>
     </div>
@@ -456,35 +379,60 @@ TooLooThinkingProcess.displayName = 'TooLooThinkingProcess';
 // ============================================================================
 
 const ADVISOR_MODES = [
-  { id: 'synthesize', icon: '🧬', label: 'Synthesize', action: 'Combine collected insights into a unified strategy' },
-  { id: 'priorities', icon: '🎯', label: 'Prioritize', action: 'Identify highest-impact items to focus on first' },
-  { id: 'gaps', icon: '🔍', label: 'Find Gaps', action: 'Discover what\'s missing from your collection' },
-  { id: 'conflicts', icon: '⚡', label: 'Resolve Conflicts', action: 'Identify and address contradictions' },
-  { id: 'roadmap', icon: '🗺️', label: 'Create Roadmap', action: 'Generate implementation sequence' },
+  {
+    id: 'synthesize',
+    icon: '🧬',
+    label: 'Synthesize',
+    action: 'Combine collected insights into a unified strategy',
+  },
+  {
+    id: 'priorities',
+    icon: '🎯',
+    label: 'Prioritize',
+    action: 'Identify highest-impact items to focus on first',
+  },
+  {
+    id: 'gaps',
+    icon: '🔍',
+    label: 'Find Gaps',
+    action: "Discover what's missing from your collection",
+  },
+  {
+    id: 'conflicts',
+    icon: '⚡',
+    label: 'Resolve Conflicts',
+    action: 'Identify and address contradictions',
+  },
+  {
+    id: 'roadmap',
+    icon: '🗺️',
+    label: 'Create Roadmap',
+    action: 'Generate implementation sequence',
+  },
 ];
 
 const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
   const [selectedMode, setSelectedMode] = useState(null);
   const [insight, setInsight] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
+
   // Auto-analyze when collected items change significantly
   useEffect(() => {
     if (collected.length >= 2 && !insight) {
       generateQuickInsight();
     }
   }, [collected.length]);
-  
+
   const generateQuickInsight = async () => {
     if (collected.length < 2) return;
-    
+
     // Analyze collection composition
-    const dimensions = [...new Set(collected.map(c => c.dimension))];
-    const highConfidence = collected.filter(c => c.confidence > 0.85);
-    
+    const dimensions = [...new Set(collected.map((c) => c.dimension))];
+    const highConfidence = collected.filter((c) => c.confidence > 0.85);
+
     // Generate contextual insight
     const insights = [];
-    
+
     if (dimensions.length >= 3) {
       insights.push({
         type: 'coverage',
@@ -493,7 +441,7 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
         action: 'synthesize',
       });
     }
-    
+
     if (highConfidence.length >= collected.length * 0.7) {
       insights.push({
         type: 'quality',
@@ -502,7 +450,7 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
         action: 'roadmap',
       });
     }
-    
+
     if (dimensions.includes('technical') && dimensions.includes('visual')) {
       insights.push({
         type: 'synergy',
@@ -511,7 +459,7 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
         action: 'synthesize',
       });
     }
-    
+
     if (collected.length >= 4 && dimensions.length < 2) {
       insights.push({
         type: 'gap',
@@ -520,35 +468,37 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
         action: 'gaps',
       });
     }
-    
-    setInsight(insights[0] || {
-      type: 'ready',
-      icon: '🚀',
-      text: `${collected.length} items collected and ready for action!`,
-      action: 'synthesize',
-    });
+
+    setInsight(
+      insights[0] || {
+        type: 'ready',
+        icon: '🚀',
+        text: `${collected.length} items collected and ready for action!`,
+        action: 'synthesize',
+      }
+    );
   };
-  
+
   const handleModeSelect = async (mode) => {
     setSelectedMode(mode);
     setIsAnalyzing(true);
-    
+
     // Simulate analysis (would call actual API in production)
-    await new Promise(r => setTimeout(r, 1200));
-    
+    await new Promise((r) => setTimeout(r, 1200));
+
     setIsAnalyzing(false);
-    
+
     // Trigger parent callback with selected mode
     if (onAdvice) {
       onAdvice({
         mode: mode.id,
-        collected: collected.map(c => ({ id: c.id, title: c.title, dimension: c.dimension })),
+        collected: collected.map((c) => ({ id: c.id, title: c.title, dimension: c.dimension })),
       });
     }
   };
-  
+
   if (collected.length < 2) return null;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -575,9 +525,9 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
             }}
             transition={{ duration: 3, repeat: Infinity }}
           />
-          
+
           <div className="relative flex items-center gap-3">
-            <motion.span 
+            <motion.span
               className="text-xl"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
@@ -591,18 +541,18 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                const mode = ADVISOR_MODES.find(m => m.id === insight.action);
+                const mode = ADVISOR_MODES.find((m) => m.id === insight.action);
                 if (mode) handleModeSelect(mode);
               }}
               className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/20 
                        text-purple-300 hover:bg-purple-500/30 transition-colors"
             >
-              {ADVISOR_MODES.find(m => m.id === insight.action)?.label || 'Go'}
+              {ADVISOR_MODES.find((m) => m.id === insight.action)?.label || 'Go'}
             </motion.button>
           </div>
         </motion.div>
       )}
-      
+
       {/* Mode Selection Grid */}
       <div className="flex flex-wrap gap-1.5">
         {ADVISOR_MODES.map((mode) => (
@@ -615,9 +565,10 @@ const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
             className={`
               px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all
               flex items-center gap-1.5 disabled:opacity-50
-              ${selectedMode?.id === mode.id 
-                ? 'bg-purple-500/30 text-purple-300 border border-purple-500/40' 
-                : 'bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:bg-gray-700/50 hover:text-gray-300'
+              ${
+                selectedMode?.id === mode.id
+                  ? 'bg-purple-500/30 text-purple-300 border border-purple-500/40'
+                  : 'bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:bg-gray-700/50 hover:text-gray-300'
               }
             `}
             title={mode.action}
@@ -648,7 +599,7 @@ TooLooProactiveAdvisor.displayName = 'TooLooProactiveAdvisor';
 
 const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
   const phaseConfig = PHASES[phase] || PHASES.discovery;
-  
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -10 }}
@@ -657,13 +608,13 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
     >
       {/* Subtle gradient backdrop */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none" />
-      
+
       <div className="relative max-w-7xl mx-auto flex items-center justify-between">
         {/* Left: Session info with hierarchy */}
         <div className="flex items-center gap-5">
           {/* TooLoo branding - simplified */}
           <div className="flex items-center gap-2">
-            <div 
+            <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-xl 
                         bg-gray-800 border border-gray-700"
             >
@@ -674,9 +625,7 @@ const HeaderBar = memo(({ prompt, phase, cardCount, collectedCount }) => {
                 {prompt ? prompt.slice(0, 35) + (prompt.length > 35 ? '...' : '') : 'TooLoo Space'}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <span 
-                  className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-300"
-                >
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">
                   {phaseConfig.label}
                 </span>
                 {prompt && (
@@ -723,7 +672,7 @@ const ChatMessage = memo(({ message, isUser, color }) => (
   >
     {!isUser && (
       <div className="flex-shrink-0 mr-3">
-        <div 
+        <div
           className="w-8 h-8 rounded-xl flex items-center justify-center"
           style={{ backgroundColor: `${color}20` }}
         >
@@ -742,13 +691,15 @@ const ChatMessage = memo(({ message, isUser, color }) => (
       {isUser ? (
         <p className="text-sm leading-relaxed">{message.content}</p>
       ) : (
-        <div className="px-4 py-3 prose prose-invert prose-sm max-w-none
+        <div
+          className="px-4 py-3 prose prose-invert prose-sm max-w-none
                       prose-headings:text-white prose-headings:font-semibold prose-headings:mb-2 prose-headings:mt-3
                       prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-2
                       prose-strong:text-white prose-strong:font-semibold
                       prose-ul:my-2 prose-li:text-gray-300 prose-li:my-0.5
                       prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded
-                      prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700">
+                      prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700"
+        >
           <EnhancedMarkdown content={message.content} isStreaming={false} />
         </div>
       )}
@@ -762,98 +713,106 @@ ChatMessage.displayName = 'ChatMessage';
 // OPTION CARD - Enhanced with glow effects and visual polish
 // ============================================================================
 
-const OptionCard = memo(({
-  card,
-  index,
-  isExpanded,
-  isCollected,
-  onExpand,
-  onCollect,
-  onChat,
-  isProcessing,
-  streamingContent,
-}) => {
-  const [chatInput, setChatInput] = useState('');
-  const chatEndRef = useRef(null);
-  const config = DIMENSION_CONFIGS[card.dimension] || DIMENSION_CONFIGS.technical;
-  
-  // Auto-scroll chat
-  useEffect(() => {
-    if (chatEndRef.current && isExpanded) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [card.refinements, streamingContent, isExpanded]);
+const OptionCard = memo(
+  ({
+    card,
+    index,
+    isExpanded,
+    isCollected,
+    onExpand,
+    onCollect,
+    onChat,
+    isProcessing,
+    streamingContent,
+  }) => {
+    const [chatInput, setChatInput] = useState('');
+    const chatEndRef = useRef(null);
+    const config = DIMENSION_CONFIGS[card.dimension] || DIMENSION_CONFIGS.technical;
 
-  const handleChatSubmit = (e) => {
-    e.preventDefault();
-    if (chatInput.trim() && !isProcessing) {
-      onChat(chatInput);
-      setChatInput('');
-    }
-  };
+    // Auto-scroll chat
+    useEffect(() => {
+      if (chatEndRef.current && isExpanded) {
+        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, [card.refinements, streamingContent, isExpanded]);
 
-  // Compact one-liner card view for collapsed state
-  if (!isExpanded) {
-    return (
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ delay: index * 0.02 }}
-        className={`
+    const handleChatSubmit = (e) => {
+      e.preventDefault();
+      if (chatInput.trim() && !isProcessing) {
+        onChat(chatInput);
+        setChatInput('');
+      }
+    };
+
+    // Compact one-liner card view for collapsed state
+    if (!isExpanded) {
+      return (
+        <motion.div
+          layout
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ delay: index * 0.02 }}
+          className={`
           group relative cursor-pointer
           ${isCollected ? 'ring-1 ring-emerald-500/40' : ''}
         `}
-        onClick={() => onExpand(card.id)}
-      >
-        {/* Compact single-line card */}
-        <div 
-          className="relative flex items-center gap-3 px-4 py-2.5 bg-gray-900/80 
+          onClick={() => onExpand(card.id)}
+        >
+          {/* Compact single-line card */}
+          <div
+            className="relative flex items-center gap-3 px-4 py-2.5 bg-gray-900/80 
                      border border-gray-800/60 hover:border-gray-700/60 hover:bg-gray-800/60
                      transition-colors rounded-lg"
-        >
-          {/* Left accent dot */}
-          <div 
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: config.color }}
-          />
-          
-          {/* Title - truncated */}
-          <span className="flex-1 text-sm text-white font-medium truncate">
-            {card.title}
-          </span>
-          
-          {/* Confidence badge - minimal */}
-          <span className="text-xs text-gray-500 flex-shrink-0">
-            {Math.round(card.confidence * 100)}%
-          </span>
-          
-          {/* Collect button - compact */}
-          {!isCollected ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onCollect(); }}
-              className="px-2 py-1 rounded text-xs bg-emerald-500/10 hover:bg-emerald-500/20 
-                       text-emerald-400 transition-colors flex-shrink-0"
-            >
-              + Collect
-            </button>
-          ) : (
-            <span className="text-xs text-emerald-400 flex-shrink-0">✓</span>
-          )}
-          
-          {/* Expand arrow */}
-          <svg className="w-4 h-4 text-gray-500 group-hover:text-gray-300 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-      </motion.div>
-    );
-  }
+          >
+            {/* Left accent dot */}
+            <div
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: config.color }}
+            />
 
-  // Expanded view (modal)
-  return null; // Rendered via ExpandedCardModal
-});
+            {/* Title - truncated */}
+            <span className="flex-1 text-sm text-white font-medium truncate">{card.title}</span>
+
+            {/* Confidence badge - minimal */}
+            <span className="text-xs text-gray-500 flex-shrink-0">
+              {Math.round(card.confidence * 100)}%
+            </span>
+
+            {/* Collect button - compact */}
+            {!isCollected ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCollect();
+                }}
+                className="px-2 py-1 rounded text-xs bg-emerald-500/10 hover:bg-emerald-500/20 
+                       text-emerald-400 transition-colors flex-shrink-0"
+              >
+                + Collect
+              </button>
+            ) : (
+              <span className="text-xs text-emerald-400 flex-shrink-0">✓</span>
+            )}
+
+            {/* Expand arrow */}
+            <svg
+              className="w-4 h-4 text-gray-500 group-hover:text-gray-300 flex-shrink-0 transition-colors"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </motion.div>
+      );
+    }
+
+    // Expanded view (modal)
+    return null; // Rendered via ExpandedCardModal
+  }
+);
 
 OptionCard.displayName = 'OptionCard';
 
@@ -861,293 +820,329 @@ OptionCard.displayName = 'OptionCard';
 // EXPANDED CARD MODAL - Full chat interface
 // ============================================================================
 
-const ExpandedCardModal = memo(({
-  card,
-  onClose,
-  onCollect,
-  onChat,
-  isProcessing,
-  streamingContent,
-}) => {
-  const [chatInput, setChatInput] = useState('');
-  const chatEndRef = useRef(null);
-  const inputRef = useRef(null);
-  const config = DIMENSION_CONFIGS[card?.dimension] || DIMENSION_CONFIGS.technical;
+const ExpandedCardModal = memo(
+  ({ card, onClose, onCollect, onChat, isProcessing, streamingContent }) => {
+    const [chatInput, setChatInput] = useState('');
+    const chatEndRef = useRef(null);
+    const inputRef = useRef(null);
+    const config = DIMENSION_CONFIGS[card?.dimension] || DIMENSION_CONFIGS.technical;
 
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [card?.refinements, streamingContent]);
+    useEffect(() => {
+      if (chatEndRef.current) {
+        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, [card?.refinements, streamingContent]);
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [card?.id]);
+    useEffect(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [card?.id]);
 
-  if (!card) return null;
+    if (!card) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (chatInput.trim() && !isProcessing) {
-      onChat(card.id, chatInput);
-      setChatInput('');
-    }
-  };
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (chatInput.trim() && !isProcessing) {
+        onChat(card.id, chatInput);
+        setChatInput('');
+      }
+    };
 
-  const messages = card.refinements || [];
+    const messages = card.refinements || [];
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-
-      {/* Modal - Enlarged for better readability */}
+    return (
       <motion.div
-        initial={{ scale: 0.95, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.95, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl h-[90vh] bg-gray-900 rounded-3xl 
-                   border border-gray-800 overflow-hidden flex flex-col shadow-2xl"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+        onClick={onClose}
       >
-        {/* Header */}
-        <div 
-          className="flex-shrink-0 p-5 border-b border-gray-800"
-          style={{ background: `linear-gradient(135deg, ${config.color}10 0%, transparent 50%)` }}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div 
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                style={{ backgroundColor: `${config.color}20` }}
-              >
-                {config.icon}
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white mb-1">{card.title}</h2>
-                <p className="text-sm text-gray-400">{card.description}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span 
-                    className="px-2 py-0.5 rounded-full text-xs font-medium"
-                    style={{ backgroundColor: `${config.color}20`, color: config.color }}
-                  >
-                    {config.label}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {Math.round(card.confidence * 100)}% confidence
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {!card.collected && (
-                <button
-                  onClick={() => onCollect(card.id)}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
-                           text-emerald-400 text-sm font-medium transition-colors flex items-center gap-1.5"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Collect
-                </button>
-              )}
-              {card.collected && (
-                <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium">
-                  ✓ Collected
-                </span>
-              )}
-              <button
-                onClick={onClose}
-                className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
-        {/* Chat area */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-3">
-          {/* TooLoo Suggestion - always shown at the start */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative mb-4"
+        {/* Modal - Enlarged for better readability */}
+        <motion.div
+          initial={{ scale: 0.95, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-4xl h-[90vh] bg-gray-900 rounded-3xl 
+                   border border-gray-800 overflow-hidden flex flex-col shadow-2xl"
+        >
+          {/* Header */}
+          <div
+            className="flex-shrink-0 p-5 border-b border-gray-800"
+            style={{ background: `linear-gradient(135deg, ${config.color}10 0%, transparent 50%)` }}
           >
-            <div 
-              className="p-4 rounded-2xl border"
-              style={{ 
-                background: `linear-gradient(135deg, ${config.color}08 0%, transparent 60%)`,
-                borderColor: `${config.color}20`,
-              }}
-            >
-              <div className="flex items-start gap-3">
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `linear-gradient(135deg, ${config.color}30 0%, ${config.color}10 100%)` }}
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                  style={{ backgroundColor: `${config.color}20` }}
                 >
-                  <span className="text-lg">✨</span>
+                  {config.icon}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-sm font-semibold text-white">TooLoo's Analysis</span>
-                    <span 
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                <div>
+                  <h2 className="text-lg font-semibold text-white mb-1">{card.title}</h2>
+                  <p className="text-sm text-gray-400">{card.description}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span
+                      className="px-2 py-0.5 rounded-full text-xs font-medium"
                       style={{ backgroundColor: `${config.color}20`, color: config.color }}
                     >
                       {config.label}
                     </span>
-                    {card.source === 'api' && (
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-500">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Live
-                      </span>
-                    )}
+                    <span className="text-xs text-gray-500">
+                      {Math.round(card.confidence * 100)}% confidence
+                    </span>
                   </div>
-                  <div className="prose prose-invert prose-sm max-w-none
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!card.collected && (
+                  <button
+                    onClick={() => onCollect(card.id)}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 
+                           text-emerald-400 text-sm font-medium transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Collect
+                  </button>
+                )}
+                {card.collected && (
+                  <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium">
+                    ✓ Collected
+                  </span>
+                )}
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Chat area */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-3">
+            {/* TooLoo Suggestion - always shown at the start */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative mb-4"
+            >
+              <div
+                className="p-4 rounded-2xl border"
+                style={{
+                  background: `linear-gradient(135deg, ${config.color}08 0%, transparent 60%)`,
+                  borderColor: `${config.color}20`,
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${config.color}30 0%, ${config.color}10 100%)`,
+                    }}
+                  >
+                    <span className="text-lg">✨</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-sm font-semibold text-white">TooLoo's Analysis</span>
+                      <span
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        style={{ backgroundColor: `${config.color}20`, color: config.color }}
+                      >
+                        {config.label}
+                      </span>
+                      {card.source === 'api' && (
+                        <span className="flex items-center gap-1 text-[10px] text-emerald-500">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Live
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="prose prose-invert prose-sm max-w-none
                                 prose-headings:text-white prose-headings:font-semibold prose-headings:mb-2 prose-headings:mt-3 prose-headings:text-base
                                 prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-2
                                 prose-strong:text-white prose-strong:font-semibold
                                 prose-ul:my-2 prose-li:text-gray-300 prose-li:my-0.5
                                 prose-ol:my-2
                                 prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded
-                                prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700 prose-pre:my-3">
-                    <EnhancedMarkdown 
-                      content={card?.toolooSuggestion || card?.content || `${config.suggestionPrefix || 'This direction offers'} ${card?.description?.toLowerCase() || 'a unique approach to your requirements'}. Consider how this aligns with your goals.`} 
-                      isStreaming={false} 
-                    />
-                  </div>
-                  {card?.direction && (
-                    <div 
-                      className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
-                      style={{ 
-                        backgroundColor: `${config.color}15`,
-                        border: `1px solid ${config.color}30`,
-                      }}
+                                prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700 prose-pre:my-3"
                     >
-                      <span style={{ color: config.color }}>→</span>
-                      <span className="text-gray-200">{card.direction}</span>
+                      <EnhancedMarkdown
+                        content={
+                          card?.toolooSuggestion ||
+                          card?.content ||
+                          `${config.suggestionPrefix || 'This direction offers'} ${card?.description?.toLowerCase() || 'a unique approach to your requirements'}. Consider how this aligns with your goals.`
+                        }
+                        isStreaming={false}
+                      />
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Initial context if no messages yet */}
-          {messages.length === 0 && (
-            <div className="text-center py-4">
-              <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                Ask questions, request changes, or dive deeper into this {config.label.toLowerCase()} approach.
-              </p>
-            </div>
-          )}
-
-          {/* Messages */}
-          {messages.map((msg, i) => (
-            <ChatMessage
-              key={i}
-              message={msg}
-              isUser={msg.role === 'user'}
-              color={config.color}
-            />
-          ))}
-
-          {/* Streaming response */}
-          {streamingContent && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start mb-3"
-            >
-              <div className="flex-shrink-0 mr-3">
-                <div 
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${config.color}20` }}
-                >
-                  <motion.span 
-                    className="text-sm"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >✨</motion.span>
-                </div>
-              </div>
-              <div
-                className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-800/60 overflow-hidden"
-                style={{ borderLeft: `3px solid ${config.color}` }}
-              >
-                <div className="px-4 py-3 prose prose-invert prose-sm max-w-none
-                              prose-headings:text-white prose-headings:font-semibold
-                              prose-p:text-gray-300 prose-p:leading-relaxed
-                              prose-strong:text-white
-                              prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded">
-                  <EnhancedMarkdown content={streamingContent} isStreaming={true} />
-                  <motion.span 
-                    className="inline-block w-2 h-4 ml-1 bg-current rounded-sm"
-                    style={{ color: config.color }}
-                    animate={{ opacity: [1, 0.3, 1] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                  />
+                    {card?.direction && (
+                      <div
+                        className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                        style={{
+                          backgroundColor: `${config.color}15`,
+                          border: `1px solid ${config.color}30`,
+                        }}
+                      >
+                        <span style={{ color: config.color }}>→</span>
+                        <span className="text-gray-200">{card.direction}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
-          )}
 
-          <div ref={chatEndRef} />
-        </div>
+            {/* Initial context if no messages yet */}
+            {messages.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                  Ask questions, request changes, or dive deeper into this{' '}
+                  {config.label.toLowerCase()} approach.
+                </p>
+              </div>
+            )}
 
-        {/* Input area */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-800 bg-gray-900/50">
-          <form onSubmit={handleSubmit} className="flex gap-3">
-            <input
-              ref={inputRef}
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder={`Ask about this ${config.label.toLowerCase()} approach...`}
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3
+            {/* Messages */}
+            {messages.map((msg, i) => (
+              <ChatMessage
+                key={i}
+                message={msg}
+                isUser={msg.role === 'user'}
+                color={config.color}
+              />
+            ))}
+
+            {/* Streaming response */}
+            {streamingContent && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-start mb-3"
+              >
+                <div className="flex-shrink-0 mr-3">
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${config.color}20` }}
+                  >
+                    <motion.span
+                      className="text-sm"
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    >
+                      ✨
+                    </motion.span>
+                  </div>
+                </div>
+                <div
+                  className="max-w-[85%] rounded-2xl rounded-bl-sm bg-gray-800/60 overflow-hidden"
+                  style={{ borderLeft: `3px solid ${config.color}` }}
+                >
+                  <div
+                    className="px-4 py-3 prose prose-invert prose-sm max-w-none
+                              prose-headings:text-white prose-headings:font-semibold
+                              prose-p:text-gray-300 prose-p:leading-relaxed
+                              prose-strong:text-white
+                              prose-code:text-cyan-400 prose-code:bg-gray-900/50 prose-code:px-1 prose-code:rounded"
+                  >
+                    <EnhancedMarkdown content={streamingContent} isStreaming={true} />
+                    <motion.span
+                      className="inline-block w-2 h-4 ml-1 bg-current rounded-sm"
+                      style={{ color: config.color }}
+                      animate={{ opacity: [1, 0.3, 1] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input area */}
+          <div className="flex-shrink-0 p-4 border-t border-gray-800 bg-gray-900/50">
+            <form onSubmit={handleSubmit} className="flex gap-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder={`Ask about this ${config.label.toLowerCase()} approach...`}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3
                        text-white placeholder-gray-500 focus:outline-none focus:ring-2
                        focus:border-transparent transition-all"
-              style={{ '--tw-ring-color': config.color }}
-              disabled={isProcessing}
-            />
-            <button
-              type="submit"
-              disabled={isProcessing || !chatInput.trim()}
-              className="px-5 py-3 rounded-xl font-medium text-white transition-all
+                style={{ '--tw-ring-color': config.color }}
+                disabled={isProcessing}
+              />
+              <button
+                type="submit"
+                disabled={isProcessing || !chatInput.trim()}
+                className="px-5 py-3 rounded-xl font-medium text-white transition-all
                        disabled:opacity-50 disabled:cursor-not-allowed
                        hover:opacity-90 active:scale-95"
-              style={{ background: `linear-gradient(135deg, ${config.color} 0%, ${config.lightColor} 100%)` }}
-            >
-              {isProcessing ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              )}
-            </button>
-          </form>
-        </div>
+                style={{
+                  background: `linear-gradient(135deg, ${config.color} 0%, ${config.lightColor} 100%)`,
+                }}
+              >
+                {isProcessing ? (
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                )}
+              </button>
+            </form>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
-});
+    );
+  }
+);
 
 ExpandedCardModal.displayName = 'ExpandedCardModal';
 
@@ -1155,77 +1150,69 @@ ExpandedCardModal.displayName = 'ExpandedCardModal';
 // DIMENSION SECTION - Enhanced with visual hierarchy and glow
 // ============================================================================
 
-const DimensionSection = memo(({
-  dimension,
-  cards,
-  expandedCard,
-  onExpand,
-  onCollect,
-  onChat,
-  isProcessing,
-}) => {
-  const config = DIMENSION_CONFIGS[dimension] || DIMENSION_CONFIGS.technical;
-  const sectionCards = cards.filter(c => c.dimension === dimension);
+const DimensionSection = memo(
+  ({ dimension, cards, expandedCard, onExpand, onCollect, onChat, isProcessing }) => {
+    const config = DIMENSION_CONFIGS[dimension] || DIMENSION_CONFIGS.technical;
+    const sectionCards = cards.filter((c) => c.dimension === dimension);
 
-  if (sectionCards.length === 0) return null;
+    if (sectionCards.length === 0) return null;
 
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-10 relative"
-    >
-      {/* Section header - clean and scannable */}
-      <div className="flex items-center gap-4 mb-5">
-        {/* Icon */}
-        <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-          style={{ 
-            backgroundColor: `${config.color}15`,
-          }}
-        >
-          {config.icon}
-        </div>
-        
-        {/* Title */}
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-white">
-            {config.label}
-          </h2>
-          <p className="text-sm text-gray-500">{config.description}</p>
-        </div>
-        
-        {/* Count badge */}
-        <div 
-          className="px-3 py-1.5 rounded-lg text-sm font-medium"
-          style={{ 
-            backgroundColor: `${config.color}15`,
-            color: config.color,
-          }}
-        >
-          {sectionCards.length} {sectionCards.length === 1 ? 'option' : 'options'}
-        </div>
-      </div>
+    return (
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-10 relative"
+      >
+        {/* Section header - clean and scannable */}
+        <div className="flex items-center gap-4 mb-5">
+          {/* Icon */}
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+            style={{
+              backgroundColor: `${config.color}15`,
+            }}
+          >
+            {config.icon}
+          </div>
 
-      {/* Cards - full width for readability */}
-      <div className="space-y-4">
-        {sectionCards.map((card, index) => (
-          <OptionCard
-            key={card.id}
-            card={card}
-            index={index}
-            isExpanded={expandedCard === card.id}
-            isCollected={card.collected}
-            onExpand={onExpand}
-            onCollect={() => onCollect(card.id)}
-            onChat={(msg) => onChat(card.id, msg)}
-            isProcessing={isProcessing}
-          />
-        ))}
-      </div>
-    </motion.section>
-  );
-});
+          {/* Title */}
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-white">{config.label}</h2>
+            <p className="text-sm text-gray-500">{config.description}</p>
+          </div>
+
+          {/* Count badge */}
+          <div
+            className="px-3 py-1.5 rounded-lg text-sm font-medium"
+            style={{
+              backgroundColor: `${config.color}15`,
+              color: config.color,
+            }}
+          >
+            {sectionCards.length} {sectionCards.length === 1 ? 'option' : 'options'}
+          </div>
+        </div>
+
+        {/* Cards - full width for readability */}
+        <div className="space-y-4">
+          {sectionCards.map((card, index) => (
+            <OptionCard
+              key={card.id}
+              card={card}
+              index={index}
+              isExpanded={expandedCard === card.id}
+              isCollected={card.collected}
+              onExpand={onExpand}
+              onCollect={() => onCollect(card.id)}
+              onChat={(msg) => onChat(card.id, msg)}
+              isProcessing={isProcessing}
+            />
+          ))}
+        </div>
+      </motion.section>
+    );
+  }
+);
 
 DimensionSection.displayName = 'DimensionSection';
 
@@ -1237,7 +1224,7 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
   <motion.button
     initial={{ opacity: 0, y: 30, scale: 0.9 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
+    transition={{ delay: index * 0.1, type: 'spring', stiffness: 200 }}
     onClick={() => onSelect(approach)}
     disabled={isProcessing}
     className="group relative p-5 rounded-2xl text-left overflow-hidden
@@ -1248,29 +1235,29 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
     {/* Behind-the-glass glow effect */}
     <motion.div
       className="absolute -inset-2 rounded-2xl opacity-0 group-hover:opacity-70 transition-all duration-300 blur-xl"
-      style={{ 
+      style={{
         background: `radial-gradient(ellipse at center, ${approach.color}50 0%, transparent 60%)`,
       }}
     />
-    
+
     {/* Card background with glass effect */}
-    <div 
+    <div
       className="absolute inset-0 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/60 
                  backdrop-blur-sm border border-white/5 group-hover:border-white/10 transition-all"
-      style={{ 
+      style={{
         boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.05)`,
       }}
     />
-    
+
     {/* Animated gradient accent */}
-    <motion.div 
+    <motion.div
       className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
       style={{ background: `linear-gradient(90deg, transparent, ${approach.color}, transparent)` }}
       initial={{ scaleX: 0 }}
       animate={{ scaleX: 1 }}
       transition={{ delay: index * 0.1 + 0.3 }}
     />
-    
+
     {/* Light streak animation on hover */}
     <motion.div
       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
@@ -1285,13 +1272,13 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
         transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
       />
     </motion.div>
-    
+
     <div className="relative">
       {/* Icon with glow */}
       <div className="relative mb-4">
         <motion.div
           className="absolute -inset-2 rounded-xl opacity-40"
-          style={{ 
+          style={{
             background: `radial-gradient(circle, ${approach.color}40 0%, transparent 70%)`,
           }}
           animate={{
@@ -1300,9 +1287,9 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
           }}
           transition={{ duration: 2, repeat: Infinity }}
         />
-        <div 
+        <div
           className="relative w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-          style={{ 
+          style={{
             backgroundColor: `${approach.color}20`,
             border: `1px solid ${approach.color}30`,
           }}
@@ -1313,7 +1300,7 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
         {approach.live && (
           <motion.div
             className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500"
-            animate={{ 
+            animate={{
               scale: [1, 1.2, 1],
               opacity: [0.8, 1, 0.8],
             }}
@@ -1322,7 +1309,7 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
           />
         )}
       </div>
-      
+
       {/* Title with module badge */}
       <div className="flex items-center gap-2 mb-1.5">
         <h3 className="font-bold text-white text-base">{approach.title}</h3>
@@ -1332,21 +1319,20 @@ const ExploreCard = memo(({ approach, index, onSelect, isProcessing }) => (
           </span>
         )}
       </div>
-      
+
       {/* Description */}
       <p className="text-sm text-gray-400 mb-4 leading-relaxed">{approach.description}</p>
-      
+
       {/* Action hint with animation */}
-      <motion.div 
+      <motion.div
         className="flex items-center gap-2 text-xs font-semibold"
         style={{ color: approach.color }}
         initial={{ opacity: 0.5 }}
         whileHover={{ opacity: 1 }}
       >
-        <motion.span
-          animate={{ x: [0, 5, 0] }}
-          transition={{ duration: 1, repeat: Infinity }}
-        >→</motion.span>
+        <motion.span animate={{ x: [0, 5, 0] }} transition={{ duration: 1, repeat: Infinity }}>
+          →
+        </motion.span>
         <span>{approach.action}</span>
       </motion.div>
     </div>
@@ -1364,21 +1350,23 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing, capabilitie
   >
     {/* Prompt display - enhanced */}
     <div className="text-center mb-8">
-      <motion.div 
+      <motion.div
         className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full 
                    bg-gradient-to-r from-gray-800/80 to-gray-800/40 
                    border border-white/10 backdrop-blur-sm mb-4"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
-        <motion.span 
+        <motion.span
           className="text-xl"
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-        >💭</motion.span>
+        >
+          💭
+        </motion.span>
         <span className="text-sm text-gray-200 font-medium">{prompt}</span>
       </motion.div>
-      <motion.h2 
+      <motion.h2
         className="text-2xl font-bold text-white mb-2"
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1386,7 +1374,7 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing, capabilitie
       >
         TooLoo's Capabilities
       </motion.h2>
-      <motion.p 
+      <motion.p
         className="text-sm text-gray-500"
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1410,7 +1398,7 @@ const ExplorePhase = memo(({ prompt, onApproachSelect, isProcessing, capabilitie
     </div>
 
     {/* Skip option - enhanced */}
-    <motion.div 
+    <motion.div
       className="text-center mt-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -1452,7 +1440,7 @@ const EmptyState = memo(({ isThinking }) => (
           {/* Outer glow rings */}
           <motion.div
             className="absolute inset-0 rounded-full"
-            animate={{ 
+            animate={{
               boxShadow: [
                 '0 0 30px rgba(6, 182, 212, 0.3), 0 0 60px rgba(168, 85, 247, 0.2)',
                 '0 0 50px rgba(6, 182, 212, 0.5), 0 0 80px rgba(168, 85, 247, 0.3)',
@@ -1463,24 +1451,28 @@ const EmptyState = memo(({ isThinking }) => (
           />
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
             className="absolute inset-0 rounded-full border-2 border-transparent border-t-cyan-500 border-r-purple-500"
           />
           <motion.div
             animate={{ rotate: -360 }}
-            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
             className="absolute inset-2 rounded-full border border-transparent border-b-cyan-400/50 border-l-purple-400/50"
           />
           <div className="absolute inset-4 rounded-full bg-gray-900 flex items-center justify-center">
-            <motion.span 
+            <motion.span
               className="text-3xl"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-            >🔮</motion.span>
+            >
+              🔮
+            </motion.span>
           </div>
         </div>
         <h3 className="text-xl font-semibold text-white mb-2">Exploring dimensions...</h3>
-        <p className="text-sm text-gray-500">TooLoo is analyzing your idea across multiple perspectives</p>
+        <p className="text-sm text-gray-500">
+          TooLoo is analyzing your idea across multiple perspectives
+        </p>
       </motion.div>
     ) : (
       <div className="text-center max-w-xl">
@@ -1496,10 +1488,10 @@ const EmptyState = memo(({ isThinking }) => (
                 'radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, rgba(168, 85, 247, 0.2) 50%, transparent 70%)',
               ],
             }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
           {/* Icon container */}
-          <motion.div 
+          <motion.div
             className="relative w-full h-full rounded-3xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 
                       border border-white/10 flex items-center justify-center backdrop-blur-sm"
             animate={{
@@ -1511,18 +1503,20 @@ const EmptyState = memo(({ isThinking }) => (
             }}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            <motion.span 
+            <motion.span
               className="text-5xl"
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
                 rotate: [0, 5, -5, 0],
               }}
               transition={{ duration: 4, repeat: Infinity }}
-            >✨</motion.span>
+            >
+              ✨
+            </motion.span>
           </motion.div>
         </div>
-        
-        <motion.h2 
+
+        <motion.h2
           className="text-3xl font-bold text-white mb-4"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1530,18 +1524,18 @@ const EmptyState = memo(({ isThinking }) => (
         >
           What are we building?
         </motion.h2>
-        <motion.p 
+        <motion.p
           className="text-gray-400 mb-10 text-lg leading-relaxed"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          Describe your idea and TooLoo will explore it across multiple dimensions,
-          giving you different perspectives to consider and refine.
+          Describe your idea and TooLoo will explore it across multiple dimensions, giving you
+          different perspectives to consider and refine.
         </motion.p>
-        
+
         {/* Dimension pills with staggered animation */}
-        <motion.div 
+        <motion.div
           className="flex justify-center gap-3 flex-wrap"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1550,13 +1544,13 @@ const EmptyState = memo(({ isThinking }) => (
           {['design', 'technical', 'user', 'business', 'ethical'].map((dim, i) => {
             const cfg = DIMENSION_CONFIGS[dim];
             return (
-              <motion.div 
+              <motion.div
                 key={dim}
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.5 + i * 0.1 }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl border"
-                style={{ 
+                style={{
                   backgroundColor: `${cfg.color}08`,
                   borderColor: `${cfg.color}20`,
                 }}
@@ -1578,154 +1572,168 @@ EmptyState.displayName = 'EmptyState';
 // COLLECTED SIDEBAR - Clean, professional design
 // ============================================================================
 
-const CollectedSidebar = memo(({ 
-  collected, 
-  onBuild, 
-  onNextIteration, 
-  onSummarize, 
-  onExport, 
-  onCompare,
-  onMergeAndSynthesize,
-  onAdvice,
-  isProcessing 
-}) => {
-  if (collected.length === 0) return null;
+const CollectedSidebar = memo(
+  ({
+    collected,
+    onBuild,
+    onNextIteration,
+    onSummarize,
+    onExport,
+    onCompare,
+    onMergeAndSynthesize,
+    onAdvice,
+    isProcessing,
+  }) => {
+    if (collected.length === 0) return null;
 
-  return (
-    <motion.aside
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="fixed right-6 top-24 bottom-24 w-72 z-40"
-    >
-      <div className="h-full bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 flex flex-col overflow-hidden">
-        {/* Header - simple */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white">Collected</h3>
-              <p className="text-xs text-gray-500">{collected.length} artifact{collected.length !== 1 ? 's' : ''} ready</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Items - simplified */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          {collected.map((item, i) => {
-            const cfg = DIMENSION_CONFIGS[item.dimension] || DIMENSION_CONFIGS.technical;
-            return (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50 hover:bg-gray-800/80 transition-colors cursor-pointer"
-              >
-                <div 
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: cfg.color }}
-                />
-                <span className="text-sm text-white truncate flex-1">{item.title}</span>
-                <span className="text-xs text-gray-500">{cfg.label}</span>
+    return (
+      <motion.aside
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="fixed right-6 top-24 bottom-24 w-72 z-40"
+      >
+        <div className="h-full bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 flex flex-col overflow-hidden">
+          {/* Header - simple */}
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                <svg
+                  className="w-5 h-5 text-emerald-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Proactive Advisor */}
-        <div className="px-3 py-2 border-t border-gray-800">
-          <TooLooProactiveAdvisor 
-            collected={collected} 
-            onAdvice={onAdvice}
-            isProcessing={isProcessing}
-          />
-        </div>
-
-        {/* Action buttons - clean grid */}
-        <div className="p-3 border-t border-gray-800 space-y-2">
-          {/* Quick actions row */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={onNextIteration}
-              disabled={isProcessing}
-              className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
-                       border border-gray-700 text-gray-300 text-xs font-medium 
-                       transition-colors flex items-center justify-center gap-1.5
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>↻</span>
-              Next Iteration
-            </button>
-            <button
-              onClick={onSummarize}
-              disabled={isProcessing}
-              className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
-                       border border-gray-700 text-gray-300 text-xs font-medium 
-                       transition-colors flex items-center justify-center gap-1.5
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>≡</span>
-              Summarize
-            </button>
+              <div>
+                <h3 className="text-base font-semibold text-white">Collected</h3>
+                <p className="text-xs text-gray-500">
+                  {collected.length} artifact{collected.length !== 1 ? 's' : ''} ready
+                </p>
+              </div>
+            </div>
           </div>
-          
-          {/* Secondary actions row */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={onCompare}
-              disabled={isProcessing || collected.length < 2}
-              className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
+
+          {/* Items - simplified */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            {collected.map((item, i) => {
+              const cfg = DIMENSION_CONFIGS[item.dimension] || DIMENSION_CONFIGS.technical;
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50 hover:bg-gray-800/80 transition-colors cursor-pointer"
+                >
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: cfg.color }}
+                  />
+                  <span className="text-sm text-white truncate flex-1">{item.title}</span>
+                  <span className="text-xs text-gray-500">{cfg.label}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Proactive Advisor */}
+          <div className="px-3 py-2 border-t border-gray-800">
+            <TooLooProactiveAdvisor
+              collected={collected}
+              onAdvice={onAdvice}
+              isProcessing={isProcessing}
+            />
+          </div>
+
+          {/* Action buttons - clean grid */}
+          <div className="p-3 border-t border-gray-800 space-y-2">
+            {/* Quick actions row */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={onNextIteration}
+                disabled={isProcessing}
+                className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
                        border border-gray-700 text-gray-300 text-xs font-medium 
                        transition-colors flex items-center justify-center gap-1.5
                        disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>↔</span>
-              Compare
-            </button>
-            <button
-              onClick={onExport}
-              className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
+              >
+                <span>↻</span>
+                Next Iteration
+              </button>
+              <button
+                onClick={onSummarize}
+                disabled={isProcessing}
+                className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
+                       border border-gray-700 text-gray-300 text-xs font-medium 
+                       transition-colors flex items-center justify-center gap-1.5
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span>≡</span>
+                Summarize
+              </button>
+            </div>
+
+            {/* Secondary actions row */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={onCompare}
+                disabled={isProcessing || collected.length < 2}
+                className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
+                       border border-gray-700 text-gray-300 text-xs font-medium 
+                       transition-colors flex items-center justify-center gap-1.5
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span>↔</span>
+                Compare
+              </button>
+              <button
+                onClick={onExport}
+                className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
                        border border-gray-700 text-gray-300 text-xs font-medium 
                        transition-colors flex items-center justify-center gap-1.5"
-            >
-              <span>↓</span>
-              Export
-            </button>
-          </div>
+              >
+                <span>↓</span>
+                Export
+              </button>
+            </div>
 
-          {/* Merge & Synthesize - clean button */}
-          <button
-            onClick={onMergeAndSynthesize}
-            disabled={isProcessing || collected.length < 2}
-            className="w-full px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
+            {/* Merge & Synthesize - clean button */}
+            <button
+              onClick={onMergeAndSynthesize}
+              disabled={isProcessing || collected.length < 2}
+              className="w-full px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 
                      border border-gray-700 text-gray-300 text-xs font-medium 
                      transition-colors flex items-center justify-center gap-1.5
                      disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>✨</span>
-            <span>Merge & Synthesize</span>
-          </button>
+            >
+              <span>✨</span>
+              <span>Merge & Synthesize</span>
+            </button>
 
-          {/* Build button - prominent but not flashy */}
-          {collected.length >= 2 && (
-            <button
-              onClick={onBuild}
-              disabled={isProcessing}
-              className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 
+            {/* Build button - prominent but not flashy */}
+            {collected.length >= 2 && (
+              <button
+                onClick={onBuild}
+                disabled={isProcessing}
+                className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 
                        text-white font-medium text-sm transition-colors 
                        flex items-center justify-center gap-2 mt-2
                        disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>🔨</span>
-              <span>Start Building</span>
-            </button>
-          )}
+              >
+                <span>🔨</span>
+                <span>Start Building</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-    </motion.aside>
-  );
-});
+      </motion.aside>
+    );
+  }
+);
 
 CollectedSidebar.displayName = 'CollectedSidebar';
 
@@ -1746,7 +1754,7 @@ const TooLooSpaceV4 = memo(() => {
   const [selectedApproach, setSelectedApproach] = useState(null);
   const [systemCapabilities, setSystemCapabilities] = useState(null);
   const [capabilityStatus, setCapabilityStatus] = useState({});
-  
+
   // Thinking state for rich process visualization
   const [thinkingState, setThinkingState] = useState({
     stage: 'initializing',
@@ -1760,7 +1768,7 @@ const TooLooSpaceV4 = memo(() => {
     visualType: null,
     events: [],
   });
-  
+
   // Reset thinking state
   const resetThinkingState = useCallback(() => {
     setThinkingState({
@@ -1776,11 +1784,11 @@ const TooLooSpaceV4 = memo(() => {
       events: [],
     });
   }, []);
-  
+
   // Update thinking state from SSE events
   const handleThinkingEvent = useCallback((data) => {
     if (data.meta) {
-      setThinkingState(prev => ({
+      setThinkingState((prev) => ({
         ...prev,
         persona: data.meta.persona,
         visualEnabled: data.meta.visualEnabled,
@@ -1789,22 +1797,25 @@ const TooLooSpaceV4 = memo(() => {
     }
     if (data.routing) {
       // V3.3.318: Capture routing decision from backend
-      setThinkingState(prev => ({
+      setThinkingState((prev) => ({
         ...prev,
         routingStrategy: data.routing.strategy,
         selectedProviders: data.routing.selectedProviders,
         complexity: data.routing.complexity,
         provider: data.routing.selectedProviders?.[0] || prev.provider,
-        events: [...prev.events.slice(-10), {
-          stage: 'routing',
-          message: data.routing.reasoning,
-          type: 'info',
-          timestamp: Date.now(),
-        }],
+        events: [
+          ...prev.events.slice(-10),
+          {
+            stage: 'routing',
+            message: data.routing.reasoning,
+            type: 'info',
+            timestamp: Date.now(),
+          },
+        ],
       }));
     }
     if (data.thinking) {
-      setThinkingState(prev => ({
+      setThinkingState((prev) => ({
         ...prev,
         stage: data.thinking.stage,
         events: [...prev.events.slice(-10), data.thinking],
@@ -1813,7 +1824,7 @@ const TooLooSpaceV4 = memo(() => {
       if (data.thinking.message?.includes('⚡')) {
         const providerMatch = data.thinking.message.match(/⚡\s*(\w+)/);
         if (providerMatch) {
-          setThinkingState(prev => ({
+          setThinkingState((prev) => ({
             ...prev,
             provider: providerMatch[1],
             selectedProviders: [providerMatch[1]],
@@ -1822,14 +1833,14 @@ const TooLooSpaceV4 = memo(() => {
       }
     }
     if (data.visualEnhanced) {
-      setThinkingState(prev => ({
+      setThinkingState((prev) => ({
         ...prev,
         visualEnabled: true,
         visualType: data.visualType,
       }));
     }
     if (data.done) {
-      setThinkingState(prev => ({
+      setThinkingState((prev) => ({
         ...prev,
         stage: 'complete',
         provider: data.provider,
@@ -1848,11 +1859,11 @@ const TooLooSpaceV4 = memo(() => {
           fetch(`${API_BASE}/capabilities/status`).catch(() => null),
           fetch(`${API_BASE}/visuals/v2/status`).catch(() => null),
         ]);
-        
+
         const health = healthRes?.ok ? await healthRes.json() : null;
         const capabilities = capabilitiesRes?.ok ? await capabilitiesRes.json() : null;
         const visual = visualRes?.ok ? await visualRes.json() : null;
-        
+
         // Build real status from API responses
         const status = {
           visuals: visual?.ok ? 'active' : 'ready',
@@ -1862,35 +1873,37 @@ const TooLooSpaceV4 = memo(() => {
           code: health?.ok ? 'active' : 'ready',
           exploration: capabilities?.ok ? 'active' : 'ready',
         };
-        
+
         setCapabilityStatus(status);
-        
+
         // Enhance capabilities with live status
-        const enhancedCapabilities = TOOLOO_CAPABILITIES.map(cap => ({
+        const enhancedCapabilities = TOOLOO_CAPABILITIES.map((cap) => ({
           ...cap,
           status: status[cap.id] || 'ready',
           live: true,
         }));
-        
+
         setSystemCapabilities(enhancedCapabilities);
       } catch (error) {
         console.log('Using default capabilities');
-        setSystemCapabilities(TOOLOO_CAPABILITIES.map(cap => ({ ...cap, status: 'ready', live: true })));
+        setSystemCapabilities(
+          TOOLOO_CAPABILITIES.map((cap) => ({ ...cap, status: 'ready', live: true }))
+        );
       }
     };
-    
+
     fetchCapabilities();
   }, []);
 
   // Get dimensions that have cards
   const activeDimensions = useMemo(() => {
-    return [...new Set(cards.map(c => c.dimension))];
+    return [...new Set(cards.map((c) => c.dimension))];
   }, [cards]);
 
   // Handle initial prompt submission - goes to explore phase
   const handleSubmit = useCallback(async ({ message }) => {
     if (!message.trim()) return;
-    
+
     setPrompt(message);
     setPhase('explore'); // Go to exploration phase first
 
@@ -1912,25 +1925,113 @@ const TooLooSpaceV4 = memo(() => {
   }, []);
 
   // Handle capability selection from explore phase - REAL API CALLS
-  const handleApproachSelect = useCallback(async (approach) => {
-    setSelectedApproach(approach);
-    setIsThinking(true);
-    setPhase('options');
-    resetThinkingState(); // Reset thinking state for new request
+  const handleApproachSelect = useCallback(
+    async (approach) => {
+      setSelectedApproach(approach);
+      setIsThinking(true);
+      setPhase('options');
+      resetThinkingState(); // Reset thinking state for new request
 
-    // Skip means show all options with default exploration
-    if (approach.id === 'skip') {
+      // Skip means show all options with default exploration
+      if (approach.id === 'skip') {
+        try {
+          // Real multi-dimension exploration via chat API
+          const response = await fetch(`${API_BASE}/chat/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `Analyze this from multiple perspectives: "${prompt}". Provide concrete options for: 1) Design approaches 2) Technical implementation 3) User experience. Format each as a distinct recommendation.`,
+              mode: 'deep',
+              sessionId: session?.id || 'default',
+              context: { route: 'explore-all', originalPrompt: prompt },
+            }),
+          });
+
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let fullContent = '';
+
+          while (reader) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
+            for (const line of lines) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                // Capture thinking/meta/routing events for process display
+                if (
+                  data.meta ||
+                  data.thinking ||
+                  data.routing ||
+                  data.done ||
+                  data.visualEnhanced
+                ) {
+                  handleThinkingEvent(data);
+                }
+                if (data.chunk) fullContent += data.chunk;
+              } catch {}
+            }
+          }
+
+          // Parse response into cards
+          const realCards = parseResponseIntoCards(fullContent, prompt);
+          setCards(realCards);
+        } catch (error) {
+          console.error('Exploration failed:', error);
+          // Fallback to generated cards if API fails
+          const newCards = generateCards(prompt, approach);
+          setCards(newCards);
+        }
+        setIsThinking(false);
+        return;
+      }
+
+      // Capability-specific API calls
       try {
-        // Real multi-dimension exploration via chat API
-        const response = await fetch(`${API_BASE}/chat/stream`, {
+        let apiPrompt = prompt;
+        let apiEndpoint = `${API_BASE}/chat/stream`;
+        let requestBody = {};
+
+        // Configure request based on capability
+        switch (approach.id) {
+          case 'visuals':
+            apiPrompt = `Create visual representations for: "${prompt}". Generate: 1) Conceptual diagram 2) UI mockup idea 3) Infographic concept. Include SVG specifications where helpful.`;
+            break;
+          case 'diagrams':
+            apiPrompt = `Create diagrams and charts for: "${prompt}". Provide: 1) Architecture diagram 2) Flow chart 3) Data visualization concept. Include chart data structures.`;
+            break;
+          case 'analytics':
+            apiPrompt = `Provide deep analytics and insights for: "${prompt}". Include: 1) Key metrics to track 2) Pattern analysis 3) Predictive insights 4) Data-driven recommendations.`;
+            break;
+          case 'summarization':
+            apiPrompt = `Provide comprehensive summarization of: "${prompt}". Create: 1) Executive summary 2) Key points extraction 3) Action items 4) Critical insights.`;
+            break;
+          case 'code':
+            apiPrompt = `Generate code solutions for: "${prompt}". Provide: 1) Clean implementation 2) Alternative approach 3) Optimized version. Include TypeScript/JavaScript examples.`;
+            break;
+          case 'exploration':
+            apiPrompt = `Deeply explore this concept: "${prompt}". Analyze from: 1) Multiple perspectives 2) Creative angles 3) Unconventional approaches 4) Future possibilities.`;
+            break;
+          default:
+            apiPrompt = `Explore this comprehensively: "${prompt}"`;
+        }
+
+        requestBody = {
+          message: apiPrompt,
+          mode: 'deep',
+          sessionId: session?.id || 'default',
+          context: {
+            route: approach.id,
+            capability: approach.module,
+            originalPrompt: prompt,
+          },
+        };
+
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `Analyze this from multiple perspectives: "${prompt}". Provide concrete options for: 1) Design approaches 2) Technical implementation 3) User experience. Format each as a distinct recommendation.`,
-            mode: 'deep',
-            sessionId: session?.id || 'default',
-            context: { route: 'explore-all', originalPrompt: prompt },
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         const reader = response.body?.getReader();
@@ -1941,7 +2042,7 @@ const TooLooSpaceV4 = memo(() => {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+          const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
           for (const line of lines) {
             try {
               const data = JSON.parse(line.slice(6));
@@ -1954,226 +2055,162 @@ const TooLooSpaceV4 = memo(() => {
           }
         }
 
-        // Parse response into cards
-        const realCards = parseResponseIntoCards(fullContent, prompt);
+        // Parse real response into cards
+        const realCards = parseResponseIntoCards(fullContent, prompt, approach.id);
         setCards(realCards);
       } catch (error) {
-        console.error('Exploration failed:', error);
-        // Fallback to generated cards if API fails
+        console.error('Capability API call failed:', error);
+        // Fallback to generated cards
         const newCards = generateCards(prompt, approach);
         setCards(newCards);
       }
+
       setIsThinking(false);
-      return;
-    }
-
-    // Capability-specific API calls
-    try {
-      let apiPrompt = prompt;
-      let apiEndpoint = `${API_BASE}/chat/stream`;
-      let requestBody = {};
-
-      // Configure request based on capability
-      switch (approach.id) {
-        case 'visuals':
-          apiPrompt = `Create visual representations for: "${prompt}". Generate: 1) Conceptual diagram 2) UI mockup idea 3) Infographic concept. Include SVG specifications where helpful.`;
-          break;
-        case 'diagrams':
-          apiPrompt = `Create diagrams and charts for: "${prompt}". Provide: 1) Architecture diagram 2) Flow chart 3) Data visualization concept. Include chart data structures.`;
-          break;
-        case 'analytics':
-          apiPrompt = `Provide deep analytics and insights for: "${prompt}". Include: 1) Key metrics to track 2) Pattern analysis 3) Predictive insights 4) Data-driven recommendations.`;
-          break;
-        case 'summarization':
-          apiPrompt = `Provide comprehensive summarization of: "${prompt}". Create: 1) Executive summary 2) Key points extraction 3) Action items 4) Critical insights.`;
-          break;
-        case 'code':
-          apiPrompt = `Generate code solutions for: "${prompt}". Provide: 1) Clean implementation 2) Alternative approach 3) Optimized version. Include TypeScript/JavaScript examples.`;
-          break;
-        case 'exploration':
-          apiPrompt = `Deeply explore this concept: "${prompt}". Analyze from: 1) Multiple perspectives 2) Creative angles 3) Unconventional approaches 4) Future possibilities.`;
-          break;
-        default:
-          apiPrompt = `Explore this comprehensively: "${prompt}"`;
-      }
-
-      requestBody = {
-        message: apiPrompt,
-        mode: 'deep',
-        sessionId: session?.id || 'default',
-        context: { 
-          route: approach.id,
-          capability: approach.module,
-          originalPrompt: prompt,
-        },
-      };
-
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-        for (const line of lines) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            // Capture thinking/meta/routing events for process display
-            if (data.meta || data.thinking || data.routing || data.done || data.visualEnhanced) {
-              handleThinkingEvent(data);
-            }
-            if (data.chunk) fullContent += data.chunk;
-          } catch {}
-        }
-      }
-
-      // Parse real response into cards
-      const realCards = parseResponseIntoCards(fullContent, prompt, approach.id);
-      setCards(realCards);
-
-    } catch (error) {
-      console.error('Capability API call failed:', error);
-      // Fallback to generated cards
-      const newCards = generateCards(prompt, approach);
-      setCards(newCards);
-    }
-    
-    setIsThinking(false);
-  }, [prompt, session, resetThinkingState, handleThinkingEvent]);
+    },
+    [prompt, session, resetThinkingState, handleThinkingEvent]
+  );
 
   // Handle chat with a specific card
-  const handleChat = useCallback(async (cardId, message) => {
-    const card = cards.find(c => c.id === cardId);
-    if (!card) return;
+  const handleChat = useCallback(
+    async (cardId, message) => {
+      const card = cards.find((c) => c.id === cardId);
+      if (!card) return;
 
-    setProcessingCardId(cardId);
-    setStreamingContent('');
-
-    // Add user message immediately
-    setCards(prev => prev.map(c => {
-      if (c.id === cardId) {
-        return {
-          ...c,
-          refinements: [...(c.refinements || []), { role: 'user', content: message }],
-        };
-      }
-      return c;
-    }));
-
-    const config = DIMENSION_CONFIGS[card.dimension] || DIMENSION_CONFIGS.technical;
-
-    try {
-      const response = await fetch(`${API_BASE}/chat/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          mode: 'quick',
-          sessionId: session?.id || 'default',
-          context: {
-            route: 'refinement',
-            cardId,
-            cardTitle: card.title,
-            cardDescription: card.description,
-            dimension: card.dimension,
-            systemPrompt: config.systemPrompt,
-          },
-        }),
-      });
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
-
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-
-        for (const line of lines) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.chunk) {
-              fullContent += data.chunk;
-              setStreamingContent(fullContent);
-            }
-          } catch {}
-        }
-      }
-
-      // Finalize message
-      setCards(prev => prev.map(c => {
-        if (c.id === cardId) {
-          return {
-            ...c,
-            confidence: Math.min(0.98, c.confidence + 0.03),
-            refinements: [
-              ...(c.refinements || []),
-              { role: 'assistant', content: fullContent || 'I understand. Let me refine this approach.' },
-            ],
-          };
-        }
-        return c;
-      }));
-
-      if (phase === 'exploration') setPhase('refinement');
-
-    } catch (error) {
-      console.error('Chat failed:', error);
-    } finally {
-      setProcessingCardId(null);
+      setProcessingCardId(cardId);
       setStreamingContent('');
-    }
-  }, [cards, session, phase]);
+
+      // Add user message immediately
+      setCards((prev) =>
+        prev.map((c) => {
+          if (c.id === cardId) {
+            return {
+              ...c,
+              refinements: [...(c.refinements || []), { role: 'user', content: message }],
+            };
+          }
+          return c;
+        })
+      );
+
+      const config = DIMENSION_CONFIGS[card.dimension] || DIMENSION_CONFIGS.technical;
+
+      try {
+        const response = await fetch(`${API_BASE}/chat/stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            mode: 'quick',
+            sessionId: session?.id || 'default',
+            context: {
+              route: 'refinement',
+              cardId,
+              cardTitle: card.title,
+              cardDescription: card.description,
+              dimension: card.dimension,
+              systemPrompt: config.systemPrompt,
+            },
+          }),
+        });
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        while (reader) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
+
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.chunk) {
+                fullContent += data.chunk;
+                setStreamingContent(fullContent);
+              }
+            } catch {}
+          }
+        }
+
+        // Finalize message
+        setCards((prev) =>
+          prev.map((c) => {
+            if (c.id === cardId) {
+              return {
+                ...c,
+                confidence: Math.min(0.98, c.confidence + 0.03),
+                refinements: [
+                  ...(c.refinements || []),
+                  {
+                    role: 'assistant',
+                    content: fullContent || 'I understand. Let me refine this approach.',
+                  },
+                ],
+              };
+            }
+            return c;
+          })
+        );
+
+        if (phase === 'exploration') setPhase('refinement');
+      } catch (error) {
+        console.error('Chat failed:', error);
+      } finally {
+        setProcessingCardId(null);
+        setStreamingContent('');
+      }
+    },
+    [cards, session, phase]
+  );
 
   // Handle collect
-  const handleCollect = useCallback(async (cardId) => {
-    const card = cards.find(c => c.id === cardId);
-    if (!card || card.collected) return;
+  const handleCollect = useCallback(
+    async (cardId) => {
+      const card = cards.find((c) => c.id === cardId);
+      if (!card || card.collected) return;
 
-    try {
-      const response = await fetch(`${API_BASE}/agent/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: card.title,
-          type: card.dimension === 'design' ? 'component' : 'code',
-          content: card.content || JSON.stringify(card, null, 2),
-          metadata: {
-            dimension: card.dimension,
-            confidence: card.confidence,
-            sessionId: session?.id,
-          },
-        }),
-      });
+      try {
+        const response = await fetch(`${API_BASE}/agent/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: card.title,
+            type: card.dimension === 'design' ? 'component' : 'code',
+            content: card.content || JSON.stringify(card, null, 2),
+            metadata: {
+              dimension: card.dimension,
+              confidence: card.confidence,
+              sessionId: session?.id,
+            },
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      setCards(prev => prev.map(c => 
-        c.id === cardId ? { ...c, collected: true, artifactId: data.artifact?.id } : c
-      ));
+        setCards((prev) =>
+          prev.map((c) =>
+            c.id === cardId ? { ...c, collected: true, artifactId: data.artifact?.id } : c
+          )
+        );
 
-      setCollected(prev => [...prev, { ...card, collected: true }]);
-
-    } catch (error) {
-      console.error('Collect failed:', error);
-    }
-  }, [cards, session]);
+        setCollected((prev) => [...prev, { ...card, collected: true }]);
+      } catch (error) {
+        console.error('Collect failed:', error);
+      }
+    },
+    [cards, session]
+  );
 
   // Handle expand card
-  const handleExpand = useCallback((cardId) => {
-    setExpandedCard(cardId === expandedCard ? null : cardId);
-  }, [expandedCard]);
+  const handleExpand = useCallback(
+    (cardId) => {
+      setExpandedCard(cardId === expandedCard ? null : cardId);
+    },
+    [expandedCard]
+  );
 
   // Handle build
   const handleBuild = useCallback(() => {
@@ -2186,9 +2223,9 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleValidate = useCallback(async () => {
     if (!prompt.trim() || isThinking) return;
-    
+
     setIsThinking(true);
-    
+
     try {
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
@@ -2200,16 +2237,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'validate', originalPrompt: prompt },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2217,7 +2254,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       // Add validation as a new card
       if (fullContent) {
         const validationCard = {
@@ -2232,7 +2269,7 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: false,
         };
-        setCards(prev => [validationCard, ...prev]);
+        setCards((prev) => [validationCard, ...prev]);
         if (phase === 'discovery' || phase === 'explore') setPhase('options');
       }
     } catch (error) {
@@ -2244,9 +2281,9 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleOptimize = useCallback(async () => {
     if (!prompt.trim() || isThinking) return;
-    
+
     setIsThinking(true);
-    
+
     try {
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
@@ -2258,16 +2295,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'optimize', originalPrompt: prompt },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2275,7 +2312,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       if (fullContent) {
         const optimizeCard = {
           id: `optimize-${Date.now()}`,
@@ -2289,7 +2326,7 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: false,
         };
-        setCards(prev => [optimizeCard, ...prev]);
+        setCards((prev) => [optimizeCard, ...prev]);
         if (phase === 'discovery' || phase === 'explore') setPhase('options');
       }
     } catch (error) {
@@ -2301,9 +2338,9 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleExpandIdea = useCallback(async () => {
     if (!prompt.trim() || isThinking) return;
-    
+
     setIsThinking(true);
-    
+
     try {
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
@@ -2315,16 +2352,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'expand', originalPrompt: prompt },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2332,7 +2369,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       if (fullContent) {
         const expandCard = {
           id: `expand-${Date.now()}`,
@@ -2346,7 +2383,7 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: false,
         };
-        setCards(prev => [expandCard, ...prev]);
+        setCards((prev) => [expandCard, ...prev]);
         if (phase === 'discovery' || phase === 'explore') setPhase('options');
       }
     } catch (error) {
@@ -2358,9 +2395,9 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleChallenge = useCallback(async () => {
     if (!prompt.trim() || isThinking) return;
-    
+
     setIsThinking(true);
-    
+
     try {
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
@@ -2372,16 +2409,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'challenge', originalPrompt: prompt },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2389,7 +2426,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       if (fullContent) {
         const challengeCard = {
           id: `challenge-${Date.now()}`,
@@ -2403,7 +2440,7 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: false,
         };
-        setCards(prev => [challengeCard, ...prev]);
+        setCards((prev) => [challengeCard, ...prev]);
         if (phase === 'discovery' || phase === 'explore') setPhase('options');
       }
     } catch (error) {
@@ -2419,10 +2456,10 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleNextIteration = useCallback(async () => {
     if (collected.length === 0) return;
-    
+
     setIsThinking(true);
-    const collectedTitles = collected.map(c => c.title).join(', ');
-    
+    const collectedTitles = collected.map((c) => c.title).join(', ');
+
     try {
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
@@ -2431,19 +2468,22 @@ const TooLooSpaceV4 = memo(() => {
           message: `Based on these collected artifacts: [${collectedTitles}], generate the next iteration of ideas. Build upon these foundations with: 1) Enhanced versions 2) Combinations 3) New directions. Original concept: "${prompt}"`,
           mode: 'deep',
           sessionId: session?.id || 'default',
-          context: { route: 'iterate', collected: collected.map(c => ({ title: c.title, dimension: c.dimension })) },
+          context: {
+            route: 'iterate',
+            collected: collected.map((c) => ({ title: c.title, dimension: c.dimension })),
+          },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2451,11 +2491,13 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       // Generate new cards based on iteration
-      const newCards = generateCards(prompt + ' (iteration based on: ' + collectedTitles + ')', selectedApproach);
-      setCards(prev => [...newCards, ...prev]);
-      
+      const newCards = generateCards(
+        prompt + ' (iteration based on: ' + collectedTitles + ')',
+        selectedApproach
+      );
+      setCards((prev) => [...newCards, ...prev]);
     } catch (error) {
       console.error('Next iteration failed:', error);
     } finally {
@@ -2465,17 +2507,17 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleSummarize = useCallback(async () => {
     if (collected.length === 0) return;
-    
+
     setIsThinking(true);
-    
+
     try {
-      const collectedData = collected.map(c => ({
+      const collectedData = collected.map((c) => ({
         title: c.title,
         dimension: c.dimension,
         description: c.description,
         direction: c.direction,
       }));
-      
+
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2486,16 +2528,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'summarize', collected: collectedData },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2503,7 +2545,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       if (fullContent) {
         const summaryCard = {
           id: `summary-${Date.now()}`,
@@ -2517,7 +2559,7 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: false,
         };
-        setCards(prev => [summaryCard, ...prev]);
+        setCards((prev) => [summaryCard, ...prev]);
       }
     } catch (error) {
       console.error('Summarize failed:', error);
@@ -2528,16 +2570,16 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleCompare = useCallback(async () => {
     if (collected.length < 2) return;
-    
+
     setIsThinking(true);
-    
+
     try {
-      const collectedData = collected.map(c => ({
+      const collectedData = collected.map((c) => ({
         title: c.title,
         dimension: c.dimension,
         description: c.description,
       }));
-      
+
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2548,16 +2590,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'compare', collected: collectedData },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2565,7 +2607,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       if (fullContent) {
         const compareCard = {
           id: `compare-${Date.now()}`,
@@ -2579,7 +2621,7 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: false,
         };
-        setCards(prev => [compareCard, ...prev]);
+        setCards((prev) => [compareCard, ...prev]);
       }
     } catch (error) {
       console.error('Compare failed:', error);
@@ -2591,7 +2633,7 @@ const TooLooSpaceV4 = memo(() => {
   const handleExport = useCallback(() => {
     const exportData = {
       session: { id: session?.id, prompt, phase },
-      collected: collected.map(c => ({
+      collected: collected.map((c) => ({
         title: c.title,
         dimension: c.dimension,
         description: c.description,
@@ -2612,17 +2654,17 @@ const TooLooSpaceV4 = memo(() => {
 
   const handleMergeAndSynthesize = useCallback(async () => {
     if (collected.length < 2) return;
-    
+
     setIsThinking(true);
     setPhase('build');
-    
+
     try {
-      const collectedData = collected.map(c => ({
+      const collectedData = collected.map((c) => ({
         title: c.title,
         dimension: c.dimension,
         content: c.content || c.description,
       }));
-      
+
       const response = await fetch(`${API_BASE}/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2633,16 +2675,16 @@ const TooLooSpaceV4 = memo(() => {
           context: { route: 'synthesize', collected: collectedData },
         }),
       });
-      
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
-      
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
         for (const line of lines) {
           try {
             const data = JSON.parse(line.slice(6));
@@ -2650,7 +2692,7 @@ const TooLooSpaceV4 = memo(() => {
           } catch {}
         }
       }
-      
+
       if (fullContent) {
         const synthesisCard = {
           id: `synthesis-${Date.now()}`,
@@ -2664,8 +2706,8 @@ const TooLooSpaceV4 = memo(() => {
           refinements: [{ role: 'assistant', content: fullContent }],
           collected: true, // Auto-collect the synthesis
         };
-        setCards(prev => [synthesisCard, ...prev]);
-        setCollected(prev => [synthesisCard, ...prev]);
+        setCards((prev) => [synthesisCard, ...prev]);
+        setCollected((prev) => [synthesisCard, ...prev]);
       }
     } catch (error) {
       console.error('Merge & Synthesize failed:', error);
@@ -2675,74 +2717,82 @@ const TooLooSpaceV4 = memo(() => {
   }, [collected, session]);
 
   // Proactive advisor action handler
-  const handleAdvice = useCallback(async ({ mode, collected: collectedItems }) => {
-    setIsThinking(true);
-    
-    const modePrompts = {
-      synthesize: 'Synthesize these collected insights into a unified strategy with clear next steps:',
-      priorities: 'Analyze these items and identify the highest-impact priorities, ranking them by value:',
-      gaps: 'Analyze this collection and identify what\'s missing - what perspectives or aspects haven\'t been explored:',
-      conflicts: 'Identify any contradictions or conflicts between these items and suggest resolutions:',
-      roadmap: 'Create a step-by-step implementation roadmap from these items, with dependencies and timeline:',
-    };
-    
-    try {
-      const response = await fetch(`${API_BASE}/chat/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `${modePrompts[mode] || modePrompts.synthesize} ${JSON.stringify(collectedItems)}`,
-          mode: 'deep',
-          sessionId: session?.id || 'default',
-          context: { route: 'advisor', mode, items: collectedItems },
-        }),
-      });
-      
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = '';
-      
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-        for (const line of lines) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.chunk) fullContent += data.chunk;
-          } catch {}
-        }
-      }
-      
-      if (fullContent) {
-        const advisorCard = {
-          id: `advisor-${mode}-${Date.now()}`,
-          dimension: mode === 'priorities' ? 'strategic' : mode === 'roadmap' ? 'technical' : 'strategic',
-          title: `🔮 TooLoo ${mode.charAt(0).toUpperCase() + mode.slice(1)}`,
-          description: fullContent.slice(0, 200) + '...',
-          direction: 'Proactive insight from your collection',
-          content: fullContent,
-          confidence: 0.92,
-          source: 'api',
-          refinements: [{ role: 'assistant', content: fullContent }],
-        };
-        setCards(prev => [advisorCard, ...prev]);
-      }
-    } catch (error) {
-      console.error('Advisor action failed:', error);
-    } finally {
-      setIsThinking(false);
-    }
-  }, [session]);
+  const handleAdvice = useCallback(
+    async ({ mode, collected: collectedItems }) => {
+      setIsThinking(true);
 
-  const expandedCardData = expandedCard ? cards.find(c => c.id === expandedCard) : null;
+      const modePrompts = {
+        synthesize:
+          'Synthesize these collected insights into a unified strategy with clear next steps:',
+        priorities:
+          'Analyze these items and identify the highest-impact priorities, ranking them by value:',
+        gaps: "Analyze this collection and identify what's missing - what perspectives or aspects haven't been explored:",
+        conflicts:
+          'Identify any contradictions or conflicts between these items and suggest resolutions:',
+        roadmap:
+          'Create a step-by-step implementation roadmap from these items, with dependencies and timeline:',
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/chat/stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `${modePrompts[mode] || modePrompts.synthesize} ${JSON.stringify(collectedItems)}`,
+            mode: 'deep',
+            sessionId: session?.id || 'default',
+            context: { route: 'advisor', mode, items: collectedItems },
+          }),
+        });
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        while (reader) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.chunk) fullContent += data.chunk;
+            } catch {}
+          }
+        }
+
+        if (fullContent) {
+          const advisorCard = {
+            id: `advisor-${mode}-${Date.now()}`,
+            dimension:
+              mode === 'priorities' ? 'strategic' : mode === 'roadmap' ? 'technical' : 'strategic',
+            title: `🔮 TooLoo ${mode.charAt(0).toUpperCase() + mode.slice(1)}`,
+            description: fullContent.slice(0, 200) + '...',
+            direction: 'Proactive insight from your collection',
+            content: fullContent,
+            confidence: 0.92,
+            source: 'api',
+            refinements: [{ role: 'assistant', content: fullContent }],
+          };
+          setCards((prev) => [advisorCard, ...prev]);
+        }
+      } catch (error) {
+        console.error('Advisor action failed:', error);
+      } finally {
+        setIsThinking(false);
+      }
+    },
+    [session]
+  );
+
+  const expandedCardData = expandedCard ? cards.find((c) => c.id === expandedCard) : null;
 
   return (
     <div className="min-h-screen max-h-screen overflow-hidden bg-[#0a0a0f] text-white">
       {/* Background */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             backgroundImage: `radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
@@ -2760,13 +2810,14 @@ const TooLooSpaceV4 = memo(() => {
       />
 
       {/* Main content - scrollable container */}
-      <main className={`relative pt-20 pb-40 px-6 overflow-y-auto scroll-smooth ${collected.length > 0 ? 'pr-80' : ''}`} style={{ height: 'calc(100vh - 80px)' }}>
+      <main
+        className={`relative pt-20 pb-40 px-6 overflow-y-auto scroll-smooth ${collected.length > 0 ? 'pr-80' : ''}`}
+        style={{ height: 'calc(100vh - 80px)' }}
+      >
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {/* Phase 1: Discovery - Empty state with input */}
-            {phase === 'discovery' && (
-              <EmptyState key="empty" isThinking={false} />
-            )}
+            {phase === 'discovery' && <EmptyState key="empty" isThinking={false} />}
 
             {/* Phase 2: Explore - Choose TooLoo capability */}
             {phase === 'explore' && (
@@ -2788,21 +2839,27 @@ const TooLooSpaceV4 = memo(() => {
                 exit={{ opacity: 0 }}
               >
                 {isThinking ? (
-                  <TooLooThinkingProcess approach={selectedApproach} prompt={prompt} thinkingState={thinkingState} />
+                  <TooLooThinkingProcess
+                    approach={selectedApproach}
+                    prompt={prompt}
+                    thinkingState={thinkingState}
+                  />
                 ) : (
                   <div className="pt-2">
                     {/* Approach indicator - cleaner header */}
                     {selectedApproach && selectedApproach.id !== 'skip' && (
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-800/50">
                         <div className="flex items-center gap-4">
-                          <div 
+                          <div
                             className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
                             style={{ backgroundColor: `${selectedApproach.color}15` }}
                           >
                             {selectedApproach.icon}
                           </div>
                           <div>
-                            <h1 className="text-xl font-bold text-white">{selectedApproach.title}</h1>
+                            <h1 className="text-xl font-bold text-white">
+                              {selectedApproach.title}
+                            </h1>
                             <p className="text-sm text-gray-400">{selectedApproach.description}</p>
                           </div>
                         </div>
@@ -2815,28 +2872,40 @@ const TooLooSpaceV4 = memo(() => {
                           className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 
                                    rounded-lg transition-colors flex items-center gap-2"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
                           </svg>
                           Change
                         </button>
                       </div>
                     )}
-                    
+
                     {/* Results summary */}
                     <div className="flex items-center justify-between mb-6">
                       <p className="text-sm text-gray-400">
-                        Found <span className="text-white font-medium">{cards.length}</span> options across{' '}
-                        <span className="text-white font-medium">{activeDimensions.length}</span> dimensions
+                        Found <span className="text-white font-medium">{cards.length}</span> options
+                        across{' '}
+                        <span className="text-white font-medium">{activeDimensions.length}</span>{' '}
+                        dimensions
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span className="w-2 h-2 rounded-full bg-emerald-500" />
                         Click any card to explore details
                       </div>
                     </div>
-                    
+
                     {/* Dimension sections */}
-                    {activeDimensions.map(dimension => (
+                    {activeDimensions.map((dimension) => (
                       <DimensionSection
                         key={dimension}
                         dimension={dimension}
@@ -2857,8 +2926,8 @@ const TooLooSpaceV4 = memo(() => {
       </main>
 
       {/* Collected sidebar */}
-      <CollectedSidebar 
-        collected={collected} 
+      <CollectedSidebar
+        collected={collected}
         onBuild={handleBuild}
         onNextIteration={handleNextIteration}
         onSummarize={handleSummarize}
@@ -2874,8 +2943,8 @@ const TooLooSpaceV4 = memo(() => {
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 p-3 shadow-xl">
           {/* Inline TooLoo hint - compact */}
           <ToolooInlineHint phase={phase} isThinking={isThinking} />
-          
-          <form 
+
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               const input = e.target.elements.spaceInput;
@@ -2902,24 +2971,31 @@ const TooLooSpaceV4 = memo(() => {
                        bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isThinking ? (
-                <svg 
-                  className="w-4 h-4 animate-spin" 
-                  fill="none" 
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
               ) : (
                 <span>Think</span>
               )}
             </button>
           </form>
-        
+
           {/* Quick action chips - simplified */}
           <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-gray-800/50">
             <span className="text-[10px] text-gray-500 mr-0.5">Quick:</span>
-            <button 
+            <button
               type="button"
               onClick={handleValidate}
               disabled={isThinking || !prompt.trim()}
@@ -2929,7 +3005,7 @@ const TooLooSpaceV4 = memo(() => {
             >
               ✓ Validate
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleOptimize}
               disabled={isThinking || !prompt.trim()}
@@ -2939,7 +3015,7 @@ const TooLooSpaceV4 = memo(() => {
             >
               ⚙ Optimize
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleExpandIdea}
               disabled={isThinking || !prompt.trim()}
@@ -2949,7 +3025,7 @@ const TooLooSpaceV4 = memo(() => {
             >
               ↗ Expand
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleChallenge}
               disabled={isThinking || !prompt.trim()}
@@ -2988,7 +3064,7 @@ TooLooSpaceV4.displayName = 'TooLooSpaceV4';
 
 const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general') => {
   const cards = [];
-  
+
   // Map capability to dimension
   const capabilityToDimension = {
     visuals: 'design',
@@ -2999,51 +3075,75 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
     exploration: 'design',
     general: 'technical',
   };
-  
+
   const primaryDimension = capabilityToDimension[capabilityId] || 'technical';
-  
+
   // Split content into sections (look for numbered items, headers, or natural breaks)
-  const sections = content.split(/(?=\d+[\.\)]\s|#{1,3}\s|(?:\n\n)(?=[A-Z]))/g)
-    .map(s => s.trim())
-    .filter(s => s.length > 50); // Filter out very short sections
-  
+  const sections = content
+    .split(/(?=\d+[\.\)]\s|#{1,3}\s|(?:\n\n)(?=[A-Z]))/g)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 50); // Filter out very short sections
+
   if (sections.length === 0) {
     // If no clear sections, create a single card from the whole response
     sections.push(content);
   }
-  
+
   // Generate cards from sections
   const dimensions = ['design', 'technical', 'user', 'business', 'ethical'];
-  
+
   sections.slice(0, 6).forEach((section, index) => {
     // Extract title from section (first line or first sentence)
-    const firstLine = section.split('\n')[0].replace(/^[\d\.\)\#\*\-]+\s*/, '').trim();
+    const firstLine = section
+      .split('\n')[0]
+      .replace(/^[\d\.\)\#\*\-]+\s*/, '')
+      .trim();
     const title = firstLine.slice(0, 50) + (firstLine.length > 50 ? '...' : '');
-    
+
     // Extract description (next few lines)
     const lines = section.split('\n').slice(1).join(' ').trim();
     const description = lines.slice(0, 150) + (lines.length > 150 ? '...' : '');
-    
+
     // Assign dimension based on content keywords or cycle through
     let dimension = primaryDimension;
     const lowerSection = section.toLowerCase();
-    if (lowerSection.includes('design') || lowerSection.includes('visual') || lowerSection.includes('ui')) {
+    if (
+      lowerSection.includes('design') ||
+      lowerSection.includes('visual') ||
+      lowerSection.includes('ui')
+    ) {
       dimension = 'design';
-    } else if (lowerSection.includes('code') || lowerSection.includes('implement') || lowerSection.includes('technical')) {
+    } else if (
+      lowerSection.includes('code') ||
+      lowerSection.includes('implement') ||
+      lowerSection.includes('technical')
+    ) {
       dimension = 'technical';
-    } else if (lowerSection.includes('user') || lowerSection.includes('experience') || lowerSection.includes('workflow')) {
+    } else if (
+      lowerSection.includes('user') ||
+      lowerSection.includes('experience') ||
+      lowerSection.includes('workflow')
+    ) {
       dimension = 'user';
-    } else if (lowerSection.includes('business') || lowerSection.includes('revenue') || lowerSection.includes('market')) {
+    } else if (
+      lowerSection.includes('business') ||
+      lowerSection.includes('revenue') ||
+      lowerSection.includes('market')
+    ) {
       dimension = 'business';
-    } else if (lowerSection.includes('ethic') || lowerSection.includes('privacy') || lowerSection.includes('access')) {
+    } else if (
+      lowerSection.includes('ethic') ||
+      lowerSection.includes('privacy') ||
+      lowerSection.includes('access')
+    ) {
       dimension = 'ethical';
     } else {
       // Cycle through dimensions for variety
       dimension = dimensions[index % dimensions.length];
     }
-    
+
     const config = DIMENSION_CONFIGS[dimension];
-    
+
     cards.push({
       id: `real-${Date.now()}-${index}`,
       dimension,
@@ -3051,18 +3151,18 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
       description: description || `Analysis of "${originalPrompt}"`,
       direction: config?.suggestionPrefix || 'Explore this approach',
       toolooSuggestion: section.slice(0, 300),
-      confidence: 0.75 + Math.random() * 0.20, // Real response = high confidence
+      confidence: 0.75 + Math.random() * 0.2, // Real response = high confidence
       content: section,
       refinements: [{ role: 'assistant', content: section }],
       collected: false,
       source: 'api', // Mark as real data
     });
   });
-  
+
   // Ensure we have at least 3 cards
   if (cards.length < 3) {
     // Add synthetic cards from content analysis
-    const missingDimensions = dimensions.filter(d => !cards.some(c => c.dimension === d));
+    const missingDimensions = dimensions.filter((d) => !cards.some((c) => c.dimension === d));
     for (let i = cards.length; i < 3 && missingDimensions.length > 0; i++) {
       const dim = missingDimensions.shift();
       const config = DIMENSION_CONFIGS[dim];
@@ -3073,7 +3173,7 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
         description: `${config?.description || 'Additional analysis'} for "${originalPrompt.slice(0, 30)}..."`,
         direction: config?.suggestionPrefix || 'Consider this angle',
         toolooSuggestion: `Exploring ${dim} aspects of your concept...`,
-        confidence: 0.70,
+        confidence: 0.7,
         content: `// Analyzing ${dim} dimension for: ${originalPrompt}`,
         refinements: [],
         collected: false,
@@ -3081,7 +3181,7 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
       });
     }
   }
-  
+
   return cards;
 };
 
@@ -3091,11 +3191,11 @@ const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general
 
 const generateCards = (prompt, approach = null) => {
   const cards = [];
-  
+
   // Adjust dimensions based on approach
   let dimensions = ['design', 'technical', 'user'];
   let cardCount = 2; // Default cards per dimension
-  
+
   if (approach) {
     switch (approach.id) {
       // New capability-based IDs
@@ -3218,11 +3318,7 @@ const generateCards = (prompt, approach = null) => {
       'Localize for key markets.',
       'Automate repetitive tasks.',
     ],
-    ethical: [
-      'Minimize data collection.',
-      'Test with diverse users.',
-      'Choose green hosting.',
-    ],
+    ethical: ['Minimize data collection.', 'Test with diverse users.', 'Choose green hosting.'],
   };
 
   dimensions.forEach((dim, di) => {
@@ -3235,7 +3331,7 @@ const generateCards = (prompt, approach = null) => {
         description: descriptions[dim]?.[i] || `A ${dim} approach`,
         direction: directions[dim]?.[i] || `Explore ${dim}`,
         toolooSuggestion: toolooSuggestions[dim]?.[i],
-        confidence: 0.70 + Math.random() * 0.25,
+        confidence: 0.7 + Math.random() * 0.25,
         content: `// ${dim.toUpperCase()}: ${titles[dim]?.[i]}\n// ${prompt}`,
         refinements: [],
         collected: false,
