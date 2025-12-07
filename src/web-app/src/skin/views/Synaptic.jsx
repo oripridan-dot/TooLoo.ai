@@ -1,4 +1,4 @@
-// @version 3.3.202
+// @version 3.3.291
 // TooLoo.ai Synaptic View - Conversation & Neural Activity
 // FULLY WIRED - Real AI backend, live thought stream, all buttons functional
 // Connected to /api/v1/chat/stream for streaming responses
@@ -619,7 +619,7 @@ const ThoughtStream = memo(({ thoughts = [], isActive = false, stats = {}, class
         <AnimatePresence mode="popLayout">
           {thoughts.slice(-8).map((thought, i) => (
             <motion.div
-              key={thought.id || i}
+              key={thought.id || `thought-${thought.timestamp || Date.now()}-${i}`}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
