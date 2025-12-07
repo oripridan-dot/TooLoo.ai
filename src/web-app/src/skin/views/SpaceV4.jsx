@@ -1,4 +1,4 @@
-// @version 3.3.274
+// @version 3.3.275
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -1121,8 +1121,8 @@ const DimensionSection = memo(({
         </div>
       </div>
 
-      {/* Cards grid - optimized for readability: 2 columns on desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {/* Cards - full width for readability */}
+      <div className="space-y-4">
         {sectionCards.map((card, index) => (
           <OptionCard
             key={card.id}
