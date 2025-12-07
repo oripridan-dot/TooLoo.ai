@@ -1,6 +1,6 @@
-// @version 3.3.221
+// @version 3.3.223
 // TooLoo.ai - Main Liquid Synapsys Application
-// The viewport IS TooLoo - Space V2 with free-moving cards
+// The viewport IS TooLoo - Space V3 with organized cards
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
@@ -20,7 +20,7 @@ import { TooLooPresenceProvider } from '../TooLooPresence';
 import { VIEWS } from '../views';
 
 // Lazy load views for code splitting
-const Space = lazy(() => import('../views/SpaceV2'));
+const Space = lazy(() => import('../views/SpaceV3'));
 const Cortex = lazy(() => import('../views/Cortex'));
 const Synaptic = lazy(() => import('../views/Synaptic'));
 const CreationSpace = lazy(() => import('../views/CreationSpaceView'));
