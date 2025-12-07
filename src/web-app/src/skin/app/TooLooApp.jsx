@@ -1,6 +1,6 @@
-// @version 2.2.632
+// @version 3.3.221
 // TooLoo.ai - Main Liquid Synapsys Application
-// The viewport IS TooLoo - Lightweight version
+// The viewport IS TooLoo - Space V2 with free-moving cards
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
@@ -20,6 +20,7 @@ import { TooLooPresenceProvider } from '../TooLooPresence';
 import { VIEWS } from '../views';
 
 // Lazy load views for code splitting
+const Space = lazy(() => import('../views/SpaceV2'));
 const Cortex = lazy(() => import('../views/Cortex'));
 const Synaptic = lazy(() => import('../views/Synaptic'));
 const CreationSpace = lazy(() => import('../views/CreationSpaceView'));
@@ -29,6 +30,7 @@ const Command = lazy(() => import('../views/Command'));
 
 // View component map
 const VIEW_MAP = {
+  space: Space,
   cortex: Cortex,
   synaptic: Synaptic,
   creationspace: CreationSpace,
@@ -200,7 +202,7 @@ ViewLoading.displayName = 'ViewLoading';
 // ============================================================================
 
 const TooLooAppInner = memo(() => {
-  const [activeView, setActiveView] = useState('synaptic');
+  const [activeView, setActiveView] = useState('space');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Keyboard shortcuts
@@ -209,8 +211,8 @@ const TooLooAppInner = memo(() => {
       // Ignore if typing in input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-      // View shortcuts (1-6)
-      if (e.key >= '1' && e.key <= '6' && !e.ctrlKey && !e.metaKey) {
+      // View shortcuts (1-7)
+      if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey) {
         const viewKeys = Object.keys(VIEWS);
         const index = parseInt(e.key) - 1;
         if (viewKeys[index]) {
@@ -243,7 +245,7 @@ const TooLooAppInner = memo(() => {
   }, []);
 
   // Get the current view component
-  const ViewComponent = VIEW_MAP[activeView] || VIEW_MAP.synaptic;
+  const ViewComponent = VIEW_MAP[activeView] || VIEW_MAP.space;
 
   return (
     <div className="h-screen flex overflow-hidden">
