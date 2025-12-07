@@ -1,4 +1,4 @@
-// @version 3.3.328
+// @version 3.3.329
 // TooLoo.ai Liquid Chat Components
 // v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
 // Rich visual display capabilities for chat responses
@@ -1198,13 +1198,10 @@ class PreviewErrorBoundary extends React.Component {
   }
 }
 
-export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...props }) => {
-  const [copied, setCopied] = useState(false);
+export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate }) => {
   const [executing, setExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState(null);
-  const [showPreview, setShowPreview] = useState(true);
-  const [showCode, setShowCode] = useState(false); // Default to collapsed for long code
-  const [previewError, setPreviewError] = useState(null);
+  const [showPreview] = useState(true); // Always show preview, no toggle
 
   // Safely extract code string from children (can be array, string, or object)
   const codeString = useMemo(() => {
@@ -1220,8 +1217,6 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate, ...
   }, [children]);
 
   const lang = (language || '').toLowerCase();
-  const lineCount = codeString.split('\n').length;
-  const isLongCode = lineCount > 15; // Collapse code blocks with more than 15 lines
 
   // Debug logging for SVG
   useEffect(() => {
