@@ -1,4 +1,4 @@
-// @version 3.3.317
+// @version 3.3.318
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -6,6 +6,8 @@
 // ENHANCED: Professional design, honest progress, compact cards
 // v3.3.312: Removed mock progress, enlarged chat modal, one-liner cards,
 //           toned down colors, removed excessive animations
+// v3.3.318: Enhanced thinking process display with real model selection,
+//           provider routing, persona info, and decision-making visibility
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, {
