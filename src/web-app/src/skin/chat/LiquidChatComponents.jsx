@@ -1,4 +1,4 @@
-// @version 3.3.329
+// @version 3.3.330
 // TooLoo.ai Liquid Chat Components
 // v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
 // Rich visual display capabilities for chat responses
@@ -1218,39 +1218,12 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate }) =
 
   const lang = (language || '').toLowerCase();
 
-  // Debug logging for SVG
-  useEffect(() => {
-    if (lang === 'svg' || codeString.includes('<svg')) {
-      console.log('[LiquidCodeBlock] SVG detected:', {
-        language: lang,
-        codeLength: codeString.length,
-        hasContent: codeString.trim().length > 0,
-        startsWithSvg: codeString.trim().startsWith('<svg'),
-        preview: codeString.substring(0, 100),
-      });
-    }
-  }, [lang, codeString]);
-
   // Determine capabilities
   const canExecute = EXECUTABLE_LANGUAGES.includes(lang);
   const canPreview = PREVIEWABLE_LANGUAGES.includes(lang);
   const isJSX = ['jsx', 'react', 'tsx'].includes(lang);
   const isSVG = lang === 'svg';
   const isHTML = lang === 'html';
-
-  // Extract a summary from the code (first comment or class/function name)
-  const codeSummary = useMemo(() => {
-    const lines = codeString.split('\n');
-    // Look for a comment at the start
-    const commentLine = lines.find(
-      (l) => l.trim().startsWith('#') || l.trim().startsWith('//') || l.trim().startsWith('"""')
-    );
-    if (commentLine) return commentLine.replace(/^[#/\s"]+/, '').substring(0, 60);
-    // Look for class or function definition
-    const defLine = lines.find((l) => l.match(/^(class|def|function|const|export)\s+\w+/));
-    if (defLine) return defLine.trim().substring(0, 60);
-    return `${lineCount} lines of ${lang || 'code'}`;
-  }, [codeString, lineCount, lang]);
 
   // Clean and prepare JSX code for react-live preview
   const cleanedCode = useMemo(() => {
