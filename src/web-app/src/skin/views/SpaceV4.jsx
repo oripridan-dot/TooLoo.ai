@@ -1,4 +1,4 @@
-// @version 3.3.276
+// @version 3.3.277
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -467,6 +467,197 @@ const TooLooThinkingProcess = memo(({ approach, prompt }) => {
 });
 
 TooLooThinkingProcess.displayName = 'TooLooThinkingProcess';
+
+// ============================================================================
+// TOOLOO PROACTIVE ADVISOR - Intelligent synthesis of collected items
+// ============================================================================
+
+const ADVISOR_MODES = [
+  { id: 'synthesize', icon: '🧬', label: 'Synthesize', action: 'Combine collected insights into a unified strategy' },
+  { id: 'priorities', icon: '🎯', label: 'Prioritize', action: 'Identify highest-impact items to focus on first' },
+  { id: 'gaps', icon: '🔍', label: 'Find Gaps', action: 'Discover what\'s missing from your collection' },
+  { id: 'conflicts', icon: '⚡', label: 'Resolve Conflicts', action: 'Identify and address contradictions' },
+  { id: 'roadmap', icon: '🗺️', label: 'Create Roadmap', action: 'Generate implementation sequence' },
+];
+
+const TooLooProactiveAdvisor = memo(({ collected, onAdvice, isProcessing }) => {
+  const [selectedMode, setSelectedMode] = useState(null);
+  const [insight, setInsight] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Auto-analyze when collected items change significantly
+  useEffect(() => {
+    if (collected.length >= 2 && !insight) {
+      generateQuickInsight();
+    }
+  }, [collected.length]);
+  
+  const generateQuickInsight = async () => {
+    if (collected.length < 2) return;
+    
+    // Analyze collection composition
+    const dimensions = [...new Set(collected.map(c => c.dimension))];
+    const highConfidence = collected.filter(c => c.confidence > 0.85);
+    
+    // Generate contextual insight
+    const insights = [];
+    
+    if (dimensions.length >= 3) {
+      insights.push({
+        type: 'coverage',
+        icon: '✨',
+        text: `Great coverage across ${dimensions.length} dimensions! Ready for synthesis.`,
+        action: 'synthesize',
+      });
+    }
+    
+    if (highConfidence.length >= collected.length * 0.7) {
+      insights.push({
+        type: 'quality',
+        icon: '💎',
+        text: `${highConfidence.length} high-confidence items - strong foundation for building.`,
+        action: 'roadmap',
+      });
+    }
+    
+    if (dimensions.includes('technical') && dimensions.includes('visual')) {
+      insights.push({
+        type: 'synergy',
+        icon: '🔗',
+        text: 'Technical + Visual synergy detected - great for full-stack ideation.',
+        action: 'synthesize',
+      });
+    }
+    
+    if (collected.length >= 4 && dimensions.length < 2) {
+      insights.push({
+        type: 'gap',
+        icon: '💡',
+        text: `All ${collected.length} items from ${dimensions[0]} - consider exploring other dimensions.`,
+        action: 'gaps',
+      });
+    }
+    
+    setInsight(insights[0] || {
+      type: 'ready',
+      icon: '🚀',
+      text: `${collected.length} items collected and ready for action!`,
+      action: 'synthesize',
+    });
+  };
+  
+  const handleModeSelect = async (mode) => {
+    setSelectedMode(mode);
+    setIsAnalyzing(true);
+    
+    // Simulate analysis (would call actual API in production)
+    await new Promise(r => setTimeout(r, 1200));
+    
+    setIsAnalyzing(false);
+    
+    // Trigger parent callback with selected mode
+    if (onAdvice) {
+      onAdvice({
+        mode: mode.id,
+        collected: collected.map(c => ({ id: c.id, title: c.title, dimension: c.dimension })),
+      });
+    }
+  };
+  
+  if (collected.length < 2) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-4 overflow-hidden"
+    >
+      {/* Proactive Insight Banner */}
+      {insight && !selectedMode && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative mb-3 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 via-cyan-500/5 to-pink-500/10 
+                   border border-purple-500/20 overflow-hidden"
+        >
+          {/* Animated gradient */}
+          <motion.div
+            className="absolute inset-0 opacity-30"
+            animate={{
+              background: [
+                'linear-gradient(90deg, rgba(168, 85, 247, 0.1) 0%, transparent 50%)',
+                'linear-gradient(90deg, transparent 0%, rgba(168, 85, 247, 0.1) 50%, transparent 100%)',
+                'linear-gradient(90deg, transparent 50%, rgba(168, 85, 247, 0.1) 100%)',
+              ],
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          />
+          
+          <div className="relative flex items-center gap-3">
+            <motion.span 
+              className="text-xl"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {insight.icon}
+            </motion.span>
+            <div className="flex-1">
+              <p className="text-sm text-gray-200">{insight.text}</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const mode = ADVISOR_MODES.find(m => m.id === insight.action);
+                if (mode) handleModeSelect(mode);
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/20 
+                       text-purple-300 hover:bg-purple-500/30 transition-colors"
+            >
+              {ADVISOR_MODES.find(m => m.id === insight.action)?.label || 'Go'}
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+      
+      {/* Mode Selection Grid */}
+      <div className="flex flex-wrap gap-1.5">
+        {ADVISOR_MODES.map((mode) => (
+          <motion.button
+            key={mode.id}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleModeSelect(mode)}
+            disabled={isAnalyzing || isProcessing}
+            className={`
+              px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all
+              flex items-center gap-1.5 disabled:opacity-50
+              ${selectedMode?.id === mode.id 
+                ? 'bg-purple-500/30 text-purple-300 border border-purple-500/40' 
+                : 'bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:bg-gray-700/50 hover:text-gray-300'
+              }
+            `}
+            title={mode.action}
+          >
+            {isAnalyzing && selectedMode?.id === mode.id ? (
+              <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              >
+                ⏳
+              </motion.span>
+            ) : (
+              <span>{mode.icon}</span>
+            )}
+            <span>{mode.label}</span>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+});
+
+TooLooProactiveAdvisor.displayName = 'TooLooProactiveAdvisor';
 
 // ============================================================================
 // HEADER BAR - Enhanced with typography hierarchy and glow
