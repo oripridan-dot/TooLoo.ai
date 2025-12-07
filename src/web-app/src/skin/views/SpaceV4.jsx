@@ -1,4 +1,4 @@
-// @version 3.3.310
+// @version 3.3.311
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -2692,69 +2692,60 @@ const TooLooSpaceV4 = memo(() => {
                   fill="none" 
                   viewBox="0 0 24 24"
                 >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </motion.svg>
-                ) : (
-                  <span className="relative">Think</span>
-                )}
-              </motion.button>
-            </form>
-          
-            {/* Quick action chips - compact */}
-            <div className="relative flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/5">
-              <span className="text-[10px] text-gray-500 mr-0.5">Quick:</span>
-              <motion.button 
-                type="button"
-                onClick={handleValidate}
-                disabled={isThinking || !prompt.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-2 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 
-                         text-emerald-400 text-[10px] font-medium transition-all flex items-center gap-1
-                         disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span>✓</span> Validate
-              </motion.button>
-              <motion.button 
-                type="button"
-                onClick={handleOptimize}
-                disabled={isThinking || !prompt.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 
-                         text-amber-400 text-[10px] font-medium transition-all flex items-center gap-1
-                         disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span>⚙</span> Optimize
-              </motion.button>
-              <motion.button 
-                type="button"
-                onClick={handleExpandIdea}
-                disabled={isThinking || !prompt.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-2 py-1 rounded-md bg-purple-500/10 hover:bg-purple-500/20 
-                         text-purple-400 text-[10px] font-medium transition-all flex items-center gap-1
-                         disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span>↗</span> Expand
-              </motion.button>
-              <motion.button 
-                type="button"
-                onClick={handleChallenge}
-                disabled={isThinking || !prompt.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-2 py-1 rounded-md bg-rose-500/10 hover:bg-rose-500/20 
-                         text-rose-400 text-[10px] font-medium transition-all flex items-center gap-1
-                         disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span>?</span> Challenge
-              </motion.button>
-            </div>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <span>Think</span>
+              )}
+            </button>
+          </form>
+        
+          {/* Quick action chips - simplified */}
+          <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-gray-800/50">
+            <span className="text-[10px] text-gray-500 mr-0.5">Quick:</span>
+            <button 
+              type="button"
+              onClick={handleValidate}
+              disabled={isThinking || !prompt.trim()}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors
+                       bg-gray-800 hover:bg-gray-700 text-gray-400 
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ✓ Validate
+            </button>
+            <button 
+              type="button"
+              onClick={handleOptimize}
+              disabled={isThinking || !prompt.trim()}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors
+                       bg-gray-800 hover:bg-gray-700 text-gray-400 
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ⚙ Optimize
+            </button>
+            <button 
+              type="button"
+              onClick={handleExpandIdea}
+              disabled={isThinking || !prompt.trim()}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors
+                       bg-gray-800 hover:bg-gray-700 text-gray-400 
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ↗ Expand
+            </button>
+            <button 
+              type="button"
+              onClick={handleChallenge}
+              disabled={isThinking || !prompt.trim()}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors
+                       bg-gray-800 hover:bg-gray-700 text-gray-400 
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              ? Challenge
+            </button>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Expanded card modal */}
