@@ -1,4 +1,4 @@
-// @version 3.3.281
+// @version 3.3.302
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -265,51 +265,27 @@ const ToolooInlineHint = memo(({ phase, isThinking }) => {
 ToolooInlineHint.displayName = 'ToolooInlineHint';
 
 // ============================================================================
-// TOOLOO THINKING - Humble, solid progress indicator
+// TOOLOO THINKING - Minimal, honest processing indicator
 // ============================================================================
 
-const THINKING_STAGES = [
-  { id: 'understand', label: 'Understanding request', duration: 2000 },
-  { id: 'analyze', label: 'Analyzing context', duration: 2500 },
-  { id: 'explore', label: 'Exploring options', duration: 3000 },
-  { id: 'synthesize', label: 'Synthesizing response', duration: 2000 },
-];
-
 const TooLooThinkingProcess = memo(({ approach, prompt }) => {
-  const [stageIndex, setStageIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   
-  // Smooth progress through stages
+  // Simple elapsed timer - no fake progress
   useEffect(() => {
-    let elapsed = 0;
-    const totalDuration = THINKING_STAGES.reduce((sum, s) => sum + s.duration, 0);
-    
     const interval = setInterval(() => {
-      elapsed += 100;
-      const newProgress = Math.min((elapsed / totalDuration) * 100, 99);
-      setProgress(newProgress);
-      
-      // Calculate current stage
-      let accumulated = 0;
-      for (let i = 0; i < THINKING_STAGES.length; i++) {
-        accumulated += THINKING_STAGES[i].duration;
-        if (elapsed < accumulated) {
-          setStageIndex(i);
-          break;
-        }
-      }
-    }, 100);
-    
+      setElapsed(e => e + 1);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
   
-  const currentStage = THINKING_STAGES[stageIndex];
+  const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
   
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8">
       <div className="bg-gray-900/80 rounded-xl border border-gray-800/60 p-6">
         {/* Header - simple and clean */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <div 
             className="w-10 h-10 rounded-lg flex items-center justify-center"
             style={{ backgroundColor: `${approach?.color || '#6366f1'}15` }}
@@ -318,56 +294,36 @@ const TooLooThinkingProcess = memo(({ approach, prompt }) => {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-medium text-white">Processing</h3>
-            <p className="text-xs text-gray-500">{approach?.title || 'Deep Exploration'}</p>
+            <p className="text-xs text-gray-500">{approach?.title || 'Thinking...'}</p>
           </div>
-          <span className="text-sm font-mono text-gray-400">{Math.round(progress)}%</span>
+          <span className="text-xs font-mono text-gray-500">{formatTime(elapsed)}</span>
         </div>
         
-        {/* Progress bar - smooth, no jumping */}
-        <div className="h-1 rounded-full bg-gray-800 mb-6 overflow-hidden">
+        {/* Simple indeterminate progress - no fake percentages */}
+        <div className="h-1 rounded-full bg-gray-800 overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-200 ease-out"
+            className="h-full w-1/3 rounded-full bg-gray-600"
             style={{ 
-              width: `${progress}%`,
-              backgroundColor: approach?.color || '#6366f1',
+              animation: 'indeterminate 1.5s ease-in-out infinite',
             }}
           />
         </div>
+        <style>{`
+          @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+          }
+        `}</style>
         
-        {/* Current stage - minimal, informative */}
-        <div className="space-y-3">
-          {THINKING_STAGES.map((stage, i) => {
-            const isActive = i === stageIndex;
-            const isDone = i < stageIndex;
-            
-            return (
-              <div 
-                key={stage.id}
-                className={`flex items-center gap-3 text-sm transition-opacity duration-300 ${
-                  isActive ? 'opacity-100' : isDone ? 'opacity-40' : 'opacity-20'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs
-                  ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 
-                    isActive ? 'bg-gray-700' : 'bg-gray-800'}`}
-                >
-                  {isDone ? '✓' : isActive ? (
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
-                  )}
-                </div>
-                <span className={isDone ? 'text-gray-500' : isActive ? 'text-white' : 'text-gray-600'}>
-                  {stage.label}
-                </span>
-              </div>
-            );
-          })}
+        {/* Status - honest messaging */}
+        <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
+          <span className="w-2 h-2 rounded-full bg-cyan-500/60" />
+          <span>Working on your request...</span>
         </div>
         
         {/* Query context - subtle reminder */}
         {prompt && (
-          <div className="mt-6 pt-4 border-t border-gray-800/50">
+          <div className="mt-4 pt-4 border-t border-gray-800/50">
             <p className="text-xs text-gray-600 truncate">
               "{prompt.length > 60 ? prompt.slice(0, 60) + '...' : prompt}"
             </p>
