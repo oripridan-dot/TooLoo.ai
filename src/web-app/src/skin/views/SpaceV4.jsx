@@ -1,4 +1,4 @@
-// @version 3.3.240
+// @version 3.3.241
 // TooLoo.ai Space V4 - Two-Step Creative Flow
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1395,87 +1395,131 @@ const TooLooSpaceV4 = memo(() => {
 TooLooSpaceV4.displayName = 'TooLooSpaceV4';
 
 // ============================================================================
-// CARD GENERATOR
+// CARD GENERATOR - Takes approach into account
 // ============================================================================
 
-const generateCards = (prompt) => {
-  const dimensions = ['design', 'technical', 'user'];
+const generateCards = (prompt, approach = null) => {
   const cards = [];
+  
+  // Adjust dimensions based on approach
+  let dimensions = ['design', 'technical', 'user'];
+  let cardCount = 2; // Default cards per dimension
+  
+  if (approach) {
+    switch (approach.id) {
+      case 'deep-dive':
+        dimensions = ['technical', 'design', 'user'];
+        cardCount = 3;
+        break;
+      case 'quick-start':
+        dimensions = ['technical', 'user'];
+        cardCount = 2;
+        break;
+      case 'explore-options':
+        dimensions = ['design', 'technical', 'user', 'business'];
+        cardCount = 3;
+        break;
+      case 'challenge':
+        dimensions = ['technical', 'ethical', 'user'];
+        cardCount = 2;
+        break;
+      case 'simplify':
+        dimensions = ['user', 'design'];
+        cardCount = 2;
+        break;
+      case 'expand':
+        dimensions = ['business', 'technical', 'design', 'user'];
+        cardCount = 2;
+        break;
+      default:
+        break;
+    }
+  }
 
   const titles = {
     design: ['Minimalist Interface', 'Bold & Expressive', 'Enterprise Grade'],
     technical: ['Modern Stack', 'Server-First Architecture', 'Edge Computing'],
     user: ['Guided Experience', 'Power User Mode', 'Accessibility First'],
+    business: ['Revenue Growth', 'Market Expansion', 'Cost Optimization'],
+    ethical: ['Privacy First', 'Inclusive Design', 'Sustainable Tech'],
   };
 
   const descriptions = {
     design: [
-      'Clean, focused interface with thoughtful whitespace and subtle interactions.',
-      'Vibrant colors and dynamic animations to engage and delight users.',
-      'Professional, trustworthy design with clear hierarchy and patterns.',
+      'Clean, focused interface with thoughtful whitespace.',
+      'Vibrant colors and dynamic animations.',
+      'Professional design with clear hierarchy.',
     ],
     technical: [
-      'React + TypeScript with modern tooling for type safety and DX.',
-      'Server components and streaming for optimal performance.',
-      'Edge-first architecture for global low-latency access.',
+      'React + TypeScript with modern tooling.',
+      'Server components for optimal performance.',
+      'Edge-first architecture for global access.',
     ],
     user: [
-      'Step-by-step onboarding with contextual help throughout.',
-      'Keyboard shortcuts, bulk actions, and advanced filters.',
-      'WCAG compliant with screen reader support and high contrast.',
+      'Step-by-step onboarding with help.',
+      'Keyboard shortcuts and bulk actions.',
+      'WCAG compliant accessibility.',
+    ],
+    business: [
+      'Monetization strategies and pricing.',
+      'New market opportunities.',
+      'Efficiency and automation.',
+    ],
+    ethical: [
+      'Data protection and user consent.',
+      'Accessible to all users.',
+      'Environmental impact reduction.',
     ],
   };
 
-  // Suggested directions for each option
   const directions = {
-    design: [
-      'Focus on clarity and simplicity',
-      'Emphasize engagement and delight',
-      'Build trust through professionalism',
-    ],
-    technical: [
-      'Prioritize developer experience and type safety',
-      'Optimize for performance and scalability',
-      'Enable global reach with low latency',
-    ],
-    user: [
-      'Reduce friction for new users',
-      'Empower experienced users',
-      'Ensure universal accessibility',
-    ],
+    design: ['Focus on clarity', 'Emphasize delight', 'Build trust'],
+    technical: ['Developer experience', 'Performance', 'Global reach'],
+    user: ['Reduce friction', 'Empower users', 'Universal access'],
+    business: ['Maximize revenue', 'Expand reach', 'Cut costs'],
+    ethical: ['Protect privacy', 'Include everyone', 'Go green'],
   };
 
-  // TooLoo suggestions per option
   const toolooSuggestions = {
     design: [
-      'This minimalist approach creates breathing room for your content. Consider using a 8px grid system and a limited color palette of 3-4 colors to maintain visual harmony.',
-      'Bold design choices can differentiate your product. Consider using micro-interactions on key actions and a vibrant accent color to guide user attention.',
-      'Enterprise users expect familiarity and trust. This approach uses established patterns like left-nav, data tables, and clear action hierarchies.',
+      'Use 8px grid and 3-4 color palette for harmony.',
+      'Add micro-interactions and vibrant accents.',
+      'Use established patterns for trust.',
     ],
     technical: [
-      'Modern tooling with TypeScript provides excellent IDE support and catches errors early. This stack works well with teams of all sizes.',
-      'Server-first architecture reduces client bundle size and improves SEO. Consider React Server Components with streaming for optimal perceived performance.',
-      'Edge computing puts your code closer to users worldwide. This is ideal for latency-sensitive applications or global audiences.',
+      'TypeScript catches errors early.',
+      'Server components reduce bundle size.',
+      'Edge computing reduces latency globally.',
     ],
     user: [
-      'Progressive onboarding reduces cognitive load. Show features contextually as users need them rather than front-loading all information.',
-      'Power users appreciate efficiency. Consider implementing vim-style keyboard navigation and command palette (Cmd+K) patterns.',
-      'Accessibility is both ethical and practical. WCAG compliance opens your product to 15% more users and improves SEO.',
+      'Show features contextually, not upfront.',
+      'Add Cmd+K command palette.',
+      'WCAG compliance adds 15% more users.',
+    ],
+    business: [
+      'Consider freemium with premium tiers.',
+      'Localize for key markets.',
+      'Automate repetitive tasks.',
+    ],
+    ethical: [
+      'Minimize data collection.',
+      'Test with diverse users.',
+      'Choose green hosting.',
     ],
   };
 
   dimensions.forEach((dim, di) => {
-    const count = 2 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < count && i < 3; i++) {
+    const count = Math.min(cardCount, titles[dim]?.length || 2);
+    for (let i = 0; i < count; i++) {
       cards.push({
         id: `card-${Date.now()}-${di}-${i}`,
         dimension: dim,
-        title: titles[dim][i] || `Option ${i + 1}`,
-        description: descriptions[dim][i] || `A ${dim} approach for: ${prompt}`,
-        direction: directions[dim][i] || `Explore this ${dim} direction`,
-        toolooSuggestion: toolooSuggestions[dim][i],
+        title: titles[dim]?.[i] || `Option ${i + 1}`,
+        description: descriptions[dim]?.[i] || `A ${dim} approach`,
+        direction: directions[dim]?.[i] || `Explore ${dim}`,
+        toolooSuggestion: toolooSuggestions[dim]?.[i],
         confidence: 0.70 + Math.random() * 0.25,
-        content: `// ${dim.toUpperCase()}: ${titles[dim][i]}\n// ${prompt}`,
+        content: `// ${dim.toUpperCase()}: ${titles[dim]?.[i]}\n// ${prompt}`,
         refinements: [],
         collected: false,
       });
