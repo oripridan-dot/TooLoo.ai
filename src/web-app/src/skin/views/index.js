@@ -1,4 +1,4 @@
-// @version 3.3.230
+// @version 3.3.231
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4
 
@@ -94,7 +94,7 @@ export const VIEWS = {
 
 // View component map for dynamic rendering
 export const VIEW_COMPONENTS = {
-  space: () => import('./SpaceV3').then((m) => m.default),
+  space: () => import('./SpaceV4').then((m) => m.default),
   cortex: () => import('./Cortex').then((m) => m.default),
   synaptic: () => import('./Synaptic').then((m) => m.default),
   creationspace: () => import('./CreationSpaceView').then((m) => m.default),
