@@ -1,4 +1,4 @@
-// @version 3.3.302
+// @version 3.3.303
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -924,13 +924,13 @@ const ExpandedCardModal = memo(({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
-      {/* Modal */}
+      {/* Modal - Enlarged for better readability */}
       <motion.div
         initial={{ scale: 0.95, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl h-[80vh] bg-gray-900 rounded-3xl 
+        className="relative w-full max-w-4xl h-[90vh] bg-gray-900 rounded-3xl 
                    border border-gray-800 overflow-hidden flex flex-col shadow-2xl"
       >
         {/* Header */}
