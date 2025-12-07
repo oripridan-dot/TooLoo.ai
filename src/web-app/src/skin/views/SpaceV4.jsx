@@ -1,4 +1,4 @@
-// @version 3.3.245
+// @version 3.3.246
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -821,7 +821,7 @@ const ExpandedCardModal = memo(({
 ExpandedCardModal.displayName = 'ExpandedCardModal';
 
 // ============================================================================
-// DIMENSION SECTION - Horizontal card row per dimension
+// DIMENSION SECTION - Enhanced with visual hierarchy and glow
 // ============================================================================
 
 const DimensionSection = memo(({
@@ -842,16 +842,61 @@ const DimensionSection = memo(({
     <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-6"
+      className="mb-8 relative"
     >
-      {/* Section header - compact */}
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <span className="text-base">{config.icon}</span>
-        <h2 className="text-sm font-medium text-white">{config.label}</h2>
-        <span className="text-xs text-gray-500">• {config.description}</span>
-        <span className="ml-auto px-1.5 py-0.5 rounded bg-gray-800 text-xs text-gray-500">
-          {sectionCards.length}
-        </span>
+      {/* Section header - enhanced typography */}
+      <div className="flex items-center gap-3 mb-4 px-1">
+        {/* Icon with glow */}
+        <div className="relative">
+          <motion.div
+            className="absolute -inset-2 rounded-lg opacity-40"
+            style={{ 
+              background: `radial-gradient(circle, ${config.color}40 0%, transparent 70%)`,
+            }}
+          />
+          <div 
+            className="relative w-9 h-9 rounded-lg flex items-center justify-center text-lg"
+            style={{ 
+              backgroundColor: `${config.color}15`,
+              border: `1px solid ${config.color}30`,
+            }}
+          >
+            {config.icon}
+          </div>
+        </div>
+        
+        {/* Title with hierarchy */}
+        <div className="flex-1">
+          <h2 className="text-base font-semibold text-white tracking-tight">
+            {config.label}
+          </h2>
+          <p className="text-xs text-gray-500">{config.description}</p>
+        </div>
+        
+        {/* Count badge */}
+        <div 
+          className="px-2.5 py-1 rounded-full text-xs font-medium"
+          style={{ 
+            backgroundColor: `${config.color}10`,
+            color: config.color,
+            border: `1px solid ${config.color}20`,
+          }}
+        >
+          {sectionCards.length} {sectionCards.length === 1 ? 'option' : 'options'}
+        </div>
+      </div>
+
+      {/* Decorative line with gradient */}
+      <div className="relative h-px mb-4 mx-1">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+        <motion.div
+          className="absolute left-0 top-0 h-full w-20"
+          style={{ 
+            background: `linear-gradient(90deg, ${config.color}60 0%, transparent 100%)`,
+          }}
+          animate={{ x: [0, 200, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        />
       </div>
 
       {/* Cards grid - more columns, tighter spacing */}
