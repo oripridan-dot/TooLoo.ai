@@ -1,4 +1,4 @@
-// @version 3.3.247
+// @version 3.3.248
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -1081,35 +1081,85 @@ const EmptyState = memo(({ isThinking }) => (
 EmptyState.displayName = 'EmptyState';
 
 // ============================================================================
-// COLLECTED SIDEBAR
+// COLLECTED SIDEBAR - Enhanced with glow effects and active buttons
 // ============================================================================
 
-const CollectedSidebar = memo(({ collected, onBuild, onNextIteration, onSummarize, onExport, onCompare }) => {
+const CollectedSidebar = memo(({ 
+  collected, 
+  onBuild, 
+  onNextIteration, 
+  onSummarize, 
+  onExport, 
+  onCompare,
+  onMergeAndSynthesize,
+  isProcessing 
+}) => {
   if (collected.length === 0) return null;
 
   return (
     <motion.aside
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="fixed right-6 top-24 bottom-24 w-64 z-40"
+      className="fixed right-6 top-24 bottom-24 w-72 z-40"
     >
-      <div className="h-full bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-gray-800 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+      {/* Behind-the-glass glow */}
+      <motion.div
+        className="absolute -inset-2 rounded-3xl opacity-30 blur-xl"
+        animate={{
+          background: [
+            'radial-gradient(ellipse at 50% 30%, rgba(16, 185, 129, 0.4) 0%, transparent 60%)',
+            'radial-gradient(ellipse at 50% 70%, rgba(16, 185, 129, 0.4) 0%, transparent 60%)',
+            'radial-gradient(ellipse at 50% 30%, rgba(16, 185, 129, 0.4) 0%, transparent 60%)',
+          ],
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        style={{ zIndex: -1 }}
+      />
+      
+      <div className="relative h-full bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-emerald-500/20 flex flex-col overflow-hidden shadow-2xl">
+        {/* Animated border glow */}
+        <motion.div
+          className="absolute inset-0 rounded-2xl pointer-events-none"
+          animate={{
+            boxShadow: [
+              'inset 0 0 20px rgba(16, 185, 129, 0.05)',
+              'inset 0 0 30px rgba(16, 185, 129, 0.1)',
+              'inset 0 0 20px rgba(16, 185, 129, 0.05)',
+            ],
+          }}
+          transition={{ duration: 3, repeat: Infinity }}
+        />
+        
+        {/* Header with glow */}
+        <div className="relative p-4 border-b border-emerald-500/20 bg-gradient-to-r from-emerald-500/5 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <motion.div
+                className="absolute -inset-1 rounded-xl"
+                animate={{
+                  boxShadow: [
+                    '0 0 10px rgba(16, 185, 129, 0.3)',
+                    '0 0 20px rgba(16, 185, 129, 0.5)',
+                    '0 0 10px rgba(16, 185, 129, 0.3)',
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 
+                            flex items-center justify-center border border-emerald-500/30">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
             </div>
             <div>
-              <div className="text-sm font-medium text-white">Collected</div>
-              <div className="text-xs text-gray-500">{collected.length} artifacts</div>
+              <h3 className="text-base font-semibold text-white">Collected</h3>
+              <p className="text-xs text-emerald-400/80">{collected.length} artifact{collected.length !== 1 ? 's' : ''} ready</p>
             </div>
           </div>
         </div>
 
-        {/* Items */}
+        {/* Items with enhanced styling */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {collected.map((item, i) => {
             const cfg = DIMENSION_CONFIGS[item.dimension] || DIMENSION_CONFIGS.technical;
@@ -1119,10 +1169,24 @@ const CollectedSidebar = memo(({ collected, onBuild, onNextIteration, onSummariz
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="p-3 rounded-xl bg-gray-800/50 border border-gray-700/50"
+                className="group relative p-3 rounded-xl bg-gray-800/50 border border-gray-700/50 
+                          hover:bg-gray-800/80 hover:border-gray-600/50 transition-all cursor-pointer"
               >
-                <div className="flex items-start gap-2">
-                  <span className="text-sm">{cfg.icon}</span>
+                {/* Hover glow */}
+                <motion.div
+                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ 
+                    background: `radial-gradient(ellipse at center, ${cfg.color}10 0%, transparent 70%)`,
+                  }}
+                />
+                
+                <div className="relative flex items-start gap-2">
+                  <div 
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                    style={{ backgroundColor: `${cfg.color}15` }}
+                  >
+                    {cfg.icon}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-white truncate">{item.title}</div>
                     <div className="text-xs text-gray-500">{cfg.label}</div>
@@ -1133,50 +1197,67 @@ const CollectedSidebar = memo(({ collected, onBuild, onNextIteration, onSummariz
           })}
         </div>
 
-        {/* Action buttons */}
-        <div className="p-3 border-t border-gray-800 space-y-2">
+        {/* Action buttons - enhanced with active states */}
+        <div className="p-3 border-t border-gray-800/80 space-y-2 bg-gradient-to-t from-gray-900/50 to-transparent">
           {/* Quick actions row */}
           <div className="grid grid-cols-2 gap-2">
-            <button
+            <motion.button
               onClick={onNextIteration}
-              className="px-3 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 
+              disabled={isProcessing}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-3 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 
                        border border-purple-500/20 text-purple-400 text-xs font-medium 
-                       transition-all flex items-center justify-center gap-1.5"
+                       transition-all flex items-center justify-center gap-1.5
+                       disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>↻</span>
+              <motion.span
+                animate={isProcessing ? { rotate: 360 } : {}}
+                transition={{ duration: 1, repeat: isProcessing ? Infinity : 0 }}
+              >↻</motion.span>
               Next Iteration
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={onSummarize}
-              className="px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 
+              disabled={isProcessing}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-3 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 
                        border border-cyan-500/20 text-cyan-400 text-xs font-medium 
-                       transition-all flex items-center justify-center gap-1.5"
+                       transition-all flex items-center justify-center gap-1.5
+                       disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>≡</span>
               Summarize
-            </button>
+            </motion.button>
           </div>
           
           {/* Secondary actions row */}
           <div className="grid grid-cols-2 gap-2">
-            <button
+            <motion.button
               onClick={onCompare}
-              className="px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 
+              disabled={isProcessing || collected.length < 2}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 
                        border border-amber-500/20 text-amber-400 text-xs font-medium 
-                       transition-all flex items-center justify-center gap-1.5"
+                       transition-all flex items-center justify-center gap-1.5
+                       disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>↔</span>
               Compare
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={onExport}
-              className="px-3 py-2 rounded-xl bg-gray-700/50 hover:bg-gray-600/50 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-3 py-2.5 rounded-xl bg-gray-700/50 hover:bg-gray-600/50 
                        border border-gray-600/30 text-gray-400 text-xs font-medium 
                        transition-all flex items-center justify-center gap-1.5"
             >
               <span>↓</span>
               Export
-            </button>
+            </motion.button>
           </div>
 
           {/* Merge & Synthesize */}
