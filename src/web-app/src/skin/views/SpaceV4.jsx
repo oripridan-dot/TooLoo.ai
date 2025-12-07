@@ -1,4 +1,4 @@
-// @version 3.3.243
+// @version 3.3.244
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -173,12 +173,135 @@ const DIMENSION_CONFIGS = {
 };
 
 const PHASES = {
-  discovery: { icon: '💡', color: '#f59e0b', label: 'Discovery' },
-  exploration: { icon: '🔍', color: '#06b6d4', label: 'Exploring' },
-  refinement: { icon: '✨', color: '#a855f7', label: 'Refining' },
-  build: { icon: '🔨', color: '#10b981', label: 'Building' },
-  ship: { icon: '🚀', color: '#f43f5e', label: 'Shipping' },
+  discovery: { icon: '💡', color: '#f59e0b', label: 'Discovery', glowColor: 'rgba(245, 158, 11, 0.3)' },
+  exploration: { icon: '🔍', color: '#06b6d4', label: 'Exploring', glowColor: 'rgba(6, 182, 212, 0.3)' },
+  explore: { icon: '🔍', color: '#06b6d4', label: 'Exploring', glowColor: 'rgba(6, 182, 212, 0.3)' },
+  options: { icon: '✨', color: '#a855f7', label: 'Options', glowColor: 'rgba(168, 85, 247, 0.3)' },
+  refinement: { icon: '✨', color: '#a855f7', label: 'Refining', glowColor: 'rgba(168, 85, 247, 0.3)' },
+  build: { icon: '🔨', color: '#10b981', label: 'Building', glowColor: 'rgba(16, 185, 129, 0.3)' },
+  ship: { icon: '🚀', color: '#f43f5e', label: 'Shipping', glowColor: 'rgba(244, 63, 94, 0.3)' },
 };
+
+// ============================================================================
+// TOOLOO GUIDANCE PANEL - Behind the glass lights effect
+// ============================================================================
+
+const ToolooGuidancePanel = memo(({ phase, isThinking }) => {
+  const guidance = TOOLOO_GUIDANCE[phase] || TOOLOO_GUIDANCE.discovery;
+  const phaseConfig = PHASES[phase] || PHASES.discovery;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative mb-6"
+    >
+      {/* Behind-the-glass glow effect */}
+      <motion.div
+        className="absolute -inset-4 rounded-3xl opacity-60 blur-xl"
+        animate={{
+          background: [
+            `radial-gradient(ellipse at 30% 50%, ${phaseConfig.glowColor} 0%, transparent 50%)`,
+            `radial-gradient(ellipse at 70% 50%, ${phaseConfig.glowColor} 0%, transparent 50%)`,
+            `radial-gradient(ellipse at 30% 50%, ${phaseConfig.glowColor} 0%, transparent 50%)`,
+          ],
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        style={{ zIndex: -1 }}
+      />
+      
+      {/* Glass panel */}
+      <div className="relative p-4 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] 
+                      backdrop-blur-xl border border-white/10 overflow-hidden">
+        {/* Animated light streak */}
+        <motion.div
+          className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent"
+          animate={{ x: [-128, 400] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 2 }}
+        />
+        
+        <div className="flex items-start gap-4">
+          {/* TooLoo Avatar with breathing glow */}
+          <div className="relative flex-shrink-0">
+            <motion.div
+              className="absolute -inset-2 rounded-full"
+              animate={{
+                boxShadow: [
+                  `0 0 20px ${phaseConfig.glowColor}`,
+                  `0 0 30px ${phaseConfig.glowColor}`,
+                  `0 0 20px ${phaseConfig.glowColor}`,
+                ],
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 
+                          border border-white/20 flex items-center justify-center overflow-hidden">
+              <motion.span 
+                className="text-xl"
+                animate={isThinking ? { 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1],
+                } : {}}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                {isThinking ? '🔮' : '✨'}
+              </motion.span>
+              {/* Inner glow */}
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                animate={{
+                  background: [
+                    `radial-gradient(circle at center, ${phaseConfig.color}20 0%, transparent 70%)`,
+                    `radial-gradient(circle at center, ${phaseConfig.color}40 0%, transparent 70%)`,
+                    `radial-gradient(circle at center, ${phaseConfig.color}20 0%, transparent 70%)`,
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </div>
+          </div>
+          
+          {/* Guidance text */}
+          <div className="flex-1 min-w-0">
+            <motion.p 
+              key={guidance.message}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-white text-sm font-medium leading-relaxed"
+            >
+              {isThinking ? "Let me think about this..." : guidance.message}
+            </motion.p>
+            <motion.p 
+              key={guidance.hint}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-gray-400 text-xs mt-1.5 flex items-center gap-1.5"
+            >
+              <span className="inline-block w-1 h-1 rounded-full bg-current opacity-60" />
+              {guidance.hint}
+            </motion.p>
+          </div>
+          
+          {/* Phase indicator */}
+          <div 
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5"
+            style={{ 
+              backgroundColor: `${phaseConfig.color}15`,
+              color: phaseConfig.color,
+              border: `1px solid ${phaseConfig.color}30`,
+            }}
+          >
+            <span>{phaseConfig.icon}</span>
+            <span>{phaseConfig.label}</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+ToolooGuidancePanel.displayName = 'ToolooGuidancePanel';
 
 // ============================================================================
 // HEADER BAR - Clean, minimal top bar
