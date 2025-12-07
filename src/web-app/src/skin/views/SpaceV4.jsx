@@ -1,4 +1,4 @@
-// @version 3.3.263
+// @version 3.3.264
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Enhanced Visuals
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - Interactive cards to choose how to approach
@@ -2647,7 +2647,110 @@ const TooLooSpaceV4 = memo(() => {
 TooLooSpaceV4.displayName = 'TooLooSpaceV4';
 
 // ============================================================================
-// CARD GENERATOR - Takes approach into account
+// REAL RESPONSE PARSER - Converts AI response into cards
+// ============================================================================
+
+const parseResponseIntoCards = (content, originalPrompt, capabilityId = 'general') => {
+  const cards = [];
+  
+  // Map capability to dimension
+  const capabilityToDimension = {
+    visuals: 'design',
+    diagrams: 'technical',
+    analytics: 'business',
+    summarization: 'user',
+    code: 'technical',
+    exploration: 'design',
+    general: 'technical',
+  };
+  
+  const primaryDimension = capabilityToDimension[capabilityId] || 'technical';
+  
+  // Split content into sections (look for numbered items, headers, or natural breaks)
+  const sections = content.split(/(?=\d+[\.\)]\s|#{1,3}\s|(?:\n\n)(?=[A-Z]))/g)
+    .map(s => s.trim())
+    .filter(s => s.length > 50); // Filter out very short sections
+  
+  if (sections.length === 0) {
+    // If no clear sections, create a single card from the whole response
+    sections.push(content);
+  }
+  
+  // Generate cards from sections
+  const dimensions = ['design', 'technical', 'user', 'business', 'ethical'];
+  
+  sections.slice(0, 6).forEach((section, index) => {
+    // Extract title from section (first line or first sentence)
+    const firstLine = section.split('\n')[0].replace(/^[\d\.\)\#\*\-]+\s*/, '').trim();
+    const title = firstLine.slice(0, 50) + (firstLine.length > 50 ? '...' : '');
+    
+    // Extract description (next few lines)
+    const lines = section.split('\n').slice(1).join(' ').trim();
+    const description = lines.slice(0, 150) + (lines.length > 150 ? '...' : '');
+    
+    // Assign dimension based on content keywords or cycle through
+    let dimension = primaryDimension;
+    const lowerSection = section.toLowerCase();
+    if (lowerSection.includes('design') || lowerSection.includes('visual') || lowerSection.includes('ui')) {
+      dimension = 'design';
+    } else if (lowerSection.includes('code') || lowerSection.includes('implement') || lowerSection.includes('technical')) {
+      dimension = 'technical';
+    } else if (lowerSection.includes('user') || lowerSection.includes('experience') || lowerSection.includes('workflow')) {
+      dimension = 'user';
+    } else if (lowerSection.includes('business') || lowerSection.includes('revenue') || lowerSection.includes('market')) {
+      dimension = 'business';
+    } else if (lowerSection.includes('ethic') || lowerSection.includes('privacy') || lowerSection.includes('access')) {
+      dimension = 'ethical';
+    } else {
+      // Cycle through dimensions for variety
+      dimension = dimensions[index % dimensions.length];
+    }
+    
+    const config = DIMENSION_CONFIGS[dimension];
+    
+    cards.push({
+      id: `real-${Date.now()}-${index}`,
+      dimension,
+      title: title || `${config?.label || 'Option'} ${index + 1}`,
+      description: description || `Analysis of "${originalPrompt}"`,
+      direction: config?.suggestionPrefix || 'Explore this approach',
+      toolooSuggestion: section.slice(0, 300),
+      confidence: 0.75 + Math.random() * 0.20, // Real response = high confidence
+      content: section,
+      refinements: [{ role: 'assistant', content: section }],
+      collected: false,
+      source: 'api', // Mark as real data
+    });
+  });
+  
+  // Ensure we have at least 3 cards
+  if (cards.length < 3) {
+    // Add synthetic cards from content analysis
+    const missingDimensions = dimensions.filter(d => !cards.some(c => c.dimension === d));
+    for (let i = cards.length; i < 3 && missingDimensions.length > 0; i++) {
+      const dim = missingDimensions.shift();
+      const config = DIMENSION_CONFIGS[dim];
+      cards.push({
+        id: `synth-${Date.now()}-${i}`,
+        dimension: dim,
+        title: `${config?.label || dim} Perspective`,
+        description: `${config?.description || 'Additional analysis'} for "${originalPrompt.slice(0, 30)}..."`,
+        direction: config?.suggestionPrefix || 'Consider this angle',
+        toolooSuggestion: `Exploring ${dim} aspects of your concept...`,
+        confidence: 0.70,
+        content: `// Analyzing ${dim} dimension for: ${originalPrompt}`,
+        refinements: [],
+        collected: false,
+        source: 'synthesized',
+      });
+    }
+  }
+  
+  return cards;
+};
+
+// ============================================================================
+// CARD GENERATOR - Fallback for when API fails
 // ============================================================================
 
 const generateCards = (prompt, approach = null) => {
