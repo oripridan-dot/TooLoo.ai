@@ -1,11 +1,12 @@
-// @version 3.3.224
+// @version 3.3.230
 // TooLoo.ai Views Index
-// The views of TooLoo - with organized Space V3 paradigm
+// The views of TooLoo - with professional Space V4
 
-// Space V3 - NEW: Organized cards with brief & suggestions
-export { default as Space } from './SpaceV3';
+// Space V4 - Professional UI with real chat & expand
+export { default as Space } from './SpaceV4';
 
 // Previous versions (preserved)
+export { default as SpaceV3 } from './SpaceV3';
 export { default as SpaceV2 } from './SpaceV2';
 
 // Cortex - TooLoo's brain visualization (providers, processing)
