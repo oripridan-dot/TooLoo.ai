@@ -1,4 +1,4 @@
-// @version 3.3.324
+// @version 3.3.325
 // TooLoo.ai Space V4 - Two-Step Creative Flow with Real Data
 // ═══════════════════════════════════════════════════════════════════════════
 // Step 1: Explore Phase - TooLoo's actual capabilities as cards
@@ -774,11 +774,6 @@ const OptionCard = memo(
             {/* Title - truncated */}
             <span className="flex-1 text-sm text-white font-medium truncate">{card.title}</span>
 
-            {/* Confidence badge - minimal */}
-            <span className="text-xs text-gray-500 flex-shrink-0">
-              {Math.round(card.confidence * 100)}%
-            </span>
-
             {/* Collect button - compact */}
             {!isCollected ? (
               <button
@@ -893,9 +888,6 @@ const ExpandedCardModal = memo(
                       style={{ backgroundColor: `${config.color}20`, color: config.color }}
                     >
                       {config.label}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {Math.round(card.confidence * 100)}% confidence
                     </span>
                   </div>
                 </div>
