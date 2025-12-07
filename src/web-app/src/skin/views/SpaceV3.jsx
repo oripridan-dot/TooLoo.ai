@@ -1,4 +1,4 @@
-// @version 3.3.227
+// @version 3.3.228
 // TooLoo.ai Space V3 - Organized Intelligent Canvas
 // ═══════════════════════════════════════════════════════════════════════════
 // Features:
@@ -865,6 +865,7 @@ const TooLooSpaceV3 = memo(() => {
                 focusedCard={focusedCard}
                 onCardClick={handleCardClick}
                 onCardFocus={handleCardFocus}
+                onCollect={handleCollect}
                 onRefine={handleRefine}
                 isProcessing={isThinking}
               />
@@ -872,6 +873,77 @@ const TooLooSpaceV3 = memo(() => {
           </motion.div>
         )}
       </div>
+
+      {/* Collected artifacts panel */}
+      <AnimatePresence>
+        {collected.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className="fixed right-4 top-32 bottom-24 w-72 z-40"
+          >
+            <div className="h-full bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-emerald-500/20 overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="p-4 border-b border-gray-800/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400">⚑</span>
+                  <span className="font-medium text-white">Collected</span>
+                  <span className="ml-auto text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+                    {collected.length}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Artifacts ready for build phase</p>
+              </div>
+
+              {/* Collected items */}
+              <div className="flex-1 overflow-auto p-3 space-y-2">
+                {collected.map((item, i) => {
+                  const config = DIMENSION_CONFIGS[item.dimension] || DIMENSION_CONFIGS.technical;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className={`p-3 rounded-lg bg-gradient-to-br ${config.gradient} border ${config.border}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-sm">{config.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-white truncate">{item.title}</h4>
+                          <p className="text-xs text-gray-400 truncate">{item.description}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-gray-500">{Math.round(item.confidence * 100)}%</span>
+                            {item.refinements?.length > 0 && (
+                              <span className="text-xs text-purple-400">
+                                +{item.refinements.length / 2} refined
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Build action */}
+              {collected.length >= 2 && (
+                <div className="p-3 border-t border-gray-800/50">
+                  <button
+                    onClick={() => setPhase('build')}
+                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg
+                             text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>🔨</span> Start Building
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Fixed input at bottom */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
