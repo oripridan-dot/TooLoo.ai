@@ -1,4 +1,4 @@
-// @version 2.2.613
+// @version 3.3.300
 // TooLoo.ai Advanced Visual Studio
 // Human-like illustration components with intelligent rendering
 // Features: Scene generation, artistic effects, interactive visuals
@@ -217,7 +217,7 @@ const NeonGlowScene = memo(({ colors, animated }) => {
       {/* Floating particles */}
       {[...Array(15)].map((_, i) => (
         <circle
-          key={i}
+          key={`particle-${i}`}
           cx={100 + Math.random() * 600}
           cy={80 + Math.random() * 340}
           r={2 + Math.random() * 2}
@@ -378,7 +378,7 @@ const IsometricScene = memo(({ colors, animated }) => {
           const offset = (i - 6) * 35;
           return (
             <line
-              key={i}
+              key={`grid-line-${i}`}
               x1={offset - 180}
               y1={offset / 2 + 90}
               x2={offset + 180}
@@ -465,7 +465,7 @@ const GeometricScene = memo(({ colors, animated }) => {
       {/* Decorative dots */}
       {[...Array(20)].map((_, i) => (
         <circle
-          key={i}
+          key={`deco-dot-${i}`}
           cx={50 + Math.random() * 700}
           cy={50 + Math.random() * 400}
           r={2 + Math.random() * 3}
@@ -528,7 +528,7 @@ const OrganicScene = memo(({ colors, animated }) => {
         const y = 100 + Math.random() * 300;
         return (
           <circle
-            key={i}
+            key={`organic-dot-${i}`}
             cx={x}
             cy={y}
             r={3 + Math.random() * 4}
