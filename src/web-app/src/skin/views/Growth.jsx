@@ -1,4 +1,4 @@
-// @version 3.3.346 - REAL DATA ONLY - No fake fallbacks!
+// @version 3.3.347 - REAL DATA ONLY - No fake fallbacks!
 // TooLoo.ai Growth View - Learning & Health Monitoring Control Center
 // Self-improvement, exploration, QA, and system health
 // MEGA-BOOSTED: Curiosity heatmaps, emergence timeline, learning velocity
@@ -501,13 +501,31 @@ const CURIOSITY_DIMENSIONS = [
 ];
 
 const CuriosityHeatmap = memo(({ dimensions = {}, className = '' }) => {
+  const hasData = Object.keys(dimensions).length > 0;
+  
   const cells = useMemo(() => {
     return CURIOSITY_DIMENSIONS.map((dim) => ({
       ...dim,
-      value: dimensions[dim.key] || Math.random() * 0.5, // Default random for demo
+      // NO FAKE DATA - use real value or 0
+      value: dimensions[dim.key] || 0,
       intensity: Math.min(1, (dimensions[dim.key] || 0) * 1.2),
     }));
   }, [dimensions]);
+
+  // Show empty state if no data
+  if (!hasData) {
+    return (
+      <LiquidPanel variant="elevated" className={`p-4 ${className}`}>
+        <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <span className="text-lg">🧠</span>
+          Curiosity Dimensions
+        </h3>
+        <div className="text-gray-500 text-sm text-center py-8">
+          No curiosity data yet - system learning in progress
+        </div>
+      </LiquidPanel>
+    );
+  }
 
   const maxValue = Math.max(...cells.map((c) => c.value), 0.1);
 
