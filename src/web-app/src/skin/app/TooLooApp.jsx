@@ -1,4 +1,4 @@
-// @version 3.3.389
+// @version 3.3.397
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 
@@ -18,6 +18,9 @@ import { TooLooPresenceProvider } from '../TooLooPresence';
 
 // Views
 import { VIEWS } from '../views';
+
+// Project Selector
+import { ProjectSelector } from '../components/ProjectSelector';
 
 // Lazy load views for code splitting
 const Space = lazy(() => import('../views/SpaceV4'));
