@@ -1,4 +1,4 @@
-// @version 3.3.387
+// @version 3.3.388
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 
@@ -213,8 +213,8 @@ const TooLooAppInner = memo(() => {
       // Ignore if typing in input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-      // View shortcuts (1-7)
-      if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey) {
+      // View shortcuts (1-8) - now supports 8 views
+      if (e.key >= '1' && e.key <= '8' && !e.ctrlKey && !e.metaKey) {
         const viewKeys = Object.keys(VIEWS);
         const index = parseInt(e.key) - 1;
         if (viewKeys[index]) {
