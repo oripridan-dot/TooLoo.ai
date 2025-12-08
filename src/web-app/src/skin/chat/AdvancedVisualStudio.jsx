@@ -1,4 +1,4 @@
-// @version 3.3.367
+// @version 3.3.368
 // TooLoo.ai Advanced Visual Studio
 // Human-like illustration components with intelligent rendering
 // Features: Scene generation, artistic effects, interactive visuals
@@ -634,9 +634,9 @@ const OrganicScene = memo(({ colors, animated }) => {
       ))}
     </g>
   );
+});
 
 OrganicScene.displayName = 'OrganicScene';
-});
 
 // ============================================================================
 // DATA ART SCENE - Artistic data visualization
