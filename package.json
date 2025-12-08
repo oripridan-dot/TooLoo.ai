@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.411",
+  "version": "3.3.412",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -62,7 +62,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
     "@google/genai": "^1.30.0",
-    "@monaco-editor/react": "^4.6.0",
+    "@monaco-editor/react": "^4.7.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/react-query": "^5.90.11",
     "@types/better-sqlite3": "^7.6.13",
