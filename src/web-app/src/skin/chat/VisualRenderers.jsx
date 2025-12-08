@@ -1,4 +1,4 @@
-// @version 3.3.349
+// @version 3.3.371
 // TooLoo.ai Visual Renderers
 // v3.3.200 - Output-only UX: No code displays, graceful errors, clean interface
 // Rich visual components for rendering AI-generated visual content
@@ -30,9 +30,52 @@ export const SVGRenderer = memo(
           svg = svgMatch[0];
         }
 
+        // VALIDATION: Reject malformed or minimal SVGs
+        // Count meaningful visual elements (not just defs, styles, or empty groups)
+        const meaningfulElements = (svg.match(/<(rect|circle|ellipse|line|polyline|polygon|path|text|image)[^>]*>/gi) || []).length;
+        
+        // Reject SVGs with too few meaningful elements (likely broken or placeholder)
+        if (meaningfulElements < 2) {
+          console.warn('[SVGRenderer] Rejecting SVG with insufficient elements:', meaningfulElements);
+          setError('Insufficient visual content');
+          return null;
+        }
+
+        // VALIDATION: Check for proper structure - reject SVGs that are just random curves
+        const hasText = /<text[^>]*>/.test(svg);
+        const hasRects = /<rect[^>]*>/.test(svg);
+        const pathCount = (svg.match(/<path[^>]*>/gi) || []).length;
+        
+        // If it's ONLY paths with no other elements, it's likely abstract garbage
+        if (pathCount > 0 && !hasText && !hasRects && meaningfulElements === pathCount) {
+          // Check if paths have reasonable coordinates (not all starting from corners)
+          const pathDAttrs = svg.match(/d=["']([^"']+)["']/gi) || [];
+          const cornerPaths = pathDAttrs.filter(d => {
+            // Check if path starts very close to 0,0 (top-left corner garbage)
+            return /d=["']M\s*[0-5],?\s*[0-5]/i.test(d) || /d=["']M\s*[0-5]\s+[0-5]/i.test(d);
+          });
+          
+          // If most paths start from corner, reject
+          if (cornerPaths.length > pathDAttrs.length / 2) {
+            console.warn('[SVGRenderer] Rejecting corner-based abstract SVG');
+            setError('Invalid diagram structure');
+            return null;
+          }
+        }
+
+        // Ensure viewBox exists - critical for proper rendering
+        if (!svg.includes('viewBox')) {
+          // Try to extract dimensions and add viewBox
+          const widthMatch = svg.match(/width=["']?(\d+)/);
+          const heightMatch = svg.match(/height=["']?(\d+)/);
+          const w = widthMatch ? widthMatch[1] : 800;
+          const h = heightMatch ? heightMatch[1] : 500;
+          svg = svg.replace('<svg', `<svg viewBox="0 0 ${w} ${h}"`);
+        }
+
         // Ensure dark theme styles
         if (!svg.includes('style=') && !svg.includes('<style>')) {
-          svg = svg.replace('<svg', '<svg style="background: transparent;"');
+          svg = svg.replace('<svg', '<svg style="background: #0a0a0f;"');
         }
 
         // Make responsive - ensure viewBox exists for proper scaling
