@@ -1,6 +1,6 @@
-// @version 3.3.371
+// @version 3.3.372
 // TooLoo.ai Visual Renderers
-// v3.3.200 - Output-only UX: No code displays, graceful errors, clean interface
+// v3.3.371 - Added SVG validation to reject malformed diagrams, corner-based curves
 // Rich visual components for rendering AI-generated visual content
 // User sees ONLY rendered output - never source code
 
