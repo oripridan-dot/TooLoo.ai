@@ -1,4 +1,4 @@
-// @version 3.3.383
+// @version 3.3.390
 /**
  * Project Manager - Figma/GitHub-style Project Management
  *
@@ -555,6 +555,8 @@ If no change is needed for a field, return the current value.
     if (branchIndex === -1) return false;
 
     const branch = project.branches[branchIndex];
+    if (!branch) return false;
+    
     if (branch.isDefault || branch.isProtected) {
       throw new Error('Cannot delete default or protected branch');
     }
