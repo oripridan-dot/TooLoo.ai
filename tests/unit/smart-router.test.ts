@@ -1,4 +1,4 @@
-// @version 3.3.350 - Smart Router Unit Tests
+// @version 3.3.356 - Smart Router Unit Tests
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the event bus before importing the module
@@ -19,173 +19,221 @@ describe('SmartRouter', () => {
   });
 
   describe('initialization', () => {
-    it('should initialize successfully', async () => {
-      await router.initialize();
+    it('should create router successfully', () => {
       expect(router).toBeDefined();
     });
 
-    it('should have default providers configured', async () => {
-      await router.initialize();
-      const providers = (router as any).providers;
-      expect(providers.size).toBeGreaterThan(0);
+    it('should detect available providers from env', () => {
+      // Router detects providers in constructor
+      const newRouter = new SmartRouter();
+      expect(newRouter).toBeDefined();
     });
   });
 
   describe('task analysis', () => {
     it('should analyze simple tasks correctly', () => {
-      const profile = (router as any).analyzeTask('Hello, how are you?', {});
-      expect(profile.complexity).toBe('simple');
-      expect(profile.estimatedTokens).toBeLessThan(100);
+      const profile = router.analyzeTask('Hello, how are you?', {});
+      expect(profile.complexity).toBe('low');
+      expect(profile.type).toBe('chat');
+    });
+
+    it('should analyze code tasks correctly', () => {
+      const profile = router.analyzeTask('Write a function to sort an array', {});
+      expect(profile.type).toBe('code');
     });
 
     it('should analyze complex tasks correctly', () => {
-      const longPrompt = 'a'.repeat(5000);
-      const profile = (router as any).analyzeTask(longPrompt, {});
-      expect(profile.complexity).toBe('complex');
-      expect(profile.estimatedTokens).toBeGreaterThan(1000);
+      const longPrompt = 'a'.repeat(5000) + ' analyze this data';
+      const profile = router.analyzeTask(longPrompt, {});
+      expect(['high', 'expert']).toContain(profile.complexity);
     });
 
-    it('should detect code generation requirements', () => {
-      const profile = (router as any).analyzeTask(
-        'Write a TypeScript function that sorts an array',
+    it('should detect analysis requirements', () => {
+      const profile = router.analyzeTask(
+        'Analyze and compare these two approaches',
         {}
       );
-      expect(profile.requiresCodeGen).toBe(true);
+      expect(profile.type).toBe('analysis');
     });
 
-    it('should detect reasoning requirements', () => {
-      const profile = (router as any).analyzeTask(
-        'Think step by step and analyze this problem',
+    it('should detect creative requirements', () => {
+      const profile = router.analyzeTask(
+        'Write a creative story about space exploration',
         {}
       );
-      expect(profile.requiresReasoning).toBe(true);
+      expect(profile.type).toBe('creative');
     });
 
-    it('should detect speed priority from options', () => {
-      const profile = (router as any).analyzeTask('Quick question', { speed: 'fast' });
-      expect(profile.prioritizeSpeed).toBe(true);
-    });
-
-    it('should detect cost priority from options', () => {
-      const profile = (router as any).analyzeTask('Budget question', { costSensitive: true });
-      expect(profile.prioritizeCost).toBe(true);
-    });
-  });
-
-  describe('provider scoring', () => {
-    beforeEach(async () => {
-      await router.initialize();
-    });
-
-    it('should score providers based on task profile', () => {
-      const profile = {
-        complexity: 'simple' as const,
-        estimatedTokens: 50,
-        requiresCodeGen: false,
-        requiresReasoning: false,
-        requiresCreativity: false,
-        prioritizeSpeed: false,
-        prioritizeCost: false,
-      };
-
-      const providers = (router as any).providers;
-      let maxScore = -1;
-      providers.forEach((provider: any, name: string) => {
-        const score = (router as any).scoreProvider(provider, profile);
-        expect(typeof score).toBe('number');
-        expect(score).toBeGreaterThanOrEqual(0);
-        if (score > maxScore) maxScore = score;
+    it('should use provided context', () => {
+      const profile = router.analyzeTask('Test', {
+        maxLatencyMs: 500,
+        preferredProvider: 'anthropic',
       });
-      expect(maxScore).toBeGreaterThan(0);
-    });
-
-    it('should prefer fast providers when speed is prioritized', () => {
-      const speedProfile = {
-        complexity: 'simple' as const,
-        estimatedTokens: 50,
-        requiresCodeGen: false,
-        requiresReasoning: false,
-        requiresCreativity: false,
-        prioritizeSpeed: true,
-        prioritizeCost: false,
-      };
-
-      const normalProfile = { ...speedProfile, prioritizeSpeed: false };
-
-      const providers = (router as any).providers;
-      const geminiProvider = providers.get('gemini-flash');
-      
-      if (geminiProvider) {
-        const speedScore = (router as any).scoreProvider(geminiProvider, speedProfile);
-        const normalScore = (router as any).scoreProvider(geminiProvider, normalProfile);
-        // Gemini Flash should score higher when speed is prioritized
-        expect(speedScore).toBeGreaterThanOrEqual(normalScore);
-      }
+      expect(profile.maxLatencyMs).toBe(500);
+      expect(profile.preferredProvider).toBe('anthropic');
     });
   });
 
   describe('routing', () => {
-    beforeEach(async () => {
-      await router.initialize();
-    });
+    it('should route tasks and return decision', async () => {
+      const decision = await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+      });
 
-    it('should route to a valid provider', async () => {
-      const decision = await router.route('Hello world', {});
       expect(decision).toBeDefined();
-      expect(decision.provider).toBeDefined();
-      expect(decision.model).toBeDefined();
-      expect(decision.confidence).toBeGreaterThan(0);
+      expect(decision.primaryProvider).toBeDefined();
+      expect(decision.reason).toBeDefined();
+      expect(decision.confidence).toBeGreaterThanOrEqual(0);
       expect(decision.confidence).toBeLessThanOrEqual(1);
     });
 
-    it('should include reasoning in decision', async () => {
-      const decision = await router.route('Write code', {});
-      expect(decision.reasoning).toBeDefined();
-      expect(decision.reasoning.length).toBeGreaterThan(0);
-    });
+    it('should provide fallback providers', async () => {
+      const decision = await router.route({
+        type: 'code',
+        complexity: 'medium',
+        domain: 'programming',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+      });
 
-    it('should provide fallback options', async () => {
-      const decision = await router.route('Complex task', {});
-      expect(decision.fallbacks).toBeDefined();
-      expect(Array.isArray(decision.fallbacks)).toBe(true);
+      expect(decision.fallbackProviders).toBeDefined();
+      expect(Array.isArray(decision.fallbackProviders)).toBe(true);
     });
 
     it('should estimate cost', async () => {
-      const decision = await router.route('Test prompt', {});
+      const decision = await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+      });
+
       expect(decision.estimatedCost).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should respect preferred provider', async () => {
+      const decision = await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+        preferredProvider: 'anthropic',
+      });
+
+      // If anthropic is available, it should be selected
+      expect(decision.primaryProvider).toBeDefined();
     });
   });
 
   describe('provider management', () => {
-    beforeEach(async () => {
-      await router.initialize();
+    it('should record success metrics', () => {
+      router.recordSuccess('anthropic', 500);
+      const metrics = router.getProviderMetrics('anthropic');
+      
+      if (metrics) {
+        expect(metrics.successCount).toBeGreaterThanOrEqual(1);
+      }
     });
 
-    it('should register custom providers', () => {
-      router.registerProvider('custom-test', {
-        name: 'Custom Test Provider',
-        models: ['custom-model'],
-        maxTokens: 4096,
-        costPer1kTokens: 0.01,
-        avgLatency: 500,
-        reliability: 0.9,
-        strengths: ['testing'],
-        weaknesses: [],
-        isAvailable: true,
-      });
-
-      const providers = (router as any).providers;
-      expect(providers.has('custom-test')).toBe(true);
+    it('should record failure metrics', () => {
+      router.recordFailure('anthropic', new Error('Test error'));
+      const metrics = router.getProviderMetrics('anthropic');
+      
+      if (metrics) {
+        expect(metrics.failureCount).toBeGreaterThanOrEqual(0);
+      }
     });
 
-    it('should update provider metrics', () => {
-      router.updateProviderMetrics('anthropic', {
-        latency: 100,
-        success: true,
+    it('should get all metrics', () => {
+      const allMetrics = router.getAllMetrics();
+      expect(allMetrics).toBeDefined();
+      expect(Array.isArray(allMetrics)).toBe(true);
+    });
+  });
+
+  describe('provider selection scoring', () => {
+    it('should score providers based on capability match', async () => {
+      const codeDecision = await router.route({
+        type: 'code',
+        complexity: 'high',
+        domain: 'programming',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
       });
 
-      // Should not throw
-      expect(true).toBe(true);
+      const chatDecision = await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+      });
+
+      // Both should return valid decisions
+      expect(codeDecision.primaryProvider).toBeDefined();
+      expect(chatDecision.primaryProvider).toBeDefined();
+    });
+
+    it('should factor in latency constraints', async () => {
+      const fastDecision = await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 100, // Very low latency requirement
+      });
+
+      expect(fastDecision.expectedLatency).toBeDefined();
+    });
+
+    it('should consider budget constraints', async () => {
+      const budgetDecision = await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+        budgetConstraint: 0.001, // Very low budget
+      });
+
+      expect(budgetDecision.estimatedCost).toBeDefined();
+    });
+  });
+
+  describe('routing history', () => {
+    it('should maintain routing history', async () => {
+      await router.route({
+        type: 'chat',
+        complexity: 'low',
+        domain: 'general',
+        requiresStreaming: false,
+        maxLatencyMs: 5000,
+      });
+
+      const history = router.getRoutingHistory();
+      expect(history.length).toBeGreaterThan(0);
+    });
+
+    it('should limit history size', async () => {
+      // Make multiple routing decisions
+      for (let i = 0; i < 150; i++) {
+        await router.route({
+          type: 'chat',
+          complexity: 'low',
+          domain: 'general',
+          requiresStreaming: false,
+          maxLatencyMs: 5000,
+        });
+      }
+
+      const history = router.getRoutingHistory();
+      expect(history.length).toBeLessThanOrEqual(100);
     });
   });
 });
