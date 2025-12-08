@@ -1,4 +1,4 @@
-// @version 3.3.384
+// @version 3.3.395
 /**
  * Project Management Hooks
  *
@@ -717,6 +717,106 @@ export function useProjectTemplates() {
   };
 }
 
+// ============================================================================
+// useActiveProject - Active Project Management
+// ============================================================================
+
+/**
+ * Hook for managing the active/selected project
+ * Integrates with chat context and system-wide project scope
+ *
+ * @returns {Object} Active project state and controls
+ */
+export function useActiveProject() {
+  const [activeProject, setActiveProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchActiveProject = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/active/current`);
+      const data = await response.json();
+
+      if (data.ok) {
+        setActiveProject(data.activeProject);
+      }
+    } catch (e) {
+      console.warn('[useActiveProject] Failed to fetch:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const selectProject = useCallback(async (projectId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/active/set`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+      });
+      const data = await response.json();
+
+      if (data.ok) {
+        setActiveProject(data.activeProject);
+        return data.activeProject;
+      } else {
+        setError(data.error || 'Failed to set active project');
+        return null;
+      }
+    } catch (e) {
+      setError(e.message || 'Network error');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const clearProject = useCallback(async () => {
+    return selectProject(null);
+  }, [selectProject]);
+
+  useEffect(() => {
+    fetchActiveProject();
+  }, [fetchActiveProject]);
+
+  // Listen for project events via Socket.IO
+  useEffect(() => {
+    const handleProjectEvent = (event) => {
+      if (event.type.startsWith('project:')) {
+        // Refresh active project when relevant events occur
+        if (
+          event.type === 'project:activated' ||
+          event.type === 'project:deactivated' ||
+          event.type === 'project:updated'
+        ) {
+          fetchActiveProject();
+        }
+      }
+    };
+
+    // Assuming socket is available globally or via context
+    if (typeof window !== 'undefined' && window.__tooloo_socket) {
+      window.__tooloo_socket.on('synapsys:event', handleProjectEvent);
+      return () => {
+        window.__tooloo_socket.off('synapsys:event', handleProjectEvent);
+      };
+    }
+  }, [fetchActiveProject]);
+
+  return {
+    activeProject,
+    loading,
+    error,
+    selectProject,
+    clearProject,
+    refresh: fetchActiveProject,
+    hasActiveProject: !!activeProject,
+  };
+}
+
 export default {
   useProjects,
   useProject,
@@ -726,4 +826,5 @@ export default {
   useProjectFiles,
   useProjectActivity,
   useProjectTemplates,
+  useActiveProject,
 };
