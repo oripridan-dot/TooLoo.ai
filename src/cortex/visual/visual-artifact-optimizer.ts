@@ -505,8 +505,8 @@ export class VisualArtifactOptimizer {
     generator: () => Promise<string>
   ): AsyncGenerator<string> {
     const self = this;
-    const width = (request.options?.width as number) || 800;
-    const height = (request.options?.height as number) || 600;
+    const width = (request.options?.['width'] as number) || 800;
+    const height = (request.options?.['height'] as number) || 600;
 
     return (async function* () {
       // Stage 1: Immediate placeholder
@@ -616,7 +616,7 @@ export class VisualArtifactOptimizer {
     parts.push(`<g transform="translate(${padding}, ${padding})">`);
 
     for (let i = 0; i < barCount; i++) {
-      const d = data[i];
+      const d = data[i]!;
       const x = gap + i * (barWidth + gap);
       const barHeight = (d.value / maxValue) * chartHeight;
       const y = chartHeight - barHeight;
@@ -665,11 +665,13 @@ export class VisualArtifactOptimizer {
 
     if (processedPoints.length === 0) return '';
 
-    // Build path string
-    const pathParts = [`M${processedPoints[0].x},${processedPoints[0].y}`];
+    // Build path string - first point is guaranteed by length check
+    const firstPoint = processedPoints[0]!;
+    const pathParts = [`M${firstPoint.x},${firstPoint.y}`];
 
     for (let i = 1; i < processedPoints.length; i++) {
-      pathParts.push(`L${processedPoints[i].x},${processedPoints[i].y}`);
+      const pt = processedPoints[i]!;
+      pathParts.push(`L${pt.x},${pt.y}`);
     }
 
     return pathParts.join(' ');
@@ -688,11 +690,12 @@ export class VisualArtifactOptimizer {
     let maxDist = 0;
     let maxIndex = 0;
 
-    const start = points[0];
-    const end = points[points.length - 1];
+    const start = points[0]!;
+    const end = points[points.length - 1]!;
 
     for (let i = 1; i < points.length - 1; i++) {
-      const dist = this.perpendicularDistance(points[i], start, end);
+      const pt = points[i]!;
+      const dist = this.perpendicularDistance(pt, start, end);
       if (dist > maxDist) {
         maxDist = dist;
         maxIndex = i;
@@ -765,13 +768,15 @@ export class VisualArtifactOptimizer {
     console.log('[VisualOptimizer] Warming up cache...');
 
     // Pre-generate common placeholders
-    const sizes = [
+    const sizes: Array<[number, number]> = [
       [400, 300],
       [800, 600],
       [1200, 800],
     ];
 
-    for (const [w, h] of sizes) {
+    for (const size of sizes) {
+      const w = size[0];
+      const h = size[1];
       const key = `placeholder-${w}x${h}`;
       if (!this.svgCache.has(key)) {
         this.svgCache.set(key, this.generatePlaceholder(w, h));

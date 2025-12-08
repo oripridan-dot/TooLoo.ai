@@ -1,4 +1,4 @@
-// @version 3.3.163
+// @version 3.3.370
 // TooLoo.ai Visual Cortex 2.0 Module Index
 // Re-exports all Visual Cortex 2.0 functionality
 
@@ -18,6 +18,16 @@ export {
   type DataSeries,
   type ChartOptions,
 } from './visual-cortex-2.js';
+
+export {
+  VisualArtifactOptimizer,
+  visualOptimizer,
+  LRUCache,
+  PRECOMPUTED_TEMPLATES,
+  type OptimizationOptions,
+  type GenerationRequest,
+  type GenerationResult,
+} from './visual-artifact-optimizer.js';
 
 export { SVGBuilder } from '../creative/svg-generation-engine.js';
 

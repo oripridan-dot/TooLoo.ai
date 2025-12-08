@@ -1,7 +1,8 @@
-// @version 3.3.163
+// @version 3.3.370
 // TooLoo.ai Visual Cortex 2.0
 // Enhanced Design Engine - Central orchestrator for visual generation
 // Unifies SVG Generation, Animation, Data Visualization, and Design System
+// OPTIMIZED: Intelligent caching, memoization, progressive rendering
 
 import { bus } from '../../core/event-bus.js';
 import {
@@ -24,6 +25,7 @@ import {
   SVGGenerationEngine,
   SVGBuilder,
 } from '../creative/svg-generation-engine.js';
+import { visualOptimizer, VisualArtifactOptimizer } from './visual-artifact-optimizer.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -199,6 +201,7 @@ export interface VisualCortex2Response {
  * 2. Animation Engine - Motion design system
  * 3. Data Viz Engine - Charts and graphs
  * 4. Design System - Tokens and components
+ * 5. Visual Optimizer - Intelligent caching and progressive rendering
  */
 export class VisualCortex2 {
   private static instance: VisualCortex2;
@@ -207,10 +210,18 @@ export class VisualCortex2 {
   public readonly svg: SVGGenerationEngine;
   public readonly animation: AnimationEngine;
   public readonly dataViz: DataVizEngine;
+  public readonly optimizer: VisualArtifactOptimizer;
 
   // Design system
   private designSystem: DesignSystem | null = null;
   private designSystemPath: string;
+
+  // Performance tracking
+  private performanceStats = {
+    totalGenerations: 0,
+    cachedResponses: 0,
+    avgGenerationTime: 0,
+  };
 
   // Presets and themes
   public readonly palettes = CHART_PALETTES;
@@ -230,12 +241,16 @@ export class VisualCortex2 {
     this.svg = svgGenerationEngine;
     this.animation = animationEngine;
     this.dataViz = dataVizEngine;
+    this.optimizer = visualOptimizer;
 
     // Set design system path
     this.designSystemPath = path.resolve(process.cwd(), 'data/design-system.json');
 
     // Load design system
     this.loadDesignSystem().catch(console.error);
+
+    // Warm up the optimizer cache
+    this.optimizer.warmUpCache().catch(console.error);
 
     // Subscribe to visual cortex events
     bus.on('cortex:visual2_request', async (event) => {
@@ -253,7 +268,7 @@ export class VisualCortex2 {
       }
     });
 
-    console.log('🧠 Visual Cortex 2.0 Enhanced Design Engine initialized');
+    console.log('🧠 Visual Cortex 2.0 Enhanced Design Engine initialized (with optimizer)');
   }
 
   // -------------------------------------------------------------------------
