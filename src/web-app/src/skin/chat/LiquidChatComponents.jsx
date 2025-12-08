@@ -1,9 +1,10 @@
-// @version 3.3.349
+// @version 3.3.376
 // TooLoo.ai Liquid Chat Components
-// v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
+// v3.3.374 - Diversified Visual Communication: Multi-format support
 // Rich visual display capabilities for chat responses
 // Integrates liquid skin throughout the chat experience
 // Enhanced with Visual Renderers for creative AI responses
+// NEW: ASCII, Mermaid, Charts, Emoji, Terminal, Math, Trees, Timelines
 
 import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
@@ -23,6 +24,20 @@ import {
   DocumentPreview,
   UniversalCodeSandbox,
 } from './VisualRenderers';
+import {
+  ASCIIRenderer,
+  MermaidRenderer,
+  ChartRenderer,
+  EmojiRenderer,
+  TerminalRenderer,
+  MathRenderer,
+  TimelineRenderer,
+  TreeRenderer,
+  StatsCardRenderer,
+  GradientCardRenderer,
+  ComparisonRenderer,
+  MarkdownTableRenderer,
+} from './MultiFormatRenderers';
 
 // ============================================================================
 // TOOLOO AVATAR - Animated presence indicator for chat
@@ -322,41 +337,65 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     // Reset for main parsing
     lastIndex = 0;
 
-    // PHASE 2: Find SVG blocks - ```svg format (with or without newline)
-    const svgRegex = /```svg\s*([\s\S]*?)```/g;
-    while ((match = svgRegex.exec(processedContent)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
+    // ========================================================================
+    // MULTI-FORMAT VISUAL PARSING (v3.3.374)
+    // Supports: svg, ascii, mermaid, chart, timeline, tree, stats, 
+    //           gradient-card, comparison, emoji, terminal, math
+    // ========================================================================
+    
+    // Combined regex for all visual formats
+    const visualFormats = [
+      { type: 'svg', regex: /```svg\s*([\s\S]*?)```/g },
+      { type: 'ascii', regex: /```ascii\s*([\s\S]*?)```/g },
+      { type: 'mermaid', regex: /```mermaid\s*([\s\S]*?)```/g },
+      { type: 'chart', regex: /```chart\s*([\s\S]*?)```/g },
+      { type: 'timeline', regex: /```timeline\s*([\s\S]*?)```/g },
+      { type: 'tree', regex: /```tree\s*([\s\S]*?)```/g },
+      { type: 'stats', regex: /```stats\s*([\s\S]*?)```/g },
+      { type: 'gradient-card', regex: /```gradient-card\s*([\s\S]*?)```/g },
+      { type: 'comparison', regex: /```comparison\s*([\s\S]*?)```/g },
+      { type: 'emoji', regex: /```emoji\s*([\s\S]*?)```/g },
+      { type: 'terminal', regex: /```terminal\s*([\s\S]*?)```/g },
+      { type: 'math', regex: /```math\s*([\s\S]*?)```/g },
+      { type: 'jsx', regex: /```(?:jsx|react|javascript)\s*([\s\S]*?)```/g },
+    ];
+    
+    // Find all visual blocks with their positions
+    const allBlocks = [];
+    visualFormats.forEach(({ type, regex }) => {
+      let blockMatch;
+      while ((blockMatch = regex.exec(processedContent)) !== null) {
+        allBlocks.push({
+          type,
+          code: blockMatch[1].trim(),
+          start: blockMatch.index,
+          end: blockMatch.index + blockMatch[0].length,
+        });
       }
-      visuals.push({ type: 'svg', code: match[1].trim(), index: parts.length });
-      parts.push({ type: 'svg', code: match[1].trim() });
-      lastIndex = match.index + match[0].length;
-    }
-
-    // PHASE 3: Find JSX/React blocks - ```jsx or ```react format
-    const jsxRegex = /```(?:jsx|react|javascript)\s*([\s\S]*?)```/g;
-    processedContent = content || ''; // Reset
-    while ((match = jsxRegex.exec(processedContent)) !== null) {
-      // Check if this overlaps with already processed parts
-      const alreadyProcessed = parts.some(
-        (p) =>
-          p.type !== 'text' &&
-          match.index >= lastIndex &&
-          match.index < lastIndex + (p.code?.length || 0)
-      );
-
-      if (!alreadyProcessed && match.index >= lastIndex) {
-        if (match.index > lastIndex) {
-          parts.push({ type: 'text', content: processedContent.substring(lastIndex, match.index) });
-        }
-        visuals.push({ type: 'jsx', code: match[1].trim(), index: parts.length });
-        parts.push({ type: 'jsx', code: match[1].trim() });
-        lastIndex = match.index + match[0].length;
+    });
+    
+    // Sort by position
+    allBlocks.sort((a, b) => a.start - b.start);
+    
+    // Build parts array
+    let currentIndex = 0;
+    allBlocks.forEach(block => {
+      // Add text before this block
+      if (block.start > currentIndex) {
+        parts.push({ type: 'text', content: processedContent.substring(currentIndex, block.start) });
       }
+      // Add the visual block
+      visuals.push({ type: block.type, code: block.code, index: parts.length });
+      parts.push({ type: block.type, code: block.code });
+      currentIndex = block.end;
+    });
+    
+    // Add remaining text
+    if (currentIndex < processedContent.length) {
+      parts.push({ type: 'text', content: processedContent.substring(currentIndex) });
     }
 
     // PHASE 4: Extract raw SVG code (not in code blocks) and RENDER as SVG
-    processedContent = content || '';
     // Reset lastIndex for raw SVG scan of remaining text parts
     parts.forEach((part, idx) => {
       if (part.type === 'text' && part.content) {
@@ -386,12 +425,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
       }
     });
 
-    // Add remaining text
-    if (lastIndex < (content?.length || 0)) {
-      parts.push({ type: 'text', content: (content || '').substring(lastIndex) });
-    }
-
-    // If no visual blocks found, return all as text
+    // If no parts found, return all as text
     if (parts.length === 0) {
       parts.push({ type: 'text', content: content || '' });
     }
@@ -399,9 +433,28 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
     return { textParts: parts, visualBlocks: visuals };
   }, [content]);
 
+  // Helper to parse JSON content safely
+  const parseJsonContent = (code) => {
+    try {
+      return JSON.parse(code);
+    } catch {
+      // Try to extract JSON from code block
+      const jsonMatch = code.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[0]);
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
+  };
+
   return (
     <div className="prose prose-invert prose-base max-w-none break-words">
       {textParts.map((part, index) => {
+        // SVG Rendering
         if (part.type === 'svg') {
           return (
             <SVGRenderer
@@ -412,7 +465,170 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             />
           );
         }
-
+        
+        // ASCII Art Rendering
+        if (part.type === 'ascii') {
+          return (
+            <ASCIIRenderer
+              key={`ascii-${index}`}
+              content={part.code}
+              title="ASCII Diagram"
+              className="my-4"
+            />
+          );
+        }
+        
+        // Mermaid Diagram Rendering
+        if (part.type === 'mermaid') {
+          const mermaidType = part.code.startsWith('graph') ? 'flowchart' 
+            : part.code.startsWith('sequenceDiagram') ? 'sequence'
+            : part.code.startsWith('classDiagram') ? 'class'
+            : part.code.startsWith('stateDiagram') ? 'state'
+            : part.code.startsWith('erDiagram') ? 'er'
+            : part.code.startsWith('gantt') ? 'gantt'
+            : part.code.startsWith('pie') ? 'pie'
+            : 'flowchart';
+          return (
+            <MermaidRenderer
+              key={`mermaid-${index}`}
+              code={part.code}
+              type={mermaidType}
+              title="Diagram"
+              className="my-4"
+            />
+          );
+        }
+        
+        // Chart Rendering
+        if (part.type === 'chart') {
+          const chartData = parseJsonContent(part.code);
+          if (chartData) {
+            // Handle both {"type":"bar","data":{...}} and {"type":"bar","labels":[...],"datasets":[...]}
+            const chartType = chartData.type || 'bar';
+            const chartDataPayload = chartData.data || { labels: chartData.labels, datasets: chartData.datasets };
+            return (
+              <ChartRenderer
+                key={`chart-${index}`}
+                type={chartType}
+                data={chartDataPayload}
+                options={chartData.options}
+                title={chartData.title}
+                className="my-4"
+              />
+            );
+          }
+        }
+        
+        // Timeline Rendering
+        if (part.type === 'timeline') {
+          const timelineData = parseJsonContent(part.code);
+          if (timelineData) {
+            return (
+              <TimelineRenderer
+                key={`timeline-${index}`}
+                events={timelineData.events || timelineData}
+                orientation={timelineData.orientation}
+                className="my-4"
+              />
+            );
+          }
+        }
+        
+        // Tree Rendering
+        if (part.type === 'tree') {
+          const treeData = parseJsonContent(part.code);
+          if (treeData) {
+            return (
+              <TreeRenderer
+                key={`tree-${index}`}
+                root={treeData.root || treeData}
+                style={treeData.style}
+                className="my-4"
+              />
+            );
+          }
+        }
+        
+        // Stats Card Rendering
+        if (part.type === 'stats') {
+          const statsData = parseJsonContent(part.code);
+          if (statsData) {
+            return (
+              <StatsCardRenderer
+                key={`stats-${index}`}
+                stats={statsData.stats || statsData}
+                layout={statsData.layout}
+                className="my-4"
+              />
+            );
+          }
+        }
+        
+        // Gradient Card Rendering
+        if (part.type === 'gradient-card') {
+          const cardData = parseJsonContent(part.code);
+          if (cardData) {
+            return (
+              <GradientCardRenderer
+                key={`gradient-card-${index}`}
+                {...cardData}
+                className="my-4"
+              />
+            );
+          }
+        }
+        
+        // Comparison Rendering
+        if (part.type === 'comparison') {
+          const compData = parseJsonContent(part.code);
+          if (compData) {
+            return (
+              <ComparisonRenderer
+                key={`comparison-${index}`}
+                items={compData.items}
+                compareBy={compData.compareBy}
+                className="my-4"
+              />
+            );
+          }
+        }
+        
+        // Emoji Composition Rendering
+        if (part.type === 'emoji') {
+          return (
+            <EmojiRenderer
+              key={`emoji-${index}`}
+              composition={part.code}
+              layout="flow"
+              animated={true}
+              className="my-4"
+            />
+          );
+        }
+        
+        // Terminal Output Rendering
+        if (part.type === 'terminal') {
+          return (
+            <TerminalRenderer
+              key={`terminal-${index}`}
+              output={part.code}
+              title="Terminal"
+              className="my-4"
+            />
+          );
+        }
+        
+        // Math/LaTeX Rendering
+        if (part.type === 'math') {
+          return (
+            <MathRenderer
+              key={`math-${index}`}
+              expression={part.code}
+              displayMode={true}
+              className="my-4"
+            />
+          );
+        }
         if (part.type === 'jsx') {
           return (
             <ReactComponentRenderer
