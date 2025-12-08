@@ -1,4 +1,4 @@
-// @version 3.3.368
+// @version 3.3.369
 // TooLoo.ai Advanced Visual Studio
 // Human-like illustration components with intelligent rendering
 // Features: Scene generation, artistic effects, interactive visuals
@@ -646,17 +646,31 @@ const DataArtScene = memo(({ colors, animated, prompt }) => {
   const [p1, p2, p3] = colors.primary;
   const [a1, a2] = colors.accent;
 
-  // Generate pseudo-random but deterministic data based on prompt
-  const generateData = () => {
+  // OPTIMIZATION: Memoize data based on prompt and colors
+  const { data, maxValue, colorArray } = useMemo(() => {
     const seed = prompt ? prompt.length : 42;
-    return [...Array(12)].map((_, i) => ({
+    const cArray = [p1, p2, p3, a1, a2];
+    const genData = Array.from({ length: 12 }, (_, i) => ({
       value: 30 + ((seed * (i + 1) * 7) % 70),
-      color: [p1, p2, p3, a1, a2][i % 5],
+      color: cArray[i % 5],
     }));
-  };
+    return {
+      data: genData,
+      maxValue: Math.max(...genData.map((d) => d.value)),
+      colorArray: cArray,
+    };
+  }, [prompt, p1, p2, p3, a1, a2]);
 
-  const data = generateData();
-  const maxValue = Math.max(...data.map((d) => d.value));
+  // OPTIMIZATION: Memoize the connecting line path
+  const connectingPath = useMemo(() => {
+    if (data.length === 0) return '';
+    const points = data.map((d, i) => {
+      const x = 120 + i * 52;
+      const y = 400 - (d.value / maxValue) * 280;
+      return i === 0 ? `M${x},${y}` : `L${x},${y}`;
+    });
+    return points.join(' ');
+  }, [data, maxValue]);
 
   return (
     <g>
@@ -668,7 +682,7 @@ const DataArtScene = memo(({ colors, animated, prompt }) => {
           const x = i * 52;
 
           return (
-            <g key={i}>
+            <g key={`bar-${i}`}>
               <rect
                 x={x}
                 y={-barHeight}
@@ -707,18 +721,13 @@ const DataArtScene = memo(({ colors, animated, prompt }) => {
 
       {/* Connecting lines between bars */}
       <g stroke={p1} strokeWidth="1" fill="none" opacity="0.3">
-        <path
-          d={`M120,${400 - (data[0].value / maxValue) * 280} ${data
-            .slice(1)
-            .map((d, i) => `L${172 + i * 52},${400 - (d.value / maxValue) * 280}`)
-            .join(' ')}`}
-        />
+        <path d={connectingPath} />
       </g>
 
       {/* Floating data points */}
       {data.map((d, i) => (
         <circle
-          key={i}
+          key={`point-${i}`}
           cx={120 + i * 52}
           cy={400 - (d.value / maxValue) * 280 - 10}
           r="4"
@@ -739,6 +748,8 @@ const DataArtScene = memo(({ colors, animated, prompt }) => {
     </g>
   );
 });
+
+DataArtScene.displayName = 'DataArtScene';
 
 // ============================================================================
 // ARTISTIC IMAGE PLACEHOLDER - For when real images would be shown
