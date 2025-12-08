@@ -1,4 +1,4 @@
-// @version 3.3.393
+// @version 3.3.394
 /**
  * Project Manager - Figma/GitHub-style Project Management
  *
@@ -473,6 +473,13 @@ export class ProjectManager {
     // Update index
     this.updateIndex(project);
     await this.saveIndex();
+
+    // Emit project created event
+    this.emitProjectEvent('created', project.id, {
+      name: project.name,
+      type: project.type,
+      visibility: project.access.visibility,
+    });
 
     console.log(`[ProjectManager] Created project: ${project.name} (${project.id})`);
     return project;
