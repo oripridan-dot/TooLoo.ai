@@ -1,4 +1,4 @@
-// @version 3.3.390
+// @version 3.3.391
 /**
  * Project Manager - Figma/GitHub-style Project Management
  *
@@ -23,9 +23,6 @@ import type {
   UpdateProjectInput,
   Branch,
   Version,
-  ProjectActivity,
-  ProjectStats,
-  ProjectMemory,
 } from '../shared/types/project.types.js';
 
 // ============================================================================
@@ -157,17 +154,21 @@ export class ProjectManager {
 
     // Apply filters
     if (filter) {
-      if (filter.type?.length) {
-        projects = projects.filter((p) => filter.type!.includes(p.type));
+      if (filter.type && filter.type.length > 0) {
+        const filterTypes = filter.type;
+        projects = projects.filter((p) => filterTypes.includes(p.type));
       }
-      if (filter.status?.length) {
-        projects = projects.filter((p) => filter.status!.includes(p.status));
+      if (filter.status && filter.status.length > 0) {
+        const filterStatuses = filter.status;
+        projects = projects.filter((p) => filterStatuses.includes(p.status));
       }
-      if (filter.visibility?.length) {
-        projects = projects.filter((p) => filter.visibility!.includes(p.visibility));
+      if (filter.visibility && filter.visibility.length > 0) {
+        const filterVisibilities = filter.visibility;
+        projects = projects.filter((p) => filterVisibilities.includes(p.visibility));
       }
-      if (filter.tags?.length) {
-        projects = projects.filter((p) => filter.tags!.some((t) => p.tags.includes(t)));
+      if (filter.tags && filter.tags.length > 0) {
+        const filterTags = filter.tags;
+        projects = projects.filter((p) => filterTags.some((t) => p.tags.includes(t)));
       }
       if (filter.search) {
         const search = filter.search.toLowerCase();
