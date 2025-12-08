@@ -1763,16 +1763,35 @@ router.post('/command/diagram', async (req, res) => {
     console.log(`[Chat] Generating ${type} diagram: ${description.substring(0, 50)}...`);
 
     const diagramPrompt = `Generate a ${type} diagram as a raw SVG for: ${description}
-    Return ONLY the SVG code, no explanations.
-    Format: \`\`\`svg
-    <svg>...</svg>
-    \`\`\`
-    Style: Dark mode, modern, professional.`;
+
+REQUIREMENTS:
+- viewBox="0 0 800 500" (use this exact size)
+- Dark background: #0a0a0f
+- Center content in the viewBox (not top-left corner)
+- Use rectangles with rounded corners (rx="8") for nodes
+- Use clear lines/arrows connecting elements
+- Colors: #06B6D4 (cyan), #8B5CF6 (purple), #EC4899 (pink), #10B981 (green)
+- Text must be white (#ffffff) or light gray (#94a3b8)
+- Font: sans-serif, sizes 12-16px
+- Include proper spacing between elements (min 40px)
+
+Return ONLY the SVG code wrapped in \`\`\`svg tags.`;
 
     const result = await precog.providers.generate({
       prompt: diagramPrompt,
-      system:
-        'You are an expert at creating clear, concise SVG diagrams. Return only the SVG code block.',
+      system: `You are an expert SVG diagram creator. Generate clean, well-structured SVG diagrams.
+
+CRITICAL RULES:
+1. ALWAYS use viewBox="0 0 800 500" 
+2. ALWAYS include a dark background rect as first element: <rect width="800" height="500" fill="#0a0a0f"/>
+3. CENTER all content - main elements should be around x=400, y=250
+4. Use RECTANGLES for boxes/nodes, CIRCLES for points, LINES/PATHS for connections
+5. NEVER create random curves or abstract art - create clear, labeled diagrams
+6. Each shape must have a PURPOSE - represent a concept, step, or connection
+7. Include text labels for all important elements
+8. Use consistent styling: stroke-width="2", font-family="sans-serif"
+
+Return ONLY the SVG code block, nothing else.`,
       taskType: 'creative',
     });
 
