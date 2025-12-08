@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.373",
+  "version": "3.3.375",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -73,6 +73,7 @@
     "axios": "^1.13.2",
     "better-sqlite3": "^12.4.6",
     "chalk": "^5.6.2",
+    "chart.js": "^4.5.1",
     "cheerio": "^1.1.2",
     "chokidar": "^4.0.3",
     "commander": "^11.0.0",
@@ -87,7 +88,9 @@
     "glob": "^13.0.0",
     "helmet": "^7.1.0",
     "js-yaml": "^4.1.1",
+    "katex": "^0.16.27",
     "lucide-react": "^0.294.0",
+    "mermaid": "^10.9.5",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "openai": "^6.9.1",
