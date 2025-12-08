@@ -1,4 +1,4 @@
-// @version 3.3.397
+// @version 3.3.405
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 
@@ -21,6 +21,9 @@ import { VIEWS } from '../views';
 
 // Project Selector
 import { ProjectSelector } from '../components/ProjectSelector';
+
+// V3.3.405: SystemPulse HUD - Real-time file watcher visualization
+import { SystemPulse } from '../components/SystemPulse';
 
 // Lazy load views for code splitting
 const Space = lazy(() => import('../views/SpaceV4'));
@@ -116,6 +119,11 @@ const Sidebar = memo(({ activeView, onViewChange, collapsed = false }) => {
     []
   );
 
+  const handleNewProject = useCallback(() => {
+    // Navigate to projects view when creating new project
+    onViewChange('projects');
+  }, [onViewChange]);
+
   return (
     <div
       className={`
@@ -138,6 +146,14 @@ const Sidebar = memo(({ activeView, onViewChange, collapsed = false }) => {
           )}
         </div>
       </div>
+
+      {/* Active Project Selector */}
+      {!collapsed && (
+        <div className="p-3 border-b border-white/5">
+          <p className="text-xs text-gray-500 mb-2 px-1">Active Project</p>
+          <ProjectSelector onNewProject={handleNewProject} />
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-2 overflow-auto">
