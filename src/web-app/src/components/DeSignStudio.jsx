@@ -1,2 +1,4 @@
-// @version 3.3.7
-export { DeSignStudio as default } from './index';
+// @version 3.3.220
+// TooLoo DeSign Studio - Now powered by TooLoo Copilot
+export { default } from './FigmaCopilot';
+export { FigmaCopilot as DeSignStudio } from './FigmaCopilot';

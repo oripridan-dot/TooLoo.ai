@@ -1,11 +1,11 @@
-// @version 3.3.216
+// @version 3.3.300
 // TooLoo Flow Session Manager
 // Manages the unified thinking and creation experience
 
 import { v4 as uuid } from 'uuid';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { bus } from '../../shared/event-bus.js';
+import { bus } from '../../core/event-bus.js';
 import {
   FlowSession,
   FlowPhase,

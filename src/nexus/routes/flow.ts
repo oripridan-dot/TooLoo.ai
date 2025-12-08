@@ -134,7 +134,7 @@ router.post('/sessions/:id/responses', async (req: Request, res: Response) => {
     if (!response) {
       return res.status(400).json({ ok: false, error: 'Response is required' });
     }
-    const message = await flowSessionManager.addToolooResponse(req.params.id, response, nodeId);
+    const message = await flowSessionManager.addToolooResponse(req.params['id'] as string, response, nodeId);
     res.json({ ok: true, message });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
@@ -153,7 +153,7 @@ router.post('/sessions/:id/branches', async (req: Request, res: Response) => {
       return res.status(400).json({ ok: false, error: 'parentNodeId and label are required' });
     }
     const branch = await flowSessionManager.createBranch(
-      req.params.id,
+      req.params['id'] as string,
       parentNodeId,
       label,
       reason || ''
@@ -339,8 +339,8 @@ router.get('/sessions/:id/readiness', async (req: Request, res: Response) => {
 router.get('/dimensions', async (req: Request, res: Response) => {
   try {
     const dimensions = Object.entries(DIMENSION_TEMPLATES).map(([type, template]) => ({
-      type,
       ...template,
+      type,
     }));
     res.json({ ok: true, dimensions });
   } catch (error) {
@@ -351,11 +351,11 @@ router.get('/dimensions', async (req: Request, res: Response) => {
 // Get specific dimension template
 router.get('/dimensions/:type', async (req: Request, res: Response) => {
   try {
-    const template = DIMENSION_TEMPLATES[req.params.type as DimensionType];
+    const template = DIMENSION_TEMPLATES[req.params['type'] as DimensionType];
     if (!template) {
       return res.status(404).json({ ok: false, error: 'Dimension not found' });
     }
-    res.json({ ok: true, dimension: { type: req.params.type, ...template } });
+    res.json({ ok: true, dimension: { ...template, type: req.params['type'] } });
   } catch (error) {
     res.status(500).json({ ok: false, error: String(error) });
   }
@@ -368,7 +368,7 @@ router.get('/dimensions/:type', async (req: Request, res: Response) => {
 // Get extended knowledge
 router.get('/sessions/:id/knowledge', async (req: Request, res: Response) => {
   try {
-    const session = await flowSessionManager.getSession(req.params.id);
+    const session = await flowSessionManager.getSession(req.params['id'] as string);
     if (!session) {
       return res.status(404).json({ ok: false, error: 'Session not found' });
     }

@@ -12,7 +12,7 @@ const API_BASE = '/api/v1/design';
 export const FigmaCopilot = () => {
   // Connection state
   const [figmaStatus, setFigmaStatus] = useState({ connected: false, user: null, loading: true });
-  
+
   // Input state
   const [figmaUrl, setFigmaUrl] = useState('');
   const [options, setOptions] = useState({
@@ -22,17 +22,17 @@ export const FigmaCopilot = () => {
     includeTests: false,
     includeStorybook: false,
   });
-  
+
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ stage: '', message: '', progress: 0 });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [selectedComponent, setSelectedComponent] = useState(null);
-  
+
   // Presets
   const [presets, setPresets] = useState(null);
-  
+
   // Cache
   const [recentImports, setRecentImports] = useState([]);
 
@@ -190,7 +190,7 @@ export const FigmaCopilot = () => {
               <p className="text-sm text-gray-400">Design to Code with AI</p>
             </div>
           </div>
-          
+
           {/* Figma Connection Status */}
           <div className="flex items-center gap-2">
             {figmaStatus.loading ? (
@@ -216,9 +216,7 @@ export const FigmaCopilot = () => {
         <div className="w-1/3 border-r border-gray-700 p-4 overflow-y-auto">
           {/* URL Input */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Figma URL
-            </label>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Figma URL</label>
             <input
               type="text"
               value={figmaUrl}
@@ -227,17 +225,13 @@ export const FigmaCopilot = () => {
               className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors"
               disabled={isGenerating}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Paste a Figma file or frame URL
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Paste a Figma file or frame URL</p>
           </div>
 
           {/* Options */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-400 mb-3">
-              Options
-            </label>
-            
+            <label className="block text-sm font-medium text-gray-400 mb-3">Options</label>
+
             {/* Framework */}
             <div className="mb-4">
               <label className="text-xs text-gray-500 mb-1 block">Framework</label>
@@ -318,15 +312,27 @@ export const FigmaCopilot = () => {
               isGenerating
                 ? 'bg-gray-600 cursor-wait'
                 : figmaStatus.connected
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-purple-500/25'
-                : 'bg-gray-600 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-purple-500/25'
+                  : 'bg-gray-600 cursor-not-allowed'
             }`}
           >
             {isGenerating ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
                 Generating...
               </span>
@@ -350,7 +356,7 @@ export const FigmaCopilot = () => {
                 <span className="text-purple-400">{Math.round(progress.progress)}%</span>
               </div>
               <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
                   style={{ width: `${progress.progress}%` }}
                 />
@@ -361,9 +367,7 @@ export const FigmaCopilot = () => {
           {/* Recent Imports */}
           {recentImports.length > 0 && (
             <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                Recent Imports
-              </label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Recent Imports</label>
               <div className="space-y-2">
                 {recentImports.slice(0, 5).map((imp, i) => (
                   <button
@@ -373,7 +377,8 @@ export const FigmaCopilot = () => {
                   >
                     <div className="text-sm font-medium truncate">{imp.fileName || imp.fileId}</div>
                     <div className="text-xs text-gray-500">
-                      {imp.componentCount} components • {new Date(imp.importedAt).toLocaleDateString()}
+                      {imp.componentCount} components •{' '}
+                      {new Date(imp.importedAt).toLocaleDateString()}
                     </div>
                   </button>
                 ))}
@@ -427,7 +432,9 @@ export const FigmaCopilot = () => {
                 <div className="text-center">
                   <div className="text-6xl mb-4">🎨</div>
                   <p className="text-lg mb-2">Paste a Figma URL to get started</p>
-                  <p className="text-sm">TooLoo will analyze your design and generate production-ready code</p>
+                  <p className="text-sm">
+                    TooLoo will analyze your design and generate production-ready code
+                  </p>
                 </div>
               </div>
             ) : (
@@ -471,7 +478,9 @@ export const FigmaCopilot = () => {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-bold">{Math.round(result.totalQualityScore * 100)}%</span>
+                  <span className="text-2xl font-bold">
+                    {Math.round(result.totalQualityScore * 100)}%
+                  </span>
                 </div>
               </div>
             </div>
@@ -483,7 +492,9 @@ export const FigmaCopilot = () => {
                 <div className="text-xs text-gray-500">Components</div>
               </div>
               <div className="bg-gray-800 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-green-400">{result.warnings?.length || 0}</div>
+                <div className="text-2xl font-bold text-green-400">
+                  {result.warnings?.length || 0}
+                </div>
                 <div className="text-xs text-gray-500">Warnings</div>
               </div>
             </div>
@@ -494,7 +505,10 @@ export const FigmaCopilot = () => {
                 <h3 className="text-sm font-medium text-gray-400 mb-2">Warnings</h3>
                 <div className="space-y-2">
                   {result.warnings.map((w, i) => (
-                    <div key={`warning-${w.message?.slice(0,20) || i}`} className="p-2 bg-yellow-900/30 border border-yellow-700/50 rounded text-sm text-yellow-200">
+                    <div
+                      key={`warning-${w.message?.slice(0, 20) || i}`}
+                      className="p-2 bg-yellow-900/30 border border-yellow-700/50 rounded text-sm text-yellow-200"
+                    >
                       {w.message}
                     </div>
                   ))}
@@ -508,7 +522,10 @@ export const FigmaCopilot = () => {
                 <h3 className="text-sm font-medium text-gray-400 mb-2">Suggestions</h3>
                 <div className="space-y-2">
                   {result.suggestions.map((s, i) => (
-                    <div key={`suggestion-${s.message?.slice(0,20) || i}`} className="p-2 bg-blue-900/30 border border-blue-700/50 rounded text-sm text-blue-200">
+                    <div
+                      key={`suggestion-${s.message?.slice(0, 20) || i}`}
+                      className="p-2 bg-blue-900/30 border border-blue-700/50 rounded text-sm text-blue-200"
+                    >
                       💡 {s.message}
                     </div>
                   ))}

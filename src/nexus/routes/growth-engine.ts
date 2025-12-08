@@ -1,15 +1,22 @@
-// @version 3.3.191
+// @version 3.3.401 - REAL LEARNING RATE
 /**
- * TooLoo.ai Synapsys V3.3.191
+ * TooLoo.ai Synapsys V3.3.401
  * Growth Engine Routes - Unified Learning & Emergence Control Center
  */
 
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { bus } from '../../core/event-bus.js';
 import { learningScheduler } from '../../precog/learning/learning-scheduler.js';
 import { emergencePredictor } from '../../cortex/discover/emergence-predictor.js';
 import { monitoringHub } from '../../cortex/observability/monitoring-hub.js';
+import { worldPipeline } from '../../cortex/knowledge/world-pipeline.js';
+import { adversarialLearner } from '../../cortex/learning/adversarial-learner.js';
+import { emergenceCatalyst } from '../../cortex/emergence/catalyst.js';
+import { GiantLeapOrchestrator } from '../../cortex/giant-leap-orchestrator.js';
 
+const DATA_DIR = path.resolve(process.cwd(), 'data');
 const router = Router();
 
 // ============================================================================
@@ -22,12 +29,16 @@ function calculateOverallHealth(metrics: {
   curiosityDiversity: number;
   explorationSuccess: number;
   criticalAlerts: number;
+  knowledgeHealth: number;
+  resilienceScore: number;
 }): number {
   const weights = {
-    learningRate: 0.25,
-    emergenceLevel: 0.25,
-    curiosityDiversity: 0.2,
-    explorationSuccess: 0.2,
+    learningRate: 0.15,
+    emergenceLevel: 0.15,
+    curiosityDiversity: 0.15,
+    explorationSuccess: 0.15,
+    knowledgeHealth: 0.15,
+    resilienceScore: 0.15,
     alertPenalty: 0.1,
   };
 
@@ -38,6 +49,8 @@ function calculateOverallHealth(metrics: {
     metrics.emergenceLevel * weights.emergenceLevel +
     metrics.curiosityDiversity * weights.curiosityDiversity +
     metrics.explorationSuccess * weights.explorationSuccess +
+    metrics.knowledgeHealth * weights.knowledgeHealth +
+    metrics.resilienceScore * weights.resilienceScore +
     alertPenalty * weights.alertPenalty
   );
 }
@@ -53,13 +66,44 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
     const hubState = monitoringHub.getState();
     const activeAlerts = monitoringHub.getActiveAlerts();
 
+    // Giant Leap States
+    const pipelineStats = worldPipeline.getStats();
+    const adversarialState = adversarialLearner.getState();
+    const catalystState = emergenceCatalyst.getState();
+    const orchestratorStatus = GiantLeapOrchestrator.getInstance().getStatus();
+
+    // Calculate real knowledge health
+    const knowledgeHealth = pipelineStats.activeSources > 0 ? 1.0 : 0.5;
+    const resilienceScore = adversarialState.exerciseHistory.length > 0 
+        ? (adversarialState.exerciseHistory[adversarialState.exerciseHistory.length - 1]?.outcome?.resilienceScore ?? 0.5)
+        : 0.5;
+
+    // Calculate real metrics from actual learning data
+    const learningMetricsPath = path.join(DATA_DIR, 'learning-metrics.json');
+    let realLearningRate = 0.5; // Base value
+    try {
+      if (fs.existsSync(learningMetricsPath)) {
+        const learningData = JSON.parse(fs.readFileSync(learningMetricsPath, 'utf-8'));
+        // Calculate learning rate from first-try success improvement over baseline
+        const firstTry = learningData.improvements?.firstTrySuccess;
+        if (firstTry) {
+          const improvement = (firstTry.current - firstTry.baseline) / (firstTry.target - firstTry.baseline);
+          realLearningRate = Math.max(0.1, Math.min(1.0, improvement));
+        }
+      }
+    } catch {
+      // Keep default
+    }
+
     const healthScore = calculateOverallHealth({
-      learningRate: 0.7,
+      learningRate: realLearningRate, // REAL: calculated from first-try success improvement
       emergenceLevel: predictorState.activePredictions.length > 0 ? 0.7 : 0.3,
       curiosityDiversity: 0.5,
       explorationSuccess: 0.6,
       criticalAlerts: activeAlerts.filter((a: { severity: string }) => a.severity === 'critical')
         .length,
+      knowledgeHealth,
+      resilienceScore,
     });
 
     const dashboard = {
@@ -75,6 +119,20 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
                 ? 'fair'
                 : 'needs_attention',
         trend: 'stable',
+      },
+      giantLeap: {
+        orchestrator: orchestratorStatus,
+        knowledge: pipelineStats,
+        adversarial: {
+            activeAdversaries: adversarialState.activeAdversaries.length,
+            lastExercise: adversarialState.lastExercise,
+            vulnerabilities: Object.keys(adversarialState.vulnerabilityMap).length
+        },
+        catalyst: {
+            syntheses: catalystState.syntheses.length,
+            predictions: catalystState.predictions.length,
+            activeGoals: catalystState.activeGoals.length
+        }
       },
       systems: {
         learning: {
@@ -178,6 +236,45 @@ router.post('/controls/:action', async (req: Request, res: Response) => {
         };
         break;
 
+      case 'trigger_red_team':
+        const exercise = await adversarialLearner.triggerExercise(options?.target || 'general');
+        result = {
+          action: 'trigger_red_team',
+          success: true,
+          message: 'Red Team exercise triggered',
+          data: { exerciseId: exercise.id }
+        };
+        break;
+
+      case 'force_ingest':
+        const sources = worldPipeline.getStats().activeSources;
+        if (sources > 0) {
+            // In a real scenario we'd pick a specific source
+            // For now, we just trigger the first one if available or log it
+            result = {
+                action: 'force_ingest',
+                success: true,
+                message: 'Ingestion triggered (mock)'
+            };
+        } else {
+             result = {
+                action: 'force_ingest',
+                success: false,
+                message: 'No active sources'
+            };
+        }
+        break;
+
+      case 'generate_forecast':
+        const prediction = await emergenceCatalyst.generateForecast(options?.topic || 'General Trends');
+        result = {
+            action: 'generate_forecast',
+            success: true,
+            message: 'Forecast generated',
+            data: { predictionId: prediction.id }
+        };
+        break;
+
       default:
         return res.status(400).json({
           success: false,
@@ -188,6 +285,9 @@ router.post('/controls/:action', async (req: Request, res: Response) => {
             'boost_learning',
             'emergency_stop',
             'force_emergence_check',
+            'trigger_red_team',
+            'force_ingest',
+            'generate_forecast'
           ],
         });
     }

@@ -1,17 +1,17 @@
 // @version 3.3.210
 /**
  * Knowledge Boost System
- * 
+ *
  * Accelerates TooLoo's learning through targeted knowledge reinforcement,
  * active recall exercises, and strategic learning interventions.
- * 
+ *
  * Key capabilities:
  * - Knowledge velocity acceleration
  * - Retention reinforcement through spaced repetition
  * - Transfer efficiency boosting across domains
  * - Targeted knowledge gap filling
  * - Active learning cycles
- * 
+ *
  * @module cortex/learning/knowledge-boost
  */
 
@@ -23,20 +23,20 @@ import path from 'path';
 // TYPES
 // ============================================================================
 
-export type BoostType = 
-  | 'velocity'      // Increase learning speed
-  | 'retention'     // Improve knowledge retention
-  | 'transfer'      // Enhance cross-domain transfer
-  | 'depth'         // Deepen understanding
-  | 'breadth'       // Expand coverage
+export type BoostType =
+  | 'velocity' // Increase learning speed
+  | 'retention' // Improve knowledge retention
+  | 'transfer' // Enhance cross-domain transfer
+  | 'depth' // Deepen understanding
+  | 'breadth' // Expand coverage
   | 'consolidation' // Consolidate fragmented knowledge
-  | 'repair';       // Fix knowledge gaps/errors
+  | 'repair'; // Fix knowledge gaps/errors
 
 export interface KnowledgeBoostConfig {
   type: BoostType;
   targetDomain?: string;
   intensity: number; // 0.1 to 2.0
-  duration: number;  // ms
+  duration: number; // ms
   autoActivate: boolean;
   triggerThreshold?: number;
 }
@@ -106,21 +106,21 @@ export interface BoostStrategy {
 
 export class KnowledgeBoostEngine {
   private static instance: KnowledgeBoostEngine;
-  
+
   private knowledgeGraph: Map<string, KnowledgeNode> = new Map();
   private activeSessions: Map<string, BoostSession> = new Map();
   private completedSessions: BoostSession[] = [];
   private strategies: Map<string, BoostStrategy> = new Map();
   private pendingExercises: LearningExercise[] = [];
-  
+
   private dataDir: string;
   private stateFile: string;
-  
+
   private boostIntervalId?: NodeJS.Timeout;
   private readonly BOOST_CHECK_INTERVAL = 60000; // 1 minute
   private readonly MAX_COMPLETED_SESSIONS = 500;
   private readonly RETENTION_DECAY_RATE = 0.001; // Per hour
-  
+
   private metrics: BoostMetrics = {
     totalBoostSessions: 0,
     activeBoostSessions: 0,
@@ -132,59 +132,77 @@ export class KnowledgeBoostEngine {
     weakestDomains: [],
     strongestDomains: [],
   };
-  
+
   private constructor() {
     this.dataDir = path.join(process.cwd(), 'data', 'knowledge-boost');
     this.stateFile = path.join(this.dataDir, 'knowledge-boost-state.json');
-    
+
     this.initializeStrategies();
     this.setupListeners();
   }
-  
+
   static getInstance(): KnowledgeBoostEngine {
     if (!KnowledgeBoostEngine.instance) {
       KnowledgeBoostEngine.instance = new KnowledgeBoostEngine();
     }
     return KnowledgeBoostEngine.instance;
   }
-  
+
   // ============================================================================
   // INITIALIZATION
   // ============================================================================
-  
+
   async initialize(): Promise<void> {
     console.log('[KnowledgeBoostEngine] Initializing knowledge boost system...');
-    
+
     await fs.ensureDir(this.dataDir);
     await this.loadState();
-    
+
     // Start the boost monitoring loop
     this.startBoostLoop();
-    
+
     // Seed initial knowledge nodes from domains
     this.seedKnowledgeGraph();
-    
+
     bus.publish('cortex', 'knowledge_boost:initialized', {
       nodeCount: this.knowledgeGraph.size,
       activeBoosts: this.activeSessions.size,
       metrics: this.metrics,
       timestamp: new Date().toISOString(),
     });
-    
+
     console.log('[KnowledgeBoostEngine] Ready - Knowledge boost system active');
   }
-  
+
   private seedKnowledgeGraph(): void {
     // Seed with TooLoo's core knowledge domains
     const coreDomains = [
-      { domain: 'code', concepts: ['typescript', 'javascript', 'python', 'react', 'node', 'api', 'database'] },
-      { domain: 'reasoning', concepts: ['logic', 'analysis', 'synthesis', 'evaluation', 'inference'] },
-      { domain: 'creative', concepts: ['ideation', 'brainstorming', 'storytelling', 'design', 'innovation'] },
-      { domain: 'system', concepts: ['architecture', 'integration', 'orchestration', 'monitoring', 'optimization'] },
-      { domain: 'learning', concepts: ['patterns', 'adaptation', 'reinforcement', 'transfer', 'generalization'] },
-      { domain: 'execution', concepts: ['processes', 'commands', 'artifacts', 'deployment', 'automation'] },
+      {
+        domain: 'code',
+        concepts: ['typescript', 'javascript', 'python', 'react', 'node', 'api', 'database'],
+      },
+      {
+        domain: 'reasoning',
+        concepts: ['logic', 'analysis', 'synthesis', 'evaluation', 'inference'],
+      },
+      {
+        domain: 'creative',
+        concepts: ['ideation', 'brainstorming', 'storytelling', 'design', 'innovation'],
+      },
+      {
+        domain: 'system',
+        concepts: ['architecture', 'integration', 'orchestration', 'monitoring', 'optimization'],
+      },
+      {
+        domain: 'learning',
+        concepts: ['patterns', 'adaptation', 'reinforcement', 'transfer', 'generalization'],
+      },
+      {
+        domain: 'execution',
+        concepts: ['processes', 'commands', 'artifacts', 'deployment', 'automation'],
+      },
     ];
-    
+
     for (const { domain, concepts } of coreDomains) {
       for (const concept of concepts) {
         const nodeId = `${domain}:${concept}`;
@@ -196,16 +214,16 @@ export class KnowledgeBoostEngine {
             strength: 0.5, // Start at medium
             lastReinforced: new Date(),
             reinforcementCount: 0,
-            connections: concepts.filter(c => c !== concept).map(c => `${domain}:${c}`),
+            connections: concepts.filter((c) => c !== concept).map((c) => `${domain}:${c}`),
             metadata: {},
           });
         }
       }
     }
-    
+
     this.updateMetrics();
   }
-  
+
   private initializeStrategies(): void {
     const strategies: BoostStrategy[] = [
       {
@@ -299,16 +317,16 @@ export class KnowledgeBoostEngine {
         effort: 0.4,
       },
     ];
-    
+
     for (const strategy of strategies) {
       this.strategies.set(strategy.id, strategy);
     }
   }
-  
+
   // ============================================================================
   // BOOST SESSION MANAGEMENT
   // ============================================================================
-  
+
   /**
    * Start a new knowledge boost session
    */
@@ -325,17 +343,17 @@ export class KnowledgeBoostEngine {
       retentionImproved: 0,
       status: 'active',
     };
-    
+
     this.activeSessions.set(session.id, session);
     this.metrics.totalBoostSessions++;
     this.metrics.activeBoostSessions = this.activeSessions.size;
-    
+
     // Apply boost effects
     this.applyBoostEffects(session);
-    
+
     // Generate initial exercises
     await this.generateExercisesForSession(session);
-    
+
     bus.publish('cortex', 'knowledge_boost:session_started', {
       sessionId: session.id,
       type: session.type,
@@ -343,17 +361,23 @@ export class KnowledgeBoostEngine {
       duration: config.duration,
       timestamp: session.startedAt.toISOString(),
     });
-    
-    console.log(`[KnowledgeBoostEngine] Boost session started: ${session.type} (intensity: ${session.intensity})`);
-    
+
+    console.log(
+      `[KnowledgeBoostEngine] Boost session started: ${session.type} (intensity: ${session.intensity})`
+    );
+
     await this.saveState();
     return session;
   }
-  
+
   /**
    * Quick boost - convenience method for immediate boost
    */
-  async quickBoost(type: BoostType, intensity: number = 1.0, durationMinutes: number = 10): Promise<BoostSession> {
+  async quickBoost(
+    type: BoostType,
+    intensity: number = 1.0,
+    durationMinutes: number = 10
+  ): Promise<BoostSession> {
     return this.startBoost({
       type,
       intensity,
@@ -361,26 +385,29 @@ export class KnowledgeBoostEngine {
       autoActivate: true,
     });
   }
-  
+
   /**
    * End a boost session
    */
-  async endBoost(sessionId: string, reason: 'completed' | 'expired' | 'cancelled' = 'completed'): Promise<void> {
+  async endBoost(
+    sessionId: string,
+    reason: 'completed' | 'expired' | 'cancelled' = 'completed'
+  ): Promise<void> {
     const session = this.activeSessions.get(sessionId);
     if (!session) return;
-    
+
     session.status = reason === 'completed' ? 'completed' : reason;
     this.activeSessions.delete(sessionId);
     this.completedSessions.push(session);
-    
+
     // Trim completed sessions
     if (this.completedSessions.length > this.MAX_COMPLETED_SESSIONS) {
       this.completedSessions = this.completedSessions.slice(-this.MAX_COMPLETED_SESSIONS);
     }
-    
+
     this.metrics.activeBoostSessions = this.activeSessions.size;
     this.updateMetrics();
-    
+
     bus.publish('cortex', 'knowledge_boost:session_ended', {
       sessionId: session.id,
       type: session.type,
@@ -390,18 +417,21 @@ export class KnowledgeBoostEngine {
       retentionImproved: session.retentionImproved,
       timestamp: new Date().toISOString(),
     });
-    
+
     console.log(`[KnowledgeBoostEngine] Boost session ended: ${session.type} (${reason})`);
-    
+
     await this.saveState();
   }
-  
+
   private applyBoostEffects(session: BoostSession): void {
     // Apply velocity multiplier
     if (session.type === 'velocity') {
-      this.metrics.velocityMultiplier = Math.min(3.0, this.metrics.velocityMultiplier * session.intensity);
+      this.metrics.velocityMultiplier = Math.min(
+        3.0,
+        this.metrics.velocityMultiplier * session.intensity
+      );
     }
-    
+
     // Notify other systems of boost
     bus.publish('cortex', 'learning:boost_activated', {
       type: session.type,
@@ -409,90 +439,94 @@ export class KnowledgeBoostEngine {
       velocityMultiplier: this.metrics.velocityMultiplier,
     });
   }
-  
+
   // ============================================================================
   // EXERCISE GENERATION & PROCESSING
   // ============================================================================
-  
+
   private async generateExercisesForSession(session: BoostSession): Promise<void> {
     const strategy = this.selectStrategy(session.type);
     if (!strategy) return;
-    
+
     const exercises: LearningExercise[] = [];
-    
+
     // Get target nodes
     let targetNodes: KnowledgeNode[] = [];
     if (session.targetDomain) {
-      targetNodes = Array.from(this.knowledgeGraph.values())
-        .filter(n => n.domain === session.targetDomain);
+      targetNodes = Array.from(this.knowledgeGraph.values()).filter(
+        (n) => n.domain === session.targetDomain
+      );
     } else {
       // Select nodes based on boost type
       targetNodes = this.selectNodesForBoostType(session.type);
     }
-    
+
     // Generate exercises based on strategy
     for (const node of targetNodes.slice(0, 10)) {
       const exercise = this.generateExercise(node, session.type, strategy);
       exercises.push(exercise);
     }
-    
+
     this.pendingExercises.push(...exercises);
   }
-  
+
   private selectNodesForBoostType(type: BoostType): KnowledgeNode[] {
     const nodes = Array.from(this.knowledgeGraph.values());
-    
+
     switch (type) {
       case 'retention':
         // Select nodes with decaying strength
         return nodes
-          .filter(n => n.strength < 0.7)
+          .filter((n) => n.strength < 0.7)
           .sort((a, b) => a.strength - b.strength)
           .slice(0, 20);
-        
+
       case 'velocity':
         // Select nodes with room to grow
         return nodes
-          .filter(n => n.strength < 0.9)
+          .filter((n) => n.strength < 0.9)
           .sort((a, b) => b.reinforcementCount - a.reinforcementCount)
           .slice(0, 20);
-        
+
       case 'transfer':
         // Select nodes with many connections
-        return nodes
-          .sort((a, b) => b.connections.length - a.connections.length)
-          .slice(0, 20);
-        
+        return nodes.sort((a, b) => b.connections.length - a.connections.length).slice(0, 20);
+
       case 'breadth':
         // Select under-explored domains
         const domainCounts = new Map<string, number>();
         for (const node of nodes) {
-          domainCounts.set(node.domain, (domainCounts.get(node.domain) || 0) + node.reinforcementCount);
+          domainCounts.set(
+            node.domain,
+            (domainCounts.get(node.domain) || 0) + node.reinforcementCount
+          );
         }
         const weakestDomains = Array.from(domainCounts.entries())
           .sort((a, b) => a[1] - b[1])
           .slice(0, 3)
-          .map(e => e[0]);
-        return nodes.filter(n => weakestDomains.includes(n.domain));
-        
+          .map((e) => e[0]);
+        return nodes.filter((n) => weakestDomains.includes(n.domain));
+
       case 'depth':
         // Select nodes in strong domains for deepening
         return nodes
-          .filter(n => n.strength > 0.6)
+          .filter((n) => n.strength > 0.6)
           .sort((a, b) => b.strength - a.strength)
           .slice(0, 20);
-        
+
       case 'consolidation':
       case 'repair':
       default:
         // General selection
-        return nodes
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 20);
+        return nodes.sort(() => Math.random() - 0.5).slice(0, 20);
     }
   }
-  
-  private generateExercise(node: KnowledgeNode, boostType: BoostType, _strategy: BoostStrategy): LearningExercise {
+
+  private generateExercise(
+    node: KnowledgeNode,
+    boostType: BoostType,
+    _strategy: BoostStrategy
+  ): LearningExercise {
     const exerciseTypes: Record<BoostType, LearningExercise['type']> = {
       velocity: 'application',
       retention: 'recall',
@@ -502,18 +536,21 @@ export class KnowledgeBoostEngine {
       consolidation: 'synthesis',
       repair: 'correction',
     };
-    
+
     const prompts: Record<LearningExercise['type'], (node: KnowledgeNode) => string> = {
-      recall: (n) => `Recall and explain the key aspects of ${n.concept} in the context of ${n.domain}.`,
+      recall: (n) =>
+        `Recall and explain the key aspects of ${n.concept} in the context of ${n.domain}.`,
       application: (n) => `Apply ${n.concept} to solve a practical problem in ${n.domain}.`,
-      synthesis: (n) => `Synthesize ${n.concept} with related concepts: ${n.connections.slice(0, 3).join(', ')}.`,
-      transfer: (n) => `Transfer the principles of ${n.concept} from ${n.domain} to another domain.`,
+      synthesis: (n) =>
+        `Synthesize ${n.concept} with related concepts: ${n.connections.slice(0, 3).join(', ')}.`,
+      transfer: (n) =>
+        `Transfer the principles of ${n.concept} from ${n.domain} to another domain.`,
       correction: (n) => `Identify and correct potential misconceptions about ${n.concept}.`,
     };
-    
+
     const exerciseType = exerciseTypes[boostType];
     const prompt = prompts[exerciseType](node);
-    
+
     return {
       id: `exercise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: exerciseType,
@@ -523,18 +560,20 @@ export class KnowledgeBoostEngine {
       targetNodes: [node.id],
     };
   }
-  
+
   /**
    * Process an exercise completion
    */
   async completeExercise(exerciseId: string, score: number): Promise<void> {
-    const exerciseIdx = this.pendingExercises.findIndex(e => e.id === exerciseId);
+    const exerciseIdx = this.pendingExercises.findIndex((e) => e.id === exerciseId);
     if (exerciseIdx === -1) return;
-    
+
     const exercise = this.pendingExercises[exerciseIdx];
+    if (!exercise) return;
+
     exercise.completedAt = new Date();
     exercise.score = score;
-    
+
     // Update knowledge nodes
     for (const nodeId of exercise.targetNodes) {
       const node = this.knowledgeGraph.get(nodeId);
@@ -546,7 +585,7 @@ export class KnowledgeBoostEngine {
         node.reinforcementCount++;
       }
     }
-    
+
     // Update active session
     for (const session of this.activeSessions.values()) {
       session.exercisesCompleted++;
@@ -555,12 +594,12 @@ export class KnowledgeBoostEngine {
         session.retentionImproved += score * 0.05;
       }
     }
-    
+
     // Remove from pending
     this.pendingExercises.splice(exerciseIdx, 1);
-    
+
     this.updateMetrics();
-    
+
     bus.publish('cortex', 'knowledge_boost:exercise_completed', {
       exerciseId,
       type: exercise.type,
@@ -568,58 +607,60 @@ export class KnowledgeBoostEngine {
       timestamp: new Date().toISOString(),
     });
   }
-  
+
   /**
    * Auto-complete exercises through internal processing (for automated learning)
    */
   async autoProcessExercises(): Promise<number> {
     let processed = 0;
-    
+
     for (const exercise of this.pendingExercises.slice(0, 5)) {
       // Simulate exercise completion with varying scores
       const baseScore = 0.6 + Math.random() * 0.3; // 0.6-0.9
       const score = baseScore * this.metrics.velocityMultiplier;
-      
+
       await this.completeExercise(exercise.id, Math.min(1, score));
       processed++;
     }
-    
+
     return processed;
   }
-  
+
   // ============================================================================
   // STRATEGY SELECTION
   // ============================================================================
-  
+
   private selectStrategy(boostType: BoostType): BoostStrategy | null {
-    const applicable = Array.from(this.strategies.values())
-      .filter(s => s.applicableTypes.includes(boostType));
-    
+    const applicable = Array.from(this.strategies.values()).filter((s) =>
+      s.applicableTypes.includes(boostType)
+    );
+
     if (applicable.length === 0) return null;
-    
+
     // Select best strategy based on expected gain and current state
-    return applicable.sort((a, b) => {
+    const sorted = applicable.sort((a, b) => {
       const scoreA = a.expectedGain / a.effort;
       const scoreB = b.expectedGain / b.effort;
       return scoreB - scoreA;
-    })[0];
+    });
+    return sorted[0] ?? null;
   }
-  
+
   // ============================================================================
   // BOOST MONITORING LOOP
   // ============================================================================
-  
+
   private startBoostLoop(): void {
     if (this.boostIntervalId) return;
-    
+
     this.boostIntervalId = setInterval(() => {
       this.boostCycle();
     }, this.BOOST_CHECK_INTERVAL);
-    
+
     // Run immediately
     this.boostCycle();
   }
-  
+
   private async boostCycle(): Promise<void> {
     // Check for expired sessions
     const now = Date.now();
@@ -628,56 +669,56 @@ export class KnowledgeBoostEngine {
         await this.endBoost(sessionId, 'expired');
       }
     }
-    
+
     // Apply knowledge decay
     this.applyKnowledgeDecay();
-    
+
     // Auto-process some exercises if boost is active
     if (this.activeSessions.size > 0) {
       await this.autoProcessExercises();
     }
-    
+
     // Check for automatic boost triggers
     await this.checkAutoBoostTriggers();
-    
+
     this.updateMetrics();
   }
-  
+
   private applyKnowledgeDecay(): void {
     const now = Date.now();
-    
+
     for (const node of this.knowledgeGraph.values()) {
       const hoursSinceReinforcement = (now - node.lastReinforced.getTime()) / (1000 * 60 * 60);
       const decay = this.RETENTION_DECAY_RATE * hoursSinceReinforcement;
-      
+
       // Apply decay but keep minimum strength
       node.strength = Math.max(0.1, node.strength - decay);
     }
   }
-  
+
   private async checkAutoBoostTriggers(): Promise<void> {
     // Check if we need automatic boosts based on system state
-    
+
     // Trigger retention boost if too many weak nodes
-    const weakNodes = Array.from(this.knowledgeGraph.values()).filter(n => n.strength < 0.4);
+    const weakNodes = Array.from(this.knowledgeGraph.values()).filter((n) => n.strength < 0.4);
     if (weakNodes.length > this.knowledgeGraph.size * 0.3 && this.activeSessions.size === 0) {
       console.log('[KnowledgeBoostEngine] Auto-triggering retention boost due to weak nodes');
       await this.quickBoost('retention', 1.2, 5);
     }
-    
+
     // Reset velocity multiplier if no active boosts
     if (this.activeSessions.size === 0 && this.metrics.velocityMultiplier > 1.0) {
       this.metrics.velocityMultiplier = Math.max(1.0, this.metrics.velocityMultiplier * 0.95);
     }
   }
-  
+
   // ============================================================================
   // METRICS & ANALYSIS
   // ============================================================================
-  
+
   private updateMetrics(): void {
     const nodes = Array.from(this.knowledgeGraph.values());
-    
+
     // Calculate domain strengths
     const domainStrengths = new Map<string, { total: number; count: number }>();
     for (const node of nodes) {
@@ -686,85 +727,95 @@ export class KnowledgeBoostEngine {
       current.count++;
       domainStrengths.set(node.domain, current);
     }
-    
+
     const domainAvgs = Array.from(domainStrengths.entries())
       .map(([domain, stats]) => ({ domain, avg: stats.total / stats.count }))
       .sort((a, b) => a.avg - b.avg);
-    
-    this.metrics.weakestDomains = domainAvgs.slice(0, 3).map(d => d.domain);
-    this.metrics.strongestDomains = domainAvgs.slice(-3).reverse().map(d => d.domain);
+
+    this.metrics.weakestDomains = domainAvgs.slice(0, 3).map((d) => d.domain);
+    this.metrics.strongestDomains = domainAvgs
+      .slice(-3)
+      .reverse()
+      .map((d) => d.domain);
     this.metrics.knowledgeNodeCount = nodes.length;
-    
+
     // Calculate averages from completed sessions
     if (this.completedSessions.length > 0) {
       const recent = this.completedSessions.slice(-50);
-      this.metrics.averageRetentionImprovement = 
+      this.metrics.averageRetentionImprovement =
         recent.reduce((sum, s) => sum + s.retentionImproved, 0) / recent.length;
     }
-    
+
     // Calculate total knowledge
     this.metrics.totalKnowledgeGained = nodes.reduce((sum, n) => sum + n.strength, 0);
   }
-  
+
   // ============================================================================
   // PUBLIC API
   // ============================================================================
-  
+
   getMetrics(): BoostMetrics {
     return { ...this.metrics };
   }
-  
+
   getActiveBoosts(): BoostSession[] {
     return Array.from(this.activeSessions.values());
   }
-  
+
   getRecentBoosts(limit: number = 20): BoostSession[] {
     return this.completedSessions.slice(-limit);
   }
-  
+
   getPendingExercises(): LearningExercise[] {
     return [...this.pendingExercises];
   }
-  
+
   getKnowledgeNodes(domain?: string): KnowledgeNode[] {
     const nodes = Array.from(this.knowledgeGraph.values());
     if (domain) {
-      return nodes.filter(n => n.domain === domain);
+      return nodes.filter((n) => n.domain === domain);
     }
     return nodes;
   }
-  
+
   getStrategies(): BoostStrategy[] {
     return Array.from(this.strategies.values());
   }
-  
+
   getDomainHealth(): Record<string, { avgStrength: number; nodeCount: number; weakNodes: number }> {
-    const health: Record<string, { avgStrength: number; nodeCount: number; weakNodes: number }> = {};
-    
+    const health: Record<string, { avgStrength: number; nodeCount: number; weakNodes: number }> =
+      {};
+
     for (const node of this.knowledgeGraph.values()) {
       if (!health[node.domain]) {
         health[node.domain] = { avgStrength: 0, nodeCount: 0, weakNodes: 0 };
       }
-      health[node.domain].nodeCount++;
-      health[node.domain].avgStrength += node.strength;
-      if (node.strength < 0.4) {
-        health[node.domain].weakNodes++;
+      const domainHealth = health[node.domain];
+      if (domainHealth) {
+        domainHealth.nodeCount++;
+        domainHealth.avgStrength += node.strength;
+        if (node.strength < 0.4) {
+          domainHealth.weakNodes++;
+        }
       }
     }
-    
+
     for (const domain of Object.keys(health)) {
-      health[domain].avgStrength /= health[domain].nodeCount;
+      const domainHealth = health[domain];
+      if (domainHealth && domainHealth.nodeCount > 0) {
+        domainHealth.avgStrength /= domainHealth.nodeCount;
+      }
     }
-    
+
     return health;
   }
-  
+
   /**
    * Add a new knowledge node
    */
   addKnowledgeNode(concept: string, domain: string, connections: string[] = []): KnowledgeNode {
     const nodeId = `${domain}:${concept}`;
-    
+
     if (!this.knowledgeGraph.has(nodeId)) {
       const node: KnowledgeNode = {
         id: nodeId,
@@ -776,46 +827,46 @@ export class KnowledgeBoostEngine {
         connections,
         metadata: {},
       };
-      
+
       this.knowledgeGraph.set(nodeId, node);
       this.updateMetrics();
-      
+
       bus.publish('cortex', 'knowledge_boost:node_added', {
         nodeId,
         concept,
         domain,
         timestamp: new Date().toISOString(),
       });
-      
+
       return node;
     }
-    
+
     return this.knowledgeGraph.get(nodeId)!;
   }
-  
+
   /**
    * Reinforce a specific knowledge node
    */
   reinforceNode(nodeId: string, amount: number = 0.1): void {
     const node = this.knowledgeGraph.get(nodeId);
     if (!node) return;
-    
+
     node.strength = Math.min(1, node.strength + amount * this.metrics.velocityMultiplier);
     node.lastReinforced = new Date();
     node.reinforcementCount++;
-    
+
     this.updateMetrics();
   }
-  
+
   // ============================================================================
   // PERSISTENCE
   // ============================================================================
-  
+
   private async loadState(): Promise<void> {
     try {
       if (await fs.pathExists(this.stateFile)) {
         const data = await fs.readJson(this.stateFile);
-        
+
         // Restore knowledge graph
         if (data.knowledgeGraph) {
           for (const node of data.knowledgeGraph) {
@@ -823,7 +874,7 @@ export class KnowledgeBoostEngine {
             this.knowledgeGraph.set(node.id, node);
           }
         }
-        
+
         // Restore completed sessions
         if (data.completedSessions) {
           this.completedSessions = data.completedSessions.map((s: any) => ({
@@ -832,19 +883,19 @@ export class KnowledgeBoostEngine {
             expiresAt: new Date(s.expiresAt),
           }));
         }
-        
+
         // Restore metrics
         if (data.metrics) {
           this.metrics = { ...this.metrics, ...data.metrics };
         }
-        
+
         console.log(`[KnowledgeBoostEngine] Loaded ${this.knowledgeGraph.size} knowledge nodes`);
       }
     } catch (error) {
       console.error('[KnowledgeBoostEngine] Failed to load state:', error);
     }
   }
-  
+
   private async saveState(): Promise<void> {
     try {
       const data = {
@@ -853,17 +904,17 @@ export class KnowledgeBoostEngine {
         metrics: this.metrics,
         savedAt: new Date().toISOString(),
       };
-      
+
       await fs.writeJson(this.stateFile, data, { spaces: 2 });
     } catch (error) {
       console.error('[KnowledgeBoostEngine] Failed to save state:', error);
     }
   }
-  
+
   // ============================================================================
   // EVENT LISTENERS
   // ============================================================================
-  
+
   private setupListeners(): void {
     // Listen for learning events to reinforce knowledge
     bus.on('learning:success', (event) => {
@@ -873,7 +924,7 @@ export class KnowledgeBoostEngine {
         this.reinforceNode(nodeId, 0.05);
       }
     });
-    
+
     // Listen for boost requests
     bus.on('knowledge_boost:request', async (event) => {
       const { type, intensity, duration } = event.payload as any;
@@ -884,13 +935,13 @@ export class KnowledgeBoostEngine {
         autoActivate: true,
       });
     });
-    
+
     // Listen for exercise completions
     bus.on('knowledge_boost:exercise_done', async (event) => {
       const { exerciseId, score } = event.payload as any;
       await this.completeExercise(exerciseId, score);
     });
-    
+
     // Listen for emergence events - knowledge from emergences
     bus.on('emergence:detected', (event) => {
       const payload = event.payload as any;
@@ -900,7 +951,7 @@ export class KnowledgeBoostEngine {
       }
     });
   }
-  
+
   /**
    * Shutdown the engine
    */
@@ -909,12 +960,12 @@ export class KnowledgeBoostEngine {
       clearInterval(this.boostIntervalId);
       this.boostIntervalId = undefined;
     }
-    
+
     // End all active sessions
     for (const sessionId of this.activeSessions.keys()) {
       await this.endBoost(sessionId, 'cancelled');
     }
-    
+
     await this.saveState();
     console.log('[KnowledgeBoostEngine] Shutdown complete');
   }

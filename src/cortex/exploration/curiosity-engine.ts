@@ -236,6 +236,17 @@ export class CuriosityEngine {
 
       this.recordCuriosity(signal);
       this.addToEmergenceBuffer(signal);
+
+      // Active Curiosity: Trigger hypothesis generation for high uncertainty/gaps
+      if (dominantType === 'uncertainty' || dominantType === 'capability_gap') {
+        bus.publish('cortex', 'curiosity:gap_detected', {
+          signalId: signal.id,
+          type: dominantType,
+          context: context,
+          score: overallScore
+        });
+      }
+
       return signal;
     }
 

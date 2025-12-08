@@ -106,12 +106,12 @@ export const DesignInstruction = {
     variants: [], // Visual variants
     states: [], // Interactive states
     animations: [], // Motion requirements
-    
+
     // A11y requirements - all components must meet these standards
     accessibility: {
       // WCAG 2.1 AA compliance
       wcagLevel: 'AA',
-      
+
       // Keyboard navigation requirements
       keyboard: {
         focusable: true, // Must be focusable via Tab
@@ -119,7 +119,7 @@ export const DesignInstruction = {
         escapeCloses: true, // Escape closes modals/dropdowns
         arrowNavigation: false, // For menus/lists only
       },
-      
+
       // Screen reader requirements
       screenReader: {
         role: '', // ARIA role (button, dialog, alert, etc.)
@@ -127,7 +127,7 @@ export const DesignInstruction = {
         describedBy: '', // aria-describedby for additional context
         liveRegion: '', // aria-live (polite, assertive) for dynamic content
       },
-      
+
       // Visual requirements
       visual: {
         colorContrastRatio: 4.5, // Minimum contrast ratio
@@ -135,7 +135,7 @@ export const DesignInstruction = {
         motionReduceRespect: true, // prefers-reduced-motion support
         noColorOnly: true, // Don't use color alone to convey meaning
       },
-      
+
       // Touch targets
       touch: {
         minTapTarget: 44, // Minimum tap target size (px)

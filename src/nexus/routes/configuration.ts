@@ -1,15 +1,35 @@
-// @version 3.3.194
+// @version 3.3.195
 /**
- * TooLoo.ai Synapsys V3.3.194
+ * TooLoo.ai Synapsys V3.3.195
  * Configuration API - Centralized Configuration Management
  *
- * Provides comprehensive configuration management:
- * - Version-controlled configuration changes
- * - Rollback capability to previous configurations
- * - Domain-specific overrides (learning, emergence, exploration, etc.)
- * - Runtime updates without restart
- * - Configuration validation and schema checking
- * - Audit trail of all configuration changes
+ * ## Configuration Precedence (Highest to Lowest)
+ *
+ * 1. **Runtime Overrides** (POST /api/v1/config/override)
+ *    - Temporary, session-only changes
+ *    - Not persisted across restarts unless explicitly saved
+ *    - Applied via EventBus to all listeners
+ *
+ * 2. **Versioned Configuration** (PUT /api/v1/config/domain/:domainId)
+ *    - Persisted in data/configuration-state.json
+ *    - Version-controlled with rollback capability
+ *    - Audit trail of all changes
+ *
+ * 3. **Environment Variables** (src/core/config.ts)
+ *    - Set via .env file or system environment
+ *    - Validated with Zod schema
+ *    - Used for secrets and deployment-specific settings
+ *
+ * 4. **Static Configuration** (tooloo.yaml)
+ *    - Read-only system defaults
+ *    - Used as reference for domain defaults
+ *    - Not directly used at runtime (values copied to domains)
+ *
+ * ## Usage
+ *
+ * - Use environment variables for: API keys, secrets, ports
+ * - Use versioned config for: Tunable parameters, feature toggles
+ * - Use runtime overrides for: Quick experiments, A/B testing
  *
  * This is the single source of truth for all TooLoo configurations.
  */

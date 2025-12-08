@@ -196,10 +196,16 @@ const useChatAPI = () => {
             // Only show essential status updates, not verbose process details
             if (data.thinking) {
               const { stage, message: thinkingMsg, type } = data.thinking;
-              
+
               // V3.3.198: Only show critical thinking events, skip verbose ones
-              const isEssential = stage === 'processing' || stage === 'complete' || type === 'error';
-              if (isEssential && thinkingMsg && !thinkingMsg.includes('Analyzing') && !thinkingMsg.includes('Evaluating')) {
+              const isEssential =
+                stage === 'processing' || stage === 'complete' || type === 'error';
+              if (
+                isEssential &&
+                thinkingMsg &&
+                !thinkingMsg.includes('Analyzing') &&
+                !thinkingMsg.includes('Evaluating')
+              ) {
                 onThought?.(thinkingMsg, type);
               }
 
@@ -1030,9 +1036,7 @@ const TestPromptsPanel = memo(({ onSelectPrompt, isDisabled = false }) => {
     <LiquidPanel variant="surface" className="p-3">
       {/* Header with auto-refresh toggle */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-          Test Prompts
-        </h3>
+        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Test Prompts</h3>
         <button
           onClick={() => setAutoRefresh(!autoRefresh)}
           className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${

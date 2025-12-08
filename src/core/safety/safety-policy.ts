@@ -140,8 +140,8 @@ export class SafetyPolicy {
       ],
       sandboxTimeout: 300000, // 5 minutes
       allowProductionExperiments: false,
-      maxDailyExperiments: 50,
-      cooldownBetweenExperiments: 60000, // 60 seconds
+      maxDailyExperiments: 100, // Increased for better exploration
+      cooldownBetweenExperiments: 5000, // 5 seconds (was 60s - too slow for UX)
       // New predictive config defaults
       enablePredictiveAssessment: true,
       predictionConfidenceThreshold: 0.8,

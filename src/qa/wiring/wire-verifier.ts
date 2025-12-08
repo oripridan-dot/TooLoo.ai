@@ -119,13 +119,14 @@ export class WireVerifier {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i] ?? '';
         // Match: fetch(endpoint, { or fetchJson<T>(url, { or fetchJson(url, {
-        const fetchVarCall = line.match(/(?:fetch|fetchJson)\s*(?:<[^>]+>)?\s*\(\s*(\w+)\s*,/);
+        // Also handle multiline: fetchJson<T>(\n  url,
+        const fetchVarCall = line.match(/(?:fetch|fetchJson)\s*(?:<[^>]+>)?\s*\(\s*(\w+)\s*,?/);
         if (fetchVarCall && fetchVarCall[1]) {
           const varName = fetchVarCall[1];
           const apiPath = variableToPath.get(varName);
           if (apiPath) {
-            // Look for method in surrounding context (next few lines)
-            const contextLines = lines.slice(i, Math.min(i + 5, lines.length)).join('\n');
+            // Look for method in surrounding context (next 10 lines for multiline calls)
+            const contextLines = lines.slice(i, Math.min(i + 10, lines.length)).join('\n');
             const methodMatch = contextLines.match(
               /method:\s*[`'"]?(POST|PUT|DELETE|PATCH|GET)[`'"]?/i
             );
@@ -217,11 +218,20 @@ export class WireVerifier {
           if (isVariableAssignment && isVariableAssignment[1]) {
             const varName = isVariableAssignment[1];
             // Skip - this will be picked up by the fetch/fetchJson with variable pattern
+            // Use regex to handle multiline cases like: fetchJson<T>(\n  varName,
+            const fetchVarRegex = new RegExp(
+              `fetch(?:Json)?\\s*(?:<[^>]+>)?\\s*\\(\\s*${varName}\\s*[,)]`,
+              's'
+            );
+            if (fetchVarRegex.test(content)) {
+              return;
+            }
+            // Skip if this is a base URL that gets concatenated with other paths
+            // e.g., API_BASE = '/api/v1/chat' used as `${API_BASE}/stream`
             if (
-              content.includes(`fetch(${varName}`) ||
-              content.includes(`fetch( ${varName}`) ||
-              content.includes(`fetchJson(${varName}`) ||
-              (content.includes(`fetchJson<`) && content.includes(`>(${varName}`))
+              content.includes(`\${${varName}}/`) ||
+              content.includes(`\${${varName}}?`) ||
+              content.includes(`+ '/'`)
             ) {
               return;
             }

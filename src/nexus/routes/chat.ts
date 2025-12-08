@@ -1,4 +1,4 @@
-// @version 3.3.198
+// @version 3.3.199
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -29,6 +29,9 @@ import { systemExecutionHub, teamRegistry, smartOrchestrator } from '../../corte
 import { autonomousMod, parseCodeSuggestions } from '../../cortex/motor/autonomous-modifier.js';
 // V3.3.197: Automated execution pipeline
 import { automatedPipeline } from '../../cortex/agent/automated-execution-pipeline.js';
+// V3.3.199: Response formatting and provider execution learning
+import { responseFormatter } from '../../shared/response-formatter.js';
+import { providerExecutionLearner } from '../../cortex/learning/provider-execution-learner.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -312,7 +315,8 @@ IMPORTANT: You ARE the system. You have direct access to execute code, create fi
       '- DO NOT use Mermaid.js or ```mermaid blocks. They are disabled.\n' +
       '- When you DO generate visuals (only when asked): wrap SVG in ```svg blocks, React in ```jsx blocks.\n' +
       '- Keep visuals responsive and dark-theme compatible.\n' +
-      '⚠️ DEFAULT BEHAVIOR: Respond with plain text unless visuals are explicitly requested.';
+      '⚠️ DEFAULT BEHAVIOR: Respond with plain text unless visuals are explicitly requested.\n' +
+      '⚠️ NEVER auto-generate diagrams. NEVER include SVG unless the user explicitly asked for visuals.';
 
     // V3.3.198: UX-OPTIMIZED RESPONSE STYLE
     systemPrompt +=
@@ -384,6 +388,28 @@ IMPORTANT: You ARE the system. You have direct access to execute code, create fi
     console.log(`[Chat Pro] Recording provider: ${result.provider}, latency: ${latency}ms`);
     cortex.providerFeedbackEngine.recordRequestStart(result.provider || 'unknown', requestId);
     cortex.providerFeedbackEngine.recordRequestSuccess(result.provider || 'unknown', latency, 0.85);
+
+    // V3.3.199: Record execution for provider learning
+    try {
+      const resultAny = result as Record<string, unknown>;
+      const usage = resultAny['usage'] as { input?: number; output?: number } | undefined;
+      const tokensUsed = usage
+        ? (usage.input || 0) + (usage.output || 0)
+        : Math.ceil(result.content.length / 4);
+      providerExecutionLearner.recordExecution({
+        providerId: result.provider || 'unknown',
+        taskType: taskType,
+        prompt: message,
+        response: result.content,
+        responseTime: latency,
+        tokensUsed,
+        success: true,
+        qualityScore: 0.8, // Base score, adjusted by user feedback
+        timestamp: new Date(),
+      });
+    } catch (learnErr) {
+      console.warn('[Chat] Provider execution learning failed:', learnErr);
+    }
 
     // Add response to session highlights
     cortex.sessionContextService.addHighlight(sessionId, {
@@ -801,6 +827,27 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
       // Silent - no verbose output
     }
 
+    // V3.3.318: Emit routing decision for process visualization
+    res.write(
+      `data: ${JSON.stringify({
+        routing: {
+          strategy: routingStrategy,
+          selectedProviders,
+          complexity,
+          reasoning: requestedProvider
+            ? `User requested ${requestedProvider}`
+            : routingStrategy === 'ensemble'
+              ? `Complex/creative task - using ${selectedProviders.length} providers in parallel`
+              : /code|debug|fix|implement/i.test(message)
+                ? `Code task - routing to ${selectedProviders[0]}`
+                : /explain|summarize|analyze/i.test(message)
+                  ? `Analysis task - routing to ${selectedProviders[0]}`
+                  : `Standard task - using ${selectedProviders[0]}`,
+          activeProviders,
+        },
+      })}\n\n`
+    );
+
     // V3.3.198: Single minimal status indicator instead of verbose processing steps
     emitThinking('processing', `⚡ ${selectedProviders[0]}`, 'info');
 
@@ -823,7 +870,9 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
 
       // Report individual provider results (silent - just log)
       const successfulProviders = parallelResult.results.filter((r) => r.success);
-      console.log(`[Chat Stream] Ensemble: ${successfulProviders.length}/${parallelResult.results.length} providers responded`);
+      console.log(
+        `[Chat Stream] Ensemble: ${successfulProviders.length}/${parallelResult.results.length} providers responded`
+      );
 
       fullResponse = parallelResult.consensus;
 
@@ -855,12 +904,17 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         provider: requestedProvider || selectedProviders[0],
         model: requestedModel || undefined,
         onChunk: (chunk) => {
-          fullResponse += chunk;
-          res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+          // Only write non-empty chunks to prevent "undefined" display
+          if (chunk && chunk.length > 0) {
+            fullResponse += chunk;
+            res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+          }
         },
         onComplete: (_fullText) => {
           // V3.3.198: Silent completion - no verbose output
-          console.log(`[Chat Stream] Response complete via ${result?.provider || selectedProviders[0]}`);
+          console.log(
+            `[Chat Stream] Response complete via ${result?.provider || selectedProviders[0]}`
+          );
         },
       });
     }
@@ -1281,11 +1335,11 @@ router.post('/command/smart', async (req, res) => {
         requestId,
         success: response.success,
         output: response.output,
-        
+
         // Human-friendly summary
         summary: humanResponse.summary,
         explanation: humanResponse.explanation,
-        
+
         // Execution details
         sprints: response.sprints.map((s) => ({
           number: s.number,
@@ -1295,23 +1349,23 @@ router.post('/command/smart', async (req, res) => {
           durationMs: s.durationMs,
         })),
         totalSprints: response.totalSprints,
-        
+
         // Quality metrics
         qualityScore: response.qualityScore,
         optimization: response.optimization,
-        
+
         // Status info
         finalStatus: response.finalStatus,
-        
+
         // Artifacts
         artifacts: response.artifacts,
-        
+
         // Performance
         durationMs: duration,
-        
+
         // Recommendations for user
         recommendations: response.recommendations,
-        
+
         // Team info
         teamId: response.teamId,
       })
@@ -1336,16 +1390,16 @@ router.post('/command/smart', async (req, res) => {
  */
 function buildHumanFriendlyResponse(response: any): { summary: string; explanation: string } {
   const { success, qualityScore, totalSprints, optimization, recommendations } = response;
-  
+
   let summary: string;
   let explanation: string;
-  
+
   if (success) {
     const qualityPercent = (qualityScore * 100).toFixed(1);
     summary = `✅ Task completed successfully with ${qualityPercent}% quality`;
-    
+
     explanation = `I completed your task in ${totalSprints} sprint${totalSprints > 1 ? 's' : ''}. `;
-    
+
     if (qualityScore >= 0.95) {
       explanation += `The output quality is excellent! `;
     } else if (qualityScore >= 0.85) {
@@ -1353,24 +1407,24 @@ function buildHumanFriendlyResponse(response: any): { summary: string; explanati
     } else {
       explanation += `The output quality is acceptable but could be improved. `;
     }
-    
+
     if (optimization.efficiencyRatio > 0.7) {
       explanation += `Execution was highly efficient. `;
     }
-    
+
     if (recommendations.length > 0) {
       explanation += `\n\nSuggestions for next time:\n• ${recommendations.slice(0, 3).join('\n• ')}`;
     }
   } else {
     summary = `⚠️ Task completed but did not meet quality threshold`;
-    
+
     explanation = `I attempted ${totalSprints} sprint${totalSprints > 1 ? 's' : ''} but achieved ${(qualityScore * 100).toFixed(1)}% quality. `;
-    
+
     if (recommendations.length > 0) {
       explanation += `\n\nHere's what might help:\n• ${recommendations.join('\n• ')}`;
     }
   }
-  
+
   return { summary, explanation };
 }
 
@@ -1392,13 +1446,7 @@ function buildHumanFriendlyResponse(response: any): { summary: string; explanati
  * V3.3.197: New automated execution pipeline
  */
 router.post('/command/auto', async (req, res) => {
-  const {
-    code,
-    objective,
-    language = 'javascript',
-    timeout = 30000,
-    maxRetries = 3,
-  } = req.body;
+  const { code, objective, language = 'javascript', timeout = 30000, maxRetries = 3 } = req.body;
 
   if (!code && !objective) {
     return res.status(400).json(errorResponse('Code or objective is required'));
@@ -1440,18 +1488,18 @@ router.post('/command/auto', async (req, res) => {
         output: result.output,
         error: result.error,
         exitCode: result.exitCode,
-        
+
         // Execution details
         executedCode: result.executedCode,
         language: result.language,
         attempts: result.attempts,
-        
+
         // Performance
         durationMs: duration,
-        
+
         // Phases completed
         phases: result.phases,
-        
+
         // Human-friendly summary
         summary: result.success
           ? `✅ Executed successfully${result.attempts > 1 ? ` (after ${result.attempts} attempts)` : ''}`
@@ -1516,7 +1564,7 @@ router.post('/command/execute', async (req, res) => {
         console.log(`[Chat Execute] Using System Hub team execution for ${language}`);
         const { systemExecutionHub } = await import('../../cortex/agent/system-hub.js');
 
-        const hubResponse = await systemExecutionHub.handleExecution({
+        const hubResponse = await systemExecutionHub.submitRequest({
           id: requestId,
           source: 'synaptic',
           type: 'execute',
@@ -1532,7 +1580,6 @@ router.post('/command/execute', async (req, res) => {
             sandbox: true,
           },
           priority: 'normal',
-          timestamp: new Date(),
         });
 
         response = {

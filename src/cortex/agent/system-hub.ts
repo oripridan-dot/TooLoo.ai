@@ -481,9 +481,21 @@ export class SystemExecutionHub {
   // ===========================================================================
 
   /**
+   * Public API to submit an execution request
+   */
+  public async submitRequest(request: Omit<ExecutionRequest, 'id' | 'timestamp'> & { id?: string }): Promise<ExecutionResponse> {
+    return this.handleExecution({
+      id: request.id || uuidv4(),
+      timestamp: new Date(),
+      ...request
+    });
+  }
+
+  /**
    * Handle an execution request
    */
-  async handleExecution(request: ExecutionRequest): Promise<ExecutionResponse> {
+  private async handleExecution(request: ExecutionRequest): Promise<ExecutionResponse> {
+
     const startTime = Date.now();
 
     console.log(

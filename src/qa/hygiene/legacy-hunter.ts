@@ -1,4 +1,4 @@
-// @version 2.2.200
+// @version 2.2.201
 /**
  * Legacy Hunter - Dead Code and Technical Debt Detection
  *
@@ -250,11 +250,34 @@ export class LegacyHunter {
       'useThemeStore',
       // Validation framework
       'createValidationFramework',
-      // Singleton instances
+      // Singleton instances (getInstance() pattern used, but singletons exported for convenience)
       'discoverAgent',
       'critic',
+      'featureValidator',
+      'serendipityInjector',
+      'reinforcementLearner',
+      'emergenceCoordinator',
+      'emergenceAmplifier',
+      'workspaceCloner',
       // Config type exports
       'Config',
+      // QA validation and fuzzing classes (used via scripts)
+      'ContractFuzzer',
+      'ContractToolProvider',
+      // Creative engine type exports for external consumers
+      'getAvailableExamples',
+      'ChartPalette',
+      'TimingPreset',
+      // Curiosity engine types
+      'CognitiveDissonance',
+      // Agent system types (part of public type API)
+      'ArtifactVersion',
+      'ProcessDefinition',
+      'AgentState',
+      'ExecutionContext',
+      'AgentEvent',
+      'CodeTemplate',
+      'CodePattern',
     ]);
 
     for (const exp of allExports.values()) {

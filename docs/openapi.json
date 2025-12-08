@@ -6199,6 +6199,554 @@
         }
       }
     },
+    "/api/v1/design/presets": {
+      "get": {
+        "summary": "GET /presets - Get available code generation presets",
+        "operationId": "getDesignPresets",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response with framework and styling presets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/status": {
+      "get": {
+        "summary": "GET /figma/status - Check Figma API connection status",
+        "operationId": "getDesignFigmaStatus",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Figma connection status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/parse-url": {
+      "post": {
+        "summary": "POST /figma/parse-url - Parse a Figma URL to extract file and node IDs",
+        "operationId": "postDesignFigmaParseUrl",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Parsed Figma URL components",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "Figma file or design URL"
+                  }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/file/{fileId}": {
+      "get": {
+        "summary": "GET /figma/file/{fileId} - Get Figma file contents",
+        "operationId": "getDesignFigmaFile",
+        "tags": [
+          "design"
+        ],
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Figma file ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Figma file data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/components/{fileId}": {
+      "get": {
+        "summary": "GET /figma/components/{fileId} - Get components from a Figma file",
+        "operationId": "getDesignFigmaComponents",
+        "tags": [
+          "design"
+        ],
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Figma file ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Figma components list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/analyze/{fileId}": {
+      "get": {
+        "summary": "GET /figma/analyze/{fileId} - Analyze a Figma design for code generation",
+        "operationId": "getDesignFigmaAnalyze",
+        "tags": [
+          "design"
+        ],
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Figma file ID"
+          },
+          {
+            "name": "nodeId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional specific node ID to analyze"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Design analysis result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/export/{fileId}": {
+      "post": {
+        "summary": "POST /figma/export/{fileId} - Export Figma assets as images",
+        "operationId": "postDesignFigmaExport",
+        "tags": [
+          "design"
+        ],
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Figma file ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported image URLs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nodeIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Node IDs to export"
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": ["png", "svg", "jpg", "pdf"],
+                    "description": "Export format"
+                  },
+                  "scale": {
+                    "type": "number",
+                    "description": "Export scale (1-4)"
+                  }
+                },
+                "required": ["nodeIds"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/make": {
+      "post": {
+        "summary": "POST /figma/make - Generate code from Figma design (main Figma Make endpoint)",
+        "operationId": "postDesignFigmaMake",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Generated code and components",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing URL or invalid configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "figmaUrl": {
+                    "type": "string",
+                    "description": "Figma file or design URL"
+                  },
+                  "framework": {
+                    "type": "string",
+                    "enum": ["react", "vue", "svelte", "html"],
+                    "description": "Target framework"
+                  },
+                  "styling": {
+                    "type": "string",
+                    "enum": ["tailwind", "css-modules", "styled-components", "css", "scss"],
+                    "description": "Styling approach"
+                  },
+                  "options": {
+                    "type": "object",
+                    "description": "Additional generation options"
+                  }
+                },
+                "required": ["figmaUrl"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/sync": {
+      "post": {
+        "summary": "POST /figma/sync - Sync existing code with Figma changes",
+        "operationId": "postDesignFigmaSync",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Sync result with changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "figmaUrl": {
+                    "type": "string",
+                    "description": "Figma file URL"
+                  },
+                  "projectPath": {
+                    "type": "string",
+                    "description": "Path to existing project to sync"
+                  }
+                },
+                "required": ["figmaUrl", "projectPath"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design/figma/webhook": {
+      "post": {
+        "summary": "POST /figma/webhook - Receive Figma webhook notifications",
+        "operationId": "postDesignFigmaWebhook",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Webhook processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Figma webhook payload"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cortex/status": {
       "get": {
         "summary": "GET /status",

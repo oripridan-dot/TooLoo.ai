@@ -422,7 +422,7 @@ export const IllustrationRequestCard = memo(({ onSubmit, isLoading = false, clas
         <div className="mb-4 flex flex-wrap gap-2">
           {quickPrompts.map((qp, i) => (
             <button
-              key={i}
+              key={`quick-prompt-${qp.slice(0, 15)}-${i}`}
               type="button"
               onClick={() => setPrompt(qp)}
               className="px-3 py-1.5 rounded-full text-xs bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-gray-700 hover:border-gray-600 transition-all"

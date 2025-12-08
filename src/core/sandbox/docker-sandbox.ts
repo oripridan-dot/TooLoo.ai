@@ -1,4 +1,4 @@
-// @version 2.3.0
+// @version 2.3.1
 import { spawn, exec } from 'child_process';
 import {
   ISandbox,
@@ -6,7 +6,7 @@ import {
   ExecutionResult,
   SandboxMetadata,
   ResourceUsage,
-} from './sandbox-manager.js';
+} from './types.js';
 import { config } from '../config.js';
 
 export class DockerSandbox implements ISandbox {

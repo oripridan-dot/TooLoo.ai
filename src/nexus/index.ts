@@ -1,4 +1,4 @@
-// @version 3.3.195
+// @version 3.3.300 - Flow System
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -36,6 +36,7 @@ import cognitiveRoutes from './routes/cognitive.js';
 import { growthEngineRoutes } from './routes/growth-engine.js';
 import { configurationRoutes } from './routes/configuration.js';
 import { reflectionRoutes } from './routes/reflection.js';
+import flowRoutes from './routes/flow.js';
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
@@ -82,6 +83,7 @@ export function createNexusApp() {
   app.use('/api/v1/growth', growthEngineRoutes);
   app.use('/api/v1/config', configurationRoutes);
   app.use('/api/v1/reflection', reflectionRoutes);
+  app.use('/api/v1/flow', flowRoutes);
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)

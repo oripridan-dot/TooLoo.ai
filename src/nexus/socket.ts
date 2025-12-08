@@ -1,4 +1,4 @@
-// @version 2.2.50
+// @version 3.3.300
 
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
@@ -13,6 +13,18 @@ export class SocketServer {
       cors: {
         origin: '*', // Allow all for local dev
         methods: ['GET', 'POST'],
+      },
+      // v3.3.300: Improved connection stability settings
+      pingTimeout: 60000, // Increase ping timeout to 60s
+      pingInterval: 25000, // Ping every 25s
+      transports: ['websocket', 'polling'], // Prefer websocket, fallback to polling
+      allowUpgrades: true,
+      upgradeTimeout: 10000,
+      maxHttpBufferSize: 1e7, // 10MB max message size
+      // Connection state recovery for better resilience
+      connectionStateRecovery: {
+        maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+        skipMiddlewares: true,
       },
     });
 

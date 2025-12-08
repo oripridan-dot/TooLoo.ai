@@ -1,4 +1,4 @@
-// @version 3.3.22
+// @version 3.3.220
 import { bus, SynapsysEvent } from '../core/event-bus.js';
 import { amygdala } from './amygdala/index.js';
 import { orchestrator } from './orchestrator.js';
@@ -29,7 +29,9 @@ import { ExplorationEngine } from './exploration/lab.js';
 import { CuriosityEngine } from './exploration/curiosity-engine.js';
 import { DisCoverAgent } from './discover/index.js';
 import { ReinforcementLearner } from './learning/reinforcement-learner.js';
+import { adversarialLearner, AdversarialLearner } from './learning/adversarial-learner.js';
 import { EmergenceAmplifier } from './discover/emergence-amplifier.js';
+import { emergenceCatalyst, EmergenceCatalyst } from './emergence/index.js';
 // V3.3.17: Agent Team Framework & System Execution Hub
 import {
   systemExecutionHub,
@@ -42,6 +44,12 @@ import { metaLearner, MetaLearner } from './cognition/meta-learner.js';
 import { collaborationHub, CollaborationHub } from './agent/collaboration-hub.js';
 // V3.3.157: Visual Cortex 2.0 Enhanced Design Engine
 import { visualCortex2, VisualCortex2 } from './visual/index.js';
+// V3.3.220: Design Cortex - Figma Integration & Design-to-Code
+import { figmaBridge, designToCode } from './design/index.js';
+// V3.3.281: Knowledge Amplification - World Pipeline
+import { worldPipeline, WorldPipeline } from './knowledge/index.js';
+// V3.3.281: Giant Leap Orchestrator
+import { giantLeapOrchestrator } from './giant-leap-orchestrator.js';
 
 import { validationLoop, ValidationLoopOutput } from './cognition/index.js';
 
@@ -105,6 +113,8 @@ export class Cortex {
     this.motor = new MotorCortex(bus, process.cwd());
     this.sensory = new SensoryCortex(bus, process.cwd());
     this.hippocampus = new Hippocampus(bus, process.cwd());
+    // Connect World Pipeline to Memory
+    worldPipeline.connectMemory(this.hippocampus);
     this.prefrontal = new PrefrontalCortex(bus, process.cwd());
     this.projectManager = new ProjectManager(process.cwd());
     this.contextResonance = new ContextResonanceEngine();
@@ -142,9 +152,16 @@ export class Cortex {
 
     // MEGA-BOOST: RL-style continuous learning
     this.reinforcementLearner = ReinforcementLearner.getInstance();
+    // MEGA-BOOST: Adversarial Learning (Red Teaming)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    adversarialLearner;
 
     // MEGA-BOOST: Emergence signal amplification
     this.emergenceAmplifier = EmergenceAmplifier.getInstance();
+    // MEGA-BOOST: Emergence Catalyst (Synthesis & Foresight)
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    emergenceCatalyst;
+    emergenceCatalyst.connectMemory(vectorStore, knowledgeGraph);
 
     // V3.3.17: Initialize Team Framework & System Execution Hub
     // This connects execution to ALL TooLoo systems
@@ -152,6 +169,10 @@ export class Cortex {
     initializeSystemExecutionHub().catch((err) => {
       console.error('[Cortex] Failed to initialize System Execution Hub:', err);
     });
+
+    // Initialize Giant Leap Orchestrator
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    giantLeapOrchestrator;
 
     this.setupListeners();
   }
@@ -581,6 +602,7 @@ Here are the key points in response:
     console.log('  - DisCover Agent (emergence coordination)');
     console.log('  - Reinforcement Learner (continuous learning)');
     console.log('  - Emergence Amplifier (breakthrough detection)');
+    console.log('  - Design Cortex (Figma integration & design-to-code)');
 
     console.log('[Cortex] Online.');
     bus.publish('cortex', 'system:ready', { module: 'cortex' });
@@ -590,6 +612,9 @@ Here are the key points in response:
 export { visualCortex } from './imagination/visual-cortex.js';
 // V3.3.157: Visual Cortex 2.0 Enhanced Design Engine
 export { visualCortex2, type VisualCortex2 } from './visual/index.js';
+// V3.3.220: Design Cortex - Figma Integration & Design-to-Code
+export { figmaBridge, designToCode } from './design/index.js';
+export * from './design/index.js';
 export {
   ValidationLoop,
   validationLoop,

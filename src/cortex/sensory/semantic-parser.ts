@@ -1,9 +1,13 @@
-// @version 2.2.75
+// @version 2.2.76 - Re-enabled memory storage with chunking and rate limiting
 import fs from 'fs-extra';
 import * as path from 'path';
 import { glob } from 'glob';
 import * as ts from 'typescript';
 import { EventBus } from '../../core/event-bus.js';
+
+// Rate limiting configuration
+const MEMORY_STORE_DELAY_MS = 500; // Delay between memory store events
+const MAX_CHUNK_SIZE = 5000; // Max characters per chunk to avoid large payload issues
 
 interface FunctionInfo {
   name: string;
@@ -37,12 +41,58 @@ interface ProjectInfo {
 
 export class SemanticParser {
   private cachePath: string;
+  private memoryStoreEnabled: boolean = true;
 
   constructor(
     private bus: EventBus,
     private workspaceRoot: string
   ) {
     this.cachePath = path.join(workspaceRoot, 'data/memory/semantic-cache.json');
+  }
+
+  /**
+   * Store data to memory with chunking and rate limiting to prevent 429 errors
+   */
+  private async storeToMemoryChunked(
+    description: string,
+    content: string,
+    tags: string[]
+  ): Promise<void> {
+    if (!this.memoryStoreEnabled) return;
+
+    // If content is small enough, store directly
+    if (content.length <= MAX_CHUNK_SIZE) {
+      this.bus.publish('cortex', 'memory:store', {
+        description,
+        content,
+        type: 'system',
+        tags,
+      });
+      return;
+    }
+
+    // Split into chunks for large content
+    const chunks: string[] = [];
+    for (let i = 0; i < content.length; i += MAX_CHUNK_SIZE) {
+      chunks.push(content.slice(i, i + MAX_CHUNK_SIZE));
+    }
+
+    console.log(`[SemanticParser] Storing ${chunks.length} chunks for: ${description}`);
+
+    // Store chunks with rate limiting
+    for (let i = 0; i < chunks.length; i++) {
+      this.bus.publish('cortex', 'memory:store', {
+        description: `${description} (Part ${i + 1}/${chunks.length})`,
+        content: chunks[i],
+        type: 'system',
+        tags: [...tags, `chunk-${i + 1}`],
+      });
+
+      // Rate limit between chunks
+      if (i < chunks.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, MEMORY_STORE_DELAY_MS));
+      }
+    }
   }
 
   async analyzeProject() {
@@ -55,16 +105,17 @@ export class SemanticParser {
         cachedInfo = await fs.readJson(this.cachePath);
         console.log('[SemanticParser] Loaded cached analysis.');
 
-        // Publish cached findings immediately
-        // DISABLED: Causing 429 Quota Exceeded loops due to size
-        /*
-        this.bus.publish("cortex", "memory:store", {
-          description: "Project Structure Analysis (Cached)",
-          content: JSON.stringify(cachedInfo),
-          type: "system",
-          tags: ["project-analysis", "structure", "symbols"],
-        });
-        */
+        // Publish cached summary (not full content to avoid large payloads)
+        await this.storeToMemoryChunked(
+          'Project Structure Analysis (Cached)',
+          JSON.stringify({
+            dependencyCount: Object.keys(cachedInfo.dependencies || {}).length,
+            scriptCount: Object.keys(cachedInfo.scripts || {}).length,
+            symbolCount: cachedInfo.symbols?.length || 0,
+            cachedAt: new Date().toISOString(),
+          }),
+          ['project-analysis', 'structure', 'cached']
+        );
       }
     } catch (e) {
       console.warn('[SemanticParser] Cache load failed, proceeding with full analysis.');
@@ -138,16 +189,19 @@ export class SemanticParser {
       console.warn(`[SemanticParser] Failed to analyze source files: ${errorMessage}`);
     }
 
-    // 4. Publish findings to Memory (Hippocampus)
-    // DISABLED: Causing 429 Quota Exceeded loops due to size
-    /*
-    this.bus.publish("cortex", "memory:store", {
-      description: "Project Structure Analysis",
-      content: JSON.stringify(projectInfo),
-      type: "system",
-      tags: ["project-analysis", "structure", "symbols"],
-    });
-    */
+    // 4. Publish findings summary to Memory (Hippocampus)
+    // Re-enabled with chunking - stores a summary instead of full data to avoid quota issues
+    await this.storeToMemoryChunked(
+      'Project Structure Analysis',
+      JSON.stringify({
+        dependencyCount: Object.keys(projectInfo.dependencies).length,
+        scriptCount: Object.keys(projectInfo.scripts).length,
+        symbolCount: projectInfo.symbols.length,
+        topDependencies: Object.keys(projectInfo.dependencies).slice(0, 20),
+        analyzedAt: new Date().toISOString(),
+      }),
+      ['project-analysis', 'structure', 'symbols']
+    );
 
     // 5. Cache the result
     try {

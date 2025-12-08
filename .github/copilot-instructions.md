@@ -40,9 +40,31 @@ npm run dev
 
 TooLoo.ai V3.3 Synapsys is a multi-agent AI orchestration system with:
 - `/src/cortex/` - Core AI orchestration, agents, and cognitive systems
-- `/src/nexus/` - API routes and web interface backend
-- `/src/web-app/` - React frontend with Liquid Skin UI
+- `/src/nexus/` - API routes and web interface backend (Socket.IO on port 4000)
+- `/src/web-app/` - React frontend with Liquid Skin UI (Vite on port 5173)
 - `/src/qa/` - Quality assurance and testing infrastructure
+- `/src/precog/` - Provider routing, synthesis, and prediction
+
+## Architecture Notes (v3.3.300)
+
+### Real-Time Communication
+- **Backend**: Socket.IO server on port 4000 (`/src/nexus/socket.ts`)
+- **Frontend**: Socket.IO client (`socket.io-client` package)
+- **Event Pattern**: `bus.publish()` → Socket.IO → `synapsys:event` broadcasts
+- **DO NOT** use native WebSocket in frontend - always use `socket.io-client`
+
+### React Component Guidelines
+- Always use unique keys in `.map()` iterations
+- Pattern: `key={item.id || \`prefix-${item.uniqueField}-${index}\`}`
+- Never use index alone as key in AnimatePresence or dynamic lists
+- Prefer compound keys with timestamps for real-time data
+
+### API Endpoints
+- All routes under `/api/v1/` prefix
+- Health: `GET /api/v1/health`
+- Growth: `GET /api/v1/growth/schedule`, `GET /api/v1/learning/report`
+- Config: `GET /api/v1/config/domains`
+- Chat: `POST /api/v1/chat` (or via Socket.IO `generate` event)
 
 ## Development Guidelines
 
@@ -50,6 +72,7 @@ TooLoo.ai V3.3 Synapsys is a multi-agent AI orchestration system with:
 2. **Use TypeScript strict mode**: All new code should be type-safe
 3. **Follow the EventBus pattern**: Use `bus.publish()` and `bus.on()` for system communication
 4. **Update version numbers**: Increment version in file headers when modifying
+5. **Socket.IO for real-time**: Frontend should use `io()` from socket.io-client, not WebSocket
 
 ## Team Framework
 

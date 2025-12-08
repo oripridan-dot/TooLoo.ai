@@ -983,8 +983,15 @@ export class EmergencePredictor {
   // ============================================================================
 
   private validatePredictions(emergence: EmergenceEvent): void {
+    // Defensive check for malformed emergence events
+    if (!emergence?.signature?.type) {
+      console.warn(
+        '[EmergencePredictor] Received emergence event without signature.type, skipping validation'
+      );
+      return;
+    }
     const emergenceType = emergence.signature.type as EmergenceType;
-    const emergenceTime = emergence.triggeredAt.getTime();
+    const emergenceTime = emergence.triggeredAt?.getTime?.() ?? Date.now();
 
     for (const prediction of this.state.activePredictions) {
       if (prediction.validated) continue;
@@ -1024,13 +1031,21 @@ export class EmergencePredictor {
   private learnFromEmergence(emergence: EmergenceEvent): void {
     if (!this.policy.learnFromOutcomes) return;
 
+    // Defensive check for malformed emergence events
+    if (!emergence?.signature?.type) {
+      console.warn(
+        '[EmergencePredictor] Received emergence event without signature.type, skipping learning'
+      );
+      return;
+    }
+
     this.emergenceHistory.push(emergence);
     if (this.emergenceHistory.length > this.MAX_EMERGENCE_HISTORY) {
       this.emergenceHistory = this.emergenceHistory.slice(-this.MAX_EMERGENCE_HISTORY);
     }
 
     const emergenceType = emergence.signature.type as EmergenceType;
-    const emergenceTime = emergence.triggeredAt.getTime();
+    const emergenceTime = emergence.triggeredAt?.getTime?.() ?? Date.now();
 
     // Find signals that preceded this emergence
     const leadTimeWindow = 600000; // 10 minutes

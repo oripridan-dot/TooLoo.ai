@@ -1,4 +1,4 @@
-// @version 2.3.0
+// @version 2.3.2
 import { EventEmitter } from 'events';
 import { spawn, exec } from 'child_process';
 import * as fs from 'fs/promises';
@@ -6,54 +6,22 @@ import * as path from 'path';
 
 import { DockerSandbox } from './docker-sandbox.js';
 import { config } from '../config.js';
+import type {
+  ExecutionResult,
+  ResourceUsage,
+  SandboxOptions,
+  SandboxMetadata,
+  ISandbox,
+} from './types.js';
 
-export interface ExecutionResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  duration: number;
-  ok: boolean;
-  timedOut?: boolean;
-  resourceUsage?: ResourceUsage;
-}
-
-export interface ResourceUsage {
-  cpuPercent: number;
-  memoryUsedMB: number;
-  memoryLimitMB: number;
-  peakMemoryMB: number;
-}
-
-export interface SandboxOptions {
-  id: string;
-  timeout?: number;
-  env?: Record<string, string>;
-  cwd?: string;
-  mode?: 'local' | 'docker';
-  // Resource limits
-  maxCpuPercent?: number; // Default 50%
-  maxMemoryMB?: number; // Default 512MB
-  maxProcesses?: number; // Default 100
-}
-
-export interface SandboxMetadata {
-  id: string;
-  createdAt: number;
-  lastUsedAt: number;
-  executionCount: number;
-  totalDuration: number;
-  mode: string;
-}
-
-export interface ISandbox {
-  id: string;
-  start(): Promise<void>;
-  exec(command: string): Promise<ExecutionResult>;
-  stop(): Promise<void>;
-  isRunning(): boolean;
-  getMetadata(): SandboxMetadata;
-  getResourceUsage(): Promise<ResourceUsage | null>;
-}
+// Re-export types from the shared types file for backward compatibility
+export type {
+  ExecutionResult,
+  ResourceUsage,
+  SandboxOptions,
+  SandboxMetadata,
+  ISandbox,
+} from './types.js';
 
 class LocalSandbox implements ISandbox {
   public id: string;

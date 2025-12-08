@@ -777,7 +777,7 @@ export class AutonomousModifier {
     // Convert suggestions to CodeChange format for reflection loop
     const changes: CodeChange[] = suggestions.map((s) => ({
       filePath: s.filePath,
-      operation: s.operation === 'replace' ? 'edit' : s.operation,
+      operation: (s.operation === 'replace' || s.operation === 'append') ? 'edit' : s.operation as 'create' | 'delete' | 'edit',
       oldContent: s.oldCode,
       newContent: s.code,
       reason: s.reason,
@@ -883,6 +883,7 @@ export class AutonomousModifier {
       if (!headerMatch) continue;
 
       const filePath = headerMatch[2];
+      if (!filePath) continue;
 
       // Extract new file content (lines starting with +, excluding header)
       const lines = fileDiff.split('\n');

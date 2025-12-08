@@ -1,14 +1,14 @@
 // @version 3.3.207
 /**
  * ProviderExecutionLearner
- * 
+ *
  * A sophisticated learning system that tracks, analyzes, and learns from each provider's
  * execution processes. Enables TooLoo to:
  * - Learn each provider's unique response patterns and structures
  * - Identify optimal methods for different task types per provider
  * - Develop new execution strategies based on learned behaviors
  * - Automatically adapt execution approaches based on provider performance
- * 
+ *
  * @module cortex/learning/provider-execution-learner
  */
 
@@ -47,14 +47,14 @@ export interface ResponseStructurePattern {
   codeBlockLanguages: string[];
 }
 
-export type PromptStyle = 
-  | 'direct'           // Simple, direct questions
+export type PromptStyle =
+  | 'direct' // Simple, direct questions
   | 'chain_of_thought' // Step-by-step reasoning
-  | 'few_shot'         // Examples provided
-  | 'decomposed'       // Break into sub-tasks
-  | 'contextual'       // Heavy context loading
-  | 'creative'         // Open-ended creative
-  | 'technical';       // Code/technical focused
+  | 'few_shot' // Examples provided
+  | 'decomposed' // Break into sub-tasks
+  | 'contextual' // Heavy context loading
+  | 'creative' // Open-ended creative
+  | 'technical'; // Code/technical focused
 
 export interface ExecutionStrategy {
   id: string;
@@ -116,44 +116,44 @@ export interface ProviderProfile {
 
 export class ProviderExecutionLearner {
   private static instance: ProviderExecutionLearner;
-  
+
   private providerProfiles: Map<string, ProviderProfile> = new Map();
   private executionHistory: ExecutionOutcome[] = [];
   private strategies: Map<string, ExecutionStrategy> = new Map();
   private insights: LearningInsight[] = [];
-  
+
   private dataDir: string;
   private stateFile: string;
-  
+
   private readonly MAX_HISTORY = 10000;
   private readonly PATTERN_ANALYSIS_THRESHOLD = 10; // Min samples before pattern analysis
   private readonly STRATEGY_EVOLUTION_THRESHOLD = 50; // Samples before evolving strategies
-  
+
   private constructor() {
     this.dataDir = path.join(process.cwd(), 'data', 'provider-learning');
     this.stateFile = path.join(this.dataDir, 'provider-execution-state.json');
-    
+
     this.initializeDefaultStrategies();
     this.setupListeners();
   }
-  
+
   static getInstance(): ProviderExecutionLearner {
     if (!ProviderExecutionLearner.instance) {
       ProviderExecutionLearner.instance = new ProviderExecutionLearner();
     }
     return ProviderExecutionLearner.instance;
   }
-  
+
   // ============================================================================
   // INITIALIZATION
   // ============================================================================
-  
+
   async initialize(): Promise<void> {
-    console.log('[ProviderExecutionLearner] Initializing execution learning system...');
-    
+    bus.publish('cortex', 'provider_learner:initializing', { timestamp: new Date().toISOString() });
+
     await fs.ensureDir(this.dataDir);
     await this.loadState();
-    
+
     // Initialize profiles for known providers
     const knownProviders = ['deepseek', 'anthropic', 'openai', 'gemini', 'localai'];
     for (const providerId of knownProviders) {
@@ -161,17 +161,17 @@ export class ProviderExecutionLearner {
         this.providerProfiles.set(providerId, this.createDefaultProfile(providerId));
       }
     }
-    
+
     bus.publish('cortex', 'provider_learning:initialized', {
       profileCount: this.providerProfiles.size,
       strategyCount: this.strategies.size,
       historySize: this.executionHistory.length,
       timestamp: new Date().toISOString(),
     });
-    
-    console.log('[ProviderExecutionLearner] Ready - Learning from provider executions');
+
+    bus.publish('cortex', 'provider_learner:ready', { timestamp: new Date().toISOString() });
   }
-  
+
   private createDefaultProfile(providerId: string): ProviderProfile {
     const providerDefaults: Record<string, Partial<ProviderProfile>> = {
       deepseek: {
@@ -210,9 +210,9 @@ export class ProviderExecutionLearner {
         overallWeaknesses: ['quality', 'capabilities'],
       },
     };
-    
+
     const defaults = providerDefaults[providerId] || {};
-    
+
     return {
       providerId,
       displayName: defaults.displayName || providerId,
@@ -227,7 +227,7 @@ export class ProviderExecutionLearner {
       maturityScore: 0.1,
     };
   }
-  
+
   private initializeDefaultStrategies(): void {
     const defaultStrategies: ExecutionStrategy[] = [
       {
@@ -250,7 +250,8 @@ export class ProviderExecutionLearner {
         description: 'Step-by-step reasoning for complex problems',
         applicableTaskTypes: ['reasoning', 'analysis', 'math', 'complex'],
         applicableProviders: ['anthropic', 'openai', 'deepseek'],
-        promptTemplate: 'Let\'s approach this step by step:\n\n{prompt}\n\nPlease think through this carefully, showing your reasoning at each step.',
+        promptTemplate:
+          "Let's approach this step by step:\n\n{prompt}\n\nPlease think through this carefully, showing your reasoning at each step.",
         preprocessingSteps: ['identify_complexity', 'extract_requirements'],
         postprocessingSteps: ['extract_conclusion', 'validate_logic'],
         successRate: 0.85,
@@ -265,10 +266,11 @@ export class ProviderExecutionLearner {
         description: 'Optimized for code generation tasks',
         applicableTaskTypes: ['code', 'technical', 'implementation'],
         applicableProviders: ['deepseek', 'anthropic', 'openai'],
-        promptTemplate: '{prompt}\n\nProvide working code with comments. Be concise and focus on correctness.',
+        promptTemplate:
+          '{prompt}\n\nProvide working code with comments. Be concise and focus on correctness.',
         preprocessingSteps: ['detect_language', 'extract_requirements', 'identify_constraints'],
         postprocessingSteps: ['extract_code_blocks', 'validate_syntax', 'check_completeness'],
-        successRate: 0.80,
+        successRate: 0.8,
         avgQualityScore: 0.82,
         usageCount: 0,
         createdAt: new Date(),
@@ -280,10 +282,11 @@ export class ProviderExecutionLearner {
         description: 'Open-ended creative generation',
         applicableTaskTypes: ['creative', 'brainstorm', 'ideation'],
         applicableProviders: ['openai', 'anthropic', 'gemini'],
-        promptTemplate: '{prompt}\n\nBe creative and explore multiple possibilities. Don\'t hold back.',
+        promptTemplate:
+          "{prompt}\n\nBe creative and explore multiple possibilities. Don't hold back.",
         preprocessingSteps: ['identify_creative_constraints', 'set_temperature_high'],
         postprocessingSteps: ['organize_ideas', 'highlight_best'],
-        successRate: 0.70,
+        successRate: 0.7,
         avgQualityScore: 0.75,
         usageCount: 0,
         createdAt: new Date(),
@@ -295,44 +298,45 @@ export class ProviderExecutionLearner {
         description: 'Forces structured JSON/table output',
         applicableTaskTypes: ['data', 'structured', 'extraction'],
         applicableProviders: ['*'],
-        promptTemplate: '{prompt}\n\nRespond ONLY with valid JSON in the following format: {format}',
+        promptTemplate:
+          '{prompt}\n\nRespond ONLY with valid JSON in the following format: {format}',
         preprocessingSteps: ['define_schema', 'validate_request'],
         postprocessingSteps: ['parse_json', 'validate_schema', 'handle_errors'],
-        successRate: 0.90,
+        successRate: 0.9,
         avgQualityScore: 0.88,
         usageCount: 0,
         createdAt: new Date(),
         isAutoGenerated: false,
       },
     ];
-    
+
     for (const strategy of defaultStrategies) {
       this.strategies.set(strategy.id, strategy);
     }
   }
-  
+
   // ============================================================================
   // EXECUTION RECORDING
   // ============================================================================
-  
+
   /**
    * Record an execution outcome for learning
    */
   recordExecution(outcome: ExecutionOutcome): void {
     // Add to history
     this.executionHistory.push(outcome);
-    
+
     // Trim history if needed
     if (this.executionHistory.length > this.MAX_HISTORY) {
       this.executionHistory = this.executionHistory.slice(-this.MAX_HISTORY);
     }
-    
+
     // Update provider profile
     this.updateProviderProfile(outcome);
-    
+
     // Check for pattern evolution
     this.analyzeAndEvolvePatterns(outcome.providerId, outcome.taskType);
-    
+
     // Emit learning event
     bus.publish('cortex', 'provider_learning:execution_recorded', {
       providerId: outcome.providerId,
@@ -341,43 +345,44 @@ export class ProviderExecutionLearner {
       qualityScore: outcome.qualityScore,
       timestamp: new Date().toISOString(),
     });
-    
+
     // Async save
-    this.saveState().catch(err => 
-      console.error('[ProviderExecutionLearner] Save failed:', err)
+    this.saveState().catch((err) =>
+      bus.publish('system', 'provider_learner:save_failed', { error: String(err) })
     );
   }
-  
+
   private updateProviderProfile(outcome: ExecutionOutcome): void {
     let profile = this.providerProfiles.get(outcome.providerId);
     if (!profile) {
       profile = this.createDefaultProfile(outcome.providerId);
       this.providerProfiles.set(outcome.providerId, profile);
     }
-    
+
     // Get or create execution pattern for this task type
     let pattern = profile.executionPatterns.get(outcome.taskType);
     if (!pattern) {
       pattern = this.createDefaultPattern(outcome.providerId, outcome.taskType);
       profile.executionPatterns.set(outcome.taskType, pattern);
     }
-    
+
     // Update pattern with new outcome
     const weight = 1 / (pattern.sampleCount + 1);
-    pattern.avgResponseTime = pattern.avgResponseTime * (1 - weight) + outcome.responseTime * weight;
+    pattern.avgResponseTime =
+      pattern.avgResponseTime * (1 - weight) + outcome.responseTime * weight;
     pattern.avgTokensUsed = pattern.avgTokensUsed * (1 - weight) + outcome.tokensUsed * weight;
     pattern.successRate = pattern.successRate * (1 - weight) + (outcome.success ? 1 : 0) * weight;
     pattern.qualityScore = pattern.qualityScore * (1 - weight) + outcome.qualityScore * weight;
     pattern.sampleCount++;
     pattern.lastUpdated = new Date();
-    
+
     // Analyze response structure
     this.analyzeResponseStructure(outcome.response, pattern);
-    
+
     // Update maturity score
     profile.maturityScore = this.calculateMaturityScore(profile);
   }
-  
+
   private createDefaultPattern(providerId: string, taskType: string): ProviderExecutionPattern {
     return {
       providerId,
@@ -404,34 +409,33 @@ export class ProviderExecutionLearner {
       lastUpdated: new Date(),
     };
   }
-  
+
   private analyzeResponseStructure(response: string, pattern: ProviderExecutionPattern): void {
     const structure = pattern.structurePattern;
-    
+
     // Analyze code blocks
     const codeBlockMatches = response.match(/```(\w+)?/g);
     structure.usesCodeBlocks = !!codeBlockMatches;
     if (codeBlockMatches) {
-      const langs = codeBlockMatches
-        .map(m => m.replace('```', ''))
-        .filter(l => l);
+      const langs = codeBlockMatches.map((m) => m.replace('```', '')).filter((l) => l);
       for (const lang of langs) {
         if (!structure.codeBlockLanguages.includes(lang)) {
           structure.codeBlockLanguages.push(lang);
         }
       }
     }
-    
+
     // Analyze headers
     structure.usesHeaders = /^#+\s/m.test(response);
-    
+
     // Analyze lists
     structure.usesLists = /^[-*•]\s|\d+\.\s/m.test(response);
-    
+
     // Count sections (headers or double newlines)
     const sections = response.split(/\n\n|\n#+/).length;
-    structure.avgSections = (structure.avgSections * (pattern.sampleCount - 1) + sections) / pattern.sampleCount;
-    
+    structure.avgSections =
+      (structure.avgSections * (pattern.sampleCount - 1) + sections) / pattern.sampleCount;
+
     // Determine format preference
     if (structure.usesCodeBlocks && structure.usesHeaders) {
       structure.preferredFormat = 'technical';
@@ -442,28 +446,30 @@ export class ProviderExecutionLearner {
     } else {
       structure.preferredFormat = 'detailed';
     }
-    
+
     // Capture opening/closing styles
     const lines = response.split('\n');
-    if (lines.length > 0 && !structure.responseOpeningStyle) {
-      structure.responseOpeningStyle = lines[0].substring(0, 50);
+    const firstLine = lines[0];
+    const lastLine = lines[lines.length - 1];
+    if (lines.length > 0 && !structure.responseOpeningStyle && firstLine) {
+      structure.responseOpeningStyle = firstLine.substring(0, 50);
     }
-    if (lines.length > 1) {
-      structure.responseClosingStyle = lines[lines.length - 1].substring(0, 50);
+    if (lines.length > 1 && lastLine) {
+      structure.responseClosingStyle = lastLine.substring(0, 50);
     }
   }
-  
+
   // ============================================================================
   // PATTERN ANALYSIS & STRATEGY EVOLUTION
   // ============================================================================
-  
+
   private analyzeAndEvolvePatterns(providerId: string, taskType: string): void {
     const profile = this.providerProfiles.get(providerId);
     if (!profile) return;
-    
+
     const pattern = profile.executionPatterns.get(taskType);
     if (!pattern || pattern.sampleCount < this.PATTERN_ANALYSIS_THRESHOLD) return;
-    
+
     // Identify strengths/weaknesses
     if (pattern.successRate > 0.85 && pattern.qualityScore > 0.8) {
       if (!pattern.strengthDomains.includes(taskType)) {
@@ -488,30 +494,30 @@ export class ProviderExecutionLearner {
         });
       }
     }
-    
+
     // Evolve strategies if enough samples
     if (pattern.sampleCount >= this.STRATEGY_EVOLUTION_THRESHOLD) {
       this.evolveStrategyForPattern(providerId, taskType, pattern);
     }
   }
-  
+
   private evolveStrategyForPattern(
-    providerId: string, 
-    taskType: string, 
+    providerId: string,
+    taskType: string,
     pattern: ProviderExecutionPattern
   ): void {
     // Find relevant execution history
     const relevantHistory = this.executionHistory.filter(
-      h => h.providerId === providerId && h.taskType === taskType
+      (h) => h.providerId === providerId && h.taskType === taskType
     );
-    
+
     // Analyze successful executions
-    const successes = relevantHistory.filter(h => h.success && h.qualityScore > 0.7);
+    const successes = relevantHistory.filter((h) => h.success && h.qualityScore > 0.7);
     if (successes.length < 10) return;
-    
+
     // Extract common patterns from successful prompts
-    const promptPatterns = this.extractPromptPatterns(successes.map(s => s.prompt));
-    
+    const promptPatterns = this.extractPromptPatterns(successes.map((s) => s.prompt));
+
     // Generate new strategy based on learned patterns
     const newStrategyId = `auto-${providerId}-${taskType}-${Date.now()}`;
     const newStrategy: ExecutionStrategy = {
@@ -529,12 +535,12 @@ export class ProviderExecutionLearner {
       createdAt: new Date(),
       isAutoGenerated: true,
     };
-    
+
     // Add to strategies and pattern
     this.strategies.set(newStrategyId, newStrategy);
     pattern.learnedStrategies.push(newStrategy);
     pattern.optimalPromptStyle = promptPatterns.dominantStyle;
-    
+
     this.createInsight({
       type: 'strategy_evolved',
       providerId,
@@ -542,7 +548,7 @@ export class ProviderExecutionLearner {
       confidence: pattern.successRate,
       actionRecommendation: `Apply strategy "${newStrategy.name}" for improved results`,
     });
-    
+
     bus.publish('cortex', 'provider_learning:strategy_evolved', {
       strategyId: newStrategyId,
       providerId,
@@ -551,16 +557,16 @@ export class ProviderExecutionLearner {
       timestamp: new Date().toISOString(),
     });
   }
-  
+
   private extractPromptPatterns(prompts: string[]): {
     bestTemplate: string;
     dominantStyle: PromptStyle;
     preprocessingSteps: string[];
   } {
     // Simple pattern extraction - in production, this would use more sophisticated NLP
-    
+
     // Detect dominant prompt style
-    let styleScores: Record<PromptStyle, number> = {
+    const styleScores: Record<PromptStyle, number> = {
       direct: 0,
       chain_of_thought: 0,
       few_shot: 0,
@@ -569,51 +575,50 @@ export class ProviderExecutionLearner {
       creative: 0,
       technical: 0,
     };
-    
+
     for (const prompt of prompts) {
-      const lower = prompt.toLowerCase();
-      
       if (/step by step|think through|reason/i.test(prompt)) styleScores.chain_of_thought++;
       if (/example|for instance|such as/i.test(prompt)) styleScores.few_shot++;
       if (/first.*then.*finally|break.*down/i.test(prompt)) styleScores.decomposed++;
       if (/context|given that|considering/i.test(prompt)) styleScores.contextual++;
       if (/creative|imagine|brainstorm/i.test(prompt)) styleScores.creative++;
       if (/code|implement|function|class/i.test(prompt)) styleScores.technical++;
-      
+
       // Default to direct for simple prompts
       if (prompt.length < 100) styleScores.direct++;
     }
-    
-    const dominantStyle = Object.entries(styleScores)
-      .sort((a, b) => b[1] - a[1])[0][0] as PromptStyle;
-    
+
+    const sortedStyles = Object.entries(styleScores).sort((a, b) => b[1] - a[1]);
+    const topStyle = sortedStyles[0];
+    const dominantStyle: PromptStyle = topStyle ? (topStyle[0] as PromptStyle) : 'direct';
+
     // Generate template based on dominant style
     const templates: Record<PromptStyle, string> = {
       direct: '{prompt}',
-      chain_of_thought: 'Let\'s approach this step by step:\n\n{prompt}\n\nShow your reasoning.',
+      chain_of_thought: "Let's approach this step by step:\n\n{prompt}\n\nShow your reasoning.",
       few_shot: 'Here are some examples of what I need:\n{examples}\n\nNow: {prompt}',
       decomposed: 'Break this into smaller parts:\n\n{prompt}\n\nAddress each part systematically.',
       contextual: 'Given the context:\n{context}\n\nTask: {prompt}',
       creative: '{prompt}\n\nBe creative and explore multiple angles.',
       technical: '{prompt}\n\nProvide working code with clear explanations.',
     };
-    
+
     const preprocessingSteps: string[] = [];
     if (dominantStyle === 'contextual') preprocessingSteps.push('extract_context');
     if (dominantStyle === 'few_shot') preprocessingSteps.push('generate_examples');
     if (dominantStyle === 'decomposed') preprocessingSteps.push('decompose_task');
     preprocessingSteps.push('validate_input');
-    
+
     return {
       bestTemplate: templates[dominantStyle],
       dominantStyle,
       preprocessingSteps,
     };
   }
-  
+
   private derivePostprocessingSteps(pattern: ProviderExecutionPattern): string[] {
     const steps: string[] = [];
-    
+
     if (pattern.structurePattern.usesCodeBlocks) {
       steps.push('extract_code_blocks', 'validate_syntax');
     }
@@ -621,28 +626,28 @@ export class ProviderExecutionLearner {
       steps.push('parse_structure', 'validate_completeness');
     }
     steps.push('quality_check', 'format_output');
-    
+
     return steps;
   }
-  
+
   // ============================================================================
   // INSIGHT MANAGEMENT
   // ============================================================================
-  
+
   private createInsight(params: Omit<LearningInsight, 'id' | 'createdAt'>): LearningInsight {
     const insight: LearningInsight = {
       id: `insight-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...params,
       createdAt: new Date(),
     };
-    
+
     this.insights.push(insight);
-    
+
     // Keep only recent insights
     if (this.insights.length > 500) {
       this.insights = this.insights.slice(-500);
     }
-    
+
     bus.publish('cortex', 'provider_learning:insight_generated', {
       insightId: insight.id,
       type: insight.type,
@@ -650,128 +655,133 @@ export class ProviderExecutionLearner {
       confidence: insight.confidence,
       timestamp: insight.createdAt.toISOString(),
     });
-    
+
     return insight;
   }
-  
+
   // ============================================================================
   // STRATEGY SELECTION
   // ============================================================================
-  
+
   /**
    * Select the best execution strategy for a given task
    */
   selectStrategy(
-    taskType: string, 
-    providerId?: string, 
-    context?: Record<string, unknown>
+    taskType: string,
+    providerId?: string,
+    _context?: Record<string, unknown>
   ): ExecutionStrategy | null {
     const candidates: ExecutionStrategy[] = [];
-    
+
     for (const [_id, strategy] of this.strategies) {
       // Check task type match
-      if (!strategy.applicableTaskTypes.includes(taskType) && 
-          !strategy.applicableTaskTypes.includes('*')) {
+      if (
+        !strategy.applicableTaskTypes.includes(taskType) &&
+        !strategy.applicableTaskTypes.includes('*')
+      ) {
         continue;
       }
-      
+
       // Check provider match if specified
-      if (providerId && 
-          !strategy.applicableProviders.includes(providerId) && 
-          !strategy.applicableProviders.includes('*')) {
+      if (
+        providerId &&
+        !strategy.applicableProviders.includes(providerId) &&
+        !strategy.applicableProviders.includes('*')
+      ) {
         continue;
       }
-      
+
       candidates.push(strategy);
     }
-    
+
     if (candidates.length === 0) return null;
-    
+
     // Sort by success rate and quality, prioritizing auto-generated (more specific) strategies
     candidates.sort((a, b) => {
       const scoreA = a.successRate * 0.4 + a.avgQualityScore * 0.4 + (a.isAutoGenerated ? 0.2 : 0);
       const scoreB = b.successRate * 0.4 + b.avgQualityScore * 0.4 + (b.isAutoGenerated ? 0.2 : 0);
       return scoreB - scoreA;
     });
-    
-    return candidates[0];
+
+    return candidates[0] ?? null;
   }
-  
+
   /**
    * Get the best provider for a task type based on learned patterns
    */
   getBestProvider(taskType: string, availableProviders: string[]): string | null {
     let bestProvider: string | null = null;
     let bestScore = -1;
-    
+
     for (const providerId of availableProviders) {
       const profile = this.providerProfiles.get(providerId);
       if (!profile) continue;
-      
+
       const pattern = profile.executionPatterns.get(taskType);
       if (!pattern || pattern.sampleCount < 3) continue;
-      
+
       // Calculate composite score
-      const score = pattern.successRate * 0.5 + 
-                    pattern.qualityScore * 0.3 + 
-                    (1 / (pattern.avgResponseTime / 1000 + 1)) * 0.2;
-      
+      const score =
+        pattern.successRate * 0.5 +
+        pattern.qualityScore * 0.3 +
+        (1 / (pattern.avgResponseTime / 1000 + 1)) * 0.2;
+
       if (score > bestScore) {
         bestScore = score;
         bestProvider = providerId;
       }
     }
-    
+
     return bestProvider;
   }
-  
+
   // ============================================================================
   // MATURITY & METRICS
   // ============================================================================
-  
+
   private calculateMaturityScore(profile: ProviderProfile): number {
     let totalSamples = 0;
     let totalPatterns = 0;
     let avgQuality = 0;
-    
+
     for (const [_taskType, pattern] of profile.executionPatterns) {
       totalSamples += pattern.sampleCount;
       totalPatterns++;
       avgQuality += pattern.qualityScore;
     }
-    
+
     if (totalPatterns === 0) return 0.1;
-    
+
     avgQuality /= totalPatterns;
-    
+
     // Maturity is based on sample count, pattern coverage, and quality
     const sampleScore = Math.min(1, totalSamples / 500);
     const patternScore = Math.min(1, totalPatterns / 10);
     const qualityScore = avgQuality;
-    
-    return (sampleScore * 0.4 + patternScore * 0.3 + qualityScore * 0.3);
+
+    return sampleScore * 0.4 + patternScore * 0.3 + qualityScore * 0.3;
   }
-  
+
   // ============================================================================
   // PUBLIC API
   // ============================================================================
-  
+
   getProviderProfile(providerId: string): ProviderProfile | undefined {
     return this.providerProfiles.get(providerId);
   }
-  
+
   getAllProfiles(): ProviderProfile[] {
     return Array.from(this.providerProfiles.values());
   }
-  
+
   getStrategies(): ExecutionStrategy[] {
     return Array.from(this.strategies.values());
   }
-  
+
   getRecentInsights(limit: number = 20): LearningInsight[] {
     return this.insights.slice(-limit);
   }
-  
+
   getExecutionStats(): {
     totalExecutions: number;
     byProvider: Record<string, number>;
@@ -783,32 +793,34 @@ export class ProviderExecutionLearner {
     const byTaskType: Record<string, number> = {};
     let successes = 0;
     let totalQuality = 0;
-    
+
     for (const outcome of this.executionHistory) {
       byProvider[outcome.providerId] = (byProvider[outcome.providerId] || 0) + 1;
       byTaskType[outcome.taskType] = (byTaskType[outcome.taskType] || 0) + 1;
       if (outcome.success) successes++;
       totalQuality += outcome.qualityScore;
     }
-    
+
     return {
       totalExecutions: this.executionHistory.length,
       byProvider,
       byTaskType,
-      overallSuccessRate: this.executionHistory.length > 0 ? successes / this.executionHistory.length : 0,
-      avgQualityScore: this.executionHistory.length > 0 ? totalQuality / this.executionHistory.length : 0,
+      overallSuccessRate:
+        this.executionHistory.length > 0 ? successes / this.executionHistory.length : 0,
+      avgQualityScore:
+        this.executionHistory.length > 0 ? totalQuality / this.executionHistory.length : 0,
     };
   }
-  
+
   // ============================================================================
   // PERSISTENCE
   // ============================================================================
-  
+
   private async loadState(): Promise<void> {
     try {
       if (await fs.pathExists(this.stateFile)) {
         const data = await fs.readJson(this.stateFile);
-        
+
         // Restore profiles
         if (data.providerProfiles) {
           for (const profile of data.providerProfiles) {
@@ -816,33 +828,36 @@ export class ProviderExecutionLearner {
             this.providerProfiles.set(profile.providerId, profile);
           }
         }
-        
+
         // Restore strategies
         if (data.strategies) {
           for (const strategy of data.strategies) {
             this.strategies.set(strategy.id, strategy);
           }
         }
-        
+
         // Restore history and insights
         this.executionHistory = data.executionHistory || [];
         this.insights = data.insights || [];
-        
-        console.log(`[ProviderExecutionLearner] Loaded ${this.providerProfiles.size} profiles, ${this.strategies.size} strategies`);
+
+        bus.publish('cortex', 'provider_learner:state_loaded', {
+          profiles: this.providerProfiles.size,
+          strategies: this.strategies.size,
+        });
       }
     } catch (error) {
       console.error('[ProviderExecutionLearner] Failed to load state:', error);
     }
   }
-  
+
   private async saveState(): Promise<void> {
     try {
       // Convert Maps to serializable format
-      const profiles = Array.from(this.providerProfiles.values()).map(p => ({
+      const profiles = Array.from(this.providerProfiles.values()).map((p) => ({
         ...p,
         executionPatterns: Object.fromEntries(p.executionPatterns),
       }));
-      
+
       const data = {
         providerProfiles: profiles,
         strategies: Array.from(this.strategies.values()),
@@ -850,56 +865,65 @@ export class ProviderExecutionLearner {
         insights: this.insights,
         savedAt: new Date().toISOString(),
       };
-      
+
       await fs.writeJson(this.stateFile, data, { spaces: 2 });
     } catch (error) {
       console.error('[ProviderExecutionLearner] Failed to save state:', error);
     }
   }
-  
+
   // ============================================================================
   // EVENT LISTENERS
   // ============================================================================
-  
+
   private setupListeners(): void {
     // Listen for provider completions
     bus.on('precog:telemetry', (event) => {
-      const payload = event.payload as any;
+      const payload = event.payload as { type?: string; status?: string };
       if (payload?.type === 'provider_latency' && payload?.status === 'success') {
         // This is a lightweight signal, actual recording happens through recordExecution
       }
     });
-    
+
     // Listen for user feedback
     bus.on('chat:feedback', (event) => {
-      const { messageId, feedback, providerId, taskType } = event.payload as any;
-      
+      const { _messageId, feedback, providerId, taskType } = event.payload as {
+        _messageId?: string;
+        feedback?: 'positive' | 'negative' | 'neutral';
+        providerId?: string;
+        taskType?: string;
+      };
+
       // Find relevant execution and update
       const execution = this.executionHistory.find(
-        h => h.providerId === providerId && h.timestamp.getTime() > Date.now() - 60000
+        (h) => h.providerId === providerId && h.timestamp.getTime() > Date.now() - 60000
       );
-      
+
       if (execution) {
         execution.userFeedback = feedback;
-        
+
         // Adjust quality score based on feedback
         if (feedback === 'positive') {
           execution.qualityScore = Math.min(1, execution.qualityScore * 1.1);
         } else if (feedback === 'negative') {
           execution.qualityScore = Math.max(0, execution.qualityScore * 0.8);
         }
-        
+
         // Re-analyze patterns with new feedback
-        this.analyzeAndEvolvePatterns(providerId, taskType);
+        if (providerId && taskType) {
+          this.analyzeAndEvolvePatterns(providerId, taskType);
+        }
       }
     });
-    
+
     // Listen for learning boost signals
     bus.on('learning:boost_requested', (event) => {
-      const { providerId, factor } = event.payload as any;
-      const profile = this.providerProfiles.get(providerId);
-      if (profile) {
-        profile.learningVelocity = Math.min(2, profile.learningVelocity * factor);
+      const { providerId, factor } = event.payload as { providerId?: string; factor?: number };
+      if (providerId && factor !== undefined) {
+        const profile = this.providerProfiles.get(providerId);
+        if (profile) {
+          profile.learningVelocity = Math.min(2, profile.learningVelocity * factor);
+        }
       }
     });
   }

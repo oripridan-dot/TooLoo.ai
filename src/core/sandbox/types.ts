@@ -1,7 +1,7 @@
 // @version 3.3.203
 /**
  * Sandbox Types - Shared interfaces for sandbox implementations
- * 
+ *
  * Extracted to break circular dependency between docker-sandbox.ts and sandbox-manager.ts
  */
 

@@ -260,24 +260,28 @@ export class ExplorationEngine {
 
   /**
    * Start continuous exploration cycle
+   * Reduced frequency to minimize resource usage and visual noise
    */
   private startExplorationCycle() {
-    // Run exploration every 5 minutes
+    // Run exploration every 15 minutes (was 5 minutes - reduced to minimize noise)
     setInterval(
       () => {
         this.conductExplorationRound().catch((err) =>
           console.error('[ExplorationEngine] Exploration round failed:', err)
         );
       },
-      5 * 60 * 1000
+      15 * 60 * 1000
     );
 
-    // Initial run after 30 seconds
-    setTimeout(() => {
-      this.conductExplorationRound().catch((err) =>
-        console.error('[ExplorationEngine] Initial exploration failed:', err)
-      );
-    }, 30000);
+    // Initial run after 2 minutes (was 30 seconds - delayed to let system stabilize)
+    setTimeout(
+      () => {
+        this.conductExplorationRound().catch((err) =>
+          console.error('[ExplorationEngine] Initial exploration failed:', err)
+        );
+      },
+      2 * 60 * 1000
+    );
   }
 
   /**
@@ -1226,8 +1230,13 @@ export class ExplorationEngine {
         case 'cross_domain':
           result = await this.executeCrossDomainExploration(hypothesis, sandboxId);
           break;
+        case 'enhancement':
+        case 'custom':
+        case 'manual':
         default:
-          throw new Error(`Unknown hypothesis type: ${hypothesis.type}`);
+          // Handle enhancement and custom types as capability discovery
+          result = await this.exploreCapability(hypothesis, sandboxId);
+          break;
       }
 
       // Add safety metadata to result

@@ -1,4 +1,4 @@
-// @version 3.3.1 - Architecture cleanup: moved nexus/engine to proper homes
+// @version 3.3.350 - Synapsys Cognitive Systems + AI Infrastructure Enhancement
 import 'dotenv/config';
 import * as readline from 'readline';
 import { bus } from './core/event-bus.js';
@@ -9,10 +9,30 @@ import { startNexus } from './nexus/index.js';
 import { VersionManager } from './core/version-manager.js';
 import { SYSTEM_VERSION, SYSTEM_ID, SYSTEM_NAME } from './core/system-info.js';
 import { registry } from './core/module-registry.js';
+import environmentHub from './core/environment-hub.js';
 import { smartFS } from './core/fs-manager.js';
 import { initQAGuardian } from './qa/index.js';
 import { perfectionEnforcer } from './qa/guards/perfection-enforcer.js';
 import { executionAgent } from './cortex/agent/execution-agent.js';
+// V3.3.3: Synapsys Cognitive Systems
+import { synapsysActivator } from './cortex/system-activator.js';
+// V3.3.220: Design Cortex - Figma Integration
+import { figmaBridge } from './cortex/design/index.js';
+// V3.3.350: AI Infrastructure Enhancement - Phase 1-4
+import { SmartRouter } from './precog/providers/smart-router.js';
+import { OllamaProvider } from './precog/providers/ollama-provider.js';
+import { EncryptionManager } from './core/security/encryption-manager.js';
+import { DataEnrichmentPipeline } from './precog/engine/data-enrichment.js';
+import { PluginManager } from './core/plugin-manager.js';
+import { SelfHealingOrchestrator } from './cortex/self-modification/self-healing-orchestrator.js';
+
+// Global instances for V3.3.350 modules
+let smartRouter: SmartRouter | null = null;
+let ollamaProvider: OllamaProvider | null = null;
+let encryptionManager: EncryptionManager | null = null;
+let dataEnrichment: DataEnrichmentPipeline | null = null;
+let pluginManager: PluginManager | null = null;
+let selfHealing: SelfHealingOrchestrator | null = null;
 
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
@@ -22,6 +42,12 @@ function gracefulShutdown(reason: string = 'user request') {
 
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
+  }
+
+  // V3.3.350: Stop AI Infrastructure modules
+  if (selfHealing) {
+    selfHealing.stopMonitoring();
+    console.log('[System] Self-Healing Orchestrator stopped.');
   }
 
   bus.publish('system', 'system:shutdown', { reason, timestamp: Date.now() });
@@ -62,12 +88,15 @@ async function bootstrap() {
 
     await cortex.init();
     registry.updateStatus('cortex', 'ready');
+    environmentHub.registerComponent('cortex', cortex, ['intent', 'memory', 'planning', 'motor']);
 
     await precog.init();
     registry.updateStatus('precog', 'ready');
+    environmentHub.registerComponent('precog', precog, ['routing', 'synthesis', 'providers']);
 
     await startNexus(); // Not async anymore, starts the server
     registry.updateStatus('nexus', 'ready');
+    environmentHub.registerComponent('nexus', null, ['api', 'websocket', 'events']);
 
     // Initialize Version Manager
     const versionManager = new VersionManager(bus, process.cwd());
@@ -95,6 +124,167 @@ async function bootstrap() {
       console.log('[System] QA Guardian activated.');
     } catch (qaError) {
       console.warn('[System] QA Guardian failed to initialize:', qaError);
+      // Non-critical - continue boot
+    }
+
+    // V3.3.3: Activate all Synapsys cognitive systems (learning, emergence, knowledge boost)
+    try {
+      console.log('\n[System] Activating Synapsys Cognitive Systems...');
+      const activatorState = await synapsysActivator.activate({
+        enableEmergence: true,
+        enableLearning: true,
+        enableKnowledgeBoost: true,
+        autoBoostOnLowHealth: true,
+      });
+
+      registry.register({
+        name: 'synapsys-cognitive',
+        version: '3.3.3',
+        status: 'ready',
+        meta: {
+          systemsOnline: Object.values(activatorState.systems).filter((s) => s.status === 'online')
+            .length,
+          overallHealth: activatorState.overallHealth,
+        },
+      });
+
+      console.log(
+        `[System] Synapsys Cognitive Systems: ${Math.round(activatorState.overallHealth * 100)}% health`
+      );
+    } catch (synapsysError) {
+      console.warn('[System] Synapsys cognitive systems partial activation:', synapsysError);
+      // Non-critical - continue boot
+    }
+
+    // V3.3.220: Initialize Design Cortex (Figma Integration)
+    try {
+      const figmaToken = process.env['FIGMA_ACCESS_TOKEN'];
+      if (figmaToken) {
+        figmaBridge.initialize(figmaToken);
+        registry.register({
+          name: 'design-cortex',
+          version: '3.3.220',
+          status: 'ready',
+          meta: { 
+            figmaConnected: true,
+            capabilities: ['figma-import', 'design-to-code', 'design-tokens', 'component-analysis']
+          },
+        });
+        console.log('[System] Design Cortex activated with Figma integration.');
+      } else {
+        registry.register({
+          name: 'design-cortex',
+          version: '3.3.220',
+          status: 'degraded',
+          meta: { 
+            figmaConnected: false,
+            reason: 'FIGMA_ACCESS_TOKEN not set'
+          },
+        });
+        console.log('[System] Design Cortex activated (Figma not configured).');
+      }
+    } catch (designError) {
+      console.warn('[System] Design Cortex failed to initialize:', designError);
+    }
+
+    // V3.3.350: Initialize AI Infrastructure Enhancement Modules
+    try {
+      console.log('\n[System] Initializing AI Infrastructure Enhancement (V3.3.350)...');
+      
+      // Phase 1: Smart Router - Dynamic API Selection
+      smartRouter = new SmartRouter();
+      await smartRouter.initialize();
+      registry.register({
+        name: 'smart-router',
+        version: '3.3.350',
+        status: 'ready',
+        meta: { capabilities: ['multi-provider', 'dynamic-routing', 'cost-optimization', 'latency-aware'] },
+      });
+      console.log('[System] Smart Router activated.');
+
+      // Phase 2: Ollama Provider - Local AI
+      const ollamaUrl = process.env['OLLAMA_URL'] || 'http://localhost:11434';
+      ollamaProvider = new OllamaProvider(ollamaUrl);
+      const ollamaOnline = await ollamaProvider.isOnline();
+      registry.register({
+        name: 'ollama-provider',
+        version: '3.3.350',
+        status: ollamaOnline ? 'ready' : 'degraded',
+        meta: { 
+          url: ollamaUrl, 
+          online: ollamaOnline,
+          capabilities: ['local-inference', 'streaming', 'embeddings', 'model-management']
+        },
+      });
+      console.log(`[System] Ollama Provider ${ollamaOnline ? 'connected' : 'offline (will retry)'}.`);
+
+      // Phase 2: Encryption Manager - Security Hardening
+      const encryptionKey = process.env['ENCRYPTION_MASTER_KEY'] || process.env['SESSION_SECRET'] || 'default-dev-key';
+      encryptionManager = new EncryptionManager(encryptionKey);
+      await encryptionManager.initialize();
+      registry.register({
+        name: 'encryption-manager',
+        version: '3.3.350',
+        status: 'ready',
+        meta: { 
+          algorithm: 'AES-256-GCM',
+          keyDerivation: 'PBKDF2',
+          capabilities: ['api-key-encryption', 'secure-config', 'key-rotation']
+        },
+      });
+      console.log('[System] Encryption Manager activated.');
+
+      // Phase 3: Data Enrichment Pipeline
+      dataEnrichment = new DataEnrichmentPipeline();
+      await dataEnrichment.initialize();
+      registry.register({
+        name: 'data-enrichment',
+        version: '3.3.350',
+        status: 'ready',
+        meta: { capabilities: ['context-augmentation', 'knowledge-base', 'relevance-scoring'] },
+      });
+      console.log('[System] Data Enrichment Pipeline activated.');
+
+      // Phase 3: Plugin Manager - Ecosystem Extensions
+      pluginManager = new PluginManager(process.cwd());
+      await pluginManager.initialize();
+      const loadedPlugins = pluginManager.listPlugins();
+      registry.register({
+        name: 'plugin-manager',
+        version: '3.3.350',
+        status: 'ready',
+        meta: { 
+          pluginsLoaded: loadedPlugins.length,
+          capabilities: ['plugin-lifecycle', 'hook-system', 'dependency-resolution']
+        },
+      });
+      console.log(`[System] Plugin Manager activated (${loadedPlugins.length} plugins loaded).`);
+
+      // Phase 4: Self-Healing Orchestrator
+      selfHealing = new SelfHealingOrchestrator();
+      await selfHealing.initialize();
+      selfHealing.startMonitoring(60000); // Check every 60 seconds
+      registry.register({
+        name: 'self-healing',
+        version: '3.3.350',
+        status: 'ready',
+        meta: { 
+          monitoringInterval: 60000,
+          capabilities: ['health-monitoring', 'auto-repair', 'rollback', 'ai-fix']
+        },
+      });
+      console.log('[System] Self-Healing Orchestrator activated.');
+
+      // Register components with environment hub
+      environmentHub.registerComponent('smart-router', smartRouter, ['routing', 'multi-provider']);
+      environmentHub.registerComponent('encryption', encryptionManager, ['security', 'api-keys']);
+      environmentHub.registerComponent('data-enrichment', dataEnrichment, ['context', 'knowledge']);
+      environmentHub.registerComponent('plugins', pluginManager, ['extensions', 'hooks']);
+      environmentHub.registerComponent('self-healing', selfHealing, ['monitoring', 'repair']);
+
+      console.log('[System] AI Infrastructure Enhancement V3.3.350 fully activated.');
+    } catch (infraError) {
+      console.warn('[System] AI Infrastructure Enhancement partial activation:', infraError);
       // Non-critical - continue boot
     }
 

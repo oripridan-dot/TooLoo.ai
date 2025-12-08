@@ -472,7 +472,7 @@ export const InsightEmergence = memo(
             >
               {subInsights.map((sub, i) => (
                 <motion.span
-                  key={`sub-insight-${sub.slice(0,10)}-${i}`}
+                  key={`sub-insight-${sub.slice(0, 10)}-${i}`}
                   className="px-2 py-1 text-xs bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -665,7 +665,7 @@ export const IdeaConstellation = memo(
 
           return (
             <motion.div
-              key={`orbiting-idea-${idea.type}-${idea.label?.slice(0,10) || i}`}
+              key={`orbiting-idea-${idea.type}-${idea.label?.slice(0, 10) || i}`}
               className="absolute z-10"
               style={{
                 left: `${x}%`,
@@ -779,7 +779,7 @@ export const VisualSynthesis = memo(
         {/* Elements */}
         {positionedElements.map((el, i) => (
           <motion.div
-            key={`positioned-el-${el.type}-${el.content?.slice(0,10) || i}`}
+            key={`positioned-el-${el.type}-${el.content?.slice(0, 10) || i}`}
             className="absolute"
             style={{
               left: `${el.x}%`,

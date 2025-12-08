@@ -294,7 +294,10 @@ export class MetaLearner {
     // 7. Apply self-improvements
     await this.applySelfImprovements(insights);
 
-    // 8. Save state
+    // 8. Facilitate Knowledge Transfer
+    await this.facilitateKnowledgeTransfer();
+
+    // 9. Save state
     await this.saveState();
 
     // Publish analysis complete event
@@ -502,6 +505,40 @@ export class MetaLearner {
       cycle: this.state.selfImprovementCycles,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  private async facilitateKnowledgeTransfer(): Promise<void> {
+    // Find pending transfers that haven't been fully exploited
+    const recentTransfers = this.state.transfers.filter(
+      (t) => new Date().getTime() - new Date(t.discoveredAt).getTime() < 24 * 60 * 60 * 1000
+    );
+
+    for (const transfer of recentTransfers) {
+      // 1. Identify high-performing strategies in source domain
+      const sourceStrategies = this.state.strategies.filter(
+        (s) => (s.domainAffinity[transfer.sourceDomain] || 0) > 0.7 && s.successRate > 0.7
+      );
+
+      for (const strategy of sourceStrategies) {
+        // 2. Check if strategy is underutilized in target domain
+        const targetAffinity = strategy.domainAffinity[transfer.targetDomain] || 0;
+        
+        if (targetAffinity < 0.5) {
+          // 3. Apply Transfer: Boost affinity in target domain (Hypothesis: it will work there too)
+          // This is "Domain Adaptation"
+          const adaptationFactor = 0.1; // Conservative boost
+          strategy.domainAffinity[transfer.targetDomain] = targetAffinity + adaptationFactor;
+          
+          bus.publish('cortex', 'meta:transfer_applied', {
+            transferId: transfer.id,
+            strategy: strategy.name,
+            source: transfer.sourceDomain,
+            target: transfer.targetDomain,
+            newAffinity: strategy.domainAffinity[transfer.targetDomain]
+          });
+        }
+      }
+    }
   }
 
   // ============================================================================

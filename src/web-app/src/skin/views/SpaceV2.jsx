@@ -197,22 +197,6 @@ const FloatingCard = memo(({
                 </span>
               </div>
             </div>
-            
-            {/* Confidence badge */}
-            {card.confidence && (
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${card.confidence * 100}%`,
-                      background: config.color,
-                    }}
-                  />
-                </div>
-                <span>{Math.round(card.confidence * 100)}%</span>
-              </div>
-            )}
           </div>
 
           {/* Title */}
