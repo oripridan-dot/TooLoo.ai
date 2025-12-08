@@ -1,4 +1,4 @@
-// @version 3.3.378
+// @version 3.3.379
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
@@ -1112,66 +1112,6 @@ const ResponseTypeCard = memo(({ type, keyPoints = [] }) => {
 });
 
 ResponseTypeCard.displayName = 'ResponseTypeCard';
-
-// Technical details toggle - hides code by default
-const TechnicalDetails = memo(({ children, codeCount = 0 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  if (codeCount === 0) {
-    return children;
-  }
-
-  return (
-    <div className="mt-3">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors group"
-      >
-        <span className="w-5 h-5 rounded bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition-colors">
-          {isOpen ? '−' : '+'}
-        </span>
-        <span>
-          {isOpen ? 'Hide' : 'Show'} technical details
-          {!isOpen && (
-            <span className="text-gray-600 ml-1">
-              ({codeCount} code {codeCount === 1 ? 'block' : 'blocks'})
-            </span>
-          )}
-        </span>
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-3 pt-3 border-t border-white/5">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-});
-
-TechnicalDetails.displayName = 'TechnicalDetails';
-
-// Extract conversational text (non-code) from content
-const extractConversationalContent = (content) => {
-  // Remove code blocks for the conversational view
-  let conversational = content
-    .replace(/```[\s\S]*?```/g, '') // Remove fenced code blocks
-    .replace(/`[^`]+`/g, (match) => match) // Keep inline code but could hide
-    .trim();
-
-  // Clean up multiple newlines left by removed blocks
-  conversational = conversational.replace(/\n{3,}/g, '\n\n').trim();
-
-  return conversational;
-};
 
 // Check if content is primarily code
 const isCodeHeavy = (content) => {
