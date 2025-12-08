@@ -1,4 +1,4 @@
-// @version 3.3.381
+// @version 3.3.398
 /**
  * Project Type Definitions
  *
@@ -131,7 +131,7 @@ export interface ProjectStats {
 
 export interface ProjectActivity {
   id: string;
-  type: 'commit' | 'branch' | 'merge' | 'comment' | 'star' | 'fork' | 'update';
+  type: 'commit' | 'branch' | 'merge' | 'comment' | 'star' | 'fork' | 'update' | 'execution' | 'artifact' | 'chat' | string;
   actor: string;
   description: string;
   timestamp: string;
