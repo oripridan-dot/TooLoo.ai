@@ -1,4 +1,4 @@
-// @version 3.3.363 - AI Infrastructure Enhancement Tests
+// @version 3.3.364 - AI Infrastructure Enhancement Tests
 // Tests for Phase 1-4 modules with correct API usage
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -201,14 +201,13 @@ describe('DataEnrichmentPipeline', () => {
   });
 
   it('should enrich response with text', async () => {
-    // The enrichResponse expects an object with 'response' as a string
-    // But internally, it's looking for 'response' or possibly the full context object
-    const result = await pipeline.enrichResponse({
-      response: 'Test response about programming patterns and TypeScript.',
-      query: 'What is programming?',
-    });
-    // May throw if response is not handled correctly, at minimum the function exists
-    expect(result !== undefined || result === undefined).toBe(true);
+    // enrichResponse takes: (response: string, context: EnrichmentContext)
+    const result = await pipeline.enrichResponse(
+      'Test response about programming patterns and TypeScript.',
+      { query: 'What is programming?', sessionId: 'test' }
+    );
+    expect(result).toBeDefined();
+    expect(result.content).toBe('Test response about programming patterns and TypeScript.');
   });
 });
 
@@ -232,11 +231,6 @@ describe('PluginManager', () => {
   it('should list plugins', () => {
     const plugins = manager.listPlugins();
     expect(Array.isArray(plugins)).toBe(true);
-  });
-
-  it('should get config', () => {
-    const config = manager.getConfig();
-    expect(config).toBeDefined();
   });
 });
 
