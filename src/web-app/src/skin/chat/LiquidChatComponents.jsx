@@ -1,4 +1,4 @@
-// @version 3.3.379
+// @version 3.3.380
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
@@ -1142,12 +1142,6 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
 
   // Count code blocks
   const codeCount = useMemo(() => countCodeBlocks(cleanedContent), [cleanedContent]);
-
-  // Get conversational (non-code) content
-  const conversationalContent = useMemo(
-    () => extractConversationalContent(cleanedContent),
-    [cleanedContent]
-  );
 
   // Parse sections - MUST be called unconditionally (hooks rule)
   const sections = useMemo(() => {
