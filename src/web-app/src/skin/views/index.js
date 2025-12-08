@@ -1,6 +1,6 @@
-// @version 3.3.231
+// @version 3.3.386
 // TooLoo.ai Views Index
-// The views of TooLoo - with professional Space V4
+// The views of TooLoo - with professional Space V4 & Figma-style Projects
 
 // Space V4 - Professional UI with real chat & expand
 export { default as Space } from './SpaceV4';
@@ -14,6 +14,9 @@ export { default as Cortex } from './Cortex';
 
 // Synaptic - Classic conversation and neural activity
 export { default as Synaptic } from './Synaptic';
+
+// Projects - Figma/GitHub-style project management
+export { default as Projects } from './Projects';
 
 // CreationSpace - Legacy: Emergent thought manifestation
 export { default as CreationSpace } from './CreationSpaceView';
@@ -42,13 +45,22 @@ export const VIEWS = {
     isNew: true,
     isPrimary: true,
   },
+  projects: {
+    id: 'projects',
+    name: 'Projects',
+    icon: '📂',
+    description: 'Manage your projects',
+    color: 'indigo',
+    shortcut: '2',
+    isNew: true,
+  },
   cortex: {
     id: 'cortex',
     name: 'Cortex',
     icon: '🧠',
     description: 'Brain visualization & providers',
     color: 'cyan',
-    shortcut: '2',
+    shortcut: '3',
   },
   synaptic: {
     id: 'synaptic',
@@ -56,7 +68,7 @@ export const VIEWS = {
     icon: '💬',
     description: 'Classic conversation mode',
     color: 'purple',
-    shortcut: '3',
+    shortcut: '4',
   },
   creationspace: {
     id: 'creationspace',
@@ -64,7 +76,7 @@ export const VIEWS = {
     icon: '✨',
     description: 'Emergent thought crystallization',
     color: 'gradient',
-    shortcut: '4',
+    shortcut: '5',
   },
   growth: {
     id: 'growth',
@@ -72,7 +84,7 @@ export const VIEWS = {
     icon: '📈',
     description: 'Learning & health monitoring',
     color: 'emerald',
-    shortcut: '5',
+    shortcut: '6',
   },
   studio: {
     id: 'studio',
@@ -80,7 +92,7 @@ export const VIEWS = {
     icon: '🎨',
     description: 'Design & creation space',
     color: 'rose',
-    shortcut: '6',
+    shortcut: '7',
   },
   command: {
     id: 'command',
@@ -88,13 +100,14 @@ export const VIEWS = {
     icon: '⚙️',
     description: 'System control & settings',
     color: 'amber',
-    shortcut: '7',
+    shortcut: '8',
   },
 };
 
 // View component map for dynamic rendering
 export const VIEW_COMPONENTS = {
   space: () => import('./SpaceV4').then((m) => m.default),
+  projects: () => import('./Projects').then((m) => m.default),
   cortex: () => import('./Cortex').then((m) => m.default),
   synaptic: () => import('./Synaptic').then((m) => m.default),
   creationspace: () => import('./CreationSpaceView').then((m) => m.default),
