@@ -1,4 +1,4 @@
-// @version 3.3.392
+// @version 3.3.393
 /**
  * Project Manager - Figma/GitHub-style Project Management
  *
@@ -55,8 +55,130 @@ export interface LegacyProject {
 export class ProjectManager {
   private projectIndex: Map<string, ProjectListItem> = new Map();
   private initialized: boolean = false;
+  private activeProjectId: string | null = null;
 
-  constructor(private workspaceRoot: string = process.cwd()) {}
+  constructor(private workspaceRoot: string = process.cwd()) {
+    this.setupEventListeners();
+  }
+
+  // =========================================================================
+  // EVENT BUS INTEGRATION
+  // =========================================================================
+
+  private setupEventListeners(): void {
+    // Handle project selection requests
+    bus.on('project:select', async (event) => {
+      const { projectId } = event.payload;
+      await this.setActiveProject(projectId);
+    });
+
+    // Handle project context requests
+    bus.on('project:get_context', async (event) => {
+      const { requestId } = event.payload;
+      const context = await this.getActiveProjectContext();
+      bus.publish('cortex', 'project:context', { requestId, context });
+    });
+
+    // Handle project memory update requests
+    bus.on('project:update_memory', async (event) => {
+      const { projectId, content } = event.payload;
+      await this.addToProjectContext(projectId, content);
+    });
+  }
+
+  private emitProjectEvent(
+    eventType: string,
+    projectId: string,
+    data: Record<string, unknown> = {}
+  ): void {
+    bus.publish('cortex', `project:${eventType}`, {
+      projectId,
+      timestamp: new Date().toISOString(),
+      ...data,
+    });
+  }
+
+  // =========================================================================
+  // ACTIVE PROJECT MANAGEMENT
+  // =========================================================================
+
+  async setActiveProject(projectId: string | null): Promise<void> {
+    if (projectId === this.activeProjectId) return;
+
+    const previousProjectId = this.activeProjectId;
+    this.activeProjectId = projectId;
+
+    if (projectId) {
+      const project = await this.getProject(projectId);
+      if (project) {
+        this.emitProjectEvent('activated', projectId, {
+          name: project.name,
+          previousProjectId,
+        });
+      }
+    } else {
+      bus.publish('cortex', 'project:deactivated', {
+        previousProjectId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  getActiveProjectId(): string | null {
+    return this.activeProjectId;
+  }
+
+  async getActiveProjectContext(): Promise<{
+    project: Project | null;
+    memory: string;
+    recentActivity: string[];
+  }> {
+    if (!this.activeProjectId) {
+      return { project: null, memory: '', recentActivity: [] };
+    }
+
+    const project = await this.getProject(this.activeProjectId);
+    if (!project) {
+      return { project: null, memory: '', recentActivity: [] };
+    }
+
+    return {
+      project,
+      memory: `${project.memory.shortTerm}\n\n${project.memory.longTerm}`.trim(),
+      recentActivity: project.recentActivity.slice(0, 10).map((a) => a.description),
+    };
+  }
+
+  async addToProjectContext(
+    projectId: string,
+    content: string,
+    type: 'conversation' | 'decision' | 'artifact' | 'code' = 'conversation'
+  ): Promise<void> {
+    const project = await this.getProject(projectId);
+    if (!project) return;
+
+    // Add to short-term memory context
+    project.memory.context.push({
+      timestamp: new Date().toISOString(),
+      type,
+      content: content.slice(0, 1000), // Limit size
+    });
+
+    // Keep only last 50 context items
+    if (project.memory.context.length > 50) {
+      project.memory.context = project.memory.context.slice(-50);
+    }
+
+    await this.saveProject(project);
+    this.emitProjectEvent('context_updated', projectId, { type });
+  }
+
+  private async saveProject(project: Project): Promise<void> {
+    const projectPath = path.join(PROJECTS_DIR, project.id, 'tooloo.json');
+    await smartFS.writeSafe(projectPath, JSON.stringify(project, null, 2));
+    this.updateIndex(project);
+    await this.saveIndex();
+  }
 
   // =========================================================================
   // INITIALIZATION
@@ -73,6 +195,12 @@ export class ProjectManager {
 
     this.initialized = true;
     console.log(`[ProjectManager] Initialized with ${this.projectIndex.size} projects`);
+    
+    // Emit ready event
+    bus.publish('cortex', 'project:manager_ready', {
+      projectCount: this.projectIndex.size,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   private async loadIndex(): Promise<void> {
