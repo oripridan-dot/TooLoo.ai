@@ -1,6 +1,6 @@
-// @version 3.3.230
+// @version 3.3.387
 // TooLoo.ai - Main Liquid Synapsys Application
-// The viewport IS TooLoo - Space V4 with professional UI
+// The viewport IS TooLoo - Space V4 with professional UI & Projects
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
@@ -21,6 +21,7 @@ import { VIEWS } from '../views';
 
 // Lazy load views for code splitting
 const Space = lazy(() => import('../views/SpaceV4'));
+const Projects = lazy(() => import('../views/Projects'));
 const Cortex = lazy(() => import('../views/Cortex'));
 const Synaptic = lazy(() => import('../views/Synaptic'));
 const CreationSpace = lazy(() => import('../views/CreationSpaceView'));
@@ -31,6 +32,7 @@ const Command = lazy(() => import('../views/Command'));
 // View component map
 const VIEW_MAP = {
   space: Space,
+  projects: Projects,
   cortex: Cortex,
   synaptic: Synaptic,
   creationspace: CreationSpace,
