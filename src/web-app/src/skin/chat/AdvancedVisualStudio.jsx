@@ -1,10 +1,59 @@
-// @version 3.3.300
+// @version 3.3.367
 // TooLoo.ai Advanced Visual Studio
 // Human-like illustration components with intelligent rendering
 // Features: Scene generation, artistic effects, interactive visuals
+// OPTIMIZED: Stable random values, proper memoization, reduced re-renders
 
-import React, { memo, useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import React, { memo, useState, useRef, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// ============================================================================
+// PERFORMANCE UTILITIES
+// ============================================================================
+
+// Seeded random number generator for stable "random" values
+const seededRandom = (seed) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+// Generate stable random array based on seed
+const generateStableRandomArray = (count, seed, min = 0, max = 1) => {
+  return Array.from({ length: count }, (_, i) => {
+    const value = seededRandom(seed + i * 1.618033988749895);
+    return min + value * (max - min);
+  });
+};
+
+// Memoized particle positions - computed once per seed
+const particleCache = new Map();
+const getStableParticles = (count, seed, bounds) => {
+  const key = `${count}-${seed}-${JSON.stringify(bounds)}`;
+  if (!particleCache.has(key)) {
+    const particles = Array.from({ length: count }, (_, i) => ({
+      x: bounds.minX + seededRandom(seed + i) * (bounds.maxX - bounds.minX),
+      y: bounds.minY + seededRandom(seed + i + 100) * (bounds.maxY - bounds.minY),
+      r: bounds.minR + seededRandom(seed + i + 200) * (bounds.maxR - bounds.minR),
+      dur: bounds.minDur + seededRandom(seed + i + 300) * (bounds.maxDur - bounds.minDur),
+    }));
+    particleCache.set(key, particles);
+    // Limit cache size
+    if (particleCache.size > 50) {
+      const firstKey = particleCache.keys().next().value;
+      particleCache.delete(firstKey);
+    }
+  }
+  return particleCache.get(key);
+};
+
+// Precomputed SVG defs - shared across all scenes
+const SHARED_DEFS = `
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="8" result="blur" />
+    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+  </filter>
+  <filter id="softBlur"><feGaussianBlur stdDeviation="15" /></filter>
+`;
 
 // ============================================================================
 // INTELLIGENT SCENE RENDERER - Generates human-like illustrations
@@ -192,6 +241,16 @@ IntelligentScene.displayName = 'IntelligentScene';
 const NeonGlowScene = memo(({ colors, animated }) => {
   const [p1, p2, p3] = colors.primary;
 
+  // OPTIMIZATION: Use stable particles computed once
+  const particles = useMemo(() => 
+    getStableParticles(15, 42, {
+      minX: 100, maxX: 700,
+      minY: 80, maxY: 420,
+      minR: 2, maxR: 4,
+      minDur: 3, maxDur: 5,
+    }),
+  []);
+
   return (
     <g filter="url(#glow)">
       {/* Neon rings */}
@@ -214,13 +273,13 @@ const NeonGlowScene = memo(({ colors, animated }) => {
       <circle cx="400" cy="250" r="15" fill={p1} opacity="0.5" />
       <circle cx="400" cy="250" r="6" fill="white" opacity="0.9" />
 
-      {/* Floating particles */}
-      {[...Array(15)].map((_, i) => (
+      {/* Floating particles - OPTIMIZED: stable positions */}
+      {particles.map((p, i) => (
         <circle
           key={`particle-${i}`}
-          cx={100 + Math.random() * 600}
-          cy={80 + Math.random() * 340}
-          r={2 + Math.random() * 2}
+          cx={p.x}
+          cy={p.y}
+          r={p.r}
           fill={[p1, p2, p3][i % 3]}
           opacity="0.6"
         >
@@ -229,13 +288,13 @@ const NeonGlowScene = memo(({ colors, animated }) => {
               <animate
                 attributeName="opacity"
                 values="0.6;0.2;0.6"
-                dur={`${3 + Math.random() * 2}s`}
+                dur={`${p.dur}s`}
                 repeatCount="indefinite"
               />
               <animate
                 attributeName="cy"
-                values={`${80 + Math.random() * 340};${70 + Math.random() * 340};${80 + Math.random() * 340}`}
-                dur={`${4 + Math.random() * 3}s`}
+                values={`${p.y};${p.y - 10};${p.y}`}
+                dur={`${p.dur + 1}s`}
                 repeatCount="indefinite"
               />
             </>
@@ -245,6 +304,8 @@ const NeonGlowScene = memo(({ colors, animated }) => {
     </g>
   );
 });
+
+NeonGlowScene.displayName = 'NeonGlowScene';
 
 // ============================================================================
 // GRADIENT FLOW SCENE - Dreamy organic blobs
@@ -419,6 +480,18 @@ const GeometricScene = memo(({ colors, animated }) => {
   const [p1, p2, p3] = colors.primary;
   const [a1, a2] = colors.accent;
 
+  // OPTIMIZATION: Stable decorative dots
+  const decoDots = useMemo(() => 
+    getStableParticles(20, 123, {
+      minX: 50, maxX: 750,
+      minY: 50, maxY: 450,
+      minR: 2, maxR: 5,
+      minDur: 2, maxDur: 4,
+    }),
+  []);
+
+  const colorArray = useMemo(() => [p1, p2, p3, a1, a2], [p1, p2, p3, a1, a2]);
+
   return (
     <g>
       {/* Main shapes */}
@@ -462,14 +535,14 @@ const GeometricScene = memo(({ colors, animated }) => {
         <line x1="290" y1="320" x2="510" y2="330" />
       </g>
 
-      {/* Decorative dots */}
-      {[...Array(20)].map((_, i) => (
+      {/* Decorative dots - OPTIMIZED: stable positions */}
+      {decoDots.map((d, i) => (
         <circle
           key={`deco-dot-${i}`}
-          cx={50 + Math.random() * 700}
-          cy={50 + Math.random() * 400}
-          r={2 + Math.random() * 3}
-          fill={[p1, p2, p3, a1, a2][i % 5]}
+          cx={d.x}
+          cy={d.y}
+          r={d.r}
+          fill={colorArray[i % 5]}
           opacity="0.5"
         />
       ))}
@@ -477,12 +550,29 @@ const GeometricScene = memo(({ colors, animated }) => {
   );
 });
 
+GeometricScene.displayName = 'GeometricScene';
+
 // ============================================================================
 // ORGANIC SCENE - Nature-inspired flowing shapes
 // ============================================================================
 
 const OrganicScene = memo(({ colors, animated }) => {
   const [p1, p2, p3] = colors.primary;
+
+  // OPTIMIZATION: Stable organic dots
+  const organicDots = useMemo(() => 
+    getStableParticles(25, 789, {
+      minX: 100, maxX: 700,
+      minY: 100, maxY: 400,
+      minR: 3, maxR: 7,
+      minDur: 3, maxDur: 5,
+    }),
+  []);
+
+  // Pre-compute opacities
+  const opacities = useMemo(() => 
+    generateStableRandomArray(25, 456, 0.3, 0.6),
+  []);
 
   return (
     <g>
@@ -522,32 +612,30 @@ const OrganicScene = memo(({ colors, animated }) => {
         </path>
       </g>
 
-      {/* Organic dots (like seeds/pollen) */}
-      {[...Array(25)].map((_, i) => {
-        const x = 100 + Math.random() * 600;
-        const y = 100 + Math.random() * 300;
-        return (
-          <circle
-            key={`organic-dot-${i}`}
-            cx={x}
-            cy={y}
-            r={3 + Math.random() * 4}
-            fill={[p1, p2, p3][i % 3]}
-            opacity={0.3 + Math.random() * 0.3}
-          >
-            {animated && (
-              <animate
-                attributeName="r"
-                values={`${3 + Math.random() * 4};${4 + Math.random() * 3};${3 + Math.random() * 4}`}
-                dur={`${3 + Math.random() * 2}s`}
-                repeatCount="indefinite"
-              />
-            )}
-          </circle>
-        );
-      })}
+      {/* Organic dots - OPTIMIZED: stable positions and opacities */}
+      {organicDots.map((d, i) => (
+        <circle
+          key={`organic-dot-${i}`}
+          cx={d.x}
+          cy={d.y}
+          r={d.r}
+          fill={[p1, p2, p3][i % 3]}
+          opacity={opacities[i]}
+        >
+          {animated && (
+            <animate
+              attributeName="r"
+              values={`${d.r};${d.r + 1};${d.r}`}
+              dur={`${d.dur}s`}
+              repeatCount="indefinite"
+            />
+          )}
+        </circle>
+      ))}
     </g>
   );
+
+OrganicScene.displayName = 'OrganicScene';
 });
 
 // ============================================================================
