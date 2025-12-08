@@ -1,4 +1,4 @@
-// @version 3.3.372
+// @version 3.3.373
 // TooLoo.ai Visual Renderers
 // v3.3.371 - Added SVG validation to reject malformed diagrams, corner-based curves
 // Rich visual components for rendering AI-generated visual content
@@ -30,42 +30,55 @@ export const SVGRenderer = memo(
           svg = svgMatch[0];
         }
 
-        // VALIDATION: Reject malformed or minimal SVGs
-        // Count meaningful visual elements (not just defs, styles, or empty groups)
-        const meaningfulElements = (svg.match(/<(rect|circle|ellipse|line|polyline|polygon|path|text|image)[^>]*>/gi) || []).length;
+        // VALIDATION: Count different element types
+        const rectCount = (svg.match(/<rect[^>]*>/gi) || []).length;
+        const circleCount = (svg.match(/<circle[^>]*>/gi) || []).length;
+        const ellipseCount = (svg.match(/<ellipse[^>]*>/gi) || []).length;
+        const textCount = (svg.match(/<text[^>]*>/gi) || []).length;
+        const pathCount = (svg.match(/<path[^>]*>/gi) || []).length;
+        const lineCount = (svg.match(/<line[^>]*>/gi) || []).length;
+        const polyCount = (svg.match(/<poly(line|gon)[^>]*>/gi) || []).length;
         
-        // Reject SVGs with too few meaningful elements (likely broken or placeholder)
-        if (meaningfulElements < 2) {
-          console.warn('[SVGRenderer] Rejecting SVG with insufficient elements:', meaningfulElements);
-          setError('Insufficient visual content');
+        // Total elements
+        const shapeElements = rectCount + circleCount + ellipseCount;
+        const lineElements = pathCount + lineCount + polyCount;
+        const totalElements = shapeElements + lineElements + textCount;
+        
+        // STRICT VALIDATION: A proper diagram needs:
+        // 1. At least some shapes (rects, circles) OR text labels
+        // 2. Not just decorative lines/paths
+        
+        // Reject if too few total elements
+        if (totalElements < 3) {
+          console.warn('[SVGRenderer] Rejecting SVG: too few elements', totalElements);
+          setError('Insufficient content');
           return null;
         }
-
-        // VALIDATION: Check for proper structure - reject SVGs that are just random curves
-        const hasText = /<text[^>]*>/.test(svg);
-        const hasRects = /<rect[^>]*>/.test(svg);
-        const pathCount = (svg.match(/<path[^>]*>/gi) || []).length;
         
-        // If it's ONLY paths with no other elements, it's likely abstract garbage
-        if (pathCount > 0 && !hasText && !hasRects && meaningfulElements === pathCount) {
-          // Check if paths have reasonable coordinates (not all starting from corners)
-          const pathDAttrs = svg.match(/d=["']([^"']+)["']/gi) || [];
-          const cornerPaths = pathDAttrs.filter(d => {
-            // Check if path starts very close to 0,0 (top-left corner garbage)
-            return /d=["']M\s*[0-5],?\s*[0-5]/i.test(d) || /d=["']M\s*[0-5]\s+[0-5]/i.test(d);
-          });
-          
-          // If most paths start from corner, reject
-          if (cornerPaths.length > pathDAttrs.length / 2) {
-            console.warn('[SVGRenderer] Rejecting corner-based abstract SVG');
-            setError('Invalid diagram structure');
-            return null;
-          }
+        // Reject if it's ONLY lines/paths with no shapes or text (decorative garbage)
+        if (shapeElements === 0 && textCount === 0 && lineElements > 0) {
+          console.warn('[SVGRenderer] Rejecting SVG: only lines/paths, no shapes or text');
+          setError('Invalid diagram - no shapes or labels');
+          return null;
+        }
+        
+        // Reject if lines vastly outnumber meaningful shapes (likely decorative)
+        if (lineElements > 5 && shapeElements < 2 && textCount < 2) {
+          console.warn('[SVGRenderer] Rejecting SVG: too many lines vs shapes', { lineElements, shapeElements, textCount });
+          setError('Invalid diagram structure');
+          return null;
+        }
+        
+        // Check for dashed lines (often decorative garbage)
+        const dashedCount = (svg.match(/stroke-dasharray/gi) || []).length;
+        if (dashedCount > 3 && textCount === 0 && shapeElements < 2) {
+          console.warn('[SVGRenderer] Rejecting SVG: many dashed lines, no labels');
+          setError('Decorative SVG rejected');
+          return null;
         }
 
         // Ensure viewBox exists - critical for proper rendering
         if (!svg.includes('viewBox')) {
-          // Try to extract dimensions and add viewBox
           const widthMatch = svg.match(/width=["']?(\d+)/);
           const heightMatch = svg.match(/height=["']?(\d+)/);
           const w = widthMatch ? widthMatch[1] : 800;
@@ -73,28 +86,22 @@ export const SVGRenderer = memo(
           svg = svg.replace('<svg', `<svg viewBox="0 0 ${w} ${h}"`);
         }
 
-        // Ensure dark theme styles
+        // Ensure dark background
         if (!svg.includes('style=') && !svg.includes('<style>')) {
           svg = svg.replace('<svg', '<svg style="background: #0a0a0f;"');
         }
 
-        // Make responsive - ensure viewBox exists for proper scaling
-        // Note: SVG doesn't support height="auto", use CSS instead
+        // Make responsive
         if (!svg.includes('width=') || svg.includes('width="100%"')) {
           // Already responsive
         } else {
           svg = svg.replace(/width=["'][^"']*["']/, 'width="100%"');
-          // Remove height attribute entirely - CSS will handle it
           svg = svg.replace(/height=["'][^"']*["']/g, '');
         }
 
-        // Sanitize invalid transform attributes (AI sometimes generates invalid CSS transforms in SVG)
-        // SVG transforms use different syntax than CSS transforms
+        // Sanitize invalid transforms
         svg = svg.replace(/transform=["'][^"']*slate\([^)]*\)[^"']*["']/gi, '');
         svg = svg.replace(/transform=["'][^"']*perspective\([^)]*\)[^"']*["']/gi, '');
-
-        // Fix common AI mistakes: CSS transforms in SVG context
-        // Replace invalid 'translate3d' with valid SVG 'translate'
         svg = svg.replace(/translate3d\(([^,]+),\s*([^,]+),\s*[^)]+\)/g, 'translate($1, $2)');
 
         setError(null);
