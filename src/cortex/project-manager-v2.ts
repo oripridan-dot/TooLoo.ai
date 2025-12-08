@@ -1,4 +1,4 @@
-// @version 3.3.391
+// @version 3.3.392
 /**
  * Project Manager - Figma/GitHub-style Project Management
  *
@@ -7,6 +7,7 @@
  * - Collaboration & Permissions
  * - AI-powered Memory Management
  * - Activity Tracking
+ * - EventBus Integration for Real-time Updates
  *
  * @module cortex/project-manager
  */
@@ -15,6 +16,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateLLM } from '../precog/providers/llm-provider.js';
 import { smartFS } from '../core/fs-manager.js';
+import { bus } from '../core/event-bus.js';
 import type {
   Project,
   ProjectListItem,
