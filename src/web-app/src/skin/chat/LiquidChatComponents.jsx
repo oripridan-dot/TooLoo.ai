@@ -1,4 +1,4 @@
-// @version 3.3.377
+// @version 3.3.378
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
@@ -1263,24 +1263,15 @@ export const CollapsibleMarkdown = memo(({ content, isStreaming }) => {
     return <EnhancedMarkdown content={cleanedContent} isStreaming={true} />;
   }
 
-  // For code-heavy responses, show visual summary + hidden code
+  // For code-heavy responses, show all content directly
   if (codeCount > 0) {
     return (
       <div className="space-y-2">
         {/* Visual response type indicator */}
         <ResponseTypeCard type={responseType} keyPoints={keyPoints} />
 
-        {/* Conversational content (no code) - always visible */}
-        {conversationalContent && (
-          <div className="text-gray-200">
-            <EnhancedMarkdown content={conversationalContent} isStreaming={false} />
-          </div>
-        )}
-
-        {/* Code blocks hidden by default */}
-        <TechnicalDetails codeCount={codeCount}>
-          <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
-        </TechnicalDetails>
+        {/* Full content with code blocks - always visible */}
+        <EnhancedMarkdown content={cleanedContent} isStreaming={false} />
       </div>
     );
   }
