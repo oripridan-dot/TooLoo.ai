@@ -1,6 +1,6 @@
-// @version 3.3.376
+// @version 3.3.377
 // TooLoo.ai Liquid Chat Components
-// v3.3.374 - Diversified Visual Communication: Multi-format support
+// v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
 // Integrates liquid skin throughout the chat experience
 // Enhanced with Visual Renderers for creative AI responses
