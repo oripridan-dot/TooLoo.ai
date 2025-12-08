@@ -1,4 +1,4 @@
-// @version 3.3.323
+// @version 3.3.349
 // TooLoo.ai Visual Renderers
 // v3.3.200 - Output-only UX: No code displays, graceful errors, clean interface
 // Rich visual components for rendering AI-generated visual content

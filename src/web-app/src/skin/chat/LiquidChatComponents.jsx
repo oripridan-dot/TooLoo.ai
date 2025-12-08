@@ -1,4 +1,4 @@
-// @version 3.3.337
+// @version 3.3.349
 // TooLoo.ai Liquid Chat Components
 // v3.3.400 - Zero-code UX: Output-only display, graceful errors, no technical details
 // Rich visual display capabilities for chat responses
