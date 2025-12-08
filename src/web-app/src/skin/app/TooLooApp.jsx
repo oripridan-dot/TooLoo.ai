@@ -1,4 +1,4 @@
-// @version 3.3.388
+// @version 3.3.389
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 
@@ -55,6 +55,7 @@ const NavItem = memo(({ view, isActive, onClick }) => {
     emerald: 'hover:bg-emerald-500/20 text-emerald-400',
     rose: 'hover:bg-rose-500/20 text-rose-400',
     amber: 'hover:bg-amber-500/20 text-amber-400',
+    indigo: 'hover:bg-indigo-500/20 text-indigo-400',
     gradient: 'hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-purple-500/20 text-cyan-400',
   };
 
@@ -64,6 +65,7 @@ const NavItem = memo(({ view, isActive, onClick }) => {
     emerald: 'bg-emerald-500/20 border-emerald-500/50',
     rose: 'bg-rose-500/20 border-rose-500/50',
     amber: 'bg-amber-500/20 border-amber-500/50',
+    indigo: 'bg-indigo-500/20 border-indigo-500/50',
     gradient: 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border-cyan-500/50',
   };
 
