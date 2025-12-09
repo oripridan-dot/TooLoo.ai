@@ -1,4 +1,4 @@
-// @version 3.3.428
+// @version 3.3.429
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // V3.3.425: Added Vibe Thief - extract design tokens from external websites
@@ -807,6 +807,84 @@ const Studio = memo(({ className = '' }) => {
                 >
                   🌌 Immersive
                 </motion.button>
+              </div>
+            </LiquidPanel>
+
+            {/* V3.3.425: Vibe Thief - Extract design from websites */}
+            <LiquidPanel variant="elevated" className="p-4">
+              <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                🎭 Vibe Thief
+                <span className="text-xs text-gray-500 font-normal">Steal design vibes from any website</span>
+              </h3>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={vibeUrl}
+                    onChange={(e) => setVibeUrl(e.target.value)}
+                    placeholder="Paste URL to analyze..."
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30"
+                    disabled={vibeLoading}
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleVibeTheft}
+                    disabled={vibeLoading}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-pink-500/30 hover:from-purple-500/40 hover:to-pink-500/40 text-purple-300 text-sm transition-colors border border-purple-500/30 disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {vibeLoading ? '⟳' : '🎨'} Steal
+                  </motion.button>
+                </div>
+
+                {/* Error message */}
+                {vibeError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs text-rose-400"
+                  >
+                    ⚠️ {vibeError}
+                  </motion.p>
+                )}
+
+                {/* Extracted tokens preview */}
+                {extractedTokens && !extractedTokens.raw && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-lg bg-white/5 border border-emerald-500/20"
+                  >
+                    <p className="text-xs text-emerald-400 mb-2">✓ Design tokens extracted!</p>
+                    
+                    {/* Color preview */}
+                    {extractedTokens.colors && (
+                      <div className="flex gap-2 flex-wrap">
+                        {Object.entries(extractedTokens.colors).slice(0, 5).map(([name, color]) => (
+                          <div key={name} className="flex items-center gap-1">
+                            <div 
+                              className="w-4 h-4 rounded-full border border-white/20"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="text-xs text-gray-400">{name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Raw output for unparseable responses */}
+                {extractedTokens?.raw && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-lg bg-white/5 border border-amber-500/20 max-h-40 overflow-auto"
+                  >
+                    <p className="text-xs text-amber-400 mb-2">Raw analysis:</p>
+                    <pre className="text-xs text-gray-400 whitespace-pre-wrap">{extractedTokens.raw.substring(0, 500)}...</pre>
+                  </motion.div>
+                )}
               </div>
             </LiquidPanel>
           </div>
