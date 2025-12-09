@@ -1,4 +1,4 @@
-// @version 3.3.421
+// @version 3.3.422
 // TooLoo.ai Synapsys Conductor - Orchestrates rapid changes across all systems
 // Bridges SynapysDNA with LiquidEngine, TextureEngine, and TooLooPresence
 // Phase 3 of "Sentient Partner" Protocol - The Focus Director
@@ -349,6 +349,402 @@ function mapHueToEmotion(hue) {
   if (hue >= 320) return 'alert'; // Back to red
 
   return 'neutral';
+}
+
+// ============================================================================
+// FOCUS DIRECTOR - Sophisticated attention orchestration (Phase 3)
+// ============================================================================
+
+const FocusDirectorContext = createContext(null);
+
+/**
+ * FocusDirector - Guides attention without annoying popups
+ * Uses visual language: Spotlight, Peripheral Pulse, Zoom Transitions
+ */
+export function FocusDirector({ children }) {
+  const [spotlight, setSpotlight] = useState(null);
+  const [peripheralPulse, setPeripheralPulse] = useState(null);
+  const [zoomTarget, setZoomTarget] = useState(null);
+  const [attentionMode, setAttentionMode] = useState('normal'); // normal, focused, alert
+  const spotlightTimeoutRef = useRef(null);
+  const pulseTimeoutRef = useRef(null);
+
+  // Listen for system events that require attention direction
+  useEffect(() => {
+    // Listen for errors that need spotlight
+    const handleError = (event) => {
+      const { file, line, message, x, y } = event?.detail || {};
+      
+      // Clear any existing spotlight
+      if (spotlightTimeoutRef.current) {
+        clearTimeout(spotlightTimeoutRef.current);
+      }
+
+      // Activate spotlight on error location
+      setSpotlight({
+        type: 'error',
+        file,
+        line,
+        message,
+        x: x || 50,
+        y: y || 50,
+        radius: 150,
+      });
+
+      // Darken surroundings
+      setAttentionMode('focused');
+
+      // Auto-dismiss after 5 seconds
+      spotlightTimeoutRef.current = setTimeout(() => {
+        setSpotlight(null);
+        setAttentionMode('normal');
+      }, 5000);
+
+      // Change mood to alert
+      window.dispatchEvent(new CustomEvent('tooloo:mood', { detail: { mood: 'alert' } }));
+    };
+
+    // Listen for suggestions that need peripheral pulse
+    const handleSuggestion = (event) => {
+      const { type, message, priority } = event?.detail || {};
+
+      // Clear any existing pulse
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+      }
+
+      // Activate peripheral pulse (Gold for suggestions)
+      setPeripheralPulse({
+        type: type || 'suggestion',
+        message: message || 'Tooloo has a suggestion',
+        priority: priority || 'medium',
+        position: 'bottom-right',
+        color: priority === 'high' ? 'amber' : 'gold',
+      });
+
+      // Dispatch to Deep Canvas
+      window.dispatchEvent(new CustomEvent('tooloo:suggestion'));
+
+      // Auto-dismiss after 8 seconds
+      pulseTimeoutRef.current = setTimeout(() => {
+        setPeripheralPulse(null);
+      }, 8000);
+    };
+
+    // Listen for view mode changes for zoom transitions
+    const handleViewChange = (event) => {
+      const { from, to, targetNode } = event?.detail || {};
+
+      // Animate zoom transition
+      if (from === 'planning' && to === 'coding') {
+        // Zoom INTO the specific node
+        setZoomTarget({
+          type: 'zoom-in',
+          node: targetNode,
+          duration: 800,
+        });
+      } else if (from === 'coding' && to === 'planning') {
+        // Zoom OUT to see full picture
+        setZoomTarget({
+          type: 'zoom-out',
+          duration: 600,
+        });
+      }
+
+      // Clear zoom target after animation
+      setTimeout(() => setZoomTarget(null), 1000);
+    };
+
+    // Listen for focus requests
+    const handleFocusRequest = (event) => {
+      const { target, type, duration } = event?.detail || {};
+
+      if (type === 'spotlight') {
+        setSpotlight({
+          type: 'highlight',
+          x: target?.x || 50,
+          y: target?.y || 50,
+          radius: target?.radius || 100,
+        });
+
+        if (duration) {
+          setTimeout(() => setSpotlight(null), duration);
+        }
+      }
+    };
+
+    window.addEventListener('tooloo:error', handleError);
+    window.addEventListener('suggestion:ready', handleSuggestion);
+    window.addEventListener('tooloo:viewchange', handleViewChange);
+    window.addEventListener('tooloo:focusrequest', handleFocusRequest);
+
+    return () => {
+      window.removeEventListener('tooloo:error', handleError);
+      window.removeEventListener('suggestion:ready', handleSuggestion);
+      window.removeEventListener('tooloo:viewchange', handleViewChange);
+      window.removeEventListener('tooloo:focusrequest', handleFocusRequest);
+
+      if (spotlightTimeoutRef.current) clearTimeout(spotlightTimeoutRef.current);
+      if (pulseTimeoutRef.current) clearTimeout(pulseTimeoutRef.current);
+    };
+  }, []);
+
+  // Clear spotlight
+  const clearSpotlight = useCallback(() => {
+    setSpotlight(null);
+    setAttentionMode('normal');
+    if (spotlightTimeoutRef.current) {
+      clearTimeout(spotlightTimeoutRef.current);
+    }
+  }, []);
+
+  // Clear peripheral pulse
+  const clearPulse = useCallback(() => {
+    setPeripheralPulse(null);
+    if (pulseTimeoutRef.current) {
+      clearTimeout(pulseTimeoutRef.current);
+    }
+  }, []);
+
+  // Trigger spotlight manually
+  const triggerSpotlight = useCallback((options) => {
+    setSpotlight(options);
+    setAttentionMode(options.mode || 'focused');
+
+    if (options.duration) {
+      spotlightTimeoutRef.current = setTimeout(() => {
+        setSpotlight(null);
+        setAttentionMode('normal');
+      }, options.duration);
+    }
+  }, []);
+
+  // Trigger peripheral pulse manually
+  const triggerPulse = useCallback((options) => {
+    setPeripheralPulse(options);
+
+    if (options.duration) {
+      pulseTimeoutRef.current = setTimeout(() => {
+        setPeripheralPulse(null);
+      }, options.duration);
+    }
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    spotlight,
+    peripheralPulse,
+    zoomTarget,
+    attentionMode,
+    clearSpotlight,
+    clearPulse,
+    triggerSpotlight,
+    triggerPulse,
+    setAttentionMode,
+  }), [spotlight, peripheralPulse, zoomTarget, attentionMode, clearSpotlight, clearPulse, triggerSpotlight, triggerPulse]);
+
+  return (
+    <FocusDirectorContext.Provider value={contextValue}>
+      {children}
+    </FocusDirectorContext.Provider>
+  );
+}
+
+/**
+ * Hook to access Focus Director
+ */
+export function useFocusDirector() {
+  const context = useContext(FocusDirectorContext);
+  if (!context) {
+    return {
+      spotlight: null,
+      peripheralPulse: null,
+      zoomTarget: null,
+      attentionMode: 'normal',
+      clearSpotlight: () => {},
+      clearPulse: () => {},
+      triggerSpotlight: () => {},
+      triggerPulse: () => {},
+      setAttentionMode: () => {},
+    };
+  }
+  return context;
+}
+
+// ============================================================================
+// INITIATIVE STATE - Process awareness for reversed workflow
+// ============================================================================
+
+const InitiativeStateContext = createContext(null);
+
+/**
+ * Initiative States for "Reversed" Workflow (Phase 4)
+ * - Director Mode: User leads, Tooloo fixes errors silently
+ * - Partner Mode: User paused, Tooloo offers suggestions
+ * - Agent Mode: Tooloo leads, user observes
+ */
+export const INITIATIVE_MODES = {
+  DIRECTOR: 'director', // User typing/designing - Tooloo stays silent
+  PARTNER: 'partner',   // User paused >10s - Tooloo offers suggestions
+  AGENT: 'agent',       // User handed over control - Tooloo executes
+};
+
+export function InitiativeProvider({ children }) {
+  const [mode, setMode] = useState(INITIATIVE_MODES.DIRECTOR);
+  const [lastUserAction, setLastUserAction] = useState(Date.now());
+  const [autoSuggestionEnabled, setAutoSuggestionEnabled] = useState(true);
+  const idleTimerRef = useRef(null);
+  const IDLE_THRESHOLD = 10000; // 10 seconds
+
+  // Track user activity
+  useEffect(() => {
+    const handleUserActivity = () => {
+      setLastUserAction(Date.now());
+      
+      // If in Partner or Agent mode and user starts acting, switch to Director
+      if (mode !== INITIATIVE_MODES.DIRECTOR) {
+        setMode(INITIATIVE_MODES.DIRECTOR);
+        
+        // Notify UI of mode change
+        window.dispatchEvent(new CustomEvent('tooloo:initiative', {
+          detail: { mode: INITIATIVE_MODES.DIRECTOR, reason: 'user_activity' }
+        }));
+      }
+
+      // Reset idle timer
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+
+      // Set new idle timer for Partner mode
+      if (autoSuggestionEnabled) {
+        idleTimerRef.current = setTimeout(() => {
+          if (mode === INITIATIVE_MODES.DIRECTOR) {
+            setMode(INITIATIVE_MODES.PARTNER);
+            
+            // Notify UI of mode change
+            window.dispatchEvent(new CustomEvent('tooloo:initiative', {
+              detail: { mode: INITIATIVE_MODES.PARTNER, reason: 'user_idle' }
+            }));
+
+            // Trigger peripheral pulse to offer suggestions
+            window.dispatchEvent(new CustomEvent('suggestion:ready', {
+              detail: { type: 'idle', message: 'Tooloo has some suggestions...', priority: 'low' }
+            }));
+          }
+        }, IDLE_THRESHOLD);
+      }
+    };
+
+    // Track keyboard and mouse activity
+    const events = ['keydown', 'mousedown', 'mousemove', 'touchstart', 'scroll'];
+    events.forEach(event => {
+      window.addEventListener(event, handleUserActivity, { passive: true });
+    });
+
+    // Initial activity check
+    handleUserActivity();
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [mode, autoSuggestionEnabled]);
+
+  // Listen for explicit mode changes
+  useEffect(() => {
+    const handleModeRequest = (event) => {
+      const { mode: requestedMode, reason } = event?.detail || {};
+      
+      if (Object.values(INITIATIVE_MODES).includes(requestedMode)) {
+        setMode(requestedMode);
+        
+        // Update mood based on mode
+        const moodMap = {
+          [INITIATIVE_MODES.DIRECTOR]: 'focused',
+          [INITIATIVE_MODES.PARTNER]: 'calm',
+          [INITIATIVE_MODES.AGENT]: 'thinking',
+        };
+        
+        window.dispatchEvent(new CustomEvent('tooloo:mood', {
+          detail: { mood: moodMap[requestedMode] }
+        }));
+      }
+    };
+
+    window.addEventListener('tooloo:setinitiative', handleModeRequest);
+    return () => window.removeEventListener('tooloo:setinitiative', handleModeRequest);
+  }, []);
+
+  // Enter Agent mode (Tooloo takes control)
+  const enterAgentMode = useCallback((options = {}) => {
+    setMode(INITIATIVE_MODES.AGENT);
+    
+    window.dispatchEvent(new CustomEvent('tooloo:initiative', {
+      detail: { mode: INITIATIVE_MODES.AGENT, reason: 'user_handoff', ...options }
+    }));
+
+    window.dispatchEvent(new CustomEvent('tooloo:mood', {
+      detail: { mood: 'thinking' }
+    }));
+  }, []);
+
+  // Exit Agent mode
+  const exitAgentMode = useCallback(() => {
+    setMode(INITIATIVE_MODES.DIRECTOR);
+    
+    window.dispatchEvent(new CustomEvent('tooloo:initiative', {
+      detail: { mode: INITIATIVE_MODES.DIRECTOR, reason: 'agent_complete' }
+    }));
+
+    window.dispatchEvent(new CustomEvent('tooloo:mood', {
+      detail: { mood: 'calm' }
+    }));
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    mode,
+    setMode,
+    lastUserAction,
+    autoSuggestionEnabled,
+    setAutoSuggestionEnabled,
+    enterAgentMode,
+    exitAgentMode,
+    isDirector: mode === INITIATIVE_MODES.DIRECTOR,
+    isPartner: mode === INITIATIVE_MODES.PARTNER,
+    isAgent: mode === INITIATIVE_MODES.AGENT,
+  }), [mode, lastUserAction, autoSuggestionEnabled, enterAgentMode, exitAgentMode]);
+
+  return (
+    <InitiativeStateContext.Provider value={contextValue}>
+      {children}
+    </InitiativeStateContext.Provider>
+  );
+}
+
+/**
+ * Hook to access Initiative State
+ */
+export function useInitiativeState() {
+  const context = useContext(InitiativeStateContext);
+  if (!context) {
+    return {
+      mode: INITIATIVE_MODES.DIRECTOR,
+      setMode: () => {},
+      lastUserAction: Date.now(),
+      autoSuggestionEnabled: true,
+      setAutoSuggestionEnabled: () => {},
+      enterAgentMode: () => {},
+      exitAgentMode: () => {},
+      isDirector: true,
+      isPartner: false,
+      isAgent: false,
+    };
+  }
+  return context;
 }
 
 export default SynapysConductor;
