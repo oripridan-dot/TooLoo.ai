@@ -1,4 +1,4 @@
-// @version 3.3.425
+// @version 3.3.426
 // TooLoo.ai Synapsys Conductor - Orchestrates rapid changes across all systems
 // Bridges SynapysDNA with LiquidEngine, TextureEngine, and TooLooPresence
 // Phase 3 of "Sentient Partner" Protocol - The Focus Director
@@ -94,6 +94,10 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
   // Responds to MetaLearner cognitive state changes with visual feedback
   // ==========================================================================
 
+  // Store a ref to track socket for cleanup
+  const bioFeedbackSocketRef = useRef(null);
+
+  // Bio-Feedback effect - runs after component mounts
   useEffect(() => {
     // Connect to Socket.IO for real-time cognitive state updates
     const socket = io('/', { 
@@ -101,6 +105,7 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       transports: ['websocket', 'polling'],
       reconnection: true,
     });
+    bioFeedbackSocketRef.current = socket;
 
     // Listen for cognitive state changes from MetaLearner
     const handleCognitiveStateChange = (data) => {
@@ -108,17 +113,25 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
 
       console.log('[SynapysConductor] Cognitive state change:', { velocity: velocity?.trend, cognitiveLoad, trigger });
 
+      const state = getActions();
+      const originalPreset = state.preset;
+
       // Hyperfocus Mode: High velocity (accelerating) = Golden Ripples
       if (velocity?.trend === 'accelerating') {
         console.log('[SynapysConductor] Triggering Hyperfocus Mode (accelerating velocity)');
-        playEmergence(2000); // Golden ripples effect
+        
+        // Play emergence effect inline (golden ripples)
+        state.transitionTo('emergence', 600);
+        setTimeout(() => getActions().transitionTo(originalPreset, 800), 1400);
         
         // Brief pulse to signal positive flow state
-        getActions().override({
-          colors: { energy: 0.9 },
-          liquid: { intensity: 0.8 },
-        });
-        setTimeout(() => getActions().reset(), 1500);
+        setTimeout(() => {
+          getActions().override({
+            colors: { energy: 0.9 },
+            liquid: { intensity: 0.8 },
+          });
+          setTimeout(() => getActions().reset(), 1000);
+        }, 500);
       }
 
       // Focus Mode: High cognitive load (>0.8) = Dim/Minimal
@@ -169,6 +182,7 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
     return () => {
       socket.off('meta:cognitive_state_change', handleCognitiveStateChange);
       socket.disconnect();
+      bioFeedbackSocketRef.current = null;
     };
   }, []);
 
