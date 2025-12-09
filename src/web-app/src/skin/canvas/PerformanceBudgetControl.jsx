@@ -1,4 +1,4 @@
-// @version 3.3.488
+// @version 3.3.493
 /**
  * PerformanceBudgetControl.jsx
  * TooLoo.ai Living Canvas - Performance Budget UI Control
@@ -46,8 +46,11 @@ const BUDGET_LEVELS = {
  * Compact button version for sidebar
  */
 export function PerformanceBudgetButton({ onClick, className = '' }) {
-  const performance = useCanvasPerformance();
-  const config = BUDGET_LEVELS[performance.budget];
+  const budget = useCanvasStore((s) => s.performanceBudget);
+  // Map to our 3-tier display levels
+  const displayLevel = budget === 'minimal' || budget === 'low' ? 'minimal' 
+    : budget === 'high' || budget === 'ultra' ? 'maximum' : 'balanced';
+  const config = BUDGET_LEVELS[displayLevel];
   
   return (
     <motion.button
@@ -67,12 +70,25 @@ export function PerformanceBudgetButton({ onClick, className = '' }) {
  * Full control panel for settings
  */
 export function PerformanceBudgetPanel({ onClose, className = '' }) {
-  const performance = useCanvasPerformance();
-  const { setPerformanceBudget } = useCanvasState();
+  const budget = useCanvasStore((s) => s.performanceBudget);
+  const customBudget = useCanvasStore((s) => s.customBudget);
+  const setPerformanceBudget = useCanvasStore((s) => s.setPerformanceBudget);
   const [hoveredLevel, setHoveredLevel] = useState(null);
   
+  // Compute effective budget
+  const effective = useMemo(() => {
+    const preset = PERFORMANCE_BUDGETS[budget] || PERFORMANCE_BUDGETS.balanced;
+    return customBudget ? { ...preset, ...customBudget } : preset;
+  }, [budget, customBudget]);
+  
+  // Map to our 3-tier display levels
+  const displayLevel = budget === 'minimal' || budget === 'low' ? 'minimal' 
+    : budget === 'high' || budget === 'ultra' ? 'maximum' : 'balanced';
+  
   const handleSelect = (level) => {
-    setPerformanceBudget(level);
+    // Map 3-tier to actual budget levels
+    const budgetMap = { minimal: 'minimal', balanced: 'balanced', maximum: 'high' };
+    setPerformanceBudget(budgetMap[level]);
   };
   
   return (
