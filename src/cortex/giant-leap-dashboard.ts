@@ -1,4 +1,4 @@
-// @version 1.0.0
+// @version 3.3.460
 /**
  * GiantLeapDashboard: Visualization & Monitoring
  * 
@@ -53,9 +53,10 @@ export class GiantLeapDashboard {
   public getMetrics(): GiantLeapMetrics {
     const pipelineStats = worldPipeline.getStats();
     const learningVelocity = metaLearner.getLearningVelocity();
-    // Accessing private state via public methods if available, or inferring
-    // For prototype, we'll assume we can get these or add getters later
-    // Adding getters to the classes would be cleaner, but for now we construct:
+    
+    // V3.3.460: Wire up real stats from learning and emergence systems
+    const adversarialStats = adversarialLearner.getStats?.() || { exercisesCompleted: 0, vulnerabilitiesFound: 0 };
+    const emergenceStats = emergenceCatalyst.getStats?.() || { syntheses: 0, predictions: 0, activeGoals: 0 };
     
     return {
       knowledge: {
@@ -66,13 +67,13 @@ export class GiantLeapDashboard {
       learning: {
         velocity: learningVelocity.current,
         trend: learningVelocity.trend,
-        adversarialExercises: 0, // Placeholder until getter added
-        vulnerabilitiesFound: 0
+        adversarialExercises: adversarialStats.exercisesCompleted || 0,
+        vulnerabilitiesFound: adversarialStats.vulnerabilitiesFound || 0
       },
       emergence: {
-        syntheses: 0, // Placeholder
-        predictions: 0,
-        activeGoals: 0
+        syntheses: emergenceStats.syntheses || 0,
+        predictions: emergenceStats.predictions || 0,
+        activeGoals: emergenceStats.activeGoals || 0
       },
       synergy: {
         activeLoops: giantLeapOrchestrator.getStatus().loops,
