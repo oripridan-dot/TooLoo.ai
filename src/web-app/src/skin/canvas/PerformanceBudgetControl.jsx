@@ -10,9 +10,9 @@
  * @module skin/canvas/PerformanceBudgetControl
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCanvasPerformance, useCanvasState } from '../store/canvasStateStore';
+import { useCanvasStore, PERFORMANCE_BUDGETS } from '../store/canvasStateStore';
 
 // Budget level configurations
 const BUDGET_LEVELS = {
