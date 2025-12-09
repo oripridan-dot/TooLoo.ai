@@ -1,4 +1,4 @@
-// @version 3.3.431
+// @version 3.3.432
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // V3.3.425: Added Vibe Thief - extract design tokens from external websites
@@ -806,6 +806,63 @@ const Studio = memo(({ className = '' }) => {
                 enabled={effects.particles}
                 onChange={(v) => handleEffectToggle('particles', v)}
               />
+            </LiquidPanel>
+
+            {/* V3.3.425: Live Design Wire - Real-time generative design */}
+            <LiquidPanel variant="elevated" className="p-4">
+              <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                🎨 Live Design
+                <span className="text-xs text-gray-500 font-normal">Sketch with words</span>
+                {designLoading && (
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="inline-block text-cyan-400"
+                  >
+                    ⟳
+                  </motion.span>
+                )}
+              </h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={designPrompt}
+                  onChange={(e) => handleDesignPromptChange(e.target.value)}
+                  placeholder="Describe a visual... (e.g., 'gradient wave')"
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                />
+                
+                {/* Live SVG Preview Canvas */}
+                <div className="relative w-full h-32 rounded-lg bg-black/30 border border-white/10 overflow-hidden">
+                  {generatedSvg ? (
+                    <div 
+                      className="w-full h-full"
+                      dangerouslySetInnerHTML={{ __html: generatedSvg }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
+                      {designPrompt.length > 4 
+                        ? 'Generating...' 
+                        : 'Type to see real-time preview'}
+                    </div>
+                  )}
+                  
+                  {/* Loading overlay */}
+                  {designLoading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 opacity-50"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-gray-500">
+                  💡 Try: "wavy gradient", "neural mesh", "particle explosion"
+                </p>
+              </div>
             </LiquidPanel>
           </div>
 
