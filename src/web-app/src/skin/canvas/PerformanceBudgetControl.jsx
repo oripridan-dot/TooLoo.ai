@@ -1,4 +1,4 @@
-// @version 3.3.493
+// @version 3.3.494
 /**
  * PerformanceBudgetControl.jsx
  * TooLoo.ai Living Canvas - Performance Budget UI Control
@@ -118,7 +118,7 @@ export function PerformanceBudgetPanel({ onClose, className = '' }) {
       {/* Budget Options */}
       <div className="p-3 space-y-2">
         {Object.entries(BUDGET_LEVELS).map(([level, config]) => {
-          const isActive = performance.budget === level;
+          const isActive = displayLevel === level;
           const isHovered = hoveredLevel === level;
           
           return (
@@ -164,17 +164,17 @@ export function PerformanceBudgetPanel({ onClose, className = '' }) {
         <div className="grid grid-cols-3 gap-2 text-center">
           <StatPreview 
             label="Particles"
-            value={performance.particlesEnabled ? performance.maxParticles : 0}
-            active={performance.particlesEnabled}
+            value={effective.maxParticles || 0}
+            active={effective.maxParticles > 0}
           />
           <StatPreview 
             label="Parallax"
-            value={performance.depthEnabled ? 'On' : 'Off'}
-            active={performance.depthEnabled}
+            value={effective.enableParallax ? 'On' : 'Off'}
+            active={effective.enableParallax}
           />
           <StatPreview 
-            label="Quality"
-            value={performance.gradientQuality}
+            label="FPS"
+            value={effective.fps || 60}
             active={true}
           />
         </div>
