@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// @version 2.2.390
+// @version 3.3.461
 
 /**
  * TooLoo.ai Orchestrator v5 (TypeScript Optimized)
@@ -18,6 +18,10 @@ import bodyParser from 'body-parser';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Resolve to workspace root (assuming src/cortex/system-model/orchestrator.ts)
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+
+// Track when each service started for uptime calculation
+const serviceStartTimes: Map<string, number> = new Map();
+const systemStartTime = Date.now();
 
 // ============================================================================
 // SERVICE REGISTRY (Trinity Architecture)
