@@ -1,4 +1,4 @@
-// @version 3.3.485
+// @version 3.3.486
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
@@ -355,13 +355,22 @@ TooLooAppInner.displayName = 'TooLooAppInner';
 // ============================================================================
 
 const TooLooApp = memo(() => {
+  // V3.3.480: Get socket for Living Canvas bridge
+  const socket = useSystemState((s) => s.connection?.socket);
+  
   return (
     <LiquidEngineProvider enabled={true}>
       <TooLooPresenceProvider>
         <TextureEngineProvider enabled={false}>
           <SynapysConductor>
+            {/* V3.3.480: Living Canvas - Emotional background layer */}
+            <LivingCanvas />
+            <CanvasSocketBridge socket={socket} />
+            
             <LiquidShell showEdge={true}>
-              <TooLooAppInner />
+              <DepthScene showOrbs={true}>
+                <TooLooAppInner />
+              </DepthScene>
               {/* V3.3.405: System Pulse HUD - Shows file watcher activity */}
               <SystemPulse position="bottom-right" enabled={true} />
             </LiquidShell>
