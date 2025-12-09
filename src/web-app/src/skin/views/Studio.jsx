@@ -1,7 +1,7 @@
-// @version 3.3.214
+// @version 3.3.427
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
-// Fully wired with real API connections
+// V3.3.425: Added Vibe Thief - extract design tokens from external websites
 
 import React, { memo, useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
