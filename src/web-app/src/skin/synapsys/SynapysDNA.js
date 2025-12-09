@@ -1,7 +1,8 @@
-// @version 2.2.570
+// @version 3.3.489
 // TooLoo.ai Synapsys DNA - Rapid Configuration System
 // Single source of truth for orchestrated, sweeping changes across the entire liquid skin
 // Change one value → cascades everywhere instantly
+// Updated: Added Living Canvas configuration blocks
 
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
@@ -21,6 +22,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 180, saturation: 40, energy: 0.15 },
     motion: { speed: 0.3, spring: 0.2, damping: 0.9 },
     effects: { aurora: false, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'calm', budget: 'minimal', particles: 0, depth: false, waveIntensity: 0.2 },
   },
 
   balanced: {
@@ -32,6 +34,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 200, saturation: 60, energy: 0.3 },
     motion: { speed: 0.6, spring: 0.4, damping: 0.7 },
     effects: { aurora: true, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'neutral', budget: 'balanced', particles: 30, depth: true, waveIntensity: 0.5 },
   },
 
   immersive: {
@@ -43,6 +46,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 260, saturation: 70, energy: 0.5 },
     motion: { speed: 0.8, spring: 0.5, damping: 0.6 },
     effects: { aurora: true, orbs: true, mesh: false, particles: false },
+    canvas: { emotion: 'curious', budget: 'maximum', particles: 100, depth: true, waveIntensity: 0.8 },
   },
 
   // === ACTIVITY PRESETS ===
@@ -55,6 +59,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 200, saturation: 30, energy: 0.1 },
     motion: { speed: 0.2, spring: 0.2, damping: 0.95 },
     effects: { aurora: false, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'calm', budget: 'minimal', particles: 0, depth: false, waveIntensity: 0.1 },
   },
 
   creative: {
@@ -66,6 +71,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 300, saturation: 70, energy: 0.5 },
     motion: { speed: 0.7, spring: 0.5, damping: 0.6 },
     effects: { aurora: true, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'creating', budget: 'balanced', particles: 50, depth: true, waveIntensity: 0.6 },
   },
 
   thinking: {
@@ -77,6 +83,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 260, saturation: 60, energy: 0.4 },
     motion: { speed: 1.0, spring: 0.4, damping: 0.7 },
     effects: { aurora: true, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'thinking', budget: 'balanced', particles: 40, depth: true, waveIntensity: 0.7 },
   },
 
   // === SPECIAL PRESETS ===
@@ -89,6 +96,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 45, saturation: 80, energy: 0.7 },
     motion: { speed: 1.2, spring: 0.6, damping: 0.5 },
     effects: { aurora: true, orbs: true, mesh: false, particles: false },
+    canvas: { emotion: 'excited', budget: 'maximum', particles: 100, depth: true, waveIntensity: 1.0 },
   },
 
   alert: {
@@ -100,6 +108,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 0, saturation: 70, energy: 0.6 },
     motion: { speed: 1.5, spring: 0.7, damping: 0.4 },
     effects: { aurora: true, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'alert', budget: 'balanced', particles: 60, depth: true, waveIntensity: 0.9 },
   },
 
   night: {
@@ -111,6 +120,7 @@ export const SYNAPSYS_PRESETS = {
     colors: { primary: 240, saturation: 30, energy: 0.1 },
     motion: { speed: 0.3, spring: 0.2, damping: 0.9 },
     effects: { aurora: false, orbs: false, mesh: false, particles: false },
+    canvas: { emotion: 'calm', budget: 'minimal', particles: 10, depth: false, waveIntensity: 0.15 },
   },
 };
 
