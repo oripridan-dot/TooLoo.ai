@@ -1,4 +1,4 @@
-// @version 3.3.487
+// @version 3.3.495
 /**
  * Canvas Module Index
  * 
@@ -8,7 +8,7 @@
  */
 
 // Main canvas component
-export { default as LivingCanvas, CANVAS_EMOTIONS } from './LivingCanvas.jsx';
+export { default as LivingCanvas } from './LivingCanvas.jsx';
 
 // Particle system
 export { default as AmbientParticles } from './AmbientParticles.jsx';
