@@ -233,18 +233,24 @@ export function PerformanceBudgetDropdown({ className = '' }) {
  * Inline slider version
  */
 export function PerformanceBudgetSlider({ className = '' }) {
-  const performance = useCanvasPerformance();
-  const { setPerformanceBudget } = useCanvasState();
+  const budget = useCanvasStore((s) => s.performanceBudget);
+  const setPerformanceBudget = useCanvasStore((s) => s.setPerformanceBudget);
   
   const levels = ['minimal', 'balanced', 'maximum'];
-  const currentIndex = levels.indexOf(performance.budget);
+  // Map actual budget to display level
+  const displayLevel = budget === 'minimal' || budget === 'low' ? 'minimal' 
+    : budget === 'high' || budget === 'ultra' ? 'maximum' : 'balanced';
+  const currentIndex = levels.indexOf(displayLevel);
   
   const handleChange = (e) => {
     const index = parseInt(e.target.value, 10);
-    setPerformanceBudget(levels[index]);
+    const level = levels[index];
+    // Map display to actual budget
+    const budgetMap = { minimal: 'minimal', balanced: 'balanced', maximum: 'high' };
+    setPerformanceBudget(budgetMap[level]);
   };
   
-  const config = BUDGET_LEVELS[performance.budget];
+  const config = BUDGET_LEVELS[displayLevel];
   
   return (
     <div className={`space-y-2 ${className}`}>
