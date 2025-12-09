@@ -28,6 +28,16 @@ export {
 // Socket bridge for backend state sync
 export { default as CanvasSocketBridge, useCanvasSocketBridge } from './CanvasSocketBridge.jsx';
 
+// Performance budget UI control
+export { 
+  default as PerformanceBudgetControl,
+  PerformanceBudgetButton,
+  PerformanceBudgetPanel,
+  PerformanceBudgetDropdown,
+  PerformanceBudgetSlider,
+  BUDGET_LEVELS,
+} from './PerformanceBudgetControl.jsx';
+
 // Re-export store hooks for convenience
 export {
   useCanvasStore,
