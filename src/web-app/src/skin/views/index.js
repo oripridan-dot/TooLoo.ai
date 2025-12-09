@@ -1,4 +1,4 @@
-// @version 3.3.414
+// @version 3.3.415
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -138,4 +138,6 @@ export const VIEW_COMPONENTS = {
   growth: () => import('./Growth').then((m) => m.default),
   studio: () => import('./Studio').then((m) => m.default),
   command: () => import('./Command').then((m) => m.default),
+  design: () => import('./Design').then((m) => m.default),
+  mirror: () => import('./Mirror').then((m) => m.default),
 };
