@@ -1,4 +1,4 @@
-// @version 3.3.448
+// @version 3.3.453
 // TooLoo.ai Skin - Main Entry Point
 // Liquid Synapsys V1 - The viewport IS TooLoo
 // Exports all skin infrastructure including liquid effects, textures, presence, Synapsys DNA, shell, views, and app
@@ -27,8 +27,8 @@ export {
 // === LIQUID SHELL - Full viewport wrapper ===
 export { LiquidShell, ViewportEdge, LiquidPanel, LiquidTransition } from './shell';
 
-// === VIEWS - The 5 main TooLoo views ===
-export { Cortex, Synaptic, Growth, Studio, Command, VIEWS, VIEW_COMPONENTS } from './views';
+// === VIEWS - The 6 main TooLoo views ===
+export { Cortex, Synaptic, Growth, Studio, Command, Workstation, VIEWS, VIEW_COMPONENTS } from './views';
 
 // === CHAT COMPONENTS - Rich visual chat with liquid skin ===
 export {
