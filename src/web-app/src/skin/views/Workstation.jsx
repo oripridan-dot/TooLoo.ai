@@ -1,4 +1,4 @@
-// @version 3.3.464
+// @version 3.3.465
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -471,12 +471,15 @@ const ArtifactItem = memo(({ artifact, isSelected, onClick }) => {
 
 ArtifactItem.displayName = 'ArtifactItem';
 
-const ArtifactsPanel = memo(({ artifacts = [], onArtifactSelect, selectedArtifact }) => {
+const ArtifactsPanel = memo(({ artifacts, onArtifactSelect, selectedArtifact }) => {
   const [filter, setFilter] = useState('all');
 
+  // Ensure artifacts is always an array (handles null/undefined from API)
+  const safeArtifacts = Array.isArray(artifacts) ? artifacts : [];
+  
   const filteredArtifacts = filter === 'all' 
-    ? artifacts 
-    : artifacts.filter(a => a.type === filter);
+    ? safeArtifacts 
+    : safeArtifacts.filter(a => a?.type === filter);
 
   return (
     <LiquidPanel
