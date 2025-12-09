@@ -291,12 +291,14 @@ function startOrchestratorServer() {
     const processes = await Promise.all(
       SERVICE_REGISTRY.map(async (s) => {
         const isHealthy = await checkHealth(s);
+        const startTime = serviceStartTimes.get(s.id) || systemStartTime;
+        const uptimeMs = isHealthy ? Date.now() - startTime : 0;
         return {
           name: s.name,
           port: s.primaryPort,
           status: isHealthy ? 'running' : 'stopped',
-          pid: '?', // We don't track PIDs easily here yet
-          uptime: 0, // Placeholder
+          pid: process.pid.toString(),
+          uptime: Math.floor(uptimeMs / 1000), // Uptime in seconds
         };
       })
     );
