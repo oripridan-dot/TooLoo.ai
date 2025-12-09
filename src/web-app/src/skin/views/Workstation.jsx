@@ -1,4 +1,4 @@
-// @version 3.3.462
+// @version 3.3.463
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -84,19 +84,104 @@ const TaskNode = memo(({ task, depth = 0 }) => {
 
 TaskNode.displayName = 'TaskNode';
 
-const TaskBoardPanel = memo(({ tasks = [], currentGoal, onTaskSelect }) => {
+const TaskBoardPanel = memo(({ tasks = [], currentGoal, onTaskSelect, onAutoStructure, isStructuring }) => {
+  const [showStructureModal, setShowStructureModal] = useState(false);
+  const [featurePrompt, setFeaturePrompt] = useState('');
+  const [structureResult, setStructureResult] = useState(null);
+
+  const handleAutoStructure = async () => {
+    if (!featurePrompt.trim()) return;
+    setStructureResult(null);
+    const result = await onAutoStructure?.(featurePrompt);
+    if (result) {
+      setStructureResult(result);
+    }
+  };
+
   return (
     <LiquidPanel
       title="Task Board"
       icon="📊"
       className="h-full"
       headerActions={
-        <div className="flex items-center gap-2 text-xs text-white/50">
-          <span>{tasks.length} tasks</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowStructureModal(true)}
+            className="text-xs px-2 py-1 rounded bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/50 transition-colors"
+          >
+            🏗️ Auto-Structure
+          </button>
+          <span className="text-xs text-white/50">{tasks.length} tasks</span>
         </div>
       }
     >
       <div className="p-4 h-full overflow-auto">
+        {/* Auto-Structure Modal */}
+        <AnimatePresence>
+          {showStructureModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+              onClick={() => setShowStructureModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900 border border-emerald-500/30 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-auto"
+              >
+                <h3 className="text-lg font-semibold text-emerald-400 mb-4">🏗️ Auto-Structure Feature</h3>
+                <p className="text-white/60 text-sm mb-4">
+                  Describe a feature you want to add, and TooLoo will analyze your codebase and suggest the file structure.
+                </p>
+                <textarea
+                  value={featurePrompt}
+                  onChange={(e) => setFeaturePrompt(e.target.value)}
+                  placeholder="e.g., Add a billing page with Stripe integration for subscription management"
+                  className="w-full h-24 px-4 py-3 rounded-lg bg-black/40 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-emerald-500/50 resize-none mb-4"
+                />
+                <div className="flex justify-end gap-2 mb-4">
+                  <button
+                    onClick={() => setShowStructureModal(false)}
+                    className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/50 hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAutoStructure}
+                    disabled={!featurePrompt.trim() || isStructuring}
+                    className="px-4 py-2 rounded-lg bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/50 disabled:opacity-50"
+                  >
+                    {isStructuring ? 'Analyzing...' : 'Analyze & Structure'}
+                  </button>
+                </div>
+                
+                {/* Results */}
+                {structureResult && (
+                  <div className="mt-4 p-4 rounded-lg bg-black/40 border border-emerald-500/20">
+                    <h4 className="text-sm font-semibold text-emerald-400 mb-2">📁 Suggested Structure</h4>
+                    {structureResult.plan?.files?.map((file, idx) => (
+                      <div key={idx} className="text-sm text-white/70 py-1 flex items-center gap-2">
+                        <span className="text-emerald-400">{file.action === 'create' ? '+' : '~'}</span>
+                        <code className="text-cyan-300">{file.path}</code>
+                        <span className="text-white/40 text-xs">({file.reason})</span>
+                      </div>
+                    ))}
+                    {structureResult.plan?.summary && (
+                      <p className="text-xs text-white/50 mt-3 pt-3 border-t border-white/10">
+                        {structureResult.plan.summary}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {currentGoal && (
           <div className="mb-4 p-3 rounded-lg bg-purple-900/30 border border-purple-500/30">
             <div className="text-xs text-purple-400 uppercase tracking-wider mb-1">
