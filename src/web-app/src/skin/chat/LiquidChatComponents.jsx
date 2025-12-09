@@ -1,4 +1,4 @@
-// @version 3.3.380
+// @version 3.3.433
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
@@ -1682,13 +1682,12 @@ render(<${componentName} />);`;
         {/* HTML Preview */}
         {isHTML && showPreview && renderHTMLPreview()}
 
-        {/* For non-previewable code, show simplified view */}
+        {/* For non-previewable code, show the actual code with syntax highlighting */}
         {!canPreview && (
-          <div className="bg-black/40 p-4">
-            <div className="flex items-center gap-2 text-center justify-center py-4">
-              <span className="text-xl">📋</span>
-              <span className="text-sm text-gray-400">Content ready</span>
-            </div>
+          <div className="bg-black/40 overflow-hidden">
+            <pre className="p-4 overflow-x-auto text-sm font-mono text-gray-300 max-h-[400px] overflow-y-auto">
+              <code>{codeString}</code>
+            </pre>
           </div>
         )}
       </div>
