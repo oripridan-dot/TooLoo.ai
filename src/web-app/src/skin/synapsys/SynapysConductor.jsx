@@ -1,8 +1,9 @@
-// @version 3.3.142
+// @version 3.3.421
 // TooLoo.ai Synapsys Conductor - Orchestrates rapid changes across all systems
 // Bridges SynapysDNA with LiquidEngine, TextureEngine, and TooLooPresence
+// Phase 3 of "Sentient Partner" Protocol - The Focus Director
 
-import React, { createContext, useContext, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useSynapsynDNA, SYNAPSYS_PRESETS } from './SynapysDNA';
 
 // ============================================================================
