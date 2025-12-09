@@ -1,4 +1,4 @@
-// @version 3.3.373
+// @version 3.3.434
 // TooLoo.ai Visual Renderers
 // v3.3.371 - Added SVG validation to reject malformed diagrams, corner-based curves
 // Rich visual components for rendering AI-generated visual content
@@ -944,20 +944,19 @@ export const UniversalCodeSandbox = memo(
       </div>
     );
 
-    // If we can't render anything useful, show placeholder
+    // If we can't render anything useful, show the code itself
     if (renderError || (!canPreview && !canExecute)) {
       return (
-        <div className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] p-4 ${className}`}>
+        <div className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] ${className}`}>
           {title && (
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10">
               <span>📄</span>
               <span className="text-sm text-gray-400">{title}</span>
             </div>
           )}
-          <div className="text-center py-4">
-            <span className="text-2xl mb-2 block">📋</span>
-            <p className="text-sm text-gray-400">Content ready</p>
-          </div>
+          <pre className="p-4 overflow-x-auto text-sm font-mono text-gray-300 max-h-[400px] overflow-y-auto">
+            <code>{code}</code>
+          </pre>
         </div>
       );
     }
