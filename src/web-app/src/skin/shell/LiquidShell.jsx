@@ -1,4 +1,4 @@
-// @version 3.3.435
+// @version 3.3.436
 // TooLoo.ai LiquidShell - The "Deep Canvas" Architecture
 // Full-viewport wrapper with Z-Index Layered Architecture for sophisticated visual communication
 // Phase 1 of "Sentient Partner" Protocol
@@ -379,6 +379,8 @@ const ConsciousnessLayer = memo(({
   mood = 'calm',
   suggestionPulse = false,
   systemStatus = 'online',
+  autonomyEnabled = false,
+  onToggleAutonomy = () => {},
 }) => {
   const [pulseActive, setPulseActive] = useState(false);
   
@@ -410,12 +412,92 @@ const ConsciousnessLayer = memo(({
           </span>
         </div>
         
+        {/* Center: Autonomy Toggle - "God Mode" Switch */}
+        <motion.button
+          onClick={onToggleAutonomy}
+          className={`
+            pointer-events-auto flex items-center gap-2 px-4 py-1.5 rounded-full
+            transition-all duration-500 cursor-pointer
+            ${autonomyEnabled 
+              ? 'bg-gradient-to-r from-amber-500/30 to-yellow-500/20 border border-amber-500/50 shadow-lg shadow-amber-500/20' 
+              : 'bg-white/5 border border-white/10 hover:bg-white/10'}
+          `}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {/* Toggle switch visual */}
+          <div className={`
+            relative w-8 h-4 rounded-full transition-colors duration-300
+            ${autonomyEnabled ? 'bg-amber-500' : 'bg-gray-600'}
+          `}>
+            <motion.div 
+              className={`
+                absolute top-0.5 w-3 h-3 rounded-full shadow-md
+                ${autonomyEnabled ? 'bg-yellow-300' : 'bg-gray-400'}
+              `}
+              animate={{ left: autonomyEnabled ? '18px' : '2px' }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          </div>
+          
+          {/* Label */}
+          <span className={`
+            text-xs font-mono uppercase tracking-wider
+            ${autonomyEnabled ? 'text-amber-300' : 'text-gray-500'}
+          `}>
+            {autonomyEnabled ? '👑 GOD MODE' : 'Director'}
+          </span>
+          
+          {/* Glow effect when active */}
+          {autonomyEnabled && (
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              animate={{
+                boxShadow: [
+                  '0 0 10px rgba(255, 193, 7, 0.3)',
+                  '0 0 20px rgba(255, 193, 7, 0.5)',
+                  '0 0 10px rgba(255, 193, 7, 0.3)',
+                ],
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          )}
+        </motion.button>
+        
         {/* Mood indicator */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-600 font-mono">MOOD:</span>
-          <span className="text-xs text-cyan-400 font-mono uppercase">{mood}</span>
+          <span className={`text-xs font-mono uppercase ${autonomyEnabled ? 'text-amber-400' : 'text-cyan-400'}`}>
+            {autonomyEnabled ? 'autonomous' : mood}
+          </span>
         </div>
       </div>
+      
+      {/* Autonomy Mode Indicator - Corner badge when enabled */}
+      <AnimatePresence>
+        {autonomyEnabled && (
+          <motion.div
+            className="absolute top-14 right-4 pointer-events-none"
+            initial={{ opacity: 0, x: 20, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.8 }}
+          >
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30">
+              <motion.span
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-lg"
+              >
+                ⚡
+              </motion.span>
+              <div className="text-xs">
+                <p className="text-amber-300 font-medium">Autonomous Mode</p>
+                <p className="text-amber-400/60">Auto-approve • Self-modify</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Suggestion pulse - bottom right corner (Gold peripheral pulse) */}
       <AnimatePresence>
