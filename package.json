@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.437",
+  "version": "3.3.438",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -107,6 +107,7 @@
     "socket.io-client": "^4.8.1",
     "sqlite3": "^5.1.7",
     "tailwindcss": "^4.1.17",
+    "tesseract.js": "^6.0.1",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "yaml": "^2.8.2",
