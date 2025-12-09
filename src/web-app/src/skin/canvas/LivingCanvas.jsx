@@ -1,4 +1,4 @@
-// @version 3.3.482
+// @version 3.3.491
 /**
  * Living Canvas
  * 
@@ -439,15 +439,15 @@ export default function LivingCanvas() {
     };
   }, [canvasEnabled, effective.useWebGL]);
   
-  // Animation loop
+  // Animation loop - uses refs to avoid dependency changes causing restarts
   useEffect(() => {
     if (!canvasEnabled) return;
     
     let lastTime = performance.now();
-    const targetFrameTime = 1000 / effective.fps;
     
     const animate = (timestamp) => {
       const deltaTime = timestamp - lastTime;
+      const targetFrameTime = 1000 / (effectiveRef.current?.fps || 60);
       
       // Frame rate limiting
       if (deltaTime >= targetFrameTime) {
@@ -457,9 +457,9 @@ export default function LivingCanvas() {
         tickEmotionTransition(deltaTime);
         updateFrameStats(timestamp);
         
-        // Render WebGL
-        if (rendererRef.current && effective.useWebGL) {
-          rendererRef.current.render(emotion, mousePosition);
+        // Render WebGL using ref values (current state without dependency)
+        if (rendererRef.current && effectiveRef.current?.useWebGL) {
+          rendererRef.current.render(emotionRef.current, mouseRef.current);
         }
       }
       
@@ -473,7 +473,7 @@ export default function LivingCanvas() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [canvasEnabled, effective.fps, effective.useWebGL, emotion, mousePosition, tickEmotionTransition, updateFrameStats]);
+  }, [canvasEnabled, tickEmotionTransition, updateFrameStats]);
   
   // Mouse tracking
   const handleMouseMove = useCallback((e) => {
