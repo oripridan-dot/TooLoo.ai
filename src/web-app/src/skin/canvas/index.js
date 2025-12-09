@@ -1,4 +1,4 @@
-// @version 1.0.0
+// @version 3.3.487
 /**
  * Canvas Module Index
  * 
@@ -24,6 +24,9 @@ export {
   FloatingOrb,
   useParallax,
 } from './DepthParallax.jsx';
+
+// Socket bridge for backend state sync
+export { default as CanvasSocketBridge, useCanvasSocketBridge } from './CanvasSocketBridge.jsx';
 
 // Re-export store hooks for convenience
 export {
