@@ -1,10 +1,10 @@
-// @version 3.3.446
+// @version 3.3.447
 // TooLoo.ai Projection Interface - Component Index
 // ═══════════════════════════════════════════════════════════════════════════
 // Export all Projection Interface components for easy integration
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Store
+// Store - SystemStateStore (single source of truth for backend state)
 export { 
   useSystemState, 
   useOrchestrator, 
@@ -19,10 +19,10 @@ export {
   selectActiveProvider,
   selectRetrievedContext,
   selectSegments,
-} from './store/systemStateStore.js';
+} from '../store/systemStateStore.js';
 
-// Components
-export { ControlDeck } from './components/ControlDeck.jsx';
-export { KnowledgeRail } from './components/KnowledgeRail.jsx';
-export { SegmentationSidebar } from './components/SegmentationSidebar.jsx';
-export { ModeLayout } from './components/ModeLayout.jsx';
+// Components - Projection Interface Building Blocks
+export { ControlDeck } from '../components/ControlDeck.jsx';
+export { KnowledgeRail } from '../components/KnowledgeRail.jsx';
+export { SegmentationSidebar } from '../components/SegmentationSidebar.jsx';
+export { ModeLayout } from '../components/ModeLayout.jsx';
