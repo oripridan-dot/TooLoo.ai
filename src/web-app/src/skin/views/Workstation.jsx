@@ -1,4 +1,4 @@
-// @version 3.3.465
+// @version 3.3.466
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -84,10 +84,13 @@ const TaskNode = memo(({ task, depth = 0 }) => {
 
 TaskNode.displayName = 'TaskNode';
 
-const TaskBoardPanel = memo(({ tasks = [], currentGoal, onTaskSelect, onAutoStructure, isStructuring }) => {
+const TaskBoardPanel = memo(({ tasks, currentGoal, onTaskSelect, onAutoStructure, isStructuring }) => {
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [featurePrompt, setFeaturePrompt] = useState('');
   const [structureResult, setStructureResult] = useState(null);
+  
+  // Ensure tasks is always an array
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
 
   const handleAutoStructure = async () => {
     if (!featurePrompt.trim()) return;
