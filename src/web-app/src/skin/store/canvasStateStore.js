@@ -1,4 +1,4 @@
-// @version 3.3.480
+// @version 3.3.490
 /**
  * Canvas State Store
  * 
@@ -340,44 +340,70 @@ function easeInOutCubic(t) {
 
 // ============================================================================
 // HOOKS FOR COMPONENTS
+// Note: These selectors must return primitives or stable references to avoid
+// infinite re-render loops. Use separate selectors for each value.
 // ============================================================================
 
+// Individual selectors for emotion - avoids creating new objects
+export const useCanvasEmotionValue = () => useCanvasStore((s) => s.computedEmotion);
+export const useSetCanvasEmotion = () => useCanvasStore((s) => s.setEmotion);
+export const useIsEmotionTransitioning = () => useCanvasStore((s) => s.currentEmotion !== s.targetEmotion);
+
+// Legacy hook - use individual selectors instead for better performance
 export function useCanvasEmotion() {
-  return useCanvasStore((state) => ({
-    emotion: state.computedEmotion,
-    setEmotion: state.setEmotion,
-    isTransitioning: state.currentEmotion !== state.targetEmotion,
-  }));
+  const emotion = useCanvasStore((s) => s.computedEmotion);
+  const setEmotion = useCanvasStore((s) => s.setEmotion);
+  const isTransitioning = useCanvasStore((s) => s.currentEmotion !== s.targetEmotion);
+  return { emotion, setEmotion, isTransitioning };
 }
 
-export function useCanvasPerformance() {
-  return useCanvasStore((state) => ({
-    budget: state.performanceBudget,
-    effective: state.getEffectiveBudget(),
-    setBudget: state.setPerformanceBudget,
-    setCustom: state.setCustomBudget,
-    fps: state.currentFps,
-  }));
+// Individual selectors for performance - stable references
+export const useCanvasBudget = () => useCanvasStore((s) => s.performanceBudget);
+export const useCanvasFps = () => useCanvasStore((s) => s.currentFps);
+export const useSetCanvasBudget = () => useCanvasStore((s) => s.setPerformanceBudget);
+
+// Get effective budget as a stable selector
+export function useEffectiveBudget() {
+  const budget = useCanvasStore((s) => s.performanceBudget);
+  const customBudget = useCanvasStore((s) => s.customBudget);
+  const preset = PERFORMANCE_BUDGETS[budget];
+  return customBudget ? { ...preset, ...customBudget } : preset;
 }
+
+// Legacy hook - use individual selectors instead
+export function useCanvasPerformance() {
+  const budget = useCanvasStore((s) => s.performanceBudget);
+  const customBudget = useCanvasStore((s) => s.customBudget);
+  const setBudget = useCanvasStore((s) => s.setPerformanceBudget);
+  const setCustom = useCanvasStore((s) => s.setCustomBudget);
+  const fps = useCanvasStore((s) => s.currentFps);
+  const preset = PERFORMANCE_BUDGETS[budget];
+  const effective = customBudget ? { ...preset, ...customBudget } : preset;
+  return { budget, effective, setBudget, setCustom, fps };
+}
+
+// Individual selectors for depth
+export const useMousePosition = () => useCanvasStore((s) => s.mousePosition);
+export const useFocusDepth = () => useCanvasStore((s) => s.focusDepth);
+export const useActivePanel = () => useCanvasStore((s) => s.activePanelId);
+export const useSetMousePosition = () => useCanvasStore((s) => s.setMousePosition);
 
 export function useCanvasDepth() {
-  return useCanvasStore((state) => ({
-    mouse: state.mousePosition,
-    depth: state.focusDepth,
-    activePanel: state.activePanelId,
-    setMouse: state.setMousePosition,
-    setDepth: state.setFocusDepth,
-    setActivePanel: state.setActivePanel,
-  }));
+  const mouse = useCanvasStore((s) => s.mousePosition);
+  const depth = useCanvasStore((s) => s.focusDepth);
+  const activePanel = useCanvasStore((s) => s.activePanelId);
+  const setMouse = useCanvasStore((s) => s.setMousePosition);
+  const setDepth = useCanvasStore((s) => s.setFocusDepth);
+  const setActivePanel = useCanvasStore((s) => s.setActivePanel);
+  return { mouse, depth, activePanel, setMouse, setDepth, setActivePanel };
 }
 
 export function useCanvasVisibility() {
-  return useCanvasStore((state) => ({
-    canvasEnabled: state.canvasEnabled,
-    particlesEnabled: state.particlesEnabled,
-    toggleCanvas: state.toggleCanvas,
-    toggleParticles: state.toggleParticles,
-  }));
+  const canvasEnabled = useCanvasStore((s) => s.canvasEnabled);
+  const particlesEnabled = useCanvasStore((s) => s.particlesEnabled);
+  const toggleCanvas = useCanvasStore((s) => s.toggleCanvas);
+  const toggleParticles = useCanvasStore((s) => s.toggleParticles);
+  return { canvasEnabled, particlesEnabled, toggleCanvas, toggleParticles };
 }
 
 export default useCanvasStore;
