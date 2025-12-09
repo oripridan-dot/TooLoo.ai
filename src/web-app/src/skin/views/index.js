@@ -1,4 +1,4 @@
-// @version 3.3.415
+// @version 3.3.452
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -39,8 +39,21 @@ export { default as Design } from './Design';
 // V3.3.408: Internal Mirror - Self-hosted code editor with Monaco
 export { default as Mirror } from './Mirror';
 
+// V3.3.450: Workstation - The 4-Panel Unified Development Interface (Phase 2d)
+export { default as Workstation } from './Workstation';
+
 // View registry for dynamic routing
 export const VIEWS = {
+  workstation: {
+    id: 'workstation',
+    name: 'Workstation',
+    icon: '🖥️',
+    description: '4-panel unified development interface',
+    color: 'cyan',
+    shortcut: 'W',
+    isNew: true,
+    isPrimary: true, // Make this the new primary view
+  },
   space: {
     id: 'space',
     name: 'Space',
@@ -48,8 +61,7 @@ export const VIEWS = {
     description: 'Unified creative canvas',
     color: 'gradient',
     shortcut: '1',
-    isNew: true,
-    isPrimary: true,
+    isNew: false,
   },
   projects: {
     id: 'projects',
@@ -130,6 +142,7 @@ export const VIEWS = {
 
 // View component map for dynamic rendering
 export const VIEW_COMPONENTS = {
+  workstation: () => import('./Workstation').then((m) => m.default),
   space: () => import('./SpaceV4').then((m) => m.default),
   projects: () => import('./Projects').then((m) => m.default),
   cortex: () => import('./Cortex').then((m) => m.default),
