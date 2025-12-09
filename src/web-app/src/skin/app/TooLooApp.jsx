@@ -1,4 +1,4 @@
-// @version 3.3.405
+// @version 3.3.416
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 
@@ -34,6 +34,9 @@ const CreationSpace = lazy(() => import('../views/CreationSpaceView'));
 const Growth = lazy(() => import('../views/Growth'));
 const Studio = lazy(() => import('../views/Studio'));
 const Command = lazy(() => import('../views/Command'));
+// V3.3.408: DeSignStudio and Internal Mirror
+const Design = lazy(() => import('../views/Design'));
+const Mirror = lazy(() => import('../views/Mirror'));
 
 // View component map
 const VIEW_MAP = {
@@ -45,6 +48,8 @@ const VIEW_MAP = {
   growth: Growth,
   studio: Studio,
   command: Command,
+  design: Design,
+  mirror: Mirror,
 };
 
 // ============================================================================
@@ -234,10 +239,10 @@ const TooLooAppInner = memo(() => {
       // Ignore if typing in input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-      // View shortcuts (1-8) - now supports 8 views
-      if (e.key >= '1' && e.key <= '8' && !e.ctrlKey && !e.metaKey) {
+      // View shortcuts (1-9, 0) - supports 10 views
+      if ((e.key >= '1' && e.key <= '9' || e.key === '0') && !e.ctrlKey && !e.metaKey) {
         const viewKeys = Object.keys(VIEWS);
-        const index = parseInt(e.key) - 1;
+        const index = e.key === '0' ? 9 : parseInt(e.key) - 1;
         if (viewKeys[index]) {
           setActiveView(viewKeys[index]);
         }
@@ -305,6 +310,8 @@ const TooLooApp = memo(() => {
           <SynapysConductor>
             <LiquidShell showEdge={true}>
               <TooLooAppInner />
+              {/* V3.3.405: System Pulse HUD - Shows file watcher activity */}
+              <SystemPulse position="bottom-right" enabled={true} />
             </LiquidShell>
           </SynapysConductor>
         </TextureEngineProvider>
