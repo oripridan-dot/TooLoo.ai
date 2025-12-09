@@ -175,6 +175,13 @@ export function interpolatePresets(presetA, presetB, t) {
       mesh: a.effects.mesh || b.effects.mesh,
       particles: a.effects.particles || b.effects.particles,
     },
+    canvas: {
+      emotion: t < 0.5 ? a.canvas?.emotion : b.canvas?.emotion,
+      budget: t < 0.5 ? a.canvas?.budget : b.canvas?.budget,
+      particles: Math.round(lerp(a.canvas?.particles || 0, b.canvas?.particles || 0, t)),
+      depth: t < 0.5 ? a.canvas?.depth : b.canvas?.depth,
+      waveIntensity: lerp(a.canvas?.waveIntensity || 0.5, b.canvas?.waveIntensity || 0.5, t),
+    },
   };
 }
 
