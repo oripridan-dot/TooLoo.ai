@@ -1,8 +1,9 @@
-// @version 3.3.350
+// @version 3.3.473
 /**
  * Precog Engine Index
  *
  * Exports all engine modules for AI processing and orchestration.
+ * V3.3.352: Added Neural Learning Optimizer, Autonomous Evolution Engine, and Shadow Lab
  * @module precog/engine
  */
 
@@ -33,3 +34,55 @@ export { ParallelProviderOrchestrator } from './parallel-provider-orchestrator.j
 
 // Creativity
 export { SerendipityInjector } from './serendipity-injector.js';
+
+// Neural Router (Emergent Model Routing)
+export {
+  DynamicModelRegistry,
+  dynamicModelRegistry,
+  type ModelRecommendation,
+  type RoutingPlan,
+  type RecipeStep,
+  type OutcomeData,
+  type BudgetTier,
+  type DomainType,
+} from './model-registry-dynamic.js';
+
+export {
+  ModelChooser,
+  modelChooser,
+  type Intent,
+  type ComplexityAnalysis,
+  type ShadowTestResult,
+  type ExecutionResult,
+} from './model-chooser.js';
+
+// Neural Learning Optimizer (Q-Learning based strategy selection)
+export {
+  NeuralLearningOptimizer,
+  neuralLearningOptimizer,
+  type LearningStrategy,
+  type LearningState,
+  type QTableEntry,
+  type OptimizerConfig,
+  type StrategyMapping,
+} from './neural-learning-optimizer.js';
+
+// Autonomous Evolution Engine (Self-optimization and evolutionary leaps)
+export {
+  AutonomousEvolutionEngine,
+  autonomousEvolutionEngine,
+  type PerformanceMetrics,
+  type ProviderPerformance,
+  type ImprovementOpportunity,
+  type CodeModification,
+  type EvolutionaryLeap,
+  type InteractionRecord,
+} from './autonomous-evolution-engine.js';
+
+// Shadow Lab (Background challenger experiments)
+export {
+  ShadowLab,
+  shadowLab,
+  type ShadowExperiment,
+  type ShadowLabConfig,
+} from './shadow-lab.js';
