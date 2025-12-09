@@ -1,12 +1,18 @@
-// @version 3.3.416
+// @version 3.3.449
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
+// V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 
 // Synapsys DNA & Conductor - only import what we need
 import { useSynapsynDNA, SynapysConductor, SYNAPSYS_PRESETS } from '../synapsys';
+
+// V3.3.449: Projection Interface - Backend state visualization
+import { ControlDeck } from '../components/ControlDeck';
+import { KnowledgeRail } from '../components/KnowledgeRail';
+import { useSystemState } from '../store/systemStateStore';
 
 // Shell & Effects
 import { LiquidShell, LiquidTransition } from '../shell/LiquidShell';
@@ -272,26 +278,54 @@ const TooLooAppInner = memo(() => {
     setActiveView(view);
   }, []);
 
+  // V3.3.449: Initialize Projection Interface store connection
+  const initializeConnection = useSystemState((s) => s.initializeConnection);
+  const [knowledgeRailOpen, setKnowledgeRailOpen] = useState(false);
+  
+  useEffect(() => {
+    initializeConnection();
+  }, [initializeConnection]);
+
   // Get the current view component
   const ViewComponent = VIEW_MAP[activeView] || VIEW_MAP.space;
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        activeView={activeView}
-        onViewChange={handleViewChange}
-        collapsed={sidebarCollapsed}
-      />
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* V3.3.449: Projection Interface Header - Shows provider, cost, confidence */}
+      <ControlDeck />
+      
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar
+          activeView={activeView}
+          onViewChange={handleViewChange}
+          collapsed={sidebarCollapsed}
+        />
 
-      {/* Main content area */}
-      <main className="flex-1 overflow-hidden">
-        <LiquidTransition viewKey={activeView}>
-          <Suspense fallback={<ViewLoading />}>
-            <ViewComponent />
-          </Suspense>
-        </LiquidTransition>
-      </main>
+        {/* Main content area */}
+        <main className="flex-1 overflow-hidden relative">
+          <LiquidTransition viewKey={activeView}>
+            <Suspense fallback={<ViewLoading />}>
+              <ViewComponent />
+            </Suspense>
+          </LiquidTransition>
+          
+          {/* V3.3.449: Knowledge Rail toggle button */}
+          <button
+            onClick={() => setKnowledgeRailOpen(!knowledgeRailOpen)}
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            title="Toggle Knowledge Context"
+          >
+            📚
+          </button>
+        </main>
+        
+        {/* V3.3.449: Knowledge Rail - Shows retrieved context */}
+        <KnowledgeRail 
+          isOpen={knowledgeRailOpen} 
+          onClose={() => setKnowledgeRailOpen(false)} 
+        />
+      </div>
     </div>
   );
 });
