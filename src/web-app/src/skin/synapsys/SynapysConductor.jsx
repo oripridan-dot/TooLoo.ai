@@ -1,4 +1,4 @@
-// @version 3.3.424
+// @version 3.3.425
 // TooLoo.ai Synapsys Conductor - Orchestrates rapid changes across all systems
 // Bridges SynapysDNA with LiquidEngine, TextureEngine, and TooLooPresence
 // Phase 3 of "Sentient Partner" Protocol - The Focus Director
@@ -88,6 +88,89 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       unsubscribe();
     };
   }, [liquidEngine, textureEngine, presenceSystem]);
+
+  // ==========================================================================
+  // BIO-FEEDBACK LOOP - V3.3.425
+  // Responds to MetaLearner cognitive state changes with visual feedback
+  // ==========================================================================
+
+  useEffect(() => {
+    // Connect to Socket.IO for real-time cognitive state updates
+    const socket = io('/', { 
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+    });
+
+    // Listen for cognitive state changes from MetaLearner
+    const handleCognitiveStateChange = (data) => {
+      const { velocity, cognitiveLoad, trigger } = data;
+
+      console.log('[SynapysConductor] Cognitive state change:', { velocity: velocity?.trend, cognitiveLoad, trigger });
+
+      // Hyperfocus Mode: High velocity (accelerating) = Golden Ripples
+      if (velocity?.trend === 'accelerating') {
+        console.log('[SynapysConductor] Triggering Hyperfocus Mode (accelerating velocity)');
+        playEmergence(2000); // Golden ripples effect
+        
+        // Brief pulse to signal positive flow state
+        getActions().override({
+          colors: { energy: 0.9 },
+          liquid: { intensity: 0.8 },
+        });
+        setTimeout(() => getActions().reset(), 1500);
+      }
+
+      // Focus Mode: High cognitive load (>0.8) = Dim/Minimal
+      if (cognitiveLoad > 0.8) {
+        console.log('[SynapysConductor] Triggering Focus Mode (high cognitive load)');
+        getActions().transitionTo('focus', 800);
+        
+        // Dim background, reduce visual noise
+        window.dispatchEvent(new CustomEvent('tooloo:mood', { detail: { mood: 'focused' } }));
+      }
+
+      // Creative Mode: Low cognitive load (<0.2) = Vibrant
+      if (cognitiveLoad < 0.2) {
+        console.log('[SynapysConductor] Triggering Creative Mode (low cognitive load)');
+        getActions().transitionTo('creative', 1000);
+        
+        // Brighten UI, enable creative elements
+        window.dispatchEvent(new CustomEvent('tooloo:mood', { detail: { mood: 'creative' } }));
+      }
+
+      // Support Mode: Stalled or decelerating velocity
+      if (velocity?.trend === 'stalled' || velocity?.trend === 'decelerating') {
+        console.log('[SynapysConductor] Triggering Support Mode (velocity stalled/decelerating)');
+        
+        // Brighten UI, offer suggestions
+        getActions().transitionTo('balanced', 600);
+        
+        // Trigger suggestion pulse
+        window.dispatchEvent(new CustomEvent('suggestion:ready', {
+          detail: { 
+            type: 'support', 
+            message: 'Tooloo noticed you might be stuck. Need help?',
+            priority: 'medium'
+          }
+        }));
+      }
+    };
+
+    socket.on('meta:cognitive_state_change', handleCognitiveStateChange);
+
+    // Also listen via synapsys:event for fallback
+    socket.on('synapsys:event', (event) => {
+      if (event.type === 'meta:cognitive_state_change') {
+        handleCognitiveStateChange(event.payload);
+      }
+    });
+
+    return () => {
+      socket.off('meta:cognitive_state_change', handleCognitiveStateChange);
+      socket.disconnect();
+    };
+  }, []);
 
   // === ORCHESTRATED SEQUENCES ===
 
