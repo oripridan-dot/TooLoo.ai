@@ -1,11 +1,31 @@
-// @version 3.3.420
+// @version 3.3.435
 // TooLoo.ai LiquidShell - The "Deep Canvas" Architecture
 // Full-viewport wrapper with Z-Index Layered Architecture for sophisticated visual communication
 // Phase 1 of "Sentient Partner" Protocol
+// V3.3.434: Added Director Mode Toggle - Global Autonomy Switch for "God Mode"
 
 import React, { memo, useEffect, useRef, useState, useCallback, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSynapsynDNA } from '../synapsys';
+
+// ============================================================================
+// AUTONOMY CONTEXT - Global "God Mode" state
+// When enabled: autoApprove=true for all agent tasks, golden theme, self-modification allowed
+// ============================================================================
+
+const AutonomyContext = createContext(null);
+
+export const useAutonomy = () => {
+  const context = useContext(AutonomyContext);
+  if (!context) {
+    return {
+      autonomyEnabled: false,
+      toggleAutonomy: () => {},
+      getTaskOptions: () => ({}),
+    };
+  }
+  return context;
+};
 
 // ============================================================================
 // DEEP CANVAS CONTEXT - Coordinates all layers
@@ -36,7 +56,7 @@ export const useDeepCanvas = () => {
 // Renders mood-driven visual expression
 // ============================================================================
 
-const SubconsciousLayer = memo(({ mood = 'calm', intensity = 0.5 }) => {
+const SubconsciousLayer = memo(({ mood = 'calm', intensity = 0.5, autonomyEnabled = false }) => {
   const moodColors = {
     calm: { hue: 200, saturation: 40, energy: 0.2, pulse: 0.5 },
     thinking: { hue: 260, saturation: 70, energy: 0.5, pulse: 1.2 },
@@ -44,9 +64,13 @@ const SubconsciousLayer = memo(({ mood = 'calm', intensity = 0.5 }) => {
     celebration: { hue: 45, saturation: 90, energy: 1.0, pulse: 2.5 },
     creative: { hue: 300, saturation: 75, energy: 0.6, pulse: 1.0 },
     focused: { hue: 220, saturation: 60, energy: 0.4, pulse: 0.8 },
+    // God Mode: Golden autonomous state
+    autonomous: { hue: 45, saturation: 85, energy: 0.7, pulse: 1.5 },
   };
 
-  const moodConfig = moodColors[mood] || moodColors.calm;
+  // Override mood when autonomy is enabled
+  const effectiveMood = autonomyEnabled ? 'autonomous' : mood;
+  const moodConfig = moodColors[effectiveMood] || moodColors.calm;
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const frameRef = useRef(0);
