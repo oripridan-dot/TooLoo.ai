@@ -1,4 +1,4 @@
-// @version 3.3.427
+// @version 3.3.428
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // V3.3.425: Added Vibe Thief - extract design tokens from external websites
@@ -224,6 +224,12 @@ const Studio = memo(({ className = '' }) => {
   // NEW: Tab state for switching between Studio, Liquid Skin Showcase, and Figma Copilot
   const [activeTab, setActiveTab] = useState('studio'); // 'studio' | 'showcase' | 'figma'
 
+  // V3.3.425: Vibe Thief state
+  const [vibeUrl, setVibeUrl] = useState('');
+  const [vibeLoading, setVibeLoading] = useState(false);
+  const [vibeError, setVibeError] = useState(null);
+  const [extractedTokens, setExtractedTokens] = useState(null);
+
   // Fetch emergence artifacts from API
   const fetchEmergences = useCallback(async () => {
     try {
@@ -372,6 +378,143 @@ const Studio = memo(({ className = '' }) => {
     const presetKey = moodToPreset[mood] || 'balanced';
     handlePresetChange(presetKey);
   }, [handlePresetChange]);
+
+  // ==========================================================================
+  // VIBE THIEF - V3.3.425
+  // Extract design tokens from external websites and apply them as presets
+  // ==========================================================================
+
+  const handleVibeTheft = useCallback(async () => {
+    if (!vibeUrl.trim()) {
+      setVibeError('Please enter a URL to analyze');
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(vibeUrl);
+    } catch (e) {
+      setVibeError('Invalid URL format. Please include http:// or https://');
+      return;
+    }
+
+    setVibeLoading(true);
+    setVibeError(null);
+    setExtractedTokens(null);
+
+    try {
+      console.log('[VibeThief] Analyzing:', vibeUrl);
+
+      // Call the research task to extract design tokens
+      const res = await fetch(`${API_BASE}/agent/task/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'research',
+          name: 'Vibe Thief - Extract Design Tokens',
+          input: {
+            url: vibeUrl,
+            goal: 'Extract color palette, typography, and layout spacing tokens',
+            extractDesignTokens: true,
+          },
+          options: {
+            autoApprove: true,
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.ok || !data.data?.result?.success) {
+        throw new Error(data.error || data.data?.result?.output || 'Failed to extract design tokens');
+      }
+
+      // Parse the extracted tokens from the LLM response
+      const output = data.data.result.output;
+      let tokens;
+
+      try {
+        // Try to extract JSON from the response
+        const jsonMatch = output.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          tokens = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON tokens found in response');
+        }
+      } catch (parseError) {
+        console.warn('[VibeThief] Could not parse tokens as JSON:', parseError);
+        // Store raw output for display
+        setVibeError('Could not parse design tokens. Raw analysis shown below.');
+        setExtractedTokens({ raw: output });
+        return;
+      }
+
+      console.log('[VibeThief] Extracted tokens:', tokens);
+      setExtractedTokens(tokens);
+
+      // Convert extracted tokens to a Synapsys preset and apply
+      if (tokens.colors?.primary) {
+        const primaryHex = tokens.colors.primary;
+        const hue = hexToHue(primaryHex);
+        
+        if (hue !== null) {
+          handleColorChange(hue);
+          
+          // Apply as temporary preset
+          const actions = useSynapsynDNA.getState();
+          actions.override({
+            colors: {
+              primary: hue,
+              secondary: (hue + 180) % 360, // Complementary
+              accent: (hue + 60) % 360, // Analogous
+            },
+          });
+          
+          console.log('[VibeThief] Applied vibe with hue:', hue);
+        }
+      }
+
+    } catch (error) {
+      console.error('[VibeThief] Failed:', error);
+      setVibeError(error.message || 'Failed to analyze website');
+    } finally {
+      setVibeLoading(false);
+    }
+  }, [vibeUrl, handleColorChange]);
+
+  // Helper: Convert hex color to hue value
+  const hexToHue = (hex) => {
+    try {
+      // Remove # if present
+      hex = hex.replace('#', '');
+      
+      // Parse RGB
+      const r = parseInt(hex.substring(0, 2), 16) / 255;
+      const g = parseInt(hex.substring(2, 4), 16) / 255;
+      const b = parseInt(hex.substring(4, 6), 16) / 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const delta = max - min;
+      
+      let hue = 0;
+      if (delta !== 0) {
+        if (max === r) {
+          hue = ((g - b) / delta) % 6;
+        } else if (max === g) {
+          hue = (b - r) / delta + 2;
+        } else {
+          hue = (r - g) / delta + 4;
+        }
+        hue = Math.round(hue * 60);
+        if (hue < 0) hue += 360;
+      }
+      
+      return hue;
+    } catch (e) {
+      return null;
+    }
+  };
 
   // Color palette
   const colorHues = [0, 30, 60, 120, 180, 200, 260, 300, 330];
