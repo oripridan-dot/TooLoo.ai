@@ -1,4 +1,4 @@
-// @version 3.3.475
+// @version 3.3.476
 /**
  * Precog Engine Index
  *
@@ -30,7 +30,7 @@ export { default as HyperSpeedTrainingCamp } from './hyper-speed-training-camp.j
 
 // Execution
 export { ValidatedExecutionFramework } from './validated-execution-framework.js';
-export { ParallelProviderOrchestrator } from './parallel-provider-orchestrator.js';
+export { default as ParallelProviderOrchestrator } from './parallel-provider-orchestrator.js';
 
 // Creativity
 export { SerendipityInjector } from './serendipity-injector.js';
