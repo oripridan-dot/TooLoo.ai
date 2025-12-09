@@ -1,6 +1,7 @@
-// @version 3.3.451
+// @version 3.3.462
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
+// V3.3.462: Added Auto-Structure button for repo organization
 //
 // Panels:
 // 1. TaskBoard - DAG visualization of current task decomposition
