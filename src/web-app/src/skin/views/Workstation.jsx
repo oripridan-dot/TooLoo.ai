@@ -194,7 +194,7 @@ const TaskBoardPanel = memo(({ tasks, currentGoal, onTaskSelect, onAutoStructure
           </div>
         )}
 
-        {tasks.length === 0 ? (
+        {safeTasks.length === 0 ? (
           <div className="text-center text-white/40 py-8">
             <div className="text-2xl mb-2">📋</div>
             <div>No tasks in queue</div>
@@ -202,7 +202,7 @@ const TaskBoardPanel = memo(({ tasks, currentGoal, onTaskSelect, onAutoStructure
           </div>
         ) : (
           <div className="space-y-1">
-            {tasks.map((task, idx) => (
+            {safeTasks.map((task, idx) => (
               <TaskNode key={task.id || idx} task={task} />
             ))}
           </div>
