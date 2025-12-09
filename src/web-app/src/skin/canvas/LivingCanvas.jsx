@@ -383,16 +383,34 @@ export default function LivingCanvas() {
   const rendererRef = useRef(null);
   const animationRef = useRef(null);
   
-  const { emotion, setEmotion } = useCanvasEmotion();
-  const { effective } = useCanvasPerformance();
+  // Use individual selectors to avoid creating new objects on every render
+  const emotion = useCanvasStore((s) => s.computedEmotion);
   const canvasEnabled = useCanvasStore((s) => s.canvasEnabled);
   const particlesEnabled = useCanvasStore((s) => s.particlesEnabled);
   const mousePosition = useCanvasStore((s) => s.mousePosition);
   const setMousePosition = useCanvasStore((s) => s.setMousePosition);
   const tickEmotionTransition = useCanvasStore((s) => s.tickEmotionTransition);
   const updateFrameStats = useCanvasStore((s) => s.updateFrameStats);
+  const performanceBudget = useCanvasStore((s) => s.performanceBudget);
+  const customBudget = useCanvasStore((s) => s.customBudget);
+  
+  // Compute effective budget locally (stable reference via useMemo)
+  const effective = useMemo(() => {
+    const preset = PERFORMANCE_BUDGETS[performanceBudget] || PERFORMANCE_BUDGETS.balanced;
+    return customBudget ? { ...preset, ...customBudget } : preset;
+  }, [performanceBudget, customBudget]);
   
   const [showControls, setShowControls] = React.useState(false);
+  
+  // Store current values in refs for animation loop (avoids dependency changes)
+  const emotionRef = useRef(emotion);
+  const mouseRef = useRef(mousePosition);
+  const effectiveRef = useRef(effective);
+  
+  // Keep refs up to date
+  useEffect(() => { emotionRef.current = emotion; }, [emotion]);
+  useEffect(() => { mouseRef.current = mousePosition; }, [mousePosition]);
+  useEffect(() => { effectiveRef.current = effective; }, [effective]);
   
   // Initialize WebGL renderer
   useEffect(() => {
