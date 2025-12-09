@@ -1,7 +1,8 @@
-// @version 3.3.449
+// @version 3.3.454
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
+// V3.3.450: Added Workstation view - 4-panel unified development interface
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
@@ -246,7 +247,7 @@ const TooLooAppInner = memo(() => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       // View shortcuts (1-9, 0) - supports 10 views
-      if ((e.key >= '1' && e.key <= '9' || e.key === '0') && !e.ctrlKey && !e.metaKey) {
+      if (((e.key >= '1' && e.key <= '9') || e.key === '0') && !e.ctrlKey && !e.metaKey) {
         const viewKeys = Object.keys(VIEWS);
         const index = e.key === '0' ? 9 : parseInt(e.key) - 1;
         if (viewKeys[index]) {
@@ -281,7 +282,7 @@ const TooLooAppInner = memo(() => {
   // V3.3.449: Initialize Projection Interface store connection
   const initializeConnection = useSystemState((s) => s.initializeConnection);
   const [knowledgeRailOpen, setKnowledgeRailOpen] = useState(false);
-  
+
   useEffect(() => {
     initializeConnection();
   }, [initializeConnection]);
@@ -293,7 +294,7 @@ const TooLooAppInner = memo(() => {
     <div className="h-screen flex flex-col overflow-hidden">
       {/* V3.3.449: Projection Interface Header - Shows provider, cost, confidence */}
       <ControlDeck />
-      
+
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <Sidebar
@@ -309,7 +310,7 @@ const TooLooAppInner = memo(() => {
               <ViewComponent />
             </Suspense>
           </LiquidTransition>
-          
+
           {/* V3.3.449: Knowledge Rail toggle button */}
           <button
             onClick={() => setKnowledgeRailOpen(!knowledgeRailOpen)}
@@ -319,12 +320,9 @@ const TooLooAppInner = memo(() => {
             📚
           </button>
         </main>
-        
+
         {/* V3.3.449: Knowledge Rail - Shows retrieved context */}
-        <KnowledgeRail 
-          isOpen={knowledgeRailOpen} 
-          onClose={() => setKnowledgeRailOpen(false)} 
-        />
+        <KnowledgeRail isOpen={knowledgeRailOpen} onClose={() => setKnowledgeRailOpen(false)} />
       </div>
     </div>
   );
