@@ -1,4 +1,4 @@
-// @version 3.3.468
+// @version 3.3.469
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -261,7 +261,7 @@ const ChatPanel = memo(({ messages, onSendMessage, isProcessing }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [safeMessages, scrollToBottom]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
