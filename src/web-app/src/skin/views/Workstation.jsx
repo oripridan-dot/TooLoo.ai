@@ -1,4 +1,4 @@
-// @version 3.3.463
+// @version 3.3.464
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -643,6 +643,40 @@ const Workstation = memo(() => {
       }
     } catch (error) {
       console.error('[Workstation] Vision capture failed:', error);
+    }
+  }, []);
+
+  // V3.3.462: Handle Auto-Structure - calls RepoAutoOrg
+  const [isStructuring, setIsStructuring] = useState(false);
+  const handleAutoStructure = useCallback(async (featurePrompt) => {
+    setIsStructuring(true);
+    try {
+      const response = await fetch('/api/v1/repo/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: featurePrompt,
+          mode: 'analyze' 
+        }),
+      });
+      const data = await response.json();
+
+      if (data.ok && data.data) {
+        // Add to messages for visibility
+        setMessages(prev => [...prev, {
+          id: `msg-${Date.now()}-structure`,
+          role: 'assistant',
+          content: `🏗️ Auto-Structure Analysis Complete!\n\nFeature: ${featurePrompt}\n\nSuggested ${data.data.plan?.files?.length || 0} file changes.`,
+          timestamp: Date.now(),
+        }]);
+        return data.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('[Workstation] Auto-structure failed:', error);
+      return null;
+    } finally {
+      setIsStructuring(false);
     }
   }, []);
 
