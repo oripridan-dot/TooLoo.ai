@@ -1,4 +1,4 @@
-// @version 3.3.413
+// @version 3.3.414
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -107,6 +107,24 @@ export const VIEWS = {
     description: 'System control & settings',
     color: 'amber',
     shortcut: '8',
+  },
+  design: {
+    id: 'design',
+    name: 'Design',
+    icon: '🎭',
+    description: 'Visual Cortex studio',
+    color: 'rose',
+    shortcut: '9',
+    isNew: true,
+  },
+  mirror: {
+    id: 'mirror',
+    name: 'Mirror',
+    icon: '🪞',
+    description: 'Self-hosted code editor',
+    color: 'cyan',
+    shortcut: '0',
+    isNew: true,
   },
 };
 
