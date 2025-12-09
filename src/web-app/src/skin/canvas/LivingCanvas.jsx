@@ -19,9 +19,8 @@ import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   useCanvasStore, 
-  useCanvasEmotion, 
-  useCanvasPerformance,
-  CANVAS_EMOTIONS 
+  CANVAS_EMOTIONS,
+  PERFORMANCE_BUDGETS,
 } from '../store/canvasStateStore';
 import AmbientParticles from './AmbientParticles';
 
