@@ -1,11 +1,11 @@
-// @version 3.3.408
+// @version 3.3.417
 // TooLoo DeSign Studio - The Visual Cortex Interface
 // This is the "steering wheel" for VisualCortex2
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// API base URL
-const API_BASE = '/api/v1/visual';
+// API base URL - maps to /api/v1/visuals routes
+const API_BASE = '/api/v1/visuals/v2';
 
 // Export FigmaCopilot for backward compatibility
 export { FigmaCopilot } from './FigmaCopilot';
