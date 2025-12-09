@@ -1,4 +1,4 @@
-// @version 2.2.596
+// @version 3.3.448
 // TooLoo.ai Skin - Main Entry Point
 // Liquid Synapsys V1 - The viewport IS TooLoo
 // Exports all skin infrastructure including liquid effects, textures, presence, Synapsys DNA, shell, views, and app
@@ -105,6 +105,29 @@ export {
   COMPONENT_GENERATION_PROMPT,
   generateComponentCode,
 } from './GenerativeUI';
+
+// V3.3.441: Projection Interface - Backend-first UI architecture
+export {
+  // Store - Single source of truth for backend state
+  useSystemState,
+  useOrchestrator,
+  useSkills,
+  useKnowledge,
+  useEvaluation,
+  useModality,
+  useUIMode,
+  useConnection,
+  selectIsProcessing,
+  selectConfidence,
+  selectActiveProvider,
+  selectRetrievedContext,
+  selectSegments,
+  // Components - Projection Interface building blocks
+  ControlDeck,
+  KnowledgeRail,
+  SegmentationSidebar,
+  ModeLayout,
+} from './projection';
 
 // Registry (JSON import requires bundler support)
 // import registry from './registry.json';
