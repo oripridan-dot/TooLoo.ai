@@ -714,6 +714,8 @@ const Workstation = memo(() => {
           <TaskBoardPanel
             tasks={tasks}
             currentGoal={currentGoal}
+            onAutoStructure={handleAutoStructure}
+            isStructuring={isStructuring}
           />
         </div>
         <div style={{ gridColumn: `span 1` }}>
