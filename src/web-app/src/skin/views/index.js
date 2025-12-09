@@ -1,4 +1,4 @@
-// @version 3.3.386
+// @version 3.3.413
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -32,6 +32,12 @@ export { default as Command } from './Command';
 
 // LiquidSkinShowcase - Full immersive demo of Liquid Skin system
 export { default as LiquidSkinShowcase } from './LiquidSkinShowcase';
+
+// V3.3.408: DeSignStudio - Visual Cortex interface
+export { default as Design } from './Design';
+
+// V3.3.408: Internal Mirror - Self-hosted code editor with Monaco
+export { default as Mirror } from './Mirror';
 
 // View registry for dynamic routing
 export const VIEWS = {
