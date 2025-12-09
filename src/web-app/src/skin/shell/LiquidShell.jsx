@@ -1,4 +1,4 @@
-// @version 3.3.436
+// @version 3.3.437
 // TooLoo.ai LiquidShell - The "Deep Canvas" Architecture
 // Full-viewport wrapper with Z-Index Layered Architecture for sophisticated visual communication
 // Phase 1 of "Sentient Partner" Protocol
@@ -625,6 +625,43 @@ export const LiquidShell = memo(({
   const [focusTarget, setFocusTarget] = useState(null);
   const [suggestionPulse, setSuggestionPulse] = useState(false);
   const [systemStatus, setSystemStatus] = useState('online');
+  
+  // V3.3.434: Autonomy Mode - "God Mode" state
+  const [autonomyEnabled, setAutonomyEnabled] = useState(false);
+
+  // Toggle autonomy mode
+  const toggleAutonomy = useCallback(() => {
+    setAutonomyEnabled((prev) => {
+      const newState = !prev;
+      console.log(`[LiquidShell] Autonomy Mode: ${newState ? 'ENABLED' : 'DISABLED'}`);
+      
+      // Dispatch event for other systems to react
+      window.dispatchEvent(new CustomEvent('tooloo:autonomy', { 
+        detail: { enabled: newState } 
+      }));
+      
+      // When enabling, apply golden theme
+      if (newState) {
+        const dna = useSynapsynDNA.getState();
+        dna.override({
+          colors: { primary: 45, energy: 0.8 }, // Golden hue
+          liquid: { intensity: 0.7 },
+        });
+      } else {
+        // Reset to balanced when disabling
+        useSynapsynDNA.getState().reset();
+      }
+      
+      return newState;
+    });
+  }, []);
+
+  // Get task options based on autonomy mode
+  const getTaskOptions = useCallback(() => {
+    return autonomyEnabled 
+      ? { autoApprove: true, allowSelfModification: true }
+      : {};
+  }, [autonomyEnabled]);
 
   // Toggle between micro (coding) and macro (planning) views
   const toggleViewMode = useCallback(() => {
@@ -673,21 +710,27 @@ export const LiquidShell = memo(({
     };
   }, [triggerSuggestionPulse]);
 
-  // Keyboard shortcuts for view mode
+  // Keyboard shortcuts for view mode and autonomy
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ctrl+M: Toggle view mode
       if (e.ctrlKey && e.key === 'm') {
         e.preventDefault();
         toggleViewMode();
+      }
+      // Ctrl+Shift+G: Toggle God Mode (Autonomy)
+      if (e.ctrlKey && e.shiftKey && e.key === 'G') {
+        e.preventDefault();
+        toggleAutonomy();
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleViewMode]);
+  }, [toggleViewMode, toggleAutonomy]);
 
-  // Context value
-  const contextValue = {
+  // Context value for Deep Canvas
+  const canvasContextValue = {
     mood,
     setMood,
     viewMode,
@@ -702,41 +745,56 @@ export const LiquidShell = memo(({
     setSystemStatus,
   };
 
+  // Context value for Autonomy
+  const autonomyContextValue = {
+    autonomyEnabled,
+    toggleAutonomy,
+    getTaskOptions,
+  };
+
   return (
-    <DeepCanvasContext.Provider value={contextValue}>
-      <div className={`relative w-full h-screen overflow-hidden bg-[#0a0a0a] ${className}`}>
-        {/* Layer 1: Subconscious (z-0) - Mood backdrop */}
-        <SubconsciousLayer mood={mood} intensity={viewMode === 'macro' ? 0.7 : 0.4} />
-        
-        {/* Layer 2: Context (z-10) - Dependency visualization */}
-        <ContextLayer 
-          dependencies={dependencies}
-          hoveredDependency={hoveredDependency}
-          onHoverDependency={setHoveredDependency}
-          viewMode={viewMode}
-          visible={true}
-        />
-        
-        {/* Layer 3: Work Surface (z-20) - Content area */}
-        <WorkSurfaceLayer 
-          viewMode={viewMode}
-          dimmed={hoveredDependency !== null}
-          focusTarget={focusTarget}
-        >
-          {children}
-        </WorkSurfaceLayer>
-        
-        {/* Layer 4: Consciousness (z-50) - HUD overlay */}
-        <ConsciousnessLayer 
-          mood={mood}
-          suggestionPulse={suggestionPulse}
-          systemStatus={systemStatus}
-        />
-        
-        {/* Viewport edge breathing (highest z-index) */}
-        {showEdge && <ViewportEdge mood={mood} />}
-      </div>
-    </DeepCanvasContext.Provider>
+    <AutonomyContext.Provider value={autonomyContextValue}>
+      <DeepCanvasContext.Provider value={canvasContextValue}>
+        <div className={`relative w-full h-screen overflow-hidden bg-[#0a0a0a] ${className}`}>
+          {/* Layer 1: Subconscious (z-0) - Mood backdrop */}
+          <SubconsciousLayer 
+            mood={mood} 
+            intensity={viewMode === 'macro' ? 0.7 : 0.4} 
+            autonomyEnabled={autonomyEnabled}
+          />
+          
+          {/* Layer 2: Context (z-10) - Dependency visualization */}
+          <ContextLayer 
+            dependencies={dependencies}
+            hoveredDependency={hoveredDependency}
+            onHoverDependency={setHoveredDependency}
+            viewMode={viewMode}
+            visible={true}
+          />
+          
+          {/* Layer 3: Work Surface (z-20) - Content area */}
+          <WorkSurfaceLayer 
+            viewMode={viewMode}
+            dimmed={hoveredDependency !== null}
+            focusTarget={focusTarget}
+          >
+            {children}
+          </WorkSurfaceLayer>
+          
+          {/* Layer 4: Consciousness (z-50) - HUD overlay with Autonomy Toggle */}
+          <ConsciousnessLayer 
+            mood={mood}
+            suggestionPulse={suggestionPulse}
+            systemStatus={systemStatus}
+            autonomyEnabled={autonomyEnabled}
+            onToggleAutonomy={toggleAutonomy}
+          />
+          
+          {/* Viewport edge breathing (highest z-index) - golden when autonomous */}
+          {showEdge && <ViewportEdge mood={autonomyEnabled ? 'celebration' : mood} />}
+        </div>
+      </DeepCanvasContext.Provider>
+    </AutonomyContext.Provider>
   );
 });
 
