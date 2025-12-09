@@ -1,12 +1,14 @@
-// @version 3.3.429
+// @version 3.3.430
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // V3.3.425: Added Vibe Thief - extract design tokens from external websites
+// V3.3.425: Added Live Design Wire - real-time generative design
 
-import React, { memo, useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import React, { memo, useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SYNAPSYS_PRESETS, useSynapsynDNA } from '../synapsys';
 import { LiquidPanel } from '../shell/LiquidShell';
+import { io } from 'socket.io-client';
 
 // Lazy load the showcase and FigmaCopilot for better initial load
 const LiquidSkinShowcase = lazy(() => import('./LiquidSkinShowcase'));
