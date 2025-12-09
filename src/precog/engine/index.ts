@@ -1,4 +1,4 @@
-// @version 3.3.473
+// @version 3.3.475
 /**
  * Precog Engine Index
  *
@@ -24,9 +24,9 @@ export type {
 } from './data-enrichment.js';
 
 // Learning and training
-export { MetaLearningEngine } from './meta-learning-engine.js';
+export { default as MetaLearningEngine } from './meta-learning-engine.js';
 export { TrainingCamp } from './training-camp.js';
-export { HyperSpeedTrainingCamp } from './hyper-speed-training-camp.js';
+export { default as HyperSpeedTrainingCamp } from './hyper-speed-training-camp.js';
 
 // Execution
 export { ValidatedExecutionFramework } from './validated-execution-framework.js';
