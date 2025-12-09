@@ -1,4 +1,4 @@
-// @version 3.3.466
+// @version 3.3.467
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -114,7 +114,7 @@ const TaskBoardPanel = memo(({ tasks, currentGoal, onTaskSelect, onAutoStructure
           >
             🏗️ Auto-Structure
           </button>
-          <span className="text-xs text-white/50">{tasks.length} tasks</span>
+          <span className="text-xs text-white/50">{safeTasks.length} tasks</span>
         </div>
       }
     >
