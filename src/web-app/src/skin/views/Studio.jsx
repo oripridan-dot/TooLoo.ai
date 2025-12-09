@@ -1,4 +1,4 @@
-// @version 3.3.430
+// @version 3.3.431
 // TooLoo.ai Studio View - Design & Creation Space
 // Visual design, generative UI, emergence tracking, Figma Make
 // V3.3.425: Added Vibe Thief - extract design tokens from external websites
@@ -232,6 +232,13 @@ const Studio = memo(({ className = '' }) => {
   const [vibeError, setVibeError] = useState(null);
   const [extractedTokens, setExtractedTokens] = useState(null);
 
+  // V3.3.425: Live Design Wire state
+  const [designPrompt, setDesignPrompt] = useState('');
+  const [generatedSvg, setGeneratedSvg] = useState(null);
+  const [designLoading, setDesignLoading] = useState(false);
+  const socketRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+
   // Fetch emergence artifacts from API
   const fetchEmergences = useCallback(async () => {
     try {
@@ -269,6 +276,66 @@ const Studio = memo(({ className = '' }) => {
   useEffect(() => {
     fetchEmergences();
   }, [fetchEmergences]);
+
+  // ==========================================================================
+  // LIVE DESIGN WIRE - V3.3.425
+  // Real-time generative design via WebSocket
+  // ==========================================================================
+
+  useEffect(() => {
+    // Connect to Socket.IO for visual streaming
+    const socket = io('/', {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+    });
+    socketRef.current = socket;
+
+    // Listen for visual stream results
+    socket.on('visual:stream:result', (data) => {
+      console.log('[LiveDesign] Received result:', data.success);
+      setDesignLoading(false);
+      
+      if (data.success && data.svg) {
+        setGeneratedSvg(data.svg);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
+  // Debounced design prompt handler
+  const handleDesignPromptChange = useCallback((value) => {
+    setDesignPrompt(value);
+
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Don't send if prompt is too short
+    if (value.trim().length < 5) {
+      return;
+    }
+
+    // Debounce 500ms
+    debounceTimerRef.current = setTimeout(() => {
+      if (socketRef.current && value.trim()) {
+        console.log('[LiveDesign] Sending prompt:', value);
+        setDesignLoading(true);
+        
+        socketRef.current.emit('visual:stream', {
+          prompt: value,
+          type: 'svg',
+          subtype: 'background',
+          requestId: `design-${Date.now()}`,
+        });
+      }
+    }, 500);
+  }, []);
 
   const handlePresetChange = useCallback((presetKey) => {
     setActivePreset(presetKey);
