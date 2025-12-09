@@ -1,4 +1,4 @@
-// @version 3.3.491
+// @version 3.3.492
 /**
  * Living Canvas
  * 
@@ -270,8 +270,21 @@ function CSSGradientLayer({ emotion }) {
 // ============================================================================
 
 function PerformanceControls({ isOpen, onClose }) {
-  const { budget, effective, setBudget, fps } = useCanvasPerformance();
-  const { canvasEnabled, particlesEnabled, toggleCanvas, toggleParticles } = useCanvasStore();
+  // Use individual selectors to avoid object recreation
+  const budget = useCanvasStore((s) => s.performanceBudget);
+  const customBudget = useCanvasStore((s) => s.customBudget);
+  const setBudget = useCanvasStore((s) => s.setPerformanceBudget);
+  const fps = useCanvasStore((s) => s.currentFps);
+  const canvasEnabled = useCanvasStore((s) => s.canvasEnabled);
+  const particlesEnabled = useCanvasStore((s) => s.particlesEnabled);
+  const toggleCanvas = useCanvasStore((s) => s.toggleCanvas);
+  const toggleParticles = useCanvasStore((s) => s.toggleParticles);
+  
+  // Compute effective locally
+  const effective = useMemo(() => {
+    const preset = PERFORMANCE_BUDGETS[budget] || PERFORMANCE_BUDGETS.balanced;
+    return customBudget ? { ...preset, ...customBudget } : preset;
+  }, [budget, customBudget]);
   
   if (!isOpen) return null;
   
