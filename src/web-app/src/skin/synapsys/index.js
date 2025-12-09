@@ -1,6 +1,7 @@
-// @version 2.2.565
+// @version 3.3.423
 // TooLoo.ai Synapsys Module Index
 // Re-exports all Synapsys system components
+// Phase 3 of "Sentient Partner" Protocol
 
 // Core DNA System - Single source of truth
 export {
@@ -30,4 +31,11 @@ export {
   SynapysConductor,
   useSynapsynConductor,
   useRapidSkin,
+  // Phase 3: Focus Director - Sophisticated attention orchestration
+  FocusDirector,
+  useFocusDirector,
+  // Phase 4: Initiative State - Process awareness
+  InitiativeProvider,
+  useInitiativeState,
+  INITIATIVE_MODES,
 } from './SynapysConductor';
