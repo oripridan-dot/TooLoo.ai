@@ -289,14 +289,14 @@ const ChatPanel = memo(({ messages, onSendMessage, isProcessing }) => {
       }
     >
       <div className="flex-1 overflow-auto p-4">
-        {messages.length === 0 ? (
+        {safeMessages.length === 0 ? (
           <div className="text-center text-white/40 py-8">
             <div className="text-2xl mb-2">👋</div>
             <div>Start a conversation</div>
             <div className="text-xs mt-1">Tell TooLoo what you want to build</div>
           </div>
         ) : (
-          messages.map((msg, idx) => (
+          safeMessages.map((msg, idx) => (
             <ChatMessage key={msg.id || idx} message={msg} />
           ))
         )}
