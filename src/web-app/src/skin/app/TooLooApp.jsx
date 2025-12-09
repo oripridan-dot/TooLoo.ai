@@ -1,4 +1,4 @@
-// @version 3.3.454
+// @version 3.3.455
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
@@ -44,6 +44,8 @@ const Command = lazy(() => import('../views/Command'));
 // V3.3.408: DeSignStudio and Internal Mirror
 const Design = lazy(() => import('../views/Design'));
 const Mirror = lazy(() => import('../views/Mirror'));
+// V3.3.450: Workstation - 4-panel unified development interface
+const Workstation = lazy(() => import('../views/Workstation'));
 
 // View component map
 const VIEW_MAP = {
@@ -57,6 +59,7 @@ const VIEW_MAP = {
   command: Command,
   design: Design,
   mirror: Mirror,
+  workstation: Workstation,
 };
 
 // ============================================================================
@@ -252,6 +255,17 @@ const TooLooAppInner = memo(() => {
         const index = e.key === '0' ? 9 : parseInt(e.key) - 1;
         if (viewKeys[index]) {
           setActiveView(viewKeys[index]);
+        }
+      }
+
+      // V3.3.450: Letter shortcuts for views (W for Workstation, etc.)
+      if (/^[a-z]$/i.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const viewKeys = Object.keys(VIEWS);
+        const matchedView = viewKeys.find(
+          (key) => VIEWS[key].shortcut?.toLowerCase() === e.key.toLowerCase()
+        );
+        if (matchedView) {
+          setActiveView(matchedView);
         }
       }
 
