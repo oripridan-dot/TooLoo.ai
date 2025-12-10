@@ -1,4 +1,4 @@
-// @version 3.3.505
+// @version 3.3.506
 
 import { SmartRouter } from '../src/precog/engine/smart-router.js';
 import { getQLearningOptimizer } from '../src/precog/learning/q-learning-optimizer.js';
@@ -54,7 +54,7 @@ async function runTest() {
     
     // Check current Q-values before routing
     const taskType = 'CODING'; 
-    const best = optimizer.getOptimalProvider(taskType, segment);
+    const best = optimizer.getOptimalProvider({ taskType, userSegment: segment }, ['deepseek', 'anthropic', 'openai', 'gemini']);
     console.log(`Current Best Provider (Q-Learning): ${best || 'None'}`);
     
     const result = await router.smartRoute(prompt, {
@@ -67,7 +67,7 @@ async function runTest() {
   }
   
   console.log('\n--- Verification Results ---');
-  const finalBest = optimizer.getOptimalProvider('CODING', 'developer');
+  const finalBest = optimizer.getOptimalProvider({ taskType: 'CODING', userSegment: 'developer' }, ['deepseek', 'anthropic', 'openai', 'gemini']);
   console.log(`Final Optimal Provider: ${finalBest}`);
   
   if (finalBest === 'deepseek') {
