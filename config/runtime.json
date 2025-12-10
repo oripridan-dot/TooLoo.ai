@@ -1,0 +1,57 @@
+{
+  "timestamp": 1765327580528,
+  "version": "3.3.497",
+  "global": {
+    "providerWeights": {
+      "latency": 0.5,
+      "cost": 0.2,
+      "reliability": 0.3
+    },
+    "defaultModelConfig": {
+      "maxTokens": 2048,
+      "temperature": 0.7,
+      "topP": 0.9,
+      "frequencyPenalty": 0,
+      "presencePenalty": 0
+    },
+    "explorationRate": 0.1,
+    "updateFrequency": 60000,
+    "enabled": true
+  },
+  "providers": {
+    "deepseek": {
+      "enabled": true,
+      "priority": 1,
+      "timeout": 30000
+    },
+    "gemini": {
+      "enabled": true,
+      "priority": 2,
+      "timeout": 30000
+    },
+    "anthropic": {
+      "enabled": true,
+      "priority": 3,
+      "timeout": 30000
+    },
+    "openai": {
+      "enabled": true,
+      "priority": 4,
+      "timeout": 30000
+    }
+  },
+  "features": {
+    "smartRouting": true,
+    "metricsCollection": true,
+    "autoOptimization": true,
+    "explorationMode": false,
+    "userSegmentation": false,
+    "continuousLearning": false
+  },
+  "metadata": {
+    "optimizedBy": "api-client",
+    "optimizationScore": 0.6935166666666667,
+    "lastOptimizationTime": 1765327580528,
+    "iterationCount": 1
+  }
+}
