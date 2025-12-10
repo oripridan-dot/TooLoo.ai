@@ -1,4 +1,4 @@
-// @version 3.3.350
+// @version 3.3.508
 /**
  * Core Security Index
  *
@@ -18,4 +18,4 @@ export type {
 export { PIIScrubber } from './pii-scrubber.js';
 
 // Chaos Middleware
-export { ChaosMiddleware } from './chaos-middleware.js';
+export { chaosMiddleware } from './chaos-middleware.js';
