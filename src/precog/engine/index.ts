@@ -32,6 +32,24 @@ export { default as HyperSpeedTrainingCamp } from './hyper-speed-training-camp.j
 export { ValidatedExecutionFramework } from './validated-execution-framework.js';
 export { default as ParallelProviderOrchestrator } from './parallel-provider-orchestrator.js';
 
+// Phase 1: Smart Router (Real Dynamic Provider Ranking)
+export {
+  ProviderScorecard,
+  initProviderScorecard,
+  getProviderScorecard,
+  type RequestMetric,
+  type ProviderStats,
+  type ScoringWeights,
+} from './provider-scorecard.js';
+
+export {
+  SmartRouter,
+  initSmartRouter,
+  getSmartRouter,
+  type SmartRouteOptions,
+  type SmartRouteResult,
+} from './smart-router.js';
+
 // Creativity
 export { SerendipityInjector } from './serendipity-injector.js';
 
