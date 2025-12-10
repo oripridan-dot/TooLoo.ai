@@ -1,7 +1,8 @@
 # TooLoo.ai System Status
 
-> Last Updated: December 10, 2025
+> Last Updated: December 10, 2025 @ 19:15 UTC
 > Version: 3.3.510
+> Commit: 016bf52 (merged to main via PR #47)
 
 ---
 
@@ -13,12 +14,21 @@
 |--------|-------|--------|
 | Wire Coverage | 90.9% (50/55) | ✅ |
 | Perfection Score | 78/100 (Grade C) | 🔄 |
-| Test Coverage | 3,254 tests passing | ✅ |
+| Test Coverage | 3,254+ tests (80+ new test files) | ✅ |
 | LLM Providers | 6 (OpenAI, Anthropic, Gemini, DeepSeek, Ollama, ZhiPu GLM) | ✅ |
 | Stubs Remaining | 8 | 🔄 |
 | Critical Issues | 0 | ✅ |
 | TODOs | 12 | 📋 |
 | Dead Exports | 38 | 📋 |
+
+### System Resources (Live)
+
+| Resource | Usage | Status |
+|----------|-------|--------|
+| RAM | 8.5GB / 15GB (54%) | ✅ Healthy |
+| CPU Load | 0.85 (1min), 1.65 (5min) | ✅ Normal |
+| Swap | 0B / 0B | ✅ Not needed |
+| Available Memory | 7.1GB | ✅ Plenty |
 
 ---
 
@@ -179,13 +189,30 @@ curl http://localhost:4000/api/v1/qa/wire-check
 
 | Component | Status | Version |
 |-----------|--------|---------|
-| Cortex | ✅ Online | 3.3.461 |
-| Nexus | ✅ Online | 3.3.461 |
-| Precog | ✅ Online | 3.3.461 |
+| Cortex | ✅ Online | 3.3.510 |
+| Nexus | ✅ Online | 3.3.510 |
+| Precog | ✅ Online | 3.3.510 |
 | QA Guardian | ✅ Online | 2.0.0 |
 | Self-Healing | ✅ Online | 3.3.350 |
 | Design Cortex | ✅ Online | 3.3.220 |
 | Execution Agent | ✅ Ready | 3.3.0 |
+
+---
+
+## 📈 Latest Update Summary (v3.3.510)
+
+### Test Coverage Expansion
+- **80+ new unit test files** added across all modules
+- **Cortex**: Agent, cognition, memory, learning, scheduling, creative, design
+- **Precog**: Provider types, scheduler, synthesizer, training, domain router
+- **Nexus**: Routes, socket, middleware, auto-architect
+- **QA**: Contract fuzzer, feature validator, filesystem hygiene, schema guard
+
+### New Features
+- Error handler middleware
+- Rate limiter middleware
+- Model registry & model chooser enhancements
+- Segmentation service for personalization
 
 ---
 
