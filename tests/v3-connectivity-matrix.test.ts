@@ -1,3 +1,4 @@
+// @version 3.3.509
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { createNexusApp } from "../src/nexus/index.js";
@@ -7,6 +8,12 @@ vi.mock("../src/precog/index.js", () => ({
   precog: {
     providers: {
       generate: vi.fn().mockResolvedValue({
+        content: "This is a mocked V3 response.",
+        provider: "mock-provider",
+        model: "mock-model",
+        latency: 100,
+      }),
+      generateWithTransparency: vi.fn().mockResolvedValue({
         content: "This is a mocked V3 response.",
         provider: "mock-provider",
         model: "mock-model",
