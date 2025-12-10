@@ -1,3 +1,4 @@
+// @version 3.3.510
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import express from "express";
@@ -89,7 +90,7 @@ describe("Design Routes", () => {
         data: {
           meta: {
             styles: [
-              { style_type: "FILL", name: "Primary" },
+              { style_type: "FILL", name: "Primary", node_id: "123:456" },
               { style_type: "TEXT", name: "H1" },
             ],
           },
@@ -104,7 +105,8 @@ describe("Design Routes", () => {
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(res.body.designSystem.colors).toHaveProperty("Primary");
-      expect(res.body.designSystem.colors["Primary"]).toBe("#000000");
+      // The route returns style:node_id since it can't get actual color values without extra API call
+      expect(res.body.designSystem.colors["Primary"]).toBe("style:123:456");
     });
 
     it("should return 400 if apiToken is missing", async () => {
