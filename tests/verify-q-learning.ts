@@ -1,31 +1,30 @@
-// @version 3.3.503
+// @version 3.3.504
 
 import { SmartRouter } from '../src/precog/engine/smart-router.js';
 import { getQLearningOptimizer } from '../src/precog/learning/q-learning-optimizer.js';
 import { getProviderScorecard } from '../src/precog/engine/provider-scorecard.js';
 
-// Mock generateLLM
-import * as llmProvider from '../src/precog/providers/llm-provider.js';
-
-// Monkey patch generateLLM to simulate behavior
-// @ts-ignore
-llmProvider.generateLLM = async (options: any) => {
-  // Simulate latency based on provider
-  const latencyMap: Record<string, number> = {
-    'deepseek': 100,
-    'anthropic': 500,
-    'openai': 200,
-    'gemini': 300
-  };
-  
-  const latency = latencyMap[options.provider] || 1000;
-  await new Promise(resolve => setTimeout(resolve, latency));
-  
-  return {
-    text: `Response from ${options.provider}`,
-    tokens: 100
-  };
-};
+// Subclass to mock callProvider
+class MockSmartRouter extends SmartRouter {
+  // @ts-ignore
+  async callProvider(provider: string, prompt: string, options: any) {
+    // Simulate latency based on provider
+    const latencyMap: Record<string, number> = {
+      'deepseek': 100,
+      'anthropic': 500,
+      'openai': 200,
+      'gemini': 300
+    };
+    
+    const latency = latencyMap[provider] || 1000;
+    await new Promise(resolve => setTimeout(resolve, latency));
+    
+    return {
+      text: `Response from ${provider}`,
+      tokens: 100
+    };
+  }
+}
 
 async function runTest() {
   console.log('Starting Phase 4 Verification: Q-Learning Integration');
@@ -34,7 +33,7 @@ async function runTest() {
   // Reset scorecard for clean state
   scorecard['metrics'].clear();
   
-  const router = new SmartRouter(scorecard);
+  const router = new MockSmartRouter(scorecard);
   const optimizer = getQLearningOptimizer();
   
   // Scenario: Coding Task for Developer Segment
@@ -45,7 +44,7 @@ async function runTest() {
   
   console.log(`\n--- Training Loop: ${prompt} [${segment}] ---`);
   
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 10; i++) { // Increased iterations to ensure convergence
     console.log(`\nIteration ${i}:`);
     
     // Check current Q-values before routing
