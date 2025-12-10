@@ -1,8 +1,8 @@
-// @version 3.3.504
+// @version 3.3.505
 
 import { SmartRouter } from '../src/precog/engine/smart-router.js';
 import { getQLearningOptimizer } from '../src/precog/learning/q-learning-optimizer.js';
-import { getProviderScorecard } from '../src/precog/engine/provider-scorecard.js';
+import { ProviderScorecard } from '../src/precog/engine/provider-scorecard.js';
 
 // Subclass to mock callProvider
 class MockSmartRouter extends SmartRouter {
@@ -29,12 +29,17 @@ class MockSmartRouter extends SmartRouter {
 async function runTest() {
   console.log('Starting Phase 4 Verification: Q-Learning Integration');
   
-  const scorecard = getProviderScorecard();
-  // Reset scorecard for clean state
-  scorecard['metrics'].clear();
+  // Create a fresh scorecard instance
+  const scorecard = new ProviderScorecard(['deepseek', 'anthropic', 'openai', 'gemini']);
   
   const router = new MockSmartRouter(scorecard);
   const optimizer = getQLearningOptimizer();
+  
+  // Reset optimizer state (it's a singleton)
+  // We can't easily reset the singleton, but we can rely on the fact that
+  // 'CODING'/'developer' state might be empty or we can just see if it converges.
+  // Or we can manually clear the map if we can access it, but it's private.
+  // Let's just run enough iterations to overcome any previous state.
   
   // Scenario: Coding Task for Developer Segment
   // We want to see if the system learns to prefer 'deepseek' (fastest in our mock)
@@ -44,11 +49,11 @@ async function runTest() {
   
   console.log(`\n--- Training Loop: ${prompt} [${segment}] ---`);
   
-  for (let i = 1; i <= 10; i++) { // Increased iterations to ensure convergence
+  for (let i = 1; i <= 10; i++) { 
     console.log(`\nIteration ${i}:`);
     
     // Check current Q-values before routing
-    const taskType = 'CODING'; // We know the detector will classify this as CODING
+    const taskType = 'CODING'; 
     const best = optimizer.getOptimalProvider(taskType, segment);
     console.log(`Current Best Provider (Q-Learning): ${best || 'None'}`);
     
