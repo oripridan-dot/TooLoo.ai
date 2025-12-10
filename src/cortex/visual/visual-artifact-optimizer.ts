@@ -441,7 +441,7 @@ export class VisualArtifactOptimizer {
 </svg>`
     );
 
-    // Placeholder template (for progressive loading)
+    // Shimmer loading skeleton template (used during progressive loading)
     this.templateCache.set(
       'placeholder',
       `<svg viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">

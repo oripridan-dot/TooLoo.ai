@@ -165,16 +165,22 @@ loadProjectIndex();
 router.get('/', async (req, res) => {
   try {
     const filter: ProjectListFilter = {
-      type: req.query.type ? (req.query.type as string).split(',') as any : undefined,
-      status: req.query.status ? (req.query.status as string).split(',') as any : undefined,
-      visibility: req.query.visibility ? (req.query.visibility as string).split(',') as any : undefined,
-      tags: req.query.tags ? (req.query.tags as string).split(',') : undefined,
-      search: req.query.search as string,
-      starred: req.query.starred === 'true',
-      sortBy: (req.query.sortBy as any) || 'updatedAt',
-      sortOrder: (req.query.sortOrder as any) || 'desc',
-      limit: parseInt(req.query.limit as string) || 50,
-      offset: parseInt(req.query.offset as string) || 0,
+      type: req.query['type']
+        ? ((req.query['type'] as string).split(',') as ProjectListFilter['type'])
+        : undefined,
+      status: req.query['status']
+        ? ((req.query['status'] as string).split(',') as ProjectListFilter['status'])
+        : undefined,
+      visibility: req.query['visibility']
+        ? ((req.query['visibility'] as string).split(',') as ProjectListFilter['visibility'])
+        : undefined,
+      tags: req.query['tags'] ? (req.query['tags'] as string).split(',') : undefined,
+      search: req.query['search'] as string,
+      starred: req.query['starred'] === 'true',
+      sortBy: (req.query['sortBy'] as ProjectListFilter['sortBy']) || 'updatedAt',
+      sortOrder: (req.query['sortOrder'] as ProjectListFilter['sortOrder']) || 'desc',
+      limit: parseInt(req.query['limit'] as string) || 50,
+      offset: parseInt(req.query['offset'] as string) || 0,
     };
 
     // Reload index to get latest
@@ -183,17 +189,21 @@ router.get('/', async (req, res) => {
     let projects = Array.from(projectIndex.values());
 
     // Apply filters
-    if (filter.type?.length) {
-      projects = projects.filter((p) => filter.type!.includes(p.type));
+    if (filter.type && filter.type.length) {
+      const types = filter.type;
+      projects = projects.filter((p) => types.includes(p.type));
     }
-    if (filter.status?.length) {
-      projects = projects.filter((p) => filter.status!.includes(p.status));
+    if (filter.status && filter.status.length) {
+      const statuses = filter.status;
+      projects = projects.filter((p) => statuses.includes(p.status));
     }
-    if (filter.visibility?.length) {
-      projects = projects.filter((p) => filter.visibility!.includes(p.visibility));
+    if (filter.visibility && filter.visibility.length) {
+      const visibilities = filter.visibility;
+      projects = projects.filter((p) => visibilities.includes(p.visibility));
     }
-    if (filter.tags?.length) {
-      projects = projects.filter((p) => filter.tags!.some((t) => p.tags.includes(t)));
+    if (filter.tags && filter.tags.length) {
+      const tags = filter.tags;
+      projects = projects.filter((p) => tags.some((t) => p.tags.includes(t)));
     }
     if (filter.search) {
       const search = filter.search.toLowerCase();
@@ -209,12 +219,12 @@ router.get('/', async (req, res) => {
     const sortKey = filter.sortBy || 'updatedAt';
     const sortDir = filter.sortOrder === 'asc' ? 1 : -1;
     projects.sort((a, b) => {
-      const aVal = a[sortKey as keyof ProjectListItem] ?? '';
-      const bVal = b[sortKey as keyof ProjectListItem] ?? '';
+      const aVal = (a as unknown as Record<string, unknown>)[sortKey] ?? '';
+      const bVal = (b as unknown as Record<string, unknown>)[sortKey] ?? '';
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return aVal.localeCompare(bVal) * sortDir;
       }
-      return ((aVal as number) - (bVal as number)) * sortDir;
+      return (Number(aVal) - Number(bVal)) * sortDir;
     });
 
     // Paginate
@@ -252,7 +262,9 @@ router.post('/', async (req, res) => {
   // Check for slug collision
   const existingWithSlug = Array.from(projectIndex.values()).find((p) => p.slug === slug);
   if (existingWithSlug) {
-    return res.status(409).json({ ok: false, error: 'A project with a similar name already exists' });
+    return res
+      .status(409)
+      .json({ ok: false, error: 'A project with a similar name already exists' });
   }
 
   try {
@@ -337,11 +349,9 @@ router.post('/', async (req, res) => {
 
     // Save initial commit
     const initialCommit = createInitialCommit(defaultBranch.name);
-    await fs.writeJson(
-      path.join(projectPath, '.tooloo', 'commits.json'),
-      [initialCommit],
-      { spaces: 2 }
-    );
+    await fs.writeJson(path.join(projectPath, '.tooloo', 'commits.json'), [initialCommit], {
+      spaces: 2,
+    });
 
     // Create README
     await fs.writeFile(
@@ -514,9 +524,7 @@ router.post('/:id/fork', async (req, res) => {
   }
 
   try {
-    const sourceProject: Project = await fs.readJson(
-      path.join(sourceProjectPath, 'tooloo.json')
-    );
+    const sourceProject: Project = await fs.readJson(path.join(sourceProjectPath, 'tooloo.json'));
 
     // Check if forking is allowed
     if (!sourceProject.access.allowForks && sourceProject.access.visibility !== 'public') {
@@ -563,9 +571,7 @@ router.post('/:id/fork', async (req, res) => {
 
     // Update source project stats
     sourceProject.stats.forks++;
-    sourceProject.recentActivity.unshift(
-      createActivity('fork', 'user', `Project forked by user`)
-    );
+    sourceProject.recentActivity.unshift(createActivity('fork', 'user', `Project forked by user`));
     await fs.writeJson(path.join(sourceProjectPath, 'tooloo.json'), sourceProject, { spaces: 2 });
 
     // Update indexes
@@ -649,7 +655,9 @@ router.post('/:id/branches', async (req, res) => {
     project.branches.push(newBranch);
     project.stats.branches++;
     project.updatedAt = now;
-    project.recentActivity.unshift(createActivity('branch', 'user', `Created branch: ${input.name}`));
+    project.recentActivity.unshift(
+      createActivity('branch', 'user', `Created branch: ${input.name}`)
+    );
 
     await fs.writeJson(path.join(projectPath, 'tooloo.json'), project, { spaces: 2 });
 
@@ -679,7 +687,7 @@ router.delete('/:id/branches/:branchName', async (req, res) => {
       return res.status(404).json({ ok: false, error: 'Branch not found' });
     }
 
-    const branch = project.branches[branchIndex];
+    const branch = project.branches[branchIndex]!;
     if (branch.isDefault) {
       return res.status(400).json({ ok: false, error: 'Cannot delete default branch' });
     }
@@ -690,7 +698,9 @@ router.delete('/:id/branches/:branchName', async (req, res) => {
     project.branches.splice(branchIndex, 1);
     project.stats.branches = Math.max(1, project.stats.branches - 1);
     project.updatedAt = new Date().toISOString();
-    project.recentActivity.unshift(createActivity('branch', 'user', `Deleted branch: ${branchName}`));
+    project.recentActivity.unshift(
+      createActivity('branch', 'user', `Deleted branch: ${branchName}`)
+    );
 
     await fs.writeJson(path.join(projectPath, 'tooloo.json'), project, { spaces: 2 });
 
@@ -1019,7 +1029,7 @@ router.delete('/:id/files', async (req, res) => {
  */
 router.get('/:id/activity', async (req, res) => {
   const { id } = req.params;
-  const limit = parseInt(req.query.limit as string) || 20;
+  const limit = parseInt(req.query['limit'] as string) || 20;
   const projectPath = getProjectPath(id);
 
   if (!(await fs.pathExists(projectPath))) {
@@ -1071,7 +1081,11 @@ router.get('/templates/list', async (_req, res) => {
       structure: {
         folders: ['src/client', 'src/server', 'src/shared', 'docs', 'tests'],
         files: [
-          { path: 'README.md', template: '# {{name}}\n\n{{description}}\n\n## Getting Started\n\n```bash\nnpm install\nnpm run dev\n```' },
+          {
+            path: 'README.md',
+            template:
+              '# {{name}}\n\n{{description}}\n\n## Getting Started\n\n```bash\nnpm install\nnpm run dev\n```',
+          },
           { path: 'package.json', template: '{\n  "name": "{{slug}}",\n  "version": "0.1.0"\n}' },
         ],
         settings: { enableAI: true, aiAssistLevel: 'full' },
@@ -1088,9 +1102,7 @@ router.get('/templates/list', async (_req, res) => {
       color: '#10b981',
       structure: {
         folders: ['src/routes', 'src/services', 'src/models', 'tests'],
-        files: [
-          { path: 'README.md', template: '# {{name}} API\n\n{{description}}' },
-        ],
+        files: [{ path: 'README.md', template: '# {{name}} API\n\n{{description}}' }],
         settings: {},
       },
       tags: ['api', 'rest', 'express'],
@@ -1203,6 +1215,93 @@ router.post('/:id/deploy', async (req, res) => {
       status: 'deployed',
       target,
       timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// ACTIVE PROJECT
+// ============================================================================
+
+import { projectManager } from '../../cortex/project-manager-v2.js';
+
+/**
+ * Get current active project
+ * GET /api/v1/projects/active/current
+ */
+router.get('/active/current', async (_req, res) => {
+  try {
+    const activeId = projectManager.getActiveProjectId();
+    if (!activeId) {
+      return res.json({ ok: true, activeProject: null });
+    }
+
+    const ctx = await projectManager.getActiveProjectContext();
+    res.json({
+      ok: true,
+      activeProject: ctx.project
+        ? {
+            id: ctx.project.id,
+            name: ctx.project.name,
+            type: ctx.project.type,
+            icon: ctx.project.icon,
+            color: ctx.project.color,
+          }
+        : null,
+    });
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * Set active project
+ * POST /api/v1/projects/active/set
+ */
+router.post('/active/set', async (req, res) => {
+  const { projectId } = req.body;
+
+  try {
+    await projectManager.setActiveProject(projectId || null);
+
+    if (projectId) {
+      const ctx = await projectManager.getActiveProjectContext();
+      res.json({
+        ok: true,
+        activeProject: ctx.project
+          ? {
+              id: ctx.project.id,
+              name: ctx.project.name,
+              type: ctx.project.type,
+              icon: ctx.project.icon,
+              color: ctx.project.color,
+            }
+          : null,
+      });
+    } else {
+      res.json({ ok: true, activeProject: null });
+    }
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * Get active project context for chat
+ * GET /api/v1/projects/active/context
+ */
+router.get('/active/context', async (_req, res) => {
+  try {
+    const ctx = await projectManager.getActiveProjectContext();
+    res.json({
+      ok: true,
+      context: {
+        project: ctx.project,
+        memory: ctx.memory,
+        recentActivity: ctx.recentActivity,
+      },
     });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });

@@ -44,7 +44,7 @@ export interface ProviderAdapter {
 export interface ImageGenerationRequest {
   prompt: string;
   provider?: 'gemini' | 'openai'; // Select provider
-  model?: string; // 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview' | 'dall-e-3'
+  model?: string; // 'imagen-4.0-generate-001' | 'gemini-2.0-flash-exp' | 'dall-e-3'
   aspectRatio?: string; // "1:1", "16:9", etc.
   imageSize?: string; // "1K", "2K", "4K" (for Pro)
   negativePrompt?: string;

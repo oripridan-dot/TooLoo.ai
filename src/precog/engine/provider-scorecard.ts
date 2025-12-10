@@ -1,23 +1,23 @@
 // @version 3.3.496
 /**
  * ProviderScorecard - Real Dynamic Provider Ranking
- * 
+ *
  * This is the foundation of Phase 1: Smart Router
- * 
+ *
  * Tracks live performance metrics for each LLM provider and generates
  * dynamic rankings based on:
  * - Latency (rolling average of last 50 requests)
  * - Error Rate (percentage of failed requests)
  * - Cost per token
  * - Reliability (uptime percentage)
- * 
+ *
  * Algorithm: Score = (w1 × normalizedLatency) + (w2 × normalizedCost) + (w3 × errorRate)
  * Lower score = better provider
- * 
+ *
  * This replaces hardcoded PROVIDER_PRIORITY arrays with live, performance-based ranking.
  */
 
-interface RequestMetric {
+export interface RequestMetric {
   timestamp: number;
   latency: number;
   success: boolean;
@@ -26,7 +26,7 @@ interface RequestMetric {
   error?: string;
 }
 
-interface ProviderStats {
+export interface ProviderStats {
   totalRequests: number;
   successfulRequests: number;
   failedRequests: number;
@@ -37,9 +37,9 @@ interface ProviderStats {
   recentMetrics: RequestMetric[]; // Last 50 requests (rolling window)
 }
 
-interface ScoringWeights {
+export interface ScoringWeights {
   latency: number; // Weight for latency factor (0-1)
-  cost: number;    // Weight for cost factor (0-1)
+  cost: number; // Weight for cost factor (0-1)
   reliability: number; // Weight for error rate factor (0-1)
 }
 
@@ -48,13 +48,13 @@ export class ProviderScorecard {
   private scoringWeights: ScoringWeights;
   private maxMetricsPerProvider = 50; // Rolling window size
   private readonly METRIC_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
-  
+
   // Default provider costs (tokens per $1, approximate)
   private costModel: Record<string, number> = {
-    'deepseek': 0.00000028, // Cheapest (~$0.14 per million tokens)
-    'anthropic': 0.00000300, // Claude 3.5 Haiku
-    'openai': 0.00000150, // GPT-4 Turbo input
-    'gemini': 0.00000075, // Gemini 1.5 Flash
+    deepseek: 0.00000028, // Cheapest (~$0.14 per million tokens)
+    anthropic: 0.000003, // Claude 3.5 Haiku
+    openai: 0.0000015, // GPT-4 Turbo input
+    gemini: 0.00000075, // Gemini 1.5 Flash
   };
 
   constructor(
@@ -153,13 +153,26 @@ export class ProviderScorecard {
   /**
    * Get ranked providers sorted by score (best first)
    * Lower score = better provider
+   * @param preferences Optional map of provider preference multipliers (>1.0 preferred, <1.0 avoided)
    */
-  getRankedProviders(): Array<{ provider: string; score: number; stats: ProviderStats }> {
-    const ranked = Array.from(this.providers.entries()).map(([provider, stats]) => ({
-      provider,
-      score: this.calculateProviderScore(stats),
-      stats,
-    }));
+  getRankedProviders(
+    preferences?: Record<string, number>
+  ): Array<{ provider: string; score: number; stats: ProviderStats }> {
+    const ranked = Array.from(this.providers.entries()).map(([provider, stats]) => {
+      let score = this.calculateProviderScore(stats);
+
+      // Apply preferences if provided
+      if (preferences && preferences[provider]) {
+        // Divide by preference multiplier (higher multiplier = lower score = better rank)
+        score = score / preferences[provider];
+      }
+
+      return {
+        provider,
+        score,
+        stats,
+      };
+    });
 
     // Sort by score ascending (lower is better)
     ranked.sort((a, b) => a.score - b.score);
@@ -171,22 +184,22 @@ export class ProviderScorecard {
    * Get the next best provider to try
    * This is used by the smart router for waterfall fallback logic
    */
-  getBestProvider(): string | null {
-    const ranked = this.getRankedProviders();
+  getBestProvider(preferences?: Record<string, number>): string | null {
+    const ranked = this.getRankedProviders(preferences);
     return ranked.length > 0 ? ranked[0]!.provider : null;
   }
 
   /**
    * Get providers in priority order for waterfall routing
    */
-  getRouteOrder(): string[] {
-    return this.getRankedProviders().map((r) => r.provider);
+  getRouteOrder(preferences?: Record<string, number>): string[] {
+    return this.getRankedProviders(preferences).map((r) => r.provider);
   }
 
   /**
    * Calculate composite score for a provider
    * Score = (w1 × latencyNorm) + (w2 × costNorm) + (w3 × errorRate)
-   * 
+   *
    * Returns value typically 0-1, where lower is better
    * Providers with no requests get highest score (will be tried last)
    */

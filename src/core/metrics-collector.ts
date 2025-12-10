@@ -1,10 +1,13 @@
-// @version 2.1.28
+// @version 3.3.405
 /**
  * System Metrics Collector
  * Real-time collection of process metrics, service health, and system statistics
+ *
+ * V3.3.405: Added real-time request/latency/token tracking via EventBus
  */
 
 import os from 'os';
+import { bus } from './event-bus.js';
 
 interface IntentStats {
   totalProcessed: number;
@@ -37,6 +40,31 @@ interface InstanceMetrics {
   speedupEstimate: number;
 }
 
+// V3.3.405: Real-time metrics tracking
+interface RealTimeMetrics {
+  requests: {
+    total: number;
+    perMinute: number;
+    timestamps: number[]; // Last 60 seconds of request timestamps
+  };
+  latency: {
+    samples: number[];
+    average: number;
+    p95: number;
+    p99: number;
+  };
+  tokens: {
+    total: number;
+    input: number;
+    output: number;
+  };
+  cost: {
+    today: number;
+    total: number;
+    lastReset: number;
+  };
+}
+
 export class MetricsCollector {
   private startTime: number;
   private processStartTime: number;
@@ -45,6 +73,10 @@ export class MetricsCollector {
   private resourceSnapshots: unknown[];
   private maxSnapshots: number;
   private instanceMetrics: InstanceMetrics | null = null;
+
+  // V3.3.405: Real-time metrics
+  private realTimeMetrics: RealTimeMetrics;
+  private metricsCleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     this.startTime = Date.now();
@@ -58,6 +90,137 @@ export class MetricsCollector {
     this.serviceMetrics = new Map();
     this.resourceSnapshots = [];
     this.maxSnapshots = 100; // Keep last 100 snapshots
+
+    // V3.3.405: Initialize real-time metrics
+    this.realTimeMetrics = {
+      requests: { total: 0, perMinute: 0, timestamps: [] },
+      latency: { samples: [], average: 0, p95: 0, p99: 0 },
+      tokens: { total: 0, input: 0, output: 0 },
+      cost: { today: 0, total: 0, lastReset: Date.now() },
+    };
+
+    // Wire up event listeners for real-time tracking
+    this.setupEventListeners();
+
+    // Cleanup old timestamps every minute
+    this.metricsCleanupInterval = setInterval(() => this.cleanupOldMetrics(), 60000);
+  }
+
+  /**
+   * V3.3.405: Setup event listeners for real-time metrics
+   */
+  private setupEventListeners(): void {
+    // Track incoming requests
+    bus.on('nexus:request', () => {
+      this.recordRequest();
+    });
+
+    // Track chat requests specifically
+    bus.on('nexus:chat_request', () => {
+      this.recordRequest();
+    });
+
+    // Track response latency
+    bus.on('cortex:response', (event) => {
+      if (event.payload?.latencyMs) {
+        this.recordLatency(event.payload.latencyMs);
+      }
+    });
+
+    // Track token usage from precog
+    bus.on('precog:token_usage', (event) => {
+      const { inputTokens, outputTokens, cost } = event.payload || {};
+      this.recordTokenUsage(inputTokens || 0, outputTokens || 0, cost || 0);
+    });
+
+    // Track cost from provider completions
+    bus.on('precog:completion', (event) => {
+      const { usage, cost_usd } = event.payload || {};
+      if (usage) {
+        this.recordTokenUsage(
+          usage.prompt_tokens || 0,
+          usage.completion_tokens || 0,
+          cost_usd || 0
+        );
+      }
+    });
+  }
+
+  /**
+   * V3.3.405: Record a request for per-minute tracking
+   */
+  recordRequest(): void {
+    const now = Date.now();
+    this.realTimeMetrics.requests.total++;
+    this.realTimeMetrics.requests.timestamps.push(now);
+
+    // Calculate requests per minute
+    const oneMinuteAgo = now - 60000;
+    const recentRequests = this.realTimeMetrics.requests.timestamps.filter((t) => t > oneMinuteAgo);
+    this.realTimeMetrics.requests.perMinute = recentRequests.length;
+  }
+
+  /**
+   * V3.3.405: Record response latency
+   */
+  recordLatency(latencyMs: number): void {
+    const samples = this.realTimeMetrics.latency.samples;
+    samples.push(latencyMs);
+
+    // Keep last 100 samples
+    if (samples.length > 100) {
+      samples.shift();
+    }
+
+    // Calculate statistics
+    const sorted = [...samples].sort((a, b) => a - b);
+    this.realTimeMetrics.latency.average = samples.reduce((a, b) => a + b, 0) / samples.length;
+    this.realTimeMetrics.latency.p95 = sorted[Math.floor(sorted.length * 0.95)] || 0;
+    this.realTimeMetrics.latency.p99 = sorted[Math.floor(sorted.length * 0.99)] || 0;
+  }
+
+  /**
+   * V3.3.405: Record token usage
+   */
+  recordTokenUsage(input: number, output: number, cost: number): void {
+    this.realTimeMetrics.tokens.input += input;
+    this.realTimeMetrics.tokens.output += output;
+    this.realTimeMetrics.tokens.total += input + output;
+
+    this.realTimeMetrics.cost.total += cost;
+
+    // Reset daily cost at midnight
+    const now = new Date();
+    const lastResetDate = new Date(this.realTimeMetrics.cost.lastReset);
+    if (now.getDate() !== lastResetDate.getDate()) {
+      this.realTimeMetrics.cost.today = cost;
+      this.realTimeMetrics.cost.lastReset = Date.now();
+    } else {
+      this.realTimeMetrics.cost.today += cost;
+    }
+  }
+
+  /**
+   * V3.3.405: Cleanup old request timestamps
+   */
+  private cleanupOldMetrics(): void {
+    const oneMinuteAgo = Date.now() - 60000;
+    this.realTimeMetrics.requests.timestamps = this.realTimeMetrics.requests.timestamps.filter(
+      (t) => t > oneMinuteAgo
+    );
+  }
+
+  /**
+   * V3.3.405: Get real-time metrics for the health endpoint
+   */
+  getRealTimeMetrics(): RealTimeMetrics {
+    // Recalculate requests per minute
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    const recentRequests = this.realTimeMetrics.requests.timestamps.filter((t) => t > oneMinuteAgo);
+    this.realTimeMetrics.requests.perMinute = recentRequests.length;
+
+    return { ...this.realTimeMetrics };
   }
 
   /**

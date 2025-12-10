@@ -1,0 +1,97 @@
+{
+  "id": "406d849f-084a-4d90-98ab-85d9922d6dd3",
+  "slug": "my-first-project",
+  "name": "My First Project",
+  "description": "A test project",
+  "type": "component",
+  "status": "active",
+  "icon": "📁",
+  "color": "#6366f1",
+  "owner": "user",
+  "access": {
+    "visibility": "private",
+    "allowForks": true,
+    "allowComments": true,
+    "requireApproval": false,
+    "collaborators": [
+      {
+        "id": "user",
+        "name": "Owner",
+        "role": "owner",
+        "addedAt": "2025-12-08T17:54:20.227Z"
+      }
+    ]
+  },
+  "currentVersion": "0.1.0",
+  "versions": [
+    {
+      "id": "ver-b20989be-24bd-4b08-9f91-11a1db4a4ab6",
+      "number": "0.1.0",
+      "name": "Initial Version",
+      "description": "Project created",
+      "createdAt": "2025-12-08T17:54:20.227Z",
+      "createdBy": "system",
+      "tags": [
+        "initial"
+      ],
+      "isRelease": false
+    }
+  ],
+  "branches": [
+    {
+      "id": "branch-3a705b14-3fc1-4052-9067-bf361c54b1ff",
+      "name": "main",
+      "description": "Default branch",
+      "status": "active",
+      "isDefault": true,
+      "isProtected": true,
+      "createdAt": "2025-12-08T17:54:20.227Z",
+      "createdBy": "system",
+      "lastCommitAt": "2025-12-08T17:54:20.227Z",
+      "aheadBy": 0,
+      "behindBy": 0
+    }
+  ],
+  "defaultBranch": "main",
+  "tags": [
+    "test",
+    "demo"
+  ],
+  "stats": {
+    "stars": 0,
+    "forks": 0,
+    "views": 0,
+    "branches": 1,
+    "commits": 1,
+    "collaborators": 1,
+    "files": 0,
+    "sizeBytes": 0
+  },
+  "settings": {
+    "defaultBranch": "main",
+    "autoSave": true,
+    "autoVersion": false,
+    "requireReview": false,
+    "enableAI": true,
+    "aiAssistLevel": "moderate",
+    "notifyOnChanges": true,
+    "customFields": {}
+  },
+  "memory": {
+    "shortTerm": "",
+    "longTerm": "",
+    "context": [],
+    "preferences": {}
+  },
+  "recentActivity": [
+    {
+      "id": "activity-ac9ed539-1cd3-483a-ad09-27b7f83563a4",
+      "type": "commit",
+      "actor": "system",
+      "description": "Project created",
+      "timestamp": "2025-12-08T17:54:20.227Z"
+    }
+  ],
+  "createdAt": "2025-12-08T17:54:20.227Z",
+  "updatedAt": "2025-12-08T17:54:20.227Z"
+}

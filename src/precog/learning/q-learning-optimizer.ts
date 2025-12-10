@@ -59,12 +59,13 @@ export class QLearningOptimizer {
   getOptimalProvider(state: QState, availableProviders: string[]): string {
     // Epsilon-greedy exploration
     if (Math.random() < this.epsilon) {
-      const random = availableProviders[Math.floor(Math.random() * availableProviders.length)];
+      const randomIdx = Math.floor(Math.random() * availableProviders.length);
+      const random = availableProviders[randomIdx] ?? availableProviders[0] ?? 'deepseek';
       console.log(`[QLearning] Exploring: ${random}`);
       return random;
     }
 
-    let bestProvider = availableProviders[0];
+    let bestProvider = availableProviders[0] ?? 'deepseek';
     let maxQ = -Infinity;
 
     for (const provider of availableProviders) {
@@ -98,7 +99,7 @@ export class QLearningOptimizer {
     const qualityScore = reward.quality ?? 0.5; // Default neutral if unknown
 
     // Composite reward
-    const r = (latencyScore * 0.3) + (successScore * 0.5) + (qualityScore * 0.2);
+    const r = latencyScore * 0.3 + successScore * 0.5 + qualityScore * 0.2;
 
     // Q-Learning Update Rule
     // Q(s,a) = Q(s,a) + alpha * (r - Q(s,a))
@@ -107,7 +108,7 @@ export class QLearningOptimizer {
 
     this.qTable.set(key, {
       qValue: newQ,
-      visits: currentEntry.visits + 1
+      visits: currentEntry.visits + 1,
     });
 
     await this.save();

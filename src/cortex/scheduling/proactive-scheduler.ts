@@ -1,26 +1,31 @@
-// @version 3.3.401
+// @version 3.3.404
 /**
  * Proactive Task Scheduler
- * 
+ *
  * Enables TooLoo to initiate tasks autonomously without user prompting.
  * This is a key component of the "sovereign AI" architecture.
- * 
+ *
  * Key capabilities:
  * 1. **Scheduled Tasks** - Regular maintenance, optimization, analysis
  * 2. **Event-Triggered Tasks** - React to system events proactively
  * 3. **Opportunity Detection** - Identify and act on improvement opportunities
  * 4. **Background Processing** - Handle low-priority tasks during idle time
- * 
+ *
+ * V3.3.404 Enhancements:
+ * - Integration with ExecutionAgent for code tasks
+ * - Code generation handler routes to autonomous execution
+ * - Bridge between scheduler and Sentinel pattern
+ *
  * Safety constraints:
  * - All tasks must pass ethics/safety checks
  * - Resource limits are enforced
  * - User can pause/resume at any time
  * - Critical actions require confirmation
- * 
+ *
  * @module cortex/scheduling/proactive-scheduler
  */
 
-import { bus, SynapsysEvent } from '../../core/event-bus.js';
+import { bus } from '../../core/event-bus.js';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -106,7 +111,9 @@ export interface SchedulerState {
 // BUILT-IN TASK HANDLERS
 // ============================================================================
 
-type TaskHandler = (params: Record<string, unknown>) => Promise<{ success: boolean; result?: unknown; error?: string }>;
+type TaskHandler = (
+  params: Record<string, unknown>
+) => Promise<{ success: boolean; result?: unknown; error?: string }>;
 
 const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
   /**
@@ -117,14 +124,14 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
       const { VectorStore } = await import('../memory/vector-store.js');
       const vectorStore = new VectorStore(process.cwd());
       await vectorStore.initialize();
-      
+
       const stats = vectorStore.getStats();
-      
+
       bus.publish('cortex', 'proactive:memory_cleanup', {
         documentsCount: stats.totalDocuments,
         timestamp: Date.now(),
       });
-      
+
       return { success: true, result: { stats } };
     } catch (error: unknown) {
       return { success: false, error: String(error) };
@@ -140,7 +147,7 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
         source: 'proactive-scheduler',
         timestamp: Date.now(),
       });
-      
+
       return { success: true, result: { triggered: true } };
     } catch (error: unknown) {
       return { success: false, error: String(error) };
@@ -157,9 +164,9 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
         uptime: process.uptime(),
         timestamp: Date.now(),
       };
-      
+
       bus.publish('cortex', 'proactive:health_check', checks);
-      
+
       return { success: true, result: checks };
     } catch (error: unknown) {
       return { success: false, error: String(error) };
@@ -173,15 +180,15 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
     try {
       const { getASTIndexer } = await import('../memory/ast-indexer.js');
       const indexer = getASTIndexer(process.cwd());
-      
+
       const results = await indexer.indexDirectory('src');
-      
-      return { 
-        success: true, 
-        result: { 
+
+      return {
+        success: true,
+        result: {
           filesIndexed: results.length,
           totalSymbols: results.reduce((sum, f) => sum + f.symbols.length, 0),
-        } 
+        },
       };
     } catch (error: unknown) {
       return { success: false, error: String(error) };
@@ -195,16 +202,16 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
     try {
       const { ReinforcementLearner } = await import('../learning/reinforcement-learner.js');
       const learner = ReinforcementLearner.getInstance();
-      
+
       if (learner.isLearningEnabled()) {
         bus.publish('cortex', 'learning:consolidation_triggered', {
           source: 'proactive-scheduler',
           timestamp: Date.now(),
         });
-        
+
         return { success: true, result: { consolidated: true } };
       }
-      
+
       return { success: true, result: { consolidated: false, reason: 'learning_paused' } };
     } catch (error: unknown) {
       return { success: false, error: String(error) };
@@ -218,14 +225,73 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
     try {
       // Check for patterns that could be improved
       const opportunities: string[] = [];
-      
+
       // Emit event for other systems to respond
       bus.publish('cortex', 'proactive:opportunity_scan', {
         source: 'proactive-scheduler',
         timestamp: Date.now(),
       });
-      
+
       return { success: true, result: { opportunities } };
+    } catch (error: unknown) {
+      return { success: false, error: String(error) };
+    }
+  },
+
+  /**
+   * V3.3.404: Execute code task through ExecutionAgent (Sentinel bridge)
+   * This bridges scheduler tasks to actual code execution
+   */
+  async executeCodeTask(params: Record<string, unknown>) {
+    try {
+      const { prompt, type, context } = params as {
+        prompt?: string;
+        type?: string;
+        context?: Record<string, unknown>;
+      };
+
+      if (!prompt) {
+        return { success: false, error: 'Missing prompt parameter' };
+      }
+
+      // Emit event that ExecutionAgent listens for
+      bus.publish('cortex', 'proactive_scheduler:code_task', {
+        prompt,
+        type: type || 'execute',
+        context: context || {},
+        source: 'proactive-scheduler',
+        timestamp: Date.now(),
+      });
+
+      return { success: true, result: { queued: true, prompt: prompt.substring(0, 50) + '...' } };
+    } catch (error: unknown) {
+      return { success: false, error: String(error) };
+    }
+  },
+
+  /**
+   * V3.3.404: Autonomous code improvement task
+   * Analyzes codebase and suggests/applies improvements
+   */
+  async autonomousImprovement(params: Record<string, unknown>) {
+    try {
+      const { targetPath, improvementType } = params as {
+        targetPath?: string;
+        improvementType?: 'refactor' | 'optimize' | 'document' | 'test';
+      };
+
+      // Emit event for ExecutionAgent to handle
+      bus.publish('cortex', 'proactive_scheduler:code_task', {
+        prompt: `Analyze and ${improvementType || 'improve'} the code at: ${targetPath || 'src/'}. 
+                 Look for opportunities to enhance code quality, performance, or maintainability.
+                 Apply safe improvements that don't change functionality.`,
+        type: 'analyze',
+        context: { targetPath, improvementType },
+        source: 'autonomous-improvement',
+        timestamp: Date.now(),
+      });
+
+      return { success: true, result: { triggered: true, type: improvementType } };
     } catch (error: unknown) {
       return { success: false, error: String(error) };
     }
@@ -238,7 +304,7 @@ const BUILT_IN_HANDLERS: Record<string, TaskHandler> = {
 
 export class ProactiveScheduler {
   private static instance: ProactiveScheduler;
-  
+
   private state: SchedulerState;
   private dataDir: string;
   private stateFile: string;
@@ -276,21 +342,21 @@ export class ProactiveScheduler {
 
   async initialize(): Promise<void> {
     console.log('[ProactiveScheduler] Initializing autonomous task scheduler...');
-    
+
     await fs.ensureDir(this.dataDir);
     await this.loadState();
-    
+
     // Register default tasks if none exist
     if (this.state.tasks.length === 0) {
       await this.registerDefaultTasks();
     }
-    
+
     this.setupEventListeners();
     this.startScheduleChecker();
 
     bus.publish('cortex', 'proactive_scheduler:initialized', {
       tasks: this.state.tasks.length,
-      enabledTasks: this.state.tasks.filter(t => t.enabled).length,
+      enabledTasks: this.state.tasks.filter((t) => t.enabled).length,
     });
 
     console.log(`[ProactiveScheduler] Ready - ${this.state.tasks.length} tasks registered`);
@@ -303,7 +369,12 @@ export class ProactiveScheduler {
   /**
    * Register a new proactive task
    */
-  async registerTask(task: Omit<ProactiveTask, 'id' | 'createdAt' | 'successCount' | 'failureCount' | 'runningCount' | 'status'>): Promise<ProactiveTask> {
+  async registerTask(
+    task: Omit<
+      ProactiveTask,
+      'id' | 'createdAt' | 'successCount' | 'failureCount' | 'runningCount' | 'status'
+    >
+  ): Promise<ProactiveTask> {
     const newTask: ProactiveTask = {
       ...task,
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -340,11 +411,11 @@ export class ProactiveScheduler {
    * Enable/disable a task
    */
   async setTaskEnabled(taskId: string, enabled: boolean): Promise<void> {
-    const task = this.state.tasks.find(t => t.id === taskId);
+    const task = this.state.tasks.find((t) => t.id === taskId);
     if (task) {
       task.enabled = enabled;
       await this.saveState();
-      
+
       bus.publish('cortex', 'proactive_scheduler:task_toggled', {
         taskId,
         enabled,
@@ -358,7 +429,7 @@ export class ProactiveScheduler {
   pause(reason: string): void {
     this.state.isPaused = true;
     this.state.pauseReason = reason;
-    
+
     bus.publish('cortex', 'proactive_scheduler:paused', { reason });
     console.log(`[ProactiveScheduler] ⏸️ Paused: ${reason}`);
   }
@@ -369,7 +440,7 @@ export class ProactiveScheduler {
   resume(): void {
     this.state.isPaused = false;
     this.state.pauseReason = undefined;
-    
+
     bus.publish('cortex', 'proactive_scheduler:resumed', {});
     console.log('[ProactiveScheduler] ▶️ Resumed');
   }
@@ -381,8 +452,11 @@ export class ProactiveScheduler {
   /**
    * Execute a task by ID
    */
-  async executeTask(taskId: string, source: 'schedule' | 'event' | 'manual' = 'manual'): Promise<TaskExecution | null> {
-    const task = this.state.tasks.find(t => t.id === taskId);
+  async executeTask(
+    taskId: string,
+    source: 'schedule' | 'event' | 'manual' = 'manual'
+  ): Promise<TaskExecution | null> {
+    const task = this.state.tasks.find((t) => t.id === taskId);
     if (!task) {
       console.warn(`[ProactiveScheduler] Task not found: ${taskId}`);
       return null;
@@ -430,15 +504,12 @@ export class ProactiveScheduler {
         setTimeout(() => reject(new Error('Timeout')), task.resourceLimits.maxDurationMs);
       });
 
-      const result = await Promise.race([
-        handler(task.params),
-        timeoutPromise,
-      ]);
+      const result = await Promise.race([handler(task.params), timeoutPromise]);
 
       // Update execution
       execution.completedAt = Date.now();
       execution.metrics.durationMs = execution.completedAt - execution.startedAt;
-      
+
       if (result.success) {
         execution.status = 'success';
         execution.result = result.result;
@@ -450,7 +521,6 @@ export class ProactiveScheduler {
         task.failureCount++;
         this.state.totalFailures++;
       }
-
     } catch (error: unknown) {
       execution.completedAt = Date.now();
       execution.metrics.durationMs = execution.completedAt - execution.startedAt;
@@ -464,7 +534,7 @@ export class ProactiveScheduler {
     task.runningCount--;
     task.status = task.runningCount > 0 ? 'running' : 'pending';
     task.lastDuration = execution.metrics.durationMs;
-    
+
     if (task.schedule) {
       task.nextRunAt = this.calculateNextRun(task.schedule);
     }
@@ -497,7 +567,7 @@ export class ProactiveScheduler {
       () => this.checkScheduledTasks().catch(console.error),
       this.CHECK_INTERVAL_MS
     );
-    
+
     // Initial check after short delay
     setTimeout(() => this.checkScheduledTasks().catch(console.error), 5000);
   }
@@ -645,7 +715,7 @@ export class ProactiveScheduler {
     // Listen for events that should trigger tasks
     bus.on('learning:boosted', () => {
       // Trigger self-improvement when learning is boosted
-      const task = this.state.tasks.find(t => t.handler === 'selfImprovementCycle');
+      const task = this.state.tasks.find((t) => t.handler === 'selfImprovementCycle');
       if (task) {
         this.executeTask(task.id, 'event').catch(console.error);
       }
@@ -654,7 +724,7 @@ export class ProactiveScheduler {
     // Listen for system events
     bus.on('system:error', () => {
       // Trigger health check on errors
-      const task = this.state.tasks.find(t => t.handler === 'systemHealthCheck');
+      const task = this.state.tasks.find((t) => t.handler === 'systemHealthCheck');
       if (task) {
         this.executeTask(task.id, 'event').catch(console.error);
       }
@@ -709,12 +779,23 @@ export class ProactiveScheduler {
   } {
     return {
       totalTasks: this.state.tasks.length,
-      enabledTasks: this.state.tasks.filter(t => t.enabled).length,
+      enabledTasks: this.state.tasks.filter((t) => t.enabled).length,
       totalExecutions: this.state.totalExecutions,
-      successRate: this.state.totalExecutions > 0 
-        ? this.state.totalSuccesses / this.state.totalExecutions 
-        : 0,
+      successRate:
+        this.state.totalExecutions > 0 ? this.state.totalSuccesses / this.state.totalExecutions : 0,
       isPaused: this.state.isPaused,
+    };
+  }
+
+  /**
+   * V3.3.401: Get stats for API consumption (alias for getMetrics)
+   */
+  getStats(): Record<string, number | string | boolean> {
+    const metrics = this.getMetrics();
+    return {
+      ...metrics,
+      lastCheck: this.state.lastCheck,
+      status: this.state.isPaused ? 'paused' : 'active',
     };
   }
 

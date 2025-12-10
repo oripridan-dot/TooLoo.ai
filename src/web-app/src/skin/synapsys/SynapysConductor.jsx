@@ -4,7 +4,15 @@
 // Phase 3 of "Sentient Partner" Protocol - The Focus Director
 // V3.3.425: Added Bio-Feedback Loop - responds to MetaLearner cognitive state changes
 
-import React, { createContext, useContext, useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { useSynapsynDNA, SYNAPSYS_PRESETS } from './SynapysDNA';
 import { io } from 'socket.io-client';
 
@@ -100,7 +108,7 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
   // Bio-Feedback effect - runs after component mounts
   useEffect(() => {
     // Connect to Socket.IO for real-time cognitive state updates
-    const socket = io('/', { 
+    const socket = io('/', {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -111,7 +119,11 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
     const handleCognitiveStateChange = (data) => {
       const { velocity, cognitiveLoad, trigger } = data;
 
-      console.log('[SynapysConductor] Cognitive state change:', { velocity: velocity?.trend, cognitiveLoad, trigger });
+      console.log('[SynapysConductor] Cognitive state change:', {
+        velocity: velocity?.trend,
+        cognitiveLoad,
+        trigger,
+      });
 
       const state = getActions();
       const originalPreset = state.preset;
@@ -119,11 +131,11 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       // Hyperfocus Mode: High velocity (accelerating) = Golden Ripples
       if (velocity?.trend === 'accelerating') {
         console.log('[SynapysConductor] Triggering Hyperfocus Mode (accelerating velocity)');
-        
+
         // Play emergence effect inline (golden ripples)
         state.transitionTo('emergence', 600);
         setTimeout(() => getActions().transitionTo(originalPreset, 800), 1400);
-        
+
         // Brief pulse to signal positive flow state
         setTimeout(() => {
           getActions().override({
@@ -138,7 +150,7 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       if (cognitiveLoad > 0.8) {
         console.log('[SynapysConductor] Triggering Focus Mode (high cognitive load)');
         getActions().transitionTo('focus', 800);
-        
+
         // Dim background, reduce visual noise
         window.dispatchEvent(new CustomEvent('tooloo:mood', { detail: { mood: 'focused' } }));
       }
@@ -147,7 +159,7 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       if (cognitiveLoad < 0.2) {
         console.log('[SynapysConductor] Triggering Creative Mode (low cognitive load)');
         getActions().transitionTo('creative', 1000);
-        
+
         // Brighten UI, enable creative elements
         window.dispatchEvent(new CustomEvent('tooloo:mood', { detail: { mood: 'creative' } }));
       }
@@ -155,18 +167,20 @@ export function SynapysConductor({ children, liquidEngine, textureEngine, presen
       // Support Mode: Stalled or decelerating velocity
       if (velocity?.trend === 'stalled' || velocity?.trend === 'decelerating') {
         console.log('[SynapysConductor] Triggering Support Mode (velocity stalled/decelerating)');
-        
+
         // Brighten UI, offer suggestions
         getActions().transitionTo('balanced', 600);
-        
+
         // Trigger suggestion pulse
-        window.dispatchEvent(new CustomEvent('suggestion:ready', {
-          detail: { 
-            type: 'support', 
-            message: 'Tooloo noticed you might be stuck. Need help?',
-            priority: 'medium'
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('suggestion:ready', {
+            detail: {
+              type: 'support',
+              message: 'Tooloo noticed you might be stuck. Need help?',
+              priority: 'medium',
+            },
+          })
+        );
       }
     };
 
@@ -473,7 +487,7 @@ export function FocusDirector({ children }) {
     // Listen for errors that need spotlight
     const handleError = (event) => {
       const { file, line, message, x, y } = event?.detail || {};
-      
+
       // Clear any existing spotlight
       if (spotlightTimeoutRef.current) {
         clearTimeout(spotlightTimeoutRef.current);
@@ -629,22 +643,32 @@ export function FocusDirector({ children }) {
     }
   }, []);
 
-  const contextValue = useMemo(() => ({
-    spotlight,
-    peripheralPulse,
-    zoomTarget,
-    attentionMode,
-    clearSpotlight,
-    clearPulse,
-    triggerSpotlight,
-    triggerPulse,
-    setAttentionMode,
-  }), [spotlight, peripheralPulse, zoomTarget, attentionMode, clearSpotlight, clearPulse, triggerSpotlight, triggerPulse]);
+  const contextValue = useMemo(
+    () => ({
+      spotlight,
+      peripheralPulse,
+      zoomTarget,
+      attentionMode,
+      clearSpotlight,
+      clearPulse,
+      triggerSpotlight,
+      triggerPulse,
+      setAttentionMode,
+    }),
+    [
+      spotlight,
+      peripheralPulse,
+      zoomTarget,
+      attentionMode,
+      clearSpotlight,
+      clearPulse,
+      triggerSpotlight,
+      triggerPulse,
+    ]
+  );
 
   return (
-    <FocusDirectorContext.Provider value={contextValue}>
-      {children}
-    </FocusDirectorContext.Provider>
+    <FocusDirectorContext.Provider value={contextValue}>{children}</FocusDirectorContext.Provider>
   );
 }
 
@@ -683,8 +707,8 @@ const InitiativeStateContext = createContext(null);
  */
 export const INITIATIVE_MODES = {
   DIRECTOR: 'director', // User typing/designing - Tooloo stays silent
-  PARTNER: 'partner',   // User paused >10s - Tooloo offers suggestions
-  AGENT: 'agent',       // User handed over control - Tooloo executes
+  PARTNER: 'partner', // User paused >10s - Tooloo offers suggestions
+  AGENT: 'agent', // User handed over control - Tooloo executes
 };
 
 export function InitiativeProvider({ children }) {
@@ -698,15 +722,17 @@ export function InitiativeProvider({ children }) {
   useEffect(() => {
     const handleUserActivity = () => {
       setLastUserAction(Date.now());
-      
+
       // If in Partner or Agent mode and user starts acting, switch to Director
       if (mode !== INITIATIVE_MODES.DIRECTOR) {
         setMode(INITIATIVE_MODES.DIRECTOR);
-        
+
         // Notify UI of mode change
-        window.dispatchEvent(new CustomEvent('tooloo:initiative', {
-          detail: { mode: INITIATIVE_MODES.DIRECTOR, reason: 'user_activity' }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('tooloo:initiative', {
+            detail: { mode: INITIATIVE_MODES.DIRECTOR, reason: 'user_activity' },
+          })
+        );
       }
 
       // Reset idle timer
@@ -719,16 +745,24 @@ export function InitiativeProvider({ children }) {
         idleTimerRef.current = setTimeout(() => {
           if (mode === INITIATIVE_MODES.DIRECTOR) {
             setMode(INITIATIVE_MODES.PARTNER);
-            
+
             // Notify UI of mode change
-            window.dispatchEvent(new CustomEvent('tooloo:initiative', {
-              detail: { mode: INITIATIVE_MODES.PARTNER, reason: 'user_idle' }
-            }));
+            window.dispatchEvent(
+              new CustomEvent('tooloo:initiative', {
+                detail: { mode: INITIATIVE_MODES.PARTNER, reason: 'user_idle' },
+              })
+            );
 
             // Trigger peripheral pulse to offer suggestions
-            window.dispatchEvent(new CustomEvent('suggestion:ready', {
-              detail: { type: 'idle', message: 'Tooloo has some suggestions...', priority: 'low' }
-            }));
+            window.dispatchEvent(
+              new CustomEvent('suggestion:ready', {
+                detail: {
+                  type: 'idle',
+                  message: 'Tooloo has some suggestions...',
+                  priority: 'low',
+                },
+              })
+            );
           }
         }, IDLE_THRESHOLD);
       }
@@ -736,7 +770,7 @@ export function InitiativeProvider({ children }) {
 
     // Track keyboard and mouse activity
     const events = ['keydown', 'mousedown', 'mousemove', 'touchstart', 'scroll'];
-    events.forEach(event => {
+    events.forEach((event) => {
       window.addEventListener(event, handleUserActivity, { passive: true });
     });
 
@@ -744,7 +778,7 @@ export function InitiativeProvider({ children }) {
     handleUserActivity();
 
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         window.removeEventListener(event, handleUserActivity);
       });
       if (idleTimerRef.current) {
@@ -757,20 +791,22 @@ export function InitiativeProvider({ children }) {
   useEffect(() => {
     const handleModeRequest = (event) => {
       const { mode: requestedMode, reason } = event?.detail || {};
-      
+
       if (Object.values(INITIATIVE_MODES).includes(requestedMode)) {
         setMode(requestedMode);
-        
+
         // Update mood based on mode
         const moodMap = {
           [INITIATIVE_MODES.DIRECTOR]: 'focused',
           [INITIATIVE_MODES.PARTNER]: 'calm',
           [INITIATIVE_MODES.AGENT]: 'thinking',
         };
-        
-        window.dispatchEvent(new CustomEvent('tooloo:mood', {
-          detail: { mood: moodMap[requestedMode] }
-        }));
+
+        window.dispatchEvent(
+          new CustomEvent('tooloo:mood', {
+            detail: { mood: moodMap[requestedMode] },
+          })
+        );
       }
     };
 
@@ -781,41 +817,52 @@ export function InitiativeProvider({ children }) {
   // Enter Agent mode (Tooloo takes control)
   const enterAgentMode = useCallback((options = {}) => {
     setMode(INITIATIVE_MODES.AGENT);
-    
-    window.dispatchEvent(new CustomEvent('tooloo:initiative', {
-      detail: { mode: INITIATIVE_MODES.AGENT, reason: 'user_handoff', ...options }
-    }));
 
-    window.dispatchEvent(new CustomEvent('tooloo:mood', {
-      detail: { mood: 'thinking' }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('tooloo:initiative', {
+        detail: { mode: INITIATIVE_MODES.AGENT, reason: 'user_handoff', ...options },
+      })
+    );
+
+    window.dispatchEvent(
+      new CustomEvent('tooloo:mood', {
+        detail: { mood: 'thinking' },
+      })
+    );
   }, []);
 
   // Exit Agent mode
   const exitAgentMode = useCallback(() => {
     setMode(INITIATIVE_MODES.DIRECTOR);
-    
-    window.dispatchEvent(new CustomEvent('tooloo:initiative', {
-      detail: { mode: INITIATIVE_MODES.DIRECTOR, reason: 'agent_complete' }
-    }));
 
-    window.dispatchEvent(new CustomEvent('tooloo:mood', {
-      detail: { mood: 'calm' }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('tooloo:initiative', {
+        detail: { mode: INITIATIVE_MODES.DIRECTOR, reason: 'agent_complete' },
+      })
+    );
+
+    window.dispatchEvent(
+      new CustomEvent('tooloo:mood', {
+        detail: { mood: 'calm' },
+      })
+    );
   }, []);
 
-  const contextValue = useMemo(() => ({
-    mode,
-    setMode,
-    lastUserAction,
-    autoSuggestionEnabled,
-    setAutoSuggestionEnabled,
-    enterAgentMode,
-    exitAgentMode,
-    isDirector: mode === INITIATIVE_MODES.DIRECTOR,
-    isPartner: mode === INITIATIVE_MODES.PARTNER,
-    isAgent: mode === INITIATIVE_MODES.AGENT,
-  }), [mode, lastUserAction, autoSuggestionEnabled, enterAgentMode, exitAgentMode]);
+  const contextValue = useMemo(
+    () => ({
+      mode,
+      setMode,
+      lastUserAction,
+      autoSuggestionEnabled,
+      setAutoSuggestionEnabled,
+      enterAgentMode,
+      exitAgentMode,
+      isDirector: mode === INITIATIVE_MODES.DIRECTOR,
+      isPartner: mode === INITIATIVE_MODES.PARTNER,
+      isAgent: mode === INITIATIVE_MODES.AGENT,
+    }),
+    [mode, lastUserAction, autoSuggestionEnabled, enterAgentMode, exitAgentMode]
+  );
 
   return (
     <InitiativeStateContext.Provider value={contextValue}>

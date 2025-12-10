@@ -1,7 +1,8 @@
-// @version 3.3.375
+// @version 3.3.376
 // TooLoo.ai Multi-Format Visual Renderers
 // ═══════════════════════════════════════════════════════════════════════════
 // DIVERSIFIED VISUAL COMMUNICATION - React Components for All Formats
+// Fixed Chart.js animation conflicts, improved error handling
 //
 // Renders visual artifacts in many formats beyond just SVG:
 // ASCII, Markdown Tables, Mermaid, Charts, Emoji, Terminal, Math, etc.

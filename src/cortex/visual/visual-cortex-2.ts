@@ -875,6 +875,288 @@ export class VisualCortex2 {
     return this.animation.toCSSAnimation(this.animation.getPreset(preset));
   }
 
+  // =========================================================================
+  // MULTI-FORMAT VISUAL GENERATION (v3.3.374)
+  // Diversified visual communication beyond SVG
+  // =========================================================================
+
+  /**
+   * Generate ASCII art box
+   */
+  generateASCIIBox(
+    title: string,
+    content: string[],
+    style: 'single' | 'double' | 'rounded' = 'rounded'
+  ): string {
+    const borders = {
+      single: { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' },
+      double: { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║' },
+      rounded: { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│' }
+    };
+    
+    const b = borders[style];
+    const maxLen = Math.max(title.length, ...content.map(l => l.length)) + 2;
+    
+    const lines: string[] = [];
+    lines.push(`${b.tl}${b.h.repeat(maxLen + 2)}${b.tr}`);
+    lines.push(`${b.v} ${title.padEnd(maxLen)} ${b.v}`);
+    lines.push(`${b.v}${b.h.repeat(maxLen + 2)}${b.v}`);
+    content.forEach(line => {
+      lines.push(`${b.v} ${line.padEnd(maxLen)} ${b.v}`);
+    });
+    lines.push(`${b.bl}${b.h.repeat(maxLen + 2)}${b.br}`);
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate ASCII progress bar
+   */
+  generateASCIIProgress(
+    value: number,
+    max: number = 100,
+    width: number = 20,
+    style: 'blocks' | 'arrows' | 'dots' = 'blocks'
+  ): string {
+    const percent = Math.min(100, Math.max(0, (value / max) * 100));
+    const filled = Math.round((percent / 100) * width);
+    const empty = width - filled;
+    
+    const styles = {
+      blocks: { filled: '█', empty: '░', left: '[', right: ']' },
+      arrows: { filled: '▶', empty: '·', left: '|', right: '|' },
+      dots: { filled: '●', empty: '○', left: '(', right: ')' }
+    };
+    
+    const s = styles[style];
+    return `${s.left}${s.filled.repeat(filled)}${s.empty.repeat(empty)}${s.right} ${percent.toFixed(0)}%`;
+  }
+
+  /**
+   * Generate emoji status indicator
+   */
+  generateEmojiStatus(
+    status: 'success' | 'warning' | 'error' | 'info' | 'loading' | 'progress',
+    message?: string
+  ): string {
+    const indicators: Record<string, string> = {
+      success: '✅',
+      warning: '⚠️',
+      error: '❌',
+      info: 'ℹ️',
+      loading: '⏳',
+      progress: '🔄'
+    };
+    
+    return `${indicators[status]} ${message || status}`;
+  }
+
+  /**
+   * Generate Mermaid flowchart code
+   */
+  generateMermaidFlowchart(
+    nodes: Array<{ id: string; label: string; type?: 'default' | 'decision' | 'start' | 'end' }>,
+    edges: Array<{ from: string; to: string; label?: string }>
+  ): string {
+    const defaultShape: [string, string] = ['[', ']'];
+    const nodeShapes: Record<string, [string, string]> = {
+      default: defaultShape,
+      decision: ['{', '}'],
+      start: ['([', '])'],
+      end: ['[[', ']]'],
+    };
+
+    const lines = ['graph TD'];
+
+    // Add nodes
+    nodes.forEach((node) => {
+      const shape = nodeShapes[node.type || 'default'] ?? defaultShape;
+      const [left, right] = shape;
+      lines.push(`    ${node.id}${left}${node.label}${right}`);
+    });
+
+    // Add edges
+    edges.forEach((edge) => {
+      const label = edge.label ? `|${edge.label}|` : '';
+      lines.push(`    ${edge.from} -->${label} ${edge.to}`);
+    });
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate chart data structure
+   */
+  generateChartData(
+    type: 'bar' | 'line' | 'pie' | 'doughnut',
+    labels: string[],
+    datasets: Array<{ label: string; data: number[]; color?: string }>
+  ): object {
+    const colors = [
+      'rgba(99, 102, 241, 0.8)',
+      'rgba(139, 92, 246, 0.8)',
+      'rgba(6, 182, 212, 0.8)',
+      'rgba(16, 185, 129, 0.8)',
+      'rgba(245, 158, 11, 0.8)',
+    ];
+
+    return {
+      type,
+      data: {
+        labels,
+        datasets: datasets.map((ds, i) => {
+          const bgColor = ds.color || colors[i % colors.length] || 'rgba(99, 102, 241, 0.8)';
+          return {
+            label: ds.label,
+            data: ds.data,
+            backgroundColor: bgColor,
+            borderColor: bgColor.replace('0.8', '1'),
+          };
+        }),
+      },
+    };
+  }
+
+  /**
+   * Generate timeline data structure
+   */
+  generateTimelineData(
+    events: Array<{
+      date: string;
+      title: string;
+      description?: string;
+      type?: 'milestone' | 'event' | 'checkpoint';
+    }>
+  ): object {
+    return {
+      events: events.map(e => ({
+        date: e.date,
+        title: e.title,
+        description: e.description,
+        type: e.type || 'event'
+      }))
+    };
+  }
+
+  /**
+   * Generate tree/hierarchy data structure
+   */
+  generateTreeData(
+    label: string,
+    children?: Array<{ label: string; children?: unknown[] }>,
+    icon?: string
+  ): object {
+    return {
+      label,
+      icon,
+      children: children || []
+    };
+  }
+
+  /**
+   * Generate stats card data structure
+   */
+  generateStatsData(
+    stats: Array<{
+      label: string;
+      value: string | number;
+      change?: { value: number; direction: 'up' | 'down' | 'flat' };
+      icon?: string;
+    }>
+  ): object {
+    return { stats };
+  }
+
+  /**
+   * Generate comparison data structure
+   */
+  generateComparisonData(
+    items: Array<{
+      title: string;
+      features: Record<string, string | boolean | number>;
+      highlight?: boolean;
+    }>,
+    compareBy: string[]
+  ): object {
+    return { items, compareBy };
+  }
+
+  /**
+   * Generate gradient card data structure
+   */
+  generateGradientCard(
+    title: string,
+    options: {
+      subtitle?: string;
+      value?: string | number;
+      icon?: string;
+      gradient?: [string, string];
+      footer?: string;
+    } = {}
+  ): object {
+    return {
+      title,
+      subtitle: options.subtitle,
+      value: options.value,
+      icon: options.icon,
+      gradient: options.gradient || ['#6366f1', '#8b5cf6'],
+      footer: options.footer
+    };
+  }
+
+  /**
+   * Suggest best visual format based on content
+   */
+  suggestVisualFormat(
+    query: string,
+    context?: {
+      hasNumericalData?: boolean;
+      hasHierarchy?: boolean;
+      hasTemporal?: boolean;
+      hasComparison?: boolean;
+    }
+  ): string[] {
+    const queryLower = query.toLowerCase();
+    const suggestions: string[] = [];
+    
+    // Keyword-based suggestions
+    if (queryLower.includes('flow') || queryLower.includes('process')) {
+      suggestions.push('mermaid', 'ascii');
+    }
+    if (queryLower.includes('chart') || queryLower.includes('graph') || context?.hasNumericalData) {
+      suggestions.push('chart');
+    }
+    if (queryLower.includes('tree') || queryLower.includes('hierarchy') || context?.hasHierarchy) {
+      suggestions.push('tree', 'ascii');
+    }
+    if (queryLower.includes('timeline') || queryLower.includes('history') || context?.hasTemporal) {
+      suggestions.push('timeline');
+    }
+    if (queryLower.includes('compare') || queryLower.includes('versus') || context?.hasComparison) {
+      suggestions.push('comparison', 'markdown-table');
+    }
+    if (queryLower.includes('status') || queryLower.includes('progress')) {
+      suggestions.push('emoji', 'stats');
+    }
+    if (queryLower.includes('diagram') || queryLower.includes('architecture')) {
+      suggestions.push('svg', 'mermaid');
+    }
+    if (queryLower.includes('command') || queryLower.includes('terminal')) {
+      suggestions.push('terminal');
+    }
+    if (queryLower.includes('math') || queryLower.includes('equation')) {
+      suggestions.push('math');
+    }
+    
+    // Default if no matches
+    if (suggestions.length === 0) {
+      suggestions.push('ascii', 'markdown-table');
+    }
+    
+    // Return unique suggestions
+    return [...new Set(suggestions)].slice(0, 3);
+  }
+
   /**
    * Get system status
    */
@@ -884,15 +1166,20 @@ export class VisualCortex2 {
     designSystemVersion: string;
     tokenCategories: string[];
     componentCount: number;
+    visualFormats: string[];
   } {
     const system = this.getDesignSystem();
 
     return {
       initialized: true,
-      modules: ['SVG Generation', 'Animation', 'Data Visualization', 'Design System'],
+      modules: ['SVG Generation', 'Animation', 'Data Visualization', 'Design System', 'Multi-Format'],
       designSystemVersion: system.version,
       tokenCategories: Object.keys(system.tokens),
       componentCount: system.components.length,
+      visualFormats: [
+        'svg', 'ascii', 'mermaid', 'chart', 'timeline', 'tree', 
+        'stats', 'gradient-card', 'comparison', 'emoji', 'terminal', 'math'
+      ],
     };
   }
 }

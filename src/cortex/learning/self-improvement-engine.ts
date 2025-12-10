@@ -1,16 +1,16 @@
 // @version 3.3.400
 /**
  * Self-Improvement Engine
- * 
+ *
  * The core autonomous improvement loop for TooLoo.
  * This connects memory, learning, and execution into a continuous improvement cycle.
- * 
+ *
  * Key capabilities:
  * 1. **Automatic Prompt Refinement** - Learns which prompts work best
- * 2. **Strategy A/B Testing** - Tests different approaches and tracks results  
+ * 2. **Strategy A/B Testing** - Tests different approaches and tracks results
  * 3. **Performance Trending** - Tracks improvement over time
  * 4. **Proactive Goal Setting** - Sets improvement targets based on weaknesses
- * 
+ *
  * @module cortex/learning/self-improvement-engine
  */
 
@@ -108,6 +108,7 @@ export interface SelfImprovementState {
   lastAnalysis: number;
   cycleCount: number;
   totalImprovements: number;
+  totalRegressions: number;
 }
 
 // ============================================================================
@@ -116,7 +117,7 @@ export interface SelfImprovementState {
 
 export class SelfImprovementEngine {
   private static instance: SelfImprovementEngine;
-  
+
   private state: SelfImprovementState;
   private dataDir: string;
   private stateFile: string;
@@ -144,6 +145,7 @@ export class SelfImprovementEngine {
       lastAnalysis: 0,
       cycleCount: 0,
       totalImprovements: 0,
+      totalRegressions: 0,
     };
   }
 
@@ -160,11 +162,11 @@ export class SelfImprovementEngine {
 
   async initialize(): Promise<void> {
     console.log('[SelfImprovement] Initializing autonomous improvement engine...');
-    
+
     await fs.ensureDir(this.dataDir);
     await this.loadState();
     await this.vectorStore.initialize();
-    
+
     this.setupEventListeners();
     this.startAnalysisCycle();
 
@@ -186,11 +188,11 @@ export class SelfImprovementEngine {
    * Get the best strategy for a task type
    */
   getBestStrategy(taskType: string): PromptStrategy | null {
-    const strategies = this.state.strategies.filter(s => s.taskType === taskType);
+    const strategies = this.state.strategies.filter((s) => s.taskType === taskType);
     if (strategies.length === 0) return null;
 
     // Return champion if exists
-    const champion = strategies.find(s => s.isChampion);
+    const champion = strategies.find((s) => s.isChampion);
     if (champion) return champion;
 
     // Otherwise return best by success rate
@@ -204,7 +206,7 @@ export class SelfImprovementEngine {
     strategyId: string,
     outcome: { success: boolean; quality: number; latency: number }
   ): Promise<void> {
-    const strategy = this.state.strategies.find(s => s.id === strategyId);
+    const strategy = this.state.strategies.find((s) => s.id === strategyId);
     if (!strategy) return;
 
     // Update statistics
@@ -213,16 +215,14 @@ export class SelfImprovementEngine {
     strategy.lastUsedAt = Date.now();
 
     // Rolling average for success rate
-    strategy.successRate = 
+    strategy.successRate =
       (strategy.successRate * prevTotal + (outcome.success ? 1 : 0)) / strategy.usageCount;
-    
+
     // Rolling average for quality
-    strategy.avgQuality = 
-      (strategy.avgQuality * prevTotal + outcome.quality) / strategy.usageCount;
-    
+    strategy.avgQuality = (strategy.avgQuality * prevTotal + outcome.quality) / strategy.usageCount;
+
     // Rolling average for latency
-    strategy.avgLatency = 
-      (strategy.avgLatency * prevTotal + outcome.latency) / strategy.usageCount;
+    strategy.avgLatency = (strategy.avgLatency * prevTotal + outcome.latency) / strategy.usageCount;
 
     // Update active A/B tests
     await this.updateABTests(strategyId, outcome);
@@ -276,7 +276,7 @@ export class SelfImprovementEngine {
    * Mutate a strategy to create a variation
    */
   async mutateStrategy(strategyId: string): Promise<PromptStrategy | null> {
-    const parent = this.state.strategies.find(s => s.id === strategyId);
+    const parent = this.state.strategies.find((s) => s.id === strategyId);
     if (!parent) return null;
 
     // Generate mutation via AI (simplified - in production would use precog)
@@ -311,16 +311,17 @@ export class SelfImprovementEngine {
    * Start an A/B test between two strategies
    */
   async startABTest(strategyAId: string, strategyBId: string): Promise<ABTest | null> {
-    const strategyA = this.state.strategies.find(s => s.id === strategyAId);
-    const strategyB = this.state.strategies.find(s => s.id === strategyBId);
-    
+    const strategyA = this.state.strategies.find((s) => s.id === strategyAId);
+    const strategyB = this.state.strategies.find((s) => s.id === strategyBId);
+
     if (!strategyA || !strategyB) return null;
     if (strategyA.taskType !== strategyB.taskType) return null;
 
     // Check if test already exists
     const existing = this.state.activeTests.find(
-      t => (t.strategyA === strategyAId && t.strategyB === strategyBId) ||
-           (t.strategyA === strategyBId && t.strategyB === strategyAId)
+      (t) =>
+        (t.strategyA === strategyAId && t.strategyB === strategyBId) ||
+        (t.strategyA === strategyBId && t.strategyB === strategyAId)
     );
     if (existing) return existing;
 
@@ -373,8 +374,7 @@ export class SelfImprovementEngine {
       }
 
       // Check if test can be concluded
-      if (test.resultsA.samples >= test.minSamples && 
-          test.resultsB.samples >= test.minSamples) {
+      if (test.resultsA.samples >= test.minSamples && test.resultsB.samples >= test.minSamples) {
         await this.concludeABTest(test);
       }
     }
@@ -386,14 +386,16 @@ export class SelfImprovementEngine {
   private async concludeABTest(test: ABTest): Promise<void> {
     const rateA = test.resultsA.successes / test.resultsA.samples;
     const rateB = test.resultsB.successes / test.resultsB.samples;
-    
+
     // Simple statistical test (in production would use proper stats)
     const diff = Math.abs(rateA - rateB);
-    const pooledRate = (test.resultsA.successes + test.resultsB.successes) / 
-                       (test.resultsA.samples + test.resultsB.samples);
-    const se = Math.sqrt(pooledRate * (1 - pooledRate) * 
-               (1/test.resultsA.samples + 1/test.resultsB.samples));
-    
+    const pooledRate =
+      (test.resultsA.successes + test.resultsB.successes) /
+      (test.resultsA.samples + test.resultsB.samples);
+    const se = Math.sqrt(
+      pooledRate * (1 - pooledRate) * (1 / test.resultsA.samples + 1 / test.resultsB.samples)
+    );
+
     const zScore = diff / (se || 0.01);
     test.confidence = Math.min(0.99, 1 - Math.exp(-zScore * 0.5));
 
@@ -416,7 +418,7 @@ export class SelfImprovementEngine {
 
     if (test.status === 'completed') {
       // Move to completed tests
-      this.state.activeTests = this.state.activeTests.filter(t => t.id !== test.id);
+      this.state.activeTests = this.state.activeTests.filter((t) => t.id !== test.id);
       this.state.completedTests.push(test);
 
       bus.publish('cortex', 'self_improvement:ab_test_completed', {
@@ -427,7 +429,9 @@ export class SelfImprovementEngine {
         rateB,
       });
 
-      console.log(`[SelfImprovement] A/B test completed: ${test.name} - Winner: ${test.winner} (${(test.confidence * 100).toFixed(1)}% confidence)`);
+      console.log(
+        `[SelfImprovement] A/B test completed: ${test.name} - Winner: ${test.winner} (${(test.confidence * 100).toFixed(1)}% confidence)`
+      );
     }
   }
 
@@ -440,11 +444,11 @@ export class SelfImprovementEngine {
         strategy.isChampion = strategy.id === strategyId;
       }
     }
-    
-    const champion = this.state.strategies.find(s => s.id === strategyId);
+
+    const champion = this.state.strategies.find((s) => s.id === strategyId);
     if (champion) {
       console.log(`[SelfImprovement] 👑 New champion for ${taskType}: ${champion.name}`);
-      
+
       bus.publish('cortex', 'self_improvement:new_champion', {
         strategyId,
         taskType,
@@ -468,14 +472,16 @@ export class SelfImprovementEngine {
     deadlineDays?: number;
   }): Promise<ImprovementGoal> {
     const currentValue = await this.getCurrentMetricValue(params.metric, params.taskType);
-    
+
     const goal: ImprovementGoal = {
       id: `goal-${Date.now()}`,
       metric: params.metric,
       taskType: params.taskType,
       targetValue: params.targetValue,
       currentValue,
-      deadline: params.deadlineDays ? Date.now() + params.deadlineDays * 24 * 60 * 60 * 1000 : undefined,
+      deadline: params.deadlineDays
+        ? Date.now() + params.deadlineDays * 24 * 60 * 60 * 1000
+        : undefined,
       status: 'active',
       createdAt: Date.now(),
       progress: Math.min(1, currentValue / params.targetValue),
@@ -492,18 +498,23 @@ export class SelfImprovementEngine {
       current: currentValue,
     });
 
-    console.log(`[SelfImprovement] Goal set: ${params.metric} for ${params.taskType} → ${params.targetValue}`);
+    console.log(
+      `[SelfImprovement] Goal set: ${params.metric} for ${params.taskType} → ${params.targetValue}`
+    );
     return goal;
   }
 
   /**
    * Get current value for a metric
    */
-  private async getCurrentMetricValue(metric: ImprovementGoal['metric'], taskType: string): Promise<number> {
-    const strategies = this.state.strategies.filter(s => s.taskType === taskType);
+  private async getCurrentMetricValue(
+    metric: ImprovementGoal['metric'],
+    taskType: string
+  ): Promise<number> {
+    const strategies = this.state.strategies.filter((s) => s.taskType === taskType);
     if (strategies.length === 0) return 0;
 
-    const champion = strategies.find(s => s.isChampion) || strategies[0];
+    const champion = strategies.find((s) => s.isChampion) || strategies[0];
     if (!champion) return 0;
 
     switch (metric) {
@@ -524,7 +535,7 @@ export class SelfImprovementEngine {
    * Check and update goal progress
    */
   private async updateGoals(): Promise<void> {
-    for (const goal of this.state.goals.filter(g => g.status === 'active')) {
+    for (const goal of this.state.goals.filter((g) => g.status === 'active')) {
       const current = await this.getCurrentMetricValue(goal.metric, goal.taskType);
       goal.currentValue = current;
       goal.progress = Math.min(1, current / goal.targetValue);
@@ -570,9 +581,10 @@ export class SelfImprovementEngine {
 
     // 2. Identify underperforming areas
     const weakAreas = this.identifyWeakAreas();
-    
+
     // 3. Create mutations for weak areas
-    for (const area of weakAreas.slice(0, 2)) { // Max 2 mutations per cycle
+    for (const area of weakAreas.slice(0, 2)) {
+      // Max 2 mutations per cycle
       const champion = this.getBestStrategy(area.taskType);
       if (champion && champion.usageCount >= 10) {
         await this.mutateStrategy(champion.id);
@@ -603,7 +615,7 @@ export class SelfImprovementEngine {
    */
   private identifyWeakAreas(): { taskType: string; successRate: number }[] {
     const byTaskType = new Map<string, { total: number; successes: number }>();
-    
+
     for (const strategy of this.state.strategies) {
       const existing = byTaskType.get(strategy.taskType) || { total: 0, successes: 0 };
       existing.total += strategy.usageCount;
@@ -615,7 +627,8 @@ export class SelfImprovementEngine {
     for (const [taskType, stats] of byTaskType) {
       if (stats.total > 0) {
         const rate = stats.successes / stats.total;
-        if (rate < 0.8) { // Below 80% success rate
+        if (rate < 0.8) {
+          // Below 80% success rate
           weak.push({ taskType, successRate: rate });
         }
       }
@@ -628,19 +641,20 @@ export class SelfImprovementEngine {
    * Automatically start A/B tests for untested mutations
    */
   private async startAutoABTests(): Promise<void> {
-    const taskTypes = new Set(this.state.strategies.map(s => s.taskType));
-    
+    const taskTypes = new Set(this.state.strategies.map((s) => s.taskType));
+
     for (const taskType of taskTypes) {
-      const strategies = this.state.strategies.filter(s => s.taskType === taskType);
-      const champion = strategies.find(s => s.isChampion);
-      
+      const strategies = this.state.strategies.filter((s) => s.taskType === taskType);
+      const champion = strategies.find((s) => s.isChampion);
+
       if (!champion) continue;
-      
+
       // Find mutations that haven't been tested
-      const untestedMutations = strategies.filter(s => 
-        s.parentId === champion.id &&
-        !this.state.activeTests.some(t => t.strategyA === s.id || t.strategyB === s.id) &&
-        !this.state.completedTests.some(t => t.strategyA === s.id || t.strategyB === s.id)
+      const untestedMutations = strategies.filter(
+        (s) =>
+          s.parentId === champion.id &&
+          !this.state.activeTests.some((t) => t.strategyA === s.id || t.strategyB === s.id) &&
+          !this.state.completedTests.some((t) => t.strategyA === s.id || t.strategyB === s.id)
       );
 
       // Start test for first untested mutation
@@ -655,13 +669,13 @@ export class SelfImprovementEngine {
    */
   private async recordTrend(): Promise<void> {
     const today = new Date().toISOString().split('T')[0]!;
-    
+
     // Calculate aggregate metrics
     let totalSuccess = 0;
     let totalQuality = 0;
     let totalLatency = 0;
     let totalUsage = 0;
-    
+
     for (const strategy of this.state.strategies) {
       totalSuccess += strategy.successRate * strategy.usageCount;
       totalQuality += strategy.avgQuality * strategy.usageCount;
@@ -676,11 +690,21 @@ export class SelfImprovementEngine {
       avgLatency: totalUsage > 0 ? totalLatency / totalUsage : 0,
       totalTasks: totalUsage,
       improvements: this.state.totalImprovements,
-      regressions: 0, // TODO: track regressions
+      regressions: this.state.totalRegressions,
     };
 
+    // Detect regression: compare to yesterday's trend
+    if (this.state.trends.length > 0) {
+      const yesterday = this.state.trends[this.state.trends.length - 1];
+      if (yesterday && trend.successRate < yesterday.successRate - 0.05) {
+        // Success rate dropped by more than 5%
+        this.state.totalRegressions++;
+        console.log(`[SelfImprovement] ⚠️ Regression detected: success rate dropped ${((yesterday.successRate - trend.successRate) * 100).toFixed(1)}%`);
+      }
+    }
+
     // Update or add today's trend
-    const existingIndex = this.state.trends.findIndex(t => t.date === today);
+    const existingIndex = this.state.trends.findIndex((t) => t.date === today);
     if (existingIndex >= 0) {
       this.state.trends[existingIndex] = trend;
     } else {
@@ -695,13 +719,15 @@ export class SelfImprovementEngine {
   /**
    * Auto-set improvement goals for weak areas
    */
-  private async autoSetGoals(weakAreas: { taskType: string; successRate: number }[]): Promise<void> {
+  private async autoSetGoals(
+    weakAreas: { taskType: string; successRate: number }[]
+  ): Promise<void> {
     for (const area of weakAreas) {
       // Check if goal already exists
       const hasGoal = this.state.goals.some(
-        g => g.taskType === area.taskType && g.status === 'active'
+        (g) => g.taskType === area.taskType && g.status === 'active'
       );
-      
+
       if (!hasGoal) {
         // Set goal to improve by 10%
         await this.setGoal({
@@ -722,11 +748,11 @@ export class SelfImprovementEngine {
     // Listen for execution outcomes to update strategies
     bus.on('pipeline:execution:complete', async (event) => {
       const { success, language, errorAnalysis } = event.payload;
-      
+
       // Find strategy for this task type
       const taskType = errorAnalysis?.errorType || 'general';
       const strategy = this.getBestStrategy(taskType);
-      
+
       if (strategy) {
         await this.recordStrategyOutcome(strategy.id, {
           success,
@@ -748,14 +774,14 @@ export class SelfImprovementEngine {
       () => this.runAnalysisCycle().catch(console.error),
       this.ANALYSIS_INTERVAL_MS
     );
-    
+
     // Run initial cycle after short delay
     setTimeout(() => this.runAnalysisCycle().catch(console.error), 10000);
   }
 
   private async pruneStrategies(taskType: string): Promise<void> {
-    const strategies = this.state.strategies.filter(s => s.taskType === taskType);
-    
+    const strategies = this.state.strategies.filter((s) => s.taskType === taskType);
+
     if (strategies.length > this.MAX_STRATEGIES_PER_TYPE) {
       // Keep champion and best performers
       const sorted = strategies.sort((a, b) => {
@@ -763,11 +789,9 @@ export class SelfImprovementEngine {
         if (b.isChampion) return 1;
         return b.successRate - a.successRate;
       });
-      
+
       const toRemove = sorted.slice(this.MAX_STRATEGIES_PER_TYPE);
-      this.state.strategies = this.state.strategies.filter(
-        s => !toRemove.includes(s)
-      );
+      this.state.strategies = this.state.strategies.filter((s) => !toRemove.includes(s));
     }
   }
 
@@ -813,11 +837,35 @@ export class SelfImprovementEngine {
       activeTests: this.state.activeTests.length,
       completedTests: this.state.completedTests.length,
       totalImprovements: this.state.totalImprovements,
-      activeGoals: this.state.goals.filter(g => g.status === 'active').length,
-      achievedGoals: this.state.goals.filter(g => g.status === 'achieved').length,
+      activeGoals: this.state.goals.filter((g) => g.status === 'active').length,
+      achievedGoals: this.state.goals.filter((g) => g.status === 'achieved').length,
       cycleCount: this.state.cycleCount,
       trends: this.state.trends.slice(-30),
     };
+  }
+
+  /**
+   * V3.3.401: Get stats for API consumption
+   */
+  getStats(): Record<string, number | string> {
+    return {
+      totalStrategies: this.state.strategies.length,
+      activeTests: this.state.activeTests.length,
+      completedTests: this.state.completedTests.length,
+      totalImprovements: this.state.totalImprovements,
+      activeGoals: this.state.goals.filter((g) => g.status === 'active').length,
+      achievedGoals: this.state.goals.filter((g) => g.status === 'achieved').length,
+      cycleCount: this.state.cycleCount,
+      lastAnalysis: this.state.lastAnalysis,
+      status: 'active',
+    };
+  }
+
+  /**
+   * V3.3.401: Get goals for API consumption
+   */
+  getGoals(): ImprovementGoal[] {
+    return this.state.goals;
   }
 
   async shutdown(): Promise<void> {

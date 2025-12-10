@@ -1,4 +1,4 @@
-// @version 3.3.199
+// @version 3.3.470
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -32,6 +32,22 @@ import { automatedPipeline } from '../../cortex/agent/automated-execution-pipeli
 // V3.3.199: Response formatting and provider execution learning
 import { responseFormatter } from '../../shared/response-formatter.js';
 import { providerExecutionLearner } from '../../cortex/learning/provider-execution-learner.js';
+// V3.3.392: Project context integration
+import { projectManager } from '../../cortex/project-manager-v2.js';
+// V3.3.470: Emergent Neural Router integration
+import { modelChooser, type RoutingPlan } from '../../precog/engine/model-chooser.js';
+// V3.3.480: Shadow Lab for background challenger experiments
+import { shadowLab } from '../../precog/engine/shadow-lab.js';
+// Phase 1: Smart Router - Real dynamic provider ranking
+import {
+  initSmartRouter,
+  getSmartRouter,
+  initProviderScorecard,
+} from '../../precog/engine/index.js';
+// Phase 2: Self-Optimization (Runtime Config & Benchmarking)
+import { initRuntimeConfig, getRuntimeConfig } from '../../precog/engine/index.js';
+import { initBenchmarkService, getBenchmarkService } from '../../precog/engine/index.js';
+import { getSegmentationService } from '../../precog/index.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -48,6 +64,30 @@ const parallelOrchestrator = new ParallelProviderOrchestrator({
 parallelOrchestrator.init().then(() => {
   console.log('[Chat] ParallelProviderOrchestrator ready for ensemble queries');
 });
+
+// Phase 1: Initialize SmartRouter with ProviderScorecard for dynamic routing
+const scorecard = initProviderScorecard(['deepseek', 'anthropic', 'openai', 'gemini'], {
+  latency: 0.4, // 40% weight on latency
+  cost: 0.3, // 30% weight on cost
+  reliability: 0.3, // 30% weight on reliability
+});
+const smartRouter = initSmartRouter(scorecard);
+console.log('[Chat] SmartRouter and ProviderScorecard initialized for Phase 1 Smart Routing');
+
+// Phase 2: Initialize RuntimeConfig and BenchmarkService for self-optimization
+const runtimeConfig = initRuntimeConfig();
+runtimeConfig.load().then(() => {
+  console.log('[Chat] RuntimeConfig loaded for Phase 2 Self-Optimization');
+
+  // Update SmartRouter weights from runtime config if available
+  const weights = runtimeConfig.getProviderWeights();
+  scorecard.setScoringWeights(weights);
+  console.log('[Chat] SmartRouter weights synced from RuntimeConfig:', weights);
+});
+
+const benchmarkService = initBenchmarkService();
+benchmarkService.start();
+console.log('[Chat] BenchmarkService started for real performance tracking');
 
 // Helper to load history
 async function loadHistory() {
@@ -137,7 +177,7 @@ router.post('/generate', async (req, res) => {
 });
 
 router.post('/message', async (req, res) => {
-  // Extend timeout for deep reasoning models (Gemini 3 Pro)
+  // Extend timeout for deep reasoning models (Gemini 2.0 Flash)
   req.setTimeout(300000);
 
   const { message, mode = 'quick', context, attachments } = req.body;
@@ -247,17 +287,61 @@ router.post('/message', async (req, res) => {
       const searchResults = await cortex.hippocampus.vectorStore.search(message, 3);
       if (searchResults && searchResults.length > 0) {
         ragContext = searchResults
-          .map((result) => `[Source: ${result.doc.metadata.source}]\n${result.doc.text}`)
+          .map((result) => `[Source: ${result.doc.metadata['source']}]\n${result.doc.text}`)
           .join('\n\n');
         sources = searchResults.map((result) => ({
-          source: result.doc.metadata.source,
+          source: result.doc.metadata['source'],
           relevance: result.score,
         }));
+
+        // V3.3.441: Emit context retrieval for Projection Interface UI
+        bus.publish('memory', 'memory:context_retrieved', {
+          query: message,
+          hits: searchResults.map((r) => ({
+            content: r.doc.text,
+            source: r.doc.metadata['source'],
+            score: r.score,
+            type: r.doc.metadata['type'] || 'memory',
+            timestamp: r.doc.createdAt,
+          })),
+          timestamp: Date.now(),
+        });
       }
     } catch (err) {
       console.warn('[Chat] Vector search failed:', err);
     }
 
+    // V3.3.392: Project Context Integration
+    let projectContextStr = '';
+    let activeProject: any = null;
+    try {
+      const activeProjectId = projectManager.getActiveProjectId();
+      if (activeProjectId) {
+        const ctx = await projectManager.getActiveProjectContext();
+        if (ctx.project) {
+          activeProject = ctx.project;
+          projectContextStr = `
+📁 ACTIVE PROJECT: "${ctx.project.name}"
+Type: ${ctx.project.type} | Status: ${ctx.project.status}
+Description: ${ctx.project.description}
+Tags: ${ctx.project.tags.join(', ')}
+${ctx.memory ? `\nProject Memory:\n${ctx.memory}` : ''}
+${
+  ctx.recentActivity.length > 0
+    ? `\nRecent Activity:\n${ctx.recentActivity
+        .slice(0, 5)
+        .map((a: string) => `- ${a}`)
+        .join('\n')}`
+    : ''
+}
+`;
+          // Update project context with conversation
+          projectManager.addToProjectContext(activeProjectId, message, 'conversation');
+        }
+      }
+    } catch (err) {
+      console.warn('[Chat] Project context fetch failed:', err);
+    }
     // Project Context
     const projectStructure = await projectContext.getStructure();
 
@@ -270,7 +354,16 @@ SYSTEM IDENTITY:
   * OpenAI (GPT-4, DALL-E 3)
   * Anthropic (Claude 3.5 Sonnet/Haiku)
   * Google (Gemini Pro/Flash, Imagen)
-
+${
+  projectContextStr
+    ? `
+🎯 ACTIVE PROJECT CONTEXT:
+${projectContextStr}
+When responding, consider the active project context. Reference project-specific information when relevant.
+All generated artifacts should be associated with this project unless specified otherwise.
+`
+    : ''
+}
 PROJECT AWARENESS:
 You are running within the "TooLoo.ai-V3-Synapsys" workspace.
 Here is the current file structure of the project you are part of:
@@ -306,17 +399,66 @@ CORE SYSTEMS:
 
 IMPORTANT: You ARE the system. You have direct access to execute code, create files, run processes, and modify the environment. Never claim you cannot execute code - route execution requests to the System Execution Hub.`;
 
-    // Visual Capabilities Instruction - ONLY generate visuals when EXPLICITLY requested
+    // Visual Capabilities Instruction - DIVERSIFIED VISUAL COMMUNICATION (v3.3.375)
     systemPrompt +=
-      '\n\nVISUAL CAPABILITIES (USE SPARINGLY):\n' +
-      '- You CAN generate SVG diagrams, charts, and React components when the user EXPLICITLY asks for visuals.\n' +
-      "- ONLY generate SVG/visual content when the user specifically requests: charts, graphs, diagrams, visualizations, infographics, timelines, illustrations, or says 'show me', 'draw', 'visualize', 'create a chart/diagram'.\n" +
-      '- For normal questions, explanations, and discussions: respond with TEXT ONLY. Do NOT generate SVG.\n' +
-      '- DO NOT use Mermaid.js or ```mermaid blocks. They are disabled.\n' +
-      '- When you DO generate visuals (only when asked): wrap SVG in ```svg blocks, React in ```jsx blocks.\n' +
-      '- Keep visuals responsive and dark-theme compatible.\n' +
-      '⚠️ DEFAULT BEHAVIOR: Respond with plain text unless visuals are explicitly requested.\n' +
-      '⚠️ NEVER auto-generate diagrams. NEVER include SVG unless the user explicitly asked for visuals.';
+      '\n\n🎨 VISUAL COMMUNICATION SYSTEM (v3.3.375):\n' +
+      'You have 12+ visual formats. Choose the BEST one for the content:\n\n' +
+      '═══ QUICK FORMAT REFERENCE ═══\n' +
+      '• ascii    → Text diagrams, boxes, trees (just text art)\n' +
+      '• mermaid  → Flowcharts, sequences, architecture (diagram code)\n' +
+      '• chart    → Bar/line/pie charts (JSON with labels+datasets)\n' +
+      '• emoji    → Status indicators, playful visuals (emoji text)\n' +
+      '• table    → Standard markdown tables for comparisons\n' +
+      '• svg      → Complex graphics, icons (only when necessary)\n' +
+      '• terminal → CLI output styling (command + output text)\n' +
+      '• math     → LaTeX equations (KaTeX syntax)\n' +
+      '• timeline → Chronological events (JSON)\n' +
+      '• tree     → Hierarchies (JSON)\n' +
+      '• stats    → KPI dashboards (JSON)\n\n' +
+      '═══ EXACT FORMAT SYNTAX ═══\n\n' +
+      '**ASCII** (simple text boxes/diagrams):\n' +
+      '```ascii\n' +
+      '┌─────────────┐     ┌─────────────┐\n' +
+      '│   Input     │────▶│   Output    │\n' +
+      '└─────────────┘     └─────────────┘\n' +
+      '```\n\n' +
+      '**MERMAID** (flowcharts, sequences):\n' +
+      '```mermaid\n' +
+      'graph LR\n' +
+      '    A[Start] --> B{Check}\n' +
+      '    B -->|Yes| C[Done]\n' +
+      '    B -->|No| D[Retry]\n' +
+      '```\n\n' +
+      '**CHART** (data visualization - EXACT JSON format):\n' +
+      '```chart\n' +
+      '{"type":"bar","data":{"labels":["Jan","Feb","Mar","Apr"],"datasets":[{"label":"Sales","data":[65,59,80,81]}]}}\n' +
+      '```\n' +
+      '**PIE chart example:**\n' +
+      '```chart\n' +
+      '{"type":"pie","data":{"labels":["Desktop","Mobile","Tablet"],"datasets":[{"data":[60,30,10]}]}}\n' +
+      '```\n\n' +
+      '**EMOJI** (visual status/composition):\n' +
+      '```emoji\n' +
+      '✅ Success  ⏳ Progress  ❌ Error  🚀 Launch\n' +
+      '```\n\n' +
+      '**TIMELINE** (chronological):\n' +
+      '```timeline\n' +
+      '{"events":[{"date":"Q1 2024","title":"Planning","type":"milestone"},{"date":"Q2 2024","title":"Development","type":"event"},{"date":"Q3 2024","title":"Launch","type":"milestone"}]}\n' +
+      '```\n\n' +
+      '**STATS** (metrics cards):\n' +
+      '```stats\n' +
+      '{"stats":[{"label":"Users","value":"12.5K","change":{"value":15,"direction":"up"}},{"label":"Revenue","value":"$48K","change":{"value":8,"direction":"up"}}]}\n' +
+      '```\n\n' +
+      '═══ DECISION GUIDE ═══\n' +
+      '• Numbers/metrics → chart (bar/line) or stats\n' +
+      '• Process flow → mermaid or ascii\n' +
+      '• Comparisons → markdown table\n' +
+      '• Quick status → emoji\n' +
+      '• File structure → ascii tree\n' +
+      '• Architecture → mermaid or svg\n' +
+      '• Timeline/roadmap → timeline\n\n' +
+      '⚠️ JSON must be valid, single-line, no trailing commas!\n' +
+      '⚠️ Default to TEXT. Only use visuals when they add clarity.';
 
     // V3.3.198: UX-OPTIMIZED RESPONSE STYLE
     systemPrompt +=
@@ -777,49 +919,100 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
       }
     };
 
-    // Determine complexity and optimal routing (silently)
-    const complexity =
-      message.length > 500 || /code|implement|build|create|design|architect/i.test(message)
-        ? 'high'
-        : 'standard';
+    // ============================================
+    // V3.3.470: EMERGENT NEURAL ROUTER INTEGRATION
+    // Use ModelChooser for intelligent routing with learning
+    // ============================================
 
-    // Determine ensemble strategy based on task (minimal status output)
+    // Determine ensemble strategy using Neural Router
     const availableProviders = precog.providers.getProviderStatus();
     const activeProviders = Object.entries(availableProviders)
       .filter(([_, status]: [string, any]) => status.available)
       .map(([name]) => name);
 
-    // V3.3.80: Smart ensemble selection based on task type
     let selectedProviders: string[] = [];
     let routingStrategy = 'single';
+    let neuralRoutingPlan: RoutingPlan | null = null;
+    let requestStartTime = Date.now();
 
     if (!requestedProvider) {
-      // Auto mode - TooLoo selects optimal ensemble
-      if (complexity === 'high' || /creative|brainstorm|multiple|compare/i.test(message)) {
-        // Use ensemble for complex/creative tasks
-        selectedProviders = activeProviders.slice(0, 3); // Top 3 available
-        routingStrategy = 'ensemble';
-        // Silent - no verbose output
-      } else if (/code|debug|fix|implement/i.test(message)) {
-        // Prefer DeepSeek for code, fallback to others
-        selectedProviders = activeProviders.includes('deepseek')
-          ? ['deepseek']
-          : activeProviders.includes('anthropic')
+      // V3.3.470: Use Neural Router for intelligent routing
+      try {
+        neuralRoutingPlan = await modelChooser.selectRecipeForIntent({
+          originalPrompt: enhancedMessage,
+          taskType: taskType,
+          context: { ...context, sessionId },
+          sessionId,
+          requestId: `chat-${Date.now()}`,
+        });
+
+        if (neuralRoutingPlan.type === 'recipe' && neuralRoutingPlan.steps) {
+          // Recipe mode: use primary model from first step
+          selectedProviders = neuralRoutingPlan.steps
+            .map((s) => s.model)
+            .filter((m) => activeProviders.includes(m))
+            .slice(0, 3);
+          routingStrategy = 'recipe';
+          console.log(
+            `[Chat Stream] 🧠 Neural Router: Recipe "${neuralRoutingPlan.name}" selected`
+          );
+        } else if (neuralRoutingPlan.model) {
+          // Single model mode
+          if (activeProviders.includes(neuralRoutingPlan.model)) {
+            selectedProviders = [neuralRoutingPlan.model];
+          } else {
+            // Fallback if recommended model not available
+            selectedProviders = activeProviders.slice(0, 1);
+          }
+          routingStrategy = neuralRoutingPlan.lane === 'deep' ? 'ensemble' : 'single';
+          console.log(
+            `[Chat Stream] 🧠 Neural Router: ${neuralRoutingPlan.model} (${neuralRoutingPlan.lane} lane, confidence: ${neuralRoutingPlan.confidence?.toFixed(2)})`
+          );
+        }
+
+        // Emit neural routing info
+        res.write(
+          `data: ${JSON.stringify({
+            neuralRouting: {
+              plan: neuralRoutingPlan.type,
+              model: neuralRoutingPlan.model,
+              lane: neuralRoutingPlan.lane,
+              confidence: neuralRoutingPlan.confidence,
+              recipeName: neuralRoutingPlan.name,
+              shadowTest: neuralRoutingPlan.shadowTest,
+            },
+          })}\n\n`
+        );
+      } catch (routerError) {
+        console.warn('[Chat Stream] Neural Router error, using fallback:', routerError);
+        // Fallback to legacy routing
+        const complexity =
+          enhancedMessage.length > 500 ||
+          /code|implement|build|create|design|architect/i.test(enhancedMessage)
+            ? 'high'
+            : 'standard';
+
+        if (
+          complexity === 'high' ||
+          /creative|brainstorm|multiple|compare/i.test(enhancedMessage)
+        ) {
+          selectedProviders = activeProviders.slice(0, 3);
+          routingStrategy = 'ensemble';
+        } else if (/code|debug|fix|implement/i.test(enhancedMessage)) {
+          selectedProviders = activeProviders.includes('deepseek')
+            ? ['deepseek']
+            : activeProviders.includes('anthropic')
+              ? ['anthropic']
+              : [activeProviders[0] || 'gemini'];
+        } else if (/explain|summarize|analyze/i.test(enhancedMessage)) {
+          selectedProviders = activeProviders.includes('anthropic')
             ? ['anthropic']
             : [activeProviders[0] || 'gemini'];
-        // Silent - no verbose output
-      } else if (/explain|summarize|analyze/i.test(message)) {
-        // Prefer Claude for analysis
-        selectedProviders = activeProviders.includes('anthropic')
-          ? ['anthropic']
-          : [activeProviders[0] || 'gemini'];
-        // Silent - no verbose output
-      } else {
-        // Default: Use fastest available (Gemini Flash)
-        selectedProviders = activeProviders.includes('gemini')
-          ? ['gemini']
-          : [activeProviders[0] || 'gemini'];
-        // Silent - no verbose output
+        } else {
+          selectedProviders = activeProviders.includes('gemini')
+            ? ['gemini']
+            : [activeProviders[0] || 'gemini'];
+        }
       }
     } else {
       // User selected specific provider
@@ -827,7 +1020,8 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
       // Silent - no verbose output
     }
 
-    // V3.3.318: Emit routing decision for process visualization
+    // V3.3.470: Emit routing decision for process visualization with Neural Router info
+    const complexity = neuralRoutingPlan?.lane === 'deep' ? 'high' : 'standard';
     res.write(
       `data: ${JSON.stringify({
         routing: {
@@ -836,14 +1030,24 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
           complexity,
           reasoning: requestedProvider
             ? `User requested ${requestedProvider}`
-            : routingStrategy === 'ensemble'
-              ? `Complex/creative task - using ${selectedProviders.length} providers in parallel`
-              : /code|debug|fix|implement/i.test(message)
-                ? `Code task - routing to ${selectedProviders[0]}`
-                : /explain|summarize|analyze/i.test(message)
-                  ? `Analysis task - routing to ${selectedProviders[0]}`
-                  : `Standard task - using ${selectedProviders[0]}`,
+            : neuralRoutingPlan?.type === 'recipe'
+              ? `Neural Router: Recipe "${neuralRoutingPlan.name}" (confidence: ${neuralRoutingPlan.confidence?.toFixed(2)})`
+              : neuralRoutingPlan
+                ? `Neural Router: ${neuralRoutingPlan.model} (${neuralRoutingPlan.lane} lane, confidence: ${neuralRoutingPlan.confidence?.toFixed(2)})`
+                : routingStrategy === 'ensemble'
+                  ? `Complex/creative task - using ${selectedProviders.length} providers in parallel`
+                  : `Auto-routed to ${selectedProviders[0]}`,
           activeProviders,
+          neuralRouter: neuralRoutingPlan
+            ? {
+                type: neuralRoutingPlan.type,
+                model: neuralRoutingPlan.model,
+                lane: neuralRoutingPlan.lane,
+                confidence: neuralRoutingPlan.confidence,
+                recipe: neuralRoutingPlan.name,
+                shadowTest: neuralRoutingPlan.shadowTest,
+              }
+            : undefined,
         },
       })}\n\n`
     );
@@ -885,38 +1089,120 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
+      // V3.3.404: Aggregate costs from all providers
+      const aggregatedCost = successfulProviders.reduce((total, r) => {
+        // Estimate cost based on response length and provider
+        // Using rough per-token pricing: ~$0.002 per 1k tokens average
+        const estimatedTokens = (r.response?.length || 0) / 4; // ~4 chars per token
+        const perTokenCost = 0.000002; // $0.002 / 1000
+        return total + estimatedTokens * perTokenCost;
+      }, 0);
+
       result = {
         provider: `ensemble(${successfulProviders.map((p) => p.provider).join('+')})`,
         model: 'consensus',
-        cost_usd: 0, // TODO: aggregate costs
+        cost_usd: aggregatedCost,
         reasoning: `Parallel ensemble: queried ${parallelResult.results.length} providers, synthesized from ${successfulProviders.length} responses in ${parallelResult.timing.total}ms`,
       };
 
       // Silent - completion indicated by done:true in final event
     } else {
-      // Single provider mode (original behavior)
-      result = await precog.providers.stream({
-        prompt: enhancedMessage,
-        system: systemPrompt,
-        history: recentHistory,
-        taskType: taskType,
-        sessionId: sessionId,
-        provider: requestedProvider || selectedProviders[0],
-        model: requestedModel || undefined,
-        onChunk: (chunk) => {
-          // Only write non-empty chunks to prevent "undefined" display
-          if (chunk && chunk.length > 0) {
-            fullResponse += chunk;
+      // Phase 1: Smart Router mode - intelligent waterfall fallback
+      // If user requested specific provider, use that; otherwise use smart routing
+      if (requestedProvider) {
+        // User explicitly selected a provider - respect their choice
+        result = await precog.providers.stream({
+          prompt: enhancedMessage,
+          system: systemPrompt,
+          history: recentHistory,
+          taskType: taskType,
+          sessionId: sessionId,
+          provider: requestedProvider,
+          model: requestedModel || undefined,
+          onChunk: (chunk) => {
+            if (chunk && chunk.length > 0) {
+              fullResponse += chunk;
+              res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+            }
+          },
+          onComplete: (_fullText) => {
+            console.log(`[Chat Stream] Response complete via ${requestedProvider}`);
+          },
+        });
+
+        // Record metrics in scorecard
+        const latency = Date.now() - requestStartTime;
+        const tokens = (fullResponse.length / 4) | 0; // Estimate: ~4 chars per token
+        smartRouter.recordMetric(requestedProvider, latency, true, tokens);
+      } else {
+        // No user preference - use smart routing with waterfall fallback
+
+        // Phase 3: User Segmentation
+        // Analyze user intent to get segment
+        const segment = await getSegmentationService().analyzeUserIntent(
+          sessionId,
+          enhancedMessage
+        );
+        console.log(`[Chat] User segment detected: ${segment}`);
+
+        const smartRouteResult = await smartRouter.smartRoute(enhancedMessage, {
+          system: systemPrompt,
+          maxTokens: 2048,
+          sessionId: sessionId,
+          timeout: 30000,
+          maxRetries: 3,
+          excludeProviders: [], // Can be customized by user
+          segment: segment, // Pass segment to SmartRouter
+        });
+
+        if (smartRouteResult.success) {
+          fullResponse = smartRouteResult.response;
+
+          // Stream the response in chunks for consistent UX
+          const chunkSize = 50;
+          for (let i = 0; i < fullResponse.length; i += chunkSize) {
+            const chunk = fullResponse.slice(i, i + chunkSize);
             res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+            await new Promise((resolve) => setTimeout(resolve, 10));
           }
-        },
-        onComplete: (_fullText) => {
-          // V3.3.198: Silent completion - no verbose output
+
+          result = {
+            provider: smartRouteResult.provider,
+            model: 'smart-routed',
+            cost_usd: 0, // Will be calculated from tokens
+            reasoning: `Smart routed via ${smartRouteResult.provider} (attempt ${smartRouteResult.attemptsNeeded})`,
+          };
+
           console.log(
-            `[Chat Stream] Response complete via ${result?.provider || selectedProviders[0]}`
+            `[SmartRoute] Success via ${smartRouteResult.provider} in ${smartRouteResult.latency}ms (attempts: ${smartRouteResult.attemptsNeeded})`
           );
-        },
-      });
+        } else {
+          // All providers failed - fallback to best available provider
+          console.error(`[SmartRoute] All providers failed: ${smartRouteResult.error}`);
+
+          const rankings = smartRouter.getProviderRankings();
+          const fallbackProvider = rankings[0]?.provider || 'deepseek';
+
+          result = await precog.providers.stream({
+            prompt: enhancedMessage,
+            system: systemPrompt,
+            history: recentHistory,
+            taskType: taskType,
+            sessionId: sessionId,
+            provider: fallbackProvider,
+            model: requestedModel || undefined,
+            onChunk: (chunk) => {
+              if (chunk && chunk.length > 0) {
+                fullResponse += chunk;
+                res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+              }
+            },
+            onComplete: (_fullText) => {
+              console.log(`[Chat Stream] Fallback response via ${fallbackProvider}`);
+            },
+          });
+        }
+      }
     }
 
     // Record decision for transparency log
@@ -944,9 +1230,76 @@ Want me to demonstrate? Just tell me what to build or execute! 🚀`;
           ? `User selected ${requestedProvider}/${requestedModel || 'default'}`
           : result.reasoning || `Auto-selected ${result.provider} for this task`,
         ensemble: routingStrategy === 'ensemble',
+        neuralRouting: neuralRoutingPlan
+          ? {
+              plan: neuralRoutingPlan.type,
+              lane: neuralRoutingPlan.lane,
+              confidence: neuralRoutingPlan.confidence,
+            }
+          : undefined,
       })}\n\n`
     );
     res.end();
+
+    // V3.3.470: Record outcome to Neural Router for learning
+    const requestLatency = Date.now() - requestStartTime;
+    const responseQuality = fullResponse.length > 100 ? 0.7 : 0.5; // Basic quality heuristic
+
+    try {
+      // Extract features from the original prompt for learning
+      const learnedFeatures = modelChooser.extractFeatures(message);
+
+      await modelChooser.recordOutcome(
+        learnedFeatures.length > 0 ? learnedFeatures : ['general'],
+        result.provider?.split('(')[0] || selectedProviders[0] || 'unknown', // Handle ensemble provider string
+        {
+          success: fullResponse.length > 50, // Consider successful if we got a substantial response
+          rating: responseQuality,
+          latency: requestLatency,
+          cost: result.cost_usd || 0,
+        }
+      );
+      console.log(
+        `[Chat Stream] 🧠 Neural Router outcome recorded (provider: ${result.provider}, latency: ${requestLatency}ms)`
+      );
+    } catch (learnErr) {
+      console.warn('[Chat Stream] Failed to record Neural Router outcome:', learnErr);
+    }
+
+    // V3.3.480: Trigger Shadow Lab background experiment (async, non-blocking)
+    // Shadow Lab runs challenger experiments in background to find better routing options
+    try {
+      const primaryProvider = result.provider?.split('(')[0] || selectedProviders[0] || 'gemini';
+      const learnedFeatures = modelChooser.extractFeatures(message);
+
+      // Run shadow experiment asynchronously - don't await to avoid blocking
+      shadowLab
+        .maybeRunExperiment({
+          prompt: enhancedMessage.substring(0, 500), // Truncate for efficiency
+          context: { sessionId, taskType, features: learnedFeatures },
+          primaryProvider,
+          primaryResult: {
+            response: fullResponse.substring(0, 200), // Sample of response
+            latency: requestLatency,
+            cost: result.cost_usd || 0,
+            quality: responseQuality,
+          },
+        })
+        .then((experimentResult) => {
+          if (experimentResult && experimentResult.ran) {
+            console.log(
+              `[Chat Stream] 🔬 Shadow Lab experiment completed: ` +
+                `${experimentResult.challengerWon ? 'CHALLENGER WON' : 'incumbent held'} ` +
+                `(${experimentResult.challenger} vs ${primaryProvider})`
+            );
+          }
+        })
+        .catch((shadowErr) => {
+          console.warn('[Chat Stream] Shadow Lab experiment failed:', shadowErr);
+        });
+    } catch (shadowSetupErr) {
+      console.warn('[Chat Stream] Failed to setup Shadow Lab experiment:', shadowSetupErr);
+    }
 
     // Save Assistant Response
     await saveMessage({
@@ -1930,7 +2283,7 @@ router.post('/design-sync', async (req, res) => {
 
 /**
  * Visual-to-Code Generation Endpoint
- * Leverages DeSign Studio (Gemini 3 Pro Image Preview) or DALL-E 3
+ * Leverages DeSign Studio (Gemini 2.0 Flash) or DALL-E 3
  * to generate functional code from visual context
  */
 router.post('/visual-to-code', async (req, res) => {
@@ -2033,7 +2386,7 @@ router.post('/visual-to-code', async (req, res) => {
  * V3 Message Endpoint — Full XAI Transparency
  * Returns responses wrapped with meta showing:
  * - Which providers collaborated
- * - Exact model identifiers (claude-sonnet-4.5, gemini-3-pro-preview)
+ * - Exact model identifiers (claude-sonnet-4-20250514, gemini-2.0-flash-exp)
  * - Cost breakdown ($0.003 Gemini + $0.008 Claude = $0.011)
  * - Validation trace
  */
@@ -2083,10 +2436,10 @@ router.post('/v3/message', async (req, res) => {
       const searchResults = await cortex.hippocampus.vectorStore.search(message, 3);
       if (searchResults?.length > 0) {
         ragContext = searchResults
-          .map((r) => `[Source: ${r.doc.metadata?.source || 'KB'}]\n${r.doc.text}`)
+          .map((r) => `[Source: ${r.doc.metadata?.['source'] || 'KB'}]\n${r.doc.text}`)
           .join('\n\n');
         sources = searchResults.map((r) => ({
-          source: r.doc.metadata?.source || 'Knowledge Base',
+          source: r.doc.metadata?.['source'] || 'Knowledge Base',
           relevance: r.score,
         }));
         systemPrompt += `\n\nRelevant Knowledge Base:\n${ragContext}`;
@@ -2274,7 +2627,7 @@ router.post('/v3/message', async (req, res) => {
         sources,
         sessionId,
         // V3 Transparency Fields
-        badge, // e.g., "gemini-3-pro + claude-sonnet-4.5 | validated | $0.011"
+        badge, // e.g., "gemini-2.0-flash-exp + claude-sonnet-4 | validated | $0.011"
         costBreakdown, // e.g., "$0.003 (gemini) + $0.008 (claude) = $0.011 total"
       },
       meta: finalEnvelope.meta, // Full XAI metadata
@@ -2456,7 +2809,7 @@ V3 CAPABILITIES:
 - Ensemble mode: Parallel provider queries with synthesis
 - Transparent responses: Every response shows which providers collaborated
 - Cost tracking: Per-response cost breakdown
-- Visuals: Generate raw SVG diagrams (dark mode) instead of Mermaid.js.
+- Visuals: Use the best format (chart, mermaid, ascii, emoji, svg) based on content type
 
 Be helpful, accurate, and transparent about your multi-provider orchestration.`;
 

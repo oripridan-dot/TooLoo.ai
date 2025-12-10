@@ -7,12 +7,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  useOrchestrator, 
-  useEvaluation, 
-  useUIMode, 
+import {
+  useOrchestrator,
+  useEvaluation,
+  useUIMode,
   useConnection,
-  useSystemState 
+  useSystemState,
 } from '../store/systemStateStore.js';
 
 // ============================================================================
@@ -67,9 +67,9 @@ const PROVIDER_CONFIG = {
  */
 const ProviderBadge = ({ provider, model, isProcessing }) => {
   const config = PROVIDER_CONFIG[provider] || PROVIDER_CONFIG.default;
-  
+
   return (
-    <motion.div 
+    <motion.div
       className="provider-badge"
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
@@ -89,13 +89,15 @@ const ProviderBadge = ({ provider, model, isProcessing }) => {
       <span style={{ fontSize: '16px' }}>{config.icon}</span>
       <span>{config.name}</span>
       {model && (
-        <span style={{ 
-          fontSize: '11px', 
-          opacity: 0.8,
-          padding: '2px 6px',
-          background: 'rgba(255,255,255,0.2)',
-          borderRadius: '8px',
-        }}>
+        <span
+          style={{
+            fontSize: '11px',
+            opacity: 0.8,
+            padding: '2px 6px',
+            background: 'rgba(255,255,255,0.2)',
+            borderRadius: '8px',
+          }}
+        >
           {model.split('/').pop()}
         </span>
       )}
@@ -116,30 +118,33 @@ const ProviderBadge = ({ provider, model, isProcessing }) => {
  * CostGauge - Visual budget/cost indicator
  */
 const CostGauge = ({ currentCost, sessionCost, remainingBudget }) => {
-  const budgetUsed = remainingBudget > 0 
-    ? ((100 - remainingBudget) / 100) * 100 
-    : 0;
-  
+  const budgetUsed = remainingBudget > 0 ? ((100 - remainingBudget) / 100) * 100 : 0;
+
   const getColor = () => {
     if (budgetUsed > 80) return '#E74C3C';
     if (budgetUsed > 60) return '#F39C12';
     return '#2ECC71';
   };
-  
+
   return (
-    <div className="cost-gauge" style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-    }}>
-      <div style={{
-        position: 'relative',
-        width: '60px',
-        height: '6px',
-        background: 'rgba(255,255,255,0.1)',
-        borderRadius: '3px',
-        overflow: 'hidden',
-      }}>
+    <div
+      className="cost-gauge"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: '60px',
+          height: '6px',
+          background: 'rgba(255,255,255,0.1)',
+          borderRadius: '3px',
+          overflow: 'hidden',
+        }}
+      >
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${budgetUsed}%` }}
@@ -150,11 +155,13 @@ const CostGauge = ({ currentCost, sessionCost, remainingBudget }) => {
           }}
         />
       </div>
-      <span style={{ 
-        fontSize: '12px', 
-        color: 'var(--text-secondary, #888)',
-        fontFamily: 'monospace',
-      }}>
+      <span
+        style={{
+          fontSize: '12px',
+          color: 'var(--text-secondary, #888)',
+          fontFamily: 'monospace',
+        }}
+      >
         ${sessionCost.toFixed(3)}
       </span>
     </div>
@@ -168,19 +175,22 @@ const ConfidenceRing = ({ score, level }) => {
   const radius = 16;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - score);
-  
+
   const getColor = () => {
     if (score > 0.8) return '#2ECC71';
     if (score > 0.6) return '#F39C12';
     return '#E74C3C';
   };
-  
+
   return (
-    <div className="confidence-ring" style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-    }}>
+    <div
+      className="confidence-ring"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+      }}
+    >
       <svg width="40" height="40" viewBox="0 0 40 40">
         {/* Background circle */}
         <circle
@@ -221,12 +231,14 @@ const ConfidenceRing = ({ score, level }) => {
           {Math.round(score * 100)}
         </text>
       </svg>
-      <span style={{ 
-        fontSize: '11px', 
-        color: getColor(),
-        textTransform: 'uppercase',
-        fontWeight: 500,
-      }}>
+      <span
+        style={{
+          fontSize: '11px',
+          color: getColor(),
+          textTransform: 'uppercase',
+          fontWeight: 500,
+        }}
+      >
         {level}
       </span>
     </div>
@@ -252,12 +264,8 @@ const ModeTab = ({ mode, isActive, onClick, icon, label }) => {
         cursor: 'pointer',
         fontSize: '13px',
         fontWeight: isActive ? 600 : 400,
-        background: isActive 
-          ? 'var(--accent-primary, #9B59B6)' 
-          : 'rgba(255,255,255,0.05)',
-        color: isActive 
-          ? '#fff' 
-          : 'var(--text-secondary, #888)',
+        background: isActive ? 'var(--accent-primary, #9B59B6)' : 'rgba(255,255,255,0.05)',
+        color: isActive ? '#fff' : 'var(--text-secondary, #888)',
         transition: 'all 0.2s ease',
       }}
     >
@@ -277,15 +285,18 @@ const ModeTabs = ({ currentMode, onModeChange }) => {
     { mode: 'analysis', icon: '🔍', label: 'Analysis' },
     { mode: 'studio', icon: '🎨', label: 'Studio' },
   ];
-  
+
   return (
-    <div className="mode-tabs" style={{
-      display: 'flex',
-      gap: '4px',
-      padding: '4px',
-      background: 'rgba(255,255,255,0.03)',
-      borderRadius: '10px',
-    }}>
+    <div
+      className="mode-tabs"
+      style={{
+        display: 'flex',
+        gap: '4px',
+        padding: '4px',
+        background: 'rgba(255,255,255,0.03)',
+        borderRadius: '10px',
+      }}
+    >
       {modes.map((m) => (
         <ModeTab
           key={m.mode}
@@ -316,9 +327,7 @@ const ConnectionIndicator = ({ connected }) => {
         height: '10px',
         borderRadius: '50%',
         background: connected ? '#2ECC71' : '#E74C3C',
-        boxShadow: connected 
-          ? '0 0 8px rgba(46,204,113,0.5)' 
-          : '0 0 8px rgba(231,76,60,0.5)',
+        boxShadow: connected ? '0 0 8px rgba(46,204,113,0.5)' : '0 0 8px rgba(231,76,60,0.5)',
       }}
       title={connected ? 'Connected to backend' : 'Disconnected'}
     />
@@ -336,16 +345,16 @@ export const ControlDeck = () => {
   const connection = useConnection();
   const setUIMode = useSystemState((s) => s.setUIMode);
   const initializeConnection = useSystemState((s) => s.initializeConnection);
-  
+
   // Initialize socket connection on mount
   useEffect(() => {
     initializeConnection();
   }, [initializeConnection]);
-  
+
   const handleModeChange = (mode) => {
     setUIMode(mode);
   };
-  
+
   return (
     <motion.header
       className="control-deck"
@@ -377,19 +386,13 @@ export const ControlDeck = () => {
           remainingBudget={orchestrator.remainingBudget}
         />
       </div>
-      
+
       {/* Center Section: Mode Tabs */}
-      <ModeTabs
-        currentMode={uiMode}
-        onModeChange={handleModeChange}
-      />
-      
+      <ModeTabs currentMode={uiMode} onModeChange={handleModeChange} />
+
       {/* Right Section: Confidence + Connection */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <ConfidenceRing
-          score={evaluation.calibrationScore}
-          level={evaluation.confidenceLevel}
-        />
+        <ConfidenceRing score={evaluation.calibrationScore} level={evaluation.confidenceLevel} />
         <ConnectionIndicator connected={connection.connected} />
       </div>
     </motion.header>

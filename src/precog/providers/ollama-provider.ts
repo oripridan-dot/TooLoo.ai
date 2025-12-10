@@ -1,6 +1,8 @@
-// @version 3.3.350
+// @version 3.3.351
 /**
  * Ollama Provider - Local AI Integration
+ *
+ * V3.3.351: Added isOnline() method for main.ts bootstrap
  *
  * Provides integration with Ollama for local AI inference.
  * Supports:
@@ -210,6 +212,14 @@ export class OllamaProvider {
   // ===========================================================================
   // Health & Monitoring
   // ===========================================================================
+
+  /**
+   * Check if Ollama is online (convenience method for main.ts)
+   */
+  async isOnline(): Promise<boolean> {
+    const status = await this.checkHealth();
+    return status.available;
+  }
 
   private startHealthMonitoring() {
     // Initial check

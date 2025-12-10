@@ -1,10 +1,12 @@
-// @version 3.3.13
+// @version 3.3.425
 /**
  * Agent Execution System - Types
  *
  * Core type definitions for the autonomous agent that enables
  * TooLoo to execute code, save artifacts, and manage processes
  * like this chat does.
+ *
+ * V3.3.425: Added 'research' task type for Ethical Explorer
  *
  * @module cortex/agent/types
  */
@@ -17,7 +19,8 @@ export type TaskType =
   | 'analyze' // Analyze code/files
   | 'fix' // Fix issues automatically
   | 'deploy' // Deploy artifacts
-  | 'validate'; // Validate code/tests
+  | 'validate' // Validate code/tests
+  | 'research'; // Research web content ethically
 
 export type TaskStatus = 'pending' | 'in-progress' | 'completed' | 'failed' | 'cancelled';
 
@@ -60,6 +63,10 @@ export interface TaskInput {
   branch?: string;
   remote?: string;
   commitMessage?: string;
+  // Research-specific fields (V3.3.425)
+  url?: string;
+  goal?: string;
+  extractDesignTokens?: boolean;
 }
 
 export interface TaskOptions {

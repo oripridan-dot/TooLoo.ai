@@ -1,4 +1,4 @@
-// @version 3.3.18
+// @version 3.3.392
 /**
  * System Execution Hub
  *
@@ -8,6 +8,7 @@
  * - Learning/Growth: Execute learning experiments
  * - Emergence: Act on discovered opportunities
  * - Cortex: Core cognitive functions
+ * - Projects: Project-scoped execution (V3.3.392)
  *
  * This is the central nervous system for execution across TooLoo.
  *
@@ -24,6 +25,7 @@ import {
   TeamTaskResult,
 } from './team-framework.js';
 import { executionAgent } from './execution-agent.js';
+import { projectManager } from '../project-manager-v2.js';
 import type { TaskType, AgentTask } from './types.js';
 
 // ============================================================================
@@ -52,6 +54,7 @@ export interface ExecutionRequest {
   options?: ExecutionOptions;
   priority?: 'low' | 'normal' | 'high' | 'critical';
   timestamp: Date;
+  projectId?: string; // V3.3.392: Project-scoped execution
 }
 
 export interface ExecutionOptions {
@@ -65,6 +68,7 @@ export interface ExecutionOptions {
   autoApprove?: boolean;
   provider?: string;
   model?: string;
+  projectId?: string; // V3.3.392: Project scope
 }
 
 export interface ExecutionResponse {
@@ -483,11 +487,13 @@ export class SystemExecutionHub {
   /**
    * Public API to submit an execution request
    */
-  public async submitRequest(request: Omit<ExecutionRequest, 'id' | 'timestamp'> & { id?: string }): Promise<ExecutionResponse> {
+  public async submitRequest(
+    request: Omit<ExecutionRequest, 'id' | 'timestamp'> & { id?: string }
+  ): Promise<ExecutionResponse> {
     return this.handleExecution({
       id: request.id || uuidv4(),
       timestamp: new Date(),
-      ...request
+      ...request,
     });
   }
 
@@ -495,7 +501,6 @@ export class SystemExecutionHub {
    * Handle an execution request
    */
   private async handleExecution(request: ExecutionRequest): Promise<ExecutionResponse> {
-
     const startTime = Date.now();
 
     console.log(
@@ -509,6 +514,24 @@ export class SystemExecutionHub {
 
     // Store request
     this.requestQueue.set(request.id, request);
+
+    // Fetch project context if projectId is provided
+    let projectContext: { name: string; description: string; settings: unknown } | null = null;
+    if (request.projectId) {
+      try {
+        const project = await projectManager.getProject(request.projectId);
+        if (project) {
+          projectContext = {
+            name: project.name,
+            description: project.description || '',
+            settings: project.settings || {},
+          };
+          console.log(`[SystemExecutionHub] Execution in project context: ${project.name}`);
+        }
+      } catch (err) {
+        console.warn(`[SystemExecutionHub] Could not load project ${request.projectId}:`, err);
+      }
+    }
 
     try {
       let response: ExecutionResponse;
@@ -525,6 +548,27 @@ export class SystemExecutionHub {
         this.stats.successfulRequests++;
         this.updateSourceStats(request.source, true);
         this.updateTypeStats(request.type, true);
+
+        // Record execution to project activity if in project context
+        if (request.projectId && projectContext) {
+          try {
+            await projectManager.addActivity(request.projectId, {
+              type: 'execution',
+              user: 'system',
+              description: `Executed ${request.type}: ${request.prompt.slice(0, 100)}...`,
+              metadata: {
+                executionId: request.id,
+                type: request.type,
+                source: request.source,
+                success: true,
+                durationMs: response.durationMs,
+                qualityScore: response.qualityScore,
+              },
+            });
+          } catch (err) {
+            console.warn(`[SystemExecutionHub] Could not record activity to project:`, err);
+          }
+        }
       } else {
         this.stats.failedRequests++;
       }
@@ -690,6 +734,7 @@ export class SystemExecutionHub {
       fix: 'code-fixing',
       deploy: 'deployment',
       validate: 'validation',
+      research: 'research',
     };
 
     return typeMap[request.type] || 'general';

@@ -1,12 +1,16 @@
-// @version 2.2.396
+// @version 3.3.404
 /**
  * Cost & Decision Transparency API
  *
  * Exposes TooLoo's intelligent provider selection decisions and cost tracking
  * to give users visibility into how TooLoo orchestrates AI providers.
+ *
+ * V3.3.404: Added persistence to data/decisions.json
  */
 import { Router } from 'express';
 import { precog } from '../../precog/index.js';
+import fs from 'fs-extra';
+import path from 'path';
 
 const router = Router();
 
@@ -25,6 +29,34 @@ interface Decision {
 
 const decisions: Decision[] = [];
 const MAX_DECISIONS = 100;
+const DECISIONS_FILE = path.join(process.cwd(), 'data', 'decisions.json');
+
+// V3.3.404: Load decisions from file on startup
+(async () => {
+  try {
+    if (await fs.pathExists(DECISIONS_FILE)) {
+      const data = await fs.readJson(DECISIONS_FILE);
+      if (Array.isArray(data)) {
+        decisions.push(...data.slice(0, MAX_DECISIONS));
+        console.log(`[Cost] Loaded ${decisions.length} decisions from disk`);
+      }
+    }
+  } catch (err) {
+    console.warn('[Cost] Could not load decisions from disk:', err);
+  }
+})();
+
+/**
+ * V3.3.404: Persist decisions to disk (async, non-blocking)
+ */
+async function persistDecisions(): Promise<void> {
+  try {
+    await fs.ensureDir(path.dirname(DECISIONS_FILE));
+    await fs.writeJson(DECISIONS_FILE, decisions.slice(0, MAX_DECISIONS), { spaces: 2 });
+  } catch (err) {
+    console.error('[Cost] Failed to persist decisions:', err);
+  }
+}
 
 /**
  * Record a provider selection decision
@@ -43,6 +75,9 @@ export function recordDecision(decision: Omit<Decision, 'id' | 'timestamp'>) {
   if (decisions.length > MAX_DECISIONS) {
     decisions.splice(MAX_DECISIONS);
   }
+
+  // V3.3.404: Persist to disk (non-blocking)
+  persistDecisions();
 
   return entry;
 }

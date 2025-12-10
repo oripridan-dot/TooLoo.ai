@@ -628,6 +628,7 @@ export class TeamExecutor {
       fix: 'code-fixing',
       deploy: 'deployment',
       validate: 'validation',
+      research: 'research',
     };
 
     // Infer from keywords

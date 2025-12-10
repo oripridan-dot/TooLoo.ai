@@ -37,7 +37,7 @@ export class GeminiImageProvider {
     let modelName = req.model || 'imagen-4.0-generate-001';
 
     // Force Imagen 4 if a text model is requested for image generation
-    // But allow "DeSign Studio" (gemini-2.5-flash-image) if we implement support for it later via generateContent
+    // DeSign Studio uses Gemini 2.0 Flash for multimodal analysis, Imagen 4 for generation
     // For now, we assume generateImages is used, which requires an Imagen model.
     if (
       (modelName.includes('flash') || modelName.includes('pro')) &&
@@ -119,7 +119,7 @@ export class GeminiImageProvider {
 
   /**
    * Analyze visual context and generate functional code (DeSign Studio capability)
-   * Uses Gemini 3 Pro Image Preview to understand design context and generate code
+   * Uses Gemini 2.0 Flash to understand design context and generate code
    */
   async generateCodeFromContext(
     req: ImageCodeGenerationRequest
@@ -129,7 +129,7 @@ export class GeminiImageProvider {
     }
 
     const modelName =
-      req.provider === 'gemini-nano' ? 'gemini-3-pro-image-preview' : 'gemini-2.0-flash-exp';
+      req.provider === 'gemini-nano' ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp';
 
     console.log(`[GeminiImageProvider] Generating code from context with ${modelName}...`);
 

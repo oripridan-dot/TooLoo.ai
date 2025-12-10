@@ -311,6 +311,10 @@ export class FileSystemHygiene {
         for (const match of importMatches) {
           const importPath = match[1];
           if (!importPath) continue;
+
+          // Skip template literal imports (e.g., ./${componentName}) - these are code generation templates
+          if (importPath.includes('${')) continue;
+
           const resolvedPath = this.resolveImportPath(file, importPath);
 
           if (resolvedPath && !(await fs.pathExists(resolvedPath))) {

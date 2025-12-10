@@ -1,17 +1,17 @@
 // @version 3.3.403
 /**
  * Session Continuity Manager
- * 
+ *
  * Ensures TooLoo maintains context and progress across restarts.
  * This is critical for autonomous operation - the AI should "remember"
  * what it was doing and seamlessly continue.
- * 
+ *
  * Key capabilities:
  * 1. **Session State Persistence** - Save/restore active work state
  * 2. **Task Resumption** - Continue interrupted tasks on restart
  * 3. **Context Preservation** - Maintain conversation and project context
  * 4. **Progress Tracking** - Track and report on multi-session goals
- * 
+ *
  * @module cortex/continuity/session-continuity
  */
 
@@ -120,7 +120,7 @@ export interface ContinuityReport {
 
 export class SessionContinuityManager {
   private static instance: SessionContinuityManager;
-  
+
   private state: SessionState;
   private dataDir: string;
   private stateFile: string;
@@ -153,17 +153,17 @@ export class SessionContinuityManager {
 
   async initialize(): Promise<ContinuityReport> {
     console.log('[SessionContinuity] Initializing cross-session continuity...');
-    
+
     await fs.ensureDir(this.dataDir);
-    
+
     // Load previous session state
     const previousState = await this.loadPreviousState();
-    
+
     // Create new session with continuity from previous
     this.state = this.createFreshState();
-    
+
     let report: ContinuityReport;
-    
+
     if (previousState) {
       report = await this.restoreContinuity(previousState);
     } else {
@@ -176,7 +176,7 @@ export class SessionContinuityManager {
         continuityScore: 0,
       };
     }
-    
+
     this.setupEventListeners();
     this.startPeriodicSave();
 
@@ -188,7 +188,9 @@ export class SessionContinuityManager {
 
     console.log(`[SessionContinuity] Session ${this.state.sessionId.substring(0, 8)}... started`);
     if (report.previousSessionId) {
-      console.log(`[SessionContinuity] Continuity from ${report.previousSessionId.substring(0, 8)}... (score: ${(report.continuityScore * 100).toFixed(0)}%)`);
+      console.log(
+        `[SessionContinuity] Continuity from ${report.previousSessionId.substring(0, 8)}... (score: ${(report.continuityScore * 100).toFixed(0)}%)`
+      );
     }
 
     return report;
@@ -218,41 +220,46 @@ export class SessionContinuityManager {
   }
 
   private async restoreContinuity(previousState: SessionState): Promise<ContinuityReport> {
-    const timeSinceLastSession = Date.now() - (previousState.systemSnapshot.lastHealthCheck || previousState.startedAt);
-    
+    const timeSinceLastSession =
+      Date.now() - (previousState.systemSnapshot.lastHealthCheck || previousState.startedAt);
+
     // Transfer continuity data
     this.state.previousSessionId = previousState.sessionId;
     this.state.previousSessionEndedAt = previousState.systemSnapshot.lastHealthCheck;
-    this.state.totalUptime = previousState.totalUptime + (previousState.systemSnapshot.lastHealthCheck - previousState.startedAt);
+    this.state.totalUptime =
+      previousState.totalUptime +
+      (previousState.systemSnapshot.lastHealthCheck - previousState.startedAt);
     this.state.sessionCount = previousState.sessionCount + 1;
-    
+
     // Restore persistent goals
-    this.state.persistentGoals = previousState.persistentGoals.filter(g => g.status === 'active');
+    this.state.persistentGoals = previousState.persistentGoals.filter((g) => g.status === 'active');
     for (const goal of this.state.persistentGoals) {
       goal.sessionsActive++;
     }
-    
+
     // Restore active tasks that can be resumed
-    const resumableTasks = previousState.activeTasks.filter(t => t.progress < 1 && t.progress > 0);
+    const resumableTasks = previousState.activeTasks.filter(
+      (t) => t.progress < 1 && t.progress > 0
+    );
     this.state.activeTasks = resumableTasks;
-    
+
     // Restore project context if recent
     if (previousState.projectContext && timeSinceLastSession < 24 * 60 * 60 * 1000) {
       this.state.projectContext = previousState.projectContext;
     }
-    
+
     // Restore conversation context if very recent (< 1 hour)
     if (previousState.conversationContext && timeSinceLastSession < 60 * 60 * 1000) {
       this.state.conversationContext = previousState.conversationContext;
     }
-    
+
     // Calculate continuity score
     let score = 0;
     if (this.state.persistentGoals.length > 0) score += 0.3;
     if (this.state.activeTasks.length > 0) score += 0.3;
     if (this.state.projectContext) score += 0.2;
     if (this.state.conversationContext) score += 0.2;
-    
+
     // Emit events for resumed tasks
     for (const task of this.state.activeTasks) {
       bus.publish('cortex', 'continuity:task_resumed', {
@@ -261,7 +268,7 @@ export class SessionContinuityManager {
         progress: task.progress,
       });
     }
-    
+
     return {
       sessionId: this.state.sessionId,
       previousSessionId: previousState.sessionId,
@@ -281,14 +288,14 @@ export class SessionContinuityManager {
    * Register an active task for potential resumption
    */
   trackTask(task: Omit<ActiveTask, 'startedAt' | 'lastCheckpoint'>): void {
-    const existingIndex = this.state.activeTasks.findIndex(t => t.id === task.id);
-    
+    const existingIndex = this.state.activeTasks.findIndex((t) => t.id === task.id);
+
     const trackedTask: ActiveTask = {
       ...task,
       startedAt: existingIndex >= 0 ? this.state.activeTasks[existingIndex]!.startedAt : Date.now(),
       lastCheckpoint: task.progress,
     };
-    
+
     if (existingIndex >= 0) {
       this.state.activeTasks[existingIndex] = trackedTask;
     } else {
@@ -299,18 +306,22 @@ export class SessionContinuityManager {
   /**
    * Update task progress
    */
-  updateTaskProgress(taskId: string, progress: number, resumeState?: Record<string, unknown>): void {
-    const task = this.state.activeTasks.find(t => t.id === taskId);
+  updateTaskProgress(
+    taskId: string,
+    progress: number,
+    resumeState?: Record<string, unknown>
+  ): void {
+    const task = this.state.activeTasks.find((t) => t.id === taskId);
     if (task) {
       task.progress = progress;
       task.lastCheckpoint = progress;
       if (resumeState) {
         task.resumeState = resumeState;
       }
-      
+
       // Remove completed tasks
       if (progress >= 1) {
-        this.state.activeTasks = this.state.activeTasks.filter(t => t.id !== taskId);
+        this.state.activeTasks = this.state.activeTasks.filter((t) => t.id !== taskId);
       }
     }
   }
@@ -319,7 +330,7 @@ export class SessionContinuityManager {
    * Get tasks that need to be resumed
    */
   getResumableTasks(): ActiveTask[] {
-    return this.state.activeTasks.filter(t => t.progress > 0 && t.progress < 1);
+    return this.state.activeTasks.filter((t) => t.progress > 0 && t.progress < 1);
   }
 
   // ============================================================================
@@ -338,17 +349,18 @@ export class SessionContinuityManager {
    */
   addProjectChange(file: string, type: string): void {
     if (!this.state.projectContext) return;
-    
+
     this.state.projectContext.recentChanges.push({
       file,
       type,
       timestamp: Date.now(),
     });
-    
+
     // Keep only recent changes
     if (this.state.projectContext.recentChanges.length > this.MAX_RECENT_CHANGES) {
-      this.state.projectContext.recentChanges = 
-        this.state.projectContext.recentChanges.slice(-this.MAX_RECENT_CHANGES);
+      this.state.projectContext.recentChanges = this.state.projectContext.recentChanges.slice(
+        -this.MAX_RECENT_CHANGES
+      );
     }
   }
 
@@ -362,16 +374,16 @@ export class SessionContinuityManager {
         pendingRequests: [],
       };
     }
-    
+
     this.state.conversationContext.recentMessages.push({
       role,
       content: content.substring(0, 1000), // Truncate long messages
       timestamp: Date.now(),
     });
-    
+
     // Keep only recent messages
     if (this.state.conversationContext.recentMessages.length > this.MAX_RECENT_MESSAGES) {
-      this.state.conversationContext.recentMessages = 
+      this.state.conversationContext.recentMessages =
         this.state.conversationContext.recentMessages.slice(-this.MAX_RECENT_MESSAGES);
     }
   }
@@ -383,7 +395,9 @@ export class SessionContinuityManager {
   /**
    * Add a persistent goal
    */
-  addPersistentGoal(goal: Omit<PersistentGoal, 'id' | 'createdAt' | 'sessionsActive' | 'status'>): PersistentGoal {
+  addPersistentGoal(
+    goal: Omit<PersistentGoal, 'id' | 'createdAt' | 'sessionsActive' | 'status'>
+  ): PersistentGoal {
     const newGoal: PersistentGoal = {
       ...goal,
       id: `goal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -391,14 +405,14 @@ export class SessionContinuityManager {
       sessionsActive: 1,
       status: 'active',
     };
-    
+
     this.state.persistentGoals.push(newGoal);
-    
+
     bus.publish('cortex', 'continuity:goal_added', {
       goalId: newGoal.id,
       description: newGoal.description,
     });
-    
+
     return newGoal;
   }
 
@@ -406,11 +420,11 @@ export class SessionContinuityManager {
    * Update goal progress
    */
   updateGoalProgress(goalId: string, currentValue: number): void {
-    const goal = this.state.persistentGoals.find(g => g.id === goalId);
+    const goal = this.state.persistentGoals.find((g) => g.id === goalId);
     if (goal) {
       goal.currentValue = currentValue;
       goal.progress = Math.min(1, currentValue / goal.targetValue);
-      
+
       if (goal.progress >= 1) {
         goal.status = 'achieved';
         bus.publish('cortex', 'continuity:goal_achieved', {
@@ -425,7 +439,7 @@ export class SessionContinuityManager {
    * Get active goals
    */
   getActiveGoals(): PersistentGoal[] {
-    return this.state.persistentGoals.filter(g => g.status === 'active');
+    return this.state.persistentGoals.filter((g) => g.status === 'active');
   }
 
   // ============================================================================
@@ -461,11 +475,10 @@ export class SessionContinuityManager {
       timestamp: Date.now(),
       message: message.substring(0, 500),
     });
-    
+
     // Keep only recent errors
     if (this.state.systemSnapshot.errors.length > this.MAX_ERRORS) {
-      this.state.systemSnapshot.errors = 
-        this.state.systemSnapshot.errors.slice(-this.MAX_ERRORS);
+      this.state.systemSnapshot.errors = this.state.systemSnapshot.errors.slice(-this.MAX_ERRORS);
     }
   }
 
@@ -560,21 +573,21 @@ export class SessionContinuityManager {
 
   async shutdown(): Promise<void> {
     console.log('[SessionContinuity] Saving session state before shutdown...');
-    
+
     if (this.saveInterval) {
       clearInterval(this.saveInterval);
     }
-    
+
     // Final save
     await this.saveState();
-    
+
     bus.publish('cortex', 'continuity:session_ended', {
       sessionId: this.state.sessionId,
       duration: Date.now() - this.sessionStartTime,
       tasksInProgress: this.state.activeTasks.length,
-      goalsActive: this.state.persistentGoals.filter(g => g.status === 'active').length,
+      goalsActive: this.state.persistentGoals.filter((g) => g.status === 'active').length,
     });
-    
+
     console.log(`[SessionContinuity] Session ${this.state.sessionId.substring(0, 8)}... ended`);
   }
 }

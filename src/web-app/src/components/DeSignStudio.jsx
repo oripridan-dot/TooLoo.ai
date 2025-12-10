@@ -13,7 +13,7 @@ export { FigmaCopilot } from './FigmaCopilot';
 /**
  * TooLoo DeSign Studio
  * Central interface for the Visual Cortex 2.0 design engine
- * 
+ *
  * Capabilities:
  * - SVG generation (backgrounds, cards, badges, icons)
  * - Data visualization (charts, gauges, sparklines)
@@ -23,17 +23,17 @@ export { FigmaCopilot } from './FigmaCopilot';
 export const DeSignStudio = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState('generate');
-  
+
   // Visual Cortex status
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Generation state
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  
+
   // Chart builder state
   const [chartType, setChartType] = useState('bar');
   const [chartData, setChartData] = useState([
@@ -44,12 +44,12 @@ export const DeSignStudio = () => {
     { label: 'May', value: 75 },
   ]);
   const [chartSvg, setChartSvg] = useState(null);
-  
+
   // Animation state
   const [animations, setAnimations] = useState([]);
   const [selectedAnimation, setSelectedAnimation] = useState(null);
   const [animationCss, setAnimationCss] = useState(null);
-  
+
   // SVG builder state
   const [svgType, setSvgType] = useState('background');
   const [svgOptions, setSvgOptions] = useState({
@@ -328,10 +328,22 @@ export const DeSignStudio = () => {
                 <h3 className="font-semibold mb-4">Quick Templates</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { label: 'Dashboard Card', prompt: 'Create a modern dashboard stat card with gradient' },
-                    { label: 'Profile Avatar', prompt: 'Generate a circular profile avatar placeholder with initials' },
-                    { label: 'Progress Ring', prompt: 'Create an animated progress ring showing 75% completion' },
-                    { label: 'Status Badge', prompt: 'Design a status badge showing "Online" with a green dot' },
+                    {
+                      label: 'Dashboard Card',
+                      prompt: 'Create a modern dashboard stat card with gradient',
+                    },
+                    {
+                      label: 'Profile Avatar',
+                      prompt: 'Generate a circular profile avatar placeholder with initials',
+                    },
+                    {
+                      label: 'Progress Ring',
+                      prompt: 'Create an animated progress ring showing 75% completion',
+                    },
+                    {
+                      label: 'Status Badge',
+                      prompt: 'Design a status badge showing "Online" with a green dot',
+                    },
                   ].map((template) => (
                     <button
                       key={template.label}
@@ -454,7 +466,9 @@ export const DeSignStudio = () => {
                     <input
                       type="number"
                       value={svgOptions.width}
-                      onChange={(e) => setSvgOptions({ ...svgOptions, width: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setSvgOptions({ ...svgOptions, width: parseInt(e.target.value) })
+                      }
                       className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"
                     />
                   </div>
@@ -463,7 +477,9 @@ export const DeSignStudio = () => {
                     <input
                       type="number"
                       value={svgOptions.height}
-                      onChange={(e) => setSvgOptions({ ...svgOptions, height: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setSvgOptions({ ...svgOptions, height: parseInt(e.target.value) })
+                      }
                       className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"
                     />
                   </div>
@@ -472,7 +488,9 @@ export const DeSignStudio = () => {
                     <input
                       type="color"
                       value={svgOptions.primaryColor}
-                      onChange={(e) => setSvgOptions({ ...svgOptions, primaryColor: e.target.value })}
+                      onChange={(e) =>
+                        setSvgOptions({ ...svgOptions, primaryColor: e.target.value })
+                      }
                       className="w-full h-10 bg-gray-900 border border-gray-700 rounded-lg cursor-pointer"
                     />
                   </div>
@@ -481,7 +499,9 @@ export const DeSignStudio = () => {
                     <input
                       type="color"
                       value={svgOptions.secondaryColor}
-                      onChange={(e) => setSvgOptions({ ...svgOptions, secondaryColor: e.target.value })}
+                      onChange={(e) =>
+                        setSvgOptions({ ...svgOptions, secondaryColor: e.target.value })
+                      }
                       className="w-full h-10 bg-gray-900 border border-gray-700 rounded-lg cursor-pointer"
                     />
                   </div>

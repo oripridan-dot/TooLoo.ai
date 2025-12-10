@@ -190,6 +190,21 @@ export class AdversarialLearner {
     return { ...this.state };
   }
 
+  /**
+   * Get aggregated stats for dashboard display
+   */
+  public getStats(): { exercisesCompleted: number; vulnerabilitiesFound: number } {
+    const completed = this.state.exerciseHistory.filter(e => e.status === 'completed' || e.status === 'failed');
+    const vulnerabilities = completed.reduce((sum, e) => {
+      return sum + (e.outcome?.vulnerabilitiesFound?.length ?? 0);
+    }, 0);
+    
+    return {
+      exercisesCompleted: completed.length,
+      vulnerabilitiesFound: vulnerabilities
+    };
+  }
+
   private selectAdversary(): AdversaryProfile {
     const ids = Array.from(this.adversaries.keys());
     const id = ids[Math.floor(Math.random() * ids.length)];

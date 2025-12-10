@@ -1,9 +1,10 @@
-// @version 3.3.39
+// @version 3.3.374
 // TooLoo.ai LIQUID CREATION SPACE - Multi-Artifact Visual Canvas
 // ═══════════════════════════════════════════════════════════════════════════
-// v3.3.39 - FREE MOVEMENT: Drag artifacts anywhere with momentum & persistence
+// v3.3.374 - DIVERSIFIED VISUAL COMMUNICATION: Multi-format support
 // Generates MULTIPLE visual artifacts per prompt with intelligent follow-ups
 // Each selection influences the next set of artifacts - contextual creativity
+// NEW: ASCII, Mermaid, Charts, Emoji, Terminal, Math, Trees, Timelines
 // ═══════════════════════════════════════════════════════════════════════════
 
 import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -19,18 +20,28 @@ import { TooLooAvatar, SVGRenderer } from '../chat';
 const API_BASE = '/api/v1/chat';
 
 // ============================================================================
-// ARTIFACT TYPES - Different visual manifestations
+// ARTIFACT TYPES - Diversified visual manifestations (v3.3.374)
 // ============================================================================
 
 const ARTIFACT_TYPES = {
-  diagram: { icon: '📊', label: 'Diagram', color: 'cyan' },
-  illustration: { icon: '🎨', label: 'Illustration', color: 'purple' },
-  infographic: { icon: '📈', label: 'Infographic', color: 'emerald' },
-  mindmap: { icon: '🧠', label: 'Mind Map', color: 'pink' },
-  flowchart: { icon: '🔀', label: 'Flowchart', color: 'amber' },
-  timeline: { icon: '📅', label: 'Timeline', color: 'blue' },
-  comparison: { icon: '⚖️', label: 'Comparison', color: 'rose' },
-  concept: { icon: '💡', label: 'Concept', color: 'yellow' },
+  // Original formats
+  diagram: { icon: '📊', label: 'Diagram', color: 'cyan', format: 'svg' },
+  illustration: { icon: '🎨', label: 'Illustration', color: 'purple', format: 'svg' },
+  infographic: { icon: '📈', label: 'Infographic', color: 'emerald', format: 'svg' },
+  mindmap: { icon: '🧠', label: 'Mind Map', color: 'pink', format: 'tree' },
+  flowchart: { icon: '🔀', label: 'Flowchart', color: 'amber', format: 'mermaid' },
+  timeline: { icon: '📅', label: 'Timeline', color: 'blue', format: 'timeline' },
+  comparison: { icon: '⚖️', label: 'Comparison', color: 'rose', format: 'comparison' },
+  concept: { icon: '💡', label: 'Concept', color: 'yellow', format: 'svg' },
+  // New diversified formats
+  ascii: { icon: '📝', label: 'ASCII Art', color: 'green', format: 'ascii' },
+  chart: { icon: '📉', label: 'Data Chart', color: 'indigo', format: 'chart' },
+  tree: { icon: '🌳', label: 'Hierarchy', color: 'teal', format: 'tree' },
+  stats: { icon: '📊', label: 'Stats Card', color: 'violet', format: 'stats' },
+  terminal: { icon: '💻', label: 'Terminal', color: 'slate', format: 'terminal' },
+  emoji: { icon: '🎭', label: 'Emoji Scene', color: 'orange', format: 'emoji' },
+  math: { icon: '🔢', label: 'Math Formula', color: 'sky', format: 'math' },
+  sequence: { icon: '↔️', label: 'Sequence', color: 'fuchsia', format: 'mermaid' },
 };
 
 // ============================================================================

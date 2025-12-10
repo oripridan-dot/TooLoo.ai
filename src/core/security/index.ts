@@ -8,11 +8,7 @@
 
 // Encryption
 export { EncryptionManager, encryptionManager } from './encryption-manager.js';
-export type {
-  EncryptedData,
-  SecureConfig,
-  EncryptionOptions,
-} from './encryption-manager.js';
+export type { EncryptedData, SecureConfig, EncryptionOptions } from './encryption-manager.js';
 
 // PII Scrubbing
 export { PIIScrubber } from './pii-scrubber.js';

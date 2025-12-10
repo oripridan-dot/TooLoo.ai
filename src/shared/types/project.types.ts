@@ -131,7 +131,18 @@ export interface ProjectStats {
 
 export interface ProjectActivity {
   id: string;
-  type: 'commit' | 'branch' | 'merge' | 'comment' | 'star' | 'fork' | 'update' | 'execution' | 'artifact' | 'chat' | string;
+  type:
+    | 'commit'
+    | 'branch'
+    | 'merge'
+    | 'comment'
+    | 'star'
+    | 'fork'
+    | 'update'
+    | 'execution'
+    | 'artifact'
+    | 'chat'
+    | string;
   actor: string;
   description: string;
   timestamp: string;

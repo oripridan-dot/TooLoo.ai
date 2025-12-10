@@ -1,4 +1,4 @@
-// @version 3.3.220
+// @version 3.3.392
 import { bus, SynapsysEvent } from '../core/event-bus.js';
 import { amygdala } from './amygdala/index.js';
 import { orchestrator } from './orchestrator.js';
@@ -11,7 +11,7 @@ import { synthesizer } from '../precog/synthesizer.js';
 import { precog } from '../precog/index.js';
 import { tracer } from './tracer.js';
 import { metaprogrammer } from './metaprogrammer.js';
-import { ProjectManager } from './project-manager.js';
+import { ProjectManager, projectManager } from './project-manager-v2.js';
 import { visualCortex } from './imagination/visual-cortex.js';
 import { responseVisualizer as visualizer } from './imagination/response-visualizer.js';
 import { registry } from '../core/module-registry.js';
@@ -63,6 +63,7 @@ interface PlanResult {
 interface SynthesisResult {
   response: string;
   meta: unknown;
+  latencyMs?: number;
 }
 
 export class Cortex {
@@ -116,7 +117,8 @@ export class Cortex {
     // Connect World Pipeline to Memory
     worldPipeline.connectMemory(this.hippocampus);
     this.prefrontal = new PrefrontalCortex(bus, process.cwd());
-    this.projectManager = new ProjectManager(process.cwd());
+    // Use singleton ProjectManager with EventBus integration
+    this.projectManager = projectManager;
     this.contextResonance = new ContextResonanceEngine();
     this.reasoningChain = new ReasoningChain();
 
@@ -381,7 +383,7 @@ I'm not just an AI that talks about code - I'm a system that **does** things. Wa
 
               return {
                 content: result.response,
-                latencyMs: 1000, // Placeholder, synthesizer doesn't return latency yet
+                latencyMs: result.latencyMs ?? 1000,
               };
             };
 

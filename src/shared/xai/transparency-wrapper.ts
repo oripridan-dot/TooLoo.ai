@@ -1,10 +1,10 @@
-// @version 2.2.238
+// @version 2.2.239
 /**
  * TransparencyWrapper — The heart of TooLoo.ai V3
  *
  * Wraps all responses with full transparency metadata showing:
  * - Which providers collaborated
- * - The exact models used (claude-sonnet-4.5, gemini-3-pro-preview)
+ * - The exact models used (claude-sonnet-4-20250514, gemini-2.0-flash-exp)
  * - Cost breakdown ($0.003 Gemini + $0.008 Claude = $0.011)
  * - Validation trace
  * - Routing decisions
@@ -325,7 +325,7 @@ export function formatCostBreakdown(meta: XAIMeta): string {
 
 /**
  * Generate a summary badge for the response
- * e.g., "gemini-3-pro + claude-sonnet-4.5 | validated | $0.011"
+ * e.g., "gemini-2.0-flash-exp + claude-sonnet-4 | validated | $0.011"
  */
 export function generateBadge(meta: XAIMeta): string {
   const models = meta.models.join(' + ');

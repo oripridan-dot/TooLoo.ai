@@ -1,4 +1,4 @@
-// @version 3.3.282
+// @version 3.3.401
 /* eslint-disable no-console */
 /**
  * TooLoo Automated Execution Pipeline
@@ -7,8 +7,16 @@
  * 1. Receives code or objectives
  * 2. Automatically prepares and validates input
  * 3. Executes with proper file-based sandboxing (not eval)
- * 4. Self-corrects on failures
- * 5. Returns clean results
+ * 4. Self-corrects on failures using AI error feedback
+ * 5. **NEW: Recalls past experiences to inform fixes**
+ * 6. Returns clean results with full execution traces
+ *
+ * OODA Loop Implementation:
+ * - Observe: Capture stdout/stderr from execution
+ * - Orient: Analyze error patterns and context + RECALL past experiences
+ * - Decide: Generate fix suggestions via AI (informed by memory)
+ * - Act: Apply fixes and re-execute
+ * - **Learn: Record outcome for future recall**
  *
  * This is TooLoo's internal execution engine - it handles all the complexity
  * so the user just sees results.
@@ -22,6 +30,7 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
+import { VectorStore } from '../memory/vector-store.js';
 
 // ============================================================================
 // TYPES
@@ -40,6 +49,8 @@ export interface ExecutionInput {
   timeout?: number;
   /** Max auto-fix attempts */
   maxRetries?: number;
+  /** Use Docker sandbox for secure execution */
+  useSandbox?: boolean;
 }
 
 export interface ExecutionOutput {
@@ -61,6 +72,8 @@ export interface ExecutionOutput {
   durationMs: number;
   /** Execution phases completed */
   phases: ExecutionPhase[];
+  /** Error analysis from AI (if auto-fix was attempted) */
+  errorAnalysis?: ErrorAnalysis;
 }
 
 export interface ExecutionPhase {
@@ -68,6 +81,20 @@ export interface ExecutionPhase {
   status: 'success' | 'failed' | 'skipped';
   durationMs: number;
   message: string;
+}
+
+/** Structured error analysis for learning */
+export interface ErrorAnalysis {
+  /** Type of error */
+  errorType: 'syntax' | 'runtime' | 'logic' | 'import' | 'timeout' | 'unknown';
+  /** Root cause identified by AI */
+  rootCause: string;
+  /** Fix that was attempted */
+  fixAttempted: string;
+  /** Whether the fix was successful */
+  fixSuccessful: boolean;
+  /** Confidence in analysis (0-1) */
+  confidence: number;
 }
 
 // ============================================================================
@@ -78,12 +105,15 @@ export class AutomatedExecutionPipeline {
   private static instance: AutomatedExecutionPipeline;
   private tempDir: string;
   private initialized = false;
+  /** VectorStore for experience-based learning and recall */
+  private vectorStore: VectorStore;
 
   private readonly DEFAULT_TIMEOUT = 30000;
   private readonly DEFAULT_MAX_RETRIES = 3;
 
   private constructor() {
     this.tempDir = path.join(process.cwd(), 'temp', 'execution');
+    this.vectorStore = new VectorStore(process.cwd());
   }
 
   static getInstance(): AutomatedExecutionPipeline {
@@ -96,8 +126,9 @@ export class AutomatedExecutionPipeline {
   async initialize(): Promise<void> {
     if (this.initialized) return;
     await fs.ensureDir(this.tempDir);
+    await this.vectorStore.initialize();
     this.initialized = true;
-    console.log('[AutomatedPipeline] Initialized');
+    console.log('[AutomatedPipeline] Initialized with memory recall enabled');
   }
 
   // --------------------------------------------------------------------------
@@ -129,11 +160,13 @@ export class AutomatedExecutionPipeline {
     try {
       if (!code && input.objective) {
         // Generate code from objective
-        console.log(`[AutomatedPipeline] Generating code for: ${input.objective.substring(0, 50)}...`);
+        console.log(
+          `[AutomatedPipeline] Generating code for: ${input.objective.substring(0, 50)}...`
+        );
         const generated = await this.generateCode(input.objective, language);
         code = generated.code;
         language = generated.language as any;
-        
+
         phases.push({
           name: 'code-generation',
           status: 'success',
@@ -173,10 +206,12 @@ export class AutomatedExecutionPipeline {
     }
 
     // =========================================================================
-    // PHASE 2: EXECUTION WITH AUTO-RETRY
+    // PHASE 2: EXECUTION WITH AUTO-RETRY (OODA LOOP)
     // =========================================================================
-    let lastResult: { success: boolean; stdout: string; stderr: string; exitCode: number } | null = null;
+    let lastResult: { success: boolean; stdout: string; stderr: string; exitCode: number } | null =
+      null;
     let attempt = 0;
+    let lastErrorAnalysis: ErrorAnalysis | undefined;
 
     while (attempt < maxRetries) {
       attempt++;
@@ -185,7 +220,7 @@ export class AutomatedExecutionPipeline {
       console.log(`[AutomatedPipeline] Execution attempt ${attempt}/${maxRetries}`);
 
       try {
-        // Execute using file-based approach (not -e flag)
+        // OBSERVE: Execute using file-based approach (not -e flag)
         lastResult = await this.executeInFile(code, language, executionId, timeout);
 
         phases.push({
@@ -198,30 +233,49 @@ export class AutomatedExecutionPipeline {
         });
 
         if (lastResult.success) {
+          // Mark any previous fix as successful
+          if (lastErrorAnalysis) {
+            lastErrorAnalysis.fixSuccessful = true;
+            bus.publish('cortex', 'pipeline:fix_succeeded', {
+              errorType: lastErrorAnalysis.errorType,
+              attempts: attempt,
+            });
+          }
           break;
         }
 
-        // Auto-fix on failure if we have retries left
+        // ORIENT + DECIDE: Auto-fix on failure if we have retries left
         if (attempt < maxRetries) {
-          console.log(`[AutomatedPipeline] Attempting auto-fix...`);
+          console.log(`[AutomatedPipeline] OODA: Analyzing error and generating fix...`);
           const fixStart = Date.now();
-          
+
           try {
-            const fixedCode = await this.autoFixCode(code, lastResult.stderr, language);
+            // This is the core OODA feedback - error goes to AI, fix comes back
+            const { fixedCode, analysis } = await this.autoFixCode(
+              code,
+              lastResult.stderr,
+              language
+            );
+            lastErrorAnalysis = analysis;
+
+            console.log(
+              `[AutomatedPipeline] Error type: ${analysis.errorType}, Root cause: ${analysis.rootCause}`
+            );
+
             if (fixedCode && fixedCode !== code) {
               code = fixedCode;
               phases.push({
                 name: `auto-fix-${attempt}`,
                 status: 'success',
                 durationMs: Date.now() - fixStart,
-                message: 'Code auto-fixed, retrying...',
+                message: `Fix applied (${analysis.errorType}): ${analysis.rootCause.substring(0, 50)}`,
               });
             } else {
               phases.push({
                 name: `auto-fix-${attempt}`,
                 status: 'skipped',
                 durationMs: Date.now() - fixStart,
-                message: 'No fix available',
+                message: 'No fix available - same code returned',
               });
               break; // No point retrying with same code
             }
@@ -256,13 +310,37 @@ export class AutomatedExecutionPipeline {
     // =========================================================================
     const totalDuration = Date.now() - startTime;
 
-    // Emit completion event
+    // Emit completion event with full context for learning
     bus.publish('cortex', 'pipeline:execution:complete', {
       executionId,
       success: lastResult?.success || false,
       attempts: attempt,
       durationMs: totalDuration,
+      errorAnalysis: lastErrorAnalysis,
+      language,
     });
+
+    // Record for reinforcement learning if we had to fix
+    if (lastErrorAnalysis) {
+      bus.publish('cortex', 'learning:execution_outcome', {
+        errorType: lastErrorAnalysis.errorType,
+        fixSuccessful: lastErrorAnalysis.fixSuccessful,
+        attempts: attempt,
+        language,
+      });
+
+      // PHASE 4 (NEW): Record experience to memory for future recall
+      // This creates the learning loop: Execute → Learn → Recall → Execute Better
+      this.recordExecutionOutcome({
+        code: input.code || input.objective || '',
+        error: lastResult?.stderr || '',
+        fixedCode: code,
+        success: lastResult?.success || false,
+        language,
+        errorType: lastErrorAnalysis.errorType,
+        rootCause: lastErrorAnalysis.rootCause,
+      }).catch((err) => console.warn('[AutomatedPipeline] Failed to record experience:', err));
+    }
 
     return {
       success: lastResult?.success || false,
@@ -274,6 +352,7 @@ export class AutomatedExecutionPipeline {
       attempts: attempt,
       durationMs: totalDuration,
       phases,
+      errorAnalysis: lastErrorAnalysis,
     };
   }
 
@@ -387,7 +466,7 @@ export class AutomatedExecutionPipeline {
 
       proc.on('error', async (error) => {
         clearTimeout(timeoutHandle);
-        
+
         try {
           await fs.remove(execDir);
         } catch (e) {
@@ -432,36 +511,243 @@ The code must be complete and run without modifications.`,
   }
 
   /**
-   * Auto-fix code based on error message
+   * Auto-fix code based on error message with structured analysis
+   * This is the core of the OODA loop's "Decide" phase
+   * NOW ENHANCED with experience recall from VectorStore
    */
   private async autoFixCode(
     code: string,
     error: string,
     language: string
-  ): Promise<string | null> {
+  ): Promise<{ fixedCode: string | null; analysis: ErrorAnalysis }> {
+    const analysis: ErrorAnalysis = {
+      errorType: this.classifyError(error),
+      rootCause: '',
+      fixAttempted: '',
+      fixSuccessful: false,
+      confidence: 0,
+    };
+
     try {
+      // STEP 0 (NEW): Recall past experiences with similar errors
+      const pastExperiences = await this.recallRelevantExperiences(error, language);
+      const experienceContext =
+        pastExperiences.length > 0
+          ? `\n\nPAST SIMILAR EXPERIENCES (${pastExperiences.length} found):\n${pastExperiences
+              .map(
+                (e, i) =>
+                  `${i + 1}. Problem: ${e.problem.substring(0, 100)}...\n   Action: ${e.action}\n   Result: ${e.success ? '✓ SUCCESS' : '✗ FAILED'}`
+              )
+              .join('\n')}`
+          : '';
+
+      if (pastExperiences.length > 0) {
+        console.log(
+          `[AutomatedPipeline] MEMORY RECALL: Found ${pastExperiences.length} similar past experiences`
+        );
+      }
+
+      // Step 1: Analyze the error (now with experience context)
+      const analysisResponse = await precog.providers.generate({
+        prompt: `Analyze this ${language} execution error and identify the root cause:
+
+ERROR:
+${error}
+
+CODE:
+${code}${experienceContext}
+
+Respond with a brief JSON object:
+{
+  "rootCause": "one sentence explaining the root cause",
+  "fixStrategy": "one sentence explaining how to fix it",
+  "confidence": 0.0-1.0,
+  "usedPastExperience": true/false
+}`,
+        system:
+          'You are a debugging expert. Analyze errors precisely. If past experiences are provided, use them to inform your analysis. Return only valid JSON.',
+        taskType: 'analyze',
+      });
+
+      // Parse analysis
+      let usedPastExperience = false;
+      try {
+        const parsed = JSON.parse(analysisResponse.content.replace(/```json\n?|\n?```/g, ''));
+        analysis.rootCause = parsed.rootCause || 'Unknown';
+        analysis.fixAttempted = parsed.fixStrategy || 'General fix';
+        analysis.confidence = parsed.confidence || 0.5;
+        usedPastExperience = parsed.usedPastExperience || false;
+
+        // Boost confidence if we learned from past success
+        if (usedPastExperience && pastExperiences.some((e) => e.success)) {
+          analysis.confidence = Math.min(analysis.confidence + 0.15, 0.95);
+        }
+      } catch {
+        analysis.rootCause = 'Could not parse error analysis';
+        analysis.confidence = 0.3;
+      }
+
+      // Step 2: Generate the fix (with experience-informed system prompt)
+      const successfulFixes = pastExperiences.filter((e) => e.success);
+      const experienceSystemHint =
+        successfulFixes.length > 0
+          ? `\nPast successful fix patterns for similar issues:\n${successfulFixes.map((e) => `- ${e.action}`).join('\n')}`
+          : '';
+
       const response = await precog.providers.generate({
         prompt: `Fix this ${language} code that produced the following error:
 
 ERROR:
 ${error}
 
+ROOT CAUSE ANALYSIS:
+${analysis.rootCause}
+
 CODE:
 ${code}
 
 Return ONLY the fixed code. No markdown, no explanations.`,
         system: `You are an expert debugger. Fix the code to resolve the error.
-Return ONLY the corrected code - no markdown, no explanations.`,
+Return ONLY the corrected code - no markdown, no explanations.
+Based on the analysis: ${analysis.fixAttempted}${experienceSystemHint}`,
         taskType: 'fix',
       });
 
       let fixedCode = response.content;
       fixedCode = this.cleanCode(fixedCode, language);
 
-      return fixedCode;
+      // Emit event for learning
+      bus.publish('cortex', 'pipeline:error_analyzed', {
+        errorType: analysis.errorType,
+        rootCause: analysis.rootCause,
+        language,
+        confidence: analysis.confidence,
+        usedMemory: pastExperiences.length > 0,
+      });
+
+      return { fixedCode, analysis };
     } catch (e) {
-      return null;
+      analysis.rootCause = 'Auto-fix generation failed';
+      return { fixedCode: null, analysis };
     }
+  }
+
+  /**
+   * Recall relevant past experiences from VectorStore
+   * This enables the pipeline to "remember what worked before"
+   */
+  private async recallRelevantExperiences(
+    error: string,
+    language: string
+  ): Promise<
+    { problem: string; action: string; result: string; success: boolean; similarity: number }[]
+  > {
+    try {
+      const experiences = await this.vectorStore.getRelevantExperiences(
+        `${language} error: ${error}`,
+        {
+          preferSuccessful: true, // Prioritize successful fixes
+          limit: 3,
+        }
+      );
+
+      // Filter for high-quality matches
+      return experiences.filter((e) => e.similarity > 0.4);
+    } catch (err) {
+      console.warn('[AutomatedPipeline] Memory recall failed:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Record execution outcome to memory for future learning
+   * This creates the feedback loop: Execute → Learn → Recall → Execute Better
+   */
+  async recordExecutionOutcome(input: {
+    code: string;
+    error: string;
+    fixedCode: string | null;
+    success: boolean;
+    language: string;
+    errorType: string;
+    rootCause: string;
+  }): Promise<void> {
+    try {
+      await this.vectorStore.recordExperience({
+        problem: `${input.language} execution error: ${input.error.substring(0, 200)}`,
+        action: input.fixedCode
+          ? `Applied fix for ${input.errorType}: ${input.rootCause}`
+          : `No fix available for ${input.errorType}`,
+        result: input.success
+          ? 'Fix successful, code executed correctly'
+          : 'Fix did not resolve the issue',
+        success: input.success,
+        errorType: input.errorType,
+        language: input.language,
+        fixApplied: !!input.fixedCode,
+        context: {
+          codeLength: input.code.length,
+          errorLength: input.error.length,
+        },
+      });
+
+      console.log(
+        `[AutomatedPipeline] MEMORY STORED: ${input.success ? '✓' : '✗'} ${input.errorType} fix`
+      );
+    } catch (err) {
+      console.warn('[AutomatedPipeline] Failed to record experience:', err);
+    }
+  }
+
+  /**
+   * Classify error type for better learning
+   */
+  private classifyError(error: string): ErrorAnalysis['errorType'] {
+    const errorLower = error.toLowerCase();
+
+    // Syntax errors
+    if (
+      errorLower.includes('syntaxerror') ||
+      errorLower.includes('unexpected token') ||
+      errorLower.includes('parsing error')
+    ) {
+      return 'syntax';
+    }
+
+    // Import/module errors
+    if (
+      errorLower.includes('cannot find module') ||
+      errorLower.includes('module not found') ||
+      errorLower.includes('importerror') ||
+      errorLower.includes('is not defined')
+    ) {
+      return 'import';
+    }
+
+    // Timeout
+    if (errorLower.includes('timeout') || errorLower.includes('timed out')) {
+      return 'timeout';
+    }
+
+    // Runtime errors
+    if (
+      errorLower.includes('typeerror') ||
+      errorLower.includes('referenceerror') ||
+      errorLower.includes('rangeerror')
+    ) {
+      return 'runtime';
+    }
+
+    // Logic errors (assertion failures)
+    if (
+      errorLower.includes('assertion') ||
+      errorLower.includes('expected') ||
+      errorLower.includes('assert')
+    ) {
+      return 'logic';
+    }
+
+    return 'unknown';
   }
 
   /**

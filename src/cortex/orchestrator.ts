@@ -1,6 +1,24 @@
-// @version 2.1.265
+// @version 3.3.450 - Added vision integration for context-aware orchestration
 import { bus } from '../core/event-bus.js';
 import { smartFS } from '../core/fs-manager.js';
+
+// Lazy import to avoid circular dependency
+let screenCapture: any = null;
+async function getScreenCapture() {
+  if (!screenCapture) {
+    const module = await import('./vision/screen-capture-service.js');
+    screenCapture = module.screenCapture;
+  }
+  return screenCapture;
+}
+
+interface VisionContext {
+  timestamp: number;
+  hasScreenshot: boolean;
+  extractedText?: string[];
+  ocrConfidence?: number;
+  imagePath?: string;
+}
 
 interface OrchestratorState {
   initialized: boolean;
@@ -13,6 +31,8 @@ interface OrchestratorState {
   lastCycleTime: string | null;
   planQueue: string[];
   currentFocus: string;
+  visionEnabled: boolean;
+  lastVisionContext: VisionContext | null;
 }
 
 export class Orchestrator {
@@ -24,6 +44,8 @@ export class Orchestrator {
     lastCycleTime: null,
     planQueue: [],
     currentFocus: 'idle',
+    visionEnabled: false,
+    lastVisionContext: null,
   };
 
   private retryMap: Map<string, number> = new Map();
@@ -31,6 +53,111 @@ export class Orchestrator {
 
   constructor() {
     this.setupListeners();
+    this.setupVisionListeners();
+  }
+
+  /**
+   * Setup vision-related event listeners
+   */
+  private setupVisionListeners() {
+    // Enable/disable vision for orchestration
+    bus.on('nexus:orchestrator_vision', async (event) => {
+      const { enabled, url } = event.payload;
+      this.state.visionEnabled = enabled;
+      
+      if (enabled) {
+        console.log('[Cortex] 👁️ Vision enabled for orchestration');
+        
+        // Optionally capture initial context
+        if (url) {
+          await this.captureVisionContext(url);
+        }
+      } else {
+        console.log('[Cortex] Vision disabled');
+        this.state.lastVisionContext = null;
+      }
+      
+      bus.publish('cortex', 'cortex:response', {
+        requestId: event.payload.requestId,
+        data: { ok: true, visionEnabled: this.state.visionEnabled },
+      });
+    });
+
+    // Request vision context manually
+    bus.on('nexus:orchestrator_vision_capture', async (event) => {
+      const { url } = event.payload;
+      
+      if (!url) {
+        bus.publish('cortex', 'cortex:response', {
+          requestId: event.payload.requestId,
+          data: { ok: false, error: 'URL required for vision capture' },
+        });
+        return;
+      }
+      
+      const context = await this.captureVisionContext(url);
+      
+      bus.publish('cortex', 'cortex:response', {
+        requestId: event.payload.requestId,
+        data: { ok: true, visionContext: context },
+      });
+    });
+
+    // Listen for vision ready events
+    bus.on('vision:ready', () => {
+      console.log('[Cortex] 👁️ Vision system reported ready');
+    });
+  }
+
+  /**
+   * Capture vision context from a URL
+   */
+  private async captureVisionContext(url: string): Promise<VisionContext> {
+    try {
+      const capture = await getScreenCapture();
+      console.log(`[Cortex] 👁️ Capturing vision context from: ${url}`);
+      
+      const result = await capture.capture({
+        url,
+        fullPage: true,
+        extractText: true,
+        viewport: { width: 1920, height: 1080 },
+      });
+      
+      const context: VisionContext = {
+        timestamp: Date.now(),
+        hasScreenshot: result.success,
+        extractedText: result.extractedText,
+        ocrConfidence: result.metadata?.ocrConfidence,
+        imagePath: result.imagePath,
+      };
+      
+      this.state.lastVisionContext = context;
+      
+      // Emit event for telemetry
+      bus.publish('cortex', 'vision:context_captured', {
+        url,
+        textCount: result.extractedText?.length || 0,
+        confidence: result.metadata?.ocrConfidence,
+      });
+      
+      console.log(`[Cortex] 👁️ Vision context captured: ${result.extractedText?.length || 0} text blocks`);
+      
+      return context;
+    } catch (error: any) {
+      console.error('[Cortex] Vision capture failed:', error.message);
+      return {
+        timestamp: Date.now(),
+        hasScreenshot: false,
+      };
+    }
+  }
+
+  /**
+   * Get current vision context for task execution
+   */
+  public getVisionContext(): VisionContext | null {
+    return this.state.lastVisionContext;
   }
 
   private setupListeners() {
@@ -236,9 +363,21 @@ export class Orchestrator {
         }
       }
 
+      // Include vision context if enabled and available
+      let visionText: string[] = [];
+      if (this.state.visionEnabled && this.state.lastVisionContext?.extractedText) {
+        visionText = this.state.lastVisionContext.extractedText;
+        console.log(`[Cortex] 👁️ Including ${visionText.length} vision text blocks in context`);
+      }
+
       bus.publish('cortex', 'planning:intent', {
         goal: nextGoal,
         context: contextBundle,
+        visionContext: visionText.length > 0 ? {
+          text: visionText,
+          confidence: this.state.lastVisionContext?.ocrConfidence,
+          capturedAt: this.state.lastVisionContext?.timestamp,
+        } : undefined,
       });
     }
   }

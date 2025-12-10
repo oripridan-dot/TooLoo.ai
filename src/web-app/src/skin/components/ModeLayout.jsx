@@ -21,15 +21,15 @@ const LAYOUT_CONFIGS = {
     name: 'Chat',
     description: 'Conversational interface',
     showLeftSidebar: false,
-    showRightSidebar: true,  // Knowledge context helpful during chat
+    showRightSidebar: true, // Knowledge context helpful during chat
     contentMaxWidth: '800px',
     contentPadding: '20px',
   },
   planner: {
     name: 'Planner',
     description: 'Task planning and execution',
-    showLeftSidebar: true,   // Show DAG and segments
-    showRightSidebar: true,  // Show context
+    showLeftSidebar: true, // Show DAG and segments
+    showRightSidebar: true, // Show context
     contentMaxWidth: '100%', // Full width for planning
     contentPadding: '20px',
   },
@@ -37,14 +37,14 @@ const LAYOUT_CONFIGS = {
     name: 'Analysis',
     description: 'Deep research and investigation',
     showLeftSidebar: false,
-    showRightSidebar: true,  // Critical for citations/provenance
+    showRightSidebar: true, // Critical for citations/provenance
     contentMaxWidth: '900px',
     contentPadding: '24px',
   },
   studio: {
     name: 'Studio',
     description: 'Creation and code generation',
-    showLeftSidebar: true,   // File tree / segments
+    showLeftSidebar: true, // File tree / segments
     showRightSidebar: false, // More space for code
     contentMaxWidth: '100%',
     contentPadding: '16px',
@@ -126,20 +126,20 @@ export const ModeLayout = ({ children }) => {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const [showModeIndicator, setShowModeIndicator] = useState(false);
-  
+
   const config = LAYOUT_CONFIGS[uiMode] || LAYOUT_CONFIGS.chat;
-  
+
   // Auto-adjust sidebars when mode changes
   useEffect(() => {
     setLeftOpen(config.showLeftSidebar);
     setRightOpen(config.showRightSidebar);
-    
+
     // Show mode indicator briefly
     setShowModeIndicator(true);
     const timer = setTimeout(() => setShowModeIndicator(false), 2000);
     return () => clearTimeout(timer);
   }, [uiMode, config.showLeftSidebar, config.showRightSidebar]);
-  
+
   // Handle segment click (scroll to that part of conversation)
   const handleSegmentClick = useCallback((segment, index) => {
     // Find and scroll to the corresponding message
@@ -148,12 +148,12 @@ export const ModeLayout = ({ children }) => {
       messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, []);
-  
+
   // Calculate main content margins based on sidebar state
   const getMainStyle = () => {
     const leftMargin = leftOpen ? '240px' : '0px';
     const rightMargin = rightOpen ? '280px' : '0px';
-    
+
     return {
       marginLeft: leftMargin,
       marginRight: rightMargin,
@@ -163,29 +163,30 @@ export const ModeLayout = ({ children }) => {
       flexDirection: 'column',
     };
   };
-  
+
   return (
-    <div className="mode-layout" style={{ 
-      minHeight: '100vh',
-      background: 'var(--surface-base, #0d0d0d)',
-    }}>
+    <div
+      className="mode-layout"
+      style={{
+        minHeight: '100vh',
+        background: 'var(--surface-base, #0d0d0d)',
+      }}
+    >
       {/* Control Deck (Header) */}
       <ControlDeck />
-      
+
       {/* Mode Indicator (temporary) */}
       <AnimatePresence>
-        {showModeIndicator && (
-          <ModeIndicator mode={uiMode} config={config} />
-        )}
+        {showModeIndicator && <ModeIndicator mode={uiMode} config={config} />}
       </AnimatePresence>
-      
+
       {/* Left Sidebar (Segmentation) */}
-      <SegmentationSidebar 
-        isOpen={leftOpen} 
+      <SegmentationSidebar
+        isOpen={leftOpen}
         onClose={() => setLeftOpen(false)}
         onSegmentClick={handleSegmentClick}
       />
-      
+
       {/* Left Toggle Button */}
       <SidebarToggle
         side="left"
@@ -193,13 +194,10 @@ export const ModeLayout = ({ children }) => {
         onClick={() => setLeftOpen(!leftOpen)}
         icon={leftOpen ? '◀' : '📑'}
       />
-      
+
       {/* Right Sidebar (Knowledge Rail) */}
-      <KnowledgeRail 
-        isOpen={rightOpen} 
-        onClose={() => setRightOpen(false)}
-      />
-      
+      <KnowledgeRail isOpen={rightOpen} onClose={() => setRightOpen(false)} />
+
       {/* Right Toggle Button */}
       <SidebarToggle
         side="right"
@@ -207,21 +205,19 @@ export const ModeLayout = ({ children }) => {
         onClick={() => setRightOpen(!rightOpen)}
         icon={rightOpen ? '▶' : '📚'}
       />
-      
+
       {/* Main Content Area */}
-      <motion.main
-        className="main-content"
-        layout
-        style={getMainStyle()}
-      >
-        <div style={{
-          maxWidth: config.contentMaxWidth,
-          width: '100%',
-          margin: '0 auto',
-          padding: config.contentPadding,
-          paddingTop: '20px',
-          flex: 1,
-        }}>
+      <motion.main className="main-content" layout style={getMainStyle()}>
+        <div
+          style={{
+            maxWidth: config.contentMaxWidth,
+            width: '100%',
+            margin: '0 auto',
+            padding: config.contentPadding,
+            paddingTop: '20px',
+            flex: 1,
+          }}
+        >
           {children}
         </div>
       </motion.main>

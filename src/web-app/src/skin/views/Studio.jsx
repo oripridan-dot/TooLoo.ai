@@ -31,7 +31,9 @@ const ColorSwatch = memo(({ hue, isSelected, onClick, size = 40 }) => {
         width: size,
         height: size,
         background: `linear-gradient(135deg, hsl(${hue}, 70%, 50%), hsl(${hue + 30}, 80%, 40%))`,
-        boxShadow: isSelected ? `0 0 30px hsla(${hue}, 70%, 50%, 0.6), 0 4px 20px hsla(${hue}, 70%, 50%, 0.3)` : '0 2px 10px hsla(0, 0%, 0%, 0.3)',
+        boxShadow: isSelected
+          ? `0 0 30px hsla(${hue}, 70%, 50%, 0.6), 0 4px 20px hsla(${hue}, 70%, 50%, 0.3)`
+          : '0 2px 10px hsla(0, 0%, 0%, 0.3)',
       }}
     />
   );
@@ -51,9 +53,11 @@ const PresetCard = memo(({ presetKey, preset, isActive, onClick }) => {
       whileTap={{ scale: 0.98 }}
       className={`
         p-4 rounded-xl text-left transition-all relative overflow-hidden
-        ${isActive 
-          ? 'bg-gradient-to-br from-cyan-500/20 to-purple-500/10 border-2 border-cyan-500/50' 
-          : 'bg-white/5 border border-white/10 hover:bg-white/8 hover:border-white/20'}
+        ${
+          isActive
+            ? 'bg-gradient-to-br from-cyan-500/20 to-purple-500/10 border-2 border-cyan-500/50'
+            : 'bg-white/5 border border-white/10 hover:bg-white/8 hover:border-white/20'
+        }
       `}
     >
       {/* Active glow */}
@@ -65,7 +69,7 @@ const PresetCard = memo(({ presetKey, preset, isActive, onClick }) => {
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
       )}
-      
+
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-2">
           <motion.div
@@ -74,10 +78,14 @@ const PresetCard = memo(({ presetKey, preset, isActive, onClick }) => {
             className="w-8 h-8 rounded-lg"
             style={{
               background: `linear-gradient(135deg, hsl(${preset.colors.primary}, ${preset.colors.saturation}%, 50%), hsl(${preset.colors.primary + 40}, ${preset.colors.saturation}%, 40%))`,
-              boxShadow: isActive ? `0 0 20px hsla(${preset.colors.primary}, ${preset.colors.saturation}%, 50%, 0.4)` : 'none',
+              boxShadow: isActive
+                ? `0 0 20px hsla(${preset.colors.primary}, ${preset.colors.saturation}%, 50%, 0.4)`
+                : 'none',
             }}
           />
-          <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-300'}`}>{preset.name}</span>
+          <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-300'}`}>
+            {preset.name}
+          </span>
           {isActive && (
             <motion.span
               initial={{ scale: 0 }}
@@ -89,13 +97,17 @@ const PresetCard = memo(({ presetKey, preset, isActive, onClick }) => {
           )}
         </div>
         <p className="text-xs text-gray-500">{preset.description}</p>
-        
+
         {/* Visual indicators */}
         <div className="flex gap-2 mt-3">
-          <span className={`text-xs px-2 py-0.5 rounded-full ${preset.effects.orbs ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-gray-500'}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full ${preset.effects.orbs ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-gray-500'}`}
+          >
             {preset.effects.orbs ? '●' : '○'} Orbs
           </span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${preset.effects.aurora ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500'}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full ${preset.effects.aurora ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500'}`}
+          >
             {preset.effects.aurora ? '●' : '○'} Aurora
           </span>
         </div>
@@ -112,7 +124,7 @@ PresetCard.displayName = 'PresetCard';
 
 const IntensitySlider = memo(({ value, onChange, label, min = 0, max = 1, step = 0.1 }) => {
   const percentage = ((value - min) / (max - min)) * 100;
-  
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
@@ -154,9 +166,13 @@ const EffectToggle = memo(({ label, enabled, onChange, icon }) => {
       `}
     >
       <span className="text-lg">{icon}</span>
-      <span className={`flex-1 text-sm ${enabled ? 'text-cyan-300' : 'text-gray-400'}`}>{label}</span>
-      <div className={`w-8 h-4 rounded-full relative transition-colors ${enabled ? 'bg-cyan-500' : 'bg-white/20'}`}>
-        <div 
+      <span className={`flex-1 text-sm ${enabled ? 'text-cyan-300' : 'text-gray-400'}`}>
+        {label}
+      </span>
+      <div
+        className={`w-8 h-4 rounded-full relative transition-colors ${enabled ? 'bg-cyan-500' : 'bg-white/20'}`}
+      >
+        <div
           className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all"
           style={{ left: enabled ? 16 : 2 }}
         />
@@ -222,7 +238,7 @@ const Studio = memo(({ className = '' }) => {
   const [emergences, setEmergences] = useState([]);
   const [loading, setLoading] = useState(false);
   const [previewActive, setPreviewActive] = useState(false);
-  
+
   // NEW: Tab state for switching between Studio, Liquid Skin Showcase, and Figma Copilot
   const [activeTab, setActiveTab] = useState('studio'); // 'studio' | 'showcase' | 'figma'
 
@@ -246,28 +262,67 @@ const Studio = memo(({ className = '' }) => {
       const data = await res.json();
       if (data.artifacts) {
         const pending = data.artifacts
-          .filter(a => a.status === 'pending')
+          .filter((a) => a.status === 'pending')
           .map((artifact, i) => ({
             id: artifact.id,
-            icon: artifact.type === 'code' ? '💻' : 
-                  artifact.type === 'style' ? '🎨' : 
-                  artifact.type === 'optimization' ? '⚡' : '✨',
+            icon:
+              artifact.type === 'code'
+                ? '💻'
+                : artifact.type === 'style'
+                  ? '🎨'
+                  : artifact.type === 'optimization'
+                    ? '⚡'
+                    : '✨',
             title: artifact.name || `Artifact ${i + 1}`,
             description: artifact.description || 'Generated by exploration engine',
           }));
-        setEmergences(pending.length > 0 ? pending : [
-          { id: 'demo-1', icon: '🎨', title: 'New color scheme detected', description: 'Based on your usage patterns' },
-          { id: 'demo-2', icon: '⚡', title: 'Performance optimization', description: 'Suggested effect reduction' },
-          { id: 'demo-3', icon: '✨', title: 'Animation enhancement', description: 'Smoother transition curves' },
-        ]);
+        setEmergences(
+          pending.length > 0
+            ? pending
+            : [
+                {
+                  id: 'demo-1',
+                  icon: '🎨',
+                  title: 'New color scheme detected',
+                  description: 'Based on your usage patterns',
+                },
+                {
+                  id: 'demo-2',
+                  icon: '⚡',
+                  title: 'Performance optimization',
+                  description: 'Suggested effect reduction',
+                },
+                {
+                  id: 'demo-3',
+                  icon: '✨',
+                  title: 'Animation enhancement',
+                  description: 'Smoother transition curves',
+                },
+              ]
+        );
       }
     } catch (error) {
       console.error('[Studio] Failed to fetch emergences:', error);
       // Use demo data on error
       setEmergences([
-        { id: 'demo-1', icon: '🎨', title: 'New color scheme detected', description: 'Based on your usage patterns' },
-        { id: 'demo-2', icon: '⚡', title: 'Performance optimization', description: 'Suggested effect reduction' },
-        { id: 'demo-3', icon: '✨', title: 'Animation enhancement', description: 'Smoother transition curves' },
+        {
+          id: 'demo-1',
+          icon: '🎨',
+          title: 'New color scheme detected',
+          description: 'Based on your usage patterns',
+        },
+        {
+          id: 'demo-2',
+          icon: '⚡',
+          title: 'Performance optimization',
+          description: 'Suggested effect reduction',
+        },
+        {
+          id: 'demo-3',
+          icon: '✨',
+          title: 'Animation enhancement',
+          description: 'Smoother transition curves',
+        },
       ]);
     }
   }, []);
@@ -295,7 +350,7 @@ const Studio = memo(({ className = '' }) => {
     socket.on('visual:stream:result', (data) => {
       console.log('[LiveDesign] Received result:', data.success);
       setDesignLoading(false);
-      
+
       if (data.success && data.svg) {
         setGeneratedSvg(data.svg);
       }
@@ -326,7 +381,7 @@ const Studio = memo(({ className = '' }) => {
       if (socketRef.current && value.trim()) {
         console.log('[LiveDesign] Sending prompt:', value);
         setDesignLoading(true);
-        
+
         socketRef.current.emit('visual:stream', {
           prompt: value,
           type: 'svg',
@@ -342,7 +397,7 @@ const Studio = memo(({ className = '' }) => {
     // Use getState() for imperative access - no re-renders
     const actions = useSynapsynDNA.getState();
     actions.applyPreset?.(presetKey);
-    
+
     // Update local state to reflect preset
     const preset = SYNAPSYS_PRESETS[presetKey];
     if (preset) {
@@ -376,7 +431,7 @@ const Studio = memo(({ className = '' }) => {
   }, []);
 
   const handleEffectToggle = useCallback((effect, enabled) => {
-    setEffects(prev => ({ ...prev, [effect]: enabled }));
+    setEffects((prev) => ({ ...prev, [effect]: enabled }));
     const dna = useSynapsynDNA.getState();
     dna.setEffect?.(effect, enabled);
   }, []);
@@ -394,7 +449,7 @@ const Studio = memo(({ className = '' }) => {
       console.log('[Studio] Approved (local):', item.title);
     }
     // Remove from list
-    setEmergences(prev => prev.filter(e => e.id !== item.id));
+    setEmergences((prev) => prev.filter((e) => e.id !== item.id));
   }, []);
 
   const handleRejectEmergence = useCallback(async (item) => {
@@ -410,7 +465,7 @@ const Studio = memo(({ className = '' }) => {
       console.log('[Studio] Rejected (local):', item.title);
     }
     // Remove from list
-    setEmergences(prev => prev.filter(e => e.id !== item.id));
+    setEmergences((prev) => prev.filter((e) => e.id !== item.id));
   }, []);
 
   const handlePreview = useCallback(() => {
@@ -429,7 +484,7 @@ const Studio = memo(({ className = '' }) => {
       });
       const data = await res.json();
       console.log('[Studio] Emergence triggered:', data);
-      
+
       // Refresh emergences after delay
       setTimeout(fetchEmergences, 2000);
     } catch (error) {
@@ -438,15 +493,18 @@ const Studio = memo(({ className = '' }) => {
     setLoading(false);
   }, [fetchEmergences]);
 
-  const handleQuickMood = useCallback((mood) => {
-    const moodToPreset = {
-      zen: 'zen',
-      creative: 'creative',
-      immersive: 'immersive',
-    };
-    const presetKey = moodToPreset[mood] || 'balanced';
-    handlePresetChange(presetKey);
-  }, [handlePresetChange]);
+  const handleQuickMood = useCallback(
+    (mood) => {
+      const moodToPreset = {
+        zen: 'zen',
+        creative: 'creative',
+        immersive: 'immersive',
+      };
+      const presetKey = moodToPreset[mood] || 'balanced';
+      handlePresetChange(presetKey);
+    },
+    [handlePresetChange]
+  );
 
   // ==========================================================================
   // VIBE THIEF - V3.3.425
@@ -495,7 +553,9 @@ const Studio = memo(({ className = '' }) => {
       const data = await res.json();
 
       if (!data.ok || !data.data?.result?.success) {
-        throw new Error(data.error || data.data?.result?.output || 'Failed to extract design tokens');
+        throw new Error(
+          data.error || data.data?.result?.output || 'Failed to extract design tokens'
+        );
       }
 
       // Parse the extracted tokens from the LLM response
@@ -525,10 +585,10 @@ const Studio = memo(({ className = '' }) => {
       if (tokens.colors?.primary) {
         const primaryHex = tokens.colors.primary;
         const hue = hexToHue(primaryHex);
-        
+
         if (hue !== null) {
           handleColorChange(hue);
-          
+
           // Apply as temporary preset
           const actions = useSynapsynDNA.getState();
           actions.override({
@@ -538,11 +598,10 @@ const Studio = memo(({ className = '' }) => {
               accent: (hue + 60) % 360, // Analogous
             },
           });
-          
+
           console.log('[VibeThief] Applied vibe with hue:', hue);
         }
       }
-
     } catch (error) {
       console.error('[VibeThief] Failed:', error);
       setVibeError(error.message || 'Failed to analyze website');
@@ -556,16 +615,16 @@ const Studio = memo(({ className = '' }) => {
     try {
       // Remove # if present
       hex = hex.replace('#', '');
-      
+
       // Parse RGB
       const r = parseInt(hex.substring(0, 2), 16) / 255;
       const g = parseInt(hex.substring(2, 4), 16) / 255;
       const b = parseInt(hex.substring(4, 6), 16) / 255;
-      
+
       const max = Math.max(r, g, b);
       const min = Math.min(r, g, b);
       const delta = max - min;
-      
+
       let hue = 0;
       if (delta !== 0) {
         if (max === r) {
@@ -578,7 +637,7 @@ const Studio = memo(({ className = '' }) => {
         hue = Math.round(hue * 60);
         if (hue < 0) hue += 360;
       }
-      
+
       return hue;
     } catch (e) {
       return null;
@@ -605,21 +664,23 @@ const Studio = memo(({ className = '' }) => {
             <p className="text-xs text-gray-500">Design to code in one click</p>
           </div>
         </div>
-        
+
         {/* FigmaCopilot Content */}
         <div className="flex-1 overflow-auto">
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  className="w-12 h-12 border-2 border-purple-500/30 border-t-purple-500 rounded-full mx-auto mb-4"
-                />
-                <p className="text-gray-400">Loading Figma Copilot...</p>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    className="w-12 h-12 border-2 border-purple-500/30 border-t-purple-500 rounded-full mx-auto mb-4"
+                  />
+                  <p className="text-gray-400">Loading Figma Copilot...</p>
+                </div>
               </div>
-            </div>
-          }>
+            }
+          >
             <FigmaCopilot />
           </Suspense>
         </div>
@@ -644,21 +705,23 @@ const Studio = memo(({ className = '' }) => {
             <p className="text-xs text-gray-500">Full immersive demonstration</p>
           </div>
         </div>
-        
+
         {/* Showcase Content */}
         <div className="flex-1 overflow-auto">
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  className="w-12 h-12 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full mx-auto mb-4"
-                />
-                <p className="text-gray-400">Loading Liquid Skin Showcase...</p>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    className="w-12 h-12 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full mx-auto mb-4"
+                  />
+                  <p className="text-gray-400">Loading Liquid Skin Showcase...</p>
+                </div>
               </div>
-            </div>
-          }>
+            }
+          >
             <LiquidSkinShowcase />
           </Suspense>
         </div>
@@ -733,15 +796,17 @@ const Studio = memo(({ className = '' }) => {
           <div className="space-y-4">
             <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Presets</h2>
             <div className="grid gap-3">
-              {Object.entries(SYNAPSYS_PRESETS).slice(0, 6).map(([key, preset]) => (
-                <PresetCard
-                  key={key}
-                  presetKey={key}
-                  preset={preset}
-                  isActive={activePreset === key}
-                  onClick={() => handlePresetChange(key)}
-                />
-              ))}
+              {Object.entries(SYNAPSYS_PRESETS)
+                .slice(0, 6)
+                .map(([key, preset]) => (
+                  <PresetCard
+                    key={key}
+                    presetKey={key}
+                    preset={preset}
+                    isActive={activePreset === key}
+                    onClick={() => handlePresetChange(key)}
+                  />
+                ))}
             </div>
           </div>
 
@@ -831,22 +896,20 @@ const Studio = memo(({ className = '' }) => {
                   placeholder="Describe a visual... (e.g., 'gradient wave')"
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
                 />
-                
+
                 {/* Live SVG Preview Canvas */}
                 <div className="relative w-full h-32 rounded-lg bg-black/30 border border-white/10 overflow-hidden">
                   {generatedSvg ? (
-                    <div 
+                    <div
                       className="w-full h-full"
                       dangerouslySetInnerHTML={{ __html: generatedSvg }}
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
-                      {designPrompt.length > 4 
-                        ? 'Generating...' 
-                        : 'Type to see real-time preview'}
+                      {designPrompt.length > 4 ? 'Generating...' : 'Type to see real-time preview'}
                     </div>
                   )}
-                  
+
                   {/* Loading overlay */}
                   {designLoading && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -868,7 +931,9 @@ const Studio = memo(({ className = '' }) => {
 
           {/* Right column - Emergence queue */}
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Emergence Queue</h2>
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+              Emergence Queue
+            </h2>
             <div className="space-y-3">
               <AnimatePresence>
                 {emergences.map((item) => (
@@ -902,8 +967,8 @@ const Studio = memo(({ className = '' }) => {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleQuickMood('zen')}
                   className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activePreset === 'zen' 
-                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
+                    activePreset === 'zen'
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                       : 'bg-white/5 hover:bg-white/10 text-gray-300'
                   }`}
                 >
@@ -914,8 +979,8 @@ const Studio = memo(({ className = '' }) => {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleQuickMood('creative')}
                   className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activePreset === 'creative' 
-                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                    activePreset === 'creative'
+                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                       : 'bg-white/5 hover:bg-white/10 text-gray-300'
                   }`}
                 >
@@ -926,8 +991,8 @@ const Studio = memo(({ className = '' }) => {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleQuickMood('immersive')}
                   className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activePreset === 'immersive' 
-                      ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' 
+                    activePreset === 'immersive'
+                      ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
                       : 'bg-white/5 hover:bg-white/10 text-gray-300'
                   }`}
                 >
@@ -940,7 +1005,9 @@ const Studio = memo(({ className = '' }) => {
             <LiquidPanel variant="elevated" className="p-4">
               <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
                 🎭 Vibe Thief
-                <span className="text-xs text-gray-500 font-normal">Steal design vibes from any website</span>
+                <span className="text-xs text-gray-500 font-normal">
+                  Steal design vibes from any website
+                </span>
               </h3>
               <div className="space-y-3">
                 <div className="flex gap-2">
@@ -982,19 +1049,21 @@ const Studio = memo(({ className = '' }) => {
                     className="p-3 rounded-lg bg-white/5 border border-emerald-500/20"
                   >
                     <p className="text-xs text-emerald-400 mb-2">✓ Design tokens extracted!</p>
-                    
+
                     {/* Color preview */}
                     {extractedTokens.colors && (
                       <div className="flex gap-2 flex-wrap">
-                        {Object.entries(extractedTokens.colors).slice(0, 5).map(([name, color]) => (
-                          <div key={name} className="flex items-center gap-1">
-                            <div 
-                              className="w-4 h-4 rounded-full border border-white/20"
-                              style={{ backgroundColor: color }}
-                            />
-                            <span className="text-xs text-gray-400">{name}</span>
-                          </div>
-                        ))}
+                        {Object.entries(extractedTokens.colors)
+                          .slice(0, 5)
+                          .map(([name, color]) => (
+                            <div key={name} className="flex items-center gap-1">
+                              <div
+                                className="w-4 h-4 rounded-full border border-white/20"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-xs text-gray-400">{name}</span>
+                            </div>
+                          ))}
                       </div>
                     )}
                   </motion.div>
@@ -1008,7 +1077,9 @@ const Studio = memo(({ className = '' }) => {
                     className="p-3 rounded-lg bg-white/5 border border-amber-500/20 max-h-40 overflow-auto"
                   >
                     <p className="text-xs text-amber-400 mb-2">Raw analysis:</p>
-                    <pre className="text-xs text-gray-400 whitespace-pre-wrap">{extractedTokens.raw.substring(0, 500)}...</pre>
+                    <pre className="text-xs text-gray-400 whitespace-pre-wrap">
+                      {extractedTokens.raw.substring(0, 500)}...
+                    </pre>
                   </motion.div>
                 )}
               </div>

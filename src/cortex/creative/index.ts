@@ -96,10 +96,10 @@ export class CreativeChatOrchestrator {
 
 🎭 MULTI-PROVIDER ORCHESTRATION:
 You intelligently route requests to the best AI provider:
-- **Google Gemini** (gemini-2.5-flash, gemini-2.5-pro): Speed & multimodal
+- **Google Gemini** (gemini-2.0-flash-exp, gemini-1.5-pro): Speed & multimodal
 - **Anthropic Claude** (claude-sonnet-4, claude-opus-4): Deep reasoning & safety
 - **OpenAI GPT** (gpt-4o, gpt-4-turbo): Versatility & creative writing
-- **DeepSeek** (deepseek-v3, deepseek-coder): Code & technical tasks
+- **DeepSeek** (deepseek-chat, deepseek-coder): Code & technical tasks
 
 🎨 YOUR CREATIVE MISSION:
 Transform every response into an inspiring, visually-rich experience.

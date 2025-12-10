@@ -18,15 +18,14 @@ import { useKnowledge, useSystemState } from '../store/systemStateStore.js';
  */
 const ContextCard = ({ context, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Handle different context formats
-  const content = typeof context === 'string' 
-    ? context 
-    : context.content || context.text || context.chunk || '';
+  const content =
+    typeof context === 'string' ? context : context.content || context.text || context.chunk || '';
   const metadata = typeof context === 'object' ? context : {};
   const similarity = metadata.score || metadata.similarity || null;
   const source = metadata.source || metadata.file || metadata.type || 'memory';
-  
+
   return (
     <motion.div
       className="context-card"
@@ -45,57 +44,62 @@ const ContextCard = ({ context, index }) => {
       }}
     >
       {/* Header row */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '6px',
-      }}>
-        <span style={{
-          fontSize: '10px',
-          textTransform: 'uppercase',
-          color: 'var(--text-muted, #666)',
-          fontWeight: 500,
-        }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '6px',
+        }}
+      >
+        <span
+          style={{
+            fontSize: '10px',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted, #666)',
+            fontWeight: 500,
+          }}
+        >
           {source}
         </span>
         {similarity !== null && (
-          <span style={{
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            background: similarity > 0.8 
-              ? 'rgba(46,204,113,0.2)' 
-              : similarity > 0.6 
-                ? 'rgba(243,156,18,0.2)' 
-                : 'rgba(231,76,60,0.2)',
-            color: similarity > 0.8 
-              ? '#2ECC71' 
-              : similarity > 0.6 
-                ? '#F39C12' 
-                : '#E74C3C',
-            fontFamily: 'monospace',
-          }}>
+          <span
+            style={{
+              fontSize: '10px',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background:
+                similarity > 0.8
+                  ? 'rgba(46,204,113,0.2)'
+                  : similarity > 0.6
+                    ? 'rgba(243,156,18,0.2)'
+                    : 'rgba(231,76,60,0.2)',
+              color: similarity > 0.8 ? '#2ECC71' : similarity > 0.6 ? '#F39C12' : '#E74C3C',
+              fontFamily: 'monospace',
+            }}
+          >
             {(similarity * 100).toFixed(0)}%
           </span>
         )}
       </div>
-      
+
       {/* Content preview */}
-      <p style={{
-        margin: 0,
-        fontSize: '12px',
-        color: 'var(--text-secondary, #888)',
-        lineHeight: 1.5,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        display: '-webkit-box',
-        WebkitLineClamp: isExpanded ? 'unset' : 3,
-        WebkitBoxOrient: 'vertical',
-      }}>
+      <p
+        style={{
+          margin: 0,
+          fontSize: '12px',
+          color: 'var(--text-secondary, #888)',
+          lineHeight: 1.5,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          display: '-webkit-box',
+          WebkitLineClamp: isExpanded ? 'unset' : 3,
+          WebkitBoxOrient: 'vertical',
+        }}
+      >
         {content}
       </p>
-      
+
       {/* Metadata when expanded */}
       <AnimatePresence>
         {isExpanded && metadata.timestamp && (
@@ -124,10 +128,7 @@ const ContextCard = ({ context, index }) => {
  */
 const KnowledgeGraphNode = ({ node, x, y, isActive }) => {
   return (
-    <motion.g
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-    >
+    <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }}>
       <motion.circle
         cx={x}
         cy={y}
@@ -137,13 +138,7 @@ const KnowledgeGraphNode = ({ node, x, y, isActive }) => {
         strokeWidth={3}
         whileHover={{ scale: 1.2 }}
       />
-      <text
-        x={x}
-        y={y + 20}
-        textAnchor="middle"
-        fontSize="8"
-        fill="var(--text-muted, #666)"
-      >
+      <text x={x} y={y + 20} textAnchor="middle" fontSize="8" fill="var(--text-muted, #666)">
         {typeof node === 'string' ? node.slice(0, 10) : node.label?.slice(0, 10) || ''}
       </text>
     </motion.g>
@@ -156,24 +151,26 @@ const KnowledgeGraphNode = ({ node, x, y, isActive }) => {
 const KnowledgeGraphMini = ({ nodes }) => {
   if (!nodes || nodes.length === 0) {
     return (
-      <div style={{
-        height: '100px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-muted, #666)',
-        fontSize: '12px',
-      }}>
+      <div
+        style={{
+          height: '100px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text-muted, #666)',
+          fontSize: '12px',
+        }}
+      >
         No active nodes
       </div>
     );
   }
-  
+
   // Simple circular layout
   const centerX = 80;
   const centerY = 50;
   const radius = 35;
-  
+
   return (
     <svg width="160" height="100" style={{ display: 'block', margin: '0 auto' }}>
       {/* Draw edges to center */}
@@ -193,30 +190,17 @@ const KnowledgeGraphMini = ({ nodes }) => {
           />
         );
       })}
-      
+
       {/* Draw nodes */}
       {nodes.slice(0, 6).map((node, i) => {
         const angle = (i * 2 * Math.PI) / Math.min(nodes.length, 6);
         const x = centerX + radius * Math.cos(angle);
         const y = centerY + radius * Math.sin(angle);
-        return (
-          <KnowledgeGraphNode
-            key={`node-${i}`}
-            node={node}
-            x={x}
-            y={y}
-            isActive={i === 0}
-          />
-        );
+        return <KnowledgeGraphNode key={`node-${i}`} node={node} x={x} y={y} isActive={i === 0} />;
       })}
-      
+
       {/* Center node */}
-      <circle
-        cx={centerX}
-        cy={centerY}
-        r={10}
-        fill="var(--accent-primary, #9B59B6)"
-      />
+      <circle cx={centerX} cy={centerY} r={10} fill="var(--accent-primary, #9B59B6)" />
     </svg>
   );
 };
@@ -226,20 +210,22 @@ const KnowledgeGraphMini = ({ nodes }) => {
  */
 const ProvenanceList = ({ provenance }) => {
   const entries = Object.entries(provenance || {});
-  
+
   if (entries.length === 0) {
     return (
-      <div style={{
-        padding: '12px',
-        color: 'var(--text-muted, #666)',
-        fontSize: '12px',
-        textAlign: 'center',
-      }}>
+      <div
+        style={{
+          padding: '12px',
+          color: 'var(--text-muted, #666)',
+          fontSize: '12px',
+          textAlign: 'center',
+        }}
+      >
         No citations yet
       </div>
     );
   }
-  
+
   return (
     <div className="provenance-list">
       {entries.map(([claimId, source], i) => (
@@ -251,23 +237,26 @@ const ProvenanceList = ({ provenance }) => {
             gap: '8px',
             padding: '8px 12px',
             fontSize: '11px',
-            borderBottom: i < entries.length - 1 
-              ? '1px solid var(--border-subtle, rgba(255,255,255,0.05))' 
-              : 'none',
+            borderBottom:
+              i < entries.length - 1
+                ? '1px solid var(--border-subtle, rgba(255,255,255,0.05))'
+                : 'none',
           }}
         >
-          <span style={{
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            background: 'var(--accent-primary, #9B59B6)',
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '10px',
-            fontWeight: 600,
-          }}>
+          <span
+            style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: 'var(--accent-primary, #9B59B6)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              fontWeight: 600,
+            }}
+          >
             {i + 1}
           </span>
           <span style={{ color: 'var(--text-secondary, #888)' }}>
@@ -297,21 +286,25 @@ const SectionHeader = ({ title, icon, count, isOpen, onToggle }) => {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span>{icon}</span>
-        <span style={{ 
-          fontSize: '12px', 
-          fontWeight: 600,
-          color: 'var(--text-primary, #fff)',
-        }}>
+        <span
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--text-primary, #fff)',
+          }}
+        >
           {title}
         </span>
         {count !== undefined && (
-          <span style={{
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '10px',
-            background: 'var(--accent-primary, #9B59B6)',
-            color: '#fff',
-          }}>
+          <span
+            style={{
+              fontSize: '10px',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              background: 'var(--accent-primary, #9B59B6)',
+              color: '#fff',
+            }}
+          >
             {count}
           </span>
         )}
@@ -337,14 +330,14 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
     graph: false,
     provenance: false,
   });
-  
+
   const toggleSection = (section) => {
     setOpenSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
   };
-  
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -369,19 +362,23 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
           }}
         >
           {/* Header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            borderBottom: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
-          }}>
-            <h3 style={{ 
-              margin: 0, 
-              fontSize: '14px', 
-              fontWeight: 600,
-              color: 'var(--text-primary, #fff)',
-            }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderBottom: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--text-primary, #fff)',
+              }}
+            >
               📚 Knowledge Context
             </h3>
             <button
@@ -398,13 +395,15 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
               ✕
             </button>
           </div>
-          
+
           {/* Scrollable content */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-          }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
             {/* Retrieved Context Section */}
             <div className="rail-section">
               <SectionHeader
@@ -424,12 +423,14 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
                   >
                     <div style={{ padding: '8px' }}>
                       {knowledge.retrievedContext.length === 0 ? (
-                        <p style={{
-                          color: 'var(--text-muted, #666)',
-                          fontSize: '12px',
-                          textAlign: 'center',
-                          padding: '20px',
-                        }}>
+                        <p
+                          style={{
+                            color: 'var(--text-muted, #666)',
+                            fontSize: '12px',
+                            textAlign: 'center',
+                            padding: '20px',
+                          }}
+                        >
                           No context retrieved yet
                         </p>
                       ) : (
@@ -442,7 +443,7 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
                 )}
               </AnimatePresence>
             </div>
-            
+
             {/* Knowledge Graph Section */}
             <div className="rail-section">
               <SectionHeader
@@ -467,7 +468,7 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
                 )}
               </AnimatePresence>
             </div>
-            
+
             {/* Provenance Section */}
             <div className="rail-section">
               <SectionHeader
@@ -491,16 +492,18 @@ export const KnowledgeRail = ({ isOpen, onClose }) => {
               </AnimatePresence>
             </div>
           </div>
-          
+
           {/* Footer: Memory Stats */}
-          <div style={{
-            padding: '12px 16px',
-            borderTop: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
-            fontSize: '11px',
-            color: 'var(--text-muted, #666)',
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}>
+          <div
+            style={{
+              padding: '12px 16px',
+              borderTop: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
+              fontSize: '11px',
+              color: 'var(--text-muted, #666)',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
             <span>💾 {knowledge.memoryCount} memories</span>
             {knowledge.lastSearchQuery && (
               <span>🔍 "{knowledge.lastSearchQuery.slice(0, 15)}..."</span>

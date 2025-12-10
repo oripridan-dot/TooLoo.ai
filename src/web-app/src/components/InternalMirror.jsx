@@ -11,7 +11,7 @@ const API_BASE = '/api/v1/system/self';
 /**
  * TooLoo Internal Mirror
  * Self-hosted development environment powered by SelfModificationEngine
- * 
+ *
  * Features:
  * - Monaco Editor with full IDE capabilities
  * - File tree navigation
@@ -25,22 +25,22 @@ export const InternalMirror = () => {
   const [expandedDirs, setExpandedDirs] = useState(new Set(['src']));
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Editor state
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   // Status
   const [status, setStatus] = useState({ message: '', type: 'info' });
   const [modificationLog, setModificationLog] = useState([]);
-  
+
   // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  
+
   // Editor ref
   const editorRef = useRef(null);
 
@@ -87,7 +87,7 @@ export const InternalMirror = () => {
       setStatus({ message: `Loading ${filePath}...`, type: 'info' });
       const res = await fetch(`${API_BASE}/read?file=${encodeURIComponent(filePath)}`);
       const data = await res.json();
-      
+
       if (data.ok && data.content !== undefined) {
         setSelectedFile(filePath);
         setContent(data.content);
@@ -103,10 +103,10 @@ export const InternalMirror = () => {
 
   const saveFile = async () => {
     if (!selectedFile || !hasChanges) return;
-    
+
     setSaving(true);
     setStatus({ message: 'Creating backup and saving...', type: 'info' });
-    
+
     try {
       const res = await fetch(`${API_BASE}/edit`, {
         method: 'POST',
@@ -118,17 +118,20 @@ export const InternalMirror = () => {
           reason: 'Manual edit via Internal Mirror',
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.ok) {
         setOriginalContent(content);
         setHasChanges(false);
-        setModificationLog(prev => [{
-          timestamp: new Date().toISOString(),
-          file: selectedFile,
-          backup: data.backup,
-        }, ...prev.slice(0, 9)]);
+        setModificationLog((prev) => [
+          {
+            timestamp: new Date().toISOString(),
+            file: selectedFile,
+            backup: data.backup,
+          },
+          ...prev.slice(0, 9),
+        ]);
         setStatus({ message: `Saved: ${selectedFile} (backup created)`, type: 'success' });
       } else {
         setStatus({ message: data.error || 'Failed to save file', type: 'error' });
@@ -142,12 +145,12 @@ export const InternalMirror = () => {
 
   const searchCodebase = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setSearching(true);
     try {
       const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
-      
+
       if (data.ok) {
         setSearchResults(data.results || []);
         setStatus({ message: `Found ${data.results?.length || 0} matches`, type: 'success' });
@@ -162,7 +165,7 @@ export const InternalMirror = () => {
   const createNewFile = async () => {
     const fileName = prompt('Enter file name (relative to src/):');
     if (!fileName) return;
-    
+
     try {
       const res = await fetch(`${API_BASE}/create`, {
         method: 'POST',
@@ -172,7 +175,7 @@ export const InternalMirror = () => {
           content: getTemplateForFile(fileName),
         }),
       });
-      
+
       const data = await res.json();
       if (data.ok) {
         setStatus({ message: `Created: ${data.filePath}`, type: 'success' });
@@ -229,11 +232,14 @@ export default Component;
 
   const handleEditorMount = (editor) => {
     editorRef.current = editor;
-    
+
     // Add keyboard shortcuts
-    editor.addCommand(monaco => monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      saveFile();
-    });
+    editor.addCommand(
+      (monaco) => monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+      () => {
+        saveFile();
+      }
+    );
   };
 
   // Keyboard shortcut for save
@@ -263,11 +269,15 @@ export default Component;
         </div>
 
         {/* Status */}
-        <div className={`px-3 py-1 rounded-full text-sm ${
-          status.type === 'success' ? 'bg-green-900/50 text-green-300' :
-          status.type === 'error' ? 'bg-red-900/50 text-red-300' :
-          'bg-gray-800 text-gray-300'
-        }`}>
+        <div
+          className={`px-3 py-1 rounded-full text-sm ${
+            status.type === 'success'
+              ? 'bg-green-900/50 text-green-300'
+              : status.type === 'error'
+                ? 'bg-red-900/50 text-red-300'
+                : 'bg-gray-800 text-gray-300'
+          }`}
+        >
           {status.message}
         </div>
 
@@ -385,9 +395,11 @@ export default Component;
           {/* File tabs */}
           {selectedFile && (
             <div className="border-b border-gray-700 px-2 py-1 flex items-center">
-              <div className={`px-3 py-1 rounded-t text-sm ${
-                hasChanges ? 'bg-gray-800 text-yellow-400' : 'bg-gray-800 text-gray-300'
-              }`}>
+              <div
+                className={`px-3 py-1 rounded-t text-sm ${
+                  hasChanges ? 'bg-gray-800 text-yellow-400' : 'bg-gray-800 text-gray-300'
+                }`}
+              >
                 {hasChanges && '● '}
                 {selectedFile.split('/').pop()}
               </div>
@@ -423,7 +435,8 @@ export default Component;
                   <div className="text-lg">Internal Mirror</div>
                   <div className="text-sm mt-2">Select a file to edit</div>
                   <div className="text-xs mt-4 text-gray-600">
-                    TooLoo can now modify its own code.<br/>
+                    TooLoo can now modify its own code.
+                    <br />
                     All changes create automatic backups.
                   </div>
                 </div>

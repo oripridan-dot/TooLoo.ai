@@ -1,6 +1,8 @@
-// @version 3.3.350
+// @version 3.3.351
 /**
  * Data Enrichment Pipeline
+ *
+ * V3.3.351: Added public initialize() method for main.ts bootstrap
  *
  * Enhances AI requests and responses with:
  * - Context augmentation from knowledge base
@@ -118,6 +120,16 @@ export class DataEnrichmentPipeline {
     this.loadKnowledgeBase();
   }
 
+  /**
+   * Public initialization method for async setup
+   * Called by main.ts during bootstrap
+   */
+  async initialize(): Promise<void> {
+    // Re-load knowledge base (in case data changed)
+    await this.loadKnowledgeBase();
+    console.log(`[DataEnrichment] ✓ Loaded ${this.knowledgeBase.length} knowledge entries`);
+  }
+
   private initializeDefaultSources() {
     // Built-in sources
     this.registerSource({
@@ -182,7 +194,7 @@ export class DataEnrichmentPipeline {
 
   getActiveSources(): EnrichmentSource[] {
     return Array.from(this.sources.values())
-      .filter(s => s.enabled)
+      .filter((s) => s.enabled)
       .sort((a, b) => a.priority - b.priority);
   }
 
@@ -193,7 +205,7 @@ export class DataEnrichmentPipeline {
   async enrichRequest(context: EnrichmentContext): Promise<EnrichedRequest> {
     const startTime = Date.now();
     const cacheKey = this.generateCacheKey(context);
-    
+
     // Check cache
     const cached = this.contextCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
@@ -225,11 +237,11 @@ export class DataEnrichmentPipeline {
     });
 
     const result = this.buildEnrichedRequest(context, sortedChunks, false, startTime);
-    
+
     bus.publish('precog', 'enrichment:request', {
       query: context.query.substring(0, 100),
       chunksAdded: sortedChunks.length,
-      sources: sortedChunks.map(c => c.sourceId),
+      sources: sortedChunks.map((c) => c.sourceId),
     });
 
     return result;
@@ -256,21 +268,21 @@ export class DataEnrichmentPipeline {
     context: EnrichmentContext
   ): ContextChunk[] {
     const queryLower = context.query.toLowerCase();
-    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
+    const queryWords = queryLower.split(/\s+/).filter((w) => w.length > 2);
 
     return this.knowledgeBase
-      .map(entry => {
+      .map((entry) => {
         // Simple relevance scoring based on keyword matching
         const contentLower = entry.content.toLowerCase();
         const titleLower = entry.title.toLowerCase();
-        
+
         let score = 0;
         for (const word of queryWords) {
           if (titleLower.includes(word)) score += 2;
           if (contentLower.includes(word)) score += 1;
-          if (entry.tags.some(t => t.toLowerCase().includes(word))) score += 1.5;
+          if (entry.tags.some((t) => t.toLowerCase().includes(word))) score += 1.5;
         }
-        
+
         // Domain boost
         if (context.domain && entry.domain === context.domain) {
           score *= 1.5;
@@ -284,23 +296,18 @@ export class DataEnrichmentPipeline {
           metadata: { id: entry.id, title: entry.title },
         };
       })
-      .filter(chunk => chunk.relevanceScore > 0.3);
+      .filter((chunk) => chunk.relevanceScore > 0.3);
   }
 
-  private searchMemory(
-    source: EnrichmentSource,
-    context: EnrichmentContext
-  ): ContextChunk[] {
+  private searchMemory(source: EnrichmentSource, context: EnrichmentContext): ContextChunk[] {
     // Include conversation history as context
     const chunks: ContextChunk[] = [];
-    
+
     if (context.conversationHistory && context.conversationHistory.length > 0) {
       // Include recent conversation for context
       const recentHistory = context.conversationHistory.slice(-5);
-      const historyText = recentHistory
-        .map(m => `${m.role}: ${m.content}`)
-        .join('\n');
-      
+      const historyText = recentHistory.map((m) => `${m.role}: ${m.content}`).join('\n');
+
       chunks.push({
         sourceId: source.id,
         sourceName: source.name,
@@ -313,20 +320,17 @@ export class DataEnrichmentPipeline {
     return chunks;
   }
 
-  private searchFiles(
-    source: EnrichmentSource,
-    context: EnrichmentContext
-  ): ContextChunk[] {
+  private searchFiles(source: EnrichmentSource, context: EnrichmentContext): ContextChunk[] {
     // Search project-related files for context
     const chunks: ContextChunk[] = [];
-    
+
     try {
       // Load patterns.json for learned patterns
       const patternsPath = path.join(this.dataDir, 'patterns.json');
       if (fs.existsSync(patternsPath)) {
         const patterns = JSON.parse(fs.readFileSync(patternsPath, 'utf8'));
         const relevantPatterns = patterns.slice(0, 3); // Top patterns
-        
+
         if (relevantPatterns.length > 0) {
           chunks.push({
             sourceId: source.id,
@@ -337,7 +341,9 @@ export class DataEnrichmentPipeline {
           });
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     return chunks;
   }
@@ -349,17 +355,13 @@ export class DataEnrichmentPipeline {
     startTime: number
   ): EnrichedRequest {
     // Build enriched query with context
-    let enrichedQuery = context.query;
+    const enrichedQuery = context.query;
     const systemPromptAdditions: string[] = [];
 
     if (chunks.length > 0) {
-      const contextText = chunks
-        .map(c => `[${c.sourceName}]: ${c.content}`)
-        .join('\n\n');
-      
-      systemPromptAdditions.push(
-        `\n\n📚 RELEVANT CONTEXT:\n${contextText}\n`
-      );
+      const contextText = chunks.map((c) => `[${c.sourceName}]: ${c.content}`).join('\n\n');
+
+      systemPromptAdditions.push(`\n\n📚 RELEVANT CONTEXT:\n${contextText}\n`);
     }
 
     // Estimate tokens (rough: 1 token ≈ 4 chars)
@@ -372,7 +374,7 @@ export class DataEnrichmentPipeline {
       contextChunks: chunks,
       metadata: {
         enrichmentTime: Date.now() - startTime,
-        sourcesUsed: Array.from(new Set(chunks.map(c => c.sourceId))),
+        sourcesUsed: Array.from(new Set(chunks.map((c) => c.sourceId))),
         chunksAdded: chunks.length,
         tokenEstimate,
         cacheHit,
@@ -402,11 +404,11 @@ export class DataEnrichmentPipeline {
     // Extract potential citations from context chunks
     if (requestEnrichment?.contextChunks) {
       for (const chunk of requestEnrichment.contextChunks) {
-        if (chunk.relevanceScore > 0.5 && chunk.metadata?.title) {
+        if (chunk.relevanceScore > 0.5 && chunk.metadata?.['title']) {
           citations.push({
             id: `cite-${citations.length + 1}`,
             source: chunk.sourceName,
-            content: String(chunk.metadata.title),
+            content: String(chunk.metadata['title']),
           });
         }
       }
@@ -424,10 +426,14 @@ export class DataEnrichmentPipeline {
     const sourceCoverage = requestEnrichment?.metadata.sourcesUsed.length || 0;
     const confidenceScore = Math.min(0.5 + sourceCoverage * 0.1, 0.95);
 
-    const enrichmentLevel: ResponseMetadata['enrichmentLevel'] = 
-      citations.length === 0 ? 'none' :
-      citations.length < 3 ? 'light' :
-      citations.length < 6 ? 'medium' : 'heavy';
+    const enrichmentLevel: ResponseMetadata['enrichmentLevel'] =
+      citations.length === 0
+        ? 'none'
+        : citations.length < 3
+          ? 'light'
+          : citations.length < 6
+            ? 'medium'
+            : 'heavy';
 
     bus.publish('precog', 'enrichment:response', {
       citationsAdded: citations.length,
@@ -452,23 +458,23 @@ export class DataEnrichmentPipeline {
   private extractTopics(text: string): string[] {
     // Simple topic extraction based on capitalized phrases and technical terms
     const topics = new Set<string>();
-    
+
     // Extract capitalized words (potential proper nouns/topics)
     const capitalizedWords = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
-    capitalizedWords.forEach(w => {
+    capitalizedWords.forEach((w) => {
       if (w.length > 3) topics.add(w);
     });
 
     // Extract technical terms (words with underscores, camelCase, etc.)
     const technicalTerms = text.match(/\b[a-z]+(?:[A-Z][a-z]+)+\b|\b[a-z]+_[a-z]+\b/g) || [];
-    technicalTerms.forEach(t => topics.add(t));
+    technicalTerms.forEach((t) => topics.add(t));
 
     return Array.from(topics).slice(0, 10);
   }
 
   private generateFollowups(query: string, response: string, domain?: string): string[] {
     const followups: string[] = [];
-    
+
     // Domain-specific followups
     if (domain === 'engineering') {
       if (response.includes('function') || response.includes('class')) {
@@ -505,31 +511,31 @@ export class DataEnrichmentPipeline {
       id,
       lastUpdated: new Date().toISOString(),
     };
-    
+
     this.knowledgeBase.push(newEntry);
     await this.saveKnowledgeBase();
-    
+
     return id;
   }
 
   async updateKnowledgeEntry(id: string, updates: Partial<KnowledgeEntry>): Promise<boolean> {
-    const index = this.knowledgeBase.findIndex(e => e.id === id);
+    const index = this.knowledgeBase.findIndex((e) => e.id === id);
     if (index === -1) return false;
-    
+
     this.knowledgeBase[index] = {
       ...this.knowledgeBase[index]!,
       ...updates,
       lastUpdated: new Date().toISOString(),
     };
-    
+
     await this.saveKnowledgeBase();
     return true;
   }
 
   async deleteKnowledgeEntry(id: string): Promise<boolean> {
-    const index = this.knowledgeBase.findIndex(e => e.id === id);
+    const index = this.knowledgeBase.findIndex((e) => e.id === id);
     if (index === -1) return false;
-    
+
     this.knowledgeBase.splice(index, 1);
     await this.saveKnowledgeBase();
     return true;
@@ -541,7 +547,7 @@ export class DataEnrichmentPipeline {
       if (!fs.existsSync(kbDir)) {
         fs.mkdirSync(kbDir, { recursive: true });
       }
-      
+
       const kbPath = path.join(kbDir, 'sources.json');
       fs.writeFileSync(kbPath, JSON.stringify({ entries: this.knowledgeBase }, null, 2));
     } catch (error) {
@@ -555,7 +561,7 @@ export class DataEnrichmentPipeline {
 
   getStats() {
     return {
-      sources: Array.from(this.sources.values()).map(s => ({
+      sources: Array.from(this.sources.values()).map((s) => ({
         id: s.id,
         name: s.name,
         type: s.type,

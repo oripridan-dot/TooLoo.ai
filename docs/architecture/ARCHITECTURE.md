@@ -1,9 +1,45 @@
-# TooLoo.ai V3 Architecture
+# TooLoo.ai V3.3 Architecture
 
 > **@intent** This document provides a visual and textual overview of the TooLoo.ai
 > codebase architecture, automatically generated from the actual dependency graph.
 
-*Last generated: 2025-12-01*
+*Last generated: 2025-12-09*
+*Version: 3.3.455*
+
+---
+
+## 🎯 Reality Check: What's Real vs Pending
+
+**Overall Completion: ~70%** (relative to Year 1 Phase 2 vision)
+
+### ✅ REAL (Functional & Tested)
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| **🧠 Orchestrator (Brain)** | 100% | `src/cortex/orchestrator.ts` |
+| **📊 DAG Builder (Task Management)** | 100% | `src/cortex/agent/system-hub.ts` |
+| **💾 Artifact Ledger (Memory)** | 100% | `src/cortex/agent/artifact-manager.ts` |
+| **🔀 LLM Provider Routing** | 100% | `src/precog/providers/` |
+| **🌐 Server Infrastructure** | 100% | `src/nexus/index.ts`, `src/main.ts` |
+| **📋 API Contract Enforcement** | 100% | `src/nexus/middleware/contract-enforcer.ts` |
+| **🛡️ QA Guardian** | 100% | `src/qa/` |
+| **👁️ Vision→Orchestrator** | 100% | `src/cortex/orchestrator.ts` (V3.3.450) |
+| **🖥️ Workstation UI (4-Panel)** | 100% | `src/web-app/src/skin/views/Workstation.jsx` (V3.3.455) |
+
+### ⚠️ READY FOR PRODUCTION USE
+
+| Component | Status | Location | Notes |
+|-----------|--------|----------|-------|
+| **👁️ Screen Capture (Vision)** | 100% | `src/cortex/vision/screen-capture-service.ts` | Now wired to Orchestrator |
+| **🖼️ OCR Text Extraction** | 100% | Uses Tesseract.js | Integrated via event bus |
+
+### ❌ PENDING (Not Built)
+
+| Component | Status | What's Needed |
+|-----------|--------|---------------|
+| **🤖 Repo Auto-Org (Automation)** | 0% | Branch creation, scope detection, auto-commits |
+
+---
 
 ## Visual Dependency Graph
 
@@ -101,6 +137,61 @@ graph TD
 ## Violations Report
 
 ⚠️ **3 violations detected** - See `dependency-graph.json` for details
+
+## Key Integration Points (V3.3.449)
+
+### API Contract Enforcement
+The system enforces API contracts at runtime via middleware:
+
+- **Location**: `src/nexus/middleware/contract-enforcer.ts`
+- **Contracts**: `src/qa/contracts-generated.ts` (271 schemas)
+- **Features**:
+  - Full Zod schema validation for requests/responses
+  - Metrics tracking (validatedRequests, schemaViolations, unknownRoutes)
+  - Event emission to QA Guardian for automated fixing
+  - Configurable enforcement levels (strict/development mode)
+
+### QA Guardian Integration
+The autonomous fixer now has direct access to API contracts:
+
+- **Location**: `src/qa/agent/autonomous-fixer.ts`
+- **Capabilities**:
+  - Analyze schema violations and propose fixes
+  - Generate type-safe fix suggestions
+  - Track violations as issues for continuous improvement
+
+### Environment Hub (ACTIVE - Not Orphaned)
+**Note**: The dependency graph analyzer incorrectly marks `environment-hub.ts` as orphaned.
+It is actively used in `main.ts` for component registration:
+
+```typescript
+// From main.ts
+import environmentHub from './core/environment-hub.js';
+environmentHub.registerComponent('cortex', cortex, ['intent', 'memory', 'planning', 'motor']);
+environmentHub.registerComponent('precog', precog, ['routing', 'synthesis', 'providers']);
+```
+
+### Circular Dependency Resolution
+Previously identified circular dependencies have been resolved:
+
+1. **Sandbox Manager ↔ Docker Sandbox**: Resolved via `src/core/sandbox/types.ts` which extracts the `ISandbox` interface
+2. **Visual Cortex → Cortex Index**: Uses dynamic `import()` to break the cycle
+
+### Workstation UI (V3.3.455)
+The unified development interface provides 4-panel productivity:
+
+- **Location**: `src/web-app/src/skin/views/Workstation.jsx`
+- **Access**: Press `W` key or click "Workstation" in sidebar
+- **Panels**:
+  1. **TaskBoard** - Active/pending/completed tasks (`/api/v1/tasks/list`)
+  2. **Chat** - TooLoo conversation (`/api/v1/chat`)
+  3. **Context** - Active file, session, knowledge (`/api/v1/context/current`)
+  4. **Artifacts** - Generated code, docs, tests (`/api/v1/artifacts/list`)
+- **Features**:
+  - 4-panel grid layout (responsive)
+  - Real-time API polling with hooks
+  - Framer Motion animations
+  - Integrated with LiquidShell UI system
 
 ---
 

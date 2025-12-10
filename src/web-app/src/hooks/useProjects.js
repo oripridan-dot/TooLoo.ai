@@ -514,7 +514,9 @@ export function useProjectFiles(projectId, currentPath = '.') {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/${projectId}/files?path=${encodeURIComponent(currentPath)}`);
+      const response = await fetch(
+        `${API_BASE}/${projectId}/files?path=${encodeURIComponent(currentPath)}`
+      );
       const data = await response.json();
 
       if (data.ok) {

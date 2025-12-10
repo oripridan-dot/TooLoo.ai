@@ -314,7 +314,8 @@ export class ShadowLab {
       if (random <= 0) return model;
     }
 
-    return candidates[0][0];
+    const first = candidates[0];
+    return first ? first[0] : null;
   }
 
   /**
@@ -322,9 +323,7 @@ export class ShadowLab {
    */
   private isModelAvailable(model: string): boolean {
     const providerStatus = this.providerEngine.getProviderStatus();
-    return providerStatus.some(
-      (p) => p.id.startsWith(model) && p.status !== 'Missing Key'
-    );
+    return providerStatus.some((p) => p.id.startsWith(model) && p.status !== 'Missing Key');
   }
 
   /**
@@ -476,12 +475,7 @@ Which response is better? Reply with ONLY a JSON object:
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         return {
-          winner:
-            parsed.winner === 'A'
-              ? 'primary'
-              : parsed.winner === 'B'
-                ? 'challenger'
-                : 'tie',
+          winner: parsed.winner === 'A' ? 'primary' : parsed.winner === 'B' ? 'challenger' : 'tie',
           reason: parsed.reason || 'LLM judgment',
           confidence: parsed.confidence || 0.7,
           judgeModel: this.config.judgeModel,
@@ -538,17 +532,21 @@ Which response is better? Reply with ONLY a JSON object:
   private processExperimentResults(experiment: ShadowExperiment): void {
     if (!experiment.judgment) return;
 
-    const { winner, reason, confidence } = experiment.judgment;
+    const { winner, confidence } = experiment.judgment;
 
     // Update challenger weights based on results
     if (winner === 'challenger' && confidence > 0.6) {
       // Increase challenger weight
-      this.challengerWeights[experiment.challenger.model] =
-        (this.challengerWeights[experiment.challenger.model] || 0.5) * 1.1;
+      const challengerModel = experiment.challenger.model;
+      const currentChallengerWeight = this.challengerWeights[challengerModel];
+      this.challengerWeights[challengerModel] =
+        (currentChallengerWeight !== undefined ? currentChallengerWeight : 0.5) * 1.1;
 
       // Decrease primary weight slightly
-      if (this.challengerWeights[experiment.primary.model]) {
-        this.challengerWeights[experiment.primary.model] *= 0.95;
+      const primaryModel = experiment.primary.model;
+      const currentPrimaryWeight = this.challengerWeights[primaryModel];
+      if (currentPrimaryWeight !== undefined) {
+        this.challengerWeights[primaryModel] = currentPrimaryWeight * 0.95;
       }
 
       // Feed to optimizer
@@ -574,10 +572,11 @@ Which response is better? Reply with ONLY a JSON object:
       });
 
       // Emit challenger win event
+      const winReason = experiment.judgment?.reason || 'challenger outperformed';
       bus.publish('precog', 'shadow-test:challenger-won', {
         champion: experiment.primary.model,
         challenger: experiment.challenger.model,
-        reason,
+        reason: winReason,
         domain: experiment.originalIntent.domain,
         experimentId: experiment.id,
       });
@@ -631,6 +630,76 @@ Which response is better? Reply with ONLY a JSON object:
       primaryResponse: primaryResult.content,
       primaryLatency: Date.now() - startPrimary,
     });
+  }
+
+  // ==========================================================================
+  // CONVENIENCE API FOR CHAT INTEGRATION
+  // ==========================================================================
+
+  /**
+   * maybeRunExperiment - Convenience method for chat integration
+   *
+   * Called from chat.ts after each response. Decides whether to run an experiment
+   * based on experiment rate and cooldown. Returns immediately if no experiment runs.
+   *
+   * @returns null if no experiment, or experiment result with challenger outcome
+   */
+  async maybeRunExperiment(params: {
+    prompt: string;
+    context: { sessionId?: string; taskType?: string; features?: string[] };
+    primaryProvider: string;
+    primaryResult: {
+      response: string;
+      latency: number;
+      cost: number;
+      quality: number;
+    };
+  }): Promise<{
+    ran: boolean;
+    experimentId?: string;
+    challenger?: string;
+    challengerWon?: boolean;
+    judgment?: {
+      winner: 'primary' | 'challenger' | 'tie';
+      reason: string;
+      confidence: number;
+    };
+  } | null> {
+    // Check if we should run experiment
+    if (!this.config.enabled) return { ran: false };
+    if (params.prompt.length < this.config.minPromptLength) return { ran: false };
+    if (this.runningExperiments.size >= this.config.maxConcurrent) return { ran: false };
+    if (Date.now() - this.lastExperimentTime < this.config.cooldownMs) return { ran: false };
+    if (Math.random() > this.config.experimentRate) return { ran: false };
+
+    // Run experiment
+    try {
+      const experiment = await this.runExperiment({
+        prompt: params.prompt,
+        domain: params.context.taskType || 'general',
+        sessionId: params.context.sessionId,
+        primaryModel: params.primaryProvider,
+        primaryResponse: params.primaryResult.response,
+        primaryLatency: params.primaryResult.latency,
+      });
+
+      return {
+        ran: true,
+        experimentId: experiment.id,
+        challenger: experiment.challenger.model,
+        challengerWon: experiment.judgment?.winner === 'challenger',
+        judgment: experiment.judgment
+          ? {
+              winner: experiment.judgment.winner,
+              reason: experiment.judgment.reason,
+              confidence: experiment.judgment.confidence,
+            }
+          : undefined,
+      };
+    } catch (error) {
+      console.error('[ShadowLab] maybeRunExperiment failed:', error);
+      return { ran: false };
+    }
   }
 
   // ==========================================================================

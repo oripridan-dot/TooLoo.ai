@@ -1,4 +1,4 @@
-// @version 3.3.59
+// @version 3.3.460
 /**
  * Perfection Enforcer - Proactive Code Quality Guardian
  *
@@ -469,8 +469,35 @@ export class PerfectionEnforcer {
         // Check for fetch calls with direct path
         const fetchMatch = line.match(/fetch\s*\(\s*[`'"](\/api\/v\d+\/[^`'"]+)[`'"]/);
         if (fetchMatch && fetchMatch[1]) {
-          // Determine method from context
-          const contextLines = lines.slice(i, Math.min(i + 6, lines.length)).join('\n');
+          // V3.3.460: Improved method detection
+          // Check if this fetch call is self-contained on one line (ends with ); or }))
+          const isSingleLineFetch = /fetch\s*\([^)]*\)\s*;?\s*$/.test(line) || 
+                                    /fetch\s*\(`[^`]+`\)\s*;?\s*$/.test(line);
+          
+          let contextLines = line + '\n';
+          
+          // Only look ahead if the fetch call spans multiple lines
+          if (!isSingleLineFetch) {
+            for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
+              const contextLine = lines[j] || '';
+              // Stop if we hit a line that starts a new statement
+              if (contextLine.trim().startsWith('const ') ||
+                  contextLine.trim().startsWith('let ') ||
+                  contextLine.trim().startsWith('await ') ||
+                  contextLine.trim().startsWith('if ') ||
+                  contextLine.trim().startsWith('return ') ||
+                  contextLine.trim().startsWith('for ') ||
+                  contextLine.trim().startsWith('while ')) {
+                break;
+              }
+              contextLines += contextLine + '\n';
+              // Stop if we find the closing of this fetch call
+              if (contextLine.includes(');') || contextLine.match(/\}\s*\)\s*;?\s*$/)) {
+                break;
+              }
+            }
+          }
+          
           const methodMatch = contextLines.match(
             /method:\s*[`'"]?(POST|PUT|DELETE|PATCH|GET)[`'"]?/i
           );
@@ -503,15 +530,41 @@ export class PerfectionEnforcer {
           });
         }
 
-        // Check for API_BASE + path pattern (resolves ${API_BASE}/path to full path)
-        const apiBasePatternMatch = line.match(/\$\{API_BASE\}([^`'"]*)/);
-        if (apiBasePatternMatch) {
-          const suffix = apiBasePatternMatch[1] || '';
+        // Check for API_BASE + path pattern in ACTUAL fetch calls only
+        // V3.3.460: Only match when ${API_BASE} is inside a fetch() call, not in variable assignments or config objects
+        const fetchWithApiBaseMatch = line.match(/fetch\s*\(\s*`\$\{API_BASE\}([^`]*)`/);
+        if (fetchWithApiBaseMatch) {
+          const suffix = fetchWithApiBaseMatch[1] || '';
           // Skip if suffix contains template expressions (like ${variable})
           if (!suffix.includes('${')) {
-            const contextLines = lines
-              .slice(Math.max(0, i - 3), Math.min(i + 6, lines.length))
-              .join('\n');
+            // V3.3.460: Check if this fetch call is self-contained on one line
+            const isSingleLineFetch = /fetch\s*\(`[^`]+`\)\s*;?\s*$/.test(line) ||
+                                      /fetch\s*\(`[^`]+`\)\s*$/.test(line);
+            
+            let contextLines = line + '\n';
+            
+            // Only look ahead if the fetch call spans multiple lines
+            if (!isSingleLineFetch) {
+              for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+                const contextLine = lines[j] || '';
+                // Stop if we hit a line that starts a new statement
+                if (contextLine.trim().startsWith('const ') ||
+                    contextLine.trim().startsWith('let ') ||
+                    contextLine.trim().startsWith('await ') ||
+                    contextLine.trim().startsWith('if ') ||
+                    contextLine.trim().startsWith('return ') ||
+                    contextLine.trim().startsWith('for ') ||
+                    contextLine.trim().startsWith('while ')) {
+                  break;
+                }
+                contextLines += contextLine + '\n';
+                // Stop if we find the closing of this fetch call
+                if (contextLine.includes(');') || contextLine.match(/\}\s*\)\s*;?\s*$/)) {
+                  break;
+                }
+              }
+            }
+            
             const methodMatch = contextLines.match(
               /method:\s*[`'"]?(POST|PUT|DELETE|PATCH|GET)[`'"]?/i
             );
@@ -656,6 +709,7 @@ export class PerfectionEnforcer {
       design: '/design',
       context: '/context',
       projects: '/projects',
+      'projects-v2': '/projects', // V3.3.460: projects-v2 file maps to /projects
       github: '/github',
       cost: '/cost',
       generate: '/generate',
@@ -672,6 +726,10 @@ export class PerfectionEnforcer {
       agent: '/agent',
       'self-mod': '/system/self',
       'autonomous-mod': '/system/autonomous',
+      repo: '/repo', // V3.3.460: repository automation
+      reflection: '/reflection', // V3.3.460: reflection routes
+      flow: '/flow', // V3.3.460: flow session routes
+      vision: '/vision', // V3.3.460: vision/OCR routes
     };
     return pathMap[name] !== undefined ? pathMap[name] : `/${name}`;
   }
@@ -901,7 +959,7 @@ export class PerfectionEnforcer {
     const criticalStubs = stubs.filter((s) => s.severity === 'critical');
     if (criticalStubs.length > 0) {
       recommendations.push(
-        `⚠️ HIGH: ${criticalStubs.length} critical stub(s) found - these return simulated/mock data.`
+        `⚠️ HIGH: ${criticalStubs.length} critical stub(s) found - these return placeholder data.`
       );
       for (const stub of criticalStubs.slice(0, 3)) {
         recommendations.push(`  → Fix ${stub.file}:${stub.line} (${stub.type})`);

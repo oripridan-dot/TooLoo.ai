@@ -104,7 +104,7 @@ WHEN PROVIDING DESIGN SOLUTIONS:
 - Address responsive design requirements
 - Include accessibility considerations
 - Provide implementation guidance with code examples
-- Use your VisualCortex to generate SVG visualizations
+- Use appropriate visual formats: charts for data, mermaid for flows, ascii for quick diagrams
 
 Focus on creating designs that are both beautiful and highly usable.`,
       },

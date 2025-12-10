@@ -20,7 +20,7 @@ const ARTIFACTS_INDEX_PATH = path.join(process.cwd(), 'data', 'artifacts', 'inde
 async function countFilesInDir(dirPath: string): Promise<number> {
   try {
     const files = await fs.readdir(dirPath);
-    return files.filter(f => !f.startsWith('.')).length;
+    return files.filter((f) => !f.startsWith('.')).length;
   } catch {
     return 0;
   }
@@ -30,7 +30,35 @@ async function countFilesInDir(dirPath: string): Promise<number> {
 async function countJsonlLines(filePath: string): Promise<number> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
-    return content.trim().split('\n').filter(line => line.trim()).length;
+    return content
+      .trim()
+      .split('\n')
+      .filter((line) => line.trim()).length;
+  } catch {
+    return 0;
+  }
+}
+
+// Helper to count failures in JSONL file (entries with error/failed status)
+async function countJsonlFailures(filePath: string): Promise<number> {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const lines = content
+      .trim()
+      .split('\n')
+      .filter((line) => line.trim());
+    let failures = 0;
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        if (entry.status === 'error' || entry.status === 'failed' || entry.error) {
+          failures++;
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+    return failures;
   } catch {
     return 0;
   }
@@ -88,54 +116,66 @@ if (!fs.existsSync(DECISIONS_PATH)) {
 router.get('/report', async (req, res) => {
   try {
     // ========== READ REAL DATA FROM FILES ==========
-    
+
     // 1. Count REAL sessions from flow-sessions directory
     const totalSessions = await countFilesInDir(FLOW_SESSIONS_DIR);
-    
+
     // 2. Count REAL experiments from audit log
     const totalExperiments = await countJsonlLines(AUDIT_LOG_PATH);
-    
-    // 3. Read REAL learning metrics from file
+
+    // 3. Count REAL failures from audit log
+    const failedGenerations = await countJsonlFailures(AUDIT_LOG_PATH);
+
+    // 4. Read REAL learning metrics from file
     let storedData: any = {};
     try {
       storedData = await fs.readJson(METRICS_PATH);
     } catch {
       storedData = { improvements: {} };
     }
-    
+
     // 4. Get REAL firstTrySuccess and repeatProblems from data file
     const firstTrySuccess = storedData.improvements?.firstTrySuccess?.current || 0;
     const repeatProblems = storedData.improvements?.repeatProblems?.current || 0;
-    
+
     // 5. Count REAL emergence events
     let emergenceCount = 0;
     try {
       const emergenceData = await fs.readJSON(EMERGENCE_STATE_PATH);
-      emergenceCount = Array.isArray(emergenceData.recentEmergences) 
-        ? emergenceData.recentEmergences.length 
+      emergenceCount = Array.isArray(emergenceData.recentEmergences)
+        ? emergenceData.recentEmergences.length
         : 0;
-    } catch { /* No emergence data yet */ }
-    
+    } catch {
+      /* No emergence data yet */
+    }
+
     // 6. Count REAL artifacts
     let artifactCount = 0;
     try {
       const artifactIndex = await fs.readJSON(ARTIFACTS_INDEX_PATH);
-      artifactCount = Array.isArray(artifactIndex.artifacts) 
-        ? artifactIndex.artifacts.length 
-        : 0;
-    } catch { /* No artifacts yet */ }
+      artifactCount = Array.isArray(artifactIndex.artifacts) ? artifactIndex.artifacts.length : 0;
+    } catch {
+      /* No artifacts yet */
+    }
 
     // 7. Load REAL patterns
     let patterns: any = { patterns: [] };
     try {
       patterns = await fs.readJson(PATTERNS_PATH);
-    } catch { /* Use defaults */ }
-    
-    const patternsCount = Array.isArray(patterns.patterns) ? patterns.patterns.length : 
-                          Array.isArray(patterns) ? patterns.length : 0;
+    } catch {
+      /* Use defaults */
+    }
+
+    const patternsCount = Array.isArray(patterns.patterns)
+      ? patterns.patterns.length
+      : Array.isArray(patterns)
+        ? patterns.length
+        : 0;
 
     // 8. Generate recent learnings from REAL patterns
-    const recentPatterns = (patterns.patterns || patterns.successful || patterns || []).slice(-10).reverse();
+    const recentPatterns = (patterns.patterns || patterns.successful || patterns || [])
+      .slice(-10)
+      .reverse();
     const recentLearnings = recentPatterns
       .filter((p: any) => p.comment && p.comment.length > 0)
       .slice(0, 5)
@@ -153,11 +193,11 @@ router.get('/report', async (req, res) => {
       emergenceCount,
       artifactCount,
       patternsLearned: patternsCount,
-      
-      // Success/failure from audit log (experiments = successful)
-      successfulGenerations: totalExperiments,
-      failedGenerations: 0, // TODO: track failures separately
-      
+
+      // Success/failure from audit log
+      successfulGenerations: Math.max(0, totalExperiments - failedGenerations),
+      failedGenerations,
+
       // REAL improvements from learning-metrics.json
       improvements: {
         firstTrySuccess: {
@@ -173,14 +213,13 @@ router.get('/report', async (req, res) => {
           achieved: repeatProblems <= (storedData.improvements?.repeatProblems?.target || 0.05),
         },
       },
-      
+
       // Recent learnings
-      recentLearnings: recentLearnings.length > 0 
-        ? recentLearnings 
-        : storedData.recentLearnings || [],
-      
+      recentLearnings:
+        recentLearnings.length > 0 ? recentLearnings : storedData.recentLearnings || [],
+
       lastMemoryOptimization: storedData.lastMemoryOptimization,
-      
+
       // Flag to indicate this is REAL data
       source: 'real-data-files',
     };
@@ -571,6 +610,59 @@ router.post('/harvest', async (req, res) => {
   } catch (error: any) {
     console.error('[Learning] Harvest Error:', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/learning/feedback
+ * Submit user feedback on AI responses or system behavior
+ * V3.3.451: Added for systemStateStore integration
+ */
+router.post('/feedback', async (req, res) => {
+  try {
+    const { type, rating, messageId, context, comment } = req.body;
+
+    if (!type) {
+      return res.status(400).json({ ok: false, error: 'Feedback type is required' });
+    }
+
+    // Record feedback in the learning system
+    const feedbackEntry = {
+      id: `feedback-${Date.now()}`,
+      type,
+      rating: rating ?? null,
+      messageId: messageId ?? null,
+      context: context ?? {},
+      comment: comment ?? '',
+      timestamp: new Date().toISOString(),
+    };
+
+    // Emit feedback event for learning systems
+    bus.publish('learning', 'feedback:received', feedbackEntry);
+
+    // Store feedback (could be persisted to file or database)
+    console.log('[Learning] Feedback received:', feedbackEntry.id, feedbackEntry.type);
+
+    // Pass to learner for pattern detection
+    try {
+      await learner.ingestInteraction(
+        context?.prompt || 'User feedback',
+        `${type}: ${rating >= 4 ? 'positive' : rating <= 2 ? 'negative' : 'neutral'} (${rating ?? 0})`,
+        { rating: rating ?? 0, type, success: rating >= 4 }
+      );
+    } catch (e) {
+      // Non-critical - log but don't fail
+      console.warn('[Learning] Failed to record in learner:', e);
+    }
+
+    res.json({
+      ok: true,
+      feedback: feedbackEntry,
+      message: 'Feedback recorded successfully',
+    });
+  } catch (error: any) {
+    console.error('[Learning] Feedback Error:', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 

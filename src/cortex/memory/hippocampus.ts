@@ -119,15 +119,19 @@ export class Hippocampus {
 
     // Record Response & Update KG
     this.bus.on('cortex:response', (event) => {
-      const { requestId, data } = event.payload;
+      const { requestId, data, durationMs } = event.payload;
       if (data && data.provider) {
+        // Use actual response duration if provided, otherwise estimate from timestamp
+        const actualResponseTime = durationMs || data.durationMs || data.responseTimeMs || 1000;
+        const quality = data.quality || data.confidence || 0.8;
+
         this.knowledgeGraph.recordTaskPerformance({
           taskId: requestId || Date.now().toString(),
           goal: 'interaction',
           provider: data.provider.toLowerCase().replace(/\s+/g, '-'),
           success: true,
-          responseTime: 1000, // Placeholder
-          quality: 0.8,
+          responseTime: actualResponseTime,
+          quality,
           context: { meta: data.meta },
         });
       }

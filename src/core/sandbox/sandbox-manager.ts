@@ -1,4 +1,4 @@
-// @version 2.3.2
+// @version 2.4.0 - Added Docker health check and automatic fallback
 import { EventEmitter } from 'events';
 import { spawn, exec } from 'child_process';
 import * as fs from 'fs/promises';
@@ -6,6 +6,24 @@ import * as path from 'path';
 
 import { DockerSandbox } from './docker-sandbox.js';
 import { config } from '../config.js';
+
+// Utility: Promise with timeout
+function withTimeout<T>(promise: Promise<T>, ms: number, operation: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${operation} timed out after ${ms}ms`));
+    }, ms);
+    promise
+      .then((result) => {
+        clearTimeout(timer);
+        resolve(result);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
 import type {
   ExecutionResult,
   ResourceUsage,
@@ -120,10 +138,120 @@ export class SandboxManager extends EventEmitter {
   private maxSandboxAge: number = 3600000; // 1 hour
   private maxIdleSandboxes: number = 10;
   private maxTotalSandboxes: number = 20;
+  private initialized: boolean = false;
+  private dockerHealthy: boolean = true; // Assume healthy until proven otherwise
+  private lastDockerCheck: number = 0;
+  private dockerCheckInterval: number = 60000; // Re-check every 60 seconds
 
   constructor() {
     super();
+  }
+
+  /**
+   * Check if Docker is responsive (with timeout)
+   * Returns true if Docker responds within 3 seconds
+   */
+  private async checkDockerHealth(): Promise<boolean> {
+    const now = Date.now();
+
+    // Use cached result if recent
+    if (now - this.lastDockerCheck < this.dockerCheckInterval) {
+      return this.dockerHealthy;
+    }
+
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        console.warn(
+          '[SandboxManager] ⚠️ Docker health check timed out - Docker appears unresponsive'
+        );
+        this.dockerHealthy = false;
+        this.lastDockerCheck = now;
+        resolve(false);
+      }, 3000); // 3 second timeout for health check
+
+      exec('docker info --format "{{.ServerVersion}}"', { timeout: 3000 }, (error, stdout) => {
+        clearTimeout(timeout);
+        this.lastDockerCheck = now;
+
+        if (error) {
+          console.warn('[SandboxManager] ⚠️ Docker not available:', error.message);
+          this.dockerHealthy = false;
+          resolve(false);
+        } else {
+          const wasUnhealthy = !this.dockerHealthy;
+          this.dockerHealthy = true;
+          if (wasUnhealthy) {
+            console.log(`[SandboxManager] ✅ Docker recovered (version: ${stdout.trim()})`);
+          }
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  /**
+   * Initialize the sandbox manager - call this on server startup
+   * Cleans up orphaned containers from previous crashes
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    console.log('[SandboxManager] Initializing...');
+    await this.cleanupOrphanedContainers();
     this.startAutoCleanup();
+    this.initialized = true;
+    console.log('[SandboxManager] Initialized');
+  }
+
+  /**
+   * Janitor Service: Clean up orphaned TooLoo sandbox containers
+   * This handles the case where the server crashed while sandboxes were running
+   */
+  private async cleanupOrphanedContainers(): Promise<void> {
+    return new Promise((resolve) => {
+      // Find all containers with the tooloo-sandbox prefix
+      exec(
+        'docker ps -a --filter "name=tooloo-sandbox-" --format "{{.ID}}|{{.Names}}|{{.Status}}"',
+        { timeout: 10000 },
+        async (error, stdout) => {
+          if (error) {
+            // Docker might not be available - that's OK
+            console.log('[SandboxManager] Docker not available, skipping orphan cleanup');
+            resolve();
+            return;
+          }
+
+          const lines = stdout.trim().split('\n').filter(Boolean);
+          if (lines.length === 0) {
+            console.log('[SandboxManager] No orphaned containers found');
+            resolve();
+            return;
+          }
+
+          console.log(
+            `[SandboxManager] 🧹 Found ${lines.length} orphaned container(s), cleaning up...`
+          );
+
+          const killPromises = lines.map((line) => {
+            const [containerId, name] = line.split('|');
+            return new Promise<void>((resolveKill) => {
+              exec(`docker rm -f ${containerId}`, { timeout: 5000 }, (err) => {
+                if (err) {
+                  console.warn(`[SandboxManager] Failed to remove ${name}: ${err.message}`);
+                } else {
+                  console.log(`[SandboxManager] Removed orphan: ${name}`);
+                }
+                resolveKill();
+              });
+            });
+          });
+
+          await Promise.all(killPromises);
+          console.log(`[SandboxManager] 🧹 Cleaned up ${lines.length} orphaned container(s)`);
+          resolve();
+        }
+      );
+    });
   }
 
   private startAutoCleanup(): void {
@@ -149,19 +277,45 @@ export class SandboxManager extends EventEmitter {
     }
 
     let sandbox: ISandbox;
-    const mode = options.mode || config.SANDBOX_MODE;
+    let actualMode: string;
+    const requestedMode = options.mode || config.SANDBOX_MODE;
 
-    if (mode === 'docker') {
-      sandbox = new DockerSandbox(options);
+    // If Docker is requested, check health first and fallback if needed
+    if (requestedMode === 'docker') {
+      const dockerOk = await this.checkDockerHealth();
+
+      if (dockerOk) {
+        // Try to create Docker sandbox with timeout
+        try {
+          sandbox = new DockerSandbox(options);
+          await withTimeout(sandbox.start(), 10000, 'Docker sandbox start');
+          actualMode = 'docker';
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          console.warn(`[SandboxManager] ⚠️ Docker sandbox failed: ${errMsg}`);
+          console.log('[SandboxManager] 🔄 Falling back to local sandbox');
+          this.dockerHealthy = false; // Mark unhealthy to skip Docker for a while
+          sandbox = new LocalSandbox(options);
+          await sandbox.start();
+          actualMode = 'local (fallback)';
+        }
+      } else {
+        // Docker unhealthy, use local directly
+        console.log('[SandboxManager] 🔄 Docker unavailable, using local sandbox');
+        sandbox = new LocalSandbox(options);
+        await sandbox.start();
+        actualMode = 'local (fallback)';
+      }
     } else {
       sandbox = new LocalSandbox(options);
+      await sandbox.start();
+      actualMode = 'local';
     }
 
-    await sandbox.start();
     this.sandboxes.set(options.id, sandbox);
 
-    this.emit('sandbox:created', { id: options.id, mode });
-    console.log(`[SandboxManager] Created sandbox ${options.id} (${mode})`);
+    this.emit('sandbox:created', { id: options.id, mode: actualMode });
+    console.log(`[SandboxManager] Created sandbox ${options.id} (${actualMode})`);
 
     return sandbox;
   }

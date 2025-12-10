@@ -6,6 +6,7 @@ import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { Harvester } from './harvester/index.js';
 import { scheduler, Scheduler } from './scheduler.js';
+export * from './personalization/index.js';
 
 export class Precog {
   public training: TrainingService;

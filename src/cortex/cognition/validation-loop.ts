@@ -59,7 +59,7 @@ export type ValidationLoopOutput = z.infer<typeof ValidationLoopOutputSchema>;
 const DEFAULT_STAGE_CONFIGS: Record<StageType, StageConfig> = {
   generate: {
     provider: 'gemini',
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash-exp',
     role: 'generator',
     systemPrompt: `You are a precise and helpful AI assistant. Generate a high-quality, 
 accurate response to the user's query. Be thorough but concise.`,

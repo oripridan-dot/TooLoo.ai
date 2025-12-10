@@ -1,6 +1,8 @@
-// @version 3.3.350
+// @version 3.3.351
 /**
  * Smart Router - Dynamic API Selection and Multi-Provider Orchestration
+ *
+ * V3.3.351: Added public initialize() method for main.ts bootstrap
  *
  * This module enhances TooLoo's AI capabilities with:
  * - Dynamic provider selection based on task requirements
@@ -79,9 +81,9 @@ export interface SynthesisResult {
 
 const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
   // Anthropic Claude Models
-  'anthropic:claude-sonnet-4.5': {
+  'anthropic:claude-sonnet-4': {
     provider: 'anthropic',
-    model: 'claude-sonnet-4.5',
+    model: 'claude-sonnet-4-20250514',
     capabilities: ['chat', 'code', 'reasoning', 'analysis', 'creative'],
     costPer1kTokens: 0.015,
     maxTokens: 200000,
@@ -92,9 +94,9 @@ const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
     reliability: 0.98,
     specializations: ['code-review', 'complex-reasoning', 'long-context'],
   },
-  'anthropic:claude-haiku-4.5': {
+  'anthropic:claude-35-haiku': {
     provider: 'anthropic',
-    model: 'claude-haiku-4.5',
+    model: 'claude-3-5-haiku-latest',
     capabilities: ['chat', 'code', 'quick-tasks'],
     costPer1kTokens: 0.0025,
     maxTokens: 200000,
@@ -105,9 +107,9 @@ const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
     reliability: 0.97,
     specializations: ['quick-responses', 'simple-tasks', 'cost-effective'],
   },
-  'anthropic:claude-opus-4.5': {
+  'anthropic:claude-opus-4': {
     provider: 'anthropic',
-    model: 'claude-opus-4.5',
+    model: 'claude-opus-4-20250514',
     capabilities: ['chat', 'code', 'reasoning', 'analysis', 'creative', 'expert'],
     costPer1kTokens: 0.075,
     maxTokens: 200000,
@@ -120,9 +122,9 @@ const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
   },
 
   // Google Gemini Models
-  'gemini:gemini-2.5-pro': {
+  'gemini:gemini-2-flash': {
     provider: 'gemini',
-    model: 'gemini-2.5-pro',
+    model: 'gemini-2.0-flash-exp',
     capabilities: ['chat', 'code', 'reasoning', 'vision', 'creative'],
     costPer1kTokens: 0.00125,
     maxTokens: 1000000,
@@ -133,9 +135,9 @@ const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
     reliability: 0.96,
     specializations: ['multimodal', 'long-context', 'creative-writing'],
   },
-  'gemini:gemini-3-pro': {
+  'gemini:gemini-15-pro': {
     provider: 'gemini',
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-1.5-pro',
     capabilities: ['chat', 'code', 'reasoning', 'vision', 'creative', 'expert'],
     costPer1kTokens: 0.002,
     maxTokens: 2000000,
@@ -148,11 +150,11 @@ const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
   },
 
   // OpenAI Models
-  'openai:gpt-5': {
+  'openai:gpt-4o': {
     provider: 'openai',
-    model: 'gpt-5',
+    model: 'gpt-4o',
     capabilities: ['chat', 'code', 'reasoning', 'analysis'],
-    costPer1kTokens: 0.03,
+    costPer1kTokens: 0.01,
     maxTokens: 128000,
     supportsStreaming: true,
     supportsVision: true,
@@ -161,11 +163,11 @@ const PROVIDER_CAPABILITIES: Record<string, ProviderCapability> = {
     reliability: 0.97,
     specializations: ['general-purpose', 'function-calling', 'structured-output'],
   },
-  'openai:gpt-5-codex': {
+  'openai:gpt-4-turbo': {
     provider: 'openai',
-    model: 'gpt-5-codex-preview',
+    model: 'gpt-4-turbo',
     capabilities: ['code', 'reasoning', 'analysis'],
-    costPer1kTokens: 0.04,
+    costPer1kTokens: 0.03,
     maxTokens: 128000,
     supportsStreaming: true,
     supportsVision: false,
@@ -231,6 +233,24 @@ export class SmartRouter {
   constructor() {
     this.initializeMetrics();
     this.detectAvailableProviders();
+  }
+
+  /**
+   * Public initialization method for async setup
+   * Called by main.ts during bootstrap
+   */
+  async initialize(): Promise<void> {
+    // Re-detect providers (in case env changed)
+    this.detectAvailableProviders();
+    
+    // Log available providers
+    console.log(`[SmartRouter] Available providers: ${Array.from(this.availableProviders).join(', ')}`);
+    
+    // Emit ready event
+    bus.publish('precog', 'smart-router:ready', {
+      providers: Array.from(this.availableProviders),
+      timestamp: Date.now(),
+    });
   }
 
   private initializeMetrics() {

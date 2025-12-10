@@ -1,0 +1,62 @@
+{
+  "406d849f-084a-4d90-98ab-85d9922d6dd3": {
+    "id": "406d849f-084a-4d90-98ab-85d9922d6dd3",
+    "slug": "my-first-project",
+    "name": "My First Project",
+    "description": "A test project",
+    "type": "component",
+    "status": "active",
+    "visibility": "private",
+    "icon": "📁",
+    "color": "#6366f1",
+    "owner": "user",
+    "stats": {
+      "stars": 0,
+      "forks": 0,
+      "collaborators": 1
+    },
+    "tags": [
+      "test",
+      "demo"
+    ],
+    "updatedAt": "2025-12-08T17:54:20.227Z"
+  },
+  "0ecd14c4-2841-4b77-9514-bc77b5b54fc7": {
+    "id": "0ecd14c4-2841-4b77-9514-bc77b5b54fc7",
+    "slug": "test",
+    "name": "test",
+    "description": "Component library with Storybook and tokens",
+    "type": "design-system",
+    "status": "active",
+    "visibility": "private",
+    "icon": "📁",
+    "color": "#6366f1",
+    "owner": "user",
+    "stats": {
+      "stars": 0,
+      "forks": 0,
+      "collaborators": 1
+    },
+    "tags": [],
+    "updatedAt": "2025-12-08T17:57:16.848Z"
+  },
+  "8d93ceaa-56d1-40f7-a9b9-3fb0aeacf9a3": {
+    "id": "8d93ceaa-56d1-40f7-a9b9-3fb0aeacf9a3",
+    "slug": "tooloo-test",
+    "name": "tooloo test",
+    "description": "Component library with Storybook and tokens",
+    "type": "design-system",
+    "status": "active",
+    "visibility": "private",
+    "icon": "📁",
+    "color": "#6366f1",
+    "owner": "user",
+    "stats": {
+      "stars": 0,
+      "forks": 1,
+      "collaborators": 1
+    },
+    "tags": [],
+    "updatedAt": "2025-12-09T21:09:21.738Z"
+  }
+}

@@ -158,11 +158,9 @@ export class ProjectManager {
     if (!project) return;
 
     // Add to short-term memory context
-    project.memory.context.push({
-      timestamp: new Date().toISOString(),
-      type,
-      content: content.slice(0, 1000), // Limit size
-    });
+    // Format: "timestamp|type|content"
+    const contextEntry = `${new Date().toISOString()}|${type}|${content.slice(0, 1000)}`;
+    project.memory.context.push(contextEntry);
 
     // Keep only last 50 context items
     if (project.memory.context.length > 50) {
@@ -195,7 +193,7 @@ export class ProjectManager {
 
     this.initialized = true;
     console.log(`[ProjectManager] Initialized with ${this.projectIndex.size} projects`);
-    
+
     // Emit ready event
     bus.publish('cortex', 'project:manager_ready', {
       projectCount: this.projectIndex.size,
@@ -524,17 +522,32 @@ export class ProjectManager {
     this.updateIndex(project);
     await this.saveIndex();
 
+    // Emit project updated event
+    this.emitProjectEvent('updated', id, { updates: Object.keys(updates) });
+
     return project;
   }
 
   async deleteProject(id: string): Promise<boolean> {
     await this.init();
 
+    const project = await this.getProject(id);
+    const projectName = project?.name || 'Unknown';
+
     const projectPath = path.join(PROJECTS_DIR, id);
     try {
       await fs.rm(projectPath, { recursive: true, force: true });
       this.projectIndex.delete(id);
       await this.saveIndex();
+
+      // Emit project deleted event
+      this.emitProjectEvent('deleted', id, { name: projectName });
+
+      // If this was the active project, clear it
+      if (this.activeProjectId === id) {
+        await this.setActiveProject(null);
+      }
+
       console.log(`[ProjectManager] Deleted project: ${id}`);
       return true;
     } catch {
@@ -634,11 +647,7 @@ If no change is needed for a field, return the current value.
   // BRANCHING
   // =========================================================================
 
-  async createBranch(
-    projectId: string,
-    name: string,
-    fromBranch?: string
-  ): Promise<Branch | null> {
+  async createBranch(projectId: string, name: string, fromBranch?: string): Promise<Branch | null> {
     await this.init();
 
     const project = await this.getProject(projectId);
@@ -694,7 +703,7 @@ If no change is needed for a field, return the current value.
 
     const branch = project.branches[branchIndex];
     if (!branch) return false;
-    
+
     if (branch.isDefault || branch.isProtected) {
       throw new Error('Cannot delete default or protected branch');
     }
@@ -792,6 +801,171 @@ If no change is needed for a field, return the current value.
   }
 
   // =========================================================================
+  // MEMORY INTEGRATION (Hippocampus)
+  // =========================================================================
+
+  /**
+   * Record a project-related memory in Hippocampus
+   */
+  recordProjectMemory(
+    projectId: string,
+    type: 'decision' | 'artifact' | 'conversation' | 'code' | 'learning',
+    content: string,
+    metadata: Record<string, unknown> = {}
+  ): void {
+    bus.publish('cortex', 'memory:store', {
+      content: `[Project: ${projectId}] ${content}`,
+      type: 'thought',
+      tags: ['project', projectId, type],
+      metadata: {
+        ...metadata,
+        projectId,
+        memoryType: type,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * Record a decision made within a project
+   */
+  async recordDecision(
+    projectId: string,
+    decision: string,
+    rationale: string,
+    alternatives?: string[]
+  ): Promise<void> {
+    const project = await this.getProject(projectId);
+    if (!project) return;
+
+    // Store in project memory
+    await this.addToProjectContext(
+      projectId,
+      `Decision: ${decision}\nRationale: ${rationale}`,
+      'decision'
+    );
+
+    // Store in Hippocampus for long-term recall
+    this.recordProjectMemory(projectId, 'decision', decision, {
+      rationale,
+      alternatives,
+      projectName: project.name,
+    });
+
+    // Emit event for UI updates
+    this.emitProjectEvent('decision_recorded', projectId, { decision });
+  }
+
+  /**
+   * Record an artifact created within a project
+   */
+  async recordArtifact(
+    projectId: string,
+    artifactType: string,
+    description: string,
+    filePath?: string
+  ): Promise<void> {
+    const project = await this.getProject(projectId);
+    if (!project) return;
+
+    // Store in project memory
+    await this.addToProjectContext(
+      projectId,
+      `Created ${artifactType}: ${description}${filePath ? ` at ${filePath}` : ''}`,
+      'artifact'
+    );
+
+    // Store in Hippocampus
+    this.recordProjectMemory(projectId, 'artifact', description, {
+      artifactType,
+      filePath,
+      projectName: project.name,
+    });
+
+    // Update project activity
+    const { v4: uuidv4 } = await import('uuid');
+    project.recentActivity.unshift({
+      id: `activity-${uuidv4()}`,
+      type: 'update',
+      actor: 'system',
+      description: `Created ${artifactType}: ${description}`,
+      timestamp: new Date().toISOString(),
+      metadata: { artifactType, filePath },
+    });
+    project.recentActivity = project.recentActivity.slice(0, 50);
+
+    await this.saveProject(project);
+  }
+
+  /**
+   * Record a learning/insight from project work
+   */
+  async recordLearning(
+    projectId: string,
+    learning: string,
+    category: string = 'general'
+  ): Promise<void> {
+    const project = await this.getProject(projectId);
+    if (!project) return;
+
+    // Store in Hippocampus for cross-project learning
+    this.recordProjectMemory(projectId, 'learning', learning, {
+      category,
+      projectName: project.name,
+      projectType: project.type,
+    });
+
+    this.emitProjectEvent('learning_recorded', projectId, { category });
+  }
+
+  // =========================================================================
+  // ACTIVITY MANAGEMENT
+  // =========================================================================
+
+  /**
+   * Add an activity entry to a project's recent activity log
+   */
+  async addActivity(
+    projectId: string,
+    activity: {
+      type: string;
+      user: string;
+      description: string;
+      metadata?: Record<string, unknown>;
+    }
+  ): Promise<void> {
+    await this.init();
+
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`Project ${projectId} not found`);
+    }
+
+    const { v4: uuidv4 } = await import('uuid');
+    const now = new Date().toISOString();
+    project.recentActivity.unshift({
+      id: `activity-${uuidv4()}`,
+      type: activity.type,
+      actor: activity.user,
+      description: activity.description,
+      timestamp: now,
+      metadata: activity.metadata,
+    });
+
+    // Keep only last 100 activities
+    project.recentActivity = project.recentActivity.slice(0, 100);
+    project.updatedAt = now;
+
+    // Save
+    const projectPath = path.join(PROJECTS_DIR, projectId, 'tooloo.json');
+    await smartFS.writeSafe(projectPath, JSON.stringify(project, null, 2));
+
+    // Update index
+    this.updateIndex(project);
+    await this.saveIndex();
+  }
+
+  // =========================================================================
   // HELPERS
   // =========================================================================
 
@@ -810,9 +984,7 @@ If no change is needed for a field, return the current value.
   /**
    * Get projects in legacy format (for backwards compatibility)
    */
-  async listProjectsLegacy(): Promise<
-    Array<{ id: string; name: string; created: number }>
-  > {
+  async listProjectsLegacy(): Promise<Array<{ id: string; name: string; created: number }>> {
     const { projects } = await this.listProjects();
     return projects.map((p) => ({
       id: p.id,

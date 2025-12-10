@@ -1,7 +1,7 @@
-// @version 3.3.65
+// @version 3.3.377
 // TooLoo.ai Enhanced Visual Generator
-// Transforms basic visual requests into stunning, professional-grade outputs
-// Uses example-driven prompting and quality validation
+// DIVERSIFIED VISUAL COMMUNICATION - Routes to best format, not just SVG
+// Uses format-aware prompting based on content type
 
 import { getVisualExample } from './visual-examples.js';
 
@@ -63,9 +63,40 @@ const VISUAL_KEYWORDS = [
 ];
 
 /**
- * Visual type categories
+ * Visual type categories - now maps to format recommendations
  */
 type VisualType = 'chart' | 'diagram' | 'abstract' | 'dashboard' | 'general';
+
+/**
+ * Recommended format for each visual type
+ */
+const FORMAT_RECOMMENDATIONS: Record<VisualType, { primary: string; fallback: string; description: string }> = {
+  chart: {
+    primary: 'chart',
+    fallback: 'svg',
+    description: 'Use ```chart with JSON data for interactive Chart.js rendering'
+  },
+  diagram: {
+    primary: 'mermaid',
+    fallback: 'ascii',
+    description: 'Use ```mermaid for flowcharts, sequences, architecture diagrams'
+  },
+  dashboard: {
+    primary: 'stats',
+    fallback: 'chart',
+    description: 'Use ```stats JSON for KPI cards and metrics displays'
+  },
+  abstract: {
+    primary: 'svg',
+    fallback: 'emoji',
+    description: 'Use ```svg for complex graphics, icons, or artistic visuals'
+  },
+  general: {
+    primary: 'ascii',
+    fallback: 'mermaid',
+    description: 'Use ```ascii for quick diagrams or ```mermaid for structured flows'
+  }
+};
 
 /**
  * Enhanced Visual Generator
@@ -141,68 +172,126 @@ export class EnhancedVisualGenerator {
   }
 
   /**
-   * Enhance a visual request with detailed instructions
+   * Get the recommended format for a visual type
+   */
+  getRecommendedFormat(visualType: VisualType): { primary: string; fallback: string; description: string } {
+    return FORMAT_RECOMMENDATIONS[visualType] || FORMAT_RECOMMENDATIONS.general;
+  }
+
+  /**
+   * Enhance a visual request with FORMAT-APPROPRIATE instructions
+   * No longer forces SVG - routes to the best format for the content
    */
   enhancePrompt(originalPrompt: string): string {
     const visualType = this.detectVisualType(originalPrompt);
-    const example = this.getRelevantExample(visualType);
+    const format = this.getRecommendedFormat(visualType);
 
-    const enhancedPrompt = `
-${originalPrompt}
+    // Chart-specific enhancement
+    if (visualType === 'chart') {
+      return `${originalPrompt}
 
-=== CRITICAL VISUAL GENERATION REQUIREMENTS ===
+=== CHART GENERATION INSTRUCTIONS ===
+Use the \`\`\`chart code block with JSON data for Chart.js rendering.
 
-You are TooLoo.ai, known for creating STUNNING, PROFESSIONAL-GRADE visuals.
-Your visual output must be exceptional - the kind that makes users say "WOW!"
+**EXACT FORMAT:**
+\`\`\`chart
+{"type":"bar","data":{"labels":["Label1","Label2","Label3"],"datasets":[{"label":"Data","data":[10,20,30]}]}}
+\`\`\`
 
-**MANDATORY SVG STRUCTURE:**
-1. Start with proper viewBox (e.g., viewBox="0 0 800 500")
-2. ALWAYS include a <defs> section with:
-   - linearGradient or radialGradient definitions (at least 2-3 gradients)
-   - filter effects (drop shadows, glows, blurs)
-   - clipPath if needed
-   - Unique IDs for all reusable elements
+**Chart Types:** bar, line, pie, doughnut, radar, polarArea
+**For PIE charts:** {"type":"pie","data":{"labels":["A","B","C"],"datasets":[{"data":[40,30,30]}]}}
 
-3. Use RICH, MODERN color palettes:
-   - Primary: #6366f1, #8b5cf6, #a855f7 (purples/indigos)
-   - Accent: #f472b6, #ec4899, #f43f5e (pinks/roses)
-   - Success: #4ade80, #22c55e, #14b8a6 (greens/teals)
-   - Info: #60a5fa, #3b82f6, #0ea5e9 (blues)
-   - Dark backgrounds: #0a0a14, #0f0f1a, #1e1e2f
-   
-4. ALWAYS include ANIMATIONS:
-   - <animate> for property changes
-   - <animateTransform> for rotations/scales
-   - <animateMotion> for path-based movement
-   - Use realistic durations (2-10s for ambient, 0.3-0.8s for transitions)
+IMPORTANT:
+- JSON must be valid, single-line, no trailing commas
+- Include meaningful labels and data values
+- Return ONLY the chart code block, no extra explanation
+`.trim();
+    }
 
-5. LAYERED COMPOSITION:
-   - Background layer (dark gradient or subtle pattern)
-   - Mid-ground elements (main content)
-   - Foreground accents (highlights, particles)
-   - Proper z-ordering through element order
+    // Diagram-specific enhancement (mermaid)
+    if (visualType === 'diagram') {
+      return `${originalPrompt}
 
-**QUALITY CHECKLIST:**
-✓ Minimum 3 gradient definitions
-✓ At least 1 filter effect (shadow or glow)
-✓ At least 2 animations
-✓ Professional typography (font-family="system-ui, -apple-system, sans-serif")
-✓ Proper spacing and composition
-✓ Rounded corners (rx attribute) on rectangles
-✓ Stroke-linecap="round" for smooth lines
+=== DIAGRAM GENERATION INSTRUCTIONS ===
+Use \`\`\`mermaid for flowcharts, sequences, and architecture diagrams.
 
-**EXAMPLE OF QUALITY OUTPUT (${visualType.toUpperCase()}):**
+**Flowchart Example:**
+\`\`\`mermaid
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E
+\`\`\`
+
+**Sequence Example:**
+\`\`\`mermaid
+sequenceDiagram
+    User->>Server: Request
+    Server->>Database: Query
+    Database-->>Server: Result
+    Server-->>User: Response
+\`\`\`
+
+IMPORTANT: Return ONLY the mermaid code block.
+`.trim();
+    }
+
+    // Dashboard/Stats enhancement
+    if (visualType === 'dashboard') {
+      return `${originalPrompt}
+
+=== DASHBOARD/STATS INSTRUCTIONS ===
+Use \`\`\`stats for KPI cards and metrics displays.
+
+**Format:**
+\`\`\`stats
+{"stats":[{"label":"Users","value":"12.5K","change":{"value":15,"direction":"up"}},{"label":"Revenue","value":"$48K","change":{"value":8,"direction":"up"}}]}
+\`\`\`
+
+Or use \`\`\`chart for data visualizations.
+IMPORTANT: Return ONLY the code block with valid JSON.
+`.trim();
+    }
+
+    // Abstract/Complex graphics - still use SVG
+    if (visualType === 'abstract') {
+      const example = this.getRelevantExample(visualType);
+      return `${originalPrompt}
+
+=== SVG VISUAL GENERATION ===
+For complex graphics, icons, or artistic visuals, use \`\`\`svg
+
+**Quality Requirements:**
+- Use viewBox="0 0 800 500"
+- Dark background: #0a0a0f
+- Rich colors: #6366f1, #8b5cf6, #f472b6, #4ade80
+- Include gradients in <defs>
+- Add subtle animations
+
+**Example:**
 \`\`\`svg
 ${example}
 \`\`\`
 
-**OUTPUT FORMAT:**
-Return a SINGLE, complete SVG code block. No explanations before or after.
-The SVG should be production-ready and visually stunning.
-Match or EXCEED the quality of the example above.
+Return ONLY the SVG code block.
 `.trim();
+    }
 
-    return enhancedPrompt;
+    // General/Quick visuals - prefer ascii or mermaid
+    return `${originalPrompt}
+
+=== VISUAL FORMAT SELECTION ===
+Choose the BEST format for this content:
+
+• **\`\`\`ascii** - Quick text diagrams, boxes, trees
+• **\`\`\`mermaid** - Flowcharts, sequences, architecture
+• **\`\`\`chart** - Data: {"type":"bar","data":{...}}
+• **\`\`\`emoji** - Status indicators, playful visuals
+
+Pick ONE format and return ONLY that code block.
+`.trim();
   }
 
   /**

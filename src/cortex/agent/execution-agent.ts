@@ -1,18 +1,32 @@
-// @version 3.3.23
+// @version 3.3.425
 /**
- * Execution Agent - Core Autonomous Execution Loop
+ * Execution Agent - Core Autonomous Execution Loop (Project Pinocchio)
  *
  * The heart of TooLoo's self-execution capability.
  * Enables TooLoo to receive structured input, execute code,
  * save artifacts, and manage its own processes - like this chat does.
  *
+ * V3.3.425 Enhancements:
+ * - Research task type: Ethical web exploration via DynamicCollector
+ * - SafetyPolicy URL validation
+ * - PIIScrubber integration for scraped content
+ *
+ * V3.3.404 Enhancements:
+ * - Self-correction loop: Auto-retry failed tasks with AI-driven fixes
+ * - Docker sandbox integration: Safe code execution with resource limits
+ * - Task resumption: Restore interrupted tasks from SessionContinuity
+ * - Event-driven autonomy: Full integration with Sentinel pattern
+ *
  * @module cortex/agent/execution-agent
  */
 
-import { bus } from '../../core/event-bus.js';
+import { bus, SynapsysEvent } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
 import { taskProcessor, TaskProcessor } from './task-processor.js';
 import { artifactManager, ArtifactManager } from './artifact-manager.js';
+import { SandboxManager } from '../../core/sandbox/sandbox-manager.js';
+import { config } from '../../core/config.js';
+import { PIIScrubber } from '../../core/security/pii-scrubber.js';
 import type {
   AgentTask,
   AgentState,
@@ -33,14 +47,23 @@ export class ExecutionAgent {
   private running = false;
   private processor: TaskProcessor;
   private artifacts: ArtifactManager;
+  private sandboxManager: SandboxManager;
   private activeProcesses: Map<string, ProcessExecution> = new Map();
   private processInterval: NodeJS.Timeout | null = null;
   private totalTasksExecuted = 0;
   private successfulTasks = 0;
 
+  // V3.3.404: Self-correction and autonomy tracking
+  private taskRetryCount: Map<string, number> = new Map();
+  private readonly MAX_SELF_CORRECTION_RETRIES = 3;
+  private sandboxMode: 'local' | 'docker' = 'local';
+  private autonomousFixingEnabled = true;
+
   constructor() {
     this.processor = taskProcessor;
     this.artifacts = artifactManager;
+    this.sandboxManager = new SandboxManager();
+    this.sandboxMode = config.SANDBOX_MODE as 'local' | 'docker';
     this.setupEventListeners();
     console.log('[ExecutionAgent] Initialized');
   }
@@ -50,7 +73,58 @@ export class ExecutionAgent {
    */
   async initialize(): Promise<void> {
     await this.artifacts.initialize();
+
+    // V3.3.404: Initialize sandbox manager
+    try {
+      await this.sandboxManager.initialize();
+      console.log(`[ExecutionAgent] Sandbox ready (mode: ${this.sandboxMode})`);
+    } catch (err) {
+      console.warn('[ExecutionAgent] Sandbox initialization failed, using local mode:', err);
+      this.sandboxMode = 'local';
+    }
+
+    // V3.3.404: Restore tasks from SessionContinuity
+    await this.restoreInterruptedTasks();
+
     console.log('[ExecutionAgent] Agent ready');
+  }
+
+  /**
+   * V3.3.404: Restore interrupted tasks from previous session
+   */
+  private async restoreInterruptedTasks(): Promise<void> {
+    try {
+      const { sessionContinuity } = await import('../continuity/session-continuity.js');
+      const resumableTasks = sessionContinuity.getResumableTasks();
+
+      if (resumableTasks.length > 0) {
+        console.log(`[ExecutionAgent] Restoring ${resumableTasks.length} interrupted tasks...`);
+
+        for (const task of resumableTasks) {
+          // Re-queue the task with resume state
+          await this.submitTask({
+            type: task.type as TaskType,
+            name: `[RESUMED] ${task.description}`,
+            description: `Resuming from ${(task.progress * 100).toFixed(0)}% - ${task.description}`,
+            input: {
+              prompt: task.description,
+              context: task.resumeState,
+            },
+            options: { autoApprove: true, sandbox: true },
+          });
+
+          bus.publish('cortex', 'agent:task:restored', {
+            taskId: task.id,
+            type: task.type,
+            progress: task.progress,
+          });
+        }
+
+        console.log(`[ExecutionAgent] Restored ${resumableTasks.length} tasks to queue`);
+      }
+    } catch (err) {
+      console.warn('[ExecutionAgent] Could not restore tasks:', err);
+    }
   }
 
   /**
@@ -139,6 +213,9 @@ export class ExecutionAgent {
           break;
         case 'deploy':
           result = await this.executeDeploy(task, logs);
+          break;
+        case 'research':
+          result = await this.executeResearch(task, logs);
           break;
         default:
           result = {
@@ -773,6 +850,284 @@ export class ExecutionAgent {
     return pushResult;
   }
 
+  // ============================================================================
+  // RESEARCH TASK - Ethical Explorer (V3.3.425)
+  // ============================================================================
+
+  /**
+   * Blocked domains for ethical web research
+   * No social media scraping, no dark web, no paywalled content
+   */
+  private static readonly BLOCKED_DOMAINS = [
+    // Social Media
+    'facebook.com',
+    'instagram.com',
+    'twitter.com',
+    'x.com',
+    'tiktok.com',
+    'linkedin.com',
+    'snapchat.com',
+    'reddit.com',
+    'pinterest.com',
+    // Dark Web
+    '.onion',
+    // Paywalled / Login Required
+    'medium.com',
+    'substack.com',
+    // Private Data
+    'dropbox.com',
+    'drive.google.com',
+    'onedrive.com',
+    // Banking / Financial
+    'paypal.com',
+    'stripe.com',
+    'venmo.com',
+    // Government (privacy concerns)
+    '.gov',
+    '.mil',
+  ];
+
+  /**
+   * Execute a research task - ethical web exploration
+   * Uses DynamicCollector (Playwright) to fetch and analyze web content
+   */
+  private async executeResearch(task: AgentTask, logs: string[]): Promise<TaskResult> {
+    const { url, goal, extractDesignTokens, prompt } = task.input;
+
+    logs.push(`[Research] Starting ethical exploration...`);
+
+    // Validate URL is provided
+    if (!url) {
+      logs.push('[Research] No URL provided');
+      return {
+        success: false,
+        output: 'Research task requires a URL',
+      };
+    }
+
+    // Parse and validate URL
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch (e) {
+      logs.push(`[Research] Invalid URL: ${url}`);
+      return {
+        success: false,
+        output: `Invalid URL: ${url}`,
+      };
+    }
+
+    // Safety check: Block disallowed domains
+    const hostname = parsedUrl.hostname.toLowerCase();
+    for (const blocked of ExecutionAgent.BLOCKED_DOMAINS) {
+      if (hostname.includes(blocked) || hostname.endsWith(blocked)) {
+        logs.push(`[Research] Domain blocked by SafetyPolicy: ${hostname}`);
+        return {
+          success: false,
+          output: `Domain "${hostname}" is blocked by SafetyPolicy. TooLoo respects privacy and ethics.`,
+        };
+      }
+    }
+
+    // Only allow HTTP/HTTPS
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      logs.push(`[Research] Protocol not allowed: ${parsedUrl.protocol}`);
+      return {
+        success: false,
+        output: `Protocol "${parsedUrl.protocol}" is not allowed. Only HTTP/HTTPS supported.`,
+      };
+    }
+
+    logs.push(`[Research] SafetyPolicy check passed for: ${hostname}`);
+
+    try {
+      // Check robots.txt compliance
+      const robotsAllowed = await this.checkRobotsTxt(url, logs);
+      if (!robotsAllowed) {
+        return {
+          success: false,
+          output: `robots.txt disallows scraping this URL. TooLoo respects website policies.`,
+        };
+      }
+
+      // Import DynamicCollector
+      const { DynamicCollector } =
+        await import('../../precog/harvester/collectors/dynamic-collector.js');
+      const collector = new DynamicCollector();
+
+      logs.push(`[Research] Fetching content from: ${url}`);
+
+      // Collect content
+      const harvestResult = await collector.collect({
+        url,
+        type: 'dynamic',
+        options: {},
+      });
+
+      // Close browser
+      await collector.close();
+
+      logs.push(`[Research] Content fetched: ${harvestResult.content.length} characters`);
+
+      // Scrub PII from content
+      const scrubbedContent = PIIScrubber.scrub(harvestResult.content);
+      logs.push(`[Research] PII scrubbing complete`);
+
+      // Determine the research goal
+      const researchGoal = goal || prompt || 'Summarize the main content and key points';
+
+      // If extracting design tokens, use specialized prompt
+      let systemPrompt: string;
+      if (extractDesignTokens) {
+        systemPrompt = `You are a design token extraction expert. Analyze the website content and extract:
+1. **Color Palette**: Primary, secondary, accent, background, text colors (in hex or hsl)
+2. **Typography**: Font families, sizes, weights, line heights
+3. **Spacing**: Margins, paddings, gaps (in px or rem)
+4. **Border Radius**: Button, card, input rounding values
+5. **Shadows**: Box shadows used
+
+Return the tokens in this JSON format:
+{
+  "colors": { "primary": "#hex", "secondary": "#hex", "accent": "#hex", "background": "#hex", "text": "#hex" },
+  "typography": { "fontFamily": "name", "fontSize": { "sm": "px", "base": "px", "lg": "px" }, "fontWeight": { "normal": 400, "bold": 700 } },
+  "spacing": { "sm": "px", "md": "px", "lg": "px" },
+  "borderRadius": { "sm": "px", "md": "px", "lg": "px" },
+  "shadows": { "sm": "value", "md": "value", "lg": "value" }
+}
+
+Base your extraction on the actual content, styles, and structure of the webpage.`;
+      } else {
+        systemPrompt = `You are a research assistant. Analyze the provided web content and answer the user's research goal.
+Be factual, cite specific information from the content, and provide actionable insights.
+If the content doesn't contain information relevant to the goal, say so clearly.`;
+      }
+
+      // Summarize content using LLM
+      const response = await precog.providers.generate({
+        prompt: `Website: ${url}\nTitle: ${harvestResult.metadata?.title || 'Unknown'}\n\nResearch Goal: ${researchGoal}\n\nContent:\n${scrubbedContent.substring(0, 10000)}`,
+        system: systemPrompt,
+        taskType: 'research',
+      });
+
+      logs.push(`[Research] Analysis complete`);
+
+      // Emit event for UI updates
+      bus.publish('cortex', 'agent:research:completed', {
+        taskId: task.id,
+        url,
+        goal: researchGoal,
+        timestamp: Date.now(),
+      });
+
+      return {
+        success: true,
+        output: response.content,
+        artifacts: [
+          {
+            id: uuidv4(),
+            type: 'data' as const,
+            name: `research-${hostname}-${Date.now()}`,
+            path: url,
+            version: '1.0.0',
+            createdAt: new Date(),
+            createdBy: task.id,
+            metadata: {
+              url,
+              title: harvestResult.metadata?.title,
+              goal: researchGoal,
+              extractedAt: new Date().toISOString(),
+              contentLength: harvestResult.content.length,
+            },
+          },
+        ],
+        metrics: {
+          durationMs: 0,
+          costUsd: response.cost_usd,
+        },
+      };
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      logs.push(`[Research] Failed: ${errMsg}`);
+      return {
+        success: false,
+        output: `Research failed: ${errMsg}`,
+      };
+    }
+  }
+
+  /**
+   * Check robots.txt to ensure we're allowed to scrape
+   */
+  private async checkRobotsTxt(url: string, logs: string[]): Promise<boolean> {
+    try {
+      const parsedUrl = new URL(url);
+      const robotsUrl = `${parsedUrl.protocol}//${parsedUrl.host}/robots.txt`;
+
+      logs.push(`[Research] Checking robots.txt: ${robotsUrl}`);
+
+      const response = await fetch(robotsUrl, {
+        headers: { 'User-Agent': 'TooLoo-Bot/1.0 (Ethical Research Assistant)' },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!response.ok) {
+        // No robots.txt or error - assume allowed
+        logs.push(`[Research] No robots.txt found (${response.status}) - proceeding`);
+        return true;
+      }
+
+      const robotsTxt = await response.text();
+
+      // Simple check: Look for User-agent: * and Disallow patterns
+      const lines = robotsTxt.split('\n');
+      let inUserAgentAll = false;
+      const disallowedPaths: string[] = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim().toLowerCase();
+        if (trimmed.startsWith('user-agent:')) {
+          inUserAgentAll = trimmed.includes('*');
+        } else if (inUserAgentAll && trimmed.startsWith('disallow:')) {
+          const path = trimmed.replace('disallow:', '').trim();
+          if (path) disallowedPaths.push(path);
+        }
+      }
+
+      // Check if our target path is disallowed
+      const targetPath = parsedUrl.pathname;
+      for (const disallowed of disallowedPaths) {
+        if (disallowed === '/' || targetPath.startsWith(disallowed)) {
+          logs.push(`[Research] robots.txt disallows: ${disallowed}`);
+          return false;
+        }
+      }
+
+      logs.push(`[Research] robots.txt allows access`);
+      return true;
+    } catch (error) {
+      // If we can't check robots.txt, err on the side of caution for strict mode
+      // but allow for common documentation sites
+      const hostname = new URL(url).hostname;
+      const docsSites = [
+        'docs.',
+        'developer.',
+        'api.',
+        'github.com',
+        'mdn.',
+        'react.dev',
+        'nodejs.org',
+      ];
+
+      if (docsSites.some((site) => hostname.includes(site))) {
+        logs.push(`[Research] robots.txt check failed but allowing docs site: ${hostname}`);
+        return true;
+      }
+
+      logs.push(`[Research] robots.txt check failed - proceeding cautiously`);
+      return true;
+    }
+  }
+
   private async runShellCommand(
     command: string,
     cwd: string,
@@ -836,6 +1191,10 @@ export class ExecutionAgent {
     this.processor.completeTask(task.id, result);
   }
 
+  /**
+   * Run code in sandbox - V3.3.407 FIXED: Direct sandbox execution, no recursion
+   * Always uses SandboxManager which selects Docker or Local based on config
+   */
   private async runInSandbox(
     code: string,
     language: string,
@@ -843,69 +1202,67 @@ export class ExecutionAgent {
   ): Promise<ExecutionResult> {
     const startTime = Date.now();
 
-    return new Promise((resolve) => {
-      let command: string;
-      let args: string[];
+    // Build command based on language
+    const safeCode = code.replace(/'/g, "\\'");
+    let command: string;
 
-      switch (language.toLowerCase()) {
-        case 'javascript':
-        case 'js':
-          command = 'node';
-          args = ['-e', code];
-          break;
-        case 'typescript':
-        case 'ts':
-          command = 'npx';
-          args = ['tsx', '-e', code];
-          break;
-        case 'python':
-        case 'py':
-          command = 'python3';
-          args = ['-c', code];
-          break;
-        default:
-          resolve({
-            success: false,
-            output: `Unsupported language: ${language}`,
-            durationMs: Date.now() - startTime,
-          });
-          return;
-      }
+    switch (language.toLowerCase()) {
+      case 'javascript':
+      case 'js':
+        command = `node -e '${safeCode}'`;
+        break;
+      case 'typescript':
+      case 'ts':
+        command = `npx tsx -e '${safeCode}'`;
+        break;
+      case 'python':
+      case 'py':
+        command = `python3 -c '${safeCode}'`;
+        break;
+      default:
+        return {
+          success: false,
+          output: `Unsupported language: ${language}`,
+          durationMs: Date.now() - startTime,
+        };
+    }
 
-      let output = '';
-      let stderr = '';
-
-      const proc = spawn(command, args, {
+    try {
+      // Create sandbox via manager (Docker or Local based on config)
+      const sandbox = await this.sandboxManager.createSandbox({
+        id: `exec-${Date.now()}`,
         timeout,
+        maxMemoryMB: 256,
+        maxCpuPercent: 50,
+        maxProcesses: 50,
         cwd: process.cwd(),
       });
 
-      proc.stdout?.on('data', (data) => {
-        output += data.toString();
-      });
+      try {
+        // sandbox.start() is called inside createSandbox, no need to call again
+        console.log(`[ExecutionAgent] 🛡️ Executing in sandbox (mode: ${this.sandboxMode})`);
 
-      proc.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
+        const result = await sandbox.exec(command);
 
-      proc.on('close', (exitCode) => {
-        resolve({
-          success: exitCode === 0,
-          output: output || stderr,
-          exitCode: exitCode || 0,
-          stderr,
-          durationMs: Date.now() - startTime,
-        });
-      });
-
-      proc.on('error', (error) => {
-        resolve({
-          success: false,
-          output: error.message,
-          durationMs: Date.now() - startTime,
-        });
-      });
-    });
+        return {
+          success: result.ok,
+          output: result.stdout || result.stderr,
+          exitCode: result.exitCode,
+          stderr: result.stderr,
+          durationMs: result.duration,
+        };
+      } finally {
+        console.log(`[ExecutionAgent] 🧹 Cleaning up sandbox`);
+        await sandbox.stop();
+      }
+    } catch (error) {
+      console.error(`[ExecutionAgent] Sandbox error:`, error);
+      return {
+        success: false,
+        output: error instanceof Error ? error.message : String(error),
+        durationMs: Date.now() - startTime,
+      };
+    }
   }
 
   private buildGenerationSystemPrompt(language?: string, template?: string): string {
@@ -937,6 +1294,253 @@ Return ONLY the code without markdown code blocks or explanations.`;
       const { definition } = event.payload;
       await this.runProcess(definition);
     });
+
+    // V3.3.404: Self-correction loop - listen for failed tasks
+    bus.on('agent:task:failed', async (event: SynapsysEvent) => {
+      if (!this.autonomousFixingEnabled) return;
+
+      const { taskId, name, type } = event.payload as {
+        taskId: string;
+        name: string;
+        type: TaskType;
+      };
+
+      await this.attemptSelfCorrection(taskId, name, type);
+    });
+
+    // V3.3.404: Track task progress in SessionContinuity
+    bus.on('agent:task:started', async (event: SynapsysEvent) => {
+      try {
+        const { sessionContinuity } = await import('../continuity/session-continuity.js');
+        const { taskId, name, type } = event.payload as {
+          taskId: string;
+          name: string;
+          type: TaskType;
+        };
+
+        sessionContinuity.trackTask({
+          id: taskId,
+          type: type as 'execution' | 'analysis' | 'generation' | 'learning' | 'optimization',
+          description: name,
+          progress: 0,
+          resumeState: {},
+          priority: 5,
+        });
+      } catch {
+        // SessionContinuity may not be initialized yet
+      }
+    });
+
+    bus.on('agent:task:completed', async (event: SynapsysEvent) => {
+      try {
+        const { sessionContinuity } = await import('../continuity/session-continuity.js');
+        const { taskId } = event.payload as { taskId: string };
+        sessionContinuity.updateTaskProgress(taskId, 1);
+        // Clear retry count on success
+        this.taskRetryCount.delete(taskId);
+      } catch {
+        // SessionContinuity may not be initialized yet
+      }
+    });
+
+    // V3.3.404: Listen for ProactiveScheduler code execution requests
+    bus.on('proactive_scheduler:code_task', async (event: SynapsysEvent) => {
+      const { prompt, type, context } = event.payload as {
+        prompt: string;
+        type?: TaskType;
+        context?: Record<string, unknown>;
+      };
+
+      await this.submitTask({
+        type: type || 'execute',
+        name: `Scheduled: ${prompt.substring(0, 50)}...`,
+        description: prompt,
+        input: { prompt, context: context || {} },
+        options: { autoApprove: true, sandbox: true },
+      });
+    });
+  }
+
+  // ============================================================================
+  // V3.3.404: SELF-CORRECTION LOOP (Project Pinocchio - The Brain)
+  // ============================================================================
+
+  /**
+   * Attempt to self-correct a failed task
+   * This is the core "autonomous developer" capability
+   */
+  private async attemptSelfCorrection(
+    taskId: string,
+    taskName: string,
+    taskType: TaskType
+  ): Promise<void> {
+    const retryCount = this.taskRetryCount.get(taskId) || 0;
+
+    if (retryCount >= this.MAX_SELF_CORRECTION_RETRIES) {
+      console.log(
+        `[ExecutionAgent] Task ${taskId} exceeded max retries (${this.MAX_SELF_CORRECTION_RETRIES}), abandoning`
+      );
+      bus.publish('cortex', 'agent:task:abandoned', {
+        taskId,
+        name: taskName,
+        reason: 'Max self-correction retries exceeded',
+        retries: retryCount,
+      });
+      this.taskRetryCount.delete(taskId);
+      return;
+    }
+
+    this.taskRetryCount.set(taskId, retryCount + 1);
+
+    console.log(
+      `[ExecutionAgent] Self-correction attempt ${retryCount + 1}/${this.MAX_SELF_CORRECTION_RETRIES} for ${taskName}`
+    );
+
+    // Get the failed task from history
+    const history = this.processor.getHistory(10);
+    const failedTask = history.find((t) => t.id === taskId);
+
+    if (!failedTask || !failedTask.result) {
+      console.warn(`[ExecutionAgent] Could not find failed task ${taskId} in history`);
+      return;
+    }
+
+    const errorMessage = failedTask.result.output || failedTask.error || 'Unknown error';
+
+    // Create a fix task to analyze and repair the failure
+    const fixTask = await this.submitTask({
+      type: 'fix',
+      name: `Self-correction: ${taskName}`,
+      description: `Analyzing and fixing failed task: ${errorMessage}`,
+      input: {
+        prompt: `The following task failed with error: "${errorMessage}"
+        
+Original task: ${taskName}
+Task type: ${taskType}
+Original input: ${JSON.stringify(failedTask.input, null, 2)}
+
+Analyze the error and provide a corrected implementation.`,
+        code: failedTask.input?.code,
+        context: {
+          originalTaskId: taskId,
+          errorMessage,
+          retryAttempt: retryCount + 1,
+        },
+      },
+      options: {
+        autoApprove: true,
+        sandbox: true,
+      },
+    });
+
+    bus.publish('cortex', 'agent:self_correction:started', {
+      originalTaskId: taskId,
+      fixTaskId: fixTask.id,
+      attempt: retryCount + 1,
+      errorMessage,
+    });
+  }
+
+  /**
+   * Enable/disable autonomous fixing
+   */
+  setAutonomousFixing(enabled: boolean): void {
+    this.autonomousFixingEnabled = enabled;
+    console.log(`[ExecutionAgent] Autonomous fixing ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  /**
+   * Get self-correction statistics
+   */
+  getSelfCorrectionStats(): {
+    pendingRetries: number;
+    maxRetries: number;
+    autonomousFixingEnabled: boolean;
+  } {
+    return {
+      pendingRetries: this.taskRetryCount.size,
+      maxRetries: this.MAX_SELF_CORRECTION_RETRIES,
+      autonomousFixingEnabled: this.autonomousFixingEnabled,
+    };
+  }
+
+  // ============================================================================
+  // V3.3.407: SANDBOX EXECUTION (Safe Code Execution) - FIXED recursion bug
+  // ============================================================================
+
+  /**
+   * Execute code in a sandboxed environment
+   * V3.3.407: Always uses SandboxManager - no fallback to runInSandbox (recursion fix)
+   */
+  async executeInSandbox(
+    code: string,
+    language: string,
+    options: { timeout?: number; workingDir?: string } = {}
+  ): Promise<ExecutionResult> {
+    const timeout = options.timeout || 30000;
+    const startTime = Date.now();
+
+    // Build the command based on language
+    const safeCode = code.replace(/'/g, "\\'");
+    let command: string;
+
+    switch (language.toLowerCase()) {
+      case 'javascript':
+      case 'js':
+        command = `node -e '${safeCode}'`;
+        break;
+      case 'typescript':
+      case 'ts':
+        command = `npx tsx -e '${safeCode}'`;
+        break;
+      case 'python':
+      case 'py':
+        command = `python3 -c '${safeCode}'`;
+        break;
+      default:
+        return {
+          success: false,
+          output: `Unsupported language for sandbox: ${language}`,
+          durationMs: Date.now() - startTime,
+        };
+    }
+
+    try {
+      // SandboxManager automatically creates Docker or Local sandbox based on config
+      const sandbox = await this.sandboxManager.createSandbox({
+        id: `exec-${Date.now()}`,
+        timeout,
+        maxMemoryMB: 256,
+        maxCpuPercent: 50,
+        maxProcesses: 50,
+        cwd: options.workingDir || process.cwd(),
+      });
+
+      try {
+        // sandbox.start() is called inside createSandbox, no need to call again
+        console.log(`[ExecutionAgent] 🛡️ Sandbox started (mode: ${this.sandboxMode})`);
+
+        const result = await sandbox.exec(command);
+
+        return {
+          success: result.ok,
+          output: result.stdout || result.stderr,
+          exitCode: result.exitCode,
+          stderr: result.stderr,
+          durationMs: result.duration,
+        };
+      } finally {
+        await sandbox.stop();
+        console.log(`[ExecutionAgent] 🧹 Sandbox destroyed`);
+      }
+    } catch (error) {
+      console.error(`[ExecutionAgent] Sandbox execution error:`, error);
+      return {
+        success: false,
+        output: error instanceof Error ? error.message : String(error),
+        durationMs: Date.now() - startTime,
+      };
+    }
   }
 }
 

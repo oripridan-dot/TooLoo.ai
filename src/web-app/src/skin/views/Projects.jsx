@@ -14,11 +14,7 @@
 
 import React, { useState, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  useProjects,
-  useProjectMutations,
-  useProjectTemplates,
-} from '../../hooks/useProjects';
+import { useProjects, useProjectMutations, useProjectTemplates } from '../../hooks/useProjects';
 
 // ============================================================================
 // ICONS
@@ -27,17 +23,32 @@ import {
 const Icons = {
   Grid: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+      />
     </svg>
   ),
   List: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 6h16M4 10h16M4 14h16M4 18h16"
+      />
     </svg>
   ),
   Search: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
     </svg>
   ),
   Plus: () => (
@@ -46,38 +57,78 @@ const Icons = {
     </svg>
   ),
   Star: ({ filled }) => (
-    <svg className="w-4 h-4" fill={filled ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+    <svg
+      className="w-4 h-4"
+      fill={filled ? 'currentColor' : 'none'}
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+      />
     </svg>
   ),
   Fork: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+      />
     </svg>
   ),
   Branch: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+      />
     </svg>
   ),
   Users: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+      />
     </svg>
   ),
   Private: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+      />
     </svg>
   ),
   Public: () => (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   ),
   Dots: () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+      />
     </svg>
   ),
   Close: () => (
@@ -155,7 +206,9 @@ const ProjectCard = memo(({ project, viewMode, onSelect, onStar, onFork, onOptio
               </span>
             )}
           </div>
-          <p className="text-gray-500 text-sm truncate">{project.description || 'No description'}</p>
+          <p className="text-gray-500 text-sm truncate">
+            {project.description || 'No description'}
+          </p>
         </div>
 
         {/* Stats */}
@@ -177,10 +230,7 @@ const ProjectCard = memo(({ project, viewMode, onSelect, onStar, onFork, onOptio
         {/* Tags */}
         <div className="hidden lg:flex items-center gap-2">
           {project.tags?.slice(0, 2).map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 bg-white/5 rounded text-xs text-gray-400"
-            >
+            <span key={tag} className="px-2 py-0.5 bg-white/5 rounded text-xs text-gray-400">
               {tag}
             </span>
           ))}
@@ -317,10 +367,7 @@ const ProjectCard = memo(({ project, viewMode, onSelect, onStar, onFork, onOptio
         {project.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {project.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-0.5 bg-white/5 rounded text-xs text-gray-400"
-              >
+              <span key={tag} className="px-2 py-0.5 bg-white/5 rounded text-xs text-gray-400">
                 {tag}
               </span>
             ))}
@@ -406,10 +453,7 @@ const CreateProjectModal = memo(({ isOpen, onClose, onCreate }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">Create New Project</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
             <Icons.Close />
           </button>
         </div>
@@ -418,9 +462,7 @@ const CreateProjectModal = memo(({ isOpen, onClose, onCreate }) => {
         <div className="p-4 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Project Name
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Project Name</label>
             <input
               type="text"
               value={name}
@@ -433,9 +475,7 @@ const CreateProjectModal = memo(({ isOpen, onClose, onCreate }) => {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -448,9 +488,7 @@ const CreateProjectModal = memo(({ isOpen, onClose, onCreate }) => {
           {/* Type & Visibility */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Type
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
@@ -465,9 +503,7 @@ const CreateProjectModal = memo(({ isOpen, onClose, onCreate }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Visibility
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Visibility</label>
               <select
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value)}
@@ -573,10 +609,7 @@ const ProjectDetailsPanel = memo(({ project, onClose, onFork, onDelete }) => {
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-white/10 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white truncate">{project.name}</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
             <Icons.Close />
           </button>
         </div>

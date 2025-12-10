@@ -208,6 +208,10 @@ export class ExplorationEngine {
     this.knowledgeGraph = knowledgeGraph;
     this.vectorStore = vectorStore;
     this.sandboxManager = new SandboxManager();
+    // Initialize sandbox manager (cleans up orphaned containers)
+    this.sandboxManager.initialize().catch((err) => {
+      console.warn('[ExplorationEngine] Sandbox manager init warning:', err.message);
+    });
     this.policy = {
       environmentRestriction: 'development',
       maxConcurrentExperiments: 3,
@@ -1230,11 +1234,8 @@ export class ExplorationEngine {
         case 'cross_domain':
           result = await this.executeCrossDomainExploration(hypothesis, sandboxId);
           break;
-        case 'enhancement':
-        case 'custom':
-        case 'manual':
         default:
-          // Handle enhancement and custom types as capability discovery
+          // Handle any other types as capability discovery
           result = await this.exploreCapability(hypothesis, sandboxId);
           break;
       }

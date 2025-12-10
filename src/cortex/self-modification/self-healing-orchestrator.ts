@@ -147,13 +147,28 @@ export class SelfHealingOrchestrator extends EventEmitter {
   // Lifecycle
   // ===========================================================================
 
+  /**
+   * Initialize the self-healing orchestrator
+   * Sets up metrics, loads state, and prepares for monitoring
+   */
+  async initialize(): Promise<void> {
+    // Initialize health metrics
+    this.initializeMetrics();
+    
+    // Load known issues state
+    await this.loadIssuesState();
+    
+    console.log('[SelfHealing] ✓ Self-healing orchestrator initialized');
+    return Promise.resolve();
+  }
+
   async start(): Promise<void> {
     if (this.isRunning) return;
     
     this.isRunning = true;
     console.log('[SelfHealing] Starting self-healing orchestrator...');
 
-    // Initialize health metrics
+    // Initialize health metrics (if not already done)
     this.initializeMetrics();
 
     // Load known issues
@@ -187,7 +202,7 @@ export class SelfHealingOrchestrator extends EventEmitter {
       { name: 'lint-error-count', value: 0, threshold: 5, lastChecked: 0 },
       { name: 'build-success', value: 1, threshold: 1, lastChecked: 0 },
       { name: 'memory-usage', value: 0, threshold: 0.8, lastChecked: 0 },
-      { name: 'response-time', value: 0, threshold: 1000, lastChecked: 0 },
+      { name: 'response-time', value: 100, threshold: 1000, lastChecked: 0 }, // Default 100ms, threshold 1000ms
     ];
 
     for (const m of metrics) {
@@ -324,7 +339,13 @@ export class SelfHealingOrchestrator extends EventEmitter {
 
   private updateMetricStatuses(): void {
     Array.from(this.healthMetrics.values()).forEach((metric) => {
-      if (metric.name.includes('count') || metric.name.includes('error')) {
+      // Lower is better: counts, errors, response-time, memory-usage
+      const lowerIsBetter = metric.name.includes('count') || 
+                            metric.name.includes('error') || 
+                            metric.name.includes('time') ||
+                            metric.name.includes('memory');
+      
+      if (lowerIsBetter) {
         // Lower is better
         if (metric.value <= metric.threshold) {
           metric.status = 'healthy';

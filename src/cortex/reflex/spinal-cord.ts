@@ -1,21 +1,21 @@
 // @version 3.3.406
 /**
  * Spinal Cord - Reflex Arc for Immediate File Change Response
- * 
+ *
  * Part of Project Pinocchio: The Realization Protocol
- * 
+ *
  * This subsystem acts as TooLoo's "spinal cord" - providing immediate,
  * reflexive responses to sensory input (file changes) without requiring
  * higher cognitive processing. Like human reflexes, these reactions are
  * fast, automatic, and pattern-based.
- * 
+ *
  * Flow:
  * 1. Subscribe to sensory:file:change events from FileWatcher
  * 2. Fast Check: Filter for code files (.ts, .js, .jsx, .tsx)
  * 3. Heuristic Analysis: Detect common issues (empty files, missing imports, etc.)
  * 4. Trigger: Construct FixTask and submit to ExecutionAgent
  * 5. Self-Healing: Attempt automatic repair for known issue patterns
- * 
+ *
  * @module cortex/reflex/spinal-cord
  */
 
@@ -50,8 +50,16 @@ interface FixTask {
 
 // Code file extensions we care about
 const CODE_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-  '.py', '.json', '.yaml', '.yml'
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.py',
+  '.json',
+  '.yaml',
+  '.yml',
 ]);
 
 // Patterns that indicate issues
@@ -60,12 +68,12 @@ const ISSUE_PATTERNS = {
   emptyFile: /^\s*$/,
   syntaxError: /SyntaxError|Unexpected token|Parse error/i,
   brokenImport: /Cannot find module|Module not found/,
-  
+
   // Warnings: Things that should be fixed
   todoMarker: /\/\/\s*TODO:|\/\*\s*TODO:/gi,
   fixmeMarker: /\/\/\s*FIXME:|\/\*\s*FIXME:/gi,
   hackMarker: /\/\/\s*HACK:|\/\*\s*HACK:/gi,
-  
+
   // Info: Tracked but not auto-fixed
   debugStatement: /console\.(log|debug|info)\(/g,
   unusedImport: /^import .* from .* \/\/ unused$/gm,
@@ -78,17 +86,9 @@ const IMPORT_PATTERNS: Record<string, RegExp[]> = {
     /^import \{ .* \} from ['"]([^'"]+)['"]/gm,
     /^export .* from ['"]([^'"]+)['"]/gm,
   ],
-  '.tsx': [
-    /^import .* from ['"]([^'"]+)['"]/gm,
-    /^import \{ .* \} from ['"]([^'"]+)['"]/gm,
-  ],
-  '.js': [
-    /^import .* from ['"]([^'"]+)['"]/gm,
-    /require\(['"]([^'"]+)['"]\)/gm,
-  ],
-  '.jsx': [
-    /^import .* from ['"]([^'"]+)['"]/gm,
-  ],
+  '.tsx': [/^import .* from ['"]([^'"]+)['"]/gm, /^import \{ .* \} from ['"]([^'"]+)['"]/gm],
+  '.js': [/^import .* from ['"]([^'"]+)['"]/gm, /require\(['"]([^'"]+)['"]\)/gm],
+  '.jsx': [/^import .* from ['"]([^'"]+)['"]/gm],
 };
 
 /**
@@ -138,7 +138,7 @@ export class SpinalCord {
     }, 5000);
 
     console.log('[SpinalCord] Reflex arc active - listening for file changes');
-    
+
     bus.publish('cortex', 'reflex:activated', {
       timestamp: Date.now(),
       patterns: Object.keys(ISSUE_PATTERNS).length,
@@ -153,13 +153,13 @@ export class SpinalCord {
       clearInterval(this.processingInterval);
       this.processingInterval = null;
     }
-    
+
     // Clear all debounce timers
     for (const timer of this.debounceTimers.values()) {
       clearTimeout(timer);
     }
     this.debounceTimers.clear();
-    
+
     registry.updateStatus('spinal-cord', 'degraded');
     console.log('[SpinalCord] Reflex arc deactivated');
   }
@@ -168,7 +168,11 @@ export class SpinalCord {
    * Handle incoming file change event
    */
   private handleFileChange(event: SynapsysEvent): void {
-    const { type, path: filePath, timestamp } = event.payload as {
+    const {
+      type,
+      path: filePath,
+      timestamp,
+    } = event.payload as {
       type: 'add' | 'change' | 'unlink';
       path: string;
       timestamp: number;
@@ -192,10 +196,13 @@ export class SpinalCord {
       clearTimeout(existingTimer);
     }
 
-    this.debounceTimers.set(filePath, setTimeout(() => {
-      this.debounceTimers.delete(filePath);
-      this.analyzeFile(filePath, ext, timestamp);
-    }, this.DEBOUNCE_MS));
+    this.debounceTimers.set(
+      filePath,
+      setTimeout(() => {
+        this.debounceTimers.delete(filePath);
+        this.analyzeFile(filePath, ext, timestamp);
+      }, this.DEBOUNCE_MS)
+    );
   }
 
   /**
@@ -204,9 +211,9 @@ export class SpinalCord {
   private async analyzeFile(filePath: string, ext: string, timestamp: number): Promise<void> {
     try {
       const fullPath = path.resolve(process.cwd(), filePath);
-      
+
       // Check if file exists
-      if (!await fs.pathExists(fullPath)) {
+      if (!(await fs.pathExists(fullPath))) {
         console.log(`[SpinalCord] File no longer exists: ${filePath}`);
         return;
       }
@@ -273,9 +280,7 @@ export class SpinalCord {
       this.recentAnalyses.set(filePath, analysis);
 
       // If there are critical/warning issues, queue for fixing
-      const actionableIssues = issues.filter(
-        i => i.severity !== 'info' && i.autoFixable
-      );
+      const actionableIssues = issues.filter((i) => i.severity !== 'info' && i.autoFixable);
 
       if (actionableIssues.length > 0) {
         this.queueFixTask(filePath, actionableIssues);
@@ -285,8 +290,8 @@ export class SpinalCord {
       bus.publish('cortex', 'reflex:file:analyzed', {
         file: filePath,
         issues: issues.length,
-        critical: issues.filter(i => i.severity === 'critical').length,
-        warnings: issues.filter(i => i.severity === 'warning').length,
+        critical: issues.filter((i) => i.severity === 'critical').length,
+        warnings: issues.filter((i) => i.severity === 'warning').length,
         timestamp,
       });
 
@@ -294,7 +299,6 @@ export class SpinalCord {
       if (issues.length > 0) {
         console.log(`[SpinalCord] Analyzed ${filePath}: ${issues.length} issue(s) found`);
       }
-
     } catch (error) {
       console.error(`[SpinalCord] Error analyzing ${filePath}:`, error);
     }
@@ -311,9 +315,9 @@ export class SpinalCord {
       const matches = [...content.matchAll(pattern)];
       for (const match of matches) {
         const importPath = match[1];
-        
-        // Skip node_modules imports (they should be in package.json)
-        if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+
+        // Skip if no import path captured or if node_modules import
+        if (!importPath || (!importPath.startsWith('.') && !importPath.startsWith('/'))) {
           continue;
         }
 
@@ -342,18 +346,18 @@ export class SpinalCord {
    */
   private resolveImportPath(importPath: string, fromFile: string, ext: string): string | null {
     const dir = path.dirname(fromFile);
-    
+
     // Try exact path first
-    let resolved = path.resolve(dir, importPath);
+    const resolved = path.resolve(dir, importPath);
     if (fs.existsSync(resolved)) return resolved;
-    
+
     // Try with extension
     const extensions = [ext, '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'];
     for (const tryExt of extensions) {
       const tryPath = resolved + tryExt;
       if (fs.existsSync(tryPath)) return tryPath;
     }
-    
+
     return null;
   }
 
@@ -386,7 +390,7 @@ export class SpinalCord {
     }
 
     console.log(`[SpinalCord] Queued fix task for ${file} (priority: ${priority})`);
-    
+
     bus.publish('cortex', 'reflex:task:queued', {
       taskId: task.id,
       file,
@@ -414,8 +418,8 @@ export class SpinalCord {
         name: `Auto-fix: ${task.file}`,
         input: {
           files: [task.file],
-          issues: task.issues.map(i => i.message),
-          prompt: `Analyze and fix the following issues in ${task.file}:\n${task.issues.map(i => `- [${i.severity}] ${i.message}`).join('\n')}`,
+          issues: task.issues.map((i) => i.message),
+          prompt: `Analyze and fix the following issues in ${task.file}:\n${task.issues.map((i) => `- [${i.severity}] ${i.message}`).join('\n')}`,
         },
         options: {
           autoApprove: false, // Don't auto-approve fixes, require review
@@ -428,10 +432,9 @@ export class SpinalCord {
         file: task.file,
         timestamp: Date.now(),
       });
-
     } catch (error) {
       console.error(`[SpinalCord] Error processing fix task:`, error);
-      
+
       // Re-queue with lower priority
       task.priority = Math.max(1, task.priority - 5);
       this.issueQueue.push(task);

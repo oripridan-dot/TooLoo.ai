@@ -190,9 +190,12 @@ router.post('/import-figma', async (req, res) => {
     // For now, we'll just list the style names as a proof of connection.
     // A full implementation would require a second call to /files/:key/nodes?ids=...
 
-    styles.forEach((s: { style_type: string; name: string }) => {
+    styles.forEach((s: { style_type: string; name: string; node_id?: string }) => {
       if (s.style_type === 'FILL') {
-        colors[s.name] = '#000000'; // Placeholder as we need node data
+        // Figma API limitation: Styles endpoint returns style names but not color values.
+        // Full implementation requires: GET /files/:key/nodes?ids={node_id}
+        // For now, we return the style names with a default color indicator
+        colors[s.name] = `style:${s.node_id || 'unknown'}`;
       }
     });
 

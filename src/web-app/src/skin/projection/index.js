@@ -5,14 +5,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Store - SystemStateStore (single source of truth for backend state)
-export { 
-  useSystemState, 
-  useOrchestrator, 
-  useSkills, 
-  useKnowledge, 
-  useEvaluation, 
-  useModality, 
-  useUIMode, 
+export {
+  useSystemState,
+  useOrchestrator,
+  useSkills,
+  useKnowledge,
+  useEvaluation,
+  useModality,
+  useUIMode,
   useConnection,
   selectIsProcessing,
   selectConfidence,

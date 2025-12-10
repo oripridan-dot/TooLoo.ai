@@ -1,10 +1,14 @@
-// @version 1.0.0
+// @version 3.3.425
 /**
  * Meta-Learner: Self-Improvement Cognitive Engine
  *
  * A higher-order learning system that monitors, analyzes, and improves
  * TooLoo's learning capabilities themselves. This implements the
  * "learning to learn" paradigm.
+ *
+ * V3.3.425: Added cognitive_state_change event for Bio-Feedback Loop
+ * - Emits velocity and cognitiveLoad changes to UI via EventBus
+ * - Enables Hyperfocus/Support mode transitions in SynapysConductor
  *
  * Key Capabilities:
  * - Learning velocity analysis (how fast is the system improving?)
@@ -311,6 +315,7 @@ export class MetaLearner {
 
   private analyzeLearningVelocity(): void {
     const previousVelocity = this.state.velocity.current;
+    const previousTrend = this.state.velocity.trend;
 
     // Calculate new velocity based on recent learning events
     // This is a simplified model - real implementation would use
@@ -339,6 +344,26 @@ export class MetaLearner {
     } else {
       this.state.velocity.projectedPlateau = null;
     }
+
+    // V3.3.425: Emit cognitive state change if velocity trend changed significantly
+    if (previousTrend !== this.state.velocity.trend) {
+      this.emitCognitiveStateChange('velocity_changed');
+    }
+  }
+
+  /**
+   * V3.3.425: Emit cognitive state change event for Bio-Feedback Loop
+   * This event is forwarded to the UI via Socket.IO to trigger visual responses
+   */
+  private emitCognitiveStateChange(trigger: string): void {
+    bus.publish('cortex', 'meta:cognitive_state_change', {
+      velocity: this.state.velocity,
+      cognitiveLoad: this.state.cognitiveLoad.currentLoad,
+      loadDistribution: this.state.cognitiveLoad.loadDistribution,
+      bottlenecks: this.state.cognitiveLoad.bottlenecks,
+      trigger,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   private evaluateStrategies(): void {
@@ -387,6 +412,7 @@ export class MetaLearner {
   private checkCognitiveBottlenecks(): void {
     const bottlenecks: string[] = [];
     const threshold = 0.8;
+    const previousLoad = this.state.cognitiveLoad.currentLoad;
 
     for (const [subsystem, load] of Object.entries(this.state.cognitiveLoad.loadDistribution)) {
       if (load > threshold) {
@@ -397,6 +423,16 @@ export class MetaLearner {
     this.state.cognitiveLoad.bottlenecks = bottlenecks;
     this.state.cognitiveLoad.currentLoad =
       Object.values(this.state.cognitiveLoad.loadDistribution).reduce((a, b) => a + b, 0) / 4;
+
+    // V3.3.425: Emit cognitive state change if load changed significantly (>10%)
+    const loadDelta = Math.abs(this.state.cognitiveLoad.currentLoad - previousLoad);
+    if (
+      loadDelta > 0.1 ||
+      (previousLoad < 0.8 && this.state.cognitiveLoad.currentLoad >= 0.8) ||
+      (previousLoad >= 0.2 && this.state.cognitiveLoad.currentLoad < 0.2)
+    ) {
+      this.emitCognitiveStateChange('load_changed');
+    }
   }
 
   private detectEmergencePatterns(): void {
@@ -522,19 +558,19 @@ export class MetaLearner {
       for (const strategy of sourceStrategies) {
         // 2. Check if strategy is underutilized in target domain
         const targetAffinity = strategy.domainAffinity[transfer.targetDomain] || 0;
-        
+
         if (targetAffinity < 0.5) {
           // 3. Apply Transfer: Boost affinity in target domain (Hypothesis: it will work there too)
           // This is "Domain Adaptation"
           const adaptationFactor = 0.1; // Conservative boost
           strategy.domainAffinity[transfer.targetDomain] = targetAffinity + adaptationFactor;
-          
+
           bus.publish('cortex', 'meta:transfer_applied', {
             transferId: transfer.id,
             strategy: strategy.name,
             source: transfer.sourceDomain,
             target: transfer.targetDomain,
-            newAffinity: strategy.domainAffinity[transfer.targetDomain]
+            newAffinity: strategy.domainAffinity[transfer.targetDomain],
           });
         }
       }

@@ -1,16 +1,16 @@
 // @version 3.3.399
 /**
  * AST Indexer for Code Understanding
- * 
+ *
  * Provides structural code analysis using TypeScript's compiler API.
  * This enables TooLoo to understand code at a deeper level than just text:
  * - Function signatures and purposes
  * - Class hierarchies and relationships
  * - Import/export dependencies
  * - Variable types and usages
- * 
+ *
  * Used by the memory system to create semantically meaningful code embeddings.
- * 
+ *
  * @module cortex/memory/ast-indexer
  */
 
@@ -50,7 +50,7 @@ export interface CodeSymbol {
   summary: string;
 }
 
-export type SymbolKind = 
+export type SymbolKind =
   | 'function'
   | 'class'
   | 'interface'
@@ -100,12 +100,12 @@ export class ASTIndexer {
    */
   async indexFile(filePath: string): Promise<FileIndex> {
     const absolutePath = path.resolve(this.rootDir, filePath);
-    
+
     // Check cache
     const cached = this.cache.get(absolutePath);
     const content = await fs.readFile(absolutePath, 'utf-8');
     const contentHash = this.hashContent(content);
-    
+
     if (cached && cached.contentHash === contentHash) {
       return cached;
     }
@@ -171,19 +171,26 @@ export class ASTIndexer {
   /**
    * Index all TypeScript/JavaScript files in a directory
    */
-  async indexDirectory(dirPath: string, extensions = ['.ts', '.tsx', '.js', '.jsx']): Promise<FileIndex[]> {
+  async indexDirectory(
+    dirPath: string,
+    extensions = ['.ts', '.tsx', '.js', '.jsx']
+  ): Promise<FileIndex[]> {
     const absoluteDir = path.resolve(this.rootDir, dirPath);
     const results: FileIndex[] = [];
 
     const walkDir = async (dir: string) => {
       const entries = await fs.readdir(dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        
+
         // Skip node_modules and hidden directories
         if (entry.isDirectory()) {
-          if (!entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== 'dist') {
+          if (
+            !entry.name.startsWith('.') &&
+            entry.name !== 'node_modules' &&
+            entry.name !== 'dist'
+          ) {
             await walkDir(fullPath);
           }
         } else if (entry.isFile()) {
@@ -215,9 +222,11 @@ export class ASTIndexer {
     for (const index of this.cache.values()) {
       for (const symbol of index.symbols) {
         if (kind && symbol.kind !== kind) continue;
-        
-        if (symbol.name.toLowerCase().includes(queryLower) ||
-            symbol.summary.toLowerCase().includes(queryLower)) {
+
+        if (
+          symbol.name.toLowerCase().includes(queryLower) ||
+          symbol.summary.toLowerCase().includes(queryLower)
+        ) {
           results.push(symbol);
         }
       }
@@ -241,9 +250,9 @@ export class ASTIndexer {
    */
   generateFileSummary(index: FileIndex): string {
     const parts: string[] = [];
-    
+
     parts.push(`File: ${path.basename(index.filePath)}`);
-    
+
     // Group symbols by kind
     const byKind = new Map<SymbolKind, CodeSymbol[]>();
     for (const symbol of index.symbols) {
@@ -255,19 +264,21 @@ export class ASTIndexer {
     // Classes
     const classes = byKind.get('class') || [];
     if (classes.length > 0) {
-      parts.push(`Classes: ${classes.map(c => c.name).join(', ')}`);
+      parts.push(`Classes: ${classes.map((c) => c.name).join(', ')}`);
     }
 
     // Functions
     const functions = byKind.get('function') || [];
     if (functions.length > 0) {
-      parts.push(`Functions: ${functions.map(f => `${f.name}(${f.parameters?.map(p => p.name).join(', ') || ''})`).join(', ')}`);
+      parts.push(
+        `Functions: ${functions.map((f) => `${f.name}(${f.parameters?.map((p) => p.name).join(', ') || ''})`).join(', ')}`
+      );
     }
 
     // Interfaces/Types
     const types = [...(byKind.get('interface') || []), ...(byKind.get('type') || [])];
     if (types.length > 0) {
-      parts.push(`Types: ${types.map(t => t.name).join(', ')}`);
+      parts.push(`Types: ${types.map((t) => t.name).join(', ')}`);
     }
 
     // Exports
@@ -277,7 +288,7 @@ export class ASTIndexer {
 
     // Imports
     if (index.imports.length > 0) {
-      parts.push(`Imports from: ${index.imports.map(i => i.module).join(', ')}`);
+      parts.push(`Imports from: ${index.imports.map((i) => i.module).join(', ')}`);
     }
 
     return parts.join('\n');
@@ -289,19 +300,19 @@ export class ASTIndexer {
   getDependencyGraph(filePath: string): { imports: string[]; importedBy: string[] } {
     const absolutePath = path.resolve(this.rootDir, filePath);
     const index = this.cache.get(absolutePath);
-    
+
     if (!index) {
       return { imports: [], importedBy: [] };
     }
 
-    const imports = index.imports.map(i => i.module);
+    const imports = index.imports.map((i) => i.module);
     const importedBy: string[] = [];
 
     // Find files that import this one
     const fileName = path.basename(absolutePath, path.extname(absolutePath));
     for (const [otherPath, otherIndex] of this.cache.entries()) {
       if (otherPath === absolutePath) continue;
-      
+
       for (const imp of otherIndex.imports) {
         if (imp.module.includes(fileName) || imp.module.endsWith(path.basename(absolutePath))) {
           importedBy.push(path.relative(this.rootDir, otherPath));
@@ -318,7 +329,7 @@ export class ASTIndexer {
 
   private extractSymbol(node: ts.Node, sourceFile: ts.SourceFile): CodeSymbol | null {
     const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
-    
+
     // Functions
     if (ts.isFunctionDeclaration(node) && node.name) {
       return {
@@ -349,7 +360,9 @@ export class ASTIndexer {
             column: pos.character,
             documentation: this.getJSDoc(node),
             parameters: this.extractParameters(decl.initializer as ts.FunctionLikeDeclaration),
-            returnType: (decl.initializer as ts.FunctionLikeDeclaration).type?.getText(sourceFile) || 'unknown',
+            returnType:
+              (decl.initializer as ts.FunctionLikeDeclaration).type?.getText(sourceFile) ||
+              'unknown',
             isExported: this.isExported(node),
             modifiers: this.extractModifiers(node),
             summary: this.generateSymbolSummary(node, 'function', sourceFile),
@@ -440,7 +453,7 @@ export class ASTIndexer {
       // Named imports
       if (node.importClause.namedBindings) {
         if (ts.isNamedImports(node.importClause.namedBindings)) {
-          info.namedImports = node.importClause.namedBindings.elements.map(e => e.name.text);
+          info.namedImports = node.importClause.namedBindings.elements.map((e) => e.name.text);
         }
       }
     }
@@ -450,13 +463,13 @@ export class ASTIndexer {
 
   private extractExports(node: ts.Node): string[] {
     if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
-      return node.exportClause.elements.map(e => e.name.text);
+      return node.exportClause.elements.map((e) => e.name.text);
     }
     return [];
   }
 
   private extractParameters(node: ts.FunctionLikeDeclaration): { name: string; type: string }[] {
-    return node.parameters.map(p => ({
+    return node.parameters.map((p) => ({
       name: ts.isIdentifier(p.name) ? p.name.text : 'param',
       type: p.type ? p.type.getText() : 'any',
     }));
@@ -464,7 +477,7 @@ export class ASTIndexer {
 
   private extractModifiers(node: ts.Node): string[] {
     const modifiers: string[] = [];
-    
+
     if (ts.canHaveModifiers(node)) {
       const mods = ts.getModifiers(node);
       if (mods) {
@@ -501,7 +514,7 @@ export class ASTIndexer {
         }
       }
     }
-    
+
     return modifiers;
   }
 
@@ -509,7 +522,7 @@ export class ASTIndexer {
     if (ts.canHaveModifiers(node)) {
       const mods = ts.getModifiers(node);
       if (mods) {
-        return mods.some(m => m.kind === ts.SyntaxKind.ExportKeyword);
+        return mods.some((m) => m.kind === ts.SyntaxKind.ExportKeyword);
       }
     }
     return false;
@@ -520,7 +533,9 @@ export class ASTIndexer {
     if (jsDocs && Array.isArray(jsDocs) && jsDocs.length > 0) {
       const jsDoc = jsDocs[0];
       if (jsDoc.comment) {
-        return typeof jsDoc.comment === 'string' ? jsDoc.comment : jsDoc.comment.map((c: any) => c.text).join('');
+        return typeof jsDoc.comment === 'string'
+          ? jsDoc.comment
+          : jsDoc.comment.map((c: any) => c.text).join('');
       }
     }
     return undefined;
@@ -529,19 +544,25 @@ export class ASTIndexer {
   private generateSymbolSummary(node: ts.Node, kind: string, sourceFile: ts.SourceFile): string {
     const name = this.getNodeName(node);
     const doc = this.getJSDoc(node);
-    
+
     let summary = `${kind} ${name}`;
-    
-    if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+
+    if (
+      ts.isFunctionDeclaration(node) ||
+      ts.isArrowFunction(node) ||
+      ts.isFunctionExpression(node)
+    ) {
       const fn = node as ts.FunctionLikeDeclaration;
-      const params = fn.parameters.map(p => ts.isIdentifier(p.name) ? p.name.text : 'param').join(', ');
+      const params = fn.parameters
+        .map((p) => (ts.isIdentifier(p.name) ? p.name.text : 'param'))
+        .join(', ');
       summary = `${kind} ${name}(${params})`;
     }
-    
+
     if (doc) {
       summary += `: ${doc.substring(0, 100)}`;
     }
-    
+
     return summary;
   }
 
@@ -561,11 +582,16 @@ export class ASTIndexer {
   private getScriptKind(filePath: string): ts.ScriptKind {
     const ext = path.extname(filePath).toLowerCase();
     switch (ext) {
-      case '.ts': return ts.ScriptKind.TS;
-      case '.tsx': return ts.ScriptKind.TSX;
-      case '.js': return ts.ScriptKind.JS;
-      case '.jsx': return ts.ScriptKind.JSX;
-      default: return ts.ScriptKind.Unknown;
+      case '.ts':
+        return ts.ScriptKind.TS;
+      case '.tsx':
+        return ts.ScriptKind.TSX;
+      case '.js':
+        return ts.ScriptKind.JS;
+      case '.jsx':
+        return ts.ScriptKind.JSX;
+      default:
+        return ts.ScriptKind.Unknown;
     }
   }
 
@@ -574,7 +600,7 @@ export class ASTIndexer {
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return hash.toString(16);

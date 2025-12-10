@@ -166,7 +166,7 @@ Be thorough but fair. Consider context. Flag genuine issues but don't over-inter
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',

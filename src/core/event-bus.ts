@@ -45,9 +45,23 @@ export interface EnhancedEventPayload<T = any> {
   };
 }
 
+// Define event source channels - extended for all system components
+export type EventSource =
+  | 'cortex' // Core AI orchestration
+  | 'precog' // Provider routing and prediction
+  | 'nexus' // API and web interface
+  | 'system' // System-level events
+  | 'memory' // Memory and context events
+  | 'ui' // User interface events
+  | 'learning' // Learning system events
+  | 'agent' // Agent framework events
+  | 'initiative' // Initiative manager events
+  | 'suggestions' // Suggestion aggregator events
+  | 'user'; // User-triggered events
+
 // Define the standard event shape for Synapsys
 export interface SynapsysEvent<T = any> {
-  source: 'cortex' | 'precog' | 'nexus' | 'system';
+  source: EventSource;
   type: string;
   payload: T | EnhancedEventPayload<T>;
   timestamp: number;

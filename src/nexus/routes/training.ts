@@ -746,6 +746,21 @@ router.get('/learning/report', async (req, res) => {
         : 0;
     } catch { /* No artifacts yet */ }
 
+    // Count failures from audit log
+    let failedGenerations = 0;
+    try {
+      const content = await fs.readFile(AUDIT_LOG_PATH, 'utf-8');
+      const lines = content.trim().split('\n').filter((l: string) => l.trim());
+      for (const line of lines) {
+        try {
+          const entry = JSON.parse(line);
+          if (entry.status === 'error' || entry.status === 'failed' || entry.error) {
+            failedGenerations++;
+          }
+        } catch { /* skip */ }
+      }
+    } catch { /* No failures tracked yet */ }
+
     res.json({
       ok: true,
       data: {
@@ -753,8 +768,8 @@ router.get('/learning/report', async (req, res) => {
         totalExperiments,
         emergenceCount,
         artifactCount,
-        successfulGenerations: totalExperiments, // experiments completed = successful
-        failedGenerations: 0, // TODO: track failures separately
+        successfulGenerations: Math.max(0, totalExperiments - failedGenerations),
+        failedGenerations,
         improvements,
         commonFailures: [],
         source: 'real-data', // Flag to indicate this is REAL data

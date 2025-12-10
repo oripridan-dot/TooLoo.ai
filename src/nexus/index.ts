@@ -1,16 +1,18 @@
-// @version 3.3.300 - Flow System
+// @version 3.3.461 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
 import { bus } from '../core/event-bus.js';
 import { SocketServer } from './socket.js';
+import { apiLimiter, llmLimiter, visionLimiter } from './middleware/rate-limiter.js';
+import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import apiRoutes from './routes/api.js';
 import systemRoutes from './routes/system.js';
 import providersRoutes from './routes/providers.js';
 import orchestratorRoutes from './routes/orchestrator.js';
 import capabilitiesRoutes from './routes/capabilities.js';
 import githubRoutes from './routes/github.js';
-import projectsRoutes from './routes/projects.js';
+import projectsRoutes from './routes/projects-v2.js';
 import chatRoutes from './routes/chat.js';
 import designRoutes from './routes/design.js';
 import visualsRoutes from './routes/visuals.js';
@@ -37,6 +39,8 @@ import { growthEngineRoutes } from './routes/growth-engine.js';
 import { configurationRoutes } from './routes/configuration.js';
 import { reflectionRoutes } from './routes/reflection.js';
 import flowRoutes from './routes/flow.js';
+import visionRoutes from './routes/vision.js';
+import repoRoutes from './routes/repo.js'; // V3.3.456: RepoAutoOrg
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
@@ -50,6 +54,19 @@ export function createNexusApp() {
 
   app.use(express.json());
 
+  // V3.3.461: Production Rate Limiting
+  app.use('/api/', apiLimiter);
+  
+  // V3.3.405: Request tracking middleware - emit event for every API request
+  app.use((req, res, next) => {
+    bus.publish('nexus', 'nexus:request', {
+      method: req.method,
+      path: req.path,
+      timestamp: Date.now(),
+    });
+    next();
+  });
+
   // Hard-wire API Contracts
   app.use(contractEnforcer);
 
@@ -60,7 +77,7 @@ export function createNexusApp() {
   app.use('/api/v1/capabilities', capabilitiesRoutes);
   app.use('/api/v1/github', githubRoutes);
   app.use('/api/v1/projects', projectsRoutes);
-  app.use('/api/v1/chat', chatRoutes);
+  app.use('/api/v1/chat', llmLimiter, chatRoutes);
   app.use('/api/v1/design', designRoutes);
   app.use('/api/v1/visuals', visualsRoutes);
   app.use('/api/v1/workflows', workflowsRoutes);
@@ -75,7 +92,7 @@ export function createNexusApp() {
   app.use('/api/v1/suggestions', suggestionsRoutes);
   app.use('/api/v1/qa', qaRoutes);
   app.use('/api/v1/cost', costRoutes);
-  app.use('/api/v1/generate', generateRoutes);
+  app.use('/api/v1/generate', llmLimiter, generateRoutes);
   app.use('/api/v1/agent', agentRoutes);
   app.use('/api/v1/system/self', selfModRoutes);
   app.use('/api/v1/system/autonomous', autonomousModRoutes);
@@ -84,6 +101,8 @@ export function createNexusApp() {
   app.use('/api/v1/config', configurationRoutes);
   app.use('/api/v1/reflection', reflectionRoutes);
   app.use('/api/v1/flow', flowRoutes);
+  app.use('/api/v1/vision', visionLimiter, visionRoutes); // V3.3.438: Real Screen Capture + OCR
+  app.use('/api/v1/repo', repoRoutes); // V3.3.456: RepoAutoOrg - Git automation
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)
@@ -135,6 +154,10 @@ export function createNexusApp() {
     }
     res.sendFile(path.join(distPath, 'index.html'));
   });
+
+  // V3.3.461: Production error handling
+  app.use('/api/*', notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }

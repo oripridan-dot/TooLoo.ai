@@ -16,8 +16,8 @@
  */
 
 import { chromium, Browser, Page, BrowserContext } from 'playwright';
-import Tesseract from 'tesseract.js';
-import * as fs from 'fs-extra';
+import * as Tesseract from 'tesseract.js';
+import fs from 'fs-extra';
 import * as path from 'path';
 import { bus } from '../../core/event-bus.js';
 
@@ -240,10 +240,12 @@ export class ScreenCaptureService {
 
       const result = await this.tesseractWorker.recognize(imageSource);
 
-      const words = result.data.words.map((w) => ({
-        text: w.text,
-        confidence: w.confidence,
-        bbox: w.bbox,
+      // Extract words safely - Tesseract types vary by version
+      const wordsData = (result.data as any).words || [];
+      const words = wordsData.map((w: any) => ({
+        text: w.text || '',
+        confidence: w.confidence || 0,
+        bbox: w.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 },
       }));
 
       const lines = result.data.text
@@ -306,8 +308,8 @@ export class ScreenCaptureService {
     const words1 = new Set(text1.lines);
     const words2 = new Set(text2.lines);
 
-    const intersection = new Set([...words1].filter((x) => words2.has(x)));
-    const union = new Set([...words1, ...words2]);
+    const intersection = new Set(Array.from(words1).filter((x) => words2.has(x)));
+    const union = new Set([...Array.from(words1), ...Array.from(words2)]);
 
     const similarity = union.size > 0 ? intersection.size / union.size : 1;
     const diffPercentage = Math.round((1 - similarity) * 100);

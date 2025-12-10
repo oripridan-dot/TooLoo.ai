@@ -1,4 +1,4 @@
-// @version 2.2.247
+// @version 2.2.248
 import LLMProvider from './providers/llm-provider.js';
 import { GeminiImageProvider } from './providers/gemini-image.js';
 import { OpenAIImageProvider } from './providers/openai-image.js';
@@ -15,6 +15,9 @@ interface OpenAIEmbeddingResponse {
     embedding: number[];
   }[];
 }
+
+// Track quota warnings to avoid spamming logs
+let openaiQuotaWarningShown = false;
 
 export class ProviderEngine {
   private llmProvider: LLMProvider;
@@ -60,7 +63,10 @@ export class ProviderEngine {
                   return firstData.embedding;
                 }
               } else if (response.status === 429) {
-                console.warn('[ProviderEngine] ⚠ OpenAI quota exceeded, falling back to Gemini...');
+                if (!openaiQuotaWarningShown) {
+                  console.warn('[ProviderEngine] ⚠ OpenAI quota exceeded, using Gemini for embeddings');
+                  openaiQuotaWarningShown = true;
+                }
               } else {
                 const err = await response.text();
                 console.error(`[ProviderEngine] OpenAI Embedding Error: ${response.status} ${err}`);

@@ -1,32 +1,37 @@
 // @version 3.3.497
 /**
  * SmartRouter - Real Waterfall Fallback Logic
- * 
+ *
  * Phase 1 Implementation: Smart Router
- * 
+ *
  * Replaces the simple try-catch approach with real waterfall routing:
  * 1. Get ranked providers from ProviderScorecard
  * 2. Try each in order until one succeeds
  * 3. Update scorecard after each attempt
  * 4. Return first successful response or final failure
- * 
+ *
  * This is the core of intelligent provider routing.
  */
 
 import { ProviderScorecard, getProviderScorecard } from './provider-scorecard.js';
 import { generateLLM } from '../providers/llm-provider.js';
 import { bus } from '../../core/event-bus.js';
+import { getSegmentationService, UserSegment } from '../personalization/index.js';
+import { getQLearningOptimizer } from '../learning/q-learning-optimizer.js';
+import type { TaskType } from '../../cortex/agent/types.js';
 
-interface SmartRouteOptions {
+export interface SmartRouteOptions {
   system?: string;
   maxTokens?: number;
   sessionId?: string;
   timeout?: number;
   maxRetries?: number;
   excludeProviders?: string[];
+  segment?: UserSegment;
+  taskType?: TaskType; // Allow explicit task type override
 }
 
-interface SmartRouteResult {
+export interface SmartRouteResult {
   provider: string;
   response: string;
   success: boolean;
@@ -55,18 +60,47 @@ export class SmartRouter {
    * Smart waterfall routing: try providers in ranked order until one succeeds
    * This is the core intelligent routing logic
    */
-  async smartRoute(
-    prompt: string,
-    options: SmartRouteOptions = {}
-  ): Promise<SmartRouteResult> {
+  async smartRoute(prompt: string, options: SmartRouteOptions = {}): Promise<SmartRouteResult> {
     const startTime = Date.now();
     const timeout = options.timeout || this.defaultTimeout;
     const maxRetries = options.maxRetries || this.defaultMaxRetries;
     const routeHistory: SmartRouteResult['routeHistory'] = [];
     let attemptsNeeded = 0;
 
+    // Get preferences based on segment if provided
+    let preferences: Record<string, number> | undefined;
+    if (options.segment) {
+      preferences = await getSegmentationService().getProviderPreferences(options.segment);
+      console.log(
+        `[SmartRouter] Applying preferences for segment '${options.segment}':`,
+        preferences
+      );
+    }
+
     // Get ranked providers from scorecard
-    let rankedProviders = this.scorecard.getRouteOrder();
+    let rankedProviders = this.scorecard.getRouteOrder(preferences);
+
+    // Phase 4: Q-Learning Optimization
+    // Determine task type (heuristic or explicit)
+    const taskType = options.taskType || this.detectTaskType(prompt);
+    const segment = options.segment || 'general';
+
+    // Ask Q-Learning Optimizer for a suggestion
+    const qOptimizer = getQLearningOptimizer();
+    const qState = { taskType, userSegment: segment };
+    // We use the currently ranked providers as the available action space
+    const optimalProvider = qOptimizer.getOptimalProvider(qState, rankedProviders);
+
+    if (optimalProvider) {
+      console.log(
+        `[SmartRouter] Q-Learning suggests: ${optimalProvider} for ${taskType}/${segment}`
+      );
+      const index = rankedProviders.indexOf(optimalProvider);
+      if (index !== -1) {
+        rankedProviders.splice(index, 1);
+        rankedProviders.unshift(optimalProvider);
+      }
+    }
 
     // Exclude any providers specified
     if (options.excludeProviders && options.excludeProviders.length > 0) {
@@ -93,6 +127,13 @@ export class SmartRouter {
 
         // Record success in scorecard
         this.scorecard.recordRequest(provider, latency, true, response.tokens);
+
+        // Phase 4: Update Q-Learning Model (Success)
+        qOptimizer.update(
+          { taskType, userSegment: segment },
+          { provider },
+          { latency, success: true, tokens: response.tokens }
+        );
 
         routeHistory.push({
           provider,
@@ -129,6 +170,13 @@ export class SmartRouter {
         // Record failure in scorecard
         this.scorecard.recordRequest(provider, latency, false, undefined, errorMsg);
 
+        // Phase 4: Update Q-Learning Model (Failure)
+        qOptimizer.update(
+          { taskType, userSegment: segment },
+          { provider },
+          { latency, success: false }
+        );
+
         routeHistory.push({
           provider,
           success: false,
@@ -136,9 +184,7 @@ export class SmartRouter {
           error: errorMsg,
         });
 
-        console.warn(
-          `[SmartRouter] ✗ Failed on ${provider} (attempt ${attempt + 1}): ${errorMsg}`
-        );
+        console.warn(`[SmartRouter] ✗ Failed on ${provider} (attempt ${attempt + 1}): ${errorMsg}`);
 
         // Continue to next provider
       }
@@ -166,6 +212,40 @@ export class SmartRouter {
       attemptsNeeded,
       routeHistory,
     };
+  }
+
+  /**
+   * Detect task type from prompt content
+   */
+  private detectTaskType(prompt: string): TaskType {
+    const p = prompt.toLowerCase();
+    if (
+      p.includes('code') ||
+      p.includes('function') ||
+      p.includes('class') ||
+      p.includes('import') ||
+      p.includes('const ') ||
+      p.includes('let ')
+    ) {
+      return 'generate';
+    }
+    if (
+      p.includes('creative') ||
+      p.includes('story') ||
+      p.includes('poem') ||
+      p.includes('write a')
+    ) {
+      return 'generate';
+    }
+    if (
+      p.includes('analyze') ||
+      p.includes('data') ||
+      p.includes('summary') ||
+      p.includes('extract')
+    ) {
+      return 'analyze';
+    }
+    return 'generate';
   }
 
   /**

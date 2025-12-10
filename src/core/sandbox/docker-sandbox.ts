@@ -1,4 +1,4 @@
-// @version 2.3.1
+// @version 2.4.0 - Added operation timeouts to prevent hangs
 import { spawn, exec } from 'child_process';
 import {
   ISandbox,
@@ -8,6 +8,9 @@ import {
   ResourceUsage,
 } from './types.js';
 import { config } from '../config.js';
+
+// Default timeout for Docker operations (10 seconds)
+const DOCKER_OPERATION_TIMEOUT = 10000;
 
 export class DockerSandbox implements ISandbox {
   public id: string;
@@ -77,6 +80,16 @@ export class DockerSandbox implements ISandbox {
       const child = spawn('docker', args);
       let stdout = '';
       let stderr = '';
+      let completed = false;
+
+      // Timeout to prevent hanging
+      const timeout = setTimeout(() => {
+        if (!completed) {
+          completed = true;
+          child.kill('SIGKILL');
+          reject(new Error(`Docker container start timed out after ${DOCKER_OPERATION_TIMEOUT}ms`));
+        }
+      }, DOCKER_OPERATION_TIMEOUT);
 
       child.stdout.on('data', (data) => {
         stdout += data.toString();
@@ -87,6 +100,10 @@ export class DockerSandbox implements ISandbox {
       });
 
       child.on('close', (code) => {
+        if (completed) return; // Already timed out
+        completed = true;
+        clearTimeout(timeout);
+
         if (code === 0) {
           this.containerId = stdout.trim();
           console.log(
@@ -97,6 +114,13 @@ export class DockerSandbox implements ISandbox {
         } else {
           reject(new Error(`Failed to start Docker sandbox: ${stderr}`));
         }
+      });
+
+      child.on('error', (err) => {
+        if (completed) return;
+        completed = true;
+        clearTimeout(timeout);
+        reject(err);
       });
     });
   }
@@ -156,13 +180,33 @@ export class DockerSandbox implements ISandbox {
   async stop(): Promise<void> {
     if (!this.containerId) return;
 
+    const containerId = this.containerId;
+    this.containerId = null; // Mark as stopped immediately
+
     return new Promise((resolve) => {
-      exec(`docker stop ${this.containerId}`, (error) => {
-        if (error) {
-          // We don't reject here because the container might have already stopped
-          console.warn(`Failed to stop container ${this.containerId}: ${error.message}`);
+      // Use timeout flag to track completion
+      let completed = false;
+
+      const timeout = setTimeout(() => {
+        if (!completed) {
+          completed = true;
+          console.warn(`[DockerSandbox] Stop timed out for ${containerId}, force killing...`);
+          // Try force remove as last resort
+          exec(`docker rm -f ${containerId}`, { timeout: 5000 }, () => {
+            resolve(); // Resolve regardless - we tried our best
+          });
         }
-        this.containerId = null;
+      }, 5000); // 5 second timeout for stop
+
+      exec(`docker stop -t 2 ${containerId}`, { timeout: 5000 }, (error) => {
+        if (completed) return;
+        completed = true;
+        clearTimeout(timeout);
+
+        if (error) {
+          // Container might have already stopped - that's OK
+          console.warn(`[DockerSandbox] Stop warning for ${containerId}: ${error.message}`);
+        }
         resolve();
       });
     });

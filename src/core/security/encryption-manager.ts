@@ -115,15 +115,20 @@ export class EncryptionManager {
         return true;
       }
 
-      // Development: auto-generate key (warn in production)
+      // Development: auto-generate key (silent in dev, warn in staging)
       if (process.env['NODE_ENV'] !== 'production') {
-        console.warn('[EncryptionManager] ⚠ No encryption key configured, generating ephemeral key');
+        // Silent in pure development
+        const isQuietDev = !process.env['ENCRYPTION_KEY'] && process.env['NODE_ENV'] !== 'staging';
+        if (!isQuietDev) {
+          console.warn('[EncryptionManager] ⚠ No encryption key configured, generating ephemeral key');
+        }
         this.masterKey = crypto.randomBytes(this.options.keyLength);
         this.keyId = this.generateKeyId(this.masterKey);
         
-        // Log the key for development (DO NOT do this in production!)
-        console.log(`[EncryptionManager] DEV KEY: ${this.masterKey.toString('hex')}`);
-        console.log(`[EncryptionManager] Set ENCRYPTION_KEY environment variable for persistence`);
+        // Only log DEV KEY if explicitly requested
+        if (process.env['DEBUG_ENCRYPTION']) {
+          console.log(`[EncryptionManager] DEV KEY: ${this.masterKey.toString('hex')}`);
+        }
         
         this.secureConfig = this.createEmptyConfig();
         return true;

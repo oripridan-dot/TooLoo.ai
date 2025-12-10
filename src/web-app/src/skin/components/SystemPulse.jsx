@@ -23,7 +23,7 @@ const stateColors = {
 
 /**
  * SystemPulse - Floating HUD showing real-time file system activity
- * 
+ *
  * Features:
  * - Idle: Small pulsing green dot (bottom-right)
  * - Active: Expands to show "👁️ Saw change in [filename]"
@@ -36,11 +36,11 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
   const [recentChange, setRecentChange] = useState(null);
   const [changeHistory, setChangeHistory] = useState([]);
   const [expanded, setExpanded] = useState(false);
-  
+
   // Connect to socket on mount
   useEffect(() => {
     if (!enabled) return;
-    
+
     const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
     const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling'],
@@ -48,33 +48,33 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
-    
+
     newSocket.on('connect', () => {
       console.log('[SystemPulse] Connected to server');
     });
-    
+
     newSocket.on('disconnect', () => {
       console.log('[SystemPulse] Disconnected');
     });
-    
+
     // Listen for system pulse events from FileWatcher
     newSocket.on('system:pulse', (data) => {
       console.log('[SystemPulse] Received pulse:', data);
       handlePulse(data);
     });
-    
+
     setSocket(newSocket);
-    
+
     return () => {
       newSocket.disconnect();
     };
   }, [enabled]);
-  
+
   // Handle incoming pulse events
   const handlePulse = useCallback((data) => {
     const { file, changeType, timestamp } = data;
     const fileName = file.split('/').pop() || file;
-    
+
     const changeEntry = {
       id: `${timestamp}-${file}`,
       file: fileName,
@@ -83,15 +83,15 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
       timestamp,
       time: new Date(timestamp).toLocaleTimeString(),
     };
-    
+
     // Update state
     setRecentChange(changeEntry);
     setPulseState('active');
     setExpanded(true);
-    
+
     // Add to history (keep last 10)
-    setChangeHistory(prev => [changeEntry, ...prev].slice(0, 10));
-    
+    setChangeHistory((prev) => [changeEntry, ...prev].slice(0, 10));
+
     // Auto-transition to success/idle after delay
     setTimeout(() => {
       setPulseState('success');
@@ -101,7 +101,7 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
       }, 1000);
     }, 2000);
   }, []);
-  
+
   // Position classes based on prop
   const positionClasses = {
     'bottom-right': 'bottom-4 right-4',
@@ -109,9 +109,9 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
     'top-right': 'top-4 right-4',
     'top-left': 'top-4 left-4',
   };
-  
+
   if (!enabled) return null;
-  
+
   return (
     <div className={`fixed ${positionClasses[position]} z-50`}>
       <AnimatePresence mode="wait">
@@ -142,12 +142,10 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
               }}
               className={`w-3 h-3 rounded-full ${stateColors[pulseState]}`}
             />
-            
+
             {/* Icon for change type */}
-            <span className="text-lg">
-              {icons[recentChange.changeType] || '📁'}
-            </span>
-            
+            <span className="text-lg">{icons[recentChange.changeType] || '📁'}</span>
+
             {/* File info */}
             <div className="flex flex-col">
               <span className="text-sm text-gray-200 font-medium">
@@ -156,11 +154,9 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
                 {recentChange.changeType === 'unlink' && 'Deleted: '}
                 <span className="text-cyan-400">{recentChange.file}</span>
               </span>
-              <span className="text-xs text-gray-500">
-                {recentChange.time}
-              </span>
+              <span className="text-xs text-gray-500">{recentChange.time}</span>
             </div>
-            
+
             {/* History count badge */}
             {changeHistory.length > 1 && (
               <motion.div
@@ -195,7 +191,7 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
               }}
               className={`absolute inset-0 rounded-full ${stateColors[pulseState]}`}
             />
-            
+
             {/* Inner solid dot */}
             <motion.div
               animate={{
@@ -211,14 +207,17 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
                 boxShadow: `0 0 10px ${pulseState === 'idle' ? '#10b981' : '#f59e0b'}`,
               }}
             />
-            
+
             {/* Tooltip on hover */}
-            <div className="
+            <div
+              className="
               absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100
               transition-opacity pointer-events-none
-            ">
+            "
+            >
               <div className="bg-gray-900/95 backdrop-blur px-3 py-1.5 rounded-lg text-xs text-gray-300 whitespace-nowrap">
-                System Watcher {changeHistory.length > 0 ? `(${changeHistory.length} recent)` : '(idle)'}
+                System Watcher{' '}
+                {changeHistory.length > 0 ? `(${changeHistory.length} recent)` : '(idle)'}
               </div>
             </div>
           </motion.div>

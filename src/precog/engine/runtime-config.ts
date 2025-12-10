@@ -1,18 +1,18 @@
 // @version 3.3.498
 /**
  * RuntimeConfig - Dynamic System Configuration Management
- * 
+ *
  * Phase 2: Self-Optimization
- * 
+ *
  * Allows AutonomousEvolutionEngine to write and read runtime configurations
  * that affect system behavior in real-time:
- * 
+ *
  * - Provider weights (latency, cost, reliability importance)
  * - Model parameters (max_tokens, temperature, top_p)
  * - Feature flags (enable/disable optimizations)
  * - Provider-specific overrides
  * - Learning parameters (exploration rate, update frequency)
- * 
+ *
  * This replaces hardcoded defaults with dynamically optimized values
  * that evolve based on actual system performance.
  */
@@ -22,15 +22,15 @@ import path from 'path';
 import { bus } from '../../core/event-bus.js';
 
 interface ProviderWeights {
-  latency: number;    // 0-1: importance of response speed
-  cost: number;       // 0-1: importance of cost efficiency
+  latency: number; // 0-1: importance of response speed
+  cost: number; // 0-1: importance of cost efficiency
   reliability: number; // 0-1: importance of success rate
 }
 
 interface ModelConfig {
   maxTokens: number;
   temperature: number; // 0-1: creativity/randomness
-  topP: number;        // 0-1: nucleus sampling
+  topP: number; // 0-1: nucleus sampling
   frequencyPenalty: number;
   presencePenalty: number;
 }
@@ -40,7 +40,7 @@ interface ProviderConfig {
   weights?: ProviderWeights;
   modelConfig?: ModelConfig;
   priority?: number; // Manual override of automatic ranking
-  timeout?: number;  // Provider-specific timeout
+  timeout?: number; // Provider-specific timeout
 }
 
 interface RuntimeConfigData {
@@ -77,7 +77,7 @@ export class RuntimeConfig {
 
   constructor(configPath?: string) {
     this.configPath = configPath || path.join(process.cwd(), 'config', 'runtime.json');
-    
+
     // Initialize with defaults
     this.config = this.getDefaultConfig();
   }
@@ -102,7 +102,7 @@ export class RuntimeConfig {
    */
   async save(): Promise<void> {
     const now = Date.now();
-    
+
     // Skip if wrote recently
     if (now - this.lastWriteTime < this.writeDebounceMs) {
       this.isDirty = true;
@@ -113,15 +113,15 @@ export class RuntimeConfig {
       // Ensure directory exists
       const dir = path.dirname(this.configPath);
       await fs.mkdir(dir, { recursive: true });
-      
+
       this.config.timestamp = now;
       await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2));
-      
+
       this.lastWriteTime = now;
       this.isDirty = false;
-      
+
       console.log('[RuntimeConfig] Saved to disk');
-      bus.publish('config:updated', this.config);
+      bus.publish('system', 'config:updated', this.config);
     } catch (error) {
       console.error('[RuntimeConfig] Save failed:', error);
     }
@@ -151,11 +151,11 @@ export class RuntimeConfig {
       ...this.config.global.providerWeights,
       ...weights,
     };
-    
+
     this.config.metadata.optimizedBy = optimizer || 'manual';
     this.config.metadata.lastOptimizationTime = Date.now();
     this.config.metadata.iterationCount++;
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -185,11 +185,11 @@ export class RuntimeConfig {
         ...config,
       };
     }
-    
+
     this.config.metadata.optimizedBy = optimizer || 'manual';
     this.config.metadata.lastOptimizationTime = Date.now();
     this.config.metadata.iterationCount++;
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -198,24 +198,37 @@ export class RuntimeConfig {
    * Get provider-specific config
    */
   getProviderConfig(provider: string): ProviderConfig {
-    return this.config.providers[provider] || {
+    const defaultConfig: ProviderConfig = {
       enabled: true,
+      weights: { latency: 0.4, cost: 0.3, reliability: 0.3 },
     };
+    return this.config.providers[provider] || defaultConfig;
   }
 
   /**
    * Update provider-specific config
    */
-  updateProviderConfig(provider: string, config: Partial<ProviderConfig>, optimizer?: string): void {
-    this.config.providers[provider] = {
-      ...this.config.providers[provider],
-      ...config,
+  updateProviderConfig(
+    provider: string,
+    config: Partial<ProviderConfig>,
+    optimizer?: string
+  ): void {
+    const existing = this.config.providers[provider] || {
+      enabled: true,
+      weights: { latency: 0.4, cost: 0.3, reliability: 0.3 },
     };
-    
+    this.config.providers[provider] = {
+      enabled: config.enabled !== undefined ? config.enabled : existing.enabled,
+      weights: config.weights || existing.weights,
+      modelConfig: config.modelConfig || existing.modelConfig,
+      priority: config.priority !== undefined ? config.priority : existing.priority,
+      timeout: config.timeout !== undefined ? config.timeout : existing.timeout,
+    };
+
     this.config.metadata.optimizedBy = optimizer || 'manual';
     this.config.metadata.lastOptimizationTime = Date.now();
     this.config.metadata.iterationCount++;
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -235,7 +248,7 @@ export class RuntimeConfig {
     this.config.metadata.optimizedBy = optimizer || 'manual';
     this.config.metadata.lastOptimizationTime = Date.now();
     this.config.metadata.iterationCount++;
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -254,7 +267,7 @@ export class RuntimeConfig {
     this.config.features[featureName] = enabled;
     this.config.metadata.optimizedBy = optimizer || 'manual';
     this.config.metadata.lastOptimizationTime = Date.now();
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -273,7 +286,7 @@ export class RuntimeConfig {
     this.config.metadata.optimizationScore = Math.max(0, Math.min(1, score));
     this.config.metadata.optimizedBy = optimizer || 'manual';
     this.config.metadata.lastOptimizationTime = Date.now();
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -293,7 +306,7 @@ export class RuntimeConfig {
     this.config.metadata.optimizedBy = optimizer || 'reset';
     this.config.metadata.lastOptimizationTime = Date.now();
     this.config.metadata.iterationCount = 0;
-    
+
     this.notifyUpdates();
     this.isDirty = true;
   }
@@ -338,9 +351,9 @@ export class RuntimeConfig {
       version: '3.3.497',
       global: {
         providerWeights: {
-          latency: 0.4,      // 40% - speed matters
-          cost: 0.3,         // 30% - cost efficiency
-          reliability: 0.3,  // 30% - reliability
+          latency: 0.4, // 40% - speed matters
+          cost: 0.3, // 30% - cost efficiency
+          reliability: 0.3, // 30% - reliability
         },
         defaultModelConfig: {
           maxTokens: 2048,
@@ -416,9 +429,4 @@ export function getRuntimeConfig(): RuntimeConfig {
   return runtimeConfigInstance;
 }
 
-export type {
-  RuntimeConfigData,
-  ProviderWeights,
-  ModelConfig,
-  ProviderConfig,
-};
+export type { RuntimeConfigData, ProviderWeights, ModelConfig, ProviderConfig };

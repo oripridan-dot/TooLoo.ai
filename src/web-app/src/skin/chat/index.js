@@ -1,8 +1,8 @@
-// @version 2.2.625
+// @version 3.3.374
 // TooLoo.ai Liquid Chat Module
 // Rich visual chat components with liquid skin integration
 // Now with emergent thought visualization and Gestalt-based design
-// v2.2.625: Added CollapsibleMarkdown for structured response display
+// v3.3.374: Added MultiFormatRenderers for diversified visual communication
 
 // ============================================================================
 // CORE CHAT COMPONENTS
@@ -38,6 +38,29 @@ export {
 } from './VisualRenderers';
 
 export { default as VisualRenderers } from './VisualRenderers';
+
+// ============================================================================
+// MULTI-FORMAT RENDERERS (v3.3.374) - Diversified Visual Communication
+// ASCII, Mermaid, Charts, Emoji, Terminal, Math, Trees, Timelines, etc.
+// ============================================================================
+
+export {
+  ASCIIRenderer,
+  MarkdownTableRenderer,
+  MermaidRenderer,
+  ChartRenderer,
+  EmojiRenderer,
+  TerminalRenderer,
+  MathRenderer,
+  GradientCardRenderer,
+  ComparisonRenderer,
+  TimelineRenderer,
+  TreeRenderer,
+  StatsCardRenderer,
+  UniversalFormatRenderer,
+} from './MultiFormatRenderers';
+
+export { default as MultiFormatRenderers } from './MultiFormatRenderers';
 
 // ============================================================================
 // ADVANCED VISUAL STUDIO - Scene rendering and artistic placeholders

@@ -1,4 +1,4 @@
-// @version 2.2.653
+// @version 3.3.420
 /**
  * SuggestionAggregator
  * Aggregates emergence, learning, and exploration signals into actionable suggestions.
@@ -10,6 +10,8 @@
  * - Transforms discoveries into structured ActionableSuggestion objects
  * - Provides GitHub action templates (create issue, branch, PR, commit)
  * - Tracks suggestion lifecycle: pending → reviewed → executed/dismissed
+ *
+ * Phase 2 of "Sentient Partner" Protocol - The Suggestion Engine
  */
 
 import { bus } from '../../core/event-bus.js';
@@ -987,3 +989,503 @@ ${
 
 // Export singleton
 export const suggestionAggregator = SuggestionAggregator.getInstance();
+
+// ============================================================================
+// SUGGESTION ENGINE - Phase 2 of "Sentient Partner" Protocol
+// Generates 3 distinct "Next Moves" based on current context
+// ============================================================================
+
+export interface NextMove {
+  type: 'logical' | 'creative' | 'evolutionary';
+  title: string;
+  description: string;
+  confidence: number;
+  action: string;
+  context: Record<string, unknown>;
+}
+
+export interface SuggestionEngineState {
+  lastAction: string;
+  lastActionTime: number;
+  currentFile: string | null;
+  currentGoal: string | null;
+  errors: Array<{ file: string; line: number; message: string }>;
+  pendingMoves: NextMove[];
+}
+
+/**
+ * SuggestionEngine - The Partner that runs in parallel to the user's workflow
+ *
+ * Logic:
+ * 1. Observe: Listen to bus.on('user:action') events
+ * 2. Analyze (Macro): Check the Planner state for high-level goal alignment
+ * 3. Analyze (Micro): Check current file for errors or incomplete logic
+ * 4. Synthesize: Generate 3 distinct 'Next Moves'
+ *    - Logical: The obvious next step
+ *    - Creative: A divergent idea
+ *    - Evolutionary: A self-improvement suggestion
+ * 5. Output: Stream to frontend via socket.emit('suggestion:ready')
+ */
+export class SuggestionEngine {
+  private static instance: SuggestionEngine;
+  private state: SuggestionEngineState;
+  private debounceTimer: NodeJS.Timeout | null = null;
+  private readonly DEBOUNCE_MS = 2000;
+
+  private constructor() {
+    this.state = {
+      lastAction: '',
+      lastActionTime: Date.now(),
+      currentFile: null,
+      currentGoal: null,
+      errors: [],
+      pendingMoves: [],
+    };
+
+    this.setupListeners();
+    console.log('[SuggestionEngine] Initialized - Watching for user actions');
+  }
+
+  static getInstance(): SuggestionEngine {
+    if (!SuggestionEngine.instance) {
+      SuggestionEngine.instance = new SuggestionEngine();
+    }
+    return SuggestionEngine.instance;
+  }
+
+  // ============================================================================
+  // OBSERVATION - Listen to user actions
+  // ============================================================================
+
+  private setupListeners(): void {
+    // Listen for file saves
+    bus.on('user:file_saved', (event) => {
+      this.onUserAction('file_saved', event.payload);
+    });
+
+    // Listen for errors
+    bus.on('user:error', (event) => {
+      this.onUserAction('error', event.payload);
+    });
+
+    // Listen for design requests
+    bus.on('user:design_request', (event) => {
+      this.onUserAction('design_request', event.payload);
+    });
+
+    // Listen for chat messages
+    bus.on('chat:message_sent', (event) => {
+      this.onUserAction('chat_message', event.payload);
+    });
+
+    // Listen for code execution
+    bus.on('agent:task_completed', (event) => {
+      this.onUserAction('task_completed', event.payload);
+    });
+
+    // Listen for file changes from watcher
+    bus.on('sensory:file_changed', (event) => {
+      this.onUserAction('file_changed', event.payload);
+    });
+
+    // Listen for planner updates
+    bus.on('planner:goal_updated', (event) => {
+      this.state.currentGoal = event.payload?.goal || null;
+    });
+  }
+
+  private onUserAction(actionType: string, payload: Record<string, unknown>): void {
+    this.state.lastAction = actionType;
+    this.state.lastActionTime = Date.now();
+
+    // Update current file if available
+    if (payload['file'] || payload['filePath']) {
+      this.state.currentFile = (payload['file'] || payload['filePath']) as string;
+    }
+
+    // Track errors
+    if (actionType === 'error' && payload['message']) {
+      this.state.errors.push({
+        file: (payload['file'] as string) || 'unknown',
+        line: (payload['line'] as number) || 0,
+        message: payload['message'] as string,
+      });
+      // Keep only last 10 errors
+      if (this.state.errors.length > 10) {
+        this.state.errors = this.state.errors.slice(-10);
+      }
+    }
+
+    // Debounce analysis
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    this.debounceTimer = setTimeout(() => {
+      this.analyzeAndSynthesize();
+    }, this.DEBOUNCE_MS);
+  }
+
+  // ============================================================================
+  // ANALYSIS - Macro and Micro context analysis
+  // ============================================================================
+
+  private async analyzeAndSynthesize(): Promise<void> {
+    try {
+      // 1. Macro Analysis - Check planner state
+      const macroContext = await this.analyzeMacro();
+
+      // 2. Micro Analysis - Check current file
+      const microContext = await this.analyzeMicro();
+
+      // 3. Synthesize Next Moves
+      const moves = this.synthesizeMoves(macroContext, microContext);
+
+      if (moves.length > 0) {
+        this.state.pendingMoves = moves;
+
+        // 4. Emit to frontend
+        bus.publish('suggestions', 'suggestion:ready', {
+          moves,
+          timestamp: Date.now(),
+          context: {
+            lastAction: this.state.lastAction,
+            currentFile: this.state.currentFile,
+            currentGoal: this.state.currentGoal,
+          },
+        });
+
+        console.log(`[SuggestionEngine] Generated ${moves.length} next moves`);
+      }
+    } catch (error) {
+      console.error('[SuggestionEngine] Analysis error:', error);
+    }
+  }
+
+  private async analyzeMacro(): Promise<{
+    goalAlignment: number;
+    onTrack: boolean;
+    blockers: string[];
+    suggestions: string[];
+  }> {
+    // Get planner state (simplified - in real impl, would query Planner)
+    const hasGoal = !!this.state.currentGoal;
+    const recentErrors = this.state.errors.length;
+
+    return {
+      goalAlignment: hasGoal ? 0.7 : 0.3,
+      onTrack: recentErrors < 3,
+      blockers: recentErrors > 0 ? ['Recent errors detected'] : [],
+      suggestions: hasGoal
+        ? [`Continue working on: ${this.state.currentGoal}`]
+        : ['Consider setting a clear goal for this session'],
+    };
+  }
+
+  private async analyzeMicro(): Promise<{
+    hasErrors: boolean;
+    incompletePatterns: string[];
+    fileType: string | null;
+    complexity: 'low' | 'medium' | 'high';
+  }> {
+    const recentError = this.state.errors[this.state.errors.length - 1];
+    const fileType = this.state.currentFile?.split('.').pop() || null;
+
+    // Detect incomplete patterns based on recent actions
+    const incompletePatterns: string[] = [];
+    if (this.state.lastAction === 'file_saved' && recentError) {
+      incompletePatterns.push('File saved with errors');
+    }
+
+    return {
+      hasErrors: !!recentError,
+      incompletePatterns,
+      fileType,
+      complexity: 'medium', // Would be calculated from AST analysis
+    };
+  }
+
+  // ============================================================================
+  // SYNTHESIS - Generate 3 Next Moves
+  // ============================================================================
+
+  private synthesizeMoves(
+    macro: { goalAlignment: number; onTrack: boolean; blockers: string[]; suggestions: string[] },
+    micro: {
+      hasErrors: boolean;
+      incompletePatterns: string[];
+      fileType: string | null;
+      complexity: string;
+    }
+  ): NextMove[] {
+    const moves: NextMove[] = [];
+
+    // 1. LOGICAL - The obvious next step
+    const logicalMove = this.generateLogicalMove(macro, micro);
+    if (logicalMove) moves.push(logicalMove);
+
+    // 2. CREATIVE - A divergent idea
+    const creativeMove = this.generateCreativeMove(macro, micro);
+    if (creativeMove) moves.push(creativeMove);
+
+    // 3. EVOLUTIONARY - A self-improvement suggestion
+    const evolutionaryMove = this.generateEvolutionaryMove(macro, micro);
+    if (evolutionaryMove) moves.push(evolutionaryMove);
+
+    return moves;
+  }
+
+  private generateLogicalMove(
+    macro: { goalAlignment: number; onTrack: boolean; blockers: string[]; suggestions: string[] },
+    micro: { hasErrors: boolean; incompletePatterns: string[]; fileType: string | null }
+  ): NextMove | null {
+    // If there are errors, suggest fixing them
+    if (micro.hasErrors) {
+      const error = this.state.errors[this.state.errors.length - 1];
+      return {
+        type: 'logical',
+        title: 'Fix the error',
+        description: `There's an error in ${error?.file || 'your code'}: ${error?.message || 'Unknown error'}`,
+        confidence: 0.9,
+        action: 'fix_error',
+        context: { error, file: this.state.currentFile },
+      };
+    }
+
+    // If off track from goal, suggest realignment
+    if (!macro.onTrack && macro.blockers.length > 0) {
+      return {
+        type: 'logical',
+        title: 'Address blockers',
+        description: `You have blockers: ${macro.blockers.join(', ')}`,
+        confidence: 0.8,
+        action: 'address_blockers',
+        context: { blockers: macro.blockers },
+      };
+    }
+
+    // Default: continue with current goal
+    if (macro.suggestions.length > 0) {
+      return {
+        type: 'logical',
+        title: 'Continue current work',
+        description: macro.suggestions[0] || 'Keep making progress',
+        confidence: 0.7,
+        action: 'continue',
+        context: { goal: this.state.currentGoal },
+      };
+    }
+
+    // Suggest based on file type
+    if (micro.fileType) {
+      const suggestions: Record<string, { title: string; description: string; action: string }> = {
+        ts: {
+          title: 'Add type annotations',
+          description: 'Improve type safety in your TypeScript file',
+          action: 'add_types',
+        },
+        tsx: {
+          title: 'Add component tests',
+          description: 'Write tests for your React component',
+          action: 'add_tests',
+        },
+        jsx: {
+          title: 'Extract component',
+          description: 'Consider extracting a reusable component',
+          action: 'extract_component',
+        },
+        css: {
+          title: 'Review styles',
+          description: 'Check for unused or duplicate styles',
+          action: 'review_styles',
+        },
+      };
+
+      const suggestion = suggestions[micro.fileType];
+      if (suggestion) {
+        return {
+          type: 'logical',
+          title: suggestion.title,
+          description: suggestion.description,
+          confidence: 0.6,
+          action: suggestion.action,
+          context: { fileType: micro.fileType },
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private generateCreativeMove(
+    macro: { goalAlignment: number; onTrack: boolean },
+    micro: { fileType: string | null; complexity: string }
+  ): NextMove | null {
+    // Creative suggestions based on context
+    const creativeIdeas: Array<{ condition: () => boolean; move: NextMove }> = [
+      {
+        condition: () => micro.fileType === 'jsx' || micro.fileType === 'tsx',
+        move: {
+          type: 'creative',
+          title: 'Add visual polish ✨',
+          description: 'Add subtle animations or micro-interactions to enhance UX',
+          confidence: 0.5,
+          action: 'add_animation',
+          context: { suggestion: 'framer-motion for smooth transitions' },
+        },
+      },
+      {
+        condition: () => micro.fileType === 'ts' || micro.fileType === 'js',
+        move: {
+          type: 'creative',
+          title: 'Add a creative pattern 🎨',
+          description: 'Consider using a different design pattern like Strategy or Observer',
+          confidence: 0.4,
+          action: 'suggest_pattern',
+          context: { patterns: ['Strategy', 'Observer', 'Command'] },
+        },
+      },
+      {
+        condition: () => macro.goalAlignment > 0.5,
+        move: {
+          type: 'creative',
+          title: 'Think bigger 🚀',
+          description: 'What if we made this feature 10x better? What would that look like?',
+          confidence: 0.3,
+          action: 'brainstorm',
+          context: { prompt: 'Imagine the ideal version of this feature' },
+        },
+      },
+      {
+        condition: () => this.state.lastAction === 'design_request',
+        move: {
+          type: 'creative',
+          title: 'Try a different approach 🔄',
+          description: 'What about using a completely different visual metaphor?',
+          confidence: 0.4,
+          action: 'alternative_design',
+          context: {},
+        },
+      },
+    ];
+
+    // Find matching creative idea
+    for (const idea of creativeIdeas) {
+      if (idea.condition()) {
+        return idea.move;
+      }
+    }
+
+    // Default creative suggestion
+    return {
+      type: 'creative',
+      title: 'Explore something new 🌟',
+      description: 'Take 5 minutes to explore a related concept or tool',
+      confidence: 0.3,
+      action: 'explore',
+      context: {},
+    };
+  }
+
+  private generateEvolutionaryMove(
+    macro: { goalAlignment: number; onTrack: boolean },
+    micro: { hasErrors: boolean; incompletePatterns: string[]; complexity: string }
+  ): NextMove | null {
+    // Self-improvement suggestions
+    const evolutionaryIdeas: Array<{ condition: () => boolean; move: NextMove }> = [
+      {
+        condition: () => micro.hasErrors && this.state.errors.length > 2,
+        move: {
+          type: 'evolutionary',
+          title: 'Add error prevention 🛡️',
+          description: 'Add validation or guards to prevent similar errors in the future',
+          confidence: 0.7,
+          action: 'add_validation',
+          context: { errorCount: this.state.errors.length },
+        },
+      },
+      {
+        condition: () => micro.complexity === 'high',
+        move: {
+          type: 'evolutionary',
+          title: 'Refactor for simplicity 🔧',
+          description:
+            'This code could be simplified. Consider extracting functions or reducing nesting.',
+          confidence: 0.6,
+          action: 'refactor',
+          context: { reason: 'complexity' },
+        },
+      },
+      {
+        condition: () => this.state.lastAction === 'file_saved',
+        move: {
+          type: 'evolutionary',
+          title: 'Add documentation 📝',
+          description: 'Document the key functions and their purpose',
+          confidence: 0.5,
+          action: 'add_docs',
+          context: {},
+        },
+      },
+      {
+        condition: () => macro.goalAlignment < 0.5,
+        move: {
+          type: 'evolutionary',
+          title: 'Clarify the goal 🎯',
+          description: "Take a moment to write down exactly what you're trying to achieve",
+          confidence: 0.6,
+          action: 'clarify_goal',
+          context: {},
+        },
+      },
+    ];
+
+    // Find matching evolutionary idea
+    for (const idea of evolutionaryIdeas) {
+      if (idea.condition()) {
+        return idea.move;
+      }
+    }
+
+    // Default evolutionary suggestion
+    return {
+      type: 'evolutionary',
+      title: 'Performance check ⚡',
+      description: 'Review for potential performance optimizations',
+      confidence: 0.4,
+      action: 'performance_review',
+      context: {},
+    };
+  }
+
+  // ============================================================================
+  // PUBLIC API
+  // ============================================================================
+
+  getPendingMoves(): NextMove[] {
+    return this.state.pendingMoves;
+  }
+
+  getState(): SuggestionEngineState {
+    return { ...this.state };
+  }
+
+  clearPendingMoves(): void {
+    this.state.pendingMoves = [];
+  }
+
+  // Manually trigger analysis
+  async triggerAnalysis(): Promise<NextMove[]> {
+    await this.analyzeAndSynthesize();
+    return this.state.pendingMoves;
+  }
+
+  // Update current context
+  setContext(context: { file?: string; goal?: string }): void {
+    if (context.file) this.state.currentFile = context.file;
+    if (context.goal) this.state.currentGoal = context.goal;
+  }
+}
+
+// Export suggestion engine singleton
+export const suggestionEngine = SuggestionEngine.getInstance();

@@ -1,4 +1,4 @@
-// @version 2.2.529 - Liquid Synapsys V1
+// @version 3.3.407 - Liquid Synapsys V1 + SystemPulse HUD
 import { useState } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -17,6 +17,9 @@ import LiquidSkinDemo from './components/LiquidSkinDemo';
 
 // NEW: Import Liquid Synapsys TooLoo App
 import { TooLooApp } from './skin';
+
+// V3.3.407: SystemPulse HUD - Global file watcher visualization
+import { SystemPulse } from './skin/components/SystemPulse';
 
 // Feature flag for new Liquid Synapsys UI
 // Set to true to use the new liquid skin, false for legacy UI
@@ -86,10 +89,13 @@ function LegacyApp() {
 function App() {
   // Use feature flag to switch between legacy and new Liquid Synapsys UI
   // Toggle USE_LIQUID_SYNAPSYS at the top of this file
-  if (USE_LIQUID_SYNAPSYS) {
-    return <TooLooApp />;
-  }
-  return <LegacyApp />;
+  // V3.3.407: SystemPulse renders globally above both UIs
+  return (
+    <>
+      <SystemPulse position="bottom-right" enabled={true} />
+      {USE_LIQUID_SYNAPSYS ? <TooLooApp /> : <LegacyApp />}
+    </>
+  );
 }
 
 export default App;

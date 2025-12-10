@@ -50,6 +50,25 @@ export {
   type SmartRouteResult,
 } from './smart-router.js';
 
+// Phase 2: Self-Optimization (Runtime Config & Benchmarking)
+export {
+  RuntimeConfig,
+  initRuntimeConfig,
+  getRuntimeConfig,
+  type RuntimeConfigData,
+  type ProviderWeights,
+  type ModelConfig,
+  type ProviderConfig,
+} from './runtime-config.js';
+
+export {
+  BenchmarkService,
+  initBenchmarkService,
+  getBenchmarkService,
+  type BenchmarkResult,
+  type BenchmarkRound,
+} from './benchmark-service.js';
+
 // Creativity
 export { SerendipityInjector } from './serendipity-injector.js';
 

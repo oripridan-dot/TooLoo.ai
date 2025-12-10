@@ -1,8 +1,9 @@
-// @version 3.3.176
+// @version 3.3.404 - Project Pinocchio Autonomy + Real Data Integration
 import { Router } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { successResponse, errorResponse } from '../utils.js';
 import { SYSTEM_VERSION } from '../../core/system-info.js';
+import { registry } from '../../core/module-registry.js';
 import fs from 'fs-extra';
 import path from 'path';
 import { exec } from 'child_process';
@@ -30,21 +31,27 @@ async function execCommand(command: string, cwd: string = process.cwd()) {
  * @param {string} [detail] - Optional detail level (basic|full)
  */
 router.get('/status', (req, res) => {
-  // In Synapsys, we are always "active" if this code runs
+  // V3.3.405: Real data from module registry
+  const allModules = registry.getAll();
+  const moduleStatuses: Record<string, { status: string; role: string }> = {};
+
+  for (const mod of allModules) {
+    moduleStatuses[mod.name] = {
+      status: mod.status,
+      role: ((mod.meta as Record<string, unknown>)?.['role'] as string) || mod.name,
+    };
+  }
+
   res.json(
     successResponse({
       version: SYSTEM_VERSION,
-      services: 3, // Cortex, Precog, Nexus
+      services: allModules.length,
       active: true,
-      ready: true, // Frontend expects this for Cortex status
+      ready: allModules.every((m) => m.status === 'ready'),
       uptime: process.uptime() * 1000, // Frontend expects ms
       memory: process.memoryUsage(),
-      architecture: 'Synapsys V2.2',
-      modules: {
-        cortex: { status: 'loaded', role: 'Cognitive Core' },
-        precog: { status: 'loaded', role: 'Predictive Intelligence' },
-        nexus: { status: 'loaded', role: 'Interface Layer' },
-      },
+      architecture: 'Synapsys V3.3',
+      modules: moduleStatuses,
     })
   );
 });
@@ -53,16 +60,11 @@ router.get('/status', (req, res) => {
 router.get('/health', async (req, res) => {
   try {
     const processMetrics = metricsCollector.getProcessMetrics();
-    const systemMetrics = metricsCollector.getSystemOverview();
     const uptime = process.uptime();
     const memUsage = process.memoryUsage();
 
-    // Calculate real metrics from available data
-    const requestsPerMin =
-      (systemMetrics as any)?.requests?.perMinute || (Math.floor(uptime / 60) % 20) + 5;
-    const avgLatency = (systemMetrics as any)?.latency?.average || 180 + Math.random() * 100;
-    const tokenUsage = (systemMetrics as any)?.tokens?.total || Math.floor(uptime * 10);
-    const costToday = (systemMetrics as any)?.cost?.today || tokenUsage * 0.000002;
+    // V3.3.405: Get REAL metrics from the metrics collector
+    const realTimeMetrics = metricsCollector.getRealTimeMetrics();
 
     res.json(
       successResponse({
@@ -74,10 +76,16 @@ router.get('/health', async (req, res) => {
           rss: memUsage.rss,
         },
         metrics: {
-          requestsPerMin: Math.floor(requestsPerMin),
-          avgLatency: Math.floor(avgLatency),
-          tokenUsage: Math.floor(tokenUsage),
-          costToday: Number(costToday.toFixed(4)),
+          // Real tracked values, falling back to 0 (honest "no data" instead of fake)
+          requestsPerMin: realTimeMetrics.requests.perMinute,
+          avgLatency: Math.floor(realTimeMetrics.latency.average) || 0,
+          tokenUsage: realTimeMetrics.tokens.total,
+          costToday: Number(realTimeMetrics.cost.today.toFixed(6)),
+          // Additional real metrics
+          totalRequests: realTimeMetrics.requests.total,
+          p95Latency: Math.floor(realTimeMetrics.latency.p95) || 0,
+          inputTokens: realTimeMetrics.tokens.input,
+          outputTokens: realTimeMetrics.tokens.output,
         },
       })
     );
@@ -108,6 +116,128 @@ router.get('/awareness', (req, res) => {
       },
     })
   );
+});
+
+// V3.3.451: Self Information - for InternalMirror component
+router.get('/self/info', async (req, res) => {
+  try {
+    const allModules = registry.getAll();
+    
+    res.json(
+      successResponse({
+        identity: {
+          name: 'TooLoo.ai',
+          version: SYSTEM_VERSION,
+          architecture: 'Synapsys V3.3',
+          sessionId: process.env['SESSION_ID'] || 'unknown',
+        },
+        capabilities: {
+          selfModification: true,
+          autonomousPlanning: true,
+          multiProviderAI: true,
+          codeExecution: true,
+          designIntegration: true,
+        },
+        modules: allModules.map(m => ({
+          name: m.name,
+          version: m.version,
+          status: m.status,
+        })),
+        metrics: {
+          uptime: process.uptime() * 1000,
+          memory: process.memoryUsage(),
+          moduleCount: allModules.length,
+          activeModules: allModules.filter(m => m.status === 'ready').length,
+        },
+        timestamp: new Date().toISOString(),
+      })
+    );
+  } catch (e: any) {
+    res.status(500).json(errorResponse(e.message));
+  }
+});
+
+// V3.3.401: Project Pinocchio Autonomy Status
+router.get('/autonomy', async (req, res) => {
+  try {
+    // Gather status from all Pinocchio components
+    let selfImprovement = null;
+    let proactiveScheduler = null;
+    let sessionContinuity = null;
+
+    try {
+      const { selfImprovementEngine } =
+        await import('../../cortex/learning/self-improvement-engine.js');
+      selfImprovement = {
+        status: 'active',
+        stats: selfImprovementEngine.getStats(),
+        goals: selfImprovementEngine.getGoals().slice(0, 5),
+      };
+    } catch (e) {
+      selfImprovement = { status: 'error', error: String(e) };
+    }
+
+    try {
+      const { proactiveScheduler: scheduler } =
+        await import('../../cortex/scheduling/proactive-scheduler.js');
+      selfImprovement &&
+        (proactiveScheduler = {
+          status: 'active',
+          tasks: scheduler.getTasks().map((t: any) => ({
+            id: t.id,
+            type: t.type,
+            priority: t.priority,
+            lastRun: t.lastRun,
+            nextRun: t.nextRun,
+          })),
+          stats: scheduler.getStats(),
+        });
+    } catch (e) {
+      proactiveScheduler = { status: 'error', error: String(e) };
+    }
+
+    try {
+      const { sessionContinuity: continuity } =
+        await import('../../cortex/continuity/session-continuity.js');
+      sessionContinuity = {
+        status: 'active',
+        sessionId: continuity.getSessionId(),
+        sessionCount: continuity.getSessionCount(),
+        goals: continuity.getActiveGoals().slice(0, 5),
+      };
+    } catch (e) {
+      sessionContinuity = { status: 'error', error: String(e) };
+    }
+
+    // Calculate overall autonomy score
+    const activeComponents = [selfImprovement, proactiveScheduler, sessionContinuity].filter(
+      (c) => c?.status === 'active'
+    ).length;
+    const autonomyScore = Math.round((activeComponents / 3) * 100);
+
+    res.json(
+      successResponse({
+        version: '3.3.401',
+        projectName: 'Pinocchio',
+        autonomyScore,
+        isSovereign: autonomyScore >= 80,
+        components: {
+          selfImprovement,
+          proactiveScheduler,
+          sessionContinuity,
+        },
+        capabilities: {
+          selfOptimization: selfImprovement?.status === 'active',
+          proactiveExecution: proactiveScheduler?.status === 'active',
+          crossSessionMemory: sessionContinuity?.status === 'active',
+          autonomousLearning: true,
+          goalTracking: true,
+        },
+      })
+    );
+  } catch (e: any) {
+    res.status(500).json(errorResponse(e.message));
+  }
 });
 
 // System Introspection
@@ -204,33 +334,24 @@ router.post('/self-patch', async (req, res) => {
   }
 });
 
-// System Processes (Mocking the old response for compatibility)
+// System Processes - V3.3.404: Real data from registry
 router.get('/processes', (req, res) => {
+  const modules = registry.getAll();
+  const processes = modules.map((mod) => ({
+    name: mod.name,
+    port: mod.name === 'nexus' ? process.env['PORT'] || 4000 : 'internal',
+    status: mod.status === 'ready' ? 'running' : mod.status,
+    pid: process.pid,
+    uptime: process.uptime(),
+    version: mod.version,
+    capabilities: (mod.meta as Record<string, unknown>)?.['capabilities'] || [],
+  }));
+
   res.json(
     successResponse({
-      processes: [
-        {
-          name: 'nexus',
-          port: 3000,
-          status: 'running',
-          pid: process.pid,
-          uptime: process.uptime(),
-        },
-        {
-          name: 'cortex',
-          port: 'internal',
-          status: 'running',
-          pid: process.pid,
-          uptime: process.uptime(),
-        },
-        {
-          name: 'precog',
-          port: 'internal',
-          status: 'running',
-          pid: process.pid,
-          uptime: process.uptime(),
-        },
-      ],
+      processes,
+      totalModules: modules.length,
+      readyModules: modules.filter((m) => m.status === 'ready').length,
     })
   );
 });
@@ -261,27 +382,21 @@ router.get('/config', (req, res) => {
   );
 });
 
-// Real Capabilities (Mock)
+// Real Capabilities - V3.3.404: Dynamic from registry
 router.get('/real-capabilities', (req, res) => {
+  const modules = registry.getAll();
+  const capabilities = modules.map((mod) => ({
+    name: mod.name,
+    description: (mod.meta as Record<string, unknown>)?.['role'] || `${mod.name} module`,
+    status: mod.status === 'ready' ? 'active' : mod.status,
+    version: mod.version,
+    capabilities: (mod.meta as Record<string, unknown>)?.['capabilities'] || [],
+  }));
+
   res.json(
     successResponse({
-      capabilities: [
-        {
-          name: 'Cognitive Core',
-          description: 'Reasoning & Planning',
-          status: 'active',
-        },
-        {
-          name: 'Predictive Engine',
-          description: 'Optimization & Forecasting',
-          status: 'active',
-        },
-        {
-          name: 'Nexus Interface',
-          description: 'API & Web Serving',
-          status: 'active',
-        },
-      ],
+      capabilities,
+      totalActive: capabilities.filter((c) => c.status === 'active').length,
     })
   );
 });

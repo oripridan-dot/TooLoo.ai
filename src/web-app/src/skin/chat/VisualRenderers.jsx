@@ -38,37 +38,41 @@ export const SVGRenderer = memo(
         const pathCount = (svg.match(/<path[^>]*>/gi) || []).length;
         const lineCount = (svg.match(/<line[^>]*>/gi) || []).length;
         const polyCount = (svg.match(/<poly(line|gon)[^>]*>/gi) || []).length;
-        
+
         // Total elements
         const shapeElements = rectCount + circleCount + ellipseCount;
         const lineElements = pathCount + lineCount + polyCount;
         const totalElements = shapeElements + lineElements + textCount;
-        
+
         // STRICT VALIDATION: A proper diagram needs:
         // 1. At least some shapes (rects, circles) OR text labels
         // 2. Not just decorative lines/paths
-        
+
         // Reject if too few total elements
         if (totalElements < 3) {
           console.warn('[SVGRenderer] Rejecting SVG: too few elements', totalElements);
           setError('Insufficient content');
           return null;
         }
-        
+
         // Reject if it's ONLY lines/paths with no shapes or text (decorative garbage)
         if (shapeElements === 0 && textCount === 0 && lineElements > 0) {
           console.warn('[SVGRenderer] Rejecting SVG: only lines/paths, no shapes or text');
           setError('Invalid diagram - no shapes or labels');
           return null;
         }
-        
+
         // Reject if lines vastly outnumber meaningful shapes (likely decorative)
         if (lineElements > 5 && shapeElements < 2 && textCount < 2) {
-          console.warn('[SVGRenderer] Rejecting SVG: too many lines vs shapes', { lineElements, shapeElements, textCount });
+          console.warn('[SVGRenderer] Rejecting SVG: too many lines vs shapes', {
+            lineElements,
+            shapeElements,
+            textCount,
+          });
           setError('Invalid diagram structure');
           return null;
         }
-        
+
         // Check for dashed lines (often decorative garbage)
         const dashedCount = (svg.match(/stroke-dasharray/gi) || []).length;
         if (dashedCount > 3 && textCount === 0 && shapeElements < 2) {
@@ -118,7 +122,9 @@ export const SVGRenderer = memo(
 
     if (error || !sanitizedSVG) {
       return (
-        <div className={`p-6 rounded-xl bg-gray-900/50 border border-white/10 text-center ${className}`}>
+        <div
+          className={`p-6 rounded-xl bg-gray-900/50 border border-white/10 text-center ${className}`}
+        >
           <span className="text-3xl mb-2 block">🎨</span>
           <p className="text-sm text-gray-400">Couldn't display this diagram</p>
         </div>
@@ -249,7 +255,9 @@ export const ReactComponentRenderer = memo(({ code, title, className = '', scope
 
   if (renderError || !cleanCode) {
     return (
-      <div className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] ${className}`}>
+      <div
+        className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] ${className}`}
+      >
         <GracefulError />
       </div>
     );
@@ -892,7 +900,7 @@ export const UniversalCodeSandbox = memo(
         setResult(newResult);
         onExecutionResult?.(newResult);
       } catch {
-        setResult({ success: false, output: 'Couldn\'t run this right now' });
+        setResult({ success: false, output: "Couldn't run this right now" });
       } finally {
         setExecuting(false);
       }
@@ -947,7 +955,9 @@ export const UniversalCodeSandbox = memo(
     // If we can't render anything useful, show the code itself
     if (renderError || (!canPreview && !canExecute)) {
       return (
-        <div className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] ${className}`}>
+        <div
+          className={`rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] ${className}`}
+        >
           {title && (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10">
               <span>📄</span>
@@ -966,9 +976,7 @@ export const UniversalCodeSandbox = memo(
         {/* Header - simplified, no code toggle */}
         <div className="flex items-center justify-between px-3 py-2 bg-black/50 border-b border-white/10">
           <div className="flex items-center gap-2">
-            {outputTypeLabel && (
-              <span className="text-xs text-cyan-400/70">{outputTypeLabel}</span>
-            )}
+            {outputTypeLabel && <span className="text-xs text-cyan-400/70">{outputTypeLabel}</span>}
             {title && <span className="text-sm text-gray-400">{title}</span>}
           </div>
 
@@ -1024,13 +1032,13 @@ export const UniversalCodeSandbox = memo(
                     <span className={result.success ? 'text-emerald-400' : 'text-orange-400'}>
                       {result.success ? '✓' : '⚠️'}
                     </span>
-                    <span className={`text-xs font-medium ${result.success ? 'text-emerald-400' : 'text-orange-400'}`}>
+                    <span
+                      className={`text-xs font-medium ${result.success ? 'text-emerald-400' : 'text-orange-400'}`}
+                    >
                       {result.success ? 'Done' : 'Hmm...'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-300 whitespace-pre-wrap">
-                    {result.output}
-                  </p>
+                  <p className="text-sm text-gray-300 whitespace-pre-wrap">{result.output}</p>
                 </div>
               </motion.div>
             )}

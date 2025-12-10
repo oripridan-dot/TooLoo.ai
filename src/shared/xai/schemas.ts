@@ -12,7 +12,7 @@ import { z } from 'zod';
  */
 export const ProviderTraceSchema = z.object({
   provider: z.enum(['openai', 'anthropic', 'gemini', 'deepseek', 'local']),
-  model: z.string(), // e.g., "claude-sonnet-4.5", "gemini-3-pro-preview"
+  model: z.string(), // e.g., "claude-sonnet-4-20250514", "gemini-2.0-flash-exp"
   role: z.enum(['generator', 'reviewer', 'tester', 'optimizer', 'synthesizer', 'validator']),
   latency_ms: z.number(),
   cost_usd: z.number(),
@@ -62,7 +62,7 @@ export type ReasoningTrace = z.infer<typeof ReasoningTraceSchema>;
 export const XAIMetaSchema = z.object({
   // Provider Transparency
   providers_used: z.array(z.string()), // ["anthropic", "gemini"]
-  models: z.array(z.string()), // ["claude-sonnet-4.5", "gemini-3-pro-preview"]
+  models: z.array(z.string()), // ["claude-sonnet-4-20250514", "gemini-2.0-flash-exp"]
   primary_provider: z.string(), // Main response generator
   primary_model: z.string(),
 

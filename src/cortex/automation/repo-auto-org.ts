@@ -1,4 +1,4 @@
-// @version 3.3.457
+// @version 3.3.460
 /**
  * RepoAutoOrg - Automated Repository Organization
  * 
@@ -493,6 +493,145 @@ ${scope.files.map(f => `- \`${f}\``).join('\n')}
       clearTimeout(this.commitTimer);
     }
     console.log('[RepoAutoOrg] Disabled');
+  }
+
+  /**
+   * Generate an organization plan from a feature description
+   * Analyzes the description and suggests branch names, file structure, and git commands
+   */
+  generateOrganizationPlan(description: string): {
+    featureName: string;
+    branchName: string;
+    suggestedStructure: { path: string; type: 'file' | 'directory'; purpose: string }[];
+    commands: {
+      createBranch: string;
+      stageFiles: string;
+      commit: string;
+    };
+    scope: ChangeScope;
+  } {
+    // Extract feature name from description
+    const cleanDesc = description.toLowerCase().trim();
+    const words = cleanDesc.split(/\s+/).filter(w => w.length > 2);
+    
+    // Detect scope type from keywords
+    let type: ChangeScope['type'] = 'feature';
+    let domain = 'general';
+    
+    if (/fix|bug|error|issue|broken/.test(cleanDesc)) {
+      type = 'fix';
+    } else if (/refactor|clean|improve|optimize/.test(cleanDesc)) {
+      type = 'refactor';
+    } else if (/test|spec|coverage/.test(cleanDesc)) {
+      type = 'test';
+    } else if (/doc|readme|comment/.test(cleanDesc)) {
+      type = 'docs';
+    } else if (/style|css|ui|design/.test(cleanDesc)) {
+      type = 'style';
+    }
+    
+    // Detect domain from keywords
+    if (/api|route|endpoint|server/.test(cleanDesc)) {
+      domain = 'nexus';
+    } else if (/brain|ai|model|llm|agent/.test(cleanDesc)) {
+      domain = 'cortex';
+    } else if (/ui|frontend|react|component/.test(cleanDesc)) {
+      domain = 'web-app';
+    } else if (/test|qa|quality/.test(cleanDesc)) {
+      domain = 'qa';
+    } else if (/predict|routing|provider/.test(cleanDesc)) {
+      domain = 'precog';
+    }
+    
+    // Generate feature name (kebab-case)
+    const keyWords = words
+      .filter(w => !/^(the|a|an|is|are|to|for|with|and|or|in|on|at|by)$/.test(w))
+      .slice(0, 4);
+    const featureName = keyWords.join('-').replace(/[^a-z0-9-]/g, '');
+    
+    // Generate branch name
+    const branchName = `${type}/${featureName}`;
+    
+    // Generate suggested file structure based on domain
+    const suggestedStructure = this.generateSuggestedStructure(domain, featureName, type);
+    
+    // Generate git commands
+    const commands = {
+      createBranch: `git checkout -b ${branchName}`,
+      stageFiles: `git add ${suggestedStructure.map(f => f.path).join(' ')}`,
+      commit: `git commit -m "${type}(${domain}): ${description.slice(0, 50)}"`,
+    };
+    
+    return {
+      featureName,
+      branchName,
+      suggestedStructure,
+      commands,
+      scope: {
+        type,
+        domain,
+        summary: description.slice(0, 100),
+        files: suggestedStructure.filter(f => f.type === 'file').map(f => f.path),
+        impact: type === 'feature' ? 'minor' : 'patch',
+      },
+    };
+  }
+
+  private generateSuggestedStructure(
+    domain: string, 
+    featureName: string, 
+    type: ChangeScope['type']
+  ): { path: string; type: 'file' | 'directory'; purpose: string }[] {
+    const structure: { path: string; type: 'file' | 'directory'; purpose: string }[] = [];
+    
+    switch (domain) {
+      case 'nexus':
+        structure.push(
+          { path: `src/nexus/routes/${featureName}.ts`, type: 'file', purpose: 'API route handlers' },
+          { path: `tests/unit/nexus/${featureName}.test.ts`, type: 'file', purpose: 'Unit tests' }
+        );
+        break;
+      case 'cortex':
+        structure.push(
+          { path: `src/cortex/${featureName}/`, type: 'directory', purpose: 'Feature module' },
+          { path: `src/cortex/${featureName}/index.ts`, type: 'file', purpose: 'Main module entry' },
+          { path: `tests/unit/cortex/${featureName}.test.ts`, type: 'file', purpose: 'Unit tests' }
+        );
+        break;
+      case 'web-app':
+        structure.push(
+          { path: `src/web-app/src/components/${featureName}/`, type: 'directory', purpose: 'Component folder' },
+          { path: `src/web-app/src/components/${featureName}/${featureName}.tsx`, type: 'file', purpose: 'React component' },
+          { path: `src/web-app/src/components/${featureName}/${featureName}.stories.tsx`, type: 'file', purpose: 'Storybook stories' }
+        );
+        break;
+      case 'qa':
+        structure.push(
+          { path: `src/qa/${featureName}.ts`, type: 'file', purpose: 'QA module' },
+          { path: `tests/unit/qa/${featureName}.test.ts`, type: 'file', purpose: 'Unit tests' }
+        );
+        break;
+      case 'precog':
+        structure.push(
+          { path: `src/precog/${featureName}.ts`, type: 'file', purpose: 'Prediction module' },
+          { path: `tests/unit/precog/${featureName}.test.ts`, type: 'file', purpose: 'Unit tests' }
+        );
+        break;
+      default:
+        structure.push(
+          { path: `src/${domain}/${featureName}.ts`, type: 'file', purpose: 'Feature implementation' },
+          { path: `tests/unit/${featureName}.test.ts`, type: 'file', purpose: 'Unit tests' }
+        );
+    }
+    
+    // Add docs for features
+    if (type === 'feature') {
+      structure.push(
+        { path: `docs/${featureName}.md`, type: 'file', purpose: 'Feature documentation' }
+      );
+    }
+    
+    return structure;
   }
 }
 

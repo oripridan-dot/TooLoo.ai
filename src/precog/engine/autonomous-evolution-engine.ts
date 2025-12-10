@@ -134,7 +134,7 @@ export class AutonomousEvolutionEngine {
 
   // Configuration
   private autonomousMode: boolean;
-  private evolutionInterval: NodeJS.Timer | null;
+  private evolutionInterval: ReturnType<typeof setInterval> | null;
 
   // Known leap opportunities
   private readonly leapCandidates = [
@@ -361,10 +361,12 @@ export class AutonomousEvolutionEngine {
       };
     }
     const domainPerf = perf.domains[record.domain];
-    domainPerf.requests++;
-    domainPerf.successRate =
-      domainPerf.successRate * (1 - alpha) + (record.success ? 1 : 0) * alpha;
-    domainPerf.avgQuality = domainPerf.avgQuality * (1 - alpha) + record.quality * alpha;
+    if (domainPerf) {
+      domainPerf.requests++;
+      domainPerf.successRate =
+        domainPerf.successRate * (1 - alpha) + (record.success ? 1 : 0) * alpha;
+      domainPerf.avgQuality = domainPerf.avgQuality * (1 - alpha) + record.quality * alpha;
+    }
   }
 
   /**
@@ -386,13 +388,11 @@ export class AutonomousEvolutionEngine {
       taskCompletionRate:
         this.performanceMetrics.taskCompletionRate * (1 - alpha) +
         (successes / recent.length) * alpha,
-      averageLatency:
-        this.performanceMetrics.averageLatency * (1 - alpha) + avgLatency * alpha,
+      averageLatency: this.performanceMetrics.averageLatency * (1 - alpha) + avgLatency * alpha,
       p95Latency:
         this.performanceMetrics.p95Latency * (1 - alpha) +
         (sortedLatencies[p95Index]?.latency || avgLatency) * alpha,
-      qualityScore:
-        this.performanceMetrics.qualityScore * (1 - alpha) + avgQuality * alpha,
+      qualityScore: this.performanceMetrics.qualityScore * (1 - alpha) + avgQuality * alpha,
     };
 
     // Calculate learning velocity (improvement over time)
@@ -494,11 +494,7 @@ export class AutonomousEvolutionEngine {
     }
   }
 
-  private onChallengerWin(data: {
-    champion: string;
-    challenger: string;
-    reason: string;
-  }): void {
+  private onChallengerWin(data: { champion: string; challenger: string; reason: string }): void {
     // Challenger beat champion - suggest code modification
     this.suggestCodeModification({
       file: 'src/precog/engine/model-registry-dynamic.ts',
@@ -543,9 +539,7 @@ export class AutonomousEvolutionEngine {
 
     this.codeModifications.push(modification);
 
-    console.log(
-      `[AutonomousEvolutionEngine] 📝 Code modification suggested: ${mod.description}`
-    );
+    console.log(`[AutonomousEvolutionEngine] 📝 Code modification suggested: ${mod.description}`);
 
     // Emit for review
     bus.publish('cortex', 'evolution:code-modification', modification);
@@ -585,7 +579,8 @@ export class AutonomousEvolutionEngine {
           target: `leap:${nextLeap.name}`,
           description: `System ready for evolutionary leap: ${nextLeap.name}`,
           estimatedImpact: 0.4,
-          feasibility: nextLeap.riskLevel === 'low' ? 0.8 : nextLeap.riskLevel === 'medium' ? 0.6 : 0.4,
+          feasibility:
+            nextLeap.riskLevel === 'low' ? 0.8 : nextLeap.riskLevel === 'medium' ? 0.6 : 0.4,
           suggestedAction: nextLeap.description,
         });
       }
@@ -603,11 +598,12 @@ export class AutonomousEvolutionEngine {
     if (available.length === 0) return null;
 
     // Prioritize by risk (start with low risk)
-    return (
+    const result =
       available.find((c) => c.riskLevel === 'low') ||
       available.find((c) => c.riskLevel === 'medium') ||
-      available[0]
-    );
+      available[0];
+
+    return result ?? null;
   }
 
   /**
@@ -625,7 +621,8 @@ export class AutonomousEvolutionEngine {
       requiredCapabilities: candidate.requiredCapabilities,
       expectedBenefit: `Improved ${candidate.requiredCapabilities.join(', ')} capabilities`,
       riskLevel: candidate.riskLevel,
-      feasibilityScore: candidate.riskLevel === 'low' ? 0.8 : candidate.riskLevel === 'medium' ? 0.6 : 0.4,
+      feasibilityScore:
+        candidate.riskLevel === 'low' ? 0.8 : candidate.riskLevel === 'medium' ? 0.6 : 0.4,
       progress: 0,
       createdAt: Date.now(),
     };

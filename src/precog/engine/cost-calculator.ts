@@ -10,25 +10,28 @@
 
 // V3: Model-specific pricing (per 1K tokens)
 const MODEL_PRICING = {
-  // OpenAI
+  // OpenAI (Current as of Dec 2024)
   'gpt-4o': { input: 0.005, output: 0.015 },
   'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
   'gpt-4-turbo': { input: 0.01, output: 0.03 },
+  'o1': { input: 0.015, output: 0.06 },
   'o1-preview': { input: 0.015, output: 0.06 },
   'o1-mini': { input: 0.003, output: 0.012 },
   'dall-e-3': { fixed: 0.04 }, // Per image
 
-  // Anthropic
-  'claude-sonnet-4.5': { input: 0.003, output: 0.015 },
+  // Anthropic (Current as of Dec 2024)
+  'claude-sonnet-4-20250514': { input: 0.003, output: 0.015 },
+  'claude-opus-4-20250514': { input: 0.015, output: 0.075 },
+  'claude-3-5-haiku-latest': { input: 0.00025, output: 0.00125 },
   'claude-3-opus': { input: 0.015, output: 0.075 },
   'claude-3-sonnet': { input: 0.003, output: 0.015 },
   'claude-3-haiku': { input: 0.00025, output: 0.00125 },
 
-  // Google
+  // Google (Current as of Dec 2024)
+  'gemini-2.0-flash-exp': { input: 0.0, output: 0.0 }, // Free tier
   'gemini-2.0-flash': { input: 0.0, output: 0.0 }, // Free tier
   'gemini-1.5-pro': { input: 0.00125, output: 0.005 },
   'gemini-1.5-flash': { input: 0.000075, output: 0.0003 },
-  'gemini-3-pro-preview': { input: 0.00125, output: 0.005 },
 
   // DeepSeek
   'deepseek-chat': { input: 0.00014, output: 0.00028 },

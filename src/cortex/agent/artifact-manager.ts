@@ -1,9 +1,10 @@
-// @version 3.3.15
+// @version 3.3.392
 /**
  * Artifact Manager - Code and File Artifact Storage
  *
  * Manages the storage, versioning, and retrieval of artifacts
  * created by the Agent Execution System.
+ * V3.3.392: Added project-scoped artifact support
  *
  * @module cortex/agent/artifact-manager
  */
@@ -16,6 +17,7 @@ import type { Artifact, ArtifactType, ArtifactVersion } from './types.js';
 
 const ARTIFACTS_DIR = path.join(process.cwd(), 'data', 'artifacts');
 const ARTIFACTS_INDEX = path.join(ARTIFACTS_DIR, 'index.json');
+const PROJECTS_DIR = path.join(process.cwd(), 'projects');
 
 interface ArtifactIndex {
   version: string;
@@ -95,18 +97,38 @@ export class ArtifactManager {
       version: '1.0.0',
       createdAt: new Date(),
       createdBy: params.createdBy,
-      metadata: params.metadata,
+      metadata: {
+        ...params.metadata,
+        projectId: params.metadata?.['projectId'],
+      },
       tags: params.tags,
     };
 
-    // Determine file path
+    // Determine file path - use project directory if projectId is provided
     const extension = this.getExtension(params.type, params.language);
     const filename = `${artifact.id}${extension}`;
-    artifact.path = path.join(params.type, filename);
+    const projectId = params.metadata?.['projectId'] as string | undefined;
 
-    // Save content to file
-    const fullPath = path.join(ARTIFACTS_DIR, artifact.path);
-    await fs.outputFile(fullPath, params.content);
+    if (projectId) {
+      // Store in project's artifacts folder
+      artifact.path = path.join(
+        '..',
+        '..',
+        'projects',
+        projectId,
+        'artifacts',
+        params.type,
+        filename
+      );
+      const fullPath = path.join(PROJECTS_DIR, projectId, 'artifacts', params.type, filename);
+      await fs.ensureDir(path.dirname(fullPath));
+      await fs.outputFile(fullPath, params.content);
+    } else {
+      // Store in global artifacts folder
+      artifact.path = path.join(params.type, filename);
+      const fullPath = path.join(ARTIFACTS_DIR, artifact.path);
+      await fs.outputFile(fullPath, params.content);
+    }
 
     // Save initial version
     await this.saveVersion(artifact.id, artifact.version, params.content);
@@ -123,10 +145,32 @@ export class ArtifactManager {
       type: params.type,
       name: params.name,
       path: artifact.path,
+      projectId: projectId || null,
     });
 
-    console.log(`[ArtifactManager] Created artifact: ${artifact.name} (${artifact.id})`);
+    // If project-scoped, also emit a project event
+    if (projectId) {
+      bus.publish('cortex', 'project:artifact_created', {
+        projectId,
+        artifactId: artifact.id,
+        artifactType: params.type,
+        artifactName: params.name,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(
+      `[ArtifactManager] Created artifact: ${artifact.name} (${artifact.id})${projectId ? ` [Project: ${projectId}]` : ''}`
+    );
     return artifact;
+  }
+
+  /**
+   * List artifacts for a specific project
+   */
+  async listProjectArtifacts(projectId: string): Promise<Artifact[]> {
+    await this.ensureInitialized();
+    return this.index.artifacts.filter((a) => a.metadata?.['projectId'] === projectId);
   }
 
   /**

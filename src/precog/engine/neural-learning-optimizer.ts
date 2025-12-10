@@ -262,8 +262,7 @@ export class NeuralLearningOptimizer {
    */
   private hashState(state: LearningState): string {
     // Discretize continuous values for tractable state space
-    const discretize = (value: number, bins: number): number =>
-      Math.floor(value * bins) / bins;
+    const discretize = (value: number, bins: number): number => Math.floor(value * bins) / bins;
 
     const key = {
       m: discretize(state.mastery, 5), // 5 levels
@@ -292,7 +291,11 @@ export class NeuralLearningOptimizer {
     // Epsilon-greedy exploration
     if (Math.random() < this.config.explorationRate) {
       // Explore: random action
-      const action = this.strategies[Math.floor(Math.random() * this.strategies.length)];
+      const randomIdx = Math.floor(Math.random() * this.strategies.length);
+      const action = this.strategies[randomIdx];
+      if (!action) {
+        return 'efficiency'; // Safe fallback
+      }
       console.log(`[NeuralLearningOptimizer] 🎲 Exploring: ${action}`);
       return action;
     }
@@ -306,9 +309,14 @@ export class NeuralLearningOptimizer {
     }
 
     // Find action with highest Q-value
+    const firstEntry = qEntries[0];
+    if (!firstEntry) {
+      return this.selectHeuristicAction(currentState);
+    }
+
     const best = qEntries.reduce(
       (max, entry) => (entry.qValue > max.qValue ? entry : max),
-      qEntries[0]
+      firstEntry
     );
 
     console.log(
@@ -382,8 +390,7 @@ export class NeuralLearningOptimizer {
     // Q-learning update
     const oldQ = entry.qValue;
     const newQ =
-      oldQ +
-      this.config.learningRate * (reward + this.config.discountFactor * maxNextQ - oldQ);
+      oldQ + this.config.learningRate * (reward + this.config.discountFactor * maxNextQ - oldQ);
 
     entry.qValue = newQ;
     entry.visits++;
@@ -520,10 +527,8 @@ export class NeuralLearningOptimizer {
       ...this.currentState,
       recentSuccessRate:
         this.currentState.recentSuccessRate * (1 - alpha) + (interaction.success ? 1 : 0) * alpha,
-      averageQuality:
-        this.currentState.averageQuality * (1 - alpha) + interaction.quality * alpha,
-      averageLatency:
-        this.currentState.averageLatency * (1 - alpha) + interaction.latency * alpha,
+      averageQuality: this.currentState.averageQuality * (1 - alpha) + interaction.quality * alpha,
+      averageLatency: this.currentState.averageLatency * (1 - alpha) + interaction.latency * alpha,
       domainStrengths: {
         ...this.currentState.domainStrengths,
         [interaction.domain]:
@@ -567,10 +572,12 @@ export class NeuralLearningOptimizer {
     const strategyQs: Record<string, number[]> = {};
     for (const entries of this.qTable.values()) {
       for (const entry of entries) {
-        if (!strategyQs[entry.strategy]) {
-          strategyQs[entry.strategy] = [];
+        const arr = strategyQs[entry.strategy];
+        if (!arr) {
+          strategyQs[entry.strategy] = [entry.qValue];
+        } else {
+          arr.push(entry.qValue);
         }
-        strategyQs[entry.strategy].push(entry.qValue);
       }
     }
 

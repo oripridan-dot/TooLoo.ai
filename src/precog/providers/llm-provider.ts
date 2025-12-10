@@ -1,18 +1,19 @@
-// @version 3.3.91
+// @version 3.3.452
 /**
  * LLM Provider Orchestrator (Real Providers)
  * Uses available API keys to select the cheapest suitable provider.
  * Fallback chain: DeepSeek → Anthropic Claude → OpenAI → Google Gemini.
  * If no keys are available, returns a clear configuration message.
  *
+ * V3.3.452: Added AutonomousEvolutionEngine feedback loop for self-learning
+ * V3.3.451: Removed dead code, fixed ESLint warnings
+ * V3.3.450: Fixed fictional model names to use real current models:
+ * - Claude: claude-sonnet-4-20250514 (was claude-sonnet-4.5)
+ * - OpenAI: gpt-4o (was gpt-5)
+ * - Gemini: gemini-2.0-flash-exp (was gemini-3-pro-preview)
+ *
  * V3.3.91: Moved domain-expertise and continuous-learning to proper locations.
  * V3.3.90: Improved mid-stream error handling with graceful failover.
- * - When a provider fails mid-stream, attempts continuation with next provider
- * - User-friendly error messages instead of raw system errors
- * - Returns partial content if no fallback providers available
- *
- * V2.2.250: CRITICAL FIX - TooLoo identity is now preserved. Domain expertise
- * is APPENDED to system prompts, not prepended, ensuring TooLoo's core identity
  * and capabilities are always asserted first.
  */
 
@@ -23,6 +24,9 @@ import fetch from 'node-fetch';
 import ensureEnvLoaded from '../../core/env-loader.js';
 import { amygdala, AmygdalaState } from '../../cortex/amygdala/index.js';
 import { bus } from '../../core/event-bus.js';
+
+// Import AutonomousEvolutionEngine for feedback loop
+import { autonomousEvolutionEngine } from '../engine/autonomous-evolution-engine.js';
 
 ensureEnvLoaded();
 
@@ -95,6 +99,7 @@ export default class LLMProvider {
           localai: providerAvailable('localai'),
           openinterpreter: providerAvailable('openinterpreter'),
           huggingface: providerAvailable('huggingface'),
+          zhipu: providerAvailable('zhipu'),
         };
       },
     });
@@ -103,12 +108,13 @@ export default class LLMProvider {
       get() {
         return {
           deepseek: env('DEEPSEEK_MODEL', 'deepseek-chat'),
-          anthropic: env('ANTHROPIC_MODEL', 'claude-sonnet-4.5'), // Default to Sonnet 4.5
-          openai: env('OPENAI_MODEL', 'gpt-5'), // Default to GPT-5
-          gemini: env('GEMINI_MODEL', 'gemini-3-pro-preview'), // Default to Gemini 3 Pro
+          anthropic: env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'), // Claude Sonnet 4 (latest)
+          openai: env('OPENAI_MODEL', 'gpt-4o'), // GPT-4o (best current)
+          gemini: env('GEMINI_MODEL', 'gemini-2.0-flash-exp'), // Gemini 2.0 Flash (latest)
           localai: env('LOCALAI_MODEL', 'gpt-4'),
           openinterpreter: env('OI_MODEL', 'openinterpreter/default'),
           huggingface: env('HF_MODEL', 'microsoft/DialoGPT-large'),
+          zhipu: env('ZHIPU_MODEL', 'glm-4-flash'), // GLM-4 Flash (fast, multimodal)
         };
       },
     });
@@ -132,53 +138,40 @@ export default class LLMProvider {
 
   getProviderStatus() {
     const providerList = [
+      // Anthropic Models (Real, as of Dec 2024)
       {
-        id: 'anthropic-haiku-4.5',
-        name: 'Claude Haiku 4.5',
-        model: 'claude-haiku-4.5',
-      },
-      {
-        id: 'anthropic-opus-4.5',
-        name: 'Claude Opus 4.5 (Preview)',
-        model: 'claude-opus-4.5-preview',
+        id: 'anthropic-haiku-35',
+        name: 'Claude 3.5 Haiku',
+        model: 'claude-3-5-haiku-latest',
       },
       {
         id: 'anthropic-sonnet-4',
         name: 'Claude Sonnet 4',
-        model: 'claude-sonnet-4',
+        model: 'claude-sonnet-4-20250514',
       },
       {
-        id: 'anthropic-sonnet-4.5',
-        name: 'Claude Sonnet 4.5',
-        model: 'claude-sonnet-4.5',
+        id: 'anthropic-opus-4',
+        name: 'Claude Opus 4',
+        model: 'claude-opus-4-20250514',
       },
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', model: 'gemini-2.5-pro' },
-      {
-        id: 'gemini-3-pro',
-        name: 'Gemini 3 Pro (Preview)',
-        model: 'gemini-3-pro-preview',
-      },
-      { id: 'openai-gpt-5', name: 'GPT-5', model: 'gpt-5' },
-      {
-        id: 'openai-gpt-5-codex',
-        name: 'GPT-5-Codex (Preview)',
-        model: 'gpt-5-codex-preview',
-      },
-      {
-        id: 'openai-gpt-5.1',
-        name: 'GPT-5.1 (Preview)',
-        model: 'gpt-5.1-preview',
-      },
-      {
-        id: 'openai-gpt-5.1-codex',
-        name: 'GPT-5.1-Codex (Preview)',
-        model: 'gpt-5.1-codex-preview',
-      },
-      {
-        id: 'openai-gpt-5.1-codex-mini',
-        name: 'GPT-5.1-Codex-Mini (Preview)',
-        model: 'gpt-5.1-codex-mini-preview',
-      },
+      // Google Gemini Models (Real, as of Dec 2024)
+      { id: 'gemini-2-flash', name: 'Gemini 2.0 Flash', model: 'gemini-2.0-flash-exp' },
+      { id: 'gemini-15-pro', name: 'Gemini 1.5 Pro', model: 'gemini-1.5-pro' },
+      { id: 'gemini-15-flash', name: 'Gemini 1.5 Flash', model: 'gemini-1.5-flash' },
+      // OpenAI Models (Real, as of Dec 2024)
+      { id: 'openai-gpt-4o', name: 'GPT-4o', model: 'gpt-4o' },
+      { id: 'openai-gpt-4o-mini', name: 'GPT-4o Mini', model: 'gpt-4o-mini' },
+      { id: 'openai-gpt-4-turbo', name: 'GPT-4 Turbo', model: 'gpt-4-turbo' },
+      { id: 'openai-o1', name: 'o1 (Reasoning)', model: 'o1' },
+      { id: 'openai-o1-mini', name: 'o1 Mini', model: 'o1-mini' },
+      // DeepSeek Models
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', model: 'deepseek-chat' },
+      { id: 'deepseek-coder', name: 'DeepSeek Coder', model: 'deepseek-coder' },
+      // ZhiPu GLM Models (bigmodel.cn)
+      { id: 'zhipu-glm4-flash', name: 'GLM-4 Flash', model: 'glm-4-flash' },
+      { id: 'zhipu-glm4-plus', name: 'GLM-4 Plus', model: 'glm-4-plus' },
+      { id: 'zhipu-glm4v', name: 'GLM-4V (Vision)', model: 'glm-4v' },
+      { id: 'zhipu-glm4-0520', name: 'GLM-4 0520', model: 'glm-4-0520' },
     ];
 
     return providerList.map((p) => {
@@ -214,12 +207,51 @@ export default class LLMProvider {
     return Object.values(this.providers).some(Boolean);
   }
 
+  // V3.3.452: Estimate cost based on provider and token count
+  estimateCost(provider: string, responseLength: number): number {
+    // Approximate token count (4 chars per token)
+    const outputTokens = Math.ceil(responseLength / 4);
+
+    // Cost per 1K output tokens (rough estimates)
+    const costPer1K: Record<string, number> = {
+      gemini: 0.0001, // Gemini Flash is very cheap
+      anthropic: 0.015, // Claude Sonnet
+      openai: 0.015, // GPT-4o
+      deepseek: 0.0002, // Very cheap
+      zhipu: 0.0001, // GLM-4 Flash is very affordable
+      localai: 0, // Free
+      ollama: 0, // Free
+      huggingface: 0.0001, // Mostly free
+      openinterpreter: 0, // Free
+    };
+
+    const rate = costPer1K[provider] || 0.01;
+    return (outputTokens / 1000) * rate;
+  }
+
+  // V3.3.441: Get model name for provider (for UI display)
+  getModelName(provider: string): string {
+    const modelMap: Record<string, string> = {
+      gemini: (env('GEMINI_MODEL') as string) || 'gemini-2.0-flash-exp',
+      anthropic: (env('ANTHROPIC_MODEL') as string) || 'claude-sonnet-4-20250514',
+      openai: (env('OPENAI_MODEL') as string) || 'gpt-4o',
+      deepseek: (env('DEEPSEEK_MODEL') as string) || 'deepseek-chat',
+      zhipu: (env('ZHIPU_MODEL') as string) || 'glm-4-flash',
+      localai: (env('LOCALAI_MODEL') as string) || 'local-model',
+      ollama: (env('OLLAMA_MODEL') as string) || 'llama3',
+      huggingface: 'HuggingFace API',
+      openinterpreter: 'Open Interpreter',
+    };
+    return modelMap[provider] || provider;
+  }
+
   selectProvider(taskType = 'chat') {
-    // Default chat: Prefer Gemini 3 Pro, then others
+    // Default chat: Prefer Gemini 2.0 Flash (fast, capable), then others
     const order = [
-      'gemini', // Gemini 3 Pro (Default)
+      'gemini', // Gemini 2.0 Flash (Default)
       'anthropic', // Premium reasoning (Claude)
       'openai', // Premium reliable
+      'zhipu', // GLM-4 (affordable, fast)
       'localai', // Free local OpenAI-compatible
       'huggingface', // Free tier (with limits)
       'openinterpreter', // Local with code execution
@@ -228,7 +260,7 @@ export default class LLMProvider {
 
     // For code tasks, prefer local code-capable models
     if (taskType === 'code' || taskType === 'programming') {
-      const codeOrder = ['gemini', 'openinterpreter', 'deepseek', 'openai', 'anthropic'];
+      const codeOrder = ['gemini', 'openinterpreter', 'deepseek', 'zhipu', 'openai', 'anthropic'];
       for (const p of codeOrder) {
         if (this.providers[p]) return p;
       }
@@ -236,7 +268,7 @@ export default class LLMProvider {
 
     // For reasoning tasks, prefer premium models
     if (taskType === 'reasoning' || taskType === 'analysis') {
-      const reasoningOrder = ['gemini', 'anthropic', 'openai', 'deepseek'];
+      const reasoningOrder = ['gemini', 'anthropic', 'openai', 'zhipu', 'deepseek'];
       for (const p of reasoningOrder) {
         if (this.providers[p]) return p;
       }
@@ -323,12 +355,23 @@ export default class LLMProvider {
       };
     }
 
+    // V3.3.441: Emit provider:selected for Projection Interface UI
+    bus.publish('precog', 'provider:selected', {
+      provider,
+      model: this.getModelName(provider),
+      domain: detectedDomain,
+      taskType,
+      availableProviders,
+      timestamp: Date.now(),
+    });
+
     const fns = {
       deepseek: () => this.streamDeepSeek(prompt, enhancedSystem, history, onChunk),
       anthropic: () => this.streamClaude(prompt, enhancedSystem, history, onChunk),
       openai: () => this.streamOpenAI(prompt, enhancedSystem, history, onChunk),
       gemini: () => this.streamGemini(prompt, enhancedSystem, history, modelTier, onChunk),
       localai: () => this.streamLocalAI(prompt, enhancedSystem, history, onChunk),
+      zhipu: () => this.streamZhipu(prompt, enhancedSystem, history, onChunk),
       // Others not supported for streaming yet, fallback to non-streaming
       openinterpreter: async () => {
         const res = await this.callOpenInterpreter(prompt, enhancedSystem);
@@ -343,7 +386,7 @@ export default class LLMProvider {
     };
 
     // Default chat fallback: Gemini first
-    const order = ['gemini', 'anthropic', 'openai', 'localai', 'deepseek'];
+    const order = ['gemini', 'anthropic', 'openai', 'zhipu', 'localai', 'deepseek'];
     const startIdx = order.indexOf(provider);
     const tryOrder = order.slice(startIdx).concat(order.slice(0, startIdx));
 
@@ -359,43 +402,11 @@ export default class LLMProvider {
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
       if (!(fns as unknown as Record<string, (() => Promise<void>) | undefined>)[p]) continue;
-
-      try {
-        if (sessionId) {
-          bus.publish('precog', 'precog:telemetry', {
-            type: 'provider_status',
-            sessionId,
-            provider: p,
-            status: 'streaming',
-          });
-        }
-
-        const startTime = Date.now();
-        let fullText = '';
-
-        // Intercept chunks to build full text
-        const collectingOnChunk = (chunk: string) => {
-          fullText += chunk;
-          safeOnChunk(chunk);
-        };
-
-        // Temporarily replace onChunk with collectingOnChunk for the specific call
-        // But fns[p] calls specific stream methods which take onChunk.
-        // So we need to pass collectingOnChunk to them.
-        // I need to redefine fns to accept onChunk override or just pass it.
-        // My fns definition above hardcoded onChunk. I should fix that.
-
-        // Let's redefine fns inside the loop or just call methods directly?
-        // Calling methods directly is cleaner but I need the mapping.
-
-        // I'll just redefine fns here to be simpler
-      } catch (e) {
-        // ...
-      }
+      // Provider available - will be handled in the actual streaming loop below
     }
 
-    // Re-implementing the loop logic properly
-    let accumulatedText = ''; // V3.3.90: Track accumulated text across providers for mid-stream recovery
+    // V3.3.90: Track accumulated text across providers for mid-stream recovery
+    let accumulatedText = '';
 
     for (const p of tryOrder) {
       if (!this.providers[p]) continue;
@@ -428,6 +439,8 @@ export default class LLMProvider {
           await this.streamGemini(prompt, enhancedSystem, history, modelTier, collectingOnChunk);
         else if (p === 'localai')
           await this.streamLocalAI(prompt, enhancedSystem, history, collectingOnChunk);
+        else if (p === 'zhipu')
+          await this.streamZhipu(prompt, enhancedSystem, history, collectingOnChunk);
         else if (p === 'openinterpreter') {
           const res = await this.callOpenInterpreter(prompt, enhancedSystem);
           collectingOnChunk(res.content);
@@ -440,6 +453,22 @@ export default class LLMProvider {
         const success = fullText.length > 0;
 
         updateMetrics(p, latency, success);
+
+        // FEEDBACK SIGNAL: Report to AutonomousEvolutionEngine
+        try {
+          autonomousEvolutionEngine.recordInteraction({
+            provider: p,
+            promptType: detectedDomain,
+            success,
+            latency,
+            cost: this.estimateCost(p, fullText.length),
+            quality: success ? 0.7 : 0.3, // Basic quality estimate
+            domain: detectedDomain,
+          });
+        } catch (err) {
+          // Don't let feedback failure interrupt response
+          console.warn('[LLMProvider] Evolution engine feedback failed:', err);
+        }
 
         if (sessionId) {
           bus.publish('precog', 'precog:telemetry', {
@@ -562,7 +591,9 @@ export default class LLMProvider {
             const json = JSON.parse(data);
             const content = json.choices?.[0]?.delta?.content || '';
             if (content) onChunk(content);
-          } catch (e) {}
+          } catch {
+            // Invalid JSON chunk - skip silently (common in SSE streams)
+          }
         }
       }
     }
@@ -636,7 +667,9 @@ export default class LLMProvider {
               const content = json.delta?.text || '';
               if (content) onChunk(content);
             }
-          } catch (e) {}
+          } catch {
+            // Invalid JSON chunk - skip silently (common in SSE streams)
+          }
         }
       }
     }
@@ -721,13 +754,12 @@ export default class LLMProvider {
             braceCount--;
             if (braceCount === 0 && startIndex !== -1) {
               const jsonStr = buffer.substring(startIndex, i + 1);
-              // console.log("Attempting parse:", jsonStr);
               try {
                 const json = JSON.parse(jsonStr);
                 const content = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
                 if (content) onChunk(content);
-              } catch (e: any) {
-                console.log('JSON Parse Error:', e?.message, 'String:', jsonStr);
+              } catch {
+                // JSON parse failed - likely incomplete chunk, will be handled in next iteration
               }
               processedUpTo = i + 1;
               startIndex = -1;
@@ -735,7 +767,6 @@ export default class LLMProvider {
           }
         }
       }
-      // console.log("End of chunk processing. Buffer length:", buffer.length, "ProcessedUpTo:", processedUpTo, "Remaining:", buffer.substring(processedUpTo));
 
       if (processedUpTo > 0) {
         buffer = buffer.slice(processedUpTo);
@@ -797,7 +828,9 @@ export default class LLMProvider {
             const json = JSON.parse(data);
             const content = json.choices?.[0]?.delta?.content || '';
             if (content) onChunk(content);
-          } catch (e) {}
+          } catch {
+            // Invalid JSON chunk - skip silently (common in SSE streams)
+          }
         }
       }
     }
@@ -851,7 +884,75 @@ export default class LLMProvider {
             const json = JSON.parse(data);
             const content = json.choices?.[0]?.delta?.content || '';
             if (content) onChunk(content);
-          } catch (e) {}
+          } catch {
+            // Invalid JSON chunk - skip silently (common in SSE streams)
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Stream from ZhiPu GLM-4 API (bigmodel.cn)
+   * Supports GLM-4-Flash, GLM-4-Plus, GLM-4V (vision), GLM-4.6V (video)
+   */
+  async streamZhipu(
+    prompt: string,
+    system: string,
+    history: any[],
+    onChunk: (chunk: string) => void
+  ) {
+    const apiKey = env('ZHIPU_API_KEY');
+    const model = this.defaultModel.zhipu;
+    if (!apiKey) throw new Error('ZhiPu not configured. Set ZHIPU_API_KEY in .env');
+
+    const messages = [];
+    if (system) messages.push({ role: 'system', content: system });
+    if (Array.isArray(history)) messages.push(...history);
+    messages.push({ role: 'user', content: prompt });
+
+    const res = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7,
+        stream: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`ZhiPu GLM error ${res.status}: ${err}`);
+    }
+
+    if (!res.body) throw new Error('No response body');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    for await (const chunk of res.body) {
+      const text = decoder.decode(chunk as Buffer, { stream: true });
+      buffer += text;
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data: ')) {
+          const data = trimmed.slice(6);
+          if (data === '[DONE]') return;
+          try {
+            const json = JSON.parse(data);
+            const content = json.choices?.[0]?.delta?.content || '';
+            if (content) onChunk(content);
+          } catch {
+            // Invalid JSON chunk - skip silently (common in SSE streams)
+          }
         }
       }
     }
@@ -959,7 +1060,7 @@ export default class LLMProvider {
     const tryOrder = order.slice(startIdx).concat(order.slice(0, startIdx));
 
     let lastError = null;
-    const startTime = Date.now();
+    const _startTime = Date.now(); // Track overall request time (for future telemetry)
 
     // Check Amygdala State - if PANIC/CRITICAL, maybe avoid expensive models?
     // For now, we just log it.
@@ -1198,7 +1299,7 @@ export default class LLMProvider {
     bus.publish('system', 'synapsys:event', {
       type: 'thought',
       payload: {
-        text: `Consulting Gemini 3 Pro (${model})... This may take a moment.`,
+        text: `Consulting Gemini (${model})... This may take a moment.`,
       },
     });
 
@@ -1392,7 +1493,7 @@ const providerBuilders = {
   gemini: () => {
     const rawKey = (process.env['GEMINI_API_KEY'] || '').trim();
     const key = rawKey.startsWith('sk-') ? rawKey.slice(3) : rawKey;
-    const model = env('GEMINI_MODEL', 'gemini-3-pro-preview');
+    const model = env('GEMINI_MODEL', 'gemini-2.0-flash-exp');
     return {
       name: 'gemini',
       url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -1490,6 +1591,24 @@ const providerBuilders = {
     const base = providerBuilders.claude();
     return { ...base, name: 'anthropic' };
   },
+  zhipu: () => {
+    const key = (process.env['ZHIPU_API_KEY'] || '').trim();
+    const model = env('ZHIPU_MODEL', 'glm-4-flash');
+    return {
+      name: 'zhipu',
+      url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      key,
+      header: 'Authorization',
+      model,
+      requiresKey: true,
+      format: (prompt: string) => ({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1024,
+        temperature: 0.7,
+      }),
+    };
+  },
 };
 
 function getProviderConfig(name: string) {
@@ -1526,7 +1645,7 @@ export async function generateLLM({
   system,
   history = [],
   maxTokens,
-  sessionId,
+  sessionId: _sessionId, // Prefixed with _ to indicate intentionally unused
 }: {
   prompt: string;
   provider: string;
@@ -1568,7 +1687,7 @@ export async function generateLLM({
   const bodyObj = config.format(prompt);
 
   // Handle History & System Prompt
-  if (['deepseek', 'openai', 'localai'].includes(provider)) {
+  if (['deepseek', 'openai', 'localai', 'zhipu'].includes(provider)) {
     // OpenAI-compatible format
     const messages = [];
     if (system) messages.push({ role: 'system', content: system });
@@ -1646,6 +1765,7 @@ export async function generateLLM({
     if (provider === 'deepseek') return data.choices?.[0]?.message?.content || '';
     if (provider === 'claude' || provider === 'anthropic') return data.content?.[0]?.text || '';
     if (provider === 'openai') return data.choices?.[0]?.message?.content || '';
+    if (provider === 'zhipu') return data.choices?.[0]?.message?.content || '';
     if (provider === 'huggingface') return data[0]?.generated_text || '';
 
     if (provider === 'localai') return data.choices?.[0]?.message?.content || '';
@@ -1710,6 +1830,11 @@ function providerEnabled(name: string) {
 
   if (name === 'huggingface') {
     const alt = process.env['ENABLE_HUGGINGFACE'];
+    if (alt !== undefined) return String(alt).toLowerCase() === 'true';
+  }
+
+  if (name === 'zhipu' || name === 'glm') {
+    const alt = process.env['ZHIPU_ENABLED'];
     if (alt !== undefined) return String(alt).toLowerCase() === 'true';
   }
 

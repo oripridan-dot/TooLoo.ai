@@ -246,9 +246,7 @@ export function ProjectSelector({ onNewProject, compact = false }) {
             >
               {activeProject.icon || '📁'}
             </span>
-            {!compact && (
-              <span style={styles.projectName}>{activeProject.name}</span>
-            )}
+            {!compact && <span style={styles.projectName}>{activeProject.name}</span>}
           </>
         ) : (
           <>
@@ -336,9 +334,7 @@ export function ProjectSelector({ onNewProject, compact = false }) {
                         <div style={styles.itemName}>{project.name}</div>
                         <div style={styles.itemMeta}>
                           <span>{project.type}</span>
-                          {project.stats?.stars > 0 && (
-                            <span>⭐ {project.stats.stars}</span>
-                          )}
+                          {project.stats?.stars > 0 && <span>⭐ {project.stats.stars}</span>}
                         </div>
                       </div>
                       {isActive && <span style={styles.activeBadge}>Active</span>}
@@ -402,7 +398,14 @@ export function ProjectIndicator({ onClick }) {
       whileTap={onClick ? { scale: 0.98 } : {}}
     >
       <span>{activeProject.icon || '📁'}</span>
-      <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span
+        style={{
+          maxWidth: '100px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {activeProject.name}
       </span>
     </motion.div>

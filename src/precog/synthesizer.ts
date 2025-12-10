@@ -30,6 +30,7 @@ function getAugmentedPersona() {
 export class Synthesizer {
   async synthesize(prompt: string, responseType: string = 'context-driven', sessionId?: string) {
     console.log('[Synthesizer] Starting multi-provider synthesis...');
+    const synthesisStart = Date.now();
 
     const providers = ['gemini', 'anthropic', 'openai'];
     const systemPrompt = getAugmentedPersona();
@@ -155,6 +156,7 @@ Return ONLY the synthesized response.
           providers: successful.map((r) => r.provider),
           count: successful.length,
         },
+        latencyMs: Date.now() - synthesisStart,
       };
     } catch {
       // Fallback: just return the first successful response
@@ -165,6 +167,7 @@ Return ONLY the synthesized response.
           providers: [first.provider],
           note: 'Synthesis failed, returning single provider response.',
         },
+        latencyMs: Date.now() - synthesisStart,
       };
     }
   }

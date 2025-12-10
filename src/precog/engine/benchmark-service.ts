@@ -1,17 +1,17 @@
 // @version 3.3.499
 /**
  * BenchmarkService - Real Performance Benchmarking
- * 
+ *
  * Phase 2: Self-Optimization
- * 
+ *
  * Runs hourly benchmarks to measure real provider performance:
- * 
+ *
  * 1. Sends 10 standard test prompts to all providers
  * 2. Measures actual wall-clock time + quality of responses
  * 3. Records latency, token count, quality score
  * 4. Compares results to update optimization insights
  * 5. Feeds results back to ProviderScorecard for ranking
- * 
+ *
  * This replaces simulated benchmarks with real performance data
  * that drives system optimization.
  */
@@ -68,11 +68,15 @@ export class BenchmarkService {
     }
 
     this.isRunning = true;
-    console.log('[BenchmarkService] Started - benchmarks every', this.benchmarkIntervalMs / 1000 / 60, 'minutes');
+    console.log(
+      '[BenchmarkService] Started - benchmarks every',
+      this.benchmarkIntervalMs / 1000 / 60,
+      'minutes'
+    );
 
     // Run first benchmark immediately, then on interval
     this.runBenchmark();
-    
+
     setInterval(() => {
       if (this.isRunning) {
         this.runBenchmark();
@@ -94,7 +98,7 @@ export class BenchmarkService {
   private async runBenchmark(): Promise<void> {
     const startTime = Date.now();
     const roundId = `benchmark-${Date.now()}`;
-    
+
     console.log('[BenchmarkService] Starting benchmark round:', roundId);
 
     const providers = ['deepseek', 'gemini', 'anthropic', 'openai'];
@@ -102,9 +106,7 @@ export class BenchmarkService {
 
     // Run all prompts against all providers in parallel
     const promises = providers.flatMap((provider) =>
-      this.benchmarkPrompts.map((prompt) =>
-        this.benchmarkProvider(provider, prompt)
-      )
+      this.benchmarkPrompts.map((prompt) => this.benchmarkProvider(provider, prompt))
     );
 
     const benchmarkResults = await Promise.allSettled(promises);
@@ -130,8 +132,12 @@ export class BenchmarkService {
       summary: {
         providersAttempted: providers.length * this.benchmarkPrompts.length,
         successCount,
-        avgLatency: results.filter((r) => r.success).reduce((acc, r) => acc + r.latency, 0) / Math.max(1, successCount),
-        avgQualityScore: results.filter((r) => r.success).reduce((acc, r) => acc + r.qualityScore, 0) / Math.max(1, successCount),
+        avgLatency:
+          results.filter((r) => r.success).reduce((acc, r) => acc + r.latency, 0) /
+          Math.max(1, successCount),
+        avgQualityScore:
+          results.filter((r) => r.success).reduce((acc, r) => acc + r.qualityScore, 0) /
+          Math.max(1, successCount),
         improvements: summary.improvements,
       },
     };
@@ -152,7 +158,7 @@ export class BenchmarkService {
     console.log('[BenchmarkService] Round complete:', roundId, 'Duration:', duration, 'ms');
     console.log('[BenchmarkService] Summary:', summary);
 
-    bus.publish('benchmark:complete', round);
+    bus.publish('system', 'benchmark:complete', round);
   }
 
   /**
@@ -166,7 +172,6 @@ export class BenchmarkService {
         prompt,
         provider,
         maxTokens: 512,
-        timeout: 30000,
       });
 
       const latency = Date.now() - startTime;
@@ -176,8 +181,8 @@ export class BenchmarkService {
       const qualityScore = Math.min(
         1,
         0.5 + // Base score
-        (response.length / 2000) * 0.3 + // Length component
-        (response.split('.').length / 20) * 0.2 // Sentence count component
+          (response.length / 2000) * 0.3 + // Length component
+          (response.split('.').length / 20) * 0.2 // Sentence count component
       );
 
       return {
@@ -217,10 +222,12 @@ export class BenchmarkService {
     const byProvider: { [key: string]: BenchmarkResult[] } = {};
 
     results.forEach((result) => {
-      if (!byProvider[result.provider]) {
-        byProvider[result.provider] = [];
+      const arr = byProvider[result.provider];
+      if (!arr) {
+        byProvider[result.provider] = [result];
+      } else {
+        arr.push(result);
       }
-      byProvider[result.provider].push(result);
     });
 
     let bestProvider = 'unknown';
@@ -238,8 +245,10 @@ export class BenchmarkService {
         return;
       }
 
-      const avgLatency = successResults.reduce((acc, r) => acc + r.latency, 0) / successResults.length;
-      const avgQuality = successResults.reduce((acc, r) => acc + r.qualityScore, 0) / successResults.length;
+      const avgLatency =
+        successResults.reduce((acc, r) => acc + r.latency, 0) / successResults.length;
+      const avgQuality =
+        successResults.reduce((acc, r) => acc + r.qualityScore, 0) / successResults.length;
 
       // Composite score: 40% latency, 30% quality, 30% reliability
       const score =
@@ -281,13 +290,7 @@ export class BenchmarkService {
     // Record each successful benchmark as a real request
     results.forEach((result) => {
       if (result.success) {
-        scorecard.recordRequest(result.provider, {
-          timestamp: result.timestamp,
-          latency: result.latency,
-          success: true,
-          tokens: result.tokens,
-          costPerToken: this.estimateCost(result.provider, result.tokens),
-        });
+        scorecard.recordRequest(result.provider, result.latency, true, result.tokens);
       }
     });
 
@@ -300,16 +303,16 @@ export class BenchmarkService {
   private publishResults(round: BenchmarkRound): void {
     // Update runtime config with insights
     const config = getRuntimeConfig();
-    
+
     // Calculate optimization score based on results
     const avgQuality = round.summary.avgQualityScore;
     const successRate = round.summary.successCount / round.summary.providersAttempted;
     const optimizationScore = (avgQuality + successRate) / 2;
-    
+
     config.setOptimizationScore(optimizationScore, 'BenchmarkService');
 
     // Publish event
-    bus.publish('benchmark:results', {
+    bus.publish('system', 'benchmark:results', {
       roundId: round.id,
       timestamp: round.timestamp,
       optimizationScore,
@@ -328,9 +331,11 @@ export class BenchmarkService {
    * Get latest benchmark results
    */
   getLatestResults(): BenchmarkRound | null {
-    return this.benchmarkHistory.length > 0
-      ? this.benchmarkHistory[this.benchmarkHistory.length - 1]
-      : null;
+    const latest =
+      this.benchmarkHistory.length > 0
+        ? this.benchmarkHistory[this.benchmarkHistory.length - 1]
+        : undefined;
+    return latest ?? null;
   }
 
   /**
@@ -340,31 +345,31 @@ export class BenchmarkService {
     this.benchmarkPrompts = [
       // 1. Simple Q&A
       'What is the capital of France?',
-      
+
       // 2. Code generation
       'Write a function in JavaScript that reverses a string.',
-      
+
       // 3. Explanation
       'Explain quantum computing in simple terms.',
-      
+
       // 4. Summarization
       'Summarize: The Industrial Revolution was a period of human history marked by the transition from agrarian societies to industrial ones.',
-      
+
       // 5. Creative writing
       'Write a short poem about autumn.',
-      
+
       // 6. Data extraction
       'Extract the dates from this text: The conference was held on March 15, 2024, with follow-ups on April 22 and May 10.',
-      
+
       // 7. Problem solving
       'If a train leaves New York at 60 mph and another leaves Boston at 80 mph (220 miles apart), when do they meet?',
-      
+
       // 8. Translation/Transformation
       'Convert this to JSON: Name: Alice, Age: 30, Email: alice@example.com',
-      
+
       // 9. Analysis
       'What are the pros and cons of remote work?',
-      
+
       // 10. Complex reasoning
       'Given that all cats are mammals, and all mammals have lungs, are all cats able to breathe? Explain your reasoning.',
     ];

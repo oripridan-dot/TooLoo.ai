@@ -339,10 +339,10 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
 
     // ========================================================================
     // MULTI-FORMAT VISUAL PARSING (v3.3.374)
-    // Supports: svg, ascii, mermaid, chart, timeline, tree, stats, 
+    // Supports: svg, ascii, mermaid, chart, timeline, tree, stats,
     //           gradient-card, comparison, emoji, terminal, math
     // ========================================================================
-    
+
     // Combined regex for all visual formats
     const visualFormats = [
       { type: 'svg', regex: /```svg\s*([\s\S]*?)```/g },
@@ -359,7 +359,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
       { type: 'math', regex: /```math\s*([\s\S]*?)```/g },
       { type: 'jsx', regex: /```(?:jsx|react|javascript)\s*([\s\S]*?)```/g },
     ];
-    
+
     // Find all visual blocks with their positions
     const allBlocks = [];
     visualFormats.forEach(({ type, regex }) => {
@@ -373,23 +373,26 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
         });
       }
     });
-    
+
     // Sort by position
     allBlocks.sort((a, b) => a.start - b.start);
-    
+
     // Build parts array
     let currentIndex = 0;
-    allBlocks.forEach(block => {
+    allBlocks.forEach((block) => {
       // Add text before this block
       if (block.start > currentIndex) {
-        parts.push({ type: 'text', content: processedContent.substring(currentIndex, block.start) });
+        parts.push({
+          type: 'text',
+          content: processedContent.substring(currentIndex, block.start),
+        });
       }
       // Add the visual block
       visuals.push({ type: block.type, code: block.code, index: parts.length });
       parts.push({ type: block.type, code: block.code });
       currentIndex = block.end;
     });
-    
+
     // Add remaining text
     if (currentIndex < processedContent.length) {
       parts.push({ type: 'text', content: processedContent.substring(currentIndex) });
@@ -405,16 +408,19 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
         let svgMatch;
         const subParts = [];
         let subLastIndex = 0;
-        
+
         while ((svgMatch = rawSvgRegex.exec(textContent)) !== null) {
           hasRawSvg = true;
           if (svgMatch.index > subLastIndex) {
-            subParts.push({ type: 'text', content: textContent.substring(subLastIndex, svgMatch.index) });
+            subParts.push({
+              type: 'text',
+              content: textContent.substring(subLastIndex, svgMatch.index),
+            });
           }
           subParts.push({ type: 'svg', code: svgMatch[1] });
           subLastIndex = svgMatch.index + svgMatch[0].length;
         }
-        
+
         if (hasRawSvg) {
           if (subLastIndex < textContent.length) {
             subParts.push({ type: 'text', content: textContent.substring(subLastIndex) });
@@ -465,7 +471,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             />
           );
         }
-        
+
         // ASCII Art Rendering
         if (part.type === 'ascii') {
           return (
@@ -477,17 +483,24 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             />
           );
         }
-        
+
         // Mermaid Diagram Rendering
         if (part.type === 'mermaid') {
-          const mermaidType = part.code.startsWith('graph') ? 'flowchart' 
-            : part.code.startsWith('sequenceDiagram') ? 'sequence'
-            : part.code.startsWith('classDiagram') ? 'class'
-            : part.code.startsWith('stateDiagram') ? 'state'
-            : part.code.startsWith('erDiagram') ? 'er'
-            : part.code.startsWith('gantt') ? 'gantt'
-            : part.code.startsWith('pie') ? 'pie'
-            : 'flowchart';
+          const mermaidType = part.code.startsWith('graph')
+            ? 'flowchart'
+            : part.code.startsWith('sequenceDiagram')
+              ? 'sequence'
+              : part.code.startsWith('classDiagram')
+                ? 'class'
+                : part.code.startsWith('stateDiagram')
+                  ? 'state'
+                  : part.code.startsWith('erDiagram')
+                    ? 'er'
+                    : part.code.startsWith('gantt')
+                      ? 'gantt'
+                      : part.code.startsWith('pie')
+                        ? 'pie'
+                        : 'flowchart';
           return (
             <MermaidRenderer
               key={`mermaid-${index}`}
@@ -498,14 +511,17 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             />
           );
         }
-        
+
         // Chart Rendering
         if (part.type === 'chart') {
           const chartData = parseJsonContent(part.code);
           if (chartData) {
             // Handle both {"type":"bar","data":{...}} and {"type":"bar","labels":[...],"datasets":[...]}
             const chartType = chartData.type || 'bar';
-            const chartDataPayload = chartData.data || { labels: chartData.labels, datasets: chartData.datasets };
+            const chartDataPayload = chartData.data || {
+              labels: chartData.labels,
+              datasets: chartData.datasets,
+            };
             return (
               <ChartRenderer
                 key={`chart-${index}`}
@@ -518,7 +534,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             );
           }
         }
-        
+
         // Timeline Rendering
         if (part.type === 'timeline') {
           const timelineData = parseJsonContent(part.code);
@@ -533,7 +549,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             );
           }
         }
-        
+
         // Tree Rendering
         if (part.type === 'tree') {
           const treeData = parseJsonContent(part.code);
@@ -548,7 +564,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             );
           }
         }
-        
+
         // Stats Card Rendering
         if (part.type === 'stats') {
           const statsData = parseJsonContent(part.code);
@@ -563,21 +579,17 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             );
           }
         }
-        
+
         // Gradient Card Rendering
         if (part.type === 'gradient-card') {
           const cardData = parseJsonContent(part.code);
           if (cardData) {
             return (
-              <GradientCardRenderer
-                key={`gradient-card-${index}`}
-                {...cardData}
-                className="my-4"
-              />
+              <GradientCardRenderer key={`gradient-card-${index}`} {...cardData} className="my-4" />
             );
           }
         }
-        
+
         // Comparison Rendering
         if (part.type === 'comparison') {
           const compData = parseJsonContent(part.code);
@@ -592,7 +604,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             );
           }
         }
-        
+
         // Emoji Composition Rendering
         if (part.type === 'emoji') {
           return (
@@ -605,7 +617,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             />
           );
         }
-        
+
         // Terminal Output Rendering
         if (part.type === 'terminal') {
           return (
@@ -617,7 +629,7 @@ export const EnhancedMarkdown = memo(({ content, isStreaming }) => {
             />
           );
         }
-        
+
         // Math/LaTeX Rendering
         if (part.type === 'math') {
           return (
@@ -1663,13 +1675,15 @@ render(<${componentName} />);`;
                   <LivePreview />
                 </div>
                 {/* Graceful error instead of technical stack trace */}
-                <LiveError 
+                <LiveError
                   component={() => (
                     <div className="px-4 py-3 text-center">
                       <span className="text-xl mb-2 block">⚠️</span>
-                      <p className="text-sm text-gray-400">Couldn't display this interactive element</p>
+                      <p className="text-sm text-gray-400">
+                        Couldn't display this interactive element
+                      </p>
                     </div>
-                  )} 
+                  )}
                 />
               </LiveProvider>
             </PreviewErrorBoundary>
