@@ -1,4 +1,4 @@
-// @version 3.3.516
+// @version 3.3.542
 /**
  * Project State Store
  * 
@@ -761,6 +761,35 @@ export const useProjectStore = create(
             },
           }));
         },
+        
+        // ====================================================================
+        // AUTO-SAVE CONFIGURATION
+        // ====================================================================
+        
+        enableAutoSave: (enabled = true, intervalMs = 30000) => {
+          set((state) => ({
+            sync: {
+              ...state.sync,
+              autoSave: {
+                ...state.sync.autoSave,
+                enabled,
+                intervalMs,
+              },
+            },
+          }));
+        },
+        
+        setAutoSaveInterval: (intervalMs) => {
+          set((state) => ({
+            sync: {
+              ...state.sync,
+              autoSave: {
+                ...state.sync.autoSave,
+                intervalMs,
+              },
+            },
+          }));
+        },
       }),
       {
         name: 'tooloo-project-state',
@@ -775,6 +804,96 @@ export const useProjectStore = create(
     )
   )
 );
+
+// ============================================================================
+// V3.3.532: DEBOUNCED AUTO-SAVE SUBSCRIBER
+// ============================================================================
+
+let autoSaveTimer = null;
+let pendingChangeCount = 0;
+
+// Debounced save function
+const debouncedSave = (delayMs = 5000) => {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
+  
+  autoSaveTimer = setTimeout(() => {
+    const state = useProjectStore.getState();
+    
+    // Only save if:
+    // 1. Auto-save is enabled
+    // 2. There's a project loaded
+    // 3. There are pending changes
+    if (
+      state.sync.autoSave.enabled && 
+      state.projectId && 
+      pendingChangeCount > 0
+    ) {
+      console.log('[AutoSave] Saving project...');
+      state.saveProject();
+      pendingChangeCount = 0;
+    }
+    
+    autoSaveTimer = null;
+  }, delayMs);
+};
+
+// Subscribe to state changes and trigger auto-save
+useProjectStore.subscribe(
+  (state) => ({
+    communication: state.communication,
+    execution: state.execution,
+    artifacts: state.artifacts,
+  }),
+  (current, previous) => {
+    // Deep equality check is handled by subscribeWithSelector
+    // If we got here, something changed
+    
+    const state = useProjectStore.getState();
+    if (!state.sync.autoSave.enabled || !state.projectId) return;
+    
+    // Increment pending changes
+    pendingChangeCount++;
+    
+    // Update pending changes count in store
+    useProjectStore.setState((s) => ({
+      sync: {
+        ...s.sync,
+        pendingChanges: pendingChangeCount,
+      },
+    }));
+    
+    // Trigger debounced save (use configured interval / 6 for responsive feel)
+    const saveDelay = Math.min(state.sync.autoSave.intervalMs / 6, 5000);
+    debouncedSave(saveDelay);
+  },
+  {
+    equalityFn: (a, b) => {
+      // Simple reference equality for top-level objects
+      return (
+        a.communication === b.communication &&
+        a.execution === b.execution &&
+        a.artifacts === b.artifacts
+      );
+    },
+  }
+);
+
+// Cleanup auto-save timer on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+    
+    // Force save on exit if there are pending changes
+    const state = useProjectStore.getState();
+    if (state.sync.autoSave.enabled && state.projectId && pendingChangeCount > 0) {
+      state.saveProject();
+    }
+  });
+}
 
 // ============================================================================
 // COMMAND SUGGESTION GENERATOR
