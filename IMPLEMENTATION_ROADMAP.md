@@ -12,7 +12,7 @@
 |-------|--------|----------|--------|
 | Phase 1: Foundation | 🟢 Complete | 100% | Week 1 |
 | Phase 2: User Management | 🟢 Complete | 100% | Weeks 2-3 |
-| Phase 3: Payment Integration | ⚪ Not Started | 0% | Weeks 4-5 |
+| Phase 3: Payment Integration | 🟡 In Progress | 40% | Weeks 4-5 |
 | Phase 4: Living Canvas UI | 🟢 Complete | 100% | Weeks 6-8 |
 | Phase 5: Intelligence Layer | ⚪ Not Started | 0% | Weeks 9-10 |
 | Phase 6: Self-Evolution | ⚪ Not Started | 0% | Weeks 11-12 |
@@ -69,22 +69,34 @@ export const metricsCollector = metricsCollectorInstance;
 
 ---
 
-## ⚪ Phase 3: Payment Integration [NOT STARTED]
+## ⚪ Phase 3: Payment Integration [IN PROGRESS - 40%]
 
-### 3.1 Stripe Integration
-- [ ] Subscription tiers (Free: 100 req/day, Pro: 10K/day, Unlimited)
-- [ ] Webhook handlers for subscription events
+### 3.1 Stripe Integration ✅
+- [x] Stripe SDK installed and configured
+- [x] BillingService class with subscription plans (Free/Pro/Unlimited)
+- [x] Webhook handlers for subscription lifecycle events
+- [x] Checkout session creation for upgrades
+- [x] Billing portal session for self-service management
 - [ ] License key verification middleware
-- [ ] Usage metering with Stripe meter events
 
-### 3.2 Billing UI
+### 3.2 Billing API Routes ✅
+- [x] `GET /api/v1/billing/plans` - List all subscription plans
+- [x] `GET /api/v1/billing/plans/:tier` - Get specific plan details
+- [x] `GET /api/v1/billing/subscription` - Get user's subscription status
+- [x] `POST /api/v1/billing/checkout` - Create Stripe checkout session
+- [x] `POST /api/v1/billing/portal` - Create billing portal session
+- [x] `GET /api/v1/billing/usage` - Get usage statistics
+- [x] `POST /api/v1/billing/webhook` - Handle Stripe webhooks
+- [x] `GET /api/v1/billing/compare` - Compare all tiers
+
+### 3.3 Billing UI
 - [ ] Subscription management page
 - [ ] Plan display and upgrade prompts
 - [ ] Payment method management
 - [ ] Invoice history view
 
-### 3.3 Access Control
-- [ ] Tier-based rate limits
+### 3.4 Access Control
+- [ ] Tier-based rate limits (integrate with rate-limiter middleware)
 - [ ] Feature flags per tier
 - [ ] Graceful degradation on limit exceed
 
