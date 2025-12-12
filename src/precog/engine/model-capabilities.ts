@@ -440,14 +440,22 @@ export class ModelCapabilityService {
   /**
    * Get the best models for a specific task type
    */
-  getBestModelsForTask(taskType: string, count: number = 3): string[] {
+  getBestModelsForTask(
+    taskType: string,
+    constraints?: { maxBudget?: number; minQuality?: number },
+    count: number = 3
+  ): string[] {
     const taskProfile = TASK_PROFILES[taskType];
     if (!taskProfile) {
       // Fallback to general routing
       return ['gemini', 'anthropic', 'deepseek'].slice(0, count);
     }
 
-    const scores = this.scoreModelsForTask(taskProfile);
+    const scores = this.scoreModelsForTaskInternal(
+      taskProfile,
+      constraints?.maxBudget ?? 0.1,
+      constraints?.minQuality ?? 0.7
+    );
     return scores
       .sort((a, b) => b.score - a.score)
       .slice(0, count)
@@ -455,23 +463,35 @@ export class ModelCapabilityService {
   }
 
   /**
-   * Score all models for a task profile
+   * Score all models for a task profile (internal)
    */
-  private scoreModelsForTask(task: TaskProfile): Array<{ modelId: string; score: number }> {
+  private scoreModelsForTaskInternal(
+    task: TaskProfile,
+    maxBudget: number = 0.1,
+    minQuality: number = 0.7
+  ): Array<{ modelId: string; score: number }> {
     const results: Array<{ modelId: string; score: number }> = [];
 
     for (const [modelId, profile] of Object.entries(this.profiles)) {
-      let score = 0;
+      let score = 50; // Base score
 
       // Score based on required capabilities
       for (const requiredDomain of task.requiredCapabilities) {
         const capability = profile.capabilities.find((c) => c.domain === requiredDomain);
         if (capability) {
           const levelMultiplier = this.getLevelMultiplier(capability.level, task.preferredLevel);
-          score += capability.score * levelMultiplier;
+          score += capability.score * levelMultiplier * 0.3;
         } else {
-          score -= 20; // Penalty for missing capability
+          score -= 15; // Penalty for missing capability
         }
+      }
+
+      // Budget constraint
+      const totalCost = profile.costPer1kTokens.input + profile.costPer1kTokens.output;
+      if (totalCost <= maxBudget) {
+        score += 10;
+      } else {
+        score -= (totalCost - maxBudget) * 100;
       }
 
       // Adjust for constraints
@@ -479,8 +499,7 @@ export class ModelCapabilityService {
         score += (3000 - profile.latencyMs.average) / 30; // Bonus for low latency
       }
       if (task.budgetConstraint === 'low') {
-        const totalCost = profile.costPer1kTokens.input + profile.costPer1kTokens.output;
-        score += (0.05 - totalCost) * 1000; // Bonus for low cost
+        score += (0.05 - totalCost) * 500; // Bonus for low cost
       }
 
       // Complexity adjustment
@@ -489,7 +508,7 @@ export class ModelCapabilityService {
         if (reasoningCap) score += reasoningCap.score * 0.3;
       }
 
-      results.push({ modelId, score });
+      results.push({ modelId, score: Math.max(0, Math.min(100, score)) });
     }
 
     return results;
