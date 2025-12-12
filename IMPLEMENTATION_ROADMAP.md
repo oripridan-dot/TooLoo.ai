@@ -107,6 +107,8 @@ export const metricsCollector = metricsCollectorInstance;
 | Depth Parallax | `skin/canvas/DepthParallax.jsx` | ✅ Complete |
 | Socket Bridge | `skin/canvas/CanvasSocketBridge.jsx` | ✅ Complete |
 | Performance Control | `skin/canvas/PerformanceBudgetControl.jsx` | ✅ Complete |
+| Command Palette | `skin/components/CommandPalette.jsx` | ✅ NEW V3.3.531 |
+| Task DAG | `skin/components/TaskDAG.jsx` | ✅ NEW V3.3.531 |
 
 ### 4.3 Views Status
 
@@ -122,10 +124,18 @@ export const metricsCollector = metricsCollectorInstance;
 | Design | `views/Design.jsx` | ✅ Complete |
 
 ### 4.4 Layer Implementation Tasks
-- [ ] Layer 1: Command palette (Cmd+K) overlay
-- [ ] Layer 2: DAG visualization integration
+- [x] Layer 1: Command palette (Cmd+K) overlay - V3.3.531
+- [x] Layer 2: DAG visualization component - V3.3.531
 - [ ] Layer 3: Artifact version slider
 - [ ] Layer 4: System monitor HUD wire-up
+
+### 4.5 Socket.IO Real-Time Sync [NEW V3.3.531]
+- [x] `project:join` - Join project room for collaboration
+- [x] `project:leave` - Leave project room
+- [x] `project:save` - Save state and broadcast to users
+- [x] `project:sync` - Request full state sync
+- [x] `project:cursor` - Broadcast cursor position
+- [x] `project:presence` - Update presence status
 
 ---
 
