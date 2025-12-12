@@ -201,6 +201,11 @@ export const metricsCollector = metricsCollectorInstance;
 
 ### Phase 2 (User Management)
 - `src/nexus/routes/projects-v2.ts` - Fixed hardcoded owner fields, added auth middleware
+- `src/nexus/routes/chat.ts` - V3.3.532: Per-user chat history (`data/chat-history/{userId}.json`), GET/DELETE endpoints
+- `src/nexus/routes/agent.ts` - V3.3.532: Artifact `ownerId` metadata, filtered GET by user
+- `src/nexus/routes/usage.ts` - V3.3.532: `/api/v1/usage/me` endpoint for user info + stats + limits
+- `src/precog/learning/q-learning-optimizer.ts` - V3.3.532: Per-user Q-learning state with global fallback
+- `src/nexus/middleware/auth.ts` - V3.3.532: Added `AuthenticatedRequest` type export
 
 ---
 
