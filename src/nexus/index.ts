@@ -1,10 +1,10 @@
-// @version 3.3.545 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing
+// @version 3.3.550 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
 import { bus } from '../core/event-bus.js';
 import { SocketServer } from './socket.js';
-import { apiLimiter, llmLimiter, visionLimiter } from './middleware/rate-limiter.js';
+import { apiLimiter, llmLimiter, visionLimiter, tierRateLimiter, tokenRateLimiter } from './middleware/rate-limiter.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import apiRoutes from './routes/api.js';
 import systemRoutes from './routes/system.js';
