@@ -563,7 +563,7 @@ export class ModelCapabilityService {
   }
 
   /**
-   * Score models for a task with budget/quality constraints
+   * Score models for a task with budget/quality constraints (public API)
    */
   scoreModelsForTask(
     task: TaskProfile | undefined,
@@ -574,59 +574,10 @@ export class ModelCapabilityService {
       // Return default scores if no task profile
       return Object.keys(this.profiles).map((modelId) => ({
         modelId,
-        score: 0.5,
+        score: 50,
       }));
     }
-    return this.calculateTaskScores(task, maxBudget, minQuality);
-  }
-
-  /**
-   * Internal method to calculate task scores
-   */
-  private calculateTaskScores(
-    task: TaskProfile,
-    maxBudget: number,
-    minQuality: number
-  ): Array<{ modelId: string; score: number }> {
-    const results: Array<{ modelId: string; score: number }> = [];
-
-    for (const [modelId, profile] of Object.entries(this.profiles)) {
-      let score = 50; // Base score
-
-      // Score based on required capabilities
-      for (const requiredDomain of task.requiredCapabilities) {
-        const capability = profile.capabilities.find((c) => c.domain === requiredDomain);
-        if (capability) {
-          const levelMultiplier = this.getLevelMultiplier(capability.level, task.preferredLevel);
-          score += capability.score * levelMultiplier * 0.3;
-        } else {
-          score -= 15; // Penalty for missing capability
-        }
-      }
-
-      // Budget constraint
-      const totalCost = profile.costPer1kTokens.input + profile.costPer1kTokens.output;
-      if (totalCost <= maxBudget) {
-        score += 10;
-      } else {
-        score -= (totalCost - maxBudget) * 100;
-      }
-
-      // Latency consideration
-      if (task.timeConstraint === 'fast') {
-        score += (3000 - profile.latencyMs.average) / 100;
-      }
-
-      // Quality consideration for high complexity
-      if (task.complexity === 'high') {
-        const reasoningCap = profile.capabilities.find((c) => c.domain === 'reasoning');
-        if (reasoningCap) score += reasoningCap.score * 0.2;
-      }
-
-      results.push({ modelId, score: Math.max(0, Math.min(100, score)) });
-    }
-
-    return results;
+    return this.scoreModelsForTaskInternal(task, maxBudget, minQuality);
   }
 
   /**
