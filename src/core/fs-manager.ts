@@ -329,3 +329,6 @@ export class SmartFSManager {
 }
 
 export const smartFS = SmartFSManager.getInstance();
+
+// Alias for backward compatibility with newer code
+export const fsManager = smartFS;

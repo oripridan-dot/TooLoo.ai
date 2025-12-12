@@ -1,4 +1,4 @@
-// @version 3.3.382
+// @version 3.3.531
 /**
  * Projects API Routes - Figma/GitHub-style Project Management
  *
@@ -7,11 +7,13 @@
  * - Starring & Forking
  * - Collaborator Management
  * - Rich Metadata & Activity Tracking
+ * - User-scoped ownership (V3.3.531)
  *
  * @module nexus/routes/projects
  */
 
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+import { optionalAuth } from '../middleware/auth.js';
 import fs from 'fs-extra';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -248,7 +250,7 @@ router.get('/', async (req, res) => {
  * Create a new project
  * POST /api/v1/projects
  */
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req: Request, res: Response) => {
   const input: CreateProjectInput = req.body;
 
   if (!input.name) {
@@ -281,7 +283,7 @@ router.post('/', async (req, res) => {
       thumbnail: undefined,
       icon: input.icon || '📁',
       color: input.color || '#6366f1',
-      owner: 'user', // TODO: Get from auth
+      owner: req.user?.id || 'anonymous',
       access: {
         visibility: input.visibility || 'private',
         allowForks: true,
@@ -289,8 +291,8 @@ router.post('/', async (req, res) => {
         requireApproval: false,
         collaborators: [
           {
-            id: 'user',
-            name: 'Owner',
+            id: req.user?.id || 'anonymous',
+            name: req.user?.name || 'Owner',
             role: 'owner',
             addedAt: now,
           },
@@ -514,8 +516,8 @@ router.post('/:id/star', async (req, res) => {
  * Fork a project
  * POST /api/v1/projects/:id/fork
  */
-router.post('/:id/fork', async (req, res) => {
-  const { id } = req.params;
+router.post('/:id/fork', optionalAuth, async (req: Request, res: Response) => {
+  const id = req.params['id'] as string;
   const input: ForkProjectInput = { ...req.body, sourceId: id };
   const sourceProjectPath = getProjectPath(id);
 
@@ -548,21 +550,21 @@ router.post('/:id/fork', async (req, res) => {
       name: newName,
       description: input.description || sourceProject.description,
       parentId: id,
-      owner: 'user', // TODO: Get from auth
+      owner: req.user?.id || 'anonymous',
       access: {
         ...sourceProject.access,
         visibility: input.visibility || 'private',
         collaborators: [
           {
-            id: 'user',
-            name: 'Owner',
+            id: req.user?.id || 'anonymous',
+            name: req.user?.name || 'Owner',
             role: 'owner',
             addedAt: now,
           },
         ],
       },
       stats: createDefaultStats(),
-      recentActivity: [createActivity('fork', 'user', `Forked from ${sourceProject.name}`)],
+      recentActivity: [createActivity('fork', req.user?.id || 'anonymous', `Forked from ${sourceProject.name}`)],
       createdAt: now,
       updatedAt: now,
     };

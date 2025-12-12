@@ -1,4 +1,4 @@
-// @version 3.3.511
+// @version 3.3.530
 /**
  * @file Auth Service - API Key Authentication & User Session Management
  * @module nexus/auth
@@ -9,8 +9,8 @@
  */
 
 import { randomBytes, createHash } from 'crypto';
-import { bus } from '../../cortex/bus.js';
-import { fsManager } from '../../cortex/core/fs-manager.js';
+import { bus } from '../../core/event-bus.js';
+import { fsManager } from '../../core/fs-manager.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

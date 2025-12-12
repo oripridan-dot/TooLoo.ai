@@ -150,7 +150,7 @@ const AUTOMATED_RULES: ValidationRule[] = [
         { pattern: /\bfunction\s+\(/g, code: 'MISSING_FUNCTION_NAME', message: 'Missing function name' },
         { pattern: /\bconst\s*=/g, code: 'MISSING_CONST_NAME', message: 'Missing const name' },
         { pattern: /\blet\s*=/g, code: 'MISSING_LET_NAME', message: 'Missing let name' },
-        { pattern: /=>\s*{[^}]*$/m, code: 'UNCLOSED_ARROW_BODY', message: 'Unclosed arrow function body' },
+        { pattern: /=>\s*{[^}]*$/gm, code: 'UNCLOSED_ARROW_BODY', message: 'Unclosed arrow function body' },
       ];
 
       for (const { pattern, code, message } of errorPatterns) {

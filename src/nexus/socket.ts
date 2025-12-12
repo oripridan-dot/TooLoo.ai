@@ -1,12 +1,23 @@
-// @version 3.3.460
+// @version 3.3.531
 
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { bus, SynapsysEvent } from '../core/event-bus.js';
+import fs from 'fs-extra';
+import path from 'path';
+
+// Project room tracking
+interface ProjectRoom {
+  projectId: string;
+  users: Map<string, { socketId: string; userId: string; joinedAt: number }>;
+  lastActivity: number;
+}
 
 export class SocketServer {
   private io: Server;
   private socketMap: Map<string, any> = new Map(); // Maps requestId → socket
+  private projectRooms: Map<string, ProjectRoom> = new Map(); // Maps projectId → room info
+  private socketToProject: Map<string, string> = new Map(); // Maps socketId → projectId
 
   constructor(httpServer: HttpServer) {
     this.io = new Server(httpServer, {
@@ -185,12 +196,252 @@ export class SocketServer {
         }
       });
 
+      // ============================================================================
+      // V3.3.531: Project Sync Handlers - Real-time collaboration support
+      // ============================================================================
+
+      /**
+       * project:join - Join a project room for real-time updates
+       * @param data { projectId: string, userId?: string }
+       */
+      socket.on('project:join', async (data: any) => {
+        try {
+          const { projectId, userId = 'anonymous' } = data;
+          if (!projectId) {
+            socket.emit('project:error', { error: 'projectId is required' });
+            return;
+          }
+
+          // Verify project exists
+          const projectPath = path.join(process.cwd(), 'projects', projectId);
+          if (!(await fs.pathExists(projectPath))) {
+            socket.emit('project:error', { error: 'Project not found', projectId });
+            return;
+          }
+
+          // Leave any previous project room
+          const previousProject = this.socketToProject.get(socket.id);
+          if (previousProject && previousProject !== projectId) {
+            await this.leaveProjectRoom(socket, previousProject);
+          }
+
+          // Join the Socket.IO room
+          socket.join(`project:${projectId}`);
+          this.socketToProject.set(socket.id, projectId);
+
+          // Track in our project rooms
+          if (!this.projectRooms.has(projectId)) {
+            this.projectRooms.set(projectId, {
+              projectId,
+              users: new Map(),
+              lastActivity: Date.now(),
+            });
+          }
+
+          const room = this.projectRooms.get(projectId)!;
+          room.users.set(socket.id, {
+            socketId: socket.id,
+            userId,
+            joinedAt: Date.now(),
+          });
+          room.lastActivity = Date.now();
+
+          // Load project state
+          const projectFile = path.join(projectPath, 'project.json');
+          const projectData = await fs.readJSON(projectFile).catch(() => null);
+
+          // Notify the joining user
+          socket.emit('project:joined', {
+            projectId,
+            project: projectData,
+            users: Array.from(room.users.values()).map(u => ({
+              id: u.userId,
+              joinedAt: u.joinedAt,
+            })),
+            timestamp: new Date().toISOString(),
+          });
+
+          // Notify other users in the room
+          socket.to(`project:${projectId}`).emit('project:user_joined', {
+            projectId,
+            userId,
+            timestamp: new Date().toISOString(),
+          });
+
+          console.log(`[Socket] User ${userId} joined project ${projectId}`);
+          bus.publish('project', 'project:user_joined', { projectId, userId, socketId: socket.id });
+        } catch (err) {
+          console.error(`[Socket] Error handling project:join:`, err);
+          socket.emit('project:error', {
+            error: err instanceof Error ? err.message : 'Failed to join project',
+          });
+        }
+      });
+
+      /**
+       * project:leave - Leave a project room
+       * @param data { projectId: string }
+       */
+      socket.on('project:leave', async (data: any) => {
+        try {
+          const { projectId } = data;
+          if (!projectId) {
+            socket.emit('project:error', { error: 'projectId is required' });
+            return;
+          }
+
+          await this.leaveProjectRoom(socket, projectId);
+          socket.emit('project:left', { projectId, timestamp: new Date().toISOString() });
+        } catch (err) {
+          console.error(`[Socket] Error handling project:leave:`, err);
+          socket.emit('project:error', {
+            error: err instanceof Error ? err.message : 'Failed to leave project',
+          });
+        }
+      });
+
+      /**
+       * project:save - Save project state and broadcast to all users
+       * @param data { projectId: string, state: object, userId?: string }
+       */
+      socket.on('project:save', async (data: any) => {
+        try {
+          const { projectId, state, userId = 'anonymous' } = data;
+          if (!projectId || !state) {
+            socket.emit('project:error', { error: 'projectId and state are required' });
+            return;
+          }
+
+          const projectPath = path.join(process.cwd(), 'projects', projectId);
+          const projectFile = path.join(projectPath, 'project.json');
+
+          if (!(await fs.pathExists(projectPath))) {
+            socket.emit('project:error', { error: 'Project not found', projectId });
+            return;
+          }
+
+          // Merge with existing data and save
+          const existing = await fs.readJSON(projectFile).catch(() => ({}));
+          const updated = {
+            ...existing,
+            ...state,
+            updatedAt: new Date().toISOString(),
+            lastModifiedBy: userId,
+          };
+
+          await fs.writeJSON(projectFile, updated, { spaces: 2 });
+
+          // Update room activity
+          const room = this.projectRooms.get(projectId);
+          if (room) {
+            room.lastActivity = Date.now();
+          }
+
+          // Acknowledge save to sender
+          socket.emit('project:saved', {
+            projectId,
+            version: updated.updatedAt,
+            timestamp: new Date().toISOString(),
+          });
+
+          // Broadcast update to all OTHER users in the room
+          socket.to(`project:${projectId}`).emit('project:updated', {
+            projectId,
+            state: updated,
+            updatedBy: userId,
+            timestamp: new Date().toISOString(),
+          });
+
+          console.log(`[Socket] Project ${projectId} saved by ${userId}`);
+          bus.publish('project', 'project:saved', { projectId, userId });
+        } catch (err) {
+          console.error(`[Socket] Error handling project:save:`, err);
+          socket.emit('project:error', {
+            error: err instanceof Error ? err.message : 'Failed to save project',
+          });
+        }
+      });
+
+      /**
+       * project:sync - Request full project state sync
+       * @param data { projectId: string }
+       */
+      socket.on('project:sync', async (data: any) => {
+        try {
+          const { projectId } = data;
+          if (!projectId) {
+            socket.emit('project:error', { error: 'projectId is required' });
+            return;
+          }
+
+          const projectPath = path.join(process.cwd(), 'projects', projectId);
+          const projectFile = path.join(projectPath, 'project.json');
+
+          if (!(await fs.pathExists(projectPath))) {
+            socket.emit('project:error', { error: 'Project not found', projectId });
+            return;
+          }
+
+          const projectData = await fs.readJSON(projectFile).catch(() => null);
+          const room = this.projectRooms.get(projectId);
+
+          socket.emit('project:synced', {
+            projectId,
+            project: projectData,
+            users: room
+              ? Array.from(room.users.values()).map(u => ({ id: u.userId, joinedAt: u.joinedAt }))
+              : [],
+            timestamp: new Date().toISOString(),
+          });
+
+          console.log(`[Socket] Project ${projectId} synced to ${socket.id}`);
+        } catch (err) {
+          console.error(`[Socket] Error handling project:sync:`, err);
+          socket.emit('project:error', {
+            error: err instanceof Error ? err.message : 'Failed to sync project',
+          });
+        }
+      });
+
+      /**
+       * project:cursor - Broadcast cursor position for collaboration
+       * @param data { projectId: string, cursor: { x: number, y: number, userId: string } }
+       */
+      socket.on('project:cursor', (data: any) => {
+        const { projectId, cursor } = data;
+        if (!projectId || !cursor) return;
+
+        // Broadcast cursor to other users in the room (lightweight, no persistence)
+        socket.to(`project:${projectId}`).emit('project:cursor_moved', {
+          projectId,
+          cursor: { ...cursor, socketId: socket.id },
+          timestamp: Date.now(),
+        });
+      });
+
+      /**
+       * project:presence - Update user presence status
+       * @param data { projectId: string, status: 'active' | 'idle' | 'away' }
+       */
+      socket.on('project:presence', (data: any) => {
+        const { projectId, status, userId } = data;
+        if (!projectId) return;
+
+        socket.to(`project:${projectId}`).emit('project:presence_changed', {
+          projectId,
+          userId: userId || socket.id,
+          status,
+          timestamp: Date.now(),
+        });
+      });
+
       socket.on('error', (err: any) => {
         console.error(`[Socket] Client error: ${socket.id}`, err);
       });
 
       socket.on('disconnect', () => {
         console.log(`[Socket] Client disconnected: ${socket.id}`);
+        
         // Clean up socketMap entries for this socket
         for (const [requestId, s] of this.socketMap.entries()) {
           if (s === socket) {
@@ -198,8 +449,52 @@ export class SocketServer {
             console.log(`[Socket] Cleaned up mapping for ${requestId}`);
           }
         }
+
+        // V3.3.531: Clean up project room membership
+        const projectId = this.socketToProject.get(socket.id);
+        if (projectId) {
+          this.leaveProjectRoom(socket, projectId);
+        }
       });
     });
+  }
+
+  /**
+   * V3.3.531: Helper to remove a socket from a project room
+   */
+  private async leaveProjectRoom(socket: Socket, projectId: string): Promise<void> {
+    const room = this.projectRooms.get(projectId);
+    if (room) {
+      const userData = room.users.get(socket.id);
+      const userId = userData?.userId || 'unknown';
+      
+      room.users.delete(socket.id);
+      room.lastActivity = Date.now();
+
+      // If room is empty, clean it up after a delay
+      if (room.users.size === 0) {
+        setTimeout(() => {
+          const currentRoom = this.projectRooms.get(projectId);
+          if (currentRoom && currentRoom.users.size === 0) {
+            this.projectRooms.delete(projectId);
+            console.log(`[Socket] Cleaned up empty project room: ${projectId}`);
+          }
+        }, 60000); // 1 minute delay before cleanup
+      }
+
+      // Notify other users
+      socket.to(`project:${projectId}`).emit('project:user_left', {
+        projectId,
+        userId,
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log(`[Socket] User ${userId} left project ${projectId}`);
+      bus.publish('project', 'project:user_left', { projectId, userId, socketId: socket.id });
+    }
+
+    socket.leave(`project:${projectId}`);
+    this.socketToProject.delete(socket.id);
   }
 
   private bridgeEvents() {

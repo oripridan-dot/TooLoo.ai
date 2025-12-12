@@ -1,9 +1,10 @@
 /**
  * @file Auth Middleware - API Key Authentication for Protected Routes
  * @module nexus/middleware/auth
- * @version 3.3.530
+ * @version 3.3.532
  * 
  * Validates API keys and attaches user context to requests.
+ * V3.3.532: Added AuthenticatedRequest type export
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -21,6 +22,13 @@ declare global {
       isAuthenticated?: boolean;
     }
   }
+}
+
+// V3.3.532: Export type for routes that need typed request
+export interface AuthenticatedRequest extends Request {
+  user?: User;
+  apiKey?: Omit<APIKey, 'hashedKey'>;
+  isAuthenticated?: boolean;
 }
 
 export interface AuthOptions {

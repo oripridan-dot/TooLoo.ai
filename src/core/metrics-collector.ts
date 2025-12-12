@@ -604,4 +604,10 @@ export class MetricsCollector {
   }
 }
 
-export default new MetricsCollector();
+const metricsCollectorInstance = new MetricsCollector();
+
+// Named export for explicit imports
+export const metricsCollector = metricsCollectorInstance;
+
+// Default export for backward compatibility
+export default metricsCollectorInstance;

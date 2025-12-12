@@ -1,4 +1,4 @@
-// @version 3.3.196
+// @version 3.3.532
 /**
  * Agent API Routes
  *
@@ -13,6 +13,7 @@
  * V3.3.196: Added Smart Execution Orchestrator endpoints
  * - Full sprint-based execution with progress streaming
  * - Quality > Performance > Efficiency > Cost optimization
+ * V3.3.532: Added user scoping with optionalAuth middleware
  *
  * @module nexus/routes/agent
  */
@@ -23,6 +24,8 @@ import { taskProcessor } from '../../cortex/agent/task-processor.js';
 import { artifactManager } from '../../cortex/agent/artifact-manager.js';
 import { systemExecutionHub, teamRegistry, smartOrchestrator } from '../../cortex/agent/index.js';
 import type { TaskType, TaskInput, ProcessDefinition } from '../../cortex/agent/types.js';
+// V3.3.532: User scoping for artifacts
+import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -401,10 +404,12 @@ router.post('/process', async (req: Request, res: Response) => {
 /**
  * @route POST /api/v1/agent/artifacts
  * @description Create a new artifact
+ * V3.3.532: Added user scoping with optionalAuth
  */
-router.post('/artifacts', async (req: Request, res: Response) => {
+router.post('/artifacts', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { type, name, content, language, description, metadata, tags } = req.body;
+    const userId = req.user?.id;
 
     if (!type || !content) {
       res.status(400).json({
@@ -420,8 +425,11 @@ router.post('/artifacts', async (req: Request, res: Response) => {
       content,
       language,
       description,
-      createdBy: 'chat-ui',
-      metadata,
+      createdBy: userId || 'anonymous',
+      metadata: {
+        ...metadata,
+        ownerId: userId,
+      },
       tags,
     });
 
@@ -439,18 +447,26 @@ router.post('/artifacts', async (req: Request, res: Response) => {
 
 /**
  * @route GET /api/v1/agent/artifacts
- * @description List artifacts
+ * @description List artifacts (V3.3.532: filtered by user when authenticated)
  */
-router.get('/artifacts', async (req: Request, res: Response) => {
+router.get('/artifacts', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { type, language, tags, limit } = req.query;
+    const { type, language, tags, limit, all } = req.query;
+    const userId = req.user?.id;
 
-    const artifacts = await artifactManager.listArtifacts({
+    let artifacts = await artifactManager.listArtifacts({
       type: type as any,
       language: language as string,
       tags: tags ? (tags as string).split(',') : undefined,
       limit: limit ? parseInt(limit as string) : undefined,
     });
+
+    // V3.3.532: Filter by owner if authenticated and not requesting all
+    if (userId && all !== 'true') {
+      artifacts = artifacts.filter(
+        (a) => a.metadata?.['ownerId'] === userId || a.createdBy === userId || !a.metadata?.['ownerId']
+      );
+    }
 
     res.json({
       ok: true,
@@ -458,6 +474,7 @@ router.get('/artifacts', async (req: Request, res: Response) => {
         artifacts,
         count: artifacts.length,
         stats: artifactManager.getStats(),
+        userId: userId || 'anonymous',
       },
     });
   } catch (error: any) {

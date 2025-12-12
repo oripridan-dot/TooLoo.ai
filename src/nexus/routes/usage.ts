@@ -1,17 +1,18 @@
 /**
  * @file Usage Dashboard Routes - System Usage Metrics & Analytics
  * @module nexus/routes/usage
- * @version 3.3.530
+ * @version 3.3.532
  * 
  * Endpoints for usage dashboards, analytics, and system metrics.
+ * V3.3.532: Added /me endpoint for quick user info
  */
 
 import { Router, Request, Response } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { authService } from '../auth/auth-service.js';
-import { bus } from '../../cortex/bus.js';
-import { fsManager } from '../../cortex/core/fs-manager.js';
-import { metricsCollector } from '../../cortex/core/metrics-collector.js';
+import { bus } from '../../core/event-bus.js';
+import { fsManager } from '../../core/fs-manager.js';
+import { metricsCollector } from '../../core/metrics-collector.js';
 
 const router = Router();
 
@@ -387,5 +388,56 @@ function getNextMidnight(): string {
   tomorrow.setHours(0, 0, 0, 0);
   return tomorrow.toISOString();
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V3.3.532: User Info Endpoint
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/usage/me
+ * Get current user information with usage summary
+ * Useful as a "whoami" endpoint for frontends
+ */
+router.get('/me', requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
+    const usage = authService.getUserUsageStats(req.user.id);
+    const limits = authService.getTierLimits(req.user.tier);
+    const keys = await authService.listUserAPIKeys(req.user.id);
+
+    res.json({
+      success: true,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        name: req.user.name,
+        tier: req.user.tier,
+        createdAt: req.user.createdAt,
+      },
+      usage: {
+        requestsToday: usage?.requestsToday || 0,
+        tokensToday: usage?.tokensUsedToday || 0,
+        percentRequests: Math.round(((usage?.requestsToday || 0) / limits.requestsPerDay) * 100),
+        percentTokens: Math.round(((usage?.tokensUsedToday || 0) / limits.tokensPerDay) * 100),
+      },
+      limits: {
+        requestsPerDay: limits.requestsPerDay,
+        tokensPerDay: limits.tokensPerDay,
+        apiKeys: limits.apiKeys,
+      },
+      apiKeyCount: keys.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to get user info',
+      message: error.message
+    });
+  }
+});
 
 export default router;

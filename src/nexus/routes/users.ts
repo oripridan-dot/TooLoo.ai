@@ -1,10 +1,12 @@
-// @version 3.3.514
 /**
  * @file Users Routes - User Profile & API Key Management
  * @module nexus/routes/users
  * @version 3.3.530
  * 
  * REST endpoints for user management, API key operations, and profile settings.
+ * 
+ * IMPORTANT: Static routes (/me, /me/keys) must be defined BEFORE parameterized 
+ * routes (/:userId) to ensure correct routing!
  */
 
 import { Router, Request, Response } from 'express';
@@ -38,108 +40,7 @@ const CreateAPIKeySchema = z.object({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// User Routes (Public - Admin Only in Production)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * POST /api/v1/users
- * Create a new user account
- * 
- * @body { email: string, name: string, tier?: 'free'|'pro'|'enterprise' }
- * @returns Created user object
- */
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const input = CreateUserSchema.parse(req.body);
-    const user = await authService.createUser(input.email, input.name, input.tier);
-    
-    // Don't expose internal IDs in response
-    res.status(201).json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        tier: user.tier,
-        createdAt: user.createdAt
-      }
-    });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
-      res.status(400).json({
-        error: 'Validation error',
-        details: error.errors
-      });
-      return;
-    }
-    res.status(400).json({
-      error: 'Failed to create user',
-      message: error.message
-    });
-  }
-});
-
-/**
- * GET /api/v1/users
- * List all users (Admin only)
- */
-router.get('/', async (_req: Request, res: Response) => {
-  try {
-    const users = await authService.listUsers();
-    res.json({
-      success: true,
-      count: users.length,
-      users: users.map(u => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        tier: u.tier,
-        createdAt: u.createdAt,
-        apiKeyCount: u.apiKeys.length
-      }))
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      error: 'Failed to list users',
-      message: error.message
-    });
-  }
-});
-
-/**
- * GET /api/v1/users/:userId
- * Get user by ID
- */
-router.get('/:userId', async (req: Request, res: Response) => {
-  try {
-    const user = await authService.getUser(req.params.userId);
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        tier: user.tier,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-        apiKeyCount: user.apiKeys.length,
-        usage: user.usage
-      }
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      error: 'Failed to get user',
-      message: error.message
-    });
-  }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Authenticated User Routes
+// Current User Routes (MUST be before /:userId to avoid route collision)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -189,10 +90,17 @@ router.patch('/me', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    const input = UpdateUserSchema.parse(req.body);
+    const input = UpdateUserSchema.safeParse(req.body);
+    if (!input.success) {
+      res.status(400).json({
+        error: 'Validation error',
+        details: input.error.errors
+      });
+      return;
+    }
     
     // Users can't change their own tier (admin only)
-    const updates = { ...input };
+    const updates = { ...input.data };
     delete (updates as any).tier;
 
     const user = await authService.updateUser(req.user.id, updates);
@@ -212,23 +120,12 @@ router.patch('/me', requireAuth, async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    if (error.name === 'ZodError') {
-      res.status(400).json({
-        error: 'Validation error',
-        details: error.errors
-      });
-      return;
-    }
     res.status(500).json({
       error: 'Failed to update profile',
-      message: error.message
+      message: error?.message || 'Unknown error'
     });
   }
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// API Key Routes (Authenticated)
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * GET /api/v1/users/me/keys
@@ -271,9 +168,6 @@ router.get('/me/keys', requireAuth, async (req: Request, res: Response) => {
 /**
  * POST /api/v1/users/me/keys
  * Generate a new API key
- * 
- * @body { name: string, scopes?: string[], expiresInDays?: number, rateLimit?: number }
- * @returns The newly created API key (only time plaintext is shown!)
  */
 router.post('/me/keys', requireAuth, async (req: Request, res: Response) => {
   try {
@@ -301,7 +195,7 @@ router.post('/me/keys', requireAuth, async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       message: 'API key created. Save this key securely - it will not be shown again!',
-      key: result.key, // Only time we show the plaintext key
+      key: result.key,
       keyId: result.keyId
     });
   } catch (error: any) {
@@ -406,10 +300,6 @@ router.post('/me/keys/:keyId/reactivate', requireAuth, async (req: Request, res:
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Usage Stats Routes
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * GET /api/v1/users/me/usage
  * Get detailed usage statistics for current user
@@ -453,6 +343,105 @@ router.get('/me/usage', requireAuth, async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to get usage stats',
+      message: error.message
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User Admin Routes (Public - should be admin-only in production)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/users
+ * Create a new user account
+ */
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const input = CreateUserSchema.parse(req.body);
+    const user = await authService.createUser(input.email, input.name, input.tier);
+    
+    res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        tier: user.tier,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      res.status(400).json({
+        error: 'Validation error',
+        details: error.errors
+      });
+      return;
+    }
+    res.status(400).json({
+      error: 'Failed to create user',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/users
+ * List all users (Admin only)
+ */
+router.get('/', async (_req: Request, res: Response) => {
+  try {
+    const users = await authService.listUsers();
+    res.json({
+      success: true,
+      count: users.length,
+      users: users.map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        tier: u.tier,
+        createdAt: u.createdAt,
+        apiKeyCount: u.apiKeys.length
+      }))
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to list users',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/users/:userId
+ * Get user by ID (Admin only)
+ * 
+ * NOTE: This route MUST be after /me routes to avoid collision!
+ */
+router.get('/:userId', async (req: Request, res: Response) => {
+  try {
+    const user = await authService.getUser(req.params.userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        tier: user.tier,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
+        apiKeyCount: user.apiKeys.length,
+        usage: user.usage
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to get user',
       message: error.message
     });
   }

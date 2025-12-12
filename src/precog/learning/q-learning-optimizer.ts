@@ -1,10 +1,11 @@
-// @version 3.3.502
+// @version 3.3.532
 import fs from 'fs/promises';
 import path from 'path';
 
 export interface QState {
   taskType: string; // 'code', 'creative', 'general', etc.
   userSegment: string; // 'developer', 'creative', 'analyst', 'general'
+  userId?: string; // V3.3.532: Optional user ID for personalized routing
 }
 
 export interface QAction {
@@ -49,12 +50,15 @@ export class QLearningOptimizer {
     this.initialized = true;
   }
 
+  // V3.3.532: State key now includes userId for personalized routing
   private getStateKey(state: QState, action: QAction): string {
-    return `${state.taskType}:${state.userSegment}:${action.provider}`;
+    const userPart = state.userId || 'global';
+    return `${userPart}:${state.taskType}:${state.userSegment}:${action.provider}`;
   }
 
   /**
    * Get the best provider for the current state
+   * V3.3.532: Falls back to global Q-values if user has no history
    */
   getOptimalProvider(state: QState, availableProviders: string[]): string {
     // Epsilon-greedy exploration
@@ -69,9 +73,28 @@ export class QLearningOptimizer {
     let maxQ = -Infinity;
 
     for (const provider of availableProviders) {
-      const key = this.getStateKey(state, { provider });
-      const entry = this.qTable.get(key);
-      const qValue = entry ? entry.qValue : 0; // Default Q-value 0
+      // V3.3.532: Try user-specific Q-value first, then fall back to global
+      const userKey = this.getStateKey(state, { provider });
+      const globalKey = this.getStateKey({ ...state, userId: undefined }, { provider });
+      
+      const userEntry = this.qTable.get(userKey);
+      const globalEntry = this.qTable.get(globalKey);
+      
+      // Prefer user-specific if it has enough data, otherwise blend with global
+      let qValue: number;
+      if (userEntry && userEntry.visits >= 3) {
+        qValue = userEntry.qValue;
+      } else if (userEntry && globalEntry) {
+        // Blend: weight user more as visits increase
+        const userWeight = Math.min(userEntry.visits / 5, 0.8);
+        qValue = userEntry.qValue * userWeight + globalEntry.qValue * (1 - userWeight);
+      } else if (userEntry) {
+        qValue = userEntry.qValue;
+      } else if (globalEntry) {
+        qValue = globalEntry.qValue;
+      } else {
+        qValue = 0;
+      }
 
       if (qValue > maxQ) {
         maxQ = qValue;
@@ -79,17 +102,35 @@ export class QLearningOptimizer {
       }
     }
 
-    console.log(`[QLearning] Exploiting: ${bestProvider} (Q: ${maxQ.toFixed(3)})`);
+    const userInfo = state.userId ? ` [user:${state.userId.substring(0, 8)}]` : ' [global]';
+    console.log(`[QLearning] Exploiting: ${bestProvider} (Q: ${maxQ.toFixed(3)})${userInfo}`);
     return bestProvider;
   }
 
   /**
    * Update Q-value based on reward
+   * V3.3.532: Updates both user-specific and global entries
    */
   async update(state: QState, action: QAction, reward: QReward): Promise<void> {
     if (!this.initialized) await this.initialize();
 
-    const key = this.getStateKey(state, action);
+    // Update user-specific entry
+    const userKey = this.getStateKey(state, action);
+    await this.updateEntry(userKey, reward);
+    
+    // Also update global entry for cold-start users
+    if (state.userId) {
+      const globalKey = this.getStateKey({ ...state, userId: undefined }, action);
+      await this.updateEntry(globalKey, reward);
+    }
+
+    await this.save();
+  }
+  
+  /**
+   * V3.3.532: Internal update for a single Q-table entry
+   */
+  private updateEntry(key: string, reward: QReward): void {
     const currentEntry = this.qTable.get(key) || { qValue: 0, visits: 0 };
 
     // Calculate reward scalar (0-1 range ideally)
@@ -110,8 +151,6 @@ export class QLearningOptimizer {
       qValue: newQ,
       visits: currentEntry.visits + 1,
     });
-
-    await this.save();
   }
 
   private async save(): Promise<void> {
