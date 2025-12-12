@@ -1,4 +1,4 @@
-// @version 3.3.550 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits
+// @version 3.3.551 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -80,7 +80,8 @@ export function createNexusApp() {
   app.use('/api/v1/capabilities', capabilitiesRoutes);
   app.use('/api/v1/github', githubRoutes);
   app.use('/api/v1/projects', projectsRoutes);
-  app.use('/api/v1/chat', llmLimiter, chatRoutes);
+  // V3.3.550: Chat routes with tier-based rate limiting + token tracking
+  app.use('/api/v1/chat', llmLimiter, tierRateLimiter('llm'), tokenRateLimiter(), chatRoutes);
   app.use('/api/v1/design', designRoutes);
   app.use('/api/v1/visuals', visualsRoutes);
   app.use('/api/v1/workflows', workflowsRoutes);
@@ -95,7 +96,8 @@ export function createNexusApp() {
   app.use('/api/v1/suggestions', suggestionsRoutes);
   app.use('/api/v1/qa', qaRoutes);
   app.use('/api/v1/cost', costRoutes);
-  app.use('/api/v1/generate', llmLimiter, generateRoutes);
+  // V3.3.550: Generate routes with tier-based rate limiting + token tracking
+  app.use('/api/v1/generate', llmLimiter, tierRateLimiter('llm'), tokenRateLimiter(), generateRoutes);
   app.use('/api/v1/agent', agentRoutes);
   app.use('/api/v1/system/self', selfModRoutes);
   app.use('/api/v1/system/autonomous', autonomousModRoutes);
@@ -104,7 +106,8 @@ export function createNexusApp() {
   app.use('/api/v1/config', configurationRoutes);
   app.use('/api/v1/reflection', reflectionRoutes);
   app.use('/api/v1/flow', flowRoutes);
-  app.use('/api/v1/vision', visionLimiter, visionRoutes); // V3.3.438: Real Screen Capture + OCR
+  // V3.3.550: Vision routes with tier-based rate limiting
+  app.use('/api/v1/vision', visionLimiter, tierRateLimiter('vision'), visionRoutes);
   app.use('/api/v1/repo', repoRoutes); // V3.3.456: RepoAutoOrg - Git automation
   app.use('/api/v1/users', usersRoutes); // V3.3.530: User Management
   app.use('/api/v1/usage', usageRoutes); // V3.3.530: Usage Dashboard
