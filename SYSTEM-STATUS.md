@@ -137,7 +137,7 @@
 - [ ] Usage dashboard - Endpoints exist, UI needed
 - [ ] Subscription status
 
-### 4d: Living Canvas Foundation [🟡 IN PROGRESS - V3.3.531]
+### 4d: Living Canvas Foundation [✅ COMPLETE - V3.3.532]
 - [x] Canvas state types (`src/shared/types/canvas-state.types.ts`)
 - [x] Project state store (`src/web-app/src/skin/store/projectStateStore.js`)
 - [x] Store index exports (`src/web-app/src/skin/store/index.js`)
@@ -147,7 +147,9 @@
 - [x] Command palette UI component (`src/web-app/src/skin/components/CommandPalette.jsx`)
 - [x] DAG visualization component (`src/web-app/src/skin/components/TaskDAG.jsx`)
 - [x] Component index exports (`src/web-app/src/skin/components/index.js`)
-- [ ] Integration with main app shell
+- [x] CommandPalette integration in TooLooApp (Cmd+K shortcut)
+- [x] Execution DAG hook (`src/web-app/src/skin/hooks/useExecutionDAG.js`)
+- [x] Debounced auto-save in projectStateStore
 
 ---
 
