@@ -72,7 +72,7 @@ async function ensureRegistry() {
 
 // POST /api/v1/generate/component
 // Generate a new component from natural language description
-router.post('/component', async (req, res) => {
+router.post('/component', async (req: Request, res) => {
   try {
     const { description, name, category = 'generated' } = req.body;
 
@@ -99,6 +99,13 @@ Generate the component now. Return ONLY the JSX code:`;
       system: 'You are TooLoo UI Generator. Return ONLY valid JSX code.',
       taskType: 'generation',
     });
+
+    // V3.3.550: Record token usage for billing
+    const userId = (req as AuthenticatedRequest).user?.id;
+    if (userId && response.content) {
+      const tokensUsed = Math.ceil(response.content.length / 4);
+      recordUsage(userId, 0, tokensUsed);
+    }
 
     if (!response.content) {
       throw new Error('Failed to generate component');
