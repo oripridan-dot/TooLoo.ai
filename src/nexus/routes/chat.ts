@@ -1,9 +1,13 @@
-// @version 3.3.470
-import { Router } from 'express';
+// @version 3.3.552
+import { Router, Request, Response } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
 import { cortex, visualCortex } from '../../cortex/index.js';
 import { successResponse, errorResponse } from '../utils.js';
+// V3.3.532: User scoping for chat history
+import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
+// V3.3.550: Usage metering for billing
+import { recordUsage } from '../middleware/rate-limiter.js';
 // V3.3.126: True multi-provider parallel execution
 import ParallelProviderOrchestrator from '../../precog/engine/parallel-provider-orchestrator.js';
 import {
@@ -52,7 +56,23 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const router = Router();
-const HISTORY_FILE = path.join(process.cwd(), 'data', 'chat-history.json');
+const HISTORY_DIR = path.join(process.cwd(), 'data', 'chat-history');
+const DEFAULT_HISTORY_FILE = path.join(process.cwd(), 'data', 'chat-history.json');
+
+// V3.3.532: Get user-specific history file path
+function getHistoryPath(userId?: string): string {
+  if (!userId) return DEFAULT_HISTORY_FILE;
+  return path.join(HISTORY_DIR, `${userId}.json`);
+}
+
+// V3.3.532: Ensure history directory exists
+async function ensureHistoryDir(): Promise<void> {
+  try {
+    await fs.mkdir(HISTORY_DIR, { recursive: true });
+  } catch (e) {
+    // Directory may already exist
+  }
+}
 
 // V3.3.126: Initialize parallel provider orchestrator for ensemble mode
 const parallelOrchestrator = new ParallelProviderOrchestrator({
@@ -89,26 +109,29 @@ const benchmarkService = initBenchmarkService();
 benchmarkService.start();
 console.log('[Chat] BenchmarkService started for real performance tracking');
 
-// Helper to load history
-async function loadHistory() {
+// Helper to load history (V3.3.532: user-scoped)
+async function loadHistory(userId?: string) {
   try {
-    const data = await fs.readFile(HISTORY_FILE, 'utf-8');
+    const historyPath = getHistoryPath(userId);
+    const data = await fs.readFile(historyPath, 'utf-8');
     return JSON.parse(data);
   } catch (e) {
     return [];
   }
 }
 
-// Helper to save message
-async function saveMessage(msg: any) {
+// Helper to save message (V3.3.532: user-scoped)
+async function saveMessage(msg: any, userId?: string) {
   try {
-    const history = await loadHistory();
+    await ensureHistoryDir();
+    const historyPath = getHistoryPath(userId);
+    const history = await loadHistory(userId);
     history.push(msg);
-    // Keep last 1000 messages to prevent infinite growth
+    // Keep last 1000 messages per user to prevent infinite growth
     if (history.length > 1000) {
       history.splice(0, history.length - 1000);
     }
-    await fs.writeFile(HISTORY_FILE, JSON.stringify(history, null, 2));
+    await fs.writeFile(historyPath, JSON.stringify(history, null, 2));
   } catch (err) {
     console.error('[Chat] Failed to save history:', err);
   }
@@ -118,10 +141,11 @@ async function saveMessage(msg: any) {
  * POST /api/v1/chat/generate
  * Legacy compatibility endpoint - redirects to /message
  * Used by ToolooMonitor component
+ * V3.3.532: Added user scoping with optionalAuth
  * @param {string} message - The message or prompt to send
  * @param {string} [mode] - The chat mode (quick|deep|creative)
  */
-router.post('/generate', async (req, res) => {
+router.post('/generate', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   // Map 'prompt' to 'message' for compatibility
   const { prompt, ...rest } = req.body;
   req.body = { message: prompt || req.body.message, ...rest };
@@ -131,6 +155,7 @@ router.post('/generate', async (req, res) => {
   req.setTimeout(300000);
   const message = req.body.message;
   const mode = req.body.mode || 'quick';
+  const userId = req.user?.id;
 
   if (!message) {
     return res.status(400).json(errorResponse('Message or prompt is required'));
@@ -141,7 +166,8 @@ router.post('/generate', async (req, res) => {
     type: 'user',
     content: message,
     timestamp: new Date().toISOString(),
-  });
+    userId,
+  }, userId);
 
   try {
     console.log(`[Chat Generate] Processing: ${message.substring(0, 50)}...`);
@@ -166,7 +192,8 @@ router.post('/generate', async (req, res) => {
       type: 'assistant',
       content: response.content,
       timestamp: new Date().toISOString(),
-    });
+      userId,
+    }, userId);
 
     res.json(result);
   } catch (error: unknown) {
@@ -176,11 +203,12 @@ router.post('/generate', async (req, res) => {
   }
 });
 
-router.post('/message', async (req, res) => {
+router.post('/message', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   // Extend timeout for deep reasoning models (Gemini 2.0 Flash)
   req.setTimeout(300000);
 
   const { message, mode = 'quick', context, attachments } = req.body;
+  const userId = req.user?.id;
 
   // Save User Message
   await saveMessage({
@@ -188,7 +216,8 @@ router.post('/message', async (req, res) => {
     type: 'user',
     content: message,
     timestamp: new Date().toISOString(),
-  });
+    userId,
+  }, userId);
 
   try {
     console.log(`[Chat] Processing (${mode}): ${message.substring(0, 50)}...`);
@@ -2833,5 +2862,62 @@ Be helpful, accurate, and transparent about your multi-provider orchestration.`;
 
   return systemPrompt;
 }
+
+// ============================================================================
+// V3.3.532: CHAT HISTORY ENDPOINTS
+// ============================================================================
+
+/**
+ * GET /api/v1/chat/history
+ * Get chat history for the authenticated user
+ * @query {number} limit - Maximum messages to return (default: 100)
+ * @query {number} offset - Offset for pagination (default: 0)
+ */
+router.get('/history', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const offset = parseInt(req.query.offset as string) || 0;
+    
+    const history = await loadHistory(userId);
+    const total = history.length;
+    const paged = history.slice(offset, offset + limit);
+    
+    res.json(successResponse({
+      messages: paged,
+      total,
+      limit,
+      offset,
+      userId: userId || 'anonymous',
+    }));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Chat] Failed to get history:', errorMessage);
+    res.status(500).json(errorResponse('Failed to load chat history'));
+  }
+});
+
+/**
+ * DELETE /api/v1/chat/history
+ * Clear chat history for the authenticated user
+ */
+router.delete('/history', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const historyPath = getHistoryPath(userId);
+    
+    // Write empty array to clear history
+    await fs.writeFile(historyPath, '[]');
+    
+    res.json(successResponse({
+      message: 'Chat history cleared',
+      userId: userId || 'anonymous',
+    }));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Chat] Failed to clear history:', errorMessage);
+    res.status(500).json(errorResponse('Failed to clear chat history'));
+  }
+});
 
 export default router;
