@@ -1,15 +1,114 @@
-// @version 1.0.0
+// @version 3.3.547
 /**
  * Rate Limiting Middleware
  * 
  * Production hardening: Protects API endpoints from abuse.
  * Different limits for different endpoint types.
+ * Tier-aware rate limiting based on user subscription.
+ * 
+ * V3.3.550: Added tier-based rate limiting with billing integration
  * 
  * @module nexus/middleware/rate-limiter
  */
 
 import rateLimit from 'express-rate-limit';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import { SUBSCRIPTION_PLANS, SubscriptionTier, billingService } from '../billing/billing-service.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TierRateLimitConfig {
+  requestsPerMinute: number;
+  requestsPerDay: number;
+  tokensPerDay: number;
+}
+
+// Daily usage tracking per user
+const dailyUsage = new Map<string, { requests: number; tokens: number; date: string }>();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tier-Based Limits
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Get rate limits based on subscription tier
+ */
+export function getTierLimits(tier: SubscriptionTier): TierRateLimitConfig {
+  const plan = SUBSCRIPTION_PLANS[tier];
+  const requestsPerDay = plan?.limits?.requestsPerDay ?? 100;
+  
+  // Calculate per-minute rate based on daily limit
+  // Free: 100/day = ~7/min, Pro: 10K/day = ~700/min, Unlimited: unlimited/min
+  const requestsPerMinute = requestsPerDay === Infinity 
+    ? 1000 
+    : Math.max(10, Math.ceil(requestsPerDay / 144)); // 144 = minutes in a day / 10
+
+  return {
+    requestsPerMinute,
+    requestsPerDay,
+    tokensPerDay: plan?.limits?.tokensPerDay ?? 10_000
+  };
+}
+
+/**
+ * Get user's current daily usage
+ */
+export function getDailyUsage(userId: string): { requests: number; tokens: number } {
+  const today = new Date().toISOString().split('T')[0];
+  const usage = dailyUsage.get(userId);
+  
+  // Reset if it's a new day
+  if (!usage || usage.date !== today) {
+    return { requests: 0, tokens: 0 };
+  }
+  
+  return { requests: usage.requests, tokens: usage.tokens };
+}
+
+/**
+ * Record usage for a user
+ */
+export function recordUsage(userId: string, requests: number = 1, tokens: number = 0): void {
+  const today = new Date().toISOString().split('T')[0];
+  const existing = dailyUsage.get(userId);
+  
+  if (!existing || existing.date !== today) {
+    // New day, reset counter
+    dailyUsage.set(userId, { requests, tokens, date: today });
+  } else {
+    existing.requests += requests;
+    existing.tokens += tokens;
+  }
+
+  // Also record to billing service for metering
+  billingService.recordUsage(userId, requests, tokens).catch(err => {
+    console.error('[RateLimiter] Failed to record usage to billing:', err);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper Functions
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getKeyFromRequest(req: Request): string {
+  // Use user ID if authenticated, otherwise use IP
+  const userId = (req as any).user?.id;
+  if (userId) return `user:${userId}`;
+  return `ip:${(req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown'}`;
+}
+
+function getUserTier(req: Request): SubscriptionTier {
+  const user = (req as any).user;
+  // Map 'enterprise' to 'unlimited' for backwards compatibility
+  if (user?.tier === 'enterprise') return 'unlimited';
+  return user?.tier || 'free';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standard Rate Limiters (IP-based, for unauthenticated requests)
+// ─────────────────────────────────────────────────────────────────────────────
 
 // General API rate limit: 100 requests per minute
 export const generalLimiter = rateLimit({
