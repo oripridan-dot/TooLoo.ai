@@ -136,8 +136,17 @@
 - [x] `POST /api/v1/billing/portal` - Create billing portal
 - [x] `GET /api/v1/billing/usage` - Usage statistics
 - [x] `POST /api/v1/billing/webhook` - Stripe webhooks
-- [ ] Billing UI components
-- [ ] Tier-based rate limits integration
+- [x] `GET /api/v1/billing/rate-limits` - Tier rate limit status
+- [x] Billing UI component (`src/web-app/src/components/BillingDashboard.jsx`)
+- [x] Tier-based rate limits integration (`tierRateLimiter`, `tokenRateLimiter`)
+
+### Subscription Tiers
+
+| Tier | Price | Requests/Day | Tokens/Day | API Keys |
+|------|-------|--------------|------------|----------|
+| Free | $0 | 100 | 10,000 | 2 |
+| Pro | $29/mo | 10,000 | 1,000,000 | 10 |
+| Unlimited | $99/mo | ∞ | 10,000,000 | 100 |
 
 ### 4b: Support Automation
 - [ ] Tier 1 Support Agent
