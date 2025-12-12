@@ -1,8 +1,9 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.566",
+  "version": "2.0.0-alpha.0",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
     "prestart": "node scripts/check-working-directory.cjs",
     "predev": "node scripts/check-working-directory.cjs",
@@ -141,7 +142,7 @@
     "prettier": "^3.0.0",
     "supertest": "^7.1.4",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3",
+    "typescript": "^5.7.2",
     "vite": "^5.0.0",
     "vitest": "^3.2.4"
   }

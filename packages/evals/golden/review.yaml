@@ -1,0 +1,130 @@
+# Golden Inputs - Code Review
+# Tests for code review skills
+
+- id: review-001
+  name: Simple function review
+  category: review
+  difficulty: easy
+  input: |
+    Review this JavaScript function and identify issues:
+    
+    ```javascript
+    function getData(url) {
+      var data = fetch(url)
+      return data.json()
+    }
+    ```
+  expectedRoute:
+    skillId: code-reviewer
+    minConfidence: 0.8
+  referenceOutput: |
+    Issues identified:
+    1. Missing async/await - fetch returns a Promise
+    2. Using var instead of const
+    3. No error handling
+    4. No TypeScript types
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 4
+  tags:
+    - javascript
+    - async
+    - best-practices
+  minScore: 0.7
+
+- id: review-002
+  name: Security vulnerability detection
+  category: review
+  difficulty: hard
+  input: |
+    Review this Express route for security issues:
+    
+    ```javascript
+    app.get('/user/:id', (req, res) => {
+      const query = `SELECT * FROM users WHERE id = ${req.params.id}`;
+      db.query(query, (err, results) => {
+        res.json(results);
+      });
+    });
+    ```
+  expectedRoute:
+    skillId: code-reviewer
+    minConfidence: 0.8
+  referenceOutput: |
+    Critical security issues:
+    1. SQL Injection vulnerability - user input directly interpolated into query
+    2. No input validation on req.params.id
+    3. No error handling for database errors
+    4. Potential information disclosure
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+  tags:
+    - security
+    - sql-injection
+    - express
+  minScore: 0.8
+  regression: true
+
+- id: review-003
+  name: Performance review
+  category: review
+  difficulty: medium
+  input: |
+    Review this React component for performance issues:
+    
+    ```jsx
+    function UserList({ users }) {
+      const [filter, setFilter] = useState('');
+      
+      const filteredUsers = users.filter(u => 
+        u.name.toLowerCase().includes(filter.toLowerCase())
+      );
+      
+      return (
+        <div>
+          <input onChange={e => setFilter(e.target.value)} />
+          {filteredUsers.map(user => (
+            <UserCard user={user} onClick={() => console.log(user.id)} />
+          ))}
+        </div>
+      );
+    }
+    ```
+  expectedRoute:
+    skillId: code-reviewer
+    minConfidence: 0.75
+  tags:
+    - react
+    - performance
+    - optimization
+  minScore: 0.7
+
+- id: review-004
+  name: TypeScript type review
+  category: review
+  difficulty: medium
+  input: |
+    Review this TypeScript code for type safety issues:
+    
+    ```typescript
+    interface User {
+      id: number;
+      name: string;
+      email?: string;
+    }
+    
+    function sendEmail(user: User) {
+      const message = `Hello ${user.name}, sending to ${user.email.toLowerCase()}`;
+      return fetch('/api/email', { body: message });
+    }
+    ```
+  expectedRoute:
+    skillId: code-reviewer
+    minConfidence: 0.75
+  tags:
+    - typescript
+    - type-safety
+  minScore: 0.75

@@ -1,0 +1,51 @@
+{
+  "name": "@tooloo/skills",
+  "version": "2.0.0-alpha.0",
+  "description": "Skill registry, definitions, and composition for TooLoo.ai",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "import": "./dist/registry.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tooloo/core": "workspace:*",
+    "chokidar": "^3.5.3",
+    "yaml": "^2.3.4",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "tooloo",
+    "ai",
+    "skills",
+    "agents"
+  ],
+  "author": "Ori Pridan",
+  "license": "MIT"
+}

@@ -1,0 +1,104 @@
+# Golden Inputs - Planning & Architecture
+# Tests for system design skills
+
+- id: plan-001
+  name: Feature planning
+  category: planning
+  difficulty: easy
+  input: |
+    Plan the implementation of a user authentication feature for a React app.
+    Break down into tasks with dependencies.
+  expectedRoute:
+    skillId: architect
+    minConfidence: 0.7
+  criteria:
+    relevance: 5
+    completeness: 5
+  tags:
+    - planning
+    - authentication
+    - react
+  minScore: 0.7
+
+- id: plan-002
+  name: API design
+  category: planning
+  difficulty: medium
+  input: |
+    Design a REST API for a task management system with:
+    - Users, Projects, Tasks
+    - Task assignment and status tracking
+    - Due dates and priorities
+    
+    Provide endpoint definitions with request/response schemas.
+  expectedRoute:
+    skillId: architect
+    minConfidence: 0.75
+  tags:
+    - api-design
+    - rest
+    - schema
+  minScore: 0.7
+
+- id: plan-003
+  name: Database schema design
+  category: planning
+  difficulty: medium
+  input: |
+    Design a database schema for an e-commerce platform with:
+    - Products with variants (size, color)
+    - Shopping cart
+    - Orders and order history
+    - User accounts
+    
+    Consider indexing and query patterns.
+  expectedRoute:
+    skillId: architect
+    minConfidence: 0.75
+  tags:
+    - database
+    - schema
+    - e-commerce
+  minScore: 0.7
+
+- id: plan-004
+  name: Microservices architecture
+  category: planning
+  difficulty: hard
+  input: |
+    Design a microservices architecture for a video streaming platform.
+    Consider:
+    - Service boundaries
+    - Inter-service communication
+    - Data consistency
+    - Scaling strategies
+  expectedRoute:
+    skillId: architect
+    minConfidence: 0.8
+  tags:
+    - microservices
+    - architecture
+    - distributed-systems
+  minScore: 0.65
+  regression: true
+
+- id: plan-005
+  name: Migration planning
+  category: planning
+  difficulty: hard
+  input: |
+    Plan a migration from a monolithic Node.js app to microservices.
+    The current app has:
+    - 50k lines of code
+    - PostgreSQL database
+    - 10k daily active users
+    
+    Provide a phased approach with rollback strategies.
+  expectedRoute:
+    skillId: architect
+    minConfidence: 0.75
+  tags:
+    - migration
+    - microservices
+    - planning
+  minScore: 0.65

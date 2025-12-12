@@ -1,0 +1,105 @@
+# Golden Inputs - Coding
+# Tests for code generation skills
+
+- id: coding-001
+  name: Simple function implementation
+  category: coding
+  difficulty: easy
+  input: |
+    Write a TypeScript function that calculates the factorial of a number.
+    Include proper error handling for negative numbers.
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.8
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 4
+  tags:
+    - typescript
+    - function
+    - math
+  minScore: 0.75
+
+- id: coding-002
+  name: Async API wrapper
+  category: coding
+  difficulty: medium
+  input: |
+    Create a TypeScript class that wraps a REST API with:
+    - Automatic retry with exponential backoff
+    - Request/response type safety
+    - Timeout handling
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.8
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+  tags:
+    - typescript
+    - class
+    - async
+    - api
+  minScore: 0.7
+
+- id: coding-003
+  name: React hook implementation
+  category: coding
+  difficulty: medium
+  input: |
+    Write a custom React hook called useDebounce that:
+    - Accepts a value and delay in milliseconds
+    - Returns the debounced value
+    - Cleans up properly on unmount
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.75
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 4
+  tags:
+    - react
+    - hooks
+    - typescript
+  minScore: 0.75
+
+- id: coding-004
+  name: Algorithm implementation
+  category: coding
+  difficulty: hard
+  input: |
+    Implement a LRU (Least Recently Used) cache in TypeScript with O(1) 
+    get and put operations. Include proper TypeScript generics.
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.8
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+  tags:
+    - algorithm
+    - data-structure
+    - typescript
+  minScore: 0.7
+  regression: true
+
+- id: coding-005
+  name: Error boundary component
+  category: coding
+  difficulty: easy
+  input: |
+    Create a React Error Boundary component that:
+    - Catches JavaScript errors in child components
+    - Displays a fallback UI
+    - Logs errors to console
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.75
+  tags:
+    - react
+    - error-handling
+  minScore: 0.75

@@ -1,0 +1,91 @@
+# Golden Inputs - Research & Analysis
+# Tests for research skills
+
+- id: research-001
+  name: Technology comparison
+  category: research
+  difficulty: medium
+  input: |
+    Compare React, Vue, and Svelte for a new enterprise dashboard project.
+    Consider: Learning curve, performance, ecosystem, hiring.
+  expectedRoute:
+    skillId: research-analyst
+    minConfidence: 0.7
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+  tags:
+    - comparison
+    - frontend
+    - frameworks
+  minScore: 0.7
+
+- id: research-002
+  name: Best practices research
+  category: research
+  difficulty: easy
+  input: |
+    What are the current best practices for securing a Node.js REST API in 2024?
+  expectedRoute:
+    skillId: research-analyst
+    minConfidence: 0.7
+  tags:
+    - security
+    - nodejs
+    - best-practices
+  minScore: 0.7
+
+- id: research-003
+  name: Performance investigation
+  category: research
+  difficulty: medium
+  input: |
+    Our React app has slow initial load times (5+ seconds).
+    What are the common causes and solutions for this?
+    Prioritize by impact.
+  expectedRoute:
+    skillId: research-analyst
+    minConfidence: 0.65
+  tags:
+    - performance
+    - react
+    - debugging
+  minScore: 0.7
+
+- id: research-004
+  name: Architecture patterns
+  category: research
+  difficulty: medium
+  input: |
+    Explain the differences between:
+    - Event Sourcing
+    - CQRS
+    - Traditional CRUD
+    
+    When should each be used?
+  expectedRoute:
+    skillId: research-analyst
+    minConfidence: 0.7
+  tags:
+    - architecture
+    - patterns
+    - event-sourcing
+  minScore: 0.75
+  regression: true
+
+- id: research-005
+  name: Tool evaluation
+  category: research
+  difficulty: easy
+  input: |
+    What's the difference between pnpm, npm, and yarn?
+    Which should I choose for a new monorepo project?
+  expectedRoute:
+    skillId: research-analyst
+    minConfidence: 0.65
+  tags:
+    - tools
+    - package-managers
+    - monorepo
+  minScore: 0.7
