@@ -3,8 +3,10 @@
 > 🧠 Autonomous AI Development Platform with Multi-Agent Orchestration
 
 [![Version](https://img.shields.io/badge/version-3.3.566-blue.svg)](./package.json)
+[![Synapsys V2](https://img.shields.io/badge/synapsys-v2.0.0--alpha-green.svg)](./SYNAPSYS_V2_ROADMAP.md)
 [![Node](https://img.shields.io/badge/node-22+-green.svg)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/typescript-5.6-blue.svg)](https://typescriptlang.org)
+[![TypeScript](https://img.shields.io/badge/typescript-5.7-blue.svg)](https://typescriptlang.org)
+[![pnpm](https://img.shields.io/badge/pnpm-10.0.0-orange.svg)](https://pnpm.io)
 
 ## 🌟 Overview
 
@@ -14,6 +16,21 @@ TooLoo.ai is a **multi-agent AI orchestration platform** that combines:
 - **Real-time Collaboration** - Socket.IO powered project sync
 - **Three-Layer Validation** - Automated + AI + User acceptance gates
 - **Continuous Learning** - Q-learning optimizer improves routing over time
+
+## 📦 Synapsys V2 Packages
+
+The new modular architecture (`synapsys-v2` branch) provides clean, reusable packages:
+
+| Package | Description | Status |
+|---------|-------------|--------|
+| `@tooloo/core` | The Soul - types, context, TypedEventBus | ✅ Verified |
+| `@tooloo/skills` | SkillRegistry, SkillRouter, defineSkill | ✅ Verified |
+| `@tooloo/providers` | Anthropic/DeepSeek/OpenAI + CircuitBreaker | ✅ Verified |
+| `@tooloo/memory` | SQLiteEventStore, Vector/Graph projections | ✅ Verified |
+| `@tooloo/evals` | Cognitive Unit Testing (19 golden tests) | ✅ Verified |
+| `@tooloo/contracts` | 12 API contracts with Zod validation | ✅ Verified |
+
+See [SYNAPSYS_V2_ROADMAP.md](./SYNAPSYS_V2_ROADMAP.md) for details.
 
 ## 📖 For AI Assistants
 
@@ -147,6 +164,7 @@ npm run generate:openapi
 ## 📚 Documentation
 
 - [SYSTEM_STATE.md](./SYSTEM_STATE.md) - Complete system context for AI assistants
+- [SYNAPSYS_V2_ROADMAP.md](./SYNAPSYS_V2_ROADMAP.md) - V2 consolidation roadmap
 - [.github/copilot-instructions.md](./.github/copilot-instructions.md) - Copilot guidelines
 - [docs/API_CONTRACTS_GUIDE.md](./docs/API_CONTRACTS_GUIDE.md) - API contracts
 - [docs/architecture/ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md) - System architecture
@@ -161,11 +179,11 @@ npm run generate:openapi
 
 ## Version History
 
-- **V3.3.0** - Agent Execution System, Clean Architecture
+- **V2.0.0-alpha** - Synapsys V2 monorepo (6 packages, verified)
+- **V3.3.566** - Agent Execution System, Clean Architecture
 - **V3.2.x** - Liquid Synapsys UI
 - **V3.1.x** - Emergence & Learning
 - **V3.0.x** - Initial Synapsys Release
-- **V2.x** - Legacy (archived)
 
 ---
 

@@ -22,6 +22,13 @@ TooLoo.ai is a **multi-agent AI orchestration platform** with self-execution cap
 ### Directory Structure
 ```
 /workspaces/TooLoo-Synapsys-V3.3/
+├── packages/                   # Synapsys V2 monorepo packages
+│   ├── core/                   # @tooloo/core
+│   ├── skills/                 # @tooloo/skills
+│   ├── providers/              # @tooloo/providers
+│   ├── memory/                 # @tooloo/memory
+│   ├── evals/                  # @tooloo/evals
+│   └── contracts/              # @tooloo/contracts
 ├── src/
 │   ├── main.ts                 # Entry point
 │   ├── core/                   # Event bus, config, metrics
@@ -94,6 +101,21 @@ TooLoo.ai is a **multi-agent AI orchestration platform** with self-execution cap
 - **Execution Recipes** - 7 pre-configured patterns (speed-run, quality-build, etc.)
 - **Three-Layer Validation** - Automated + AI semantic + user acceptance
 - **Intelligent Router** - Unified routing combining all systems
+
+### Synapsys V2 Packages ✅ (Branch: synapsys-v2)
+
+New modular monorepo with 6 verified packages:
+
+| Package | Description |
+|---------|-------------|
+| `@tooloo/core` | The Soul - types, context, TypedEventBus |
+| `@tooloo/skills` | SkillRegistry, SkillRouter, defineSkill |
+| `@tooloo/providers` | Anthropic/DeepSeek/OpenAI + CircuitBreaker |
+| `@tooloo/memory` | SQLiteEventStore, Vector/Graph projections |
+| `@tooloo/evals` | Cognitive Unit Testing (19 golden tests) |
+| `@tooloo/contracts` | 12 API contracts with Zod validation |
+
+See [SYNAPSYS_V2_ROADMAP.md](./SYNAPSYS_V2_ROADMAP.md) for details.
 
 ---
 

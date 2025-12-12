@@ -1,6 +1,6 @@
 # TooLoo.ai Copilot Instructions
 
-> **Version:** 3.3.566 | **Updated:** December 12, 2025
+> **Version:** 3.3.566 | **Synapsys V2:** 2.0.0-alpha.0 | **Updated:** December 12, 2025
 
 ## 📖 Quick Context
 
@@ -9,8 +9,10 @@
 - Frontend: React/Vite/Zustand on port **5173**
 - Providers: DeepSeek, Anthropic, OpenAI, Gemini, Zhipu, Ollama
 - Database: SQLite (episodic memory, artifacts)
+- **Synapsys V2:** 6 modular packages (`@tooloo/*`) in `packages/` directory
 
 **For full context, see [SYSTEM_STATE.md](../SYSTEM_STATE.md)**
+**For V2 packages, see [SYNAPSYS_V2_ROADMAP.md](../SYNAPSYS_V2_ROADMAP.md)**
 
 ---
 
@@ -55,6 +57,14 @@ npm run dev
 ## 🏗️ Project Structure
 
 ```
+packages/                      # Synapsys V2 monorepo packages
+├── core/                      # @tooloo/core - types, context, events
+├── skills/                    # @tooloo/skills - registry, router
+├── providers/                 # @tooloo/providers - LLM adapters
+├── memory/                    # @tooloo/memory - event store, projections
+├── evals/                     # @tooloo/evals - golden tests
+└── contracts/                 # @tooloo/contracts - API schemas
+
 src/
 ├── core/                      # Event bus, config, metrics
 │   ├── event-bus.ts           # Central pub/sub (bus.publish/bus.on)
@@ -203,6 +213,15 @@ curl -X POST http://localhost:4000/api/v1/routing/route \
 curl -X POST http://localhost:4000/api/v1/routing/validate \
   -H "Content-Type: application/json" \
   -d '{"content":"const x = 1;","contentType":"code"}'
+```
+
+---
+
+## 📚 Related Files
+
+- [SYSTEM_STATE.md](../SYSTEM_STATE.md) - Full system context for AI assistants
+- [docs/API_CONTRACTS_GUIDE.md](../docs/API_CONTRACTS_GUIDE.md) - API contracts
+- [docs/architecture/ARCHITECTURE.md](../docs/architecture/ARCHITECTURE.md) - Architecture
 ```
 
 ---
