@@ -1,4 +1,4 @@
-// @version 3.3.461 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting
+// @version 3.3.545 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -41,6 +41,9 @@ import { reflectionRoutes } from './routes/reflection.js';
 import flowRoutes from './routes/flow.js';
 import visionRoutes from './routes/vision.js';
 import repoRoutes from './routes/repo.js'; // V3.3.456: RepoAutoOrg
+import usersRoutes from './routes/users.js'; // V3.3.530: User Management
+import usageRoutes from './routes/usage.js'; // V3.3.530: Usage Dashboard
+import billingRoutes from './routes/billing.js'; // V3.3.542: Stripe Billing
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
@@ -103,6 +106,9 @@ export function createNexusApp() {
   app.use('/api/v1/flow', flowRoutes);
   app.use('/api/v1/vision', visionLimiter, visionRoutes); // V3.3.438: Real Screen Capture + OCR
   app.use('/api/v1/repo', repoRoutes); // V3.3.456: RepoAutoOrg - Git automation
+  app.use('/api/v1/users', usersRoutes); // V3.3.530: User Management
+  app.use('/api/v1/usage', usageRoutes); // V3.3.530: Usage Dashboard
+  app.use('/api/v1/billing', billingRoutes); // V3.3.542: Stripe Billing
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)
