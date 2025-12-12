@@ -219,6 +219,11 @@ export const metricsCollector = metricsCollectorInstance;
 - `src/precog/learning/q-learning-optimizer.ts` - V3.3.532: Per-user Q-learning state with global fallback
 - `src/nexus/middleware/auth.ts` - V3.3.532: Added `AuthenticatedRequest` type export
 
+### Phase 3 (Payment Integration)
+- `src/nexus/billing/billing-service.ts` - V3.3.542: Stripe integration, subscription plans, webhooks
+- `src/nexus/routes/billing.ts` - V3.3.542: Billing API endpoints (plans, checkout, portal, usage)
+- `src/nexus/index.ts` - V3.3.542: Added billing routes registration
+
 ---
 
 ## 🔧 Quick Commands
