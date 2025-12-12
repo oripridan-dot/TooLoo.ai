@@ -124,3 +124,49 @@ export {
   type ShadowExperiment,
   type ShadowLabConfig,
 } from './shadow-lab.js';
+
+// Phase 5: Intelligence Layer Optimization
+// Model Capabilities Matrix
+export {
+  ModelCapabilityService,
+  modelCapabilityService,
+  MODEL_PROFILES,
+  TASK_PROFILES,
+  type CapabilityDomain,
+  type CapabilityLevel,
+  type ModelCapability,
+  type ModelProfile,
+  type TaskProfile,
+  type ModelConstraints,
+} from './model-capabilities.js';
+
+// Execution Recipes
+export {
+  ExecutionRecipeService,
+  executionRecipeService,
+  type RecipeName,
+  type ExecutionRecipe,
+  type RecipeSelectionResult,
+} from './execution-recipes.js';
+
+// Three-Layer Validation
+export {
+  ThreeLayerValidationService,
+  threeLayerValidation,
+  type ValidationLayer,
+  type ValidationSeverity,
+  type ValidationIssue,
+  type ValidationResult,
+  type ThreeLayerResult,
+  type ValidationContext,
+} from './three-layer-validation.js';
+
+// Intelligent Router (Unified routing with all Phase 5 components)
+export {
+  IntelligentRouter,
+  intelligentRouter,
+  type IntelligentRequest,
+  type IntelligentResponse,
+  type DecisionStep,
+  type ExecutionResult as IntelligentExecutionResult,
+} from './intelligent-router.js';
