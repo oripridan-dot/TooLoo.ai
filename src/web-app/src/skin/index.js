@@ -1,4 +1,4 @@
-// @version 3.3.535
+// @version 3.3.541
 // TooLoo.ai Skin - Main Entry Point
 // Liquid Synapsys V1 - The viewport IS TooLoo
 // Exports all skin infrastructure including liquid effects, textures, presence, Synapsys DNA, shell, views, and app
@@ -112,6 +112,9 @@ export {
 
 // Emotion Hooks - Bridge app state to liquid visuals
 export { useSkinEmotion, useProcessingEmotion, useChatEmotion } from './hooks';
+
+// V3.3.532: Execution DAG hook for task visualization
+export { useExecutionDAG, TASK_STATUS } from './hooks';
 
 // Generative UI
 export {
