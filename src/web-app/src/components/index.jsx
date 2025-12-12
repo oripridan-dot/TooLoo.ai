@@ -140,3 +140,6 @@ export const LiquidSkinDemo = () => <PlaceholderComponent name="Liquid Skin Demo
 
 // Cognitive Dashboard Component (Meta-Learning, Collaboration, Quality)
 export { CognitiveDashboard };
+
+// V3.3.550: Billing Dashboard Component (Subscription, Usage, Plans)
+export { BillingDashboard };
