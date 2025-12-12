@@ -313,4 +313,53 @@ router.get('/compare', optionalAuth, (req: Request, res: Response) => {
   });
 });
 
+/**
+ * GET /api/v1/billing/rate-limits
+ * Get current rate limit status for the authenticated user
+ */
+router.get('/rate-limits', requireAuth, (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
+    const tier = (req.user.tier === 'enterprise' ? 'unlimited' : req.user.tier || 'free') as SubscriptionTier;
+    const status = getRateLimitStatus(req.user.id, tier);
+    const plan = billingService.getPlan(tier);
+    
+    res.json({
+      success: true,
+      tier: status.tier,
+      plan: plan.name,
+      usage: status.usage,
+      limits: {
+        requestsPerMinute: status.limits.requestsPerMinute,
+        requestsPerDay: status.limits.requestsPerDay === Infinity ? 'unlimited' : status.limits.requestsPerDay,
+        tokensPerDay: status.limits.tokensPerDay === Infinity ? 'unlimited' : status.limits.tokensPerDay
+      },
+      percentUsed: status.percentUsed,
+      remaining: {
+        requests: status.limits.requestsPerDay === Infinity 
+          ? 'unlimited' 
+          : Math.max(0, status.limits.requestsPerDay - status.usage.requests),
+        tokens: status.limits.tokensPerDay === Infinity 
+          ? 'unlimited' 
+          : Math.max(0, status.limits.tokensPerDay - status.usage.tokens)
+      },
+      resetsAt: new Date(new Date().setHours(24, 0, 0, 0)).toISOString(),
+      upgrade: tier === 'unlimited' ? null : {
+        nextTier: tier === 'free' ? 'pro' : 'unlimited',
+        message: `Upgrade to ${tier === 'free' ? 'Pro' : 'Unlimited'} for higher limits`,
+        url: '/billing/plans'
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to get rate limit status',
+      message: error.message
+    });
+  }
+});
+
 export default router;
