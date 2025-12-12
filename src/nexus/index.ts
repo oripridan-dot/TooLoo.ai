@@ -113,6 +113,7 @@ export function createNexusApp() {
   app.use('/api/v1/users', usersRoutes); // V3.3.530: User Management
   app.use('/api/v1/usage', usageRoutes); // V3.3.530: Usage Dashboard
   app.use('/api/v1/billing', billingRoutes); // V3.3.542: Stripe Billing
+  app.use('/api/v1/routing', routingRoutes); // V3.3.550: Intelligent Routing - Model selection, recipes, validation
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)
