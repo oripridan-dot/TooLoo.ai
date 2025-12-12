@@ -1,4 +1,4 @@
-// @version 3.3.552
+// @version 3.3.553
 import { Router, Request, Response } from 'express';
 import { bus } from '../../core/event-bus.js';
 import { precog } from '../../precog/index.js';
@@ -578,6 +578,12 @@ IMPORTANT: You ARE the system. You have direct access to execute code, create fi
         qualityScore: 0.8, // Base score, adjusted by user feedback
         timestamp: new Date(),
       });
+
+      // V3.3.550: Record token usage for billing metering
+      const userId = (req as AuthenticatedRequest).user?.id;
+      if (userId) {
+        recordUsage(userId, 0, tokensUsed); // 0 requests (already counted by middleware), tokensUsed tokens
+      }
     } catch (learnErr) {
       console.warn('[Chat] Provider execution learning failed:', learnErr);
     }
