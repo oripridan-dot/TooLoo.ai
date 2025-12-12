@@ -1,0 +1,48 @@
+{
+  "name": "@tooloo/api",
+  "version": "2.0.0-alpha.0",
+  "description": "TooLoo.ai Unified API Server",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --noEmit false",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tooloo/core": "workspace:*",
+    "@tooloo/contracts": "workspace:*",
+    "@tooloo/engine": "workspace:*",
+    "@tooloo/skills": "workspace:*",
+    "@tooloo/providers": "workspace:*",
+    "@tooloo/memory": "workspace:*",
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "socket.io": "^4.7.5",
+    "zod": "^4.1.12",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "tooloo",
+    "ai",
+    "api",
+    "server"
+  ],
+  "author": "Ori Pridan",
+  "license": "MIT"
+}

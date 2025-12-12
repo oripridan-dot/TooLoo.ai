@@ -1,0 +1,59 @@
+{
+  "name": "@tooloo/engine",
+  "version": "2.0.0-alpha.0",
+  "description": "The Orchestration Engine - Routes requests, executes skills, manages context",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./orchestrator": {
+      "types": "./dist/orchestrator.d.ts",
+      "import": "./dist/orchestrator.js"
+    },
+    "./router": {
+      "types": "./dist/routing-engine.d.ts",
+      "import": "./dist/routing-engine.js"
+    },
+    "./executor": {
+      "types": "./dist/skill-executor.d.ts",
+      "import": "./dist/skill-executor.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit false",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@tooloo/core": "workspace:*",
+    "@tooloo/memory": "workspace:*",
+    "@tooloo/providers": "workspace:*",
+    "@tooloo/skills": "workspace:*",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "tooloo",
+    "ai",
+    "orchestration",
+    "engine",
+    "routing"
+  ],
+  "author": "Ori Pridan",
+  "license": "MIT"
+}

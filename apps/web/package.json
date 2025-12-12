@@ -1,0 +1,50 @@
+{
+  "name": "@tooloo/web",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "description": "TooLoo.ai React Frontend - Liquid Synapsys UI",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@tanstack/react-query": "^5.51.23",
+    "chart.js": "^4.5.1",
+    "framer-motion": "^11.3.8",
+    "katex": "^0.16.27",
+    "lucide-react": "^0.427.0",
+    "mermaid": "^11.12.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-live": "^4.1.8",
+    "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^3.0.6",
+    "react-router-dom": "^6.26.0",
+    "socket.io-client": "^4.7.5",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  },
+  "keywords": [
+    "tooloo",
+    "ai",
+    "frontend",
+    "react"
+  ],
+  "author": "Ori Pridan",
+  "license": "MIT"
+}

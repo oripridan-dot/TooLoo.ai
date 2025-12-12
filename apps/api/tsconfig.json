@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "incremental": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "@tooloo/core": ["../../packages/core/src/index.ts"],
+      "@tooloo/contracts": ["../../packages/contracts/src/index.ts"],
+      "@tooloo/engine": ["../../packages/engine/src/index.ts"],
+      "@tooloo/skills": ["../../packages/skills/src/index.ts"],
+      "@tooloo/providers": ["../../packages/providers/src/index.ts"],
+      "@tooloo/memory": ["../../packages/memory/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/engine" },
+    { "path": "../../packages/skills" },
+    { "path": "../../packages/providers" },
+    { "path": "../../packages/memory" }
+  ]
+}

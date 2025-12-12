@@ -30,6 +30,23 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "@tooloo/api#dev": {
+      "dependsOn": ["@tooloo/engine#build"],
+      "cache": false,
+      "persistent": true
+    },
+    "@tooloo/web#dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "@tooloo/web#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     }
   },
   "globalEnv": [
@@ -37,6 +54,8 @@
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
     "DEEPSEEK_API_KEY",
-    "GOOGLE_GENAI_API_KEY"
+    "GOOGLE_GENAI_API_KEY",
+    "OLLAMA_BASE_URL",
+    "OLLAMA_MODEL"
   ]
 }

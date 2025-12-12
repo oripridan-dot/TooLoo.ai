@@ -9,6 +9,9 @@
 // Types - The foundational data structures
 export * from './types.js';
 
+// Skill Interface - The executable skill contract
+export * from './skill.js';
+
 // Events - Typed pub/sub system
 export * from './events/index.js';
 
