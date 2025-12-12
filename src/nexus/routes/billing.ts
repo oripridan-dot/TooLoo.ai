@@ -1,16 +1,18 @@
-// @version 3.3.544
+// @version 3.3.549
 /**
  * @file Billing Routes - Stripe Payment Endpoints
  * @module nexus/routes/billing
- * @version 3.3.542
+ * @version 3.3.550
  * 
  * REST API for subscription management, checkout, webhooks, and usage.
+ * V3.3.550: Added rate-limits endpoint for tier-based rate limit status
  */
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { billingService, SUBSCRIPTION_PLANS, type SubscriptionTier } from '../billing/billing-service.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { getRateLimitStatus, getDailyUsage, getTierLimits } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
