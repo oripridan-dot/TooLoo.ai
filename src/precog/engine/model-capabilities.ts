@@ -517,8 +517,9 @@ export class ModelCapabilityService {
   /**
    * Get fallback chain for a model
    */
-  getFallbackChain(modelId: string): string[] {
-    return this.profiles[modelId]?.fallbackChain || ['gemini', 'anthropic', 'deepseek'];
+  getFallbackChain(modelId: string, depth: number = 3): string[] {
+    const chain = this.profiles[modelId]?.fallbackChain || ['gemini', 'anthropic', 'deepseek'];
+    return chain.slice(0, depth);
   }
 
   /**
@@ -526,6 +527,87 @@ export class ModelCapabilityService {
    */
   getProfile(modelId: string): ModelProfile | undefined {
     return this.profiles[modelId];
+  }
+
+  /**
+   * Get model profile (alias for intelligent-router compatibility)
+   */
+  getModelProfile(modelId: string): ModelProfile | undefined {
+    return this.profiles[modelId];
+  }
+
+  /**
+   * Get task profile by type
+   */
+  getTaskProfile(taskType: string): TaskProfile | undefined {
+    return TASK_PROFILES[taskType];
+  }
+
+  /**
+   * Score models for a task with budget/quality constraints
+   */
+  scoreModelsForTask(
+    task: TaskProfile | undefined,
+    maxBudget: number = 0.1,
+    minQuality: number = 0.7
+  ): Array<{ modelId: string; score: number }> {
+    if (!task) {
+      // Return default scores if no task profile
+      return Object.keys(this.profiles).map((modelId) => ({
+        modelId,
+        score: 0.5,
+      }));
+    }
+    return this.calculateTaskScores(task, maxBudget, minQuality);
+  }
+
+  /**
+   * Internal method to calculate task scores
+   */
+  private calculateTaskScores(
+    task: TaskProfile,
+    maxBudget: number,
+    minQuality: number
+  ): Array<{ modelId: string; score: number }> {
+    const results: Array<{ modelId: string; score: number }> = [];
+
+    for (const [modelId, profile] of Object.entries(this.profiles)) {
+      let score = 50; // Base score
+
+      // Score based on required capabilities
+      for (const requiredDomain of task.requiredCapabilities) {
+        const capability = profile.capabilities.find((c) => c.domain === requiredDomain);
+        if (capability) {
+          const levelMultiplier = this.getLevelMultiplier(capability.level, task.preferredLevel);
+          score += capability.score * levelMultiplier * 0.3;
+        } else {
+          score -= 15; // Penalty for missing capability
+        }
+      }
+
+      // Budget constraint
+      const totalCost = profile.costPer1kTokens.input + profile.costPer1kTokens.output;
+      if (totalCost <= maxBudget) {
+        score += 10;
+      } else {
+        score -= (totalCost - maxBudget) * 100;
+      }
+
+      // Latency consideration
+      if (task.timeConstraint === 'fast') {
+        score += (3000 - profile.latencyMs.average) / 100;
+      }
+
+      // Quality consideration for high complexity
+      if (task.complexity === 'high') {
+        const reasoningCap = profile.capabilities.find((c) => c.domain === 'reasoning');
+        if (reasoningCap) score += reasoningCap.score * 0.2;
+      }
+
+      results.push({ modelId, score: Math.max(0, Math.min(100, score)) });
+    }
+
+    return results;
   }
 
   /**
