@@ -29,10 +29,12 @@
   "dependencies": {
     "@tooloo/core": "workspace:*",
     "chokidar": "^3.5.3",
+    "js-yaml": "^4.1.1",
     "yaml": "^2.3.4",
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "typescript": "^5.7.2",
     "vitest": "^3.2.4"
   },

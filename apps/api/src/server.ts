@@ -7,10 +7,12 @@
 
 import express, { type Express, type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { createServer as createHttpServer, type Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
 import type { Orchestrator } from '@tooloo/engine';
+import type { SkillRegistry } from '@tooloo/skills';
 import type { 
   ServerToClientEvents, 
   ClientToServerEvents, 
@@ -24,7 +26,9 @@ import { createSkillsRouter } from './routes/skills.js';
 import { createProjectsRouter } from './routes/projects.js';
 import { createCapabilitiesRouter } from './routes/capabilities.js';
 import { createVisualsRouter } from './routes/visuals.js';
+import authRouter from './routes/auth.js';
 import { setupSocketHandlers } from './socket/handlers.js';
+import { createRateLimiter } from './middleware/rate-limiter.js';
 
 // =============================================================================
 // SERVER CONFIGURATION
@@ -36,6 +40,7 @@ export interface ServerConfig {
   corsOrigins: string[];
   apiPrefix: string;
   orchestrator?: Orchestrator;
+  skillRegistry?: SkillRegistry;
 }
 
 const DEFAULT_CONFIG: ServerConfig = {
@@ -93,6 +98,7 @@ export class TooLooServer {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(cookieParser());
 
     // Request logging
     this.app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -109,6 +115,9 @@ export class TooLooServer {
       (req as any).requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
       next();
     });
+
+    // Rate limiting (after headers set, before routes)
+    this.app.use(createRateLimiter());
   }
 
   private setupRoutes(): void {
@@ -135,6 +144,9 @@ export class TooLooServer {
 
     // Visuals routes
     this.app.use(`${prefix}/visuals`, createVisualsRouter());
+
+    // Auth routes
+    this.app.use(`${prefix}/auth`, authRouter);
 
     // Root endpoint
     this.app.get('/', (_req: Request, res: Response) => {
@@ -173,7 +185,11 @@ export class TooLooServer {
   }
 
   private setupSocketIO(): void {
-    setupSocketHandlers(this.io);
+    if (this.config.orchestrator && this.config.skillRegistry) {
+      setupSocketHandlers(this.io, this.config.orchestrator, this.config.skillRegistry);
+    } else {
+      console.warn('⚠️  Socket.IO initialized without orchestrator - chat will be disabled');
+    }
   }
 
   /**

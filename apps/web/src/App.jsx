@@ -12,6 +12,7 @@ import DeSignStudio from './components/DeSignStudio';
 import CortexMonitor from './components/CortexMonitor';
 import ExplorationMonitor from './components/ExplorationMonitor';
 import QAGuardian from './components/QAGuardian';
+import SkillStudio from './components/SkillStudio';
 import EmergenceRoom from './components/EmergenceRoom';
 import LiquidSkinDemo from './components/LiquidSkinDemo';
 
@@ -63,6 +64,8 @@ function LegacyApp() {
       case 'Liquid Skin':
       case 'Skin Demo':
         return <LiquidSkinDemo />;
+      case 'Skill Studio':
+        return <SkillStudio />;
       default:
         return (
           <Chat

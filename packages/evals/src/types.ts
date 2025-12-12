@@ -22,6 +22,8 @@ export const EvalCategorySchema = z.enum([
   'creative',     // Writing, ideation
   'reasoning',    // Logic, problem solving
   'conversation', // General chat, clarification
+  'multistep',    // Multi-step workflows
+  'edge-case',    // Edge cases and boundary tests
 ]);
 
 export type EvalCategory = z.infer<typeof EvalCategorySchema>;

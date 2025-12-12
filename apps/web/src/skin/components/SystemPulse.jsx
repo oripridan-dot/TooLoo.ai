@@ -41,7 +41,17 @@ const SystemPulse = memo(({ position = 'bottom-right', enabled = true }) => {
   useEffect(() => {
     if (!enabled) return;
 
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:4001';
+    // Dynamic URL for Codespaces support
+    const getSocketUrl = () => {
+      if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+      if (typeof window !== 'undefined' && window.location.hostname.includes('.app.github.dev')) {
+        const apiHost = window.location.hostname.replace(/-\d+\./, '-4001.');
+        return `${window.location.protocol}//${apiHost}`;
+      }
+      return 'http://localhost:4001';
+    };
+
+    const socketUrl = getSocketUrl();
     const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       reconnection: true,

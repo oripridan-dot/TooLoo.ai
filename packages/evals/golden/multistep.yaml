@@ -1,0 +1,160 @@
+# Golden Inputs - Multi-step Tasks
+# Tests for complex, multi-step workflows
+
+- id: multistep-001
+  name: Build feature from scratch
+  category: multistep
+  difficulty: hard
+  input: |
+    I need to add a new user authentication feature to our Express app:
+    1. Create a User model with email, password (hashed), and role
+    2. Implement signup and login endpoints
+    3. Add JWT token generation and validation middleware
+    4. Create protected route decorator
+    Please provide the complete implementation.
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.7
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+    structure: 5
+  tags:
+    - typescript
+    - express
+    - auth
+    - jwt
+    - multistep
+  minScore: 0.7
+
+- id: multistep-002
+  name: Refactor and test
+  category: multistep
+  difficulty: hard
+  input: |
+    Refactor this legacy function and add comprehensive tests:
+    ```javascript
+    function processData(d) {
+      var r = [];
+      for(var i=0;i<d.length;i++){
+        if(d[i].active==true && d[i].score>50){
+          r.push({n:d[i].name,s:d[i].score*2});
+        }
+      }
+      return r;
+    }
+    ```
+    1. Convert to TypeScript with proper types
+    2. Use modern array methods
+    3. Add input validation
+    4. Write unit tests with vitest
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.8
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+    testCoverage: 4
+  tags:
+    - refactoring
+    - typescript
+    - testing
+    - vitest
+  minScore: 0.75
+
+- id: multistep-003
+  name: Database migration plan
+  category: multistep
+  difficulty: hard
+  input: |
+    Plan a database migration for our app:
+    Current schema has a single 'users' table with:
+    - id, name, email, address, phone, company_name, company_address
+
+    We need to:
+    1. Split into users and companies tables (many-to-one)
+    2. Create migration scripts (up and down)
+    3. Write data migration query
+    4. Update the TypeScript types
+    5. Create a rollback plan
+  expectedRoute:
+    skillId: planning-assistant
+    minConfidence: 0.6
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+    safety: 5
+  tags:
+    - database
+    - migration
+    - planning
+    - sql
+  minScore: 0.7
+
+- id: multistep-004
+  name: Debug complex issue
+  category: multistep
+  difficulty: hard
+  input: |
+    Our React app has a memory leak. Here's what we know:
+    - Memory grows when navigating between pages
+    - useEffect cleanup functions are present
+    - WebSocket connections are involved
+    - Problem started after adding real-time notifications
+
+    Please:
+    1. List potential causes
+    2. Provide diagnostic steps
+    3. Suggest fixes for each potential cause
+    4. Add code for proper cleanup
+  expectedRoute:
+    skillId: debugging-assistant
+    minConfidence: 0.7
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 4
+    actionable: 5
+  tags:
+    - react
+    - debugging
+    - memory-leak
+    - websocket
+  minScore: 0.7
+
+- id: multistep-005
+  name: API design and implementation
+  category: multistep
+  difficulty: hard
+  input: |
+    Design and implement a REST API for a task management system:
+
+    Requirements:
+    - CRUD operations for tasks, projects, and users
+    - Task assignment and status tracking
+    - Project membership management
+    - Filtering, sorting, pagination
+    - Rate limiting
+
+    Please provide:
+    1. OpenAPI spec for the endpoints
+    2. Database schema design
+    3. Express route implementations
+    4. Middleware for auth and rate limiting
+  expectedRoute:
+    skillId: coding-assistant
+    minConfidence: 0.8
+  criteria:
+    relevance: 5
+    accuracy: 5
+    completeness: 5
+    apiDesign: 5
+  tags:
+    - api
+    - rest
+    - express
+    - design
+  minScore: 0.7
