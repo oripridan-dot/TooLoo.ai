@@ -252,6 +252,76 @@ ViewLoading.displayName = 'ViewLoading';
 const TooLooAppInner = memo(() => {
   const [activeView, setActiveView] = useState('space');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // V3.3.532: Command Palette state
+  const { isOpen: commandPaletteOpen, open: openCommandPalette, close: closeCommandPalette } = useCommandPalette();
+
+  // V3.3.532: Command Palette action handler
+  const handleCommandAction = useCallback((action) => {
+    console.log('[CommandPalette] Action:', action);
+    
+    switch (action.type) {
+      // Navigation actions
+      case 'view':
+        if (action.target && VIEW_MAP[action.target]) {
+          setActiveView(action.target);
+        }
+        break;
+        
+      // AI actions - emit to system
+      case 'ai:generate':
+      case 'ai:explain':
+      case 'ai:refactor':
+      case 'ai:test':
+      case 'ai:review':
+        // Get socket and emit to backend
+        const socket = useSystemState.getState().connection?.socket;
+        if (socket) {
+          socket.emit('command:execute', { 
+            type: action.type, 
+            payload: action.payload 
+          });
+        }
+        break;
+        
+      // Theme actions
+      case 'theme':
+        if (action.target === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (action.target === 'light') {
+          document.documentElement.classList.remove('dark');
+        }
+        break;
+        
+      // Preset actions
+      case 'preset':
+        if (action.target && SYNAPSYS_PRESETS[action.target]) {
+          useSynapsynDNA.getState().transitionTo(action.target);
+        }
+        break;
+        
+      // Toggle actions
+      case 'toggle':
+        if (action.target === 'sidebar') {
+          setSidebarCollapsed(prev => !prev);
+        } else if (action.target === 'knowledge') {
+          setKnowledgeRailOpen(prev => !prev);
+        }
+        break;
+        
+      // Project actions
+      case 'project:new':
+        setActiveView('projects');
+        break;
+        
+      case 'project:open':
+        setActiveView('projects');
+        break;
+        
+      default:
+        console.log('[CommandPalette] Unhandled action:', action);
+    }
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
