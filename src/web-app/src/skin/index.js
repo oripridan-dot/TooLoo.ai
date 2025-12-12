@@ -1,4 +1,4 @@
-// @version 3.3.453
+// @version 3.3.535
 // TooLoo.ai Skin - Main Entry Point
 // Liquid Synapsys V1 - The viewport IS TooLoo
 // Exports all skin infrastructure including liquid effects, textures, presence, Synapsys DNA, shell, views, and app
@@ -45,8 +45,24 @@ export {
 // Layout Engine (legacy - use LiquidShell for new apps)
 export { SkinShell, SkinLayoutContext, useSkinLayout, LAYOUT_PRESETS } from './SkinShell';
 
-// State Management
+// State Management - Legacy + V3.3.531 Living Canvas stores
 export { useSkinStore } from './store';
+export {
+  useCanvasStore,
+  useProjectStore,
+  useSystemStore,
+  selectCurrentProject,
+  selectIsProcessing as selectProjectProcessing,
+  selectActiveUsers,
+  selectTaskNodes,
+  selectArtifacts,
+} from './store/index.js';
+
+// === V3.3.531: NEW COMPONENTS ===
+// Command Palette - Cmd+K quick actions
+export { CommandPalette, useCommandPalette } from './components/CommandPalette.jsx';
+// Task DAG - Execution visualization
+export { default as TaskDAG } from './components/TaskDAG.jsx';
 
 // Design Tokens
 export { default as tokens, generateCSSVariables } from './tokens';
