@@ -1,12 +1,12 @@
-// @version 3.3.558
+// @version 3.3.565
 /**
  * Model Capabilities Matrix
- * 
+ *
  * Phase 5: Intelligence Layer Optimization
- * 
+ *
  * Comprehensive capability profiles for all supported models, enabling
  * intelligent routing based on task requirements.
- * 
+ *
  * @module precog/engine/model-capabilities
  */
 
@@ -14,11 +14,11 @@
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type CapabilityDomain = 
-  | 'coding' 
-  | 'creative' 
-  | 'analysis' 
-  | 'reasoning' 
+export type CapabilityDomain =
+  | 'coding'
+  | 'creative'
+  | 'analysis'
+  | 'reasoning'
   | 'multimodal'
   | 'conversation'
   | 'research'
@@ -72,7 +72,7 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
   // ─────────────────────────────────────────────────────────────────────────
   // DeepSeek
   // ─────────────────────────────────────────────────────────────────────────
-  'deepseek': {
+  deepseek: {
     id: 'deepseek',
     name: 'DeepSeek Coder V2',
     provider: 'deepseek',
@@ -81,14 +81,45 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
     costPer1kTokens: { input: 0.00014, output: 0.00028 },
     latencyMs: { average: 800, p95: 1500 },
     capabilities: [
-      { domain: 'coding', level: 'expert', score: 95, specializations: ['typescript', 'python', 'rust', 'go', 'debugging', 'refactoring'] },
-      { domain: 'analysis', level: 'proficient', score: 80, specializations: ['code-review', 'architecture'] },
-      { domain: 'reasoning', level: 'proficient', score: 75, specializations: ['technical', 'mathematical'] },
-      { domain: 'generation', level: 'capable', score: 70, specializations: ['code-generation', 'api-design'] },
+      {
+        domain: 'coding',
+        level: 'expert',
+        score: 95,
+        specializations: ['typescript', 'python', 'rust', 'go', 'debugging', 'refactoring'],
+      },
+      {
+        domain: 'analysis',
+        level: 'proficient',
+        score: 80,
+        specializations: ['code-review', 'architecture'],
+      },
+      {
+        domain: 'reasoning',
+        level: 'proficient',
+        score: 75,
+        specializations: ['technical', 'mathematical'],
+      },
+      {
+        domain: 'generation',
+        level: 'capable',
+        score: 70,
+        specializations: ['code-generation', 'api-design'],
+      },
     ],
-    strengths: ['Fast inference', 'Excellent at coding', 'Very cost-effective', 'Large context window'],
+    strengths: [
+      'Fast inference',
+      'Excellent at coding',
+      'Very cost-effective',
+      'Large context window',
+    ],
     weaknesses: ['Limited creative writing', 'Weaker at multimodal', 'Less conversational'],
-    bestFor: ['Code generation', 'Debugging', 'Code review', 'Technical documentation', 'API design'],
+    bestFor: [
+      'Code generation',
+      'Debugging',
+      'Code review',
+      'Technical documentation',
+      'API design',
+    ],
     avoidFor: ['Creative writing', 'Image analysis', 'Casual conversation'],
     fallbackChain: ['anthropic', 'gemini', 'openai'],
   },
@@ -96,7 +127,7 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
   // ─────────────────────────────────────────────────────────────────────────
   // Anthropic Claude
   // ─────────────────────────────────────────────────────────────────────────
-  'anthropic': {
+  anthropic: {
     id: 'anthropic',
     name: 'Claude 3.5 Sonnet',
     provider: 'anthropic',
@@ -105,15 +136,52 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
     costPer1kTokens: { input: 0.003, output: 0.015 },
     latencyMs: { average: 1500, p95: 3000 },
     capabilities: [
-      { domain: 'reasoning', level: 'expert', score: 98, specializations: ['complex-reasoning', 'multi-step', 'safety'] },
-      { domain: 'coding', level: 'expert', score: 92, specializations: ['architecture', 'full-stack', 'debugging'] },
-      { domain: 'analysis', level: 'expert', score: 95, specializations: ['research', 'evaluation', 'critique'] },
-      { domain: 'creative', level: 'proficient', score: 85, specializations: ['technical-writing', 'documentation'] },
-      { domain: 'conversation', level: 'expert', score: 90, specializations: ['nuanced', 'contextual'] },
+      {
+        domain: 'reasoning',
+        level: 'expert',
+        score: 98,
+        specializations: ['complex-reasoning', 'multi-step', 'safety'],
+      },
+      {
+        domain: 'coding',
+        level: 'expert',
+        score: 92,
+        specializations: ['architecture', 'full-stack', 'debugging'],
+      },
+      {
+        domain: 'analysis',
+        level: 'expert',
+        score: 95,
+        specializations: ['research', 'evaluation', 'critique'],
+      },
+      {
+        domain: 'creative',
+        level: 'proficient',
+        score: 85,
+        specializations: ['technical-writing', 'documentation'],
+      },
+      {
+        domain: 'conversation',
+        level: 'expert',
+        score: 90,
+        specializations: ['nuanced', 'contextual'],
+      },
     ],
-    strengths: ['Deep reasoning', 'Safety-focused', 'Excellent analysis', 'Large context', 'High quality'],
+    strengths: [
+      'Deep reasoning',
+      'Safety-focused',
+      'Excellent analysis',
+      'Large context',
+      'High quality',
+    ],
     weaknesses: ['Higher cost', 'Slower response', 'No image generation'],
-    bestFor: ['Complex reasoning', 'Code architecture', 'Research analysis', 'Safety-critical tasks', 'Long documents'],
+    bestFor: [
+      'Complex reasoning',
+      'Code architecture',
+      'Research analysis',
+      'Safety-critical tasks',
+      'Long documents',
+    ],
     avoidFor: ['Simple queries', 'Budget-constrained tasks', 'Real-time applications'],
     fallbackChain: ['gemini', 'openai', 'deepseek'],
   },
@@ -121,7 +189,7 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
   // ─────────────────────────────────────────────────────────────────────────
   // OpenAI GPT-4
   // ─────────────────────────────────────────────────────────────────────────
-  'openai': {
+  openai: {
     id: 'openai',
     name: 'GPT-4 Turbo',
     provider: 'openai',
@@ -130,15 +198,46 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
     costPer1kTokens: { input: 0.01, output: 0.03 },
     latencyMs: { average: 1200, p95: 2500 },
     capabilities: [
-      { domain: 'creative', level: 'expert', score: 92, specializations: ['storytelling', 'copywriting', 'brainstorming'] },
-      { domain: 'coding', level: 'proficient', score: 85, specializations: ['full-stack', 'frontend', 'explanations'] },
-      { domain: 'conversation', level: 'expert', score: 95, specializations: ['natural', 'engaging', 'helpful'] },
-      { domain: 'generation', level: 'expert', score: 90, specializations: ['content', 'ideas', 'variations'] },
-      { domain: 'multimodal', level: 'proficient', score: 80, specializations: ['image-understanding', 'diagrams'] },
+      {
+        domain: 'creative',
+        level: 'expert',
+        score: 92,
+        specializations: ['storytelling', 'copywriting', 'brainstorming'],
+      },
+      {
+        domain: 'coding',
+        level: 'proficient',
+        score: 85,
+        specializations: ['full-stack', 'frontend', 'explanations'],
+      },
+      {
+        domain: 'conversation',
+        level: 'expert',
+        score: 95,
+        specializations: ['natural', 'engaging', 'helpful'],
+      },
+      {
+        domain: 'generation',
+        level: 'expert',
+        score: 90,
+        specializations: ['content', 'ideas', 'variations'],
+      },
+      {
+        domain: 'multimodal',
+        level: 'proficient',
+        score: 80,
+        specializations: ['image-understanding', 'diagrams'],
+      },
     ],
     strengths: ['Versatile', 'Creative', 'Natural conversation', 'Well-rounded', 'Reliable'],
     weaknesses: ['Higher cost', 'Rate limits', 'Occasional verbosity'],
-    bestFor: ['Creative writing', 'Content generation', 'User-facing chat', 'General tasks', 'Brainstorming'],
+    bestFor: [
+      'Creative writing',
+      'Content generation',
+      'User-facing chat',
+      'General tasks',
+      'Brainstorming',
+    ],
     avoidFor: ['Budget-constrained tasks', 'Pure code generation', 'High-volume processing'],
     fallbackChain: ['anthropic', 'gemini', 'deepseek'],
   },
@@ -146,7 +245,7 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
   // ─────────────────────────────────────────────────────────────────────────
   // Google Gemini
   // ─────────────────────────────────────────────────────────────────────────
-  'gemini': {
+  gemini: {
     id: 'gemini',
     name: 'Gemini 1.5 Pro',
     provider: 'gemini',
@@ -155,15 +254,46 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
     costPer1kTokens: { input: 0.00125, output: 0.005 },
     latencyMs: { average: 1000, p95: 2000 },
     capabilities: [
-      { domain: 'multimodal', level: 'expert', score: 95, specializations: ['image', 'video', 'audio', 'pdf'] },
-      { domain: 'analysis', level: 'expert', score: 90, specializations: ['document-analysis', 'summarization'] },
-      { domain: 'reasoning', level: 'proficient', score: 85, specializations: ['logical', 'mathematical'] },
-      { domain: 'coding', level: 'proficient', score: 82, specializations: ['general', 'explanations'] },
-      { domain: 'generation', level: 'proficient', score: 80, specializations: ['structured-output', 'json'] },
+      {
+        domain: 'multimodal',
+        level: 'expert',
+        score: 95,
+        specializations: ['image', 'video', 'audio', 'pdf'],
+      },
+      {
+        domain: 'analysis',
+        level: 'expert',
+        score: 90,
+        specializations: ['document-analysis', 'summarization'],
+      },
+      {
+        domain: 'reasoning',
+        level: 'proficient',
+        score: 85,
+        specializations: ['logical', 'mathematical'],
+      },
+      {
+        domain: 'coding',
+        level: 'proficient',
+        score: 82,
+        specializations: ['general', 'explanations'],
+      },
+      {
+        domain: 'generation',
+        level: 'proficient',
+        score: 80,
+        specializations: ['structured-output', 'json'],
+      },
     ],
     strengths: ['Massive context', 'Multimodal', 'Cost-effective', 'Fast', 'Good at analysis'],
     weaknesses: ['Sometimes verbose', 'Weaker at nuanced reasoning', 'Variable quality'],
-    bestFor: ['Document analysis', 'Image understanding', 'Long context tasks', 'Multimodal queries', 'Cost-effective analysis'],
+    bestFor: [
+      'Document analysis',
+      'Image understanding',
+      'Long context tasks',
+      'Multimodal queries',
+      'Cost-effective analysis',
+    ],
     avoidFor: ['Safety-critical tasks', 'Nuanced creative writing', 'Complex multi-step reasoning'],
     fallbackChain: ['anthropic', 'openai', 'deepseek'],
   },
@@ -171,7 +301,7 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
   // ─────────────────────────────────────────────────────────────────────────
   // ZhiPu GLM
   // ─────────────────────────────────────────────────────────────────────────
-  'zhipu': {
+  zhipu: {
     id: 'zhipu',
     name: 'GLM-4',
     provider: 'zhipu',
@@ -181,7 +311,12 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
     latencyMs: { average: 900, p95: 1800 },
     capabilities: [
       { domain: 'coding', level: 'proficient', score: 78, specializations: ['python', 'general'] },
-      { domain: 'conversation', level: 'proficient', score: 80, specializations: ['chinese', 'bilingual'] },
+      {
+        domain: 'conversation',
+        level: 'proficient',
+        score: 80,
+        specializations: ['chinese', 'bilingual'],
+      },
       { domain: 'generation', level: 'capable', score: 72, specializations: ['text', 'summaries'] },
       { domain: 'analysis', level: 'capable', score: 70, specializations: ['basic'] },
     ],
@@ -195,7 +330,7 @@ export const MODEL_PROFILES: Record<string, ModelProfile> = {
   // ─────────────────────────────────────────────────────────────────────────
   // Ollama (Local)
   // ─────────────────────────────────────────────────────────────────────────
-  'ollama': {
+  ollama: {
     id: 'ollama',
     name: 'Ollama Local',
     provider: 'ollama',
@@ -233,13 +368,13 @@ export const TASK_PROFILES: Record<string, TaskProfile> = {
     preferredLevel: 'expert',
     complexity: 'medium',
   },
-  'debugging': {
+  debugging: {
     type: 'debugging',
     requiredCapabilities: ['coding', 'reasoning'],
     preferredLevel: 'expert',
     complexity: 'high',
   },
-  'architecture': {
+  architecture: {
     type: 'architecture',
     requiredCapabilities: ['coding', 'reasoning', 'analysis'],
     preferredLevel: 'expert',
@@ -251,13 +386,13 @@ export const TASK_PROFILES: Record<string, TaskProfile> = {
     preferredLevel: 'expert',
     complexity: 'medium',
   },
-  'research': {
+  research: {
     type: 'research',
     requiredCapabilities: ['analysis', 'reasoning', 'research'],
     preferredLevel: 'expert',
     complexity: 'high',
   },
-  'conversation': {
+  conversation: {
     type: 'conversation',
     requiredCapabilities: ['conversation'],
     preferredLevel: 'proficient',
@@ -275,7 +410,7 @@ export const TASK_PROFILES: Record<string, TaskProfile> = {
     preferredLevel: 'expert',
     complexity: 'medium',
   },
-  'summarization': {
+  summarization: {
     type: 'summarization',
     requiredCapabilities: ['analysis', 'generation'],
     preferredLevel: 'proficient',
@@ -316,7 +451,7 @@ export class ModelCapabilityService {
     return scores
       .sort((a, b) => b.score - a.score)
       .slice(0, count)
-      .map(s => s.modelId);
+      .map((s) => s.modelId);
   }
 
   /**
@@ -330,7 +465,7 @@ export class ModelCapabilityService {
 
       // Score based on required capabilities
       for (const requiredDomain of task.requiredCapabilities) {
-        const capability = profile.capabilities.find(c => c.domain === requiredDomain);
+        const capability = profile.capabilities.find((c) => c.domain === requiredDomain);
         if (capability) {
           const levelMultiplier = this.getLevelMultiplier(capability.level, task.preferredLevel);
           score += capability.score * levelMultiplier;
@@ -350,7 +485,7 @@ export class ModelCapabilityService {
 
       // Complexity adjustment
       if (task.complexity === 'high') {
-        const reasoningCap = profile.capabilities.find(c => c.domain === 'reasoning');
+        const reasoningCap = profile.capabilities.find((c) => c.domain === 'reasoning');
         if (reasoningCap) score += reasoningCap.score * 0.3;
       }
 
@@ -365,10 +500,10 @@ export class ModelCapabilityService {
    */
   private getLevelMultiplier(actual: CapabilityLevel, required: CapabilityLevel): number {
     const levels: Record<CapabilityLevel, number> = {
-      'expert': 4,
-      'proficient': 3,
-      'capable': 2,
-      'limited': 1,
+      expert: 4,
+      proficient: 3,
+      capable: 2,
+      limited: 1,
     };
 
     const actualValue = levels[actual];
@@ -396,11 +531,15 @@ export class ModelCapabilityService {
   /**
    * Check if model is suitable for a domain
    */
-  isSuitableFor(modelId: string, domain: CapabilityDomain, minLevel: CapabilityLevel = 'capable'): boolean {
+  isSuitableFor(
+    modelId: string,
+    domain: CapabilityDomain,
+    minLevel: CapabilityLevel = 'capable'
+  ): boolean {
     const profile = this.profiles[modelId];
     if (!profile) return false;
 
-    const capability = profile.capabilities.find(c => c.domain === domain);
+    const capability = profile.capabilities.find((c) => c.domain === domain);
     if (!capability) return false;
 
     const levels: CapabilityLevel[] = ['limited', 'capable', 'proficient', 'expert'];
@@ -411,7 +550,7 @@ export class ModelCapabilityService {
    * Get all models suitable for a domain
    */
   getModelsForDomain(domain: CapabilityDomain, minLevel: CapabilityLevel = 'capable'): string[] {
-    return Object.keys(this.profiles).filter(id => this.isSuitableFor(id, domain, minLevel));
+    return Object.keys(this.profiles).filter((id) => this.isSuitableFor(id, domain, minLevel));
   }
 }
 
