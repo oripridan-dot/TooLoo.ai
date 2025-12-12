@@ -1,11 +1,14 @@
-// @version 2.2.433
+// @version 3.3.554
 // Generative UI Component Generation Route
 // Leverages Synapsys LLM providers to generate React components on demand
+// V3.3.550: Added usage metering for billing
 
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import fs from 'fs-extra';
 import path from 'path';
 import { precog } from '../../precog/index.js';
+import { recordUsage } from '../middleware/rate-limiter.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
 
