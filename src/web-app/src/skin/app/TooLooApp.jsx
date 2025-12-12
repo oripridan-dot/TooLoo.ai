@@ -1,4 +1,4 @@
-// @version 3.3.537
+// @version 3.3.538
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
@@ -425,6 +425,13 @@ const TooLooAppInner = memo(() => {
         {/* V3.3.449: Knowledge Rail - Shows retrieved context */}
         <KnowledgeRail isOpen={knowledgeRailOpen} onClose={() => setKnowledgeRailOpen(false)} />
       </div>
+      
+      {/* V3.3.532: Command Palette - Global quick actions */}
+      <CommandPalette 
+        isOpen={commandPaletteOpen}
+        onClose={closeCommandPalette}
+        onAction={handleCommandAction}
+      />
     </div>
   );
 });
