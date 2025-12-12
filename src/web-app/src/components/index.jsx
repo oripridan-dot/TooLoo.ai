@@ -1,12 +1,14 @@
-// @version 3.3.8
+// @version 3.3.556
 /**
  * @description Legacy component stubs for backwards compatibility
  * @intent These are placeholder components that allow the app to build
  *         while USE_LIQUID_SYNAPSYS is true. When switching back to legacy UI,
  *         these should be properly implemented.
+ * V3.3.550: Added BillingDashboard export
  */
 import React from 'react';
 import CognitiveDashboard from './CognitiveDashboard.jsx';
+import BillingDashboard from './BillingDashboard.jsx';
 
 // Reusable placeholder component
 const PlaceholderComponent = ({ name }) => (
