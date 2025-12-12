@@ -1,4 +1,4 @@
-// @version 3.3.542
+// @version 3.3.532
 /**
  * Project State Store
  * 
@@ -8,6 +8,8 @@
  * - Layer 2: Execution (tasks, DAG)
  * - Layer 3: Artifacts (code, visuals)
  * - Layer 4: System (metrics, health)
+ * 
+ * V3.3.532: Added debounced auto-save with configurable interval
  * 
  * Integrates with canvasStateStore for emotional/visual state.
  * 
