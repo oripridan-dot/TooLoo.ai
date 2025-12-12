@@ -1,8 +1,8 @@
 # TooLoo.ai System Status
 
 > Last Updated: December 12, 2025
-> Version: 3.3.532
-> Commit: Phase 4c + Living Canvas UI Components
+> Version: 3.3.542
+> Commit: Phase 3 Stripe Billing Integration
 
 ---
 
@@ -121,21 +121,33 @@
 
 ## 🔄 In Progress: Phase 4 - The Open Shop
 
-### 4a: Payment Integration
-- [ ] Stripe/LemonSqueezy subscription
-- [ ] License key verification
-- [ ] Usage metering
+### 4a: Payment Integration [🟡 IN PROGRESS - V3.3.542]
+- [x] Stripe SDK installed and configured
+- [x] BillingService with subscription plans (Free/Pro/Unlimited)
+- [x] Checkout session creation for upgrades
+- [x] Billing portal for self-service management
+- [x] Webhook handlers for subscription lifecycle
+- [x] `GET /api/v1/billing/plans` - List subscription plans
+- [x] `POST /api/v1/billing/checkout` - Create checkout session
+- [x] `POST /api/v1/billing/portal` - Create billing portal
+- [x] `GET /api/v1/billing/usage` - Usage statistics
+- [x] `POST /api/v1/billing/webhook` - Stripe webhooks
+- [ ] Billing UI components
+- [ ] Tier-based rate limits integration
 
 ### 4b: Support Automation
 - [ ] Tier 1 Support Agent
 - [ ] Bug escalation to GitHub Issues
 - [ ] FAQ auto-responder
 
-### 4c: User Management [🟡 IN PROGRESS]
+### 4c: User Management [✅ COMPLETE - V3.3.532]
 - [x] Simple auth (API keys) - `requireAuth`, `optionalAuth` middleware
 - [x] User context wiring - Fixed hardcoded owner fields in projects-v2.ts
-- [ ] Usage dashboard - Endpoints exist, UI needed
-- [ ] Subscription status
+- [x] Chat history user scoping - Per-user JSON files, GET/DELETE `/api/v1/chat/history`
+- [x] Artifact user scoping - `ownerId` metadata, user filtering in list
+- [x] Usage dashboard - `/api/v1/usage/me` endpoint with user info, stats, limits
+- [x] Per-user Q-learning - Personalized provider routing with cold-start fallback
+- [x] Subscription status - Integrated with Stripe billing service
 
 ### 4d: Living Canvas Foundation [✅ COMPLETE - V3.3.532]
 - [x] Canvas state types (`src/shared/types/canvas-state.types.ts`)
