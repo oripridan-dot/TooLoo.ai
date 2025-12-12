@@ -213,7 +213,7 @@ export class IntelligentRouter {
       phase: 'plan_creation',
       action: 'create_routing_plan',
       reason: `Created ${recipe.steps.length}-step routing plan in ${recipe.lane} lane`,
-      data: { planType: routingPlan.type, steps: routingPlan.steps.length },
+      data: { planType: routingPlan.type, steps: routingPlan.steps?.length ?? 0 },
       durationMs: Date.now() - planStart,
     });
 
@@ -221,8 +221,10 @@ export class IntelligentRouter {
     // Step 6: Calculate estimates
     // ─────────────────────────────────────────────────────────────────────
     const modelProfile = modelCapabilityService.getModelProfile(selectedModel);
-    const estimatedLatencyMs = modelProfile?.avgLatencyMs || recipe.expectedLatencyMs;
-    const estimatedCost = (modelProfile?.costPer1kTokens || 0.01) * recipe.expectedCostMultiplier;
+    const estimatedLatencyMs = modelProfile?.latencyMs?.average || recipe.expectedLatencyMs;
+    const estimatedCost =
+      ((modelProfile?.costPer1kTokens?.input || 0) + (modelProfile?.costPer1kTokens?.output || 0.01)) *
+      recipe.expectedCostMultiplier;
 
     // ─────────────────────────────────────────────────────────────────────
     // Emit event and return response
