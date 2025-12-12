@@ -1,9 +1,10 @@
-// @version 3.3.486
+// @version 3.3.536
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
 // V3.3.450: Added Workstation view - 4-panel unified development interface
 // V3.3.480: Added Living Canvas - emotional background layer with performance controls
+// V3.3.532: Added CommandPalette (Cmd+K) - Quick actions and navigation
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
@@ -15,6 +16,9 @@ import { useSynapsynDNA, SynapysConductor, SYNAPSYS_PRESETS } from '../synapsys'
 import { ControlDeck } from '../components/ControlDeck';
 import { KnowledgeRail } from '../components/KnowledgeRail';
 import { useSystemState } from '../store/systemStateStore';
+
+// V3.3.532: Command Palette - Quick actions
+import { CommandPalette, useCommandPalette } from '../components/CommandPalette';
 
 // V3.3.480: Living Canvas - Emotional background
 import LivingCanvas from '../canvas/LivingCanvas';
