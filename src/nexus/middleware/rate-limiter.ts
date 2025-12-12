@@ -1,4 +1,4 @@
-// @version 3.3.547
+// @version 3.3.548
 /**
  * Rate Limiting Middleware
  * 
@@ -196,3 +196,167 @@ export const apiLimiter = rateLimit({
     return (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown';
   },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tier-Aware Rate Limiting Middleware
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Middleware that enforces subscription tier-based rate limits
+ * Applies both per-minute and per-day limits based on user's subscription
+ */
+export function tierRateLimiter(type: 'api' | 'llm' | 'vision' = 'api') {
+  // Multipliers for different endpoint types
+  const multipliers = {
+    api: 1,
+    llm: 0.3,  // LLM requests are more expensive, so lower limit
+    vision: 0.1 // Vision even more expensive
+  };
+
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Skip health checks
+    if (skipHealthCheck(req, res)) {
+      return next();
+    }
+
+    const key = getKeyFromRequest(req);
+    const tier = getUserTier(req);
+    const limits = getTierLimits(tier);
+    const multiplier = multipliers[type];
+
+    // Get adjusted limits
+    const perMinuteLimit = Math.ceil(limits.requestsPerMinute * multiplier);
+    const perDayLimit = limits.requestsPerDay === Infinity 
+      ? Infinity 
+      : Math.ceil(limits.requestsPerDay * multiplier);
+
+    // Check daily limit first (if authenticated user)
+    const userId = (req as any).user?.id;
+    if (userId && perDayLimit !== Infinity) {
+      const usage = getDailyUsage(userId);
+      
+      if (usage.requests >= perDayLimit) {
+        const plan = SUBSCRIPTION_PLANS[tier];
+        res.status(429).json({
+          ok: false,
+          error: 'Daily limit exceeded',
+          message: `You have reached your daily limit of ${perDayLimit} ${type} requests for the ${plan.name} tier.`,
+          tier,
+          usage: {
+            current: usage.requests,
+            limit: perDayLimit,
+            resetsAt: new Date(new Date().setHours(24, 0, 0, 0)).toISOString()
+          },
+          upgrade: tier === 'unlimited' ? null : {
+            message: 'Upgrade your plan for higher limits',
+            url: '/billing/plans'
+          }
+        });
+        return;
+      }
+    }
+
+    // Set tier info headers
+    res.setHeader('X-Tier', tier);
+    res.setHeader('X-RateLimit-Tier-Limit-Day', perDayLimit === Infinity ? 'unlimited' : perDayLimit);
+    
+    if (userId) {
+      const usage = getDailyUsage(userId);
+      res.setHeader('X-RateLimit-Tier-Remaining-Day', 
+        perDayLimit === Infinity ? 'unlimited' : Math.max(0, perDayLimit - usage.requests));
+    }
+
+    // Record the request
+    if (userId) {
+      recordUsage(userId, 1, 0);
+    }
+
+    next();
+  };
+}
+
+/**
+ * Token-based rate limiter for LLM endpoints
+ * Tracks token consumption against tier limits
+ */
+export function tokenRateLimiter() {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return next();
+    }
+
+    const tier = getUserTier(req);
+    const limits = getTierLimits(tier);
+    const usage = getDailyUsage(userId);
+
+    // Check token limit
+    if (limits.tokensPerDay !== Infinity && usage.tokens >= limits.tokensPerDay) {
+      const plan = SUBSCRIPTION_PLANS[tier];
+      res.status(429).json({
+        ok: false,
+        error: 'Token limit exceeded',
+        message: `You have used all ${limits.tokensPerDay.toLocaleString()} tokens for today on the ${plan.name} tier.`,
+        tier,
+        usage: {
+          current: usage.tokens,
+          limit: limits.tokensPerDay,
+          resetsAt: new Date(new Date().setHours(24, 0, 0, 0)).toISOString()
+        },
+        upgrade: tier === 'unlimited' ? null : {
+          message: 'Upgrade your plan for higher limits',
+          url: '/billing/plans'
+        }
+      });
+      return;
+    }
+
+    // Attach helper to record tokens after response
+    (res as any).recordTokens = (tokens: number) => {
+      recordUsage(userId, 0, tokens);
+    };
+
+    next();
+  };
+}
+
+/**
+ * Get rate limit status for a user
+ */
+export function getRateLimitStatus(userId: string, tier: SubscriptionTier): {
+  tier: string;
+  usage: { requests: number; tokens: number };
+  limits: TierRateLimitConfig;
+  percentUsed: { requests: number; tokens: number };
+} {
+  const limits = getTierLimits(tier);
+  const usage = getDailyUsage(userId);
+
+  return {
+    tier,
+    usage,
+    limits,
+    percentUsed: {
+      requests: limits.requestsPerDay === Infinity 
+        ? 0 
+        : Math.round((usage.requests / limits.requestsPerDay) * 100),
+      tokens: limits.tokensPerDay === Infinity 
+        ? 0 
+        : Math.round((usage.tokens / limits.tokensPerDay) * 100)
+    }
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cleanup
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Clean up old daily usage entries at midnight
+setInterval(() => {
+  const today = new Date().toISOString().split('T')[0];
+  for (const [key, value] of dailyUsage.entries()) {
+    if (value.date !== today) {
+      dailyUsage.delete(key);
+    }
+  }
+}, 60 * 60 * 1000); // Check every hour
