@@ -1,9 +1,10 @@
-// @version 3.3.477
+// @version 3.3.562
 /**
  * Precog Engine Index
  *
  * Exports all engine modules for AI processing and orchestration.
  * V3.3.352: Added Neural Learning Optimizer, Autonomous Evolution Engine, and Shadow Lab
+ * V3.3.550: Added Phase 5 Intelligence Layer - Model Capabilities, Execution Recipes, Three-Layer Validation
  * @module precog/engine
  */
 
