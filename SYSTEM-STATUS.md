@@ -119,7 +119,7 @@
 
 ---
 
-## 🔄 Next Up: Phase 4 - The Open Shop
+## 🔄 In Progress: Phase 4 - The Open Shop
 
 ### 4a: Payment Integration
 - [ ] Stripe/LemonSqueezy subscription
@@ -131,10 +131,23 @@
 - [ ] Bug escalation to GitHub Issues
 - [ ] FAQ auto-responder
 
-### 4c: User Management
-- [ ] Simple auth (API keys)
-- [ ] Usage dashboard
+### 4c: User Management [🟡 IN PROGRESS]
+- [x] Simple auth (API keys) - `requireAuth`, `optionalAuth` middleware
+- [x] User context wiring - Fixed hardcoded owner fields in projects-v2.ts
+- [ ] Usage dashboard - Endpoints exist, UI needed
 - [ ] Subscription status
+
+### 4d: Living Canvas Foundation [🟡 IN PROGRESS - V3.3.531]
+- [x] Canvas state types (`src/shared/types/canvas-state.types.ts`)
+- [x] Project state store (`src/web-app/src/skin/store/projectStateStore.js`)
+- [x] Store index exports (`src/web-app/src/skin/store/index.js`)
+- [x] Fixed `fsManager` export in `src/core/fs-manager.ts`
+- [x] Fixed `metricsCollector` export in `src/core/metrics-collector.ts`
+- [x] Socket.IO project sync events (`src/nexus/socket.ts` - project:join/save/sync/cursor/presence)
+- [x] Command palette UI component (`src/web-app/src/skin/components/CommandPalette.jsx`)
+- [x] DAG visualization component (`src/web-app/src/skin/components/TaskDAG.jsx`)
+- [x] Component index exports (`src/web-app/src/skin/components/index.js`)
+- [ ] Integration with main app shell
 
 ---
 
