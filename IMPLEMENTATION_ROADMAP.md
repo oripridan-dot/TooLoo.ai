@@ -1,6 +1,6 @@
 # TooLoo.ai Living Canvas Implementation Roadmap
 
-> Version: 1.2.0
+> Version: 1.3.0
 > Created: December 12, 2025
 > Last Updated: December 12, 2025
 
@@ -11,7 +11,7 @@
 | Phase | Status | Progress | Target |
 |-------|--------|----------|--------|
 | Phase 1: Foundation | 🟢 Complete | 100% | Week 1 |
-| Phase 2: User Management | 🟡 In Progress | 60% | Weeks 2-3 |
+| Phase 2: User Management | 🟢 Complete | 100% | Weeks 2-3 |
 | Phase 3: Payment Integration | ⚪ Not Started | 0% | Weeks 4-5 |
 | Phase 4: Living Canvas UI | 🟢 Complete | 100% | Weeks 6-8 |
 | Phase 5: Intelligence Layer | ⚪ Not Started | 0% | Weeks 9-10 |
@@ -52,18 +52,20 @@ export const metricsCollector = metricsCollectorInstance;
 - [x] User context attached to requests (`req.user`)
 - [x] Rate limiting per API key implemented
 
-### 2.2 User Context Integration [IN PROGRESS]
+### 2.2 User Context Integration [✅ COMPLETE V3.3.532]
 - [x] Fixed hardcoded `owner: 'user'` in `projects-v2.ts` (line 284, 551)
 - [x] Added `optionalAuth` middleware to project routes
 - [x] User ID now properly extracted from `req.user?.id`
-- [ ] Chat history needs user scoping
-- [ ] Artifact storage needs user scoping
+- [x] Chat history user scoping - Per-user JSON files (`data/chat-history/{userId}.json`)
+- [x] Artifact storage user scoping - `ownerId` in metadata, filtered in GET `/artifacts`
+- [x] Q-learning state per-user - State keys include userId, blends with global for cold start
+- [x] Usage dashboard endpoint - `GET /api/v1/usage/me` returns user info + stats + limits
 
 ### 2.3 Remaining Tasks
-- [ ] User registration flow (email + API key provisioning)
-- [ ] Session management with secure token refresh
-- [ ] Per-user Q-learning state separation
-- [ ] Usage dashboard `/api/v1/usage/me` endpoint
+- [x] User registration flow - `POST /api/v1/users` with email + name + tier
+- [x] API key provisioning - `POST /api/v1/users/me/keys` with scopes, expiry, rate limit
+- [x] Session management - API key based with `requireAuth`/`optionalAuth` middleware
+- [ ] Subscription status integration (post-Stripe) - deferred to Phase 3
 
 ---
 
