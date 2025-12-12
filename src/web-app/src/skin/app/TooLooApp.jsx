@@ -1,4 +1,4 @@
-// @version 3.3.536
+// @version 3.3.537
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
@@ -326,7 +326,14 @@ const TooLooAppInner = memo(() => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if typing in input
+      // V3.3.532: Command Palette (Cmd+K / Ctrl+K)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        openCommandPalette();
+        return;
+      }
+      
+      // Ignore if typing in input (except for Cmd+K above)
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       // View shortcuts (1-9, 0) - supports 10 views
