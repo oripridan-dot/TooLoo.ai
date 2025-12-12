@@ -1,4 +1,4 @@
-// @version 3.3.517
+// @version 3.3.566
 /**
  * Skin Store Index
  * 
@@ -30,7 +30,7 @@ export {
   selectQAStatus,
   selectAlerts,
   selectSyncState,
-} from './projectStateStore';
+} from './projectStateStore.js';
 
 // System-wide state
 export { default as useSystemStore } from './systemStateStore';

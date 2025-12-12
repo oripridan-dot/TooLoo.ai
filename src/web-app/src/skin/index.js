@@ -1,4 +1,4 @@
-// @version 3.3.541
+// @version 3.3.566
 // TooLoo.ai Skin - Main Entry Point
 // Liquid Synapsys V1 - The viewport IS TooLoo
 // Exports all skin infrastructure including liquid effects, textures, presence, Synapsys DNA, shell, views, and app
@@ -51,11 +51,19 @@ export {
   useCanvasStore,
   useProjectStore,
   useSystemStore,
-  selectCurrentProject,
-  selectIsProcessing as selectProjectProcessing,
-  selectActiveUsers,
-  selectTaskNodes,
+  selectProjectId,
+  selectMetadata,
+  selectConversation,
+  selectActiveIntent,
+  selectCommandPalette,
+  selectTaskGraph,
+  selectCurrentExecution,
   selectArtifacts,
+  selectActiveArtifact,
+  selectSystemMetrics,
+  selectQAStatus,
+  selectAlerts,
+  selectSyncState,
 } from './store/index.js';
 
 // === V3.3.531: NEW COMPONENTS ===
