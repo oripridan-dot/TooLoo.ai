@@ -8,21 +8,36 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { ProviderRegistry } from '@tooloo/providers';
-import type { Artifact } from '@tooloo/core';
 
 import type {
-  SkillExecutionContext,
+  ExecutionContext,
   ProviderSelection,
-  OrchestratorConfig,
+  ExecutorConfig,
+  ExecutionResult,
   ToolResult,
+  Artifact,
 } from './types.js';
+import { ToolRegistry, toolRegistry as globalToolRegistry } from './tools/index.js';
+
+// =============================================================================
+// DEFAULT CONFIG
+// =============================================================================
+
+export const DEFAULT_EXECUTOR_CONFIG: ExecutorConfig = {
+  maxRetries: 3,
+  timeoutMs: 60000,
+  streaming: true,
+  enableTools: true,
+};
 
 // =============================================================================
 // TOOL IMPLEMENTATIONS ("The Hands")
 // =============================================================================
 
-const TOOL_IMPLEMENTATIONS: Record<string, (params: any) => Promise<string>> = {
-  file_write: async ({ path: filePath, content }) => {
+const TOOL_IMPLEMENTATIONS: Record<string, (params: Record<string, unknown>) => Promise<string>> = {
+  file_write: async (params) => {
+    const filePath = params['path'] as string;
+    const content = params['content'] as string;
     const targetPath = path.resolve(process.cwd(), filePath);
     // Simple safety check: ensure we don't write outside the project
     if (!targetPath.startsWith(process.cwd())) {
@@ -33,12 +48,14 @@ const TOOL_IMPLEMENTATIONS: Record<string, (params: any) => Promise<string>> = {
     return `Success: Wrote ${content.length} characters to ${filePath}`;
   },
   
-  file_read: async ({ path: filePath }) => {
+  file_read: async (params) => {
+    const filePath = params['path'] as string;
     const targetPath = path.resolve(process.cwd(), filePath);
     return await fs.readFile(targetPath, 'utf-8');
   },
   
-  list_files: async ({ path: dirPath = '.' }) => {
+  list_files: async (params) => {
+    const dirPath = (params['path'] as string) || '.';
     const targetPath = path.resolve(process.cwd(), dirPath);
     const files = await fs.readdir(targetPath);
     return files.join('\n');
@@ -46,42 +63,31 @@ const TOOL_IMPLEMENTATIONS: Record<string, (params: any) => Promise<string>> = {
 };
 
 // =============================================================================
-// TYPES
-// =============================================================================
-
-interface ExecutionResult {
-  content: string;
-  tokenCount: {
-    prompt: number;
-    completion: number;
-    total: number;
-  };
-  latencyMs: number;
-  artifacts?: Artifact[];
-  toolCalls?: Array<{
-    tool: string;
-    params: Record<string, unknown>;
-    result: ToolResult;
-  }>;
-}
-
-// =============================================================================
 // SKILL EXECUTOR
 // =============================================================================
 
 export class SkillExecutor {
+  private providerRegistry: ProviderRegistry;
+  private toolRegistry: ToolRegistry;
+  private config: ExecutorConfig;
+
   constructor(
-    private readonly providerRegistry: ProviderRegistry,
-    private config: OrchestratorConfig
-  ) {}
+    providerRegistry: ProviderRegistry,
+    config?: Partial<ExecutorConfig>,
+    toolRegistry?: ToolRegistry
+  ) {
+    this.providerRegistry = providerRegistry;
+    this.config = { ...DEFAULT_EXECUTOR_CONFIG, ...config };
+    this.toolRegistry = toolRegistry ?? globalToolRegistry;
+  }
 
   async execute(
-    context: SkillExecutionContext,
+    context: ExecutionContext,
     providerSelection: ProviderSelection
   ): Promise<ExecutionResult> {
     const startTime = Date.now();
 
-    const provider = this.providerRegistry.get(providerSelection.providerId as string);
+    const provider = this.providerRegistry.get(providerSelection.providerId);
     if (!provider) {
       throw new Error(`Provider not found: ${providerSelection.providerId}`);
     }
@@ -93,12 +99,13 @@ To use a tool, you MUST use this format on a new line:
 :::tool{name="tool_name"}
 {"param": "value"}
 :::
-Available Tools: ${context.tools.map(t => t.name).join(', ')}` 
+Available Tools: ${context.tools.map((t) => t.name).join(', ')}` 
       : '';
 
     const messages = this.buildMessages(context);
-    if (messages[0].role === 'system') {
-      messages[0].content += toolSystemPrompt;
+    const firstMsg = messages[0];
+    if (firstMsg && firstMsg.role === 'system') {
+      firstMsg.content += toolSystemPrompt;
     }
 
     // --- CALL LLM ---
@@ -112,15 +119,22 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
     const latencyMs = Date.now() - startTime;
 
     // --- EXECUTE TOOLS ---
-    const toolRegex = /:::tool{name="([^"]+)"}\n([\s\S]*?)\n:::/g;
+    const toolRegex = /:::tool\{name="([^"]+)"\}\n([\s\S]*?)\n:::/g;
     let match;
-    const toolResults = [];
+    const toolResults: Array<{
+      tool: string;
+      params: Record<string, unknown>;
+      result: ToolResult;
+    }> = [];
     let finalContent = response.content;
 
     while ((match = toolRegex.exec(response.content)) !== null) {
-      const [fullMatch, toolName, jsonParams] = match;
+      const toolName = match[1];
+      const jsonParams = match[2];
+      if (!toolName) continue;
+      
       try {
-        const params = JSON.parse(jsonParams);
+        const params = JSON.parse(jsonParams ?? '{}') as Record<string, unknown>;
         console.log(`🔨 [Executor] Running tool: ${toolName}`);
         
         const toolFn = TOOL_IMPLEMENTATIONS[toolName];
@@ -134,6 +148,11 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
           finalContent += `\n\n> 🔧 **System Tool Output:**\n> ${output}`;
         } else {
           console.warn(`Tool not found: ${toolName}`);
+          toolResults.push({
+            tool: toolName,
+            params,
+            result: { success: false, output: '', error: `Unknown tool: ${toolName}` }
+          });
         }
       } catch (e) {
         console.error(`Tool execution failed`, e);
@@ -141,7 +160,7 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
       }
     }
 
-    const artifacts = this.extractArtifacts(finalContent, context);
+    const artifacts = this.extractArtifacts(finalContent);
 
     return {
       content: finalContent,
@@ -152,23 +171,23 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
       },
       latencyMs,
       artifacts,
-      toolCalls: toolResults
+      toolCalls: toolResults.map(tr => ({
+        toolCallId: `tool-${Date.now()}`,
+        name: tr.tool,
+        result: tr.result,
+      })),
     };
   }
 
-  updateConfig(config: OrchestratorConfig): void {
-    this.config = config;
-  }
-
   async *executeStream(
-    context: SkillExecutionContext,
+    context: ExecutionContext,
     providerSelection: ProviderSelection
   ): AsyncGenerator<string> {
     const result = await this.execute(context, providerSelection);
     yield result.content;
   }
 
-  private buildMessages(context: SkillExecutionContext): Array<{
+  private buildMessages(context: ExecutionContext): Array<{
     role: 'system' | 'user' | 'assistant';
     content: string;
   }> {
@@ -189,7 +208,7 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
     return messages;
   }
 
-  private buildSystemPrompt(context: SkillExecutionContext): string {
+  private buildSystemPrompt(context: ExecutionContext): string {
     const parts: string[] = [];
     parts.push(context.skill.instructions);
     parts.push('\n\n## Context');
@@ -198,7 +217,7 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
     return parts.join('\n');
   }
 
-  private extractArtifacts(content: string, _context: SkillExecutionContext): Artifact[] {
+  private extractArtifacts(content: string): Artifact[] {
     const artifacts: Artifact[] = [];
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     let match;
@@ -208,7 +227,7 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
       const code = match[2]?.trim() || '';
       if (code.length > 50) {
         artifacts.push({
-          id: `artifact_${Date.now()}_${index++}` as any,
+          id: `artifact_${Date.now()}_${index++}`,
           type: 'code',
           name: `generated_${language}_${index}`,
           content: code,
@@ -222,15 +241,12 @@ Available Tools: ${context.tools.map(t => t.name).join(', ')}`
     }
     return artifacts;
   }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 }
 
 export function createSkillExecutor(
   providerRegistry: ProviderRegistry,
-  config: OrchestratorConfig
+  config?: Partial<ExecutorConfig>,
+  toolRegistry?: ToolRegistry
 ): SkillExecutor {
-  return new SkillExecutor(providerRegistry, config);
+  return new SkillExecutor(providerRegistry, config, toolRegistry);
 }
