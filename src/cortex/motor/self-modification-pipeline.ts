@@ -2,6 +2,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
  *
@@ -735,7 +736,7 @@ export class SelfModificationPipeline {
       // Run related tests
       const testResult = await this.runRelatedTests(proposal.fix.file);
       validation.layers.regression = testResult;
-    } catch (_error) {
+    } catch {
       validation.layers.regression.passed = true; // Assume pass if no tests
       validation.layers.regression.testsRun = 0;
       validation.layers.regression.testsPassed = 0;
