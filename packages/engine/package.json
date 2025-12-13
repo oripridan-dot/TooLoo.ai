@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --noEmit false",
+    "build": "tsc --composite false",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
