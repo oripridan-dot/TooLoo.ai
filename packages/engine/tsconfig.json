@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "composite": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "paths": {
+      "@tooloo/core": ["../core/src/index.ts"],
+      "@tooloo/core/*": ["../core/src/*"],
+      "@tooloo/skills": ["../skills/src/index.ts"],
+      "@tooloo/skills/*": ["../skills/src/*"],
+      "@tooloo/providers": ["../providers/src/index.ts"],
+      "@tooloo/providers/*": ["../providers/src/*"],
+      "@tooloo/memory": ["../memory/src/index.ts"],
+      "@tooloo/memory/*": ["../memory/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../skills" },
+    { "path": "../providers" },
+    { "path": "../memory" }
+  ]
+}
