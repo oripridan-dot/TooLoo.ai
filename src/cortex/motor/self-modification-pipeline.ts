@@ -1,5 +1,6 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
  * 
@@ -311,6 +312,9 @@ export class SelfModificationPipeline {
     if (this.skillsLoaded) return;
     
     try {
+      // Load the skills module dynamically
+      await loadSkillsModule();
+      
       await loadSkillsFromDirectory(this.config.skillsDirectory);
       this.skillsLoaded = true;
       
