@@ -1,4 +1,5 @@
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
  *
@@ -623,7 +624,7 @@ export class SelfModificationPipeline {
     };
     
     // Layer 1: Static Analysis
-    console.log('[Validation] Running static checks...');
+    bus.publish('cortex', 'validation:layer', { layer: 'static', name: 'Running static checks' });
     
     // Syntax check - try to create a temp file and compile
     const tempDir = path.join(process.cwd(), '.tooloo-temp');
@@ -689,7 +690,7 @@ export class SelfModificationPipeline {
       validation.layers.static.checks.types.passed;
     
     // Layer 2: Semantic Analysis
-    console.log('[Validation] Running semantic analysis...');
+    bus.publish('cortex', 'validation:layer', { layer: 'semantic', name: 'Running semantic analysis' });
     
     // Check if fix addresses root cause
     validation.layers.semantic.addressesRootCause = this.checkAddressesRootCause(
@@ -709,7 +710,7 @@ export class SelfModificationPipeline {
       validation.layers.semantic.sideEffects.length === 0;
     
     // Layer 3: Regression Check (if tests exist)
-    console.log('[Validation] Running regression checks...');
+    bus.publish('cortex', 'validation:layer', { layer: 'regression', name: 'Running regression checks' });
     
     try {
       // Run related tests
@@ -792,7 +793,7 @@ export class SelfModificationPipeline {
       bus.publish('cortex', 'self-mod:backup-created', { backup: editResult.backup });
       
       // Post-apply validation
-      console.log('[Modification] Running post-apply validation...');
+      bus.publish('cortex', 'self-mod:validating', { phase: 'post-apply' });
       
       // Syntax check
       try {
@@ -822,7 +823,7 @@ export class SelfModificationPipeline {
       
       // If validation fails, rollback
       if (!result.validation.syntax.passed || !result.validation.tests.passed) {
-        console.log('[Modification] Validation failed, rolling back...');
+        bus.publish('cortex', 'self-mod:validation-failed', { reason: 'Post-apply validation failed' });
         
         if (result.backup) {
           await this.engine.restoreBackup(result.backup.path);
