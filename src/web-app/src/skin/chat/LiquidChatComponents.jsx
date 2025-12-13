@@ -1,4 +1,5 @@
 // @version 2.0.NaN
+// @version 2.0.NaN
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
@@ -1397,10 +1398,19 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate }) =
     cleaned = cleaned.replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '');
     cleaned = cleaned.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
 
+    // Remove require statements (Node.js patterns don't work in browser)
+    cleaned = cleaned.replace(/^const\s+\w+\s*=\s*require\s*\([^)]+\);?\s*$/gm, '');
+    cleaned = cleaned.replace(/^let\s+\w+\s*=\s*require\s*\([^)]+\);?\s*$/gm, '');
+    cleaned = cleaned.replace(/^var\s+\w+\s*=\s*require\s*\([^)]+\);?\s*$/gm, '');
+    cleaned = cleaned.replace(/require\s*\([^)]+\)/g, '{}'); // Replace inline requires with empty object
+
     // Remove export statements but keep the code
     cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
     cleaned = cleaned.replace(/^export\s+(const|let|var|function|class)\s+/gm, '$1 ');
     cleaned = cleaned.replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
+
+    // Remove module.exports
+    cleaned = cleaned.replace(/^module\.exports\s*=.*$/gm, '');
 
     // Clean up any empty lines at start
     cleaned = cleaned.replace(/^\s*\n+/, '');
@@ -1443,6 +1453,21 @@ render(<${componentName} />);`;
     return cleaned.trim();
   }, [codeString, isJSX]);
 
+  // Mock Chart component for AI-generated chart code
+  const MockChart = ({ type, data, options }) => (
+    <div style={{ padding: '1rem', background: '#1a1a2e', borderRadius: '8px', minHeight: '200px' }}>
+      <div style={{ color: '#4fd1c5', marginBottom: '0.5rem', fontSize: '14px' }}>📊 {type || 'Chart'}</div>
+      <div style={{ color: '#9ca3af', fontSize: '12px' }}>
+        {data?.labels?.length ? `${data.labels.length} data points` : 'Chart visualization'}
+      </div>
+      {data?.datasets?.map((ds, i) => (
+        <div key={i} style={{ color: '#a78bfa', fontSize: '11px', marginTop: '4px' }}>
+          {ds.label || `Dataset ${i + 1}`}: {ds.data?.join(', ')}
+        </div>
+      ))}
+    </div>
+  );
+
   // Default scope for react-live with common utilities
   const liveScope = useMemo(
     () => ({
@@ -1457,6 +1482,14 @@ render(<${componentName} />);`;
       Fragment: React.Fragment,
       motion,
       AnimatePresence,
+      // Chart.js mocks for AI-generated chart components
+      Chart: MockChart,
+      Line: MockChart,
+      Bar: MockChart,
+      Pie: MockChart,
+      Doughnut: MockChart,
+      // Common styling utilities
+      styled: (tag) => (props) => React.createElement(tag, props),
     }),
     []
   );
