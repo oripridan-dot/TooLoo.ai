@@ -1,4 +1,5 @@
 // @version 2.0.NaN
+// @version 2.0.NaN
 // TooLoo.ai Visual Renderers
 // v3.3.371 - Added SVG validation to reject malformed diagrams, corner-based curves
 // Rich visual components for rendering AI-generated visual content
@@ -200,6 +201,16 @@ SVGRenderer.displayName = 'SVGRenderer';
 // REACT COMPONENT RENDERER - Live preview of generated React components
 // ============================================================================
 
+// Mock Chart component for AI-generated chart code
+const MockChart = ({ type, data, options }) => (
+  <div style={{ padding: '1rem', background: '#1a1a2e', borderRadius: '8px', minHeight: '150px' }}>
+    <div style={{ color: '#4fd1c5', marginBottom: '0.5rem', fontSize: '14px' }}>📊 {type || 'Chart'}</div>
+    <div style={{ color: '#9ca3af', fontSize: '12px' }}>
+      {data?.labels?.length ? `${data.labels.length} data points` : 'Chart visualization'}
+    </div>
+  </div>
+);
+
 export const ReactComponentRenderer = memo(({ code, title, className = '', scope = {} }) => {
   const [renderError, setRenderError] = useState(false);
 
@@ -212,7 +223,16 @@ export const ReactComponentRenderer = memo(({ code, title, className = '', scope
       useCallback: React.useCallback,
       useMemo: React.useMemo,
       useRef: React.useRef,
+      useReducer: React.useReducer,
+      Fragment: React.Fragment,
       motion,
+      // Chart.js mocks
+      Chart: MockChart,
+      Line: MockChart,
+      Bar: MockChart,
+      Pie: MockChart,
+      // Common utilities
+      styled: (tag) => (props) => React.createElement(tag, props),
       ...scope,
     }),
     [scope]
@@ -227,10 +247,19 @@ export const ReactComponentRenderer = memo(({ code, title, className = '', scope
       cleaned = cleaned.replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '');
       cleaned = cleaned.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
 
+      // Remove require statements (Node.js patterns don't work in browser)
+      cleaned = cleaned.replace(/^const\s+\w+\s*=\s*require\s*\([^)]+\);?\s*$/gm, '');
+      cleaned = cleaned.replace(/^let\s+\w+\s*=\s*require\s*\([^)]+\);?\s*$/gm, '');
+      cleaned = cleaned.replace(/^var\s+\w+\s*=\s*require\s*\([^)]+\);?\s*$/gm, '');
+      cleaned = cleaned.replace(/require\s*\([^)]+\)/g, '{}');
+
       // Remove export statements but keep the component
       cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
-      cleaned = cleaned.replace(/^export\s+(?:const|let|var|function|class)\s+/gm, '');
+      cleaned = cleaned.replace(/^export\s+(const|let|var|function|class)\s+/gm, '$1 ');
       cleaned = cleaned.replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
+
+      // Remove module.exports
+      cleaned = cleaned.replace(/^module\.exports\s*=.*$/gm, '');
 
       // Clean up empty lines at start
       cleaned = cleaned.replace(/^\s*\n+/, '');
