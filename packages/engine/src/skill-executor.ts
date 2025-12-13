@@ -17,7 +17,7 @@ import type {
   ToolResult,
   Artifact,
 } from './types.js';
-import { ToolRegistry, toolRegistry as globalToolRegistry } from './tools/index.js';
+import type { ToolRegistry } from './tools/index.js';
 
 // =============================================================================
 // DEFAULT CONFIG
