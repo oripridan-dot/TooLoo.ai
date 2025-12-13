@@ -4,6 +4,8 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * @tooloo/engine - Routing Engine
  * Semantic and keyword-based skill routing
@@ -15,6 +17,7 @@
  * @version 2.0.0-alpha.0
  */
 
+import { createSkillId } from '@tooloo/core';
 import type { SkillRegistry, SkillDefinition } from '@tooloo/skills';
 import type { 
   RoutingConfig, 
@@ -381,14 +384,14 @@ export class RoutingEngine {
   
   private createFallbackSkill(): SkillDefinition {
     return {
-      id: 'fallback',
+      id: createSkillId('fallback'),
       name: 'General Assistant',
       version: '1.0.0',
       description: 'General-purpose assistant for unmatched queries',
       instructions: 'You are a helpful assistant. Answer the user query to the best of your ability.',
       tools: [],
       triggers: {
-        intents: ['general'],
+        intents: ['chat'],
         keywords: [],
         patterns: [],
       },
