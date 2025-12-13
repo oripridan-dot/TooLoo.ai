@@ -1,5 +1,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * @tooloo/engine - Routing Engine
  * Semantic and keyword-based skill routing
@@ -11,7 +13,6 @@
  * @version 2.0.0-alpha.0
  */
 
-import { eventBus } from '@tooloo/core';
 import type { SkillRegistry, SkillDefinition } from '@tooloo/skills';
 import type { 
   RoutingConfig, 
