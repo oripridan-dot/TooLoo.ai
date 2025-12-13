@@ -1,4 +1,4 @@
-// @version 3.3.434
+// @version 2.0.NaN
 // TooLoo.ai Visual Renderers
 // v3.3.371 - Added SVG validation to reject malformed diagrams, corner-based curves
 // Rich visual components for rendering AI-generated visual content
@@ -218,23 +218,42 @@ export const ReactComponentRenderer = memo(({ code, title, className = '', scope
     [scope]
   );
 
-  // Clean code - extract component
+  // Clean code - extract component and ensure render() is called for noInline mode
   const cleanCode = useMemo(() => {
     try {
       let cleaned = code || '';
 
       // Remove import statements
-      cleaned = cleaned.replace(/^import\s+.*?['"];?\s*$/gm, '');
+      cleaned = cleaned.replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '');
+      cleaned = cleaned.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, '');
 
       // Remove export statements but keep the component
       cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
-      cleaned = cleaned.replace(/^export\s+/gm, '');
+      cleaned = cleaned.replace(/^export\s+(?:const|let|var|function|class)\s+/gm, '');
+      cleaned = cleaned.replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
 
-      // If it's a function component, make sure it renders
-      if (cleaned.includes('function') && !cleaned.includes('render(')) {
-        const match = cleaned.match(/function\s+(\w+)/);
-        if (match) {
-          cleaned += `\nrender(<${match[1]} />);`;
+      // Clean up empty lines at start
+      cleaned = cleaned.replace(/^\s*\n+/, '');
+
+      // Check if render() is already called
+      const hasRenderCall = cleaned.includes('render(') || cleaned.includes('render(<');
+
+      if (!hasRenderCall) {
+        // Find the main component (function, const arrow, or class)
+        const funcMatch = cleaned.match(/function\s+([A-Z]\w*)\s*\(/);
+        const constMatch = cleaned.match(/const\s+([A-Z]\w*)\s*=\s*(?:\([^)]*\)\s*=>|\(\)\s*=>|[^=]*=>)/);
+        const classMatch = cleaned.match(/class\s+([A-Z]\w*)\s+extends/);
+
+        const componentName = funcMatch?.[1] || constMatch?.[1] || classMatch?.[1];
+
+        if (componentName) {
+          cleaned = `${cleaned}\n\nrender(<${componentName} />);`;
+        } else {
+          // Try to render raw JSX directly
+          const trimmed = cleaned.trim();
+          if (trimmed.startsWith('<') && !trimmed.startsWith('<!')) {
+            cleaned = `render(${trimmed});`;
+          }
         }
       }
 
