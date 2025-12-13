@@ -1,6 +1,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
  *
@@ -519,8 +520,8 @@ export class SelfModificationPipeline {
    * Phase 1: Analyze Error
    */
   private async analyzeError(errorContext: string): Promise<ErrorAnalysis> {
-    // Get the error-analyzer skill
-    const skill = skillRegistry.get('error-analyzer');
+    // Get the error-analyzer skill (used for future LLM integration)
+    const _skill = skillRegistry.get('error-analyzer');
 
     // Parse the error context to extract key information
     const analysis: ErrorAnalysis = {
@@ -554,7 +555,8 @@ export class SelfModificationPipeline {
    * Phase 2: Generate Fix
    */
   private async generateFix(analysis: ErrorAnalysis): Promise<FixProposal> {
-    const skill = skillRegistry.get('fix-generator');
+    // Get the fix-generator skill (used for future LLM integration)
+    const _skill = skillRegistry.get('fix-generator');
 
     // Read the file content
     const fileResult = await this.engine.readFile(analysis.location.file);
@@ -597,7 +599,8 @@ export class SelfModificationPipeline {
     proposal: FixProposal,
     analysis: ErrorAnalysis
   ): Promise<ValidationResult> {
-    const skill = skillRegistry.get('fix-validator');
+    // Get the fix-validator skill (used for future LLM integration)
+    const _skill = skillRegistry.get('fix-validator');
 
     const validation: ValidationResult = {
       approved: false,
@@ -732,7 +735,7 @@ export class SelfModificationPipeline {
       // Run related tests
       const testResult = await this.runRelatedTests(proposal.fix.file);
       validation.layers.regression = testResult;
-    } catch (error) {
+    } catch (_error) {
       validation.layers.regression.passed = true; // Assume pass if no tests
       validation.layers.regression.testsRun = 0;
       validation.layers.regression.testsPassed = 0;
@@ -775,7 +778,8 @@ export class SelfModificationPipeline {
    * Phase 4: Apply Modification
    */
   private async applyModification(proposal: FixProposal): Promise<ModificationResult> {
-    const skill = skillRegistry.get('self-modifier');
+    // Get the self-modifier skill (used for future LLM integration)
+    const _skill = skillRegistry.get('self-modifier');
 
     const result: ModificationResult = {
       success: false,
@@ -913,7 +917,8 @@ export class SelfModificationPipeline {
   // ===========================================================================
 
   private detectErrorType(context: string): ErrorAnalysis['errorType'] {
-    const lower = context.toLowerCase();
+    // Note: using context directly with case-insensitive regex
+    const _lower = context.toLowerCase();
 
     if (/ts\d{4}|type\s+error|typescript/i.test(context)) return 'type';
     if (/syntaxerror|unexpected\s+token|parsing\s+error/i.test(context)) return 'syntax';
@@ -924,7 +929,8 @@ export class SelfModificationPipeline {
   }
 
   private detectSeverity(context: string): ErrorAnalysis['severity'] {
-    const lower = context.toLowerCase();
+    // Note: using context directly with case-insensitive regex
+    const _lower = context.toLowerCase();
 
     if (/critical|fatal|crash|security/i.test(context)) return 'critical';
     if (/error:|exception|failed/i.test(context)) return 'high';
