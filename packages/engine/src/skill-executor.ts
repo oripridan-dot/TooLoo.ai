@@ -1,12 +1,19 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN-selfmod
 /**
  * @tooloo/engine - Skill Executor
  * Executes matched skills with the appropriate provider and tool support
+ * 
+ * SELF-MODIFYING CAPABILITY:
+ * This executor can parse tool invocations from LLM responses and execute them.
+ * The AI can literally write code to its own filesystem.
  *
  * @version 2.0.0-alpha.0
  */
 
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import type { ProviderRegistry } from '@tooloo/providers';
 import type {
   ExecutionContext,
@@ -19,6 +26,117 @@ import type {
   ToolCallResponse,
 } from './types.js';
 import { ToolRegistry, toolRegistry as globalToolRegistry } from './tools/index.js';
+
+// =============================================================================
+// INLINE TOOL IMPLEMENTATIONS - THE "HANDS"
+// =============================================================================
+
+const PROJECT_ROOT = process.cwd();
+
+/**
+ * Direct tool implementations for self-modification
+ * These run INLINE when the AI outputs tool syntax
+ */
+const INLINE_TOOLS: Record<string, (params: Record<string, unknown>) => Promise<string>> = {
+  /**
+   * Write content to a file - THE MAIN SELF-MODIFYING TOOL
+   */
+  file_write: async (params) => {
+    const filePath = params['path'] as string;
+    const content = params['content'] as string;
+    
+    if (!filePath || content === undefined) {
+      throw new Error('file_write requires "path" and "content" parameters');
+    }
+    
+    const targetPath = path.resolve(PROJECT_ROOT, filePath);
+    
+    // Security: Prevent path traversal
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    // Security: Protect sensitive paths
+    const forbidden = ['.git', 'node_modules', '.env'];
+    if (forbidden.some(f => targetPath.includes(f))) {
+      throw new Error(`Access Denied: Cannot write to protected path`);
+    }
+    
+    // Create directory if needed
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    
+    // Write the file
+    await fs.writeFile(targetPath, content, 'utf-8');
+    
+    console.log(`✍️  [SELF-MOD] Wrote ${content.length} chars to ${filePath}`);
+    return `Success: Wrote ${content.length} characters to ${filePath}`;
+  },
+  
+  /**
+   * Read content from a file
+   */
+  file_read: async (params) => {
+    const filePath = params['path'] as string;
+    
+    if (!filePath) {
+      throw new Error('file_read requires "path" parameter');
+    }
+    
+    const targetPath = path.resolve(PROJECT_ROOT, filePath);
+    
+    // Security check
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    const content = await fs.readFile(targetPath, 'utf-8');
+    console.log(`📖 [SELF-MOD] Read ${content.length} chars from ${filePath}`);
+    return content;
+  },
+  
+  /**
+   * List directory contents
+   */
+  file_list: async (params) => {
+    const dirPath = (params['path'] as string) || '.';
+    const targetPath = path.resolve(PROJECT_ROOT, dirPath);
+    
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    const entries = await fs.readdir(targetPath, { withFileTypes: true });
+    const result = entries.map(e => e.isDirectory() ? `${e.name}/` : e.name);
+    return result.join('\n');
+  },
+  
+  /**
+   * Delete a file
+   */
+  file_delete: async (params) => {
+    const filePath = params['path'] as string;
+    
+    if (!filePath) {
+      throw new Error('file_delete requires "path" parameter');
+    }
+    
+    const targetPath = path.resolve(PROJECT_ROOT, filePath);
+    
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    // Extra safety for delete
+    const forbidden = ['.git', 'node_modules', '.env', 'package.json', 'src/'];
+    if (forbidden.some(f => targetPath.includes(f))) {
+      throw new Error(`Access Denied: Cannot delete protected path`);
+    }
+    
+    await fs.unlink(targetPath);
+    console.log(`🗑️  [SELF-MOD] Deleted ${filePath}`);
+    return `Success: Deleted ${filePath}`;
+  },
+};
 
 // =============================================================================
 // DEFAULT CONFIGURATION
