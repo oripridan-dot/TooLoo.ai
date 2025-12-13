@@ -1,26 +1,26 @@
 // @version 2.0.NaN
-// @version 2.0.NaN
-// @version 2.0.NaN
-// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
- * 
+ *
  * Orchestrates the 4-skill self-modification pipeline:
  * Error Analyzer → Fix Generator → Fix Validator → Self Modifier
- * 
+ *
  * Features:
  * - Multi-iteration validation loop
  * - Automatic rollback on failure
  * - Rate limiting
  * - Audit logging
  * - Event emission for observability
- * 
- * @version 1.0.0
+ *
+ * @version 2.0.0
  * @module cortex/motor/self-modification-pipeline
  */
 
 import { bus } from '../../core/event-bus.js';
-import { SelfModificationEngine, selfMod, type CodeEdit, type SelfModResult } from './self-modification.js';
+import {
+  SelfModificationEngine,
+  selfMod,
+} from './self-modification.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { execSync, exec } from 'child_process';
@@ -202,12 +202,12 @@ class RateLimiter {
     const oneHourAgo = now - 60 * 60 * 1000;
     
     // Clean old entries
-    this.modifications = this.modifications.filter(t => t > oneHourAgo);
-    
+    this.modifications = this.modifications.filter((t) => t > oneHourAgo);
+
     if (this.modifications.length >= this.maxPerHour) {
-      return { 
-        allowed: false, 
-        reason: `Rate limit exceeded: ${this.modifications.length}/${this.maxPerHour} modifications in the last hour` 
+      return {
+        allowed: false,
+        reason: `Rate limit exceeded: ${this.modifications.length}/${this.maxPerHour} modifications in the last hour`,
       };
     }
     
@@ -235,7 +235,7 @@ class RateLimiter {
   getStatus(): { paused: boolean; modificationsInLastHour: number; consecutiveFailures: number } {
     const now = Date.now();
     const oneHourAgo = now - 60 * 60 * 1000;
-    this.modifications = this.modifications.filter(t => t > oneHourAgo);
+    this.modifications = this.modifications.filter((t) => t > oneHourAgo);
     
     return {
       paused: this.paused,
@@ -274,7 +274,7 @@ class PipelineAuditLogger {
     try {
       const content = await fs.readFile(this.logPath, 'utf-8');
       const lines = content.trim().split('\n').filter(Boolean);
-      return lines.slice(-count).map(line => JSON.parse(line));
+      return lines.slice(-count).map((line) => JSON.parse(line));
     } catch {
       return [];
     }
@@ -325,7 +325,7 @@ export class SelfModificationPipeline {
       
       // Verify required skills are loaded
       const requiredSkills = ['error-analyzer', 'fix-generator', 'fix-validator', 'self-modifier'];
-      const missingSkills = requiredSkills.filter(id => !skillRegistry.get(id));
+      const missingSkills = requiredSkills.filter((id) => !skillRegistry.get(id));
       
       if (missingSkills.length > 0) {
         console.warn(`[Pipeline] Missing skills: ${missingSkills.join(', ')}`);
@@ -365,16 +365,16 @@ export class SelfModificationPipeline {
     
     bus.publish('cortex', 'pipeline:started', { errorContext, timestamp });
     
-    let result: PipelineResult = {
+    const result: PipelineResult = {
       success: false,
       iterations: 0,
       duration: 0,
       timestamp,
     };
-    
+
     try {
       // Phase 1: Analyze Error
-      console.log('[Pipeline] Phase 1: Analyzing error...');
+      bus.publish('cortex', 'pipeline:phase', { phase: 1, name: 'Analyzing error' });
       const analysis = await this.analyzeError(errorContext);
       result.errorAnalysis = analysis;
       
@@ -392,26 +392,31 @@ export class SelfModificationPipeline {
       // Validation Loop
       for (let iteration = 1; iteration <= this.config.maxIterations; iteration++) {
         result.iterations = iteration;
-        console.log(`[Pipeline] Iteration ${iteration}/${this.config.maxIterations}`);
-        
+        bus.publish('cortex', 'pipeline:iteration', { iteration, max: this.config.maxIterations });
+
         // Phase 2: Generate Fix
-        console.log('[Pipeline] Phase 2: Generating fix...');
+        bus.publish('cortex', 'pipeline:phase', { phase: 2, name: 'Generating fix' });
         const fixProposal = await this.generateFix(analysis);
         result.fixProposal = fixProposal;
         
         if (fixProposal.confidence < this.config.minConfidence) {
-          console.log(`[Pipeline] Fix confidence ${fixProposal.confidence} below threshold ${this.config.minConfidence}`);
+          bus.publish('cortex', 'pipeline:low-confidence', {
+            confidence: fixProposal.confidence,
+            threshold: this.config.minConfidence,
+          });
           continue; // Try again
         }
         
         // Phase 3: Validate Fix
         if (this.config.requireValidation) {
-          console.log('[Pipeline] Phase 3: Validating fix...');
+          bus.publish('cortex', 'pipeline:phase', { phase: 3, name: 'Validating fix' });
           const validation = await this.validateFix(fixProposal, analysis);
           result.validation = validation;
           
           if (!validation.approved) {
-            console.log('[Pipeline] Fix not approved:', validation.issues.map(i => i.message).join(', '));
+            bus.publish('cortex', 'pipeline:validation-failed', {
+              issues: validation.issues.map((i) => i.message),
+            });
             // Feed issues back for next iteration
             continue;
           }
@@ -429,7 +434,7 @@ export class SelfModificationPipeline {
         
         // Phase 4: Apply Modification
         if (!this.config.dryRun) {
-          console.log('[Pipeline] Phase 4: Applying modification...');
+          bus.publish('cortex', 'pipeline:phase', { phase: 4, name: 'Applying modification' });
           const modification = await this.applyModification(fixProposal);
           result.modification = modification;
           
@@ -456,7 +461,7 @@ export class SelfModificationPipeline {
             
             break; // Success!
           } else {
-            console.log('[Pipeline] Modification failed:', modification.error);
+            bus.publish('cortex', 'pipeline:modification-failed', { error: modification.error });
             // Continue to next iteration
           }
         } else {
