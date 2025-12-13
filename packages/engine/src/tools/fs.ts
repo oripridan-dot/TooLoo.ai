@@ -306,7 +306,7 @@ export const fileRead: ToolDefinition<FileReadInput> = {
     try {
       const fullPath = validatePath(filePath);
       
-      const content = await fs.readFile(fullPath, encoding);
+      const content = await fs.readFile(fullPath, encoding as BufferEncoding);
       const contentStr = typeof content === 'string' ? content : content.toString();
       
       logOperation('read', filePath, { bytes: contentStr.length });

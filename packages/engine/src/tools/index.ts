@@ -1,5 +1,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * @tooloo/engine - Tool Registry
  * Central registry for all AI-callable tools
@@ -14,14 +16,13 @@
  */
 
 import { z } from 'zod';
-import { eventBus } from '@tooloo/core';
 import type { 
   ToolDefinition, 
   ToolResult, 
   ToolCall, 
   ToolCallResponse 
 } from '../types.js';
-import { FileTools, type FileToolName } from './fs.js';
+import { FileTools } from './fs.js';
 
 // =============================================================================
 // TYPES
@@ -90,11 +91,8 @@ export class ToolRegistry {
     }
     this.tools.set(name, tool as ToolDefinition<unknown>);
     
-    eventBus.publish('engine', 'tool:registered', {
-      name,
-      description: tool.description,
-      riskLevel: tool.riskLevel,
-    });
+    // Log registration
+    console.log(`[ToolRegistry] Registered tool: ${name}`);
   }
   
   /**
@@ -103,7 +101,7 @@ export class ToolRegistry {
   unregister(name: string): boolean {
     const existed = this.tools.delete(name);
     if (existed) {
-      eventBus.publish('engine', 'tool:unregistered', { name });
+      console.log(`[ToolRegistry] Unregistered tool: ${name}`);
     }
     return existed;
   }
@@ -252,13 +250,6 @@ export class ToolRegistry {
         }
       }
       
-      // Emit event
-      eventBus.publish('engine', 'tool:executed', {
-        name: call.name,
-        success: result.success,
-        duration: Date.now() - startTime,
-      });
-      
       return {
         toolCallId: call.id,
         name: call.name,
@@ -289,11 +280,6 @@ export class ToolRegistry {
           this.defaultAuditLog(entry);
         }
       }
-      
-      eventBus.publish('engine', 'tool:error', {
-        name: call.name,
-        error: message,
-      });
       
       return {
         toolCallId: call.id,
@@ -339,7 +325,7 @@ export class ToolRegistry {
   private registerBuiltInTools(): void {
     // Register file system tools
     for (const [name, tool] of Object.entries(FileTools)) {
-      this.register(name as FileToolName, tool);
+      this.tools.set(name, tool as ToolDefinition<unknown>);
     }
   }
   
