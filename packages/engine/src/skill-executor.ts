@@ -68,8 +68,8 @@ const TOOL_IMPLEMENTATIONS: Record<string, (params: Record<string, unknown>) => 
 
 export class SkillExecutor {
   private providerRegistry: ProviderRegistry;
-  private toolRegistry: ToolRegistry;
-  private config: ExecutorConfig;
+  private _toolRegistry: ToolRegistry;
+  private _config: ExecutorConfig;
 
   constructor(
     providerRegistry: ProviderRegistry,
@@ -77,8 +77,13 @@ export class SkillExecutor {
     toolRegistry?: ToolRegistry
   ) {
     this.providerRegistry = providerRegistry;
-    this.config = { ...DEFAULT_EXECUTOR_CONFIG, ...config };
-    this.toolRegistry = toolRegistry ?? globalToolRegistry;
+    this._config = { ...DEFAULT_EXECUTOR_CONFIG, ...config };
+    this._toolRegistry = toolRegistry ?? globalToolRegistry;
+  }
+  
+  /** Get executor config */
+  get config(): ExecutorConfig {
+    return this._config;
   }
 
   async execute(
