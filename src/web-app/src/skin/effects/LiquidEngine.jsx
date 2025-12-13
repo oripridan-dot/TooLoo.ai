@@ -147,6 +147,51 @@ class AnimationFrameManager {
 const animationManager = new AnimationFrameManager();
 
 // ============================================================================
+// ACCESSIBILITY - Reduced Motion Support
+// ============================================================================
+
+/**
+ * Hook to detect if user prefers reduced motion
+ * Respects OS-level accessibility settings
+ */
+const usePrefersReducedMotion = () => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    // Check if matchMedia is available (SSR safety)
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    
+    // Set initial value
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    // Listen for changes (user might toggle setting while app is open)
+    const handleChange = (event) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    // Use modern addEventListener or fallback to deprecated addListener
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, []);
+
+  return prefersReducedMotion;
+};
+
+// ============================================================================
 // POINTER TRACKER - Tracks mouse position globally using REFS (no re-renders)
 // ============================================================================
 
@@ -207,9 +252,13 @@ const usePointerTracker = () => {
 // ============================================================================
 
 export const LiquidEngineProvider = memo(({ children, enabled = true }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const getPointer = usePointerTracker();
   const [emotion, setEmotion] = useState('neutral');
   const [emotionIntensity, setEmotionIntensity] = useState(1.0);
+
+  // Combine user preference with prop - disable animations if user prefers reduced motion
+  const effectiveEnabled = enabled && !prefersReducedMotion;
 
   // Use REFS for animation values to prevent React re-renders
   const animationStateRef = useRef({
@@ -223,7 +272,7 @@ export const LiquidEngineProvider = memo(({ children, enabled = true }) => {
 
   // Centralized animation loop - NO state updates, uses refs
   useEffect(() => {
-    if (!enabled) return;
+    if (!effectiveEnabled) return;
 
     const unsubscribe = animationManager.subscribe(subscriberIdRef.current, ({ frame }) => {
       // Update animation state in ref - no re-render!
@@ -287,7 +336,8 @@ export const LiquidEngineProvider = memo(({ children, enabled = true }) => {
   // Provide getter function for pointer instead of state
   const value = useMemo(
     () => ({
-      enabled,
+      enabled: effectiveEnabled, // Respects prefers-reduced-motion
+      prefersReducedMotion, // Expose for components that want to know
       getPointer, // Now a getter function
       pointer: getPointer(), // For backward compat (initial value)
       emotion,
@@ -309,7 +359,8 @@ export const LiquidEngineProvider = memo(({ children, enabled = true }) => {
       animationManager,
     }),
     [
-      enabled,
+      effectiveEnabled,
+      prefersReducedMotion,
       getPointer,
       emotion,
       emotionIntensity,
@@ -332,6 +383,7 @@ export const useLiquidEngine = () => {
     // Return safe defaults if not in provider
     return {
       enabled: false,
+      prefersReducedMotion: false,
       getPointer: () => ({ x: 0, y: 0, vx: 0, vy: 0 }),
       pointer: { x: 0, y: 0, vx: 0, vy: 0 },
       emotion: 'neutral',

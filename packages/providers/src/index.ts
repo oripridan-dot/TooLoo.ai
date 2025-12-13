@@ -47,5 +47,19 @@ export {
   OpenAIProvider,
 } from './adapters/index.js';
 
+// Embedding Service
+export {
+  OpenAIEmbeddingProvider,
+  LocalEmbeddingProvider,
+  createEmbeddingFunction,
+  createEmbeddingProvider,
+  getDefaultEmbeddingProvider,
+  setDefaultEmbeddingProvider,
+  type EmbeddingConfig,
+  type EmbeddingResult,
+  type EmbeddingProvider,
+  type EmbeddingServiceConfig,
+} from './embeddings.js';
+
 // Version
 export const VERSION = '2.0.0-alpha.0';

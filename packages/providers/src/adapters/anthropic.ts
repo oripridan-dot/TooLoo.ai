@@ -257,8 +257,13 @@ export class AnthropicProvider extends BaseProvider {
                 yield { id: 'stream-done', type: 'done', content: '' };
                 return;
             }
-          } catch {
-            // Skip malformed JSON
+          } catch (parseError) {
+            // Log malformed JSON for debugging - could indicate API changes
+            console.warn('[Anthropic] Failed to parse stream chunk:', {
+              data: data.substring(0, 200),
+              error: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+            });
+            // Continue processing other chunks
           }
         }
       }
