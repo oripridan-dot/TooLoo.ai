@@ -2,6 +2,8 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * @tooloo/engine - Routing Engine
  * Semantic and keyword-based skill routing
@@ -103,12 +105,8 @@ export class RoutingEngine {
         confidence: s.score,
       }));
     
-    // Emit routing event
-    eventBus.publish('engine', 'routing:complete', {
-      skillId: best.skill.id,
-      confidence: best.score,
-      alternatives: alternatives.map(a => a.skill.id),
-    });
+    // Log routing decision
+    console.log(`[RoutingEngine] Routed to: ${best.skill.id} (${(best.score * 100).toFixed(0)}% confidence)`);
     
     return {
       skill: best.skill,
