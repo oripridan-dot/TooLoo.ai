@@ -1,17 +1,15 @@
 # TooLoo.ai Copilot Instructions
 
-> **Version:** 3.3.566 | **Synapsys V2:** 2.0.0-alpha.0 | **Updated:** December 12, 2025
+> **Version:** 2.0.0-alpha.0 | **Updated:** December 13, 2025
 
 ## 📖 Quick Context
 
 **TooLoo.ai** is a multi-agent AI orchestration platform with:
-- Backend: Node.js/Express/Socket.IO on port **4000**
-- Frontend: React/Vite/Zustand on port **5173**
+- Backend: Node.js/Express/Socket.IO on port **4001**
+- Frontend: React/Vite on port **5173**
 - Providers: DeepSeek, Anthropic, OpenAI, Gemini, Zhipu, Ollama
-- Database: SQLite (episodic memory, artifacts)
-- **Synapsys V2:** 6 modular packages (`@tooloo/*`) in `packages/` directory
+- **Synapsys V2:** Monorepo with `@tooloo/*` packages
 
-**For full context, see [SYSTEM_STATE.md](../SYSTEM_STATE.md)**
 **For V2 packages, see [SYNAPSYS_V2_ROADMAP.md](../SYNAPSYS_V2_ROADMAP.md)**
 
 ---
@@ -62,36 +60,31 @@ packages/                      # Synapsys V2 monorepo packages
 ├── skills/                    # @tooloo/skills - registry, router
 ├── providers/                 # @tooloo/providers - LLM adapters
 ├── memory/                    # @tooloo/memory - event store, projections
+├── engine/                    # @tooloo/engine - orchestrator
 ├── evals/                     # @tooloo/evals - golden tests
 └── contracts/                 # @tooloo/contracts - API schemas
 
-src/
-├── core/                      # Event bus, config, metrics
-│   ├── event-bus.ts           # Central pub/sub (bus.publish/bus.on)
-│   └── fs-manager.ts          # Safe file I/O
-├── cortex/                    # AI cognitive systems
-│   ├── agent/                 # Task execution, artifacts
-│   ├── memory/                # Hippocampus, vector store
-│   └── planning/              # DAG-based planning
-├── nexus/                     # API layer
-│   ├── routes/                # 50+ REST endpoints
-│   ├── socket.ts              # Socket.IO server
-│   ├── auth/                  # API key auth (auth-service.ts)
-│   └── middleware/            # Auth, rate limiting
-├── precog/                    # AI routing
-│   ├── engine/                # Model capabilities, recipes, validation
-│   │   ├── intelligent-router.ts
-│   │   ├── model-capabilities.ts
-│   │   ├── execution-recipes.ts
-│   │   └── three-layer-validation.ts
-│   └── learning/              # Q-learning optimizer
-├── qa/                        # Quality assurance
-└── web-app/src/skin/          # React frontend (Liquid Synapsys)
-    ├── store/                 # Zustand stores
-    │   ├── projectStateStore.js
-    │   ├── systemStateStore.js
-    │   └── canvasStateStore.js
-    └── components/            # UI components
+apps/
+├── api/                       # @tooloo/api - Express/Socket.IO server
+│   └── src/
+│       ├── routes/            # REST endpoints
+│       ├── socket/            # Socket.IO handlers
+│       └── middleware/        # Auth, rate limiting
+└── web/                       # @tooloo/web - React frontend
+    └── src/
+        ├── AppV2.jsx          # Main V2 application
+        ├── components/        # UI components
+        │   ├── ChatV2.jsx     # Chat interface
+        │   ├── AdminDashboard.jsx
+        │   ├── SkillStudio.jsx
+        │   └── Login.jsx
+        ├── hooks/             # React hooks
+        │   ├── useSocket.js   # Socket.IO connection
+        │   ├── useAuth.js     # Authentication
+        │   └── useProjects.js # Projects API
+        └── utils/             # Utilities
+
+skills/                        # YAML skill definitions
 ```
 
 ---
@@ -100,19 +93,12 @@ src/
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/v1/health` | GET | System health |
-| `/api/v1/chat` | POST | AI conversation |
-| `/api/v1/agent/task/execute` | POST | Execute task |
-| `/api/v1/agent/task/team-execute` | POST | Team-validated execution |
-| `/api/v1/agent/artifacts` | GET/POST | Artifact management |
-| `/api/v1/routing/route` | POST | Intelligent routing |
-| `/api/v1/routing/validate` | POST | Three-layer validation |
-| `/api/v1/routing/models` | GET | Available models |
-| `/api/v1/routing/recipes` | GET | Execution recipes |
-| `/api/v1/users/me` | GET/PATCH | Current user |
-| `/api/v1/users/me/keys` | GET/POST | API keys |
-| `/api/v1/usage/dashboard` | GET | Usage analytics |
-| `/api/v1/projects` | GET/POST | Projects |
+| `/api/v2/system/health` | GET | System health |
+| `/api/v2/chat` | POST | AI conversation |
+| `/api/v2/orchestrator/status` | GET | Orchestrator status |
+| `/api/v2/agent/artifacts` | GET/POST | Artifact management |
+| `/api/v2/skills` | GET | Available skills |
+| `/api/v2/projects` | GET/POST | Projects |
 
 ---
 
@@ -136,25 +122,7 @@ bus.on('precog:routing', (event) => console.log(event.payload));
 
 ---
 
-## 🗄️ Frontend State (Zustand)
-
-```javascript
-// Project state
-import { useProjectStore, selectProjectId, selectArtifacts } from './skin/store';
-
-// System state
-import { useSystemStore, selectIsProcessing, selectConfidence } from './skin/store';
-
-// Selectors available:
-// selectProjectId, selectMetadata, selectConversation, selectActiveIntent
-// selectCommandPalette, selectTaskGraph, selectCurrentExecution, selectArtifacts
-// selectActiveArtifact, selectSystemMetrics, selectQAStatus, selectAlerts
-// selectSyncState, selectIsProcessing, selectConfidence, selectActiveProvider
-```
-
----
-
-## 🔐 Authentication
+##  Authentication
 
 - **API Key Prefix:** `tlai_` (e.g., `tlai_abc123...`)
 - **Headers:** `Authorization: Bearer <key>` or `X-API-Key: <key>`

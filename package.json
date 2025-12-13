@@ -1,6 +1,7 @@
 {
-  "name": "tooloo-synapsys-monorepo",
+  "name": "@tooloo/monorepo",
   "version": "2.0.0-alpha.0",
+  "description": "TooLoo.ai Synapsys V2 - Multi-agent AI Orchestration Platform",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.0.0",
@@ -10,18 +11,42 @@
   ],
   "scripts": {
     "dev": "turbo run dev --parallel",
+    "dev:api": "turbo run dev --filter=@tooloo/api",
+    "dev:web": "turbo run dev --filter=@tooloo/web",
     "build": "turbo run build",
+    "build:packages": "turbo run build --filter=@tooloo/core --filter=@tooloo/contracts --filter=@tooloo/skills --filter=@tooloo/providers --filter=@tooloo/memory --filter=@tooloo/engine --filter=@tooloo/evals",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules .turbo",
-    "db:push": "turbo run db:push",
-    "studio": "turbo run studio"
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules .turbo packages/*/dist apps/*/dist",
+    "docker:build": "docker compose -f docker-compose.v2.yml build",
+    "docker:up": "docker compose -f docker-compose.v2.yml up -d",
+    "docker:down": "docker compose -f docker-compose.v2.yml down"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.10.2",
+    "@types/supertest": "^6.0.2",
+    "@types/uuid": "^11.0.0",
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.0",
     "turbo": "^2.6.3",
     "typescript": "^5.7.2",
-    "prettier": "^3.0.0",
-    "eslint": "^8.45.0"
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "fs-extra": "^11.3.2",
+    "node-fetch": "^3.3.2",
+    "socket.io": "^4.7.5",
+    "uuid": "^13.0.0",
+    "zod": "^3.24.1"
   }
 }

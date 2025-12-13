@@ -1,7 +1,7 @@
 /**
  * @tooloo/api - Main Entry Point
  * Starts the TooLoo.ai API server with fully wired Orchestrator
- * 
+ *
  * @version 2.0.0-alpha.0
  */
 
@@ -15,13 +15,13 @@ config({ path: resolve(__dirname, '../../../.env') });
 
 import { TooLooServer } from './server.js';
 import { Orchestrator } from '@tooloo/engine';
-import { SkillRegistry } from '@tooloo/skills';
-import { createProviderId } from '@tooloo/core';
-import { 
-  ProviderRegistry, 
-  DeepSeekProvider, 
-  AnthropicProvider, 
-  OpenAIProvider 
+import { SkillRegistry, SkillHotReloader } from '@tooloo/skills';
+import { createProviderId, createSkillId } from '@tooloo/core';
+import {
+  ProviderRegistry,
+  DeepSeekProvider,
+  AnthropicProvider,
+  OpenAIProvider,
 } from '@tooloo/providers';
 
 // Export everything
@@ -44,94 +44,100 @@ function initializeProviders(): ProviderRegistry {
 
   // DeepSeek - Cost-effective, great for coding
   if (process.env.DEEPSEEK_API_KEY) {
-    registry.register(new DeepSeekProvider({
-      id: createProviderId('deepseek'),
-      name: 'DeepSeek',
-      apiKey: process.env.DEEPSEEK_API_KEY,
-      defaultModel: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
-      enabled: true,
-      models: [
-        {
-          id: 'deepseek-chat',
-          name: 'DeepSeek Chat',
-          contextWindow: 64000,
-          maxOutputTokens: 8192,
-          capabilities: [
-            { domain: 'coding', level: 'expert', score: 95 },
-            { domain: 'reasoning', level: 'proficient', score: 85 },
-            { domain: 'creative', level: 'capable', score: 70 },
-            { domain: 'analysis', level: 'proficient', score: 80 },
-          ],
-          costPer1kInput: 0.00014,
-          costPer1kOutput: 0.00028,
-          supportsStreaming: true,
-          supportsFunctionCalling: true,
-          supportsVision: false,
-        },
-      ],
-    }));
+    registry.register(
+      new DeepSeekProvider({
+        id: createProviderId('deepseek'),
+        name: 'DeepSeek',
+        apiKey: process.env.DEEPSEEK_API_KEY,
+        defaultModel: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+        enabled: true,
+        models: [
+          {
+            id: 'deepseek-chat',
+            name: 'DeepSeek Chat',
+            contextWindow: 64000,
+            maxOutputTokens: 8192,
+            capabilities: [
+              { domain: 'coding', level: 'expert', score: 95 },
+              { domain: 'reasoning', level: 'proficient', score: 85 },
+              { domain: 'creative', level: 'capable', score: 70 },
+              { domain: 'analysis', level: 'proficient', score: 80 },
+            ],
+            costPer1kInput: 0.00014,
+            costPer1kOutput: 0.00028,
+            supportsStreaming: true,
+            supportsFunctionCalling: true,
+            supportsVision: false,
+          },
+        ],
+      })
+    );
     console.log('  ✓ DeepSeek provider initialized');
   }
 
   // Anthropic (Claude) - Best for reasoning and analysis
   if (process.env.ANTHROPIC_API_KEY) {
-    registry.register(new AnthropicProvider({
-      id: createProviderId('anthropic'),
-      name: 'Anthropic',
-      apiKey: process.env.ANTHROPIC_API_KEY,
-      defaultModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
-      enabled: true,
-      models: [
-        {
-          id: 'claude-sonnet-4-20250514',
-          name: 'Claude Sonnet 4',
-          contextWindow: 200000,
-          maxOutputTokens: 8192,
-          capabilities: [
-            { domain: 'coding', level: 'expert', score: 92 },
-            { domain: 'reasoning', level: 'expert', score: 98 },
-            { domain: 'creative', level: 'proficient', score: 88 },
-            { domain: 'analysis', level: 'expert', score: 95 },
-          ],
-          costPer1kInput: 0.003,
-          costPer1kOutput: 0.015,
-          supportsStreaming: true,
-          supportsFunctionCalling: true,
-          supportsVision: true,
-        },
-      ],
-    }));
+    registry.register(
+      new AnthropicProvider({
+        id: createProviderId('anthropic'),
+        name: 'Anthropic',
+        apiKey: process.env.ANTHROPIC_API_KEY,
+        defaultModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+        enabled: true,
+        models: [
+          {
+            id: 'claude-sonnet-4-20250514',
+            name: 'Claude Sonnet 4',
+            contextWindow: 200000,
+            maxOutputTokens: 8192,
+            capabilities: [
+              { domain: 'coding', level: 'expert', score: 92 },
+              { domain: 'reasoning', level: 'expert', score: 98 },
+              { domain: 'creative', level: 'proficient', score: 88 },
+              { domain: 'analysis', level: 'expert', score: 95 },
+            ],
+            costPer1kInput: 0.003,
+            costPer1kOutput: 0.015,
+            supportsStreaming: true,
+            supportsFunctionCalling: true,
+            supportsVision: true,
+          },
+        ],
+      })
+    );
     console.log('  ✓ Anthropic provider initialized');
   }
 
   // OpenAI - General purpose
   if (process.env.OPENAI_API_KEY) {
-    registry.register(new OpenAIProvider({
-      id: createProviderId('openai'),
-      name: 'OpenAI',
-      apiKey: process.env.OPENAI_API_KEY,
-      defaultModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      enabled: true,
-      models: [
-        {
-          id: 'gpt-4o-mini',
-          name: 'GPT-4o Mini',
-          contextWindow: 128000,
-          maxOutputTokens: 16384,
-          capabilities: [
-            { domain: 'coding', level: 'proficient', score: 85 },
-            { domain: 'reasoning', level: 'proficient', score: 85 },
-            { domain: 'creative', level: 'proficient', score: 88 },
-            { domain: 'analysis', level: 'proficient', score: 85 },
-          ],
-          costPer1kInput: 0.00015,
-          costPer1kOutput: 0.0006,
-          supportsStreaming: true,
-          supportsFunctionCalling: true,
-          supportsVision: true,
-        },
-      ],
-    }));
+    registry.register(
+      new OpenAIProvider({
+        id: createProviderId('openai'),
+        name: 'OpenAI',
+        apiKey: process.env.OPENAI_API_KEY,
+        defaultModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        enabled: true,
+        models: [
+          {
+            id: 'gpt-4o-mini',
+            name: 'GPT-4o Mini',
+            contextWindow: 128000,
+            maxOutputTokens: 16384,
+            capabilities: [
+              { domain: 'coding', level: 'proficient', score: 85 },
+              { domain: 'reasoning', level: 'proficient', score: 85 },
+              { domain: 'creative', level: 'proficient', score: 88 },
+              { domain: 'analysis', level: 'proficient', score: 85 },
+            ],
+            costPer1kInput: 0.00015,
+            costPer1kOutput: 0.0006,
+            supportsStreaming: true,
+            supportsFunctionCalling: true,
+            supportsVision: true,
+          },
+        ],
+      })
+    );
     console.log('  ✓ OpenAI provider initialized');
   }
 
@@ -148,7 +154,7 @@ function initializeSkills(): SkillRegistry {
 
   // Default Chat Skill
   registry.register({
-    id: 'chat',
+    id: createSkillId('chat'),
     name: 'General Chat',
     version: '1.0.0',
     description: 'General conversation and Q&A',
@@ -181,7 +187,7 @@ Keep responses focused and avoid unnecessary verbosity.`,
 
   // Code Generation Skill
   registry.register({
-    id: 'code',
+    id: createSkillId('code'),
     name: 'Code Generation',
     version: '1.0.0',
     description: 'Write, explain, and debug code',
@@ -192,7 +198,19 @@ If asked to debug, explain the issue clearly before providing the fix.`,
     tools: [],
     triggers: {
       intents: ['code'],
-      keywords: ['code', 'function', 'class', 'implement', 'write', 'debug', 'fix', 'typescript', 'javascript', 'python', 'react'],
+      keywords: [
+        'code',
+        'function',
+        'class',
+        'implement',
+        'write',
+        'debug',
+        'fix',
+        'typescript',
+        'javascript',
+        'python',
+        'react',
+      ],
     },
     context: {
       maxTokens: 8192,
@@ -216,7 +234,7 @@ If asked to debug, explain the issue clearly before providing the fix.`,
 
   // Analysis Skill
   registry.register({
-    id: 'analyze',
+    id: createSkillId('analyze'),
     name: 'Analysis & Reasoning',
     version: '1.0.0',
     description: 'Deep analysis and complex reasoning',
@@ -262,20 +280,30 @@ const isMain = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWit
 if (isMain) {
   const port = parseInt(process.env.API_PORT || '4001', 10);
   const host = process.env.API_HOST || '0.0.0.0';
-  
+
   console.log('\n🔧 Initializing TooLoo.ai V2...\n');
 
   // Initialize providers
   const providerRegistry = initializeProviders();
-  
+
   // Initialize skills
   const skillRegistry = initializeSkills();
 
+  // Initialize hot reloader for YAML skills
+  const skillsDir = resolve(__dirname, '../../../skills');
+  const hotReloader = new SkillHotReloader(skillRegistry, {
+    skillsDir,
+    verbose: true,
+  });
+
   // Create orchestrator
   const orchestrator = new Orchestrator(skillRegistry, providerRegistry, {
+    defaultProvider: 'deepseek',
     routing: {
-      defaultProvider: 'deepseek',
-      fallbackChain: ['deepseek', 'anthropic', 'openai'],
+      semantic: true,
+      minConfidence: 0.6,
+      semanticWeight: 0.7,
+      keywordWeight: 0.3,
     },
   });
   console.log('✓ Orchestrator initialized\n');
@@ -284,25 +312,33 @@ if (isMain) {
   const server = new TooLooServer({
     port,
     host,
-    corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(','),
+    corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(
+      ','
+    ),
     orchestrator,
+    skillRegistry,
   });
 
   // Handle graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('\nReceived SIGTERM, shutting down gracefully...');
+    hotReloader.stop();
     await server.stop();
     process.exit(0);
   });
 
   process.on('SIGINT', async () => {
     console.log('\nReceived SIGINT, shutting down gracefully...');
+    hotReloader.stop();
     await server.stop();
     process.exit(0);
   });
 
-  // Start the server
-  server.start().catch((error) => {
+  // Start the server and hot reloader
+  Promise.all([
+    server.start(),
+    hotReloader.start(),
+  ]).catch((error) => {
     console.error('Failed to start server:', error);
     process.exit(1);
   });

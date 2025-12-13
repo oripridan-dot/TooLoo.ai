@@ -66,15 +66,19 @@ export class SkillExecutor {
     // Build messages for the provider
     const messages = this.buildMessages(context);
 
+    // Track current provider and model for fallback logic
+    let currentProvider = provider;
+    let currentModel = providerSelection.model;
+
     // Execute with retries
     let lastError: Error | null = null;
     let attempts = 0;
 
     while (attempts < this.config.maxRetries) {
       try {
-        const response = await provider.complete({
+        const response = await currentProvider.complete({
           messages,
-          model: providerSelection.model,
+          model: currentModel,
           temperature: providerSelection.config.temperature ?? 0.7,
           maxTokens: providerSelection.config.maxTokens ?? context.skill.context.maxTokens,
         });
@@ -99,18 +103,19 @@ export class SkillExecutor {
         attempts++;
 
         // Try fallback provider
-        if (attempts < this.config.maxRetries && providerSelection.fallbacks.length > 0) {
+        if (attempts < this.config.maxRetries && providerSelection.fallbacks.length >= attempts) {
           const fallback = providerSelection.fallbacks[attempts - 1];
           if (fallback) {
             const fallbackProvider = this.providerRegistry.get(fallback.providerId as string);
-            if (fallbackProvider) {
-              console.warn(`Attempt ${attempts} failed, trying fallback: ${fallback.providerId}`);
+            if (fallbackProvider && fallbackProvider.isAvailable()) {
+              currentProvider = fallbackProvider;
+              currentModel = fallback.model;
               continue;
             }
           }
         }
 
-        // If no fallbacks or all failed, wait before retry
+        // If no fallbacks available, wait before retry with same provider
         if (attempts < this.config.maxRetries) {
           await this.delay(1000 * attempts);
         }

@@ -73,19 +73,24 @@ export class Orchestrator {
     const startTime = Date.now();
     const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
+    console.log(`[Orchestrator] Processing message: "${message.slice(0, 50)}..."`);
+
     try {
       // 1. Build context
       const context = await this.buildContext(message, sessionId, requestId, options);
+      console.log(`[Orchestrator] Context built. Intent: ${context.intent.type} (${context.intent.confidence})`);
       this.emit({ type: 'orchestration:start', context });
 
       // 2. Route to skill
       const routingStart = Date.now();
       const routingResult = await this.routingEngine.route(context);
       const routingTimeMs = Date.now() - routingStart;
+      console.log(`[Orchestrator] Routed to skill: ${routingResult.skill.name} (${routingResult.confidence})`);
       this.emit({ type: 'orchestration:routed', result: routingResult });
 
       // 3. Select provider
       const providerSelection = await this.selectProvider(routingResult.skill, context);
+      console.log(`[Orchestrator] Selected provider: ${providerSelection.providerId}, model: ${providerSelection.model}`);
       this.emit({ type: 'orchestration:provider_selected', selection: providerSelection });
 
       // 4. Execute skill
@@ -383,45 +388,109 @@ export class Orchestrator {
     
     // Get available providers from registry
     const availableProviders = this.providerRegistry.getAvailable();
-    const availableProviderNames = availableProviders.map(p => p.name);
+    // Normalize names to lowercase for comparison
+    const availableProviderNamesLower = availableProviders.map(p => p.name.toLowerCase());
     
     // Select based on skill requirements and availability
     let selectedProvider = this.config.defaultProvider;
     let selectedModel = this.config.defaultModel;
     let reason = 'Default provider selection';
 
+    // Helper to check availability (case-insensitive)
+    const isAvailable = (name: string) => availableProviderNamesLower.includes(name.toLowerCase());
+    
+    // Helper to get correct model for provider
+    const getModelForProvider = (provider: string): string => {
+      const defaults: Record<string, string> = {
+        deepseek: 'deepseek-chat',
+        anthropic: 'claude-3-5-sonnet-20241022',
+        openai: 'gpt-4o',
+        ollama: 'llama3.2',
+      };
+      return defaults[provider.toLowerCase()] || 'default';
+    };
+
     // Check for skill-specific preferences
     if (preferredProviders.length > 0) {
       for (const preferred of preferredProviders) {
-        if (availableProviderNames.includes(preferred)) {
+        if (isAvailable(preferred)) {
           selectedProvider = preferred;
+          selectedModel = getModelForProvider(preferred);
           reason = `Skill ${skill.name} prefers ${preferred}`;
           break;
         }
       }
     }
 
-    // Check for intent-based routing
-    const intentProviderMap: Record<string, { provider: string; model: string }> = {
-      code: { provider: 'deepseek', model: 'deepseek-coder' },
-      analyze: { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
-      creative: { provider: 'openai', model: 'gpt-4o' },
+    // Check for intent-based routing (only if provider is available)
+    // Priority: DeepSeek for cost-efficiency, Anthropic for quality, OpenAI as fallback
+    const intentProviderMap: Record<string, Array<{ provider: string; model: string }>> = {
+      code: [
+        { provider: 'deepseek', model: 'deepseek-chat' },
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+      ],
+      fix: [
+        { provider: 'deepseek', model: 'deepseek-chat' },
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+      ],
+      analyze: [
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'deepseek', model: 'deepseek-chat' },
+        { provider: 'openai', model: 'gpt-4o' },
+      ],
+      refactor: [
+        { provider: 'deepseek', model: 'deepseek-chat' },
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+      ],
+      test: [
+        { provider: 'deepseek', model: 'deepseek-chat' },
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+      ],
+      plan: [
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+        { provider: 'deepseek', model: 'deepseek-chat' },
+      ],
+      research: [
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+        { provider: 'deepseek', model: 'deepseek-chat' },
+      ],
+      creative: [
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+        { provider: 'deepseek', model: 'deepseek-chat' },
+      ],
+      chat: [
+        { provider: 'deepseek', model: 'deepseek-chat' },
+        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'openai', model: 'gpt-4o' },
+      ],
     };
 
-    const intentMapping = intentProviderMap[context.intent.type];
-    if (intentMapping && availableProviderNames.includes(intentMapping.provider)) {
-      selectedProvider = intentMapping.provider;
-      selectedModel = intentMapping.model;
-      reason = `Intent ${context.intent.type} mapped to ${selectedProvider}`;
+    const intentOptions = intentProviderMap[context.intent.type];
+    if (intentOptions) {
+      for (const option of intentOptions) {
+        if (isAvailable(option.provider)) {
+          selectedProvider = option.provider;
+          selectedModel = option.model;
+          reason = `Intent ${context.intent.type} mapped to ${selectedProvider}`;
+          break;
+        }
+      }
     }
 
     // Build fallbacks
-    const fallbacks = availableProviderNames
-      .filter((p: string) => p !== selectedProvider)
+    const fallbacks = availableProviderNamesLower
+      .filter((p: string) => p !== selectedProvider.toLowerCase())
       .slice(0, 2)
       .map((p: string) => ({
         providerId: p as any,
-        model: this.getDefaultModelForProvider(p),
+        model: getModelForProvider(p),
       }));
 
     return {
@@ -436,16 +505,6 @@ export class Orchestrator {
     };
   }
 
-  private getDefaultModelForProvider(provider: string): string {
-    const defaults: Record<string, string> = {
-      deepseek: 'deepseek-chat',
-      anthropic: 'claude-3-5-sonnet-20241022',
-      openai: 'gpt-4o',
-      ollama: 'llama3.2',
-    };
-    return defaults[provider] || 'default';
-  }
-
   private getDefaultSkill(): SkillDefinition {
     // Return a minimal default skill for error cases
     return {
@@ -453,7 +512,7 @@ export class Orchestrator {
       name: 'Default Chat',
       version: '1.0.0',
       description: 'Default conversational skill',
-      instructions: 'You are a helpful AI assistant.',
+      instructions: 'You are TooLoo, a helpful AI assistant created by TooLoo.ai. You are friendly, knowledgeable, and concise. Help users with their questions and tasks.',
       tools: [],
       triggers: {
         intents: ['chat'],

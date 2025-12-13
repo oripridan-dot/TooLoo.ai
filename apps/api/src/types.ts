@@ -160,7 +160,7 @@ export interface SkillSummary {
  */
 export interface ServerToClientEvents {
   'chat:response': (data: ChatResponse) => void;
-  'chat:stream': (data: { chunk: string; done: boolean }) => void;
+  'chat:stream': (data: { chunk: string; done: boolean; cancelled?: boolean }) => void;
   'chat:error': (data: { code: string; message: string }) => void;
   'system:status': (data: StatusResponse) => void;
   'skill:matched': (data: { skillId: string; confidence: number }) => void;
@@ -168,7 +168,7 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   'chat:message': (data: ChatRequest) => void;
-  'chat:cancel': (data: { sessionId: string }) => void;
+  'chat:cancel': (data?: { sessionId?: string; requestId?: string }) => void;
   'system:ping': () => void;
 }
 
@@ -180,4 +180,5 @@ export interface SocketData {
   sessionId: SessionId;
   userId?: UserId;
   projectId?: ProjectId;
+  conversation?: Array<{ role: string; content: string }>;
 }

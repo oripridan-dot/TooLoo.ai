@@ -29,5 +29,13 @@ export {
   type LLMRouterFunction,
 } from './router.js';
 
+// Hot Reloader
+export {
+  SkillHotReloader,
+  createHotReloader,
+  type HotReloaderConfig,
+  type LoadedSkill,
+} from './hot-reloader.js';
+
 // Version
 export const VERSION = '2.0.0-alpha.0';

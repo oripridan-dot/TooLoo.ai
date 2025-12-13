@@ -258,7 +258,7 @@ export class RoutingEngine {
       name: 'Default Chat',
       version: '1.0.0',
       description: 'General conversational assistant',
-      instructions: 'You are a helpful AI assistant. Respond to the user naturally and helpfully.',
+      instructions: 'You are TooLoo, a helpful AI assistant created by TooLoo.ai. You are friendly, knowledgeable, and concise. Help users with their questions and tasks.',
       tools: [],
       triggers: {
         intents: ['chat', 'unknown'],
