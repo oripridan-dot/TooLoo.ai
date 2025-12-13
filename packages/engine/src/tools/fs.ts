@@ -1,5 +1,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * @tooloo/engine - File System Tools
  * Secure file operations for AI self-modification
@@ -307,7 +309,7 @@ export const fileRead: ToolDefinition<FileReadInput> = {
       const fullPath = validatePath(filePath);
       
       const content = await fs.readFile(fullPath, encoding as BufferEncoding);
-      const contentStr = typeof content === 'string' ? content : content.toString();
+      const contentStr = content.toString();
       
       logOperation('read', filePath, { bytes: contentStr.length });
       

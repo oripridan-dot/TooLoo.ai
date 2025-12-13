@@ -161,16 +161,10 @@ export class SkillExecutor {
     
     // Check if provider supports streaming
     if ('stream' in provider && typeof provider.stream === 'function') {
-      const streamFn = provider.stream as (req: {
-        messages: Array<{ role: string; content: string }>;
-        model: string;
-        temperature?: number;
-        maxTokens?: number;
-      }) => Promise<AsyncIterable<{ content?: string } | string>>;
-      
-      const stream = await streamFn({
+      // Call stream directly - returns AsyncGenerator
+      const stream = provider.stream({
         messages: messages.map(m => ({
-          role: m.role,
+          role: m.role as 'user' | 'assistant' | 'system',
           content: m.content,
         })),
         model: providerSelection.model,
