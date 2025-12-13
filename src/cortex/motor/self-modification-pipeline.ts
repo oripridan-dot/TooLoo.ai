@@ -1,6 +1,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
  * 
@@ -20,29 +21,33 @@
 
 import { bus } from '../../core/event-bus.js';
 import { SelfModificationEngine, selfMod, type CodeEdit, type SelfModResult } from './self-modification.js';
-// Skills package - dynamically import to avoid hard dependency
-let skillRegistry: any;
-let loadSkillsFromDirectory: any;
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { execSync, exec } from 'child_process';
 
-async function loadSkillsModule() {
+// Skills package - dynamically import to avoid hard dependency
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let skillRegistry: any = {
+  get: () => undefined,
+  getStats: () => ({ total: 0 }),
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let loadSkillsFromDirectory: any = async () => {};
+
+async function loadSkillsModule(): Promise<boolean> {
   try {
-    const skills = await import('@tooloo/skills');
+    // Dynamic import with string to avoid compile-time resolution
+    const modulePath = '@tooloo/skills';
+    const skills = await import(/* webpackIgnore: true */ modulePath);
     skillRegistry = skills.skillRegistry;
     loadSkillsFromDirectory = skills.loadSkillsFromDirectory;
     return true;
   } catch {
-    // Fallback: skills package not available, use stub
-    skillRegistry = {
-      get: () => undefined,
-      getStats: () => ({ total: 0 }),
-    };
-    loadSkillsFromDirectory = async () => {};
+    // Fallback: skills package not available, use stubs
+    console.warn('[Pipeline] @tooloo/skills not available, using stubs');
     return false;
   }
 }
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { execSync, exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
