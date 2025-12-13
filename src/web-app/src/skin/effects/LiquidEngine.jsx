@@ -1,7 +1,11 @@
-// @version 2.2.516
-// TooLoo.ai Liquid Skin Engine - PERFORMANCE OPTIMIZED
+// @version 2.0.NaN-godmode
+// TooLoo.ai Liquid Skin Engine - GOD MODE PERFORMANCE
 // Advanced visual effects: liquid glass, pointer aurora, emotional expression
 // Uses refs instead of state for animation values to prevent React re-renders
+//
+// GOD MODE CHANGES:
+// - targetFPS: 60 (butter-smooth animations)
+// - autoQuality: false (always max quality, no degradation)
 
 import React, {
   createContext,
@@ -15,20 +19,21 @@ import React, {
 } from 'react';
 
 // ============================================================================
-// PERFORMANCE CONFIGURATION
+// PERFORMANCE CONFIGURATION - GOD MODE
 // ============================================================================
 
 const PERF_CONFIG = {
-  // Target FPS - will throttle if needed
-  targetFPS: 30,
+  // GOD MODE: 60fps for butter-smooth animations
+  // Set to 120 if you have a high-refresh display
+  targetFPS: 60,
   // Minimum FPS before quality reduction
-  minFPS: 20,
+  minFPS: 30,
   // Frame time budget (ms)
-  frameBudget: 1000 / 30,
+  frameBudget: 1000 / 60,
   // Enable FPS monitoring
   monitorFPS: true,
-  // Auto-reduce quality on low FPS
-  autoQuality: true,
+  // GOD MODE: Never reduce quality - we want that premium feel
+  autoQuality: false,
 };
 
 // ============================================================================
