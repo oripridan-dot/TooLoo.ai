@@ -1,4 +1,4 @@
-// @version 3.3.433
+// @version 2.0.NaN
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses
@@ -1399,7 +1399,7 @@ export const LiquidCodeBlock = memo(({ language, children, onArtifactCreate }) =
 
     // Remove export statements but keep the code
     cleaned = cleaned.replace(/^export\s+default\s+/gm, '');
-    cleaned = cleaned.replace(/^export\s+(?:const|let|var|function|class)\s+/gm, '$1 ');
+    cleaned = cleaned.replace(/^export\s+(const|let|var|function|class)\s+/gm, '$1 ');
     cleaned = cleaned.replace(/^export\s+\{[^}]*\};?\s*$/gm, '');
 
     // Clean up any empty lines at start
