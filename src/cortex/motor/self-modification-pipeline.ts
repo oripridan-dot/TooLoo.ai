@@ -1,4 +1,5 @@
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Self-Modification Pipeline with Validation Loop
  * 
@@ -18,7 +19,26 @@
 
 import { bus } from '../../core/event-bus.js';
 import { SelfModificationEngine, selfMod, type CodeEdit, type SelfModResult } from './self-modification.js';
-import { skillRegistry, loadSkillsFromDirectory, type SkillDefinition } from '@tooloo/skills';
+// Skills package - dynamically import to avoid hard dependency
+let skillRegistry: any;
+let loadSkillsFromDirectory: any;
+
+async function loadSkillsModule() {
+  try {
+    const skills = await import('@tooloo/skills');
+    skillRegistry = skills.skillRegistry;
+    loadSkillsFromDirectory = skills.loadSkillsFromDirectory;
+    return true;
+  } catch {
+    // Fallback: skills package not available, use stub
+    skillRegistry = {
+      get: () => undefined,
+      getStats: () => ({ total: 0 }),
+    };
+    loadSkillsFromDirectory = async () => {};
+    return false;
+  }
+}
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { execSync, exec } from 'child_process';
@@ -387,8 +407,13 @@ export class SelfModificationPipeline {
             continue;
           }
           
-          if (!this.config.allowedRiskLevels.includes(validation.riskLevel)) {
+          const riskLevel = validation.riskLevel as 'low' | 'medium' | 'high';
+          if (validation.riskLevel !== 'critical' && !this.config.allowedRiskLevels.includes(riskLevel)) {
             result.error = `Risk level ${validation.riskLevel} not allowed for auto-apply`;
+            continue;
+          }
+          if (validation.riskLevel === 'critical') {
+            result.error = 'Critical risk level requires human review';
             continue;
           }
         }
