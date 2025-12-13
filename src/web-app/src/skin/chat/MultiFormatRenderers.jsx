@@ -1,4 +1,4 @@
-// @version 3.3.376
+// @version 2.0.NaN
 // TooLoo.ai Multi-Format Visual Renderers
 // ═══════════════════════════════════════════════════════════════════════════
 // DIVERSIFIED VISUAL COMMUNICATION - React Components for All Formats
@@ -222,28 +222,58 @@ export const MermaidRenderer = memo(({
   const [svg, setSvg] = useState('');
   const [error, setError] = useState(null);
   const [scale, setScale] = useState(1);
+  const [isReady, setIsReady] = useState(false);
   const id = useMemo(() => `mermaid-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, []);
 
+  // Initialize on mount
   useEffect(() => {
     initMermaid();
+    setIsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isReady || !code?.trim()) return;
+    
+    let cancelled = false;
     
     const render = async () => {
       try {
-        // Clean up any previous diagrams
+        // Clean up any previous diagrams with this ID
         const existing = document.getElementById(id);
         if (existing) existing.remove();
         
+        // Create a temporary container for mermaid to render into
+        const tempDiv = document.createElement('div');
+        tempDiv.id = id;
+        tempDiv.style.display = 'none';
+        document.body.appendChild(tempDiv);
+        
         const { svg: rendered } = await mermaid.render(id, code);
-        setSvg(rendered);
-        setError(null);
+        
+        // Cleanup temp div
+        tempDiv.remove();
+        
+        if (!cancelled) {
+          setSvg(rendered);
+          setError(null);
+        }
       } catch (err) {
         console.error('[MermaidRenderer] Error:', err);
-        setError(err.message || 'Failed to render diagram');
+        if (!cancelled) {
+          setError(err.message || 'Failed to render diagram');
+        }
+        // Cleanup on error too
+        const tempDiv = document.getElementById(id);
+        if (tempDiv) tempDiv.remove();
       }
     };
     
     render();
-  }, [code, id]);
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [code, id, isReady]);
 
   const handleZoom = (delta) => {
     setScale(prev => Math.min(2, Math.max(0.5, prev + delta * 0.25)));
