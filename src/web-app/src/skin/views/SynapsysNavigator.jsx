@@ -1,3 +1,4 @@
+// @version 2.0.NaN
 /**
  * Synapsys Navigator - The Cognitive Operating System Interface
  * 
@@ -8,7 +9,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSocket } from '../../hooks/useSocket';
+import { useSystemState } from '../store/systemStateStore';
 import './SynapsysNavigator.css';
 
 // =============================================================================
