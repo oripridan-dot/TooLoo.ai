@@ -1,9 +1,10 @@
-// @version 3.3.484
+// @version 3.3.589
 /**
  * Canvas Socket Bridge
  * 
  * Connects the Living Canvas to backend events via Socket.IO.
  * Maps AI cognitive states and events to canvas emotions.
+ * V3.3.589: Added explicit orchestration event handlers
  * 
  * @module skin/canvas/CanvasSocketBridge
  */
@@ -50,6 +51,19 @@ const PRESENCE_EMOTION_MAP = {
   'accomplished': 'accomplished',
 };
 
+// V3.3.589: Map orchestration intents to canvas emotions
+const INTENT_EMOTION_MAP = {
+  'code': 'thinking',
+  'fix': 'thinking',
+  'analyze': 'attentive',
+  'refactor': 'thinking',
+  'test': 'attentive',
+  'plan': 'thinking',
+  'creative': 'creating',
+  'chat': 'attentive',
+  'default': 'attentive',
+};
+
 // ============================================================================
 // SOCKET BRIDGE HOOK
 // ============================================================================
@@ -87,6 +101,34 @@ export function useCanvasSocketBridge(socket) {
       }
     };
     
+    // V3.3.589: Orchestration event handlers
+    const handleOrchestrationStart = (data) => {
+      const intentType = data?.context?.intent?.type || 'default';
+      const emotion = INTENT_EMOTION_MAP[intentType] || 'attentive';
+      setEmotion(emotion);
+    };
+    
+    const handleOrchestrationRouted = (data) => {
+      // When skill is selected, transition to "thinking" as we prepare execution
+      setEmotion('thinking');
+    };
+    
+    const handleOrchestrationExecuting = () => {
+      // Active execution - "creating" emotion
+      setEmotion('creating');
+    };
+    
+    const handleOrchestrationComplete = (data) => {
+      if (data?.success) {
+        setEmotion('accomplished');
+        // Return to resting after celebrating
+        setTimeout(() => setEmotion('resting'), 3000);
+      } else {
+        setEmotion('error');
+        setTimeout(() => setEmotion('resting'), 3000);
+      }
+    };
+    
     // Handler for streaming state
     const handleStreamStart = () => setEmotion('creating');
     const handleStreamEnd = () => setEmotion('accomplished');
@@ -120,6 +162,12 @@ export function useCanvasSocketBridge(socket) {
     socket.on('chat:complete', handleChatComplete);
     socket.on('user:typing', handleUserTyping);
     
+    // V3.3.589: Orchestration lifecycle events
+    socket.on('orchestration:start', handleOrchestrationStart);
+    socket.on('orchestration:routed', handleOrchestrationRouted);
+    socket.on('orchestration:executing', handleOrchestrationExecuting);
+    socket.on('orchestration:complete', handleOrchestrationComplete);
+    
     // Wildcard handler for unmapped events
     socket.onAny((event, data) => {
       // Auto-detect emotion from event names
@@ -146,6 +194,11 @@ export function useCanvasSocketBridge(socket) {
       socket.off('error', handleError);
       socket.off('chat:complete', handleChatComplete);
       socket.off('user:typing', handleUserTyping);
+      // V3.3.589: Cleanup orchestration listeners
+      socket.off('orchestration:start', handleOrchestrationStart);
+      socket.off('orchestration:routed', handleOrchestrationRouted);
+      socket.off('orchestration:executing', handleOrchestrationExecuting);
+      socket.off('orchestration:complete', handleOrchestrationComplete);
       socket.offAny();
     };
   }, [socket, setEmotion]);
