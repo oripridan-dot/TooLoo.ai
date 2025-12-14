@@ -1,6 +1,6 @@
 # TooLoo.ai Copilot Instructions
 
-> **Version:** 3.3.566 | **Synapsys V2:** 2.0.0-alpha.0 | **Updated:** December 12, 2025
+> **Version:** 3.3.573 | **Synapsys V2:** 2.0.0-alpha.0 | **Updated:** December 14, 2025
 
 ## 📖 Quick Context
 

@@ -1,6 +1,6 @@
 # TooLoo Engine V2 - Tool Execution System
 
-> **Version:** 3.3.570  
+> **Version:** 3.3.573  
 > **Status:** ✅ Operational  
 > **Updated:** December 14, 2025
 
@@ -53,7 +53,7 @@ Returns engine status and available tools.
   "ok": true,
   "data": {
     "status": "ready",
-    "version": "3.3.570",
+    "version": "3.3.573",
     "toolsEnabled": true,
     "availableTools": ["file_write", "file_read", "list_files"],
     "providers": ["anthropic", "deepseek", "openai", "gemini"]

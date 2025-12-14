@@ -27,8 +27,5 @@
   "remoteEnv": {
     "TOOLOO_ENV": "development"
   },
-  // ⚠️ CRITICAL WARNING FOR AI ASSISTANTS
-  // DO NOT USE: pkill -f "node" - This will kill the Codespace connection!
-  // SAFE: pkill -f "tsx.*main" or pkill -f "vite" for process management
   "postAttachCommand": "echo '⚠️ WARNING: Never use pkill -f node in Codespaces - it kills the connection!'"
 }

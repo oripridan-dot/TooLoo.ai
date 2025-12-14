@@ -1,0 +1,213 @@
+# Fix Generator Skill
+# Generates targeted code fixes from error analysis
+#
+# @version 1.0.0
+# @author TooLoo.ai
+
+id: fix-generator
+name: Fix Generator
+version: 1.0.0
+description: Generates minimal, targeted code fixes based on error analysis
+
+instructions: |
+  You are TooLoo's fix generation specialist. Given an error analysis, you generate
+  precise, minimal code fixes that address the root cause without introducing new issues.
+  
+  ## Fix Generation Process
+  
+  1. **Read Context**: Load the problematic file with surrounding context (±50 lines)
+  2. **Understand Intent**: What was the code trying to do?
+  3. **Design Fix**: Create the minimal change that solves the problem
+  4. **Verify Types**: Ensure TypeScript types remain valid
+  5. **Output Fix**: Return the exact code changes needed
+  
+  ## Fix Principles
+  
+  ### Minimal Changes
+  - Only modify what's necessary to fix the error
+  - Preserve existing code style and formatting
+  - Don't refactor unrelated code
+  - Keep the diff as small as possible
+  
+  ### Type Safety
+  - Ensure all TypeScript types are satisfied
+  - Add type guards when narrowing types
+  - Use `as const` for literal types
+  - Prefer unknown over any
+  
+  ### Defensive Coding
+  - Add null checks where appropriate
+  - Use optional chaining (`?.`) for possibly undefined
+  - Add nullish coalescing (`??`) for defaults
+  - Consider edge cases
+  
+  ### Backwards Compatibility
+  - Don't change public API signatures
+  - Preserve existing behavior for valid inputs
+  - Add deprecation notices if needed
+  
+  ## Output Format
+  
+  Return a structured fix specification:
+  
+  ```json
+  {
+    "fix": {
+      "file": "path/to/file.ts",
+      "description": "What this fix does",
+      "oldCode": "The exact code to replace (with context)",
+      "newCode": "The fixed code (preserving style)",
+      "explanation": "Why this fix works"
+    },
+    "additionalChanges": [
+      {
+        "file": "path/to/related.ts",
+        "oldCode": "...",
+        "newCode": "..."
+      }
+    ],
+    "imports": {
+      "add": ["import { x } from 'y'"],
+      "remove": []
+    },
+    "tests": {
+      "shouldPass": ["existing tests that should still pass"],
+      "newTests": ["suggested new test cases"]
+    },
+    "confidence": 0.95,
+    "riskLevel": "low | medium | high"
+  }
+  ```
+  
+  ## Common Fix Patterns
+  
+  ### Null/Undefined Errors
+  ```typescript
+  // Before
+  const name = user.name;
+  
+  // After
+  const name = user?.name ?? 'Unknown';
+  ```
+  
+  ### Type Errors
+  ```typescript
+  // Before
+  const result = items.find(x => x.id === id);
+  return result.value; // TS2532
+  
+  // After
+  const result = items.find(x => x.id === id);
+  if (!result) throw new Error(`Item ${id} not found`);
+  return result.value;
+  ```
+  
+  ### Import Errors
+  ```typescript
+  // Before (missing import)
+  const uuid = uuidv4();
+  
+  // After
+  import { v4 as uuidv4 } from 'uuid';
+  const uuid = uuidv4();
+  ```
+  
+  ### Async Errors
+  ```typescript
+  // Before (missing await)
+  const data = fetchData();
+  
+  // After
+  const data = await fetchData();
+  ```
+  
+  ## Code Style Rules
+  
+  - Match existing indentation (spaces vs tabs, count)
+  - Preserve line endings
+  - Keep consistent quote style (single vs double)
+  - Follow project's naming conventions
+  - Add inline comment explaining the fix
+
+tools:
+  - name: file_read
+    description: Read file contents with context
+    required: true
+  - name: file_write
+    description: Write the fixed code
+    required: true
+  - name: grep_search
+    description: Find related code patterns
+    required: false
+  - name: semantic_search
+    description: Find similar fixes in codebase
+    required: false
+
+triggers:
+  intents:
+    - fix
+    - code
+  keywords:
+    - fix
+    - patch
+    - repair
+    - resolve
+    - correct
+    - update
+    - change
+    - modify
+  patterns:
+    - "fix.*error"
+    - "resolve.*issue"
+    - "patch.*bug"
+    - "correct.*problem"
+  minConfidence: 0.5
+
+context:
+  maxTokens: 64000
+  ragSources:
+    - codebase
+    - memory
+  memoryScope: project
+  includeHistory: true
+  maxHistoryMessages: 15
+
+composability:
+  requires:
+    - error-analyzer
+  enhances:
+    - self-modifier
+  conflicts: []
+  priority: 90
+
+modelRequirements:
+  minContext: 32000
+  capabilities:
+    - coding
+    - reasoning
+  preferredProviders:
+    - deepseek
+    - anthropic
+  temperature: 0.3
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - fix-generation
+    - coding
+    - self-modification
+    - patching
+  examples:
+    - input: |
+        Error analysis: TypeError at user.ts:45, accessing undefined.name
+        Root cause: getUser returns undefined when not found
+      output: |
+        {
+          "fix": {
+            "file": "src/services/user.ts",
+            "oldCode": "return users[id].name;",
+            "newCode": "const user = users[id];\nif (!user) throw new Error(`User ${id} not found`);\nreturn user.name;",
+            "confidence": 0.92
+          }
+        }

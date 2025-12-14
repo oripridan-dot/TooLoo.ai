@@ -1914,7 +1914,7 @@ router.post('/command/auto', async (req, res) => {
 router.post('/command/execute', async (req, res) => {
   const {
     code,
-    language = 'javascript',
+    language: rawLanguage = 'javascript',
     prompt,
     useTeam = true,
     qualityThreshold = 0.8,
@@ -1924,6 +1924,15 @@ router.post('/command/execute', async (req, res) => {
 
   if (!code && !prompt) {
     return res.status(400).json(errorResponse('Code or prompt is required'));
+  }
+
+  // V3.3.NaN: Smart language detection - detect shell commands even if labeled as javascript
+  const shellCommandPatterns = /^(cat|ls|echo|pwd|cd|mkdir|rm|cp|mv|touch|grep|find|head|tail|wc|sort|uniq|chmod|chown|curl|wget|tar|zip|unzip|git|npm|pnpm|yarn|node|python|pip)\b/i;
+  const isShellCommand = shellCommandPatterns.test((code || '').trim());
+  const language = isShellCommand ? 'bash' : rawLanguage;
+  
+  if (isShellCommand) {
+    console.log(`[Chat Execute] 🐚 Detected shell command, switching language from '${rawLanguage}' to 'bash'`);
   }
 
   const startTime = Date.now();

@@ -1194,6 +1194,7 @@ If the content doesn't contain information relevant to the goal, say so clearly.
   /**
    * Run code in sandbox - V3.3.407 FIXED: Direct sandbox execution, no recursion
    * Always uses SandboxManager which selects Docker or Local based on config
+   * V3.3.NaN: Added shell command detection - don't wrap shell commands in node -e
    */
   private async runInSandbox(
     code: string,
@@ -1202,29 +1203,39 @@ If the content doesn't contain information relevant to the goal, say so clearly.
   ): Promise<ExecutionResult> {
     const startTime = Date.now();
 
+    // Detect if this is a shell command (cat, ls, echo, etc.) vs actual code
+    const shellCommandPatterns = /^(cat|ls|echo|pwd|cd|mkdir|rm|cp|mv|touch|grep|find|head|tail|wc|sort|uniq)\s/i;
+    const isShellCommand = shellCommandPatterns.test(code.trim());
+
     // Build command based on language
     const safeCode = code.replace(/'/g, "\\'");
     let command: string;
 
-    switch (language.toLowerCase()) {
-      case 'javascript':
-      case 'js':
-        command = `node -e '${safeCode}'`;
-        break;
-      case 'typescript':
-      case 'ts':
-        command = `npx tsx -e '${safeCode}'`;
-        break;
-      case 'python':
-      case 'py':
-        command = `python3 -c '${safeCode}'`;
-        break;
-      default:
-        return {
-          success: false,
-          output: `Unsupported language: ${language}`,
-          durationMs: Date.now() - startTime,
-        };
+    // If it's a shell command, run it directly regardless of "language" label
+    if (isShellCommand || language.toLowerCase() === 'bash' || language.toLowerCase() === 'shell' || language.toLowerCase() === 'sh') {
+      command = code; // Run directly as shell command
+      console.log(`[ExecutionAgent] 🐚 Running as shell command: ${command.slice(0, 50)}...`);
+    } else {
+      switch (language.toLowerCase()) {
+        case 'javascript':
+        case 'js':
+          command = `node -e '${safeCode}'`;
+          break;
+        case 'typescript':
+        case 'ts':
+          command = `npx tsx -e '${safeCode}'`;
+          break;
+        case 'python':
+        case 'py':
+          command = `python3 -c '${safeCode}'`;
+          break;
+        default:
+          return {
+            success: false,
+            output: `Unsupported language: ${language}`,
+            durationMs: Date.now() - startTime,
+          };
+      }
     }
 
     try {
@@ -1480,29 +1491,37 @@ Analyze the error and provide a corrected implementation.`,
     const timeout = options.timeout || 30000;
     const startTime = Date.now();
 
+    // Detect if this is a shell command vs actual code
+    const shellCommandPatterns = /^(cat|ls|echo|pwd|cd|mkdir|rm|cp|mv|touch|grep|find|head|tail|wc|sort|uniq)\s/i;
+    const isShellCommand = shellCommandPatterns.test(code.trim());
+
     // Build the command based on language
     const safeCode = code.replace(/'/g, "\\'");
     let command: string;
 
-    switch (language.toLowerCase()) {
-      case 'javascript':
-      case 'js':
-        command = `node -e '${safeCode}'`;
-        break;
-      case 'typescript':
-      case 'ts':
-        command = `npx tsx -e '${safeCode}'`;
-        break;
-      case 'python':
-      case 'py':
-        command = `python3 -c '${safeCode}'`;
-        break;
-      default:
-        return {
-          success: false,
-          output: `Unsupported language for sandbox: ${language}`,
-          durationMs: Date.now() - startTime,
-        };
+    // If it's a shell command, run it directly
+    if (isShellCommand || language.toLowerCase() === 'bash' || language.toLowerCase() === 'shell' || language.toLowerCase() === 'sh') {
+      command = code;
+      console.log(`[ExecutionAgent] 🐚 Running as shell command: ${command.slice(0, 50)}...`);
+    } else {
+      switch (language.toLowerCase()) {
+        case 'javascript':
+        case 'js':
+          command = `node -e '${safeCode}'`;
+          break;
+        case 'typescript':
+        case 'ts':
+          command = `npx tsx -e '${safeCode}'`;
+          break;
+        case 'python':
+        case 'py':
+          command = `python3 -c '${safeCode}'`;
+          break;
+        default:
+          // For unknown languages, try running as shell command
+          command = code;
+          console.log(`[ExecutionAgent] 🐚 Unknown language '${language}', running as shell: ${command.slice(0, 50)}...`);
+      }
     }
 
     try {

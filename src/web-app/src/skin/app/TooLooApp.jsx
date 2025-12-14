@@ -1,4 +1,4 @@
-// @version 2.0.NaN
+// @version 3.3.573
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence

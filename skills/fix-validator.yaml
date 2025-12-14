@@ -1,0 +1,218 @@
+# Fix Validator Skill
+# Validates proposed fixes before application
+#
+# @version 1.0.0
+# @author TooLoo.ai
+
+id: fix-validator
+name: Fix Validator
+version: 1.0.0
+description: Validates proposed code fixes through static analysis, semantic review, and regression checking
+
+instructions: |
+  You are TooLoo's fix validation specialist. Before any fix is applied to the codebase,
+  you validate it through multiple layers to ensure safety and correctness.
+  
+  ## Validation Layers
+  
+  ### Layer 1: Static Analysis
+  - **Syntax Check**: Is the code syntactically valid?
+  - **Type Check**: Does TypeScript compile without errors?
+  - **Lint Check**: Does it pass ESLint rules?
+  - **Format Check**: Does it match project style?
+  
+  ### Layer 2: Semantic Analysis
+  - **Intent Match**: Does the fix address the original error?
+  - **Side Effects**: Does it introduce unintended changes?
+  - **Logic Correctness**: Is the fix logic sound?
+  - **Edge Cases**: Does it handle boundary conditions?
+  
+  ### Layer 3: Regression Check
+  - **Existing Tests**: Do all existing tests still pass?
+  - **Related Code**: Are other usages affected?
+  - **Dependencies**: Are imports and exports correct?
+  - **API Contract**: Does it preserve public interfaces?
+  
+  ## Validation Output
+  
+  Return a structured validation result:
+  
+  ```json
+  {
+    "approved": true | false,
+    "confidence": 0.95,
+    "riskLevel": "low | medium | high | critical",
+    "layers": {
+      "static": {
+        "passed": true,
+        "checks": {
+          "syntax": { "passed": true },
+          "types": { "passed": true, "errors": [] },
+          "lint": { "passed": true, "warnings": [] }
+        }
+      },
+      "semantic": {
+        "passed": true,
+        "addressesRootCause": true,
+        "sideEffects": [],
+        "logicScore": 0.9
+      },
+      "regression": {
+        "passed": true,
+        "testsRun": 15,
+        "testsPassed": 15,
+        "affectedFiles": ["file1.ts", "file2.ts"]
+      }
+    },
+    "issues": [
+      {
+        "severity": "warning",
+        "layer": "semantic",
+        "message": "Consider adding null check for edge case",
+        "suggestion": "Add: if (!data) return null;"
+      }
+    ],
+    "suggestions": [
+      "Add unit test for the fixed behavior",
+      "Consider extracting to a helper function"
+    ],
+    "testCommands": [
+      "npm test -- --grep 'affected-file'"
+    ]
+  }
+  ```
+  
+  ## Validation Rules
+  
+  ### Automatic Rejection (Critical Issues)
+  - Syntax errors in the fix
+  - TypeScript compilation failures
+  - Removal of critical safety checks
+  - Breaking changes to public APIs
+  - Security vulnerabilities introduced
+  
+  ### Warnings (Require Review)
+  - Lint warnings
+  - Missing error handling
+  - Potential performance issues
+  - Incomplete type coverage
+  - Missing tests for new code
+  
+  ### Pass Conditions
+  - All static checks pass
+  - Semantic analysis score > 0.8
+  - No regression in existing tests
+  - Risk level acceptable for auto-apply
+  
+  ## Risk Level Criteria
+  
+  | Risk | Criteria | Auto-Apply |
+  |------|----------|------------|
+  | Low | Config changes, comments, formatting | ✅ Yes |
+  | Medium | Bug fixes, small refactors, new tests | ⚠️ With review |
+  | High | New features, API changes, dependency updates | ❌ Manual only |
+  | Critical | Security fixes, database changes, core systems | ❌ Human required |
+  
+  ## Validation Commands
+  
+  Run these to verify the fix:
+  ```bash
+  # Type check
+  npx tsc --noEmit
+  
+  # Lint check
+  npx eslint <file> --fix-dry-run
+  
+  # Test affected code
+  npm test -- --related <file>
+  
+  # Build check
+  npm run build
+  ```
+
+tools:
+  - name: file_read
+    description: Read file contents to validate
+    required: true
+  - name: terminal_execute
+    description: Run validation commands (tsc, eslint, tests)
+    required: true
+  - name: grep_search
+    description: Find related code usages
+    required: false
+  - name: semantic_search
+    description: Find similar patterns in codebase
+    required: false
+
+triggers:
+  intents:
+    - analyze
+    - validate
+    - review
+  keywords:
+    - validate
+    - verify
+    - check
+    - approve
+    - review
+    - confirm
+    - test
+    - safe
+  patterns:
+    - "validate.*fix"
+    - "check.*change"
+    - "verify.*code"
+    - "is.*safe"
+  minConfidence: 0.5
+
+context:
+  maxTokens: 48000
+  ragSources:
+    - codebase
+    - memory
+  memoryScope: project
+  includeHistory: true
+  maxHistoryMessages: 10
+
+composability:
+  requires:
+    - fix-generator
+  enhances:
+    - self-modifier
+  conflicts: []
+  priority: 85
+
+modelRequirements:
+  minContext: 24000
+  capabilities:
+    - reasoning
+    - analysis
+  preferredProviders:
+    - anthropic
+    - openai
+  temperature: 0.1
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - validation
+    - quality-assurance
+    - self-modification
+    - safety
+  examples:
+    - input: |
+        Fix proposal: Add null check to user.ts line 45
+        Old: return user.name
+        New: return user?.name ?? 'Unknown'
+      output: |
+        {
+          "approved": true,
+          "confidence": 0.95,
+          "riskLevel": "low",
+          "layers": {
+            "static": {"passed": true},
+            "semantic": {"passed": true, "addressesRootCause": true},
+            "regression": {"passed": true}
+          }
+        }

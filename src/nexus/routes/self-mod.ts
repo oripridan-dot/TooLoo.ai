@@ -1,4 +1,4 @@
-// @version 3.3.92
+// @version 3.3.100
 /**
  * TooLoo Self-Modification API Routes
  *
@@ -12,6 +12,7 @@
 
 import { Router, Request, Response } from 'express';
 import { selfMod, SelfModificationEngine } from '../../cortex/motor/self-modification.js';
+import { selfModPipeline } from '../../cortex/motor/self-modification-pipeline.js';
 import { bus } from '../../core/event-bus.js';
 
 const router = Router();
@@ -374,6 +375,7 @@ router.get('/capabilities', (_req: Request, res: Response) => {
         { name: 'gitCommit', description: 'Commit changes to git' },
         { name: 'runTests', description: 'Run tests after changes' },
         { name: 'restoreBackup', description: 'Restore from backups' },
+        { name: 'pipeline', description: 'Automated fix pipeline with validation loop' },
       ],
       safetyFeatures: [
         'Automatic backups before edits',
@@ -381,8 +383,131 @@ router.get('/capabilities', (_req: Request, res: Response) => {
         'Critical file warnings',
         'Atomic multi-edit with rollback',
         'Full modification log',
+        '3-layer validation (static, semantic, regression)',
+        'Rate limiting (max 5 modifications per hour)',
+        'Auto-rollback on test failures',
       ],
-      version: '3.3.90',
+      version: '2.0.0',
+    })
+  );
+});
+
+// ============================================================================
+// SELF-MODIFICATION PIPELINE
+// ============================================================================
+
+/**
+ * @route POST /api/v1/system/self/pipeline/run
+ * @description Run the full self-modification pipeline with validation loop
+ * @body errorContext - Error message, stack trace, or test failure to fix
+ */
+router.post('/pipeline/run', async (req: Request, res: Response) => {
+  const { errorContext } = req.body;
+
+  if (!errorContext || typeof errorContext !== 'string') {
+    return res.status(400).json(errorResponse('errorContext is required'));
+  }
+
+  bus.publish('cortex', 'pipeline:api-request', {
+    errorContext: errorContext.slice(0, 500),
+    timestamp: new Date().toISOString(),
+  });
+
+  const result = await selfModPipeline.run(errorContext);
+
+  if (result.success) {
+    res.json(successResponse(result));
+  } else {
+    res.status(result.errorAnalysis?.severity === 'critical' ? 403 : 400).json({
+      ok: false,
+      ...result,
+    });
+  }
+});
+
+/**
+ * @route GET /api/v1/system/self/pipeline/status
+ * @description Get the current status of the self-modification pipeline
+ */
+router.get('/pipeline/status', (_req: Request, res: Response) => {
+  const rateLimitStatus = selfModPipeline.getRateLimitStatus();
+  const config = selfModPipeline.getConfig();
+
+  res.json(
+    successResponse({
+      rateLimit: rateLimitStatus,
+      config: {
+        maxIterations: config.maxIterations,
+        maxModificationsPerHour: config.maxModificationsPerHour,
+        requireValidation: config.requireValidation,
+        dryRun: config.dryRun,
+        allowedRiskLevels: config.allowedRiskLevels,
+      },
+    })
+  );
+});
+
+/**
+ * @route POST /api/v1/system/self/pipeline/resume
+ * @description Resume the pipeline after it was paused due to failures
+ */
+router.post('/pipeline/resume', (_req: Request, res: Response) => {
+  selfModPipeline.resume();
+  res.json(successResponse({ message: 'Pipeline resumed' }));
+});
+
+/**
+ * @route GET /api/v1/system/self/pipeline/audit
+ * @description Get the pipeline audit log
+ * @query count - Number of entries to retrieve (default: 50)
+ */
+router.get('/pipeline/audit', async (req: Request, res: Response) => {
+  const count = parseInt(req.query['count'] as string) || 50;
+  const entries = await selfModPipeline.getAuditLog(count);
+
+  res.json(
+    successResponse({
+      entries,
+      count: entries.length,
+    })
+  );
+});
+
+/**
+ * @route PATCH /api/v1/system/self/pipeline/config
+ * @description Update pipeline configuration
+ * @body config - Partial configuration object
+ */
+router.patch('/pipeline/config', (req: Request, res: Response) => {
+  const { config } = req.body;
+
+  if (!config || typeof config !== 'object') {
+    return res.status(400).json(errorResponse('config object is required'));
+  }
+
+  // Validate allowed fields
+  const allowedFields = [
+    'maxIterations',
+    'maxModificationsPerHour',
+    'requireValidation',
+    'dryRun',
+    'minConfidence',
+    'allowedRiskLevels',
+  ];
+
+  const updateConfig: Record<string, unknown> = {};
+  for (const key of allowedFields) {
+    if (key in config) {
+      updateConfig[key] = config[key];
+    }
+  }
+
+  selfModPipeline.updateConfig(updateConfig);
+
+  res.json(
+    successResponse({
+      message: 'Configuration updated',
+      config: selfModPipeline.getConfig(),
     })
   );
 });

@@ -1,5 +1,5 @@
-// @version 2.0.NaN
-// @version 2.0.NaN
+// @version 3.3.573
+// @version 3.3.573
 // TooLoo.ai Visual Renderers
 // v3.3.371 - Added SVG validation to reject malformed diagrams, corner-based curves
 // Rich visual components for rendering AI-generated visual content

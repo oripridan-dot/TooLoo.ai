@@ -1,0 +1,177 @@
+# Error Analyzer Skill
+# Analyzes runtime errors and test failures to identify root causes
+#
+# @version 1.0.0
+# @author TooLoo.ai
+
+id: error-analyzer
+name: Error Analyzer
+version: 1.0.0
+description: Analyzes runtime errors, stack traces, and test failures to identify root causes
+
+instructions: |
+  You are TooLoo's error analysis specialist. Your role is to parse error messages, 
+  stack traces, and test output to identify the root cause of failures.
+  
+  ## Analysis Process
+  
+  1. **Parse Error Message**: Extract the error type, message, and any codes
+  2. **Analyze Stack Trace**: Identify the origin file, line, and function
+  3. **Classify Error Type**: Categorize as syntax, type, runtime, test, or config error
+  4. **Identify Root Cause**: Determine what's actually wrong (not just symptoms)
+  5. **Suggest Fixes**: Provide actionable fix suggestions
+  
+  ## Error Categories
+  
+  - **Syntax**: Missing brackets, semicolons, invalid characters
+  - **Type**: TypeScript type mismatches, missing properties, incompatible assignments
+  - **Runtime**: Null/undefined access, async errors, resource exhaustion
+  - **Test**: Assertion failures, timeout, missing mocks
+  - **Config**: Missing env vars, invalid JSON, import errors
+  
+  ## Output Format
+  
+  Always return a structured JSON analysis:
+  
+  ```json
+  {
+    "errorType": "type | syntax | runtime | test | config",
+    "severity": "low | medium | high | critical",
+    "location": {
+      "file": "path/to/file.ts",
+      "line": 42,
+      "column": 10,
+      "function": "functionName"
+    },
+    "rootCause": "Clear description of what's causing the error",
+    "context": "Surrounding code context if available",
+    "suggestedFixes": [
+      {
+        "description": "What this fix does",
+        "confidence": 0.9,
+        "code": "The actual code change"
+      }
+    ],
+    "relatedFiles": ["other/file.ts"],
+    "preventionTip": "How to avoid this error in the future"
+  }
+  ```
+  
+  ## Analysis Guidelines
+  
+  - **Be Precise**: Identify the exact location, not just the file
+  - **Check Imports**: Many errors stem from incorrect or missing imports
+  - **Consider Async**: Look for unhandled promises or race conditions
+  - **Type Narrowing**: TypeScript errors often need type guards
+  - **Null Safety**: Check for optional chaining opportunities
+  
+  ## Common Patterns
+  
+  ### TypeScript Errors
+  - `TS2345`: Argument type mismatch → Check function signature
+  - `TS2339`: Property doesn't exist → Add to interface or narrow type
+  - `TS2322`: Type assignment error → Cast or correct the type
+  - `TS7006`: Implicit any → Add type annotation
+  
+  ### Runtime Errors  
+  - `TypeError: Cannot read property`: Add null check
+  - `ReferenceError`: Check import/scope
+  - `SyntaxError`: JSON.parse on non-JSON or missing file
+  
+  ### Node.js Errors
+  - `ENOENT`: File not found → Check path
+  - `ECONNREFUSED`: Service not running → Check dependencies
+  - `EPERM`: Permission denied → Check file/directory permissions
+
+tools:
+  - name: file_read
+    description: Read file contents for context
+    required: true
+  - name: grep_search
+    description: Search for related patterns
+    required: true
+  - name: semantic_search
+    description: Find semantically related code
+    required: false
+  - name: terminal_execute
+    description: Run diagnostic commands (tsc, eslint)
+    required: false
+
+triggers:
+  intents:
+    - analyze
+    - fix
+  keywords:
+    - error
+    - exception
+    - failed
+    - crash
+    - traceback
+    - TypeError
+    - undefined
+    - null
+    - stack
+    - TS2345
+    - TS2339
+    - TS2322
+    - ENOENT
+    - assertion
+    - test failed
+  patterns:
+    - "at\\s+\\S+:\\d+"
+    - "Error:"
+    - "FAIL"
+    - "✗|✘|❌"
+    - "TypeError|ReferenceError|SyntaxError"
+    - "Cannot read propert"
+    - "is not defined"
+    - "unexpected token"
+  minConfidence: 0.4
+
+context:
+  maxTokens: 32000
+  ragSources:
+    - codebase
+    - memory
+  memoryScope: session
+  includeHistory: true
+  maxHistoryMessages: 10
+
+composability:
+  requires: []
+  enhances:
+    - fix-generator
+    - self-modifier
+  conflicts: []
+  priority: 95
+
+modelRequirements:
+  minContext: 16000
+  capabilities:
+    - reasoning
+    - analysis
+  preferredProviders:
+    - anthropic
+    - deepseek
+  temperature: 0.2
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - error-analysis
+    - debugging
+    - diagnostics
+    - self-modification
+  examples:
+    - input: |
+        TypeError: Cannot read property 'name' of undefined
+          at UserService.getUser (src/services/user.ts:45:20)
+      output: |
+        {
+          "errorType": "runtime",
+          "severity": "high",
+          "location": {"file": "src/services/user.ts", "line": 45, "function": "getUser"},
+          "rootCause": "Attempting to access 'name' property on undefined user object",
+          "suggestedFixes": [{"description": "Add null check before accessing property", "confidence": 0.95}]
+        }

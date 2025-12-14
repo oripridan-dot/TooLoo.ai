@@ -1,4 +1,4 @@
-// @version 2.0.NaN - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing
+// @version 3.3.573 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -45,6 +45,7 @@ import usersRoutes from './routes/users.js'; // V3.3.530: User Management
 import usageRoutes from './routes/usage.js'; // V3.3.530: Usage Dashboard
 import billingRoutes from './routes/billing.js'; // V3.3.542: Stripe Billing
 import routingRoutes from './routes/routing.js'; // V3.3.550: Intelligent Routing
+import engineV2Routes from './routes/engine-v2.js'; // V2.0: New engine with tool execution
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
@@ -114,6 +115,7 @@ export function createNexusApp() {
   app.use('/api/v1/usage', usageRoutes); // V3.3.530: Usage Dashboard
   app.use('/api/v1/billing', billingRoutes); // V3.3.542: Stripe Billing
   app.use('/api/v1/routing', routingRoutes); // V3.3.550: Intelligent Routing - Model selection, recipes, validation
+  app.use('/api/v1/engine', llmLimiter, engineV2Routes); // V2.0: New engine with tool execution
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)

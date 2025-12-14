@@ -1,7 +1,7 @@
-// @version 2.0.NaN
-// @version 2.0.NaN
-// @version 2.0.NaN
-// @version 2.0.NaN
+// @version 3.3.573
+// @version 3.3.573
+// @version 3.3.573
+// @version 3.3.573
 /**
  * Engine V2 Routes - Tool-enabled AI chat
  * 
@@ -238,7 +238,7 @@ Don't just show code - execute the file_write tool to create the file.`;
 router.get('/status', (_req: Request, res: Response) => {
   return res.json(successResponse({
     status: 'ready',
-    version: '2.0.0-alpha',
+    version: '3.3.573',
     toolsEnabled: true,
     availableTools: Object.keys(TOOL_IMPLEMENTATIONS),
     providers: ['anthropic', 'deepseek', 'openai', 'gemini'],
