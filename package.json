@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.571",
+  "version": "3.3.572",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.0.0",
