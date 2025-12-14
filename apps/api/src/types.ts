@@ -1,6 +1,7 @@
 /**
  * @tooloo/api - Types
  * API-specific type definitions
+ * V3.3.588: Added orchestration events for Cognitive Bridge
  * 
  * @version 2.0.0-alpha.0
  */
@@ -164,6 +165,29 @@ export interface ServerToClientEvents {
   'chat:error': (data: { code: string; message: string }) => void;
   'system:status': (data: StatusResponse) => void;
   'skill:matched': (data: { skillId: string; confidence: number }) => void;
+  
+  // V3.3.588: Orchestration events for Cognitive Bridge
+  'orchestration:start': (data: { 
+    sessionId?: string;
+    context: { intent: { type: string } };
+    timestamp: string;
+  }) => void;
+  'orchestration:routed': (data: {
+    result: { skill: { id: string; name: string }; confidence: number };
+    timestamp: string;
+  }) => void;
+  'orchestration:provider_selected': (data: {
+    selection: { providerId: string; model: string; reason: string };
+    timestamp: string;
+  }) => void;
+  'orchestration:executing': (data: {
+    skill: { id: string; name: string };
+    timestamp: string;
+  }) => void;
+  'orchestration:complete': (data: {
+    success: boolean;
+    timestamp: string;
+  }) => void;
 }
 
 export interface ClientToServerEvents {

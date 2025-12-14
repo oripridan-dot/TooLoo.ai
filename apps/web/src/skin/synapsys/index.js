@@ -1,7 +1,8 @@
-// @version 3.3.423
+// @version 3.3.588
 // TooLoo.ai Synapsys Module Index
 // Re-exports all Synapsys system components
 // Phase 3 of "Sentient Partner" Protocol
+// V3.3.588: Added CognitiveBridge for backend-to-DNA wiring
 
 // Core DNA System - Single source of truth
 export {
@@ -25,6 +26,9 @@ export {
   useCurrentPreset,
   useOrbCount,
 } from './SynapysDNA';
+
+// Cognitive Bridge - Connects backend events to DNA state
+export { CognitiveBridge } from './CognitiveBridge';
 
 // Conductor - Orchestrates all visual systems
 export {
