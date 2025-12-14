@@ -53,7 +53,7 @@ Returns engine status and available tools.
   "ok": true,
   "data": {
     "status": "ready",
-    "version": "2.0.0-alpha",
+    "version": "3.3.570",
     "toolsEnabled": true,
     "availableTools": ["file_write", "file_read", "list_files"],
     "providers": ["anthropic", "deepseek", "openai", "gemini"]
