@@ -1,4 +1,4 @@
-// @version 3.3.452
+// @version 2.0.NaN
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -42,8 +42,21 @@ export { default as Mirror } from './Mirror';
 // V3.3.450: Workstation - The 4-Panel Unified Development Interface (Phase 2d)
 export { default as Workstation } from './Workstation';
 
+// V2.0: Synapsys Navigator - The Cognitive Operating System Interface
+export { default as SynapsysNavigator } from './SynapsysNavigator';
+
 // View registry for dynamic routing
 export const VIEWS = {
+  navigator: {
+    id: 'navigator',
+    name: 'Navigator',
+    icon: '🧭',
+    description: 'Cognitive OS Interface - The Brain Portal',
+    color: 'gradient',
+    shortcut: 'N',
+    isNew: true,
+    isPrimary: true, // The NEW primary view - Synapsys Navigator
+  },
   workstation: {
     id: 'workstation',
     name: 'Workstation',
@@ -52,7 +65,7 @@ export const VIEWS = {
     color: 'cyan',
     shortcut: 'W',
     isNew: true,
-    isPrimary: true, // Make this the new primary view
+    isPrimary: false,
   },
   space: {
     id: 'space',
@@ -142,6 +155,7 @@ export const VIEWS = {
 
 // View component map for dynamic rendering
 export const VIEW_COMPONENTS = {
+  navigator: () => import('./SynapsysNavigator').then((m) => m.default),
   workstation: () => import('./Workstation').then((m) => m.default),
   space: () => import('./SpaceV4').then((m) => m.default),
   projects: () => import('./Projects').then((m) => m.default),
