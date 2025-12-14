@@ -1,201 +1,174 @@
 // @version 2.0.NaN
 /**
- * Engine V2 Routes - Connects the @tooloo/engine package to the API
+ * Engine V2 Routes - Tool-enabled AI chat
  * 
- * This exposes the new skill-based orchestrator with tool execution capabilities.
+ * This exposes tool execution capabilities directly in the chat flow.
  * The AI can now use file_write, file_read, list_files tools.
  */
 
 import { Router, Request, Response } from 'express';
 import { successResponse, errorResponse } from '../utils.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
-
-// Import from @tooloo packages
-import { createSkillRegistry, defineSkill } from '@tooloo/skills';
-import { createProviderRegistry } from '@tooloo/providers';
-import { createOrchestrator, type OrchestratorConfig } from '@tooloo/engine';
+import { precog } from '../../precog/index.js';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 const router = Router();
+const PROJECT_ROOT = process.cwd();
 
 // =============================================================================
-// INITIALIZE V2 ENGINE
+// TOOL IMPLEMENTATIONS ("The Hands")
 // =============================================================================
 
-// Create skill registry with default skills
-const skillRegistry = createSkillRegistry();
-
-// Register a general-purpose coding skill
-skillRegistry.register(defineSkill({
-  id: 'general-assistant',
-  name: 'General Assistant',
-  description: 'A general-purpose AI assistant that can help with coding, file operations, and more',
-  instructions: `You are TooLoo.ai, a powerful AI assistant with the ability to modify files directly.
-
-## Your Capabilities
-- Read and write files in the project
-- Analyze code and provide suggestions
-- Execute multi-step tasks autonomously
-
-## Tool Usage
-When you need to create or modify a file, use this EXACT format on a new line:
-:::tool{name="file_write"}
-{"path": "relative/path/to/file.ts", "content": "file content here"}
-:::
-
-When you need to read a file:
-:::tool{name="file_read"}
-{"path": "relative/path/to/file.ts"}
-:::
-
-When you need to list directory contents:
-:::tool{name="list_files"}
-{"path": "relative/directory"}
-:::
-
-Always be helpful, precise, and proactive. When asked to create something, DO IT - don't just explain how.`,
-  triggerPatterns: [/.*/], // Matches everything as fallback
-  keywords: ['help', 'code', 'create', 'write', 'file', 'build', 'implement'],
-  category: 'general',
-  priority: 0,
-  context: {
-    maxTokens: 4096,
-    includeHistory: true,
-    maxHistoryMessages: 10,
+const TOOL_IMPLEMENTATIONS: Record<string, (params: Record<string, unknown>) => Promise<string>> = {
+  file_write: async (params) => {
+    const filePath = params['path'] as string;
+    const content = params['content'] as string;
+    
+    if (!filePath || content === undefined) {
+      throw new Error('file_write requires "path" and "content" parameters');
+    }
+    
+    const targetPath = path.resolve(PROJECT_ROOT, filePath);
+    
+    // Security checks
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    const forbidden = ['.git', 'node_modules', '.env'];
+    if (forbidden.some(f => targetPath.includes(`/${f}/`) || targetPath.endsWith(`/${f}`))) {
+      throw new Error('Access Denied: Cannot write to protected path');
+    }
+    
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.writeFile(targetPath, content, 'utf-8');
+    
+    console.log(`✍️  [Engine-V2] Wrote ${content.length} chars to ${filePath}`);
+    return `Success: Wrote ${content.length} characters to ${filePath}`;
   },
-  tools: [
-    { name: 'file_write', required: false },
-    { name: 'file_read', required: false },
-    { name: 'list_files', required: false },
-  ],
-  modelRequirements: {
-    minCapability: 'advanced',
-    preferredProviders: ['anthropic', 'openai', 'deepseek', 'gemini'],
-    temperature: 0.7,
+  
+  file_read: async (params) => {
+    const filePath = params['path'] as string;
+    
+    if (!filePath) {
+      throw new Error('file_read requires "path" parameter');
+    }
+    
+    const targetPath = path.resolve(PROJECT_ROOT, filePath);
+    
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    const content = await fs.readFile(targetPath, 'utf-8');
+    console.log(`📖 [Engine-V2] Read ${content.length} chars from ${filePath}`);
+    return content;
   },
-}));
-
-// Register a code generation skill
-skillRegistry.register(defineSkill({
-  id: 'code-generation',
-  name: 'Code Generator',
-  description: 'Specialized skill for generating code with file operations',
-  instructions: `You are a code generation specialist. Your primary function is to write and create code files.
-
-## IMPORTANT: You have REAL file system access!
-When the user asks you to create a file, you MUST actually create it using the tool syntax below.
-
-## Tool Format (STRICT)
-:::tool{name="file_write"}
-{"path": "path/to/file.ts", "content": "your code here"}
-:::
-
-## Guidelines
-1. Always write complete, working code
-2. Include proper imports and types
-3. Follow the project's coding style
-4. Create files in appropriate directories
-5. When creating multiple files, create them one by one
-
-DO NOT just show code - CREATE THE FILES!`,
-  triggerPatterns: [
-    /create\s+(a\s+)?file/i,
-    /write\s+(a\s+)?(function|class|component|module)/i,
-    /implement/i,
-    /generate\s+code/i,
-    /build\s+(a\s+)?/i,
-  ],
-  keywords: ['create', 'write', 'implement', 'generate', 'build', 'code', 'function', 'class', 'component'],
-  category: 'coding',
-  priority: 10,
-  context: {
-    maxTokens: 8192,
-    includeHistory: true,
-    maxHistoryMessages: 5,
-  },
-  tools: [
-    { name: 'file_write', required: true },
-    { name: 'file_read', required: false },
-    { name: 'list_files', required: false },
-  ],
-  modelRequirements: {
-    minCapability: 'advanced',
-    preferredProviders: ['anthropic', 'deepseek', 'openai'],
-    temperature: 0.3,
-  },
-}));
-
-// Create provider registry
-const providerRegistry = createProviderRegistry();
-
-// Register available providers based on environment
-if (process.env.ANTHROPIC_API_KEY) {
-  providerRegistry.register('anthropic', {
-    type: 'anthropic',
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    defaultModel: 'claude-3-5-sonnet-20241022',
-  });
-}
-
-if (process.env.OPENAI_API_KEY) {
-  providerRegistry.register('openai', {
-    type: 'openai',
-    apiKey: process.env.OPENAI_API_KEY,
-    defaultModel: 'gpt-4o',
-  });
-}
-
-if (process.env.DEEPSEEK_API_KEY) {
-  providerRegistry.register('deepseek', {
-    type: 'deepseek',
-    apiKey: process.env.DEEPSEEK_API_KEY,
-    defaultModel: 'deepseek-chat',
-  });
-}
-
-// Always try to register Gemini (Google AI)
-const googleKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-if (googleKey) {
-  providerRegistry.register('gemini', {
-    type: 'gemini',
-    apiKey: googleKey,
-    defaultModel: 'gemini-1.5-flash',
-  });
-}
-
-// Determine default provider
-const defaultProvider = process.env.ANTHROPIC_API_KEY ? 'anthropic' 
-  : process.env.DEEPSEEK_API_KEY ? 'deepseek'
-  : process.env.OPENAI_API_KEY ? 'openai'
-  : 'gemini';
-
-// Create orchestrator with config
-const orchestratorConfig: Partial<OrchestratorConfig> = {
-  defaultProvider,
-  defaultModel: 'auto',
-  routing: {
-    semantic: false, // Start with keyword routing
-    minConfidence: 0.3,
-  },
-  execution: {
-    maxRetries: 2,
-    timeoutMs: 60000,
-    enableTools: true,
+  
+  list_files: async (params) => {
+    const dirPath = (params['path'] as string) || '.';
+    const targetPath = path.resolve(PROJECT_ROOT, dirPath);
+    
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      throw new Error('Access Denied: Path traversal detected');
+    }
+    
+    const entries = await fs.readdir(targetPath, { withFileTypes: true });
+    const result = entries.map(e => e.isDirectory() ? `${e.name}/` : e.name);
+    return result.join('\n');
   },
 };
 
-let orchestrator: ReturnType<typeof createOrchestrator> | null = null;
+// =============================================================================
+// TOOL SYSTEM PROMPT
+// =============================================================================
 
-// Lazy initialization
-function getOrchestrator() {
-  if (!orchestrator) {
-    orchestrator = createOrchestrator(
-      skillRegistry,
-      providerRegistry,
-      orchestratorConfig
-    );
-    console.log('[Engine-V2] Orchestrator initialized with tool support');
+const TOOL_SYSTEM_PROMPT = `
+## TOOL USAGE - SELF-MODIFICATION CAPABILITY
+You have the ability to modify the codebase. To use a tool, output this EXACT format on a new line:
+
+:::tool{name="tool_name"}
+{"param": "value"}
+:::
+
+### Available Tools:
+- **file_write**: Write content to a file. Params: {"path": "relative/path.ts", "content": "file content"}
+- **file_read**: Read a file. Params: {"path": "relative/path.ts"}
+- **list_files**: List directory. Params: {"path": "relative/dir"}
+
+### IMPORTANT RULES:
+1. Always use relative paths from project root
+2. Never use absolute paths
+3. When asked to create a file, USE THE TOOL - don't just show code
+4. Multiple tool calls are allowed in one response
+`;
+
+// =============================================================================
+// EXECUTE TOOLS FROM RESPONSE
+// =============================================================================
+
+interface ToolCallResult {
+  tool: string;
+  params: Record<string, unknown>;
+  success: boolean;
+  output: string;
+  error?: string;
+}
+
+async function executeToolsFromResponse(content: string): Promise<{
+  finalContent: string;
+  toolResults: ToolCallResult[];
+}> {
+  const toolRegex = /:::tool\{name="([^"]+)"\}\n([\s\S]*?)\n:::/g;
+  let match;
+  const toolResults: ToolCallResult[] = [];
+  let finalContent = content;
+  
+  while ((match = toolRegex.exec(content)) !== null) {
+    const toolName = match[1];
+    const jsonParams = match[2];
+    
+    if (!toolName) continue;
+    
+    try {
+      const params = JSON.parse(jsonParams || '{}') as Record<string, unknown>;
+      console.log(`🔨 [Engine-V2] Executing tool: ${toolName}`);
+      
+      const toolFn = TOOL_IMPLEMENTATIONS[toolName];
+      if (toolFn) {
+        const output = await toolFn(params);
+        toolResults.push({
+          tool: toolName,
+          params,
+          success: true,
+          output,
+        });
+        finalContent += `\n\n> 🔧 **Tool: ${toolName}**\n> ${output}`;
+      } else {
+        toolResults.push({
+          tool: toolName,
+          params,
+          success: false,
+          output: '',
+          error: `Unknown tool: ${toolName}`,
+        });
+      }
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      console.error(`[Engine-V2] Tool execution failed: ${errMsg}`);
+      toolResults.push({
+        tool: toolName,
+        params: {},
+        success: false,
+        output: '',
+        error: errMsg,
+      });
+      finalContent += `\n\n> ❌ **Tool Error (${toolName}):** ${errMsg}`;
+    }
   }
-  return orchestrator;
+  
+  return { finalContent, toolResults };
 }
 
 // =============================================================================
@@ -204,29 +177,54 @@ function getOrchestrator() {
 
 /**
  * @route POST /api/v1/engine/chat
- * @description Process a message through the V2 engine with tool execution
+ * @description Process a message with tool execution capability
  */
 router.post('/chat', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { message, sessionId, projectId } = req.body;
+    const { message, sessionId, provider: requestedProvider } = req.body;
     
     if (!message || typeof message !== 'string') {
       return errorResponse(res, 'Message is required', 400);
     }
     
-    const orch = getOrchestrator();
-    const result = await orch.process(
-      message,
-      sessionId || `session-${Date.now()}`,
-      projectId
-    );
+    const startTime = Date.now();
+    
+    // Build enhanced system prompt with tool instructions
+    const systemPrompt = `You are TooLoo.ai, an advanced AI assistant with file system access.
+${TOOL_SYSTEM_PROMPT}
+
+When the user asks you to create, write, or modify files, USE THE TOOLS to actually do it.
+Don't just show code - execute the file_write tool to create the file.`;
+    
+    // Use precog to get response
+    const provider = requestedProvider || 'anthropic';
+    const response = await precog.complete({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
+      provider,
+      model: provider === 'anthropic' ? 'claude-3-5-sonnet-20241022' 
+           : provider === 'deepseek' ? 'deepseek-chat'
+           : provider === 'openai' ? 'gpt-4o'
+           : 'gemini-1.5-flash',
+      temperature: 0.7,
+      maxTokens: 4096,
+    });
+    
+    // Execute any tool calls in the response
+    const { finalContent, toolResults } = await executeToolsFromResponse(response.content);
+    
+    const latencyMs = Date.now() - startTime;
     
     return successResponse(res, {
-      response: result.content,
-      artifacts: result.artifacts,
-      toolCalls: result.toolCalls,
-      tokens: result.tokenCount,
-      latencyMs: result.latencyMs,
+      response: finalContent,
+      provider,
+      model: response.model,
+      toolCalls: toolResults,
+      tokens: response.usage,
+      latencyMs,
+      sessionId: sessionId || `session-${Date.now()}`,
     });
   } catch (error) {
     console.error('[Engine-V2] Chat error:', error);
@@ -235,65 +233,38 @@ router.post('/chat', optionalAuth, async (req: AuthenticatedRequest, res: Respon
 });
 
 /**
- * @route POST /api/v1/engine/stream
- * @description Stream a response from the V2 engine
- */
-router.post('/stream', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { message, sessionId, projectId } = req.body;
-    
-    if (!message || typeof message !== 'string') {
-      return errorResponse(res, 'Message is required', 400);
-    }
-    
-    // Set up SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    
-    const orch = getOrchestrator();
-    
-    for await (const chunk of orch.processStream(message, sessionId, projectId)) {
-      res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
-    }
-    
-    res.write('data: [DONE]\n\n');
-    res.end();
-  } catch (error) {
-    console.error('[Engine-V2] Stream error:', error);
-    res.write(`data: ${JSON.stringify({ error: String(error) })}\n\n`);
-    res.end();
-  }
-});
-
-/**
  * @route GET /api/v1/engine/status
  * @description Get the status of the V2 engine
  */
 router.get('/status', (_req: Request, res: Response) => {
-  const providers = providerRegistry.list();
-  const skills = skillRegistry.list();
-  
-  return successResponse(res, {
+  return res.json(successResponse({
     status: 'ready',
     version: '2.0.0-alpha',
-    providers: providers.map(p => p.id),
-    skills: skills.map(s => ({ id: s.id, name: s.name, priority: s.priority })),
-    defaultProvider,
     toolsEnabled: true,
-    availableTools: ['file_write', 'file_read', 'list_files'],
-  });
+    availableTools: Object.keys(TOOL_IMPLEMENTATIONS),
+    providers: ['anthropic', 'deepseek', 'openai', 'gemini'],
+  }));
 });
 
 /**
- * @route POST /api/v1/engine/reset
- * @description Reset the session state
+ * @route POST /api/v1/engine/tool
+ * @description Execute a tool directly (for testing)
  */
-router.post('/reset', optionalAuth, async (_req: AuthenticatedRequest, res: Response) => {
+router.post('/tool', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const orch = getOrchestrator();
-    orch.resetSession();
-    return successResponse(res, { message: 'Session reset' });
+    const { tool, params } = req.body;
+    
+    if (!tool || typeof tool !== 'string') {
+      return errorResponse(res, 'Tool name is required', 400);
+    }
+    
+    const toolFn = TOOL_IMPLEMENTATIONS[tool];
+    if (!toolFn) {
+      return errorResponse(res, `Unknown tool: ${tool}`, 400);
+    }
+    
+    const output = await toolFn(params || {});
+    return successResponse(res, { tool, output });
   } catch (error) {
     return errorResponse(res, String(error), 500);
   }
