@@ -1,4 +1,4 @@
-// @version 1.0.0 - Nexus Utils Tests
+// @version 3.3.573 - Nexus Utils Tests
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Test types

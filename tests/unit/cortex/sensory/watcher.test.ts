@@ -1,3 +1,4 @@
+// @version 3.3.573
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FileWatcher } from '../../../../src/cortex/sensory/watcher';
 import { EventBus } from '../../../../src/core/event-bus';

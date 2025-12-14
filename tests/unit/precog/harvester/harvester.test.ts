@@ -1,3 +1,4 @@
+// @version 3.3.573
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Harvester } from '../../../../src/precog/harvester/index';
 import { bus } from '../../../../src/core/event-bus';

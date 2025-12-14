@@ -1,3 +1,4 @@
+// @version 3.3.573
 import { describe, it, expect } from 'vitest';
 import { SYSTEM_VERSION, SYSTEM_NAME, SYSTEM_ID, getUptime } from '../../../src/core/system-info';
 

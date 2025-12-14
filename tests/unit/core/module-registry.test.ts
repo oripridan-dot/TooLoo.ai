@@ -1,3 +1,4 @@
+// @version 3.3.573
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registry, SystemModule } from '../../../src/core/module-registry';
 

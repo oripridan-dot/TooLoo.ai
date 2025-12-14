@@ -1,4 +1,4 @@
-// @version 1.0.0 - TraitWeaver Tests
+// @version 3.3.573 - TraitWeaver Tests
 import { describe, it, expect, beforeEach } from 'vitest';
 
 // Test types and structures

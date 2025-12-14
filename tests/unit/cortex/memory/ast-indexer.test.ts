@@ -1,3 +1,4 @@
+// @version 3.3.573
 /**
  * AST Indexer Tests
  * Tests for code structure analysis using TypeScript compiler API

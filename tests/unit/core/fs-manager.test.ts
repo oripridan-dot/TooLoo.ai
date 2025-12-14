@@ -1,3 +1,4 @@
+// @version 3.3.573
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SmartFSManager } from '../../../src/core/fs-manager';
 import fs from 'fs/promises';

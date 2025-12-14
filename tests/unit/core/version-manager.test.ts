@@ -336,7 +336,7 @@ export function test() {}`;
   });
 
   it('should extract version from single line comment', () => {
-    const content = `// @version 1.0.0
+    const content = `// @version 3.3.573
 export const x = 1;`;
 
     const result = extractVersionTag(content);
