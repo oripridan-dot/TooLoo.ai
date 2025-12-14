@@ -1,6 +1,6 @@
 {
   "name": "@tooloo/monorepo",
-  "version": "2.0.0-alpha.0",
+  "version": "3.3.577",
   "description": "TooLoo.ai Synapsys V2 - Multi-agent AI Orchestration Platform",
   "private": true,
   "type": "module",

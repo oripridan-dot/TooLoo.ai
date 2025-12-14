@@ -1,4 +1,4 @@
-// @version 1.0.0 - Metaprogrammer Tests
+// @version 3.3.577 - Metaprogrammer Tests
 import { describe, it, expect, beforeEach } from 'vitest';
 
 describe('Metaprogrammer', () => {

@@ -1,4 +1,4 @@
-// @version 1.0.0 - ReasoningChain Tests
+// @version 3.3.577 - ReasoningChain Tests
 import { describe, it, expect, beforeEach } from 'vitest';
 
 // Test interface matching ReasoningStep

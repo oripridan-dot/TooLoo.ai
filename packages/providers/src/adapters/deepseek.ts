@@ -1,3 +1,4 @@
+// @version 3.3.577
 /**
  * DeepSeek Provider Adapter
  * High-performance, cost-effective code generation
@@ -210,8 +211,13 @@ export class DeepSeekProvider extends BaseProvider {
                 finishReason: this.mapFinishReason(parsed.choices[0].finish_reason),
               };
             }
-          } catch {
-            // Skip malformed JSON
+          } catch (parseError) {
+            // Log malformed JSON for debugging - could indicate API changes
+            console.warn('[DeepSeek] Failed to parse stream chunk:', {
+              data: data.substring(0, 200),
+              error: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+            });
+            // Continue processing other chunks
           }
         }
       }
