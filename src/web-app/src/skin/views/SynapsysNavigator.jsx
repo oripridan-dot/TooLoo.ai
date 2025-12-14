@@ -1,5 +1,6 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Synapsys Navigator - The Cognitive Operating System Interface
  * 
@@ -341,10 +342,37 @@ const ConversationStream = ({ messages, isTyping }) => {
               <div className="message-text">{msg.content}</div>
               {msg.toolCalls && msg.toolCalls.length > 0 && (
                 <div className="tool-calls">
+                  <div className="tool-calls-header">🔧 Tool Executions</div>
                   {msg.toolCalls.map((tool, i) => (
-                    <div key={i} className={`tool-call ${tool.result?.success ? 'success' : 'error'}`}>
-                      🔧 {tool.name}: {tool.result?.output || tool.result?.error}
-                    </div>
+                    <motion.div 
+                      key={i} 
+                      className={`tool-call ${tool.success ? 'success' : 'error'}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <div className="tool-header">
+                        <span className="tool-icon">{tool.success ? '✅' : '❌'}</span>
+                        <span className="tool-name">{tool.tool}</span>
+                      </div>
+                      {tool.params && (
+                        <div className="tool-params">
+                          {Object.entries(tool.params).map(([key, val]) => (
+                            <span key={key} className="tool-param">
+                              <code>{key}</code>: {typeof val === 'string' && val.length > 50 
+                                ? `${val.slice(0, 50)}...` 
+                                : JSON.stringify(val)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="tool-output">
+                        {tool.success 
+                          ? <pre>{tool.output}</pre>
+                          : <span className="error-text">{tool.error}</span>
+                        }
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
