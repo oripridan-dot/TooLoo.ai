@@ -9,6 +9,8 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "composite": true,
+    "incremental": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,

@@ -1,0 +1,108 @@
+# =============================================================================
+# TooLoo.ai V2 - Docker Compose Configuration
+# Production-ready deployment with API, Web, and optional services
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # API Server (Port 4001)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: tooloo-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-4001}:4001"
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - HOST=0.0.0.0
+      # Provider API keys (set in .env file)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      # Ollama (if using local models)
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+      # Database
+      - DATABASE_PATH=/app/data/tooloo.db
+      # Security
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:80}
+    volumes:
+      - api-data:/app/data
+      - ./skills:/app/skills:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tooloo-network
+    # depends_on:
+    #   - ollama
+
+  # ---------------------------------------------------------------------------
+  # Web Frontend (Port 80)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:4001/api/v2}
+        - VITE_SOCKET_URL=${VITE_SOCKET_URL:-http://localhost:4001}
+        - VITE_USE_V2=true
+    container_name: tooloo-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+    networks:
+      - tooloo-network
+    depends_on:
+      - api
+
+  # ---------------------------------------------------------------------------
+  # Ollama (Local LLM Server) - Optional
+  # ---------------------------------------------------------------------------
+  # Ollama (Local LLM Server) - Optional, requires NVIDIA GPU
+  # Start with: docker compose --profile gpu up ollama
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tooloo-ollama
+    restart: unless-stopped
+    profiles:
+      - gpu
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - tooloo-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  tooloo-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  api-data:
+    driver: local
+  ollama-data:
+    driver: local

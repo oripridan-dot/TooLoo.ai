@@ -1,190 +1,160 @@
-# TooLoo.ai V3.3.566 - Synapsys Architecture
+# TooLoo.ai Synapsys V2
 
-> 🧠 Autonomous AI Development Platform with Multi-Agent Orchestration
+> **Multi-agent AI Orchestration Platform**  
+> Version: 2.0.0-alpha.0
 
-[![Version](https://img.shields.io/badge/version-3.3.566-blue.svg)](./package.json)
-[![Synapsys V2](https://img.shields.io/badge/synapsys-v2.0.0--alpha-green.svg)](./SYNAPSYS_V2_ROADMAP.md)
-[![Node](https://img.shields.io/badge/node-22+-green.svg)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/typescript-5.7-blue.svg)](https://typescriptlang.org)
-[![pnpm](https://img.shields.io/badge/pnpm-10.0.0-orange.svg)](https://pnpm.io)
+A modern, modular AI platform with embedding-based skill routing, event-sourced memory, and real-time streaming.
 
-## 🌟 Overview
+## 🏗️ Architecture
 
-TooLoo.ai is a **multi-agent AI orchestration platform** that combines:
-- **Intelligent Provider Routing** - Auto-selects best AI model for each task
-- **Self-Execution Capabilities** - Executes code, manages artifacts, runs processes
-- **Real-time Collaboration** - Socket.IO powered project sync
-- **Three-Layer Validation** - Automated + AI + User acceptance gates
-- **Continuous Learning** - Q-learning optimizer improves routing over time
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      @tooloo/core                            │
+│  • TooLooContext (branded IDs, session, intent)             │
+│  • TypedEventBus (40+ event types)                          │
+│  • Context factory & update functions                       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+        ▼                     ▼                     ▼
+┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│ @tooloo/skills │   │ @tooloo/providers │   │  @tooloo/memory  │
+│               │   │                 │   │                 │
+│ • SkillDef    │   │ • BaseProvider  │   │ • EventStore    │
+│ • Registry    │   │ • LLM Adapters  │   │ • Projections   │
+│ • Router      │   │ • CircuitBreaker│   │ • SemanticCache │
+└───────────────┘   └─────────────────┘   └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  @tooloo/engine  │
+                    │                 │
+                    │ • Orchestrator  │
+                    │ • SkillExecutor │
+                    │ • ContextBuilder│
+                    └─────────────────┘
+```
 
-## 📦 Synapsys V2 Packages
+## 📦 Packages
 
-The new modular architecture (`synapsys-v2` branch) provides clean, reusable packages:
-
-| Package | Description | Status |
-|---------|-------------|--------|
-| `@tooloo/core` | The Soul - types, context, TypedEventBus | ✅ Verified |
-| `@tooloo/skills` | SkillRegistry, SkillRouter, defineSkill | ✅ Verified |
-| `@tooloo/providers` | Anthropic/DeepSeek/OpenAI + CircuitBreaker | ✅ Verified |
-| `@tooloo/memory` | SQLiteEventStore, Vector/Graph projections | ✅ Verified |
-| `@tooloo/evals` | Cognitive Unit Testing (19 golden tests) | ✅ Verified |
-| `@tooloo/contracts` | 12 API contracts with Zod validation | ✅ Verified |
-
-See [SYNAPSYS_V2_ROADMAP.md](./SYNAPSYS_V2_ROADMAP.md) for details.
-
-## 📖 For AI Assistants
-
-**See [SYSTEM_STATE.md](./SYSTEM_STATE.md) for complete system context** - includes all APIs, stores, events, and current implementation details that AI assistants need.
+| Package | Description |
+|---------|-------------|
+| `@tooloo/core` | Types, context, TypedEventBus |
+| `@tooloo/contracts` | API schemas with Zod validation |
+| `@tooloo/skills` | Skill registry, loader, router |
+| `@tooloo/providers` | LLM adapters (Anthropic, DeepSeek, OpenAI, Ollama) |
+| `@tooloo/memory` | Event store, vector/graph projections |
+| `@tooloo/engine` | Orchestrator that ties everything together |
+| `@tooloo/evals` | Golden tests for cognitive evaluation |
 
 ## 🚀 Quick Start
 
 ```bash
 # Install dependencies
-npm install
-cd src/web-app && npm install && cd ../..
+pnpm install
 
-# Start development (backend:4000 + frontend:5173)
-npm run dev
+# Build all packages
+pnpm build:packages
 
-# Verify running
-curl http://localhost:4000/api/v1/health
+# Start development (API + Web)
+pnpm dev
+
+# Or start individually
+pnpm dev:api  # API on port 4001
+pnpm dev:web  # Web on port 5173
 ```
 
-## 🏗️ Architecture
+## 🔌 API Endpoints
 
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/api/v2/chat` | POST | Send message, get AI response |
+| `/api/v2/chat/stream` | POST | Streaming AI response |
+| `/api/v2/skills` | GET | List available skills |
+| `/api/v2/skills/:id` | GET | Get skill details |
+| `/api/v2/projects` | GET/POST | Project management |
+| `/api/v2/auth/login` | POST | User authentication |
+| `/api/v2/auth/register` | POST | User registration |
+
+## 🧠 Skills System
+
+Skills are defined in YAML files in the `skills/` directory:
+
+```yaml
+# skills/coding-assistant.yaml
+id: coding-assistant
+name: Coding Assistant
+version: 1.0.0
+description: Expert code generation and debugging
+
+triggers:
+  keywords: [code, function, implement, debug, fix]
+  patterns: ["write.*code", "create.*function"]
+
+parameters:
+  temperature: 0.3
+  maxTokens: 4096
+
+systemPrompt: |
+  You are an expert software engineer...
 ```
-src/
-├── main.ts                    # Entry point
-├── core/                      # Event bus, config, metrics
-│   ├── event-bus.ts           # Central pub/sub system
-│   └── fs-manager.ts          # Safe file operations
-├── cortex/                    # Cognitive systems
-│   ├── agent/                 # Task execution & artifacts
-│   ├── memory/                # Hippocampus, vector store
-│   └── planning/              # DAG-based task planning
-├── nexus/                     # API layer
-│   ├── routes/                # 50+ REST endpoints
-│   ├── socket.ts              # Socket.IO server
-│   └── auth/                  # API key authentication
-├── precog/                    # AI routing
-│   ├── engine/                # Model capabilities, recipes
-│   │   ├── intelligent-router.ts
-│   │   ├── model-capabilities.ts
-│   │   ├── execution-recipes.ts
-│   │   └── three-layer-validation.ts
-│   └── learning/              # Q-learning optimizer
-├── qa/                        # Quality assurance
-└── web-app/src/skin/          # Liquid Synapsys UI (React)
-```
 
-## 🔌 Key APIs
-
-| Category | Endpoint | Description |
-|----------|----------|-------------|
-| **Health** | `GET /api/v1/health` | System status |
-| **Chat** | `POST /api/v1/chat` | AI conversation |
-| **Agent** | `POST /api/v1/agent/task/execute` | Execute task |
-| **Agent** | `POST /api/v1/agent/task/team-execute` | Team-validated execution |
-| **Routing** | `POST /api/v1/routing/route` | Intelligent model selection |
-| **Routing** | `POST /api/v1/routing/validate` | Three-layer validation |
-| **Projects** | `GET/POST /api/v1/projects` | Project management |
-| **Users** | `GET/POST /api/v1/users/me/keys` | API key management |
-| **Usage** | `GET /api/v1/usage/dashboard` | Analytics dashboard |
-
-## 🔐 Authentication
+## 🐳 Docker Deployment
 
 ```bash
-# Generate API key
-curl -X POST http://localhost:4000/api/v1/users \
-  -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","name":"Your Name"}'
+# Build and start
+pnpm docker:build
+pnpm docker:up
 
-# Use API key
-curl http://localhost:4000/api/v1/users/me \
-  -H "Authorization: Bearer tlai_your_key_here"
+# Stop
+pnpm docker:down
 ```
-
-**Tiers:** free (100 req/day), pro (1000 req/day), enterprise (10000 req/day)
 
 ## 🧪 Testing
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
-# Run specific test file
-npm test -- tests/unit/nexus/auth/
-
-# Check coverage
-open coverage/lcov-report/index.html
+# Run with coverage
+pnpm test -- --coverage
 ```
 
-## ⚙️ Environment Variables
+## 📁 Project Structure
+
+```
+├── apps/
+│   ├── api/          # Express + Socket.IO server (port 4001)
+│   └── web/          # React + Vite frontend (port 5173)
+├── packages/
+│   ├── core/         # Core types and event bus
+│   ├── contracts/    # API schemas
+│   ├── skills/       # Skill system
+│   ├── providers/    # LLM adapters
+│   ├── memory/       # Event store
+│   ├── engine/       # Orchestrator
+│   └── evals/        # Testing framework
+├── skills/           # YAML skill definitions
+├── docker-compose.v2.yml
+└── package.json
+```
+
+## 🔧 Environment Variables
+
+Copy `.env.v2.example` to `.env`:
 
 ```bash
-# Required - AI Providers
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-GOOGLE_AI_API_KEY=...
-DEEPSEEK_API_KEY=sk-...
+# Required for AI features
+DEEPSEEK_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key
+OPENAI_API_KEY=your-key
 
 # Optional
-GROQ_API_KEY=...
-GITHUB_TOKEN=ghp_...
-STRIPE_SECRET_KEY=sk_test_...
+OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-## 📊 Implemented Phases
+## 📄 License
 
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 1 | Smart Router | ✅ Complete |
-| 2 | Self-Optimization | ✅ Complete |
-| 3 | Payment Integration | ✅ Complete |
-| 4 | Continuous Learning | ✅ Complete |
-| 5 | Intelligence Layer | ✅ Complete |
-
-## 🔄 Development Commands
-
-```bash
-# Start dev servers
-npm run dev
-
-# Stop safely (Codespaces-safe)
-pkill -f "tsx.*main" 2>/dev/null
-pkill -f "vite" 2>/dev/null
-
-# Build frontend
-cd src/web-app && npm run build
-
-# Generate API docs
-npm run generate:openapi
-```
-
-## 📚 Documentation
-
-- [SYSTEM_STATE.md](./SYSTEM_STATE.md) - Complete system context for AI assistants
-- [SYNAPSYS_V2_ROADMAP.md](./SYNAPSYS_V2_ROADMAP.md) - V2 consolidation roadmap
-- [.github/copilot-instructions.md](./.github/copilot-instructions.md) - Copilot guidelines
-- [docs/API_CONTRACTS_GUIDE.md](./docs/API_CONTRACTS_GUIDE.md) - API contracts
-- [docs/architecture/ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md) - System architecture
-
-## 🤝 Contributing
-
-1. Check [SYSTEM_STATE.md](./SYSTEM_STATE.md) for context
-2. Follow TypeScript strict mode
-3. Use `bus.publish()` for events
-4. Update version in file headers
-5. Add tests for new features
-
-## Version History
-
-- **V2.0.0-alpha** - Synapsys V2 monorepo (6 packages, verified)
-- **V3.3.566** - Agent Execution System, Clean Architecture
-- **V3.2.x** - Liquid Synapsys UI
-- **V3.1.x** - Emergence & Learning
-- **V3.0.x** - Initial Synapsys Release
-
----
-
-Built with 🧠 by TooLoo.ai
+MIT © TooLoo.ai

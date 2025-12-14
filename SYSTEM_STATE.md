@@ -8,7 +8,55 @@ This document provides a complete snapshot of the current system state for AI as
 
 ---
 
-## 🏗️ Architecture Overview
+## � Synapsys V2 Architecture (NEW)
+
+TooLoo.ai now has a **pure monorepo architecture** alongside legacy code:
+
+### V2 Ports
+- **Backend V2:** `apps/api` → port **4001** (`/api/v2/*`)
+- **Frontend V2:** `apps/web` → port **5173** (same as legacy)
+- **Legacy Backend:** `src/main.ts` → port **4000** (`/api/v1/*`)
+
+### V2 Packages
+| Package | Description |
+|---------|-------------|
+| `@tooloo/core` | Types, EventBus, Context |
+| `@tooloo/skills` | Skill registry & router |
+| `@tooloo/providers` | LLM adapters (Anthropic, DeepSeek, OpenAI, **Ollama**) |
+| `@tooloo/memory` | Event store, projections |
+| `@tooloo/contracts` | API schemas with Zod |
+| `@tooloo/engine` | **Orchestrator** - ties all packages together |
+| `@tooloo/evals` | Golden tests for cognitive evaluation |
+
+### V2 Commands
+```bash
+# Start V2 (both API + Web)
+pnpm v2:dev
+
+# Start only V2 API
+pnpm v2:dev:api
+
+# Start only V2 Web
+pnpm v2:dev:web
+
+# Build all packages
+pnpm v2:build
+
+# Type check all packages
+pnpm v2:typecheck
+```
+
+### V2 API Endpoints (Port 4001)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/health` | GET | System health |
+| `/api/v2/chat` | POST | Chat with orchestrator |
+| `/api/v2/chat/stream` | POST | Streaming chat (SSE) |
+| `/api/v2/skills` | GET | List available skills |
+
+---
+
+## �🏗️ Architecture Overview
 
 TooLoo.ai is a **multi-agent AI orchestration platform** with self-execution capabilities. It runs as a full-stack application with:
 
@@ -22,35 +70,25 @@ TooLoo.ai is a **multi-agent AI orchestration platform** with self-execution cap
 ### Directory Structure
 ```
 /workspaces/TooLoo-Synapsys-V3.3/
+├── apps/                       # V2 Applications (NEW)
+│   ├── api/                    # @tooloo/api - Express + Socket.IO (port 4001)
+│   └── web/                    # @tooloo/web - React frontend
 ├── packages/                   # Synapsys V2 monorepo packages
-│   ├── core/                   # @tooloo/core
-│   ├── skills/                 # @tooloo/skills
-│   ├── providers/              # @tooloo/providers
-│   ├── memory/                 # @tooloo/memory
-│   ├── evals/                  # @tooloo/evals
-│   └── contracts/              # @tooloo/contracts
-├── src/
+│   ├── core/                   # @tooloo/core - Types, EventBus
+│   ├── skills/                 # @tooloo/skills - Registry, Router
+│   ├── providers/              # @tooloo/providers - LLM adapters + Ollama
+│   ├── memory/                 # @tooloo/memory - Event store
+│   ├── engine/                 # @tooloo/engine - Orchestrator (NEW)
+│   ├── evals/                  # @tooloo/evals - Golden tests
+│   └── contracts/              # @tooloo/contracts - API schemas
+├── src/                        # LEGACY (port 4000)
 │   ├── main.ts                 # Entry point
 │   ├── core/                   # Event bus, config, metrics
-│   │   ├── event-bus.ts        # Central pub/sub system
-│   │   ├── fs-manager.ts       # Safe file operations
-│   │   └── metrics-collector.ts
 │   ├── cortex/                 # AI cognitive systems
-│   │   ├── agent/              # Task execution, artifacts
-│   │   ├── memory/             # Hippocampus, vector store
-│   │   ├── planning/           # DAG-based task planning
-│   │   └── imagination/        # Visual generation
 │   ├── nexus/                  # API layer
-│   │   ├── routes/             # REST endpoints
-│   │   ├── socket.ts           # WebSocket server
-│   │   ├── auth/               # API key authentication
-│   │   └── middleware/         # Auth, rate limiting
 │   ├── precog/                 # AI provider routing
-│   │   ├── engine/             # Model capabilities, recipes
-│   │   └── learning/           # Q-learning optimizer
 │   ├── qa/                     # Quality assurance
-│   └── web-app/                # React frontend
-│       └── src/skin/           # Liquid Synapsys UI
+│   └── web-app/                # Legacy React frontend
 ├── data/                       # Persistent storage
 ├── projects/                   # User projects
 ├── config/runtime.json         # Runtime configuration
