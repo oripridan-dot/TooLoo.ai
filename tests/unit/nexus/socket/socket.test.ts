@@ -1,3 +1,4 @@
+// @version 3.3.577
 /**
  * @file socket.test.ts
  * @description Tests for Socket.IO server types and event structures

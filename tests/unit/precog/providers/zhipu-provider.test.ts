@@ -1,3 +1,4 @@
+// @version 3.3.577
 /**
  * @file zhipu-provider.test.ts
  * @description Unit tests for ZhiPu GLM-4 provider integration

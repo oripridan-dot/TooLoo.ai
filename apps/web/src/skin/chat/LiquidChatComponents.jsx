@@ -1,4 +1,4 @@
-// @version 3.3.433
+// @version 3.3.577
 // TooLoo.ai Liquid Chat Components
 // v3.3.376 - Fixed Chart.js rendering & improved visual format prompts
 // Rich visual display capabilities for chat responses

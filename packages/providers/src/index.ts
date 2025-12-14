@@ -1,3 +1,4 @@
+// @version 3.3.577
 /**
  * @tooloo/providers - Main Entry Point
  * Unified LLM provider interface with circuit breakers and streaming
@@ -46,6 +47,20 @@ export {
   AnthropicProvider,
   OpenAIProvider,
 } from './adapters/index.js';
+
+// Embedding Service
+export {
+  OpenAIEmbeddingProvider,
+  LocalEmbeddingProvider,
+  createEmbeddingFunction,
+  createEmbeddingProvider,
+  getDefaultEmbeddingProvider,
+  setDefaultEmbeddingProvider,
+  type EmbeddingConfig,
+  type EmbeddingResult,
+  type EmbeddingProvider,
+  type EmbeddingServiceConfig,
+} from './embeddings.js';
 
 // Version
 export const VERSION = '2.0.0-alpha.0';

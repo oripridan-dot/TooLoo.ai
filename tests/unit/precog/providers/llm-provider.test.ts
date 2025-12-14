@@ -1,3 +1,4 @@
+// @version 3.3.577
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import LLMProvider from '../../../../src/precog/providers/llm-provider';
 import { amygdala } from '../../../../src/cortex/amygdala/index';

@@ -1,4 +1,4 @@
-// @version 3.3.564 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing
+// @version 3.3.577 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';

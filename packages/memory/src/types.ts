@@ -1,3 +1,4 @@
+// @version 3.3.577
 /**
  * @tooloo/memory - Memory Types
  * Unified memory store with semantic caching
