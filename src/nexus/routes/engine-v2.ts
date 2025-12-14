@@ -1,5 +1,6 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Engine V2 Routes - Tool-enabled AI chat
  * 
@@ -197,9 +198,9 @@ ${TOOL_SYSTEM_PROMPT}
 When the user asks you to create, write, or modify files, USE THE TOOLS to actually do it.
 Don't just show code - execute the file_write tool to create the file.`;
     
-    // Use precog to get response
+    // Use precog providers to get response
     const provider = requestedProvider || 'anthropic';
-    const response = await precog.complete({
+    const response = await precog.providers.generate({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
