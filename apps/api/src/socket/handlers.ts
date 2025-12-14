@@ -1,6 +1,7 @@
 /**
  * @tooloo/api - Socket Handlers V2
  * Real-time WebSocket handlers with Orchestrator integration
+ * V3.3.588: Added orchestration event forwarding for Cognitive Bridge
  *
  * @version 2.0.0-alpha.0
  */
@@ -34,11 +35,78 @@ function toMessage(role: string, content: string): Message {
   };
 }
 
+/**
+ * Setup orchestration event forwarding for Cognitive Bridge
+ * Maps internal orchestrator events to client-facing socket events
+ */
+function setupOrchestrationEvents(io: TypedIO, orchestrator: Orchestrator): void {
+  // Forward orchestration lifecycle events to all connected clients
+  // These events drive the SynapysDNA visual state via CognitiveBridge
+  
+  orchestrator.on('orchestration:start', (event) => {
+    if (event.type !== 'orchestration:start') return;
+    io.emit('orchestration:start', {
+      sessionId: event.context.sessionId,
+      context: {
+        intent: event.context.intent || { type: 'default' },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  orchestrator.on('orchestration:routed', (event) => {
+    if (event.type !== 'orchestration:routed') return;
+    io.emit('orchestration:routed', {
+      result: {
+        skill: event.result.skill,
+        confidence: event.result.confidence,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  orchestrator.on('orchestration:provider_selected', (event) => {
+    if (event.type !== 'orchestration:provider_selected') return;
+    io.emit('orchestration:provider_selected', {
+      selection: {
+        providerId: event.selection.providerId,
+        model: event.selection.model,
+        reason: event.selection.reason,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  orchestrator.on('orchestration:executing', (event) => {
+    if (event.type !== 'orchestration:executing') return;
+    io.emit('orchestration:executing', {
+      skill: {
+        id: event.skill.id,
+        name: event.skill.name,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  orchestrator.on('orchestration:complete', (event) => {
+    if (event.type !== 'orchestration:complete') return;
+    io.emit('orchestration:complete', {
+      success: event.result.success,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  console.log('Orchestration event forwarding configured for Cognitive Bridge');
+}
+
 export function setupSocketHandlers(
   io: TypedIO,
   orchestrator: Orchestrator,
   skillRegistry: SkillRegistry
 ): void {
+  // V3.3.588: Setup orchestration event forwarding for Cognitive Bridge
+  setupOrchestrationEvents(io, orchestrator);
+
   io.on('connection', (socket: TypedSocket) => {
     console.log(`Socket connected: ${socket.id}`);
 

@@ -1,16 +1,17 @@
-// @version 3.3.577
+// @version 3.3.588
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
 // V3.3.450: Added Workstation view - 4-panel unified development interface
 // V3.3.480: Added Living Canvas - emotional background layer with performance controls
 // V3.3.532: Added CommandPalette (Cmd+K) - Quick actions and navigation
+// V3.3.588: Added CognitiveBridge - Backend orchestration to DNA state wiring
 
 import React, { memo, useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 
 // Synapsys DNA & Conductor - only import what we need
-import { useSynapsynDNA, SynapysConductor, SYNAPSYS_PRESETS } from '../synapsys';
+import { useSynapsynDNA, SynapysConductor, SYNAPSYS_PRESETS, CognitiveBridge } from '../synapsys';
 
 // V3.3.449: Projection Interface - Backend state visualization
 import { ControlDeck } from '../components/ControlDeck';
@@ -451,6 +452,9 @@ const TooLooApp = memo(() => {
       <TooLooPresenceProvider>
         <TextureEngineProvider enabled={false}>
           <SynapysConductor>
+            {/* V3.3.588: Cognitive Bridge - Wires backend orchestration to DNA state */}
+            <CognitiveBridge />
+            
             {/* V3.3.480: Living Canvas - Emotional background layer */}
             <LivingCanvas />
             <CanvasSocketBridge socket={socket} />
