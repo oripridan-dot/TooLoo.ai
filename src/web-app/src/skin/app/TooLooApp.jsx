@@ -1,4 +1,4 @@
-// @version 3.3.538
+// @version 2.0.NaN
 // TooLoo.ai - Main Liquid Synapsys Application
 // The viewport IS TooLoo - Space V4 with professional UI & Projects
 // V3.3.449: Added Projection Interface - ControlDeck header with provider/cost/confidence
@@ -56,9 +56,12 @@ const Design = lazy(() => import('../views/Design'));
 const Mirror = lazy(() => import('../views/Mirror'));
 // V3.3.450: Workstation - 4-panel unified development interface
 const Workstation = lazy(() => import('../views/Workstation'));
+// V2.0: Synapsys Navigator - The Cognitive Operating System Interface
+const Navigator = lazy(() => import('../views/SynapsysNavigator'));
 
 // View component map
 const VIEW_MAP = {
+  navigator: Navigator,
   space: Space,
   projects: Projects,
   cortex: Cortex,
