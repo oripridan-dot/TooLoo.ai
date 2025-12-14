@@ -372,7 +372,8 @@ const ConversationStream = ({ messages, isTyping }) => {
 // =============================================================================
 
 export const SynapsysNavigator = () => {
-  const socket = useSocket();
+  // Get socket from system state store
+  const socket = useSystemState((state) => state.connection?.socket);
   
   // State
   const [cognitiveState, setCognitiveState] = useState(CognitiveState.IDLE);
