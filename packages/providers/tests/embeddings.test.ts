@@ -1,3 +1,4 @@
+// @version 3.3.572
 /**
  * @tooloo/providers - Embedding Service Tests
  * Tests for OpenAI and Local embedding providers

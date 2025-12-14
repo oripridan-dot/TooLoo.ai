@@ -1,3 +1,4 @@
+// @version 3.3.572
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
