@@ -1,4 +1,5 @@
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Engine V2 Routes - Tool-enabled AI chat
  * 
@@ -184,7 +185,7 @@ router.post('/chat', optionalAuth, async (req: AuthenticatedRequest, res: Respon
     const { message, sessionId, provider: requestedProvider } = req.body;
     
     if (!message || typeof message !== 'string') {
-      return errorResponse(res, 'Message is required', 400);
+      return res.status(400).json(errorResponse('Message is required'));
     }
     
     const startTime = Date.now();
@@ -217,7 +218,7 @@ Don't just show code - execute the file_write tool to create the file.`;
     
     const latencyMs = Date.now() - startTime;
     
-    return successResponse(res, {
+    return res.json(successResponse({
       response: finalContent,
       provider,
       model: response.model,
@@ -225,10 +226,10 @@ Don't just show code - execute the file_write tool to create the file.`;
       tokens: response.usage,
       latencyMs,
       sessionId: sessionId || `session-${Date.now()}`,
-    });
+    }));
   } catch (error) {
     console.error('[Engine-V2] Chat error:', error);
-    return errorResponse(res, String(error), 500);
+    return res.status(500).json(errorResponse(String(error)));
   }
 });
 
@@ -247,6 +248,28 @@ router.get('/status', (_req: Request, res: Response) => {
 });
 
 /**
+ * @route GET /api/v1/engine/tools
+ * @description List available tools
+ */
+router.get('/tools', (_req: Request, res: Response) => {
+  return res.json(successResponse({
+    tools: Object.keys(TOOL_IMPLEMENTATIONS).map(name => ({
+      name,
+      description: getToolDescription(name),
+    })),
+  }));
+});
+
+function getToolDescription(toolName: string): string {
+  const descriptions: Record<string, string> = {
+    file_write: 'Write content to a file (creates directories as needed)',
+    file_read: 'Read the contents of a file',
+    list_files: 'List files in a directory',
+  };
+  return descriptions[toolName] || 'No description available';
+}
+
+/**
  * @route POST /api/v1/engine/tool
  * @description Execute a tool directly (for testing)
  */
@@ -255,18 +278,18 @@ router.post('/tool', optionalAuth, async (req: AuthenticatedRequest, res: Respon
     const { tool, params } = req.body;
     
     if (!tool || typeof tool !== 'string') {
-      return errorResponse(res, 'Tool name is required', 400);
+      return res.status(400).json(errorResponse('Tool name is required'));
     }
     
     const toolFn = TOOL_IMPLEMENTATIONS[tool];
     if (!toolFn) {
-      return errorResponse(res, `Unknown tool: ${tool}`, 400);
+      return res.status(400).json(errorResponse(`Unknown tool: ${tool}`));
     }
     
     const output = await toolFn(params || {});
-    return successResponse(res, { tool, output });
+    return res.json(successResponse({ tool, output }));
   } catch (error) {
-    return errorResponse(res, String(error), 500);
+    return res.status(500).json(errorResponse(String(error)));
   }
 });
 
