@@ -1,4 +1,5 @@
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Synapsys Navigator - The Cognitive Operating System Interface
  * 
@@ -420,7 +421,7 @@ export const SynapsysNavigator = () => {
     };
   }, [socket]);
   
-  // Message submission
+  // Message submission - uses Engine V2 with tool execution
   const handleSubmit = useCallback(async (message, attachments) => {
     setIsProcessing(true);
     setCognitiveState(CognitiveState.PROCESSING);
@@ -436,19 +437,40 @@ export const SynapsysNavigator = () => {
     ]);
     
     try {
-      const response = await fetch('/api/v1/chat/message', {
+      // Use Engine V2 endpoint with tool execution
+      const response = await fetch('/api/v1/engine/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message,
           mode: interactionMode,
-          enableTools: true,
         }),
       });
       
       const data = await response.json();
       
       if (data.ok) {
+        // Handle tool execution
+        if (data.data.toolCalls && data.data.toolCalls.length > 0) {
+          setCognitiveState(CognitiveState.EXECUTING);
+          setThoughtStream((prev) => [
+            ...prev, 
+            { id: Date.now(), icon: '🔧', text: `Executing ${data.data.toolCalls.length} tool(s)...` }
+          ]);
+          
+          // Add tool execution thoughts
+          data.data.toolCalls.forEach((tool) => {
+            setThoughtStream((prev) => [
+              ...prev,
+              { 
+                id: Date.now() + Math.random(), 
+                icon: tool.success ? '✅' : '❌', 
+                text: `${tool.tool}: ${tool.success ? tool.output.slice(0, 50) : tool.error}` 
+              }
+            ]);
+          });
+        }
+        
         // Add assistant message
         const assistantMsg = {
           id: Date.now() + 1,
@@ -466,10 +488,29 @@ export const SynapsysNavigator = () => {
           );
         }
         
+        // Handle artifacts from file operations
+        if (data.data.toolCalls) {
+          data.data.toolCalls.forEach((tool) => {
+            if (tool.tool === 'file_write' && tool.success) {
+              const path = tool.params?.path;
+              if (path) {
+                setArtifacts((prev) => [...prev, {
+                  id: Date.now() + Math.random(),
+                  name: path.split('/').pop(),
+                  path,
+                  type: 'code',
+                  language: path.split('.').pop(),
+                  createdAt: new Date().toISOString(),
+                }]);
+              }
+            }
+          });
+        }
+        
         // Add completion thought
         setThoughtStream((prev) => [
           ...prev, 
-          { id: Date.now(), icon: '✅', text: 'Response complete' }
+          { id: Date.now(), icon: '✅', text: `Done (${data.data.latencyMs}ms via ${data.data.provider})` }
         ]);
         
         setCognitiveState(CognitiveState.REFLECTING);
