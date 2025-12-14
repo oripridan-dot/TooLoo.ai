@@ -253,7 +253,7 @@ ViewLoading.displayName = 'ViewLoading';
 // ============================================================================
 
 const TooLooAppInner = memo(() => {
-  const [activeView, setActiveView] = useState('space');
+  const [activeView, setActiveView] = useState('navigator');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // V3.3.532: Command Palette state
