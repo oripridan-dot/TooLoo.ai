@@ -1,6 +1,7 @@
 // @version 2.0.NaN
 // @version 2.0.NaN
 // @version 2.0.NaN
+// @version 2.0.NaN
 /**
  * Engine V2 Routes - Tool-enabled AI chat
  * 
@@ -199,19 +200,15 @@ When the user asks you to create, write, or modify files, USE THE TOOLS to actua
 Don't just show code - execute the file_write tool to create the file.`;
     
     // Use precog providers to get response
-    const provider = requestedProvider || 'anthropic';
+    const provider = requestedProvider || 'deepseek';
     const response = await precog.providers.generate({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
+      prompt: message,
+      system: systemPrompt,
       provider,
       model: provider === 'anthropic' ? 'claude-3-5-sonnet-20241022' 
            : provider === 'deepseek' ? 'deepseek-chat'
            : provider === 'openai' ? 'gpt-4o'
            : 'gemini-1.5-flash',
-      temperature: 0.7,
-      maxTokens: 4096,
     });
     
     // Execute any tool calls in the response
@@ -221,10 +218,10 @@ Don't just show code - execute the file_write tool to create the file.`;
     
     return res.json(successResponse({
       response: finalContent,
-      provider,
+      provider: response.provider,
       model: response.model,
       toolCalls: toolResults,
-      tokens: response.usage,
+      cost: response.cost_usd,
       latencyMs,
       sessionId: sessionId || `session-${Date.now()}`,
     }));
