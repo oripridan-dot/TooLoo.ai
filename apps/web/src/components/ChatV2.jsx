@@ -181,9 +181,40 @@ const CodeBlock = memo(function CodeBlock({ code, language }) {
     if (!['javascript', 'js'].includes(language?.toLowerCase())) return;
     setExecuting(true);
     try {
-      // Safe eval for demo - in production use a sandbox
-      const result = new Function(code)();
-      setOutput(String(result ?? 'undefined'));
+      // Provide common stub variables for example code snippets
+      // This allows demo code to run without "undefined" errors
+      const sandbox = `
+        const firstInteraction = true;
+        const deepDive = false;
+        const showBriefIntro = () => console.log("Brief intro shown");
+        const showDetailedInfo = () => console.log("Detailed info shown");
+        const user = { name: "Demo User", preferences: {} };
+        const context = { topic: "demo", history: [] };
+        const data = [];
+        const items = ["item1", "item2", "item3"];
+        const result = null;
+      `;
+      const wrappedCode = `${sandbox}\n${code}`;
+      
+      // Capture console.log output
+      const logs = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.map(a => 
+        typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+      ).join(' '));
+      
+      try {
+        const result = new Function(wrappedCode)();
+        console.log = originalLog;
+        
+        if (logs.length > 0) {
+          setOutput(logs.join('\n'));
+        } else {
+          setOutput(String(result ?? 'undefined'));
+        }
+      } finally {
+        console.log = originalLog;
+      }
     } catch (err) {
       setOutput(`Error: ${err.message}`);
     }
