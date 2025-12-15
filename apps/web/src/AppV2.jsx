@@ -68,9 +68,17 @@ const COMPONENT_MAP = {
   
   // Memory Skills
   'memory': ChatV2,
+  'knowledge': ChatV2,
+  'context': ChatV2,
   
   // Emergence Skills
   'emergence': ChatV2,
+  'prediction': ChatV2,
+  'goal-pursuit': ChatV2,
+  
+  // Core Skills
+  'scheduler': ChatV2,
+  'orchestrator': ChatV2,
   
   // Observability Skills
   'observability': ChatV2,
