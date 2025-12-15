@@ -1,12 +1,12 @@
 # Refactoring Expert Skill
 # Improves code quality through strategic refactoring
 #
-# @version 1.0.0
+# @version 1.1.0.0
 # @author TooLoo.ai V2
 
 id: refactoring-expert
 name: Refactoring Expert
-version: 1.0.0
+version: 1.1.0
 description: Improves code quality through strategic refactoring while preserving behavior
 
 triggers:
@@ -108,3 +108,54 @@ examples:
     output: "Improved readability and structure"
   - input: "Optimize this module"
     output: "Performance improvements with benchmarks"
+tools:
+  - name: file_read
+    description: Read code files to refactor
+    required: true
+  - name: file_write
+    description: Write refactored code
+    required: true
+  - name: grep_search
+    description: Search for patterns to refactor
+    required: true
+  - name: semantic_search
+    description: Find related code for context
+    required: false
+  - name: terminal_execute
+    description: Run tests to verify refactoring
+    required: false
+
+context:
+  maxTokens: 8192
+  ragSources:
+    - codebase
+  memoryScope: project
+  includeHistory: true
+  maxHistoryMessages: 15
+
+composability:
+  requires: []
+  enhances:
+    - coding-assistant
+    - code-reviewer
+  conflicts: []
+  priority: 85
+
+modelRequirements:
+  minContext: 64000
+  capabilities:
+    - coding
+    - reasoning
+  preferredProviders:
+    - deepseek
+    - anthropic
+  temperature: 0.2
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - refactoring
+    - code-quality
+    - clean-code
+    - patterns

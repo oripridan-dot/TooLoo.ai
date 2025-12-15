@@ -2,56 +2,78 @@
  * @tooloo/api - Skills Routes
  * Skill management endpoints
  * 
- * @version 2.0.0-alpha.0
+ * @version 2.0.1 - Wired to actual skill registry
  */
 
 import { Router, type Request, type Response } from 'express';
+import type { SkillRegistry, SkillDefinition } from '@tooloo/skills';
 import type { APIResponse, SkillSummary } from '../types.js';
 
-export function createSkillsRouter(): Router {
+interface SkillsRouterOptions {
+  skillRegistry?: SkillRegistry;
+}
+
+export function createSkillsRouter(options: SkillsRouterOptions = {}): Router {
   const router = Router();
+  const { skillRegistry } = options;
 
   /**
    * GET /skills
    * List all registered skills
    */
   router.get('/', (_req: Request, res: Response) => {
-    // TODO: Wire to @tooloo/skills registry
-    const skills: SkillSummary[] = [
-      {
-        id: 'default-chat',
-        name: 'Default Chat',
-        description: 'General conversational assistant',
-        version: '1.0.0',
+    let skills: SkillSummary[];
+
+    // Use actual registry if available
+    if (skillRegistry) {
+      const allSkills = skillRegistry.getAll();
+      skills = allSkills.map((skill: SkillDefinition) => ({
+        id: skill.id,
+        name: skill.name,
+        description: skill.description,
+        version: skill.version,
         enabled: true,
-        triggers: {
-          intents: ['chat', 'unknown'],
-          keywords: [],
+        triggers: skill.triggers,
+        icon: (skill as any).icon,
+      }));
+    } else {
+      // Fallback hardcoded skills
+      skills = [
+        {
+          id: 'default-chat',
+          name: 'Default Chat',
+          description: 'General conversational assistant',
+          version: '1.0.0',
+          enabled: true,
+          triggers: {
+            intents: ['chat', 'unknown'],
+            keywords: [],
+          },
         },
-      },
-      {
-        id: 'code-generator',
-        name: 'Code Generator',
-        description: 'Generate code from natural language descriptions',
-        version: '1.0.0',
-        enabled: true,
-        triggers: {
-          intents: ['code', 'create'],
-          keywords: ['write', 'create', 'implement', 'function', 'class'],
+        {
+          id: 'code-generator',
+          name: 'Code Generator',
+          description: 'Generate code from natural language descriptions',
+          version: '1.0.0',
+          enabled: true,
+          triggers: {
+            intents: ['code', 'create'],
+            keywords: ['write', 'create', 'implement', 'function', 'class'],
+          },
         },
-      },
-      {
-        id: 'code-analyzer',
-        name: 'Code Analyzer',
-        description: 'Analyze and explain code',
-        version: '1.0.0',
-        enabled: true,
-        triggers: {
-          intents: ['analyze', 'explain'],
-          keywords: ['analyze', 'explain', 'review', 'understand'],
+        {
+          id: 'code-analyzer',
+          name: 'Code Analyzer',
+          description: 'Analyze and explain code',
+          version: '1.0.0',
+          enabled: true,
+          triggers: {
+            intents: ['analyze', 'explain'],
+            keywords: ['analyze', 'explain', 'review', 'understand'],
+          },
         },
-      },
-    ];
+      ];
+    }
 
     const response: APIResponse<SkillSummary[]> = {
       ok: true,

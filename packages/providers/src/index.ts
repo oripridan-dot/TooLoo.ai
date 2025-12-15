@@ -1,9 +1,10 @@
-// @version 3.3.577
+// @version 1.1.0.0
 /**
  * @tooloo/providers - Main Entry Point
  * Unified LLM provider interface with circuit breakers and streaming
  * 
- * @version 2.0.0-alpha.0
+ * @version 1.1.0.0
+ * @updated 2025-12-15
  */
 
 // Types
@@ -46,6 +47,8 @@ export {
   DeepSeekProvider,
   AnthropicProvider,
   OpenAIProvider,
+  GeminiProvider,
+  GEMINI_MODELS,
 } from './adapters/index.js';
 
 // Embedding Service
@@ -63,4 +66,4 @@ export {
 } from './embeddings.js';
 
 // Version
-export const VERSION = '2.0.0-alpha.0';
+export const VERSION = '1.1.0.0';

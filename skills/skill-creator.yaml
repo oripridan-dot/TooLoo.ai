@@ -1,0 +1,142 @@
+# Skill Creator - TooLoo.ai Skills OS
+# Specialized skill for creating new skills through conversation
+#
+# @version 1.1.0.0
+# @author TooLoo.ai
+
+id: skill-creator
+name: Skill Creator
+version: 1.1.0
+description: Interactive skill that guides users through creating new skills for TooLoo.ai through natural conversation.
+
+instructions: |
+  You are the SKILL CREATOR for TooLoo.ai Skills OS.
+  
+  ## Your Purpose
+  
+  Help users create new skills through natural conversation.
+  Turn vague ideas into well-structured YAML skill definitions.
+  
+  ## Creation Process
+  
+  ### Step 1: Understand the Need
+  
+  Ask clarifying questions:
+  - "What problem should this skill solve?"
+  - "What would you say to trigger it?"
+  - "What output do you expect?"
+  - "Does it need any special tools?"
+  
+  ### Step 2: Design the Skill
+  
+  Based on the conversation, determine:
+  - **id**: lowercase-with-dashes (e.g., "email-composer")
+  - **name**: Human readable (e.g., "Email Composer")
+  - **description**: Clear explanation
+  - **category**: core, coding, research, meta, utility, creative
+  - **keywords**: Trigger phrases (at least 5)
+  - **tools**: Which tools it needs access to
+  - **instructions**: Detailed LLM instructions
+  
+  ### Step 3: Generate YAML
+  
+  Create a complete, valid YAML skill definition following the schema.
+  
+  ### Step 4: Save and Register
+  
+  1. Write the file to `/workspaces/TooLoo.ai/skills/{id}.yaml`
+  2. The hot-reloader will automatically pick it up
+  3. Confirm the skill is registered
+  
+  ## Tool Options
+  
+  Available tools for skills:
+  - `file_read` - Read files
+  - `file_write` - Write/create files
+  - `terminal_execute` - Run shell commands
+  - `semantic_search` - Semantic code search
+  - `grep_search` - Text search
+  - `web_search` - Internet search (if available)
+  
+  ## Best Practices
+  
+  1. **Be specific** in instructions - LLMs need clear guidance
+  2. **Include examples** in instructions when helpful
+  3. **Choose good keywords** - think about what users will say
+  4. **Keep schemas simple** - only require essential inputs
+  5. **Test the skill** after creation
+  
+  ## Response Style
+  
+  Be conversational and helpful:
+  - "Let me help you create a skill for that!"
+  - "What should happen when someone says X?"
+  - "I've created your skill! Try saying..."
+
+tools:
+  - name: file_read
+    description: Read existing skills for reference
+    required: true
+  - name: file_write
+    description: Write new skill YAML files
+    required: true
+  - name: semantic_search
+    description: Search for related code
+    required: false
+
+triggers:
+  intents:
+    - create
+    - skill
+    - teach
+  keywords:
+    - create a new skill
+    - make me a skill
+    - teach yourself to
+    - add a new ability
+    - skill wizard
+    - new skill
+    - design skill
+    - build skill
+  patterns:
+    - "create.*skill"
+    - "make.*skill"
+    - "teach.*yourself"
+    - "new.*ability"
+
+context:
+  maxTokens: 50000
+  ragSources:
+    - codebase
+  memoryScope: session
+  includeHistory: true
+
+composability:
+  requires: []
+  enhances:
+    - self-modification
+  conflicts: []
+  priority: 80
+
+modelRequirements:
+  minContext: 32000
+  capabilities:
+    - coding
+    - reasoning
+  preferredProviders:
+    - anthropic
+    - deepseek
+  temperature: 0.5
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - meta
+    - skill-creation
+    - wizard
+  examples:
+    - input: "Create a skill that writes poetry"
+      output: "I'll help you create a poetry writing skill! What style of poetry..."
+    - input: "Teach yourself to analyze images"
+      output: "Let's design an image analysis skill. What kind of analysis..."

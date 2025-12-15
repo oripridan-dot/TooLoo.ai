@@ -1,12 +1,12 @@
 # Code Reviewer Skill
 # Expert code quality analyst and critic
 #
-# @version 1.0.0
+# @version 1.1.0.0
 # @author TooLoo.ai
 
 id: code-reviewer
 name: Code Reviewer
-version: 1.0.0
+version: 1.1.0
 description: Expert code quality analyst providing thorough reviews with actionable feedback
 
 instructions: |

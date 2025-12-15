@@ -1,8 +1,9 @@
-// @version 3.3.437
+// @version 3.3.590
 // TooLoo.ai LiquidShell - The "Deep Canvas" Architecture
 // Full-viewport wrapper with Z-Index Layered Architecture for sophisticated visual communication
 // Phase 1 of "Sentient Partner" Protocol
 // V3.3.434: Added Director Mode Toggle - Global Autonomy Switch for "God Mode"
+// V3.3.590: Made background transparent to allow LivingCanvas to show through
 
 import React, {
   memo,
@@ -775,13 +776,14 @@ export const LiquidShell = memo(
     return (
       <AutonomyContext.Provider value={autonomyContextValue}>
         <DeepCanvasContext.Provider value={canvasContextValue}>
-          <div className={`relative w-full h-screen overflow-hidden bg-[#0a0a0a] ${className}`}>
-            {/* Layer 1: Subconscious (z-0) - Mood backdrop */}
-            <SubconsciousLayer
+          {/* V3.3.590: z-10 to stay above LivingCanvas (z-0), transparent bg */}
+          <div className={`relative z-10 w-full h-screen overflow-hidden ${className}`}>
+            {/* Layer 1: SubconsciousLayer DISABLED - LivingCanvas is now the primary backdrop */}
+            {/* <SubconsciousLayer
               mood={mood}
               intensity={viewMode === 'macro' ? 0.7 : 0.4}
               autonomyEnabled={autonomyEnabled}
-            />
+            /> */}
 
             {/* Layer 2: Context (z-10) - Dependency visualization */}
             <ContextLayer

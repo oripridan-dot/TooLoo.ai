@@ -1,7 +1,7 @@
 {
-  "name": "@tooloo/monorepo",
-  "version": "3.3.577",
-  "description": "TooLoo.ai Synapsys V2 - Multi-agent AI Orchestration Platform",
+  "name": "tooloo-skills-os",
+  "version": "1.0.0",
+  "description": "TooLoo.ai Skills OS - The Universal Skill Execution Platform",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.0.0",
@@ -10,18 +10,25 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --parallel",
-    "dev:api": "turbo run dev --filter=@tooloo/api",
-    "dev:web": "turbo run dev --filter=@tooloo/web",
-    "build": "turbo run build",
-    "build:packages": "turbo run build --filter=@tooloo/core --filter=@tooloo/contracts --filter=@tooloo/skills --filter=@tooloo/providers --filter=@tooloo/memory --filter=@tooloo/engine --filter=@tooloo/evals",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
+    "boot": "tsx src/kernel/boot.ts",
+    "boot:dev": "tsx watch src/kernel/boot.ts",
+    "dev": "./scripts/skill-os-start.sh",
+    "start": "./scripts/skill-os-start.sh",
+    "stop": "./scripts/skill-os-stop.sh",
+    "dev:api": "cd apps/api && NODE_OPTIONS='--max-old-space-size=512' pnpm exec tsx watch src/index.ts",
+    "dev:web": "cd apps/web && NODE_OPTIONS='--max-old-space-size=512' pnpm exec vite --host 0.0.0.0 --port 5173",
+    "build": "pnpm run build:packages && pnpm run build:apps",
+    "build:packages": "turbo run build --filter='@tooloo/*'",
+    "build:apps": "turbo run build --filter='apps/*'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules .turbo packages/*/dist apps/*/dist",
-    "docker:build": "docker compose -f docker-compose.v2.yml build",
-    "docker:up": "docker compose -f docker-compose.v2.yml up -d",
-    "docker:down": "docker compose -f docker-compose.v2.yml down"
+    "version:bump": "tsx scripts/version-bump.ts",
+    "skills:list": "tsx scripts/skills-list.ts",
+    "skills:validate": "tsx scripts/validate-skills.ts",
+    "health": "curl -s http://localhost:4001/api/v2/health | jq"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
@@ -40,6 +47,8 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@tooloo/memory": "workspace:*",
+    "@tooloo/skills": "workspace:*",
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",
     "express": "^4.21.0",

@@ -2,7 +2,9 @@
  * @tooloo/api - Main Entry Point
  * Starts the TooLoo.ai API server with fully wired Orchestrator
  *
- * @version 2.0.0-alpha.0
+ * @version 1.1.0
+ * @skill-os true
+ * @updated 2025-12-15
  */
 
 import { config } from 'dotenv';
@@ -22,7 +24,11 @@ import {
   DeepSeekProvider,
   AnthropicProvider,
   OpenAIProvider,
+  GeminiProvider,
 } from '@tooloo/providers';
+
+// Kernel Bridge for seamless Kernel → Orchestrator integration
+import { orchestratorBridge } from '../../../src/kernel/orchestrator-bridge.js';
 
 // Export everything
 export * from './server.js';
@@ -41,6 +47,7 @@ function initializeProviders(): ProviderRegistry {
   console.log(`  DEEPSEEK_API_KEY: ${process.env.DEEPSEEK_API_KEY ? '✓ set' : '✗ missing'}`);
   console.log(`  ANTHROPIC_API_KEY: ${process.env.ANTHROPIC_API_KEY ? '✓ set' : '✗ missing'}`);
   console.log(`  OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✓ set' : '✗ missing'}`);
+  console.log(`  GOOGLE_API_KEY: ${process.env.GOOGLE_API_KEY ? '✓ set' : '✗ missing'}`);
 
   // DeepSeek - Cost-effective, great for coding
   if (process.env.DEEPSEEK_API_KEY) {
@@ -139,6 +146,39 @@ function initializeProviders(): ProviderRegistry {
       })
     );
     console.log('  ✓ OpenAI provider initialized');
+  }
+
+  // Google Gemini - Multi-modal with advanced reasoning
+  if (process.env.GOOGLE_API_KEY) {
+    registry.register(
+      new GeminiProvider({
+        id: createProviderId('gemini'),
+        name: 'Gemini',
+        apiKey: process.env.GOOGLE_API_KEY,
+        defaultModel: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+        enabled: true,
+        models: [
+          {
+            id: 'gemini-2.0-flash',
+            name: 'Gemini 2.0 Flash',
+            contextWindow: 1048576, // 1M tokens
+            maxOutputTokens: 8192,
+            capabilities: [
+              { domain: 'coding', level: 'proficient', score: 88 },
+              { domain: 'reasoning', level: 'expert', score: 92 },
+              { domain: 'creative', level: 'proficient', score: 85 },
+              { domain: 'analysis', level: 'expert', score: 90 },
+            ],
+            costPer1kInput: 0.000075,
+            costPer1kOutput: 0.0003,
+            supportsStreaming: true,
+            supportsFunctionCalling: true,
+            supportsVision: true,
+          },
+        ],
+      })
+    );
+    console.log('  ✓ Gemini provider initialized');
   }
 
   console.log(`  Total providers: ${registry.getAll().length}`);
@@ -300,13 +340,29 @@ if (isMain) {
   const orchestrator = new Orchestrator(skillRegistry, providerRegistry, {
     defaultProvider: 'deepseek',
     routing: {
-      semantic: true,
-      minConfidence: 0.6,
-      semanticWeight: 0.7,
-      keywordWeight: 0.3,
+      semantic: false,  // Disabled until embeddings service is implemented
+      minConfidence: 0.5,  // Balanced for intent-based routing
+      semanticWeight: 0.6,
+      keywordWeight: 0.3,  // When semantic=false: keyword*0.4 + intent*0.6
     },
   });
-  console.log('✓ Orchestrator initialized\n');
+  console.log('✓ Orchestrator initialized');
+
+  // ==========================================================================
+  // KERNEL-ORCHESTRATOR BRIDGE
+  // Seamlessly connects the Kernel to real LLM providers
+  // ==========================================================================
+  orchestratorBridge.initialize(providerRegistry);
+  orchestratorBridge.setOrchestrator(orchestrator);
+  
+  // Import and connect to kernel
+  import('../../../src/kernel/kernel.js').then(({ kernel }) => {
+    orchestratorBridge.connect(kernel);
+    console.log('✓ Kernel-Orchestrator Bridge connected');
+  }).catch((err) => {
+    console.warn('⚠ Could not connect Kernel-Orchestrator Bridge:', err.message);
+  });
+  console.log('');
 
   // Create server with orchestrator
   const server = new TooLooServer({

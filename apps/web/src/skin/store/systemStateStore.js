@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { io } from 'socket.io-client';
+import { getSocketUrl } from '../../utils/api.js';
 
 // ============================================================================
 // UI MODE MAPPING - Backend intent → Frontend layout
@@ -140,7 +141,11 @@ export const useSystemState = create(
       const existingSocket = get().connection.socket;
       if (existingSocket?.connected) return;
 
-      const socket = io('/', {
+      // Use dynamic URL detection for Codespaces support
+      const socketUrl = getSocketUrl();
+      console.log('[SystemState] Connecting to:', socketUrl);
+      
+      const socket = io(socketUrl, {
         path: '/socket.io',
         transports: ['websocket', 'polling'],
         reconnection: true,

@@ -1,160 +1,150 @@
-# TooLoo.ai Synapsys V2
+# TooLoo.ai Skills OS
 
-> **Multi-agent AI Orchestration Platform**  
-> Version: 2.0.0-alpha.0
+> **Version:** 1.0.0 | **Codename:** Genesis  
+> *Everything is a Skill*
 
-A modern, modular AI platform with embedding-based skill routing, event-sourced memory, and real-time streaming.
+A pure skill-based AI execution platform where the UI doesn't know what "Chat" is - it asks the Kernel "What can I do?"
 
-## 🏗️ Architecture
+## 🧠 The Philosophy
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      @tooloo/core                            │
-│  • TooLooContext (branded IDs, session, intent)             │
-│  • TypedEventBus (40+ event types)                          │
-│  • Context factory & update functions                       │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
-│ @tooloo/skills │   │ @tooloo/providers │   │  @tooloo/memory  │
-│               │   │                 │   │                 │
-│ • SkillDef    │   │ • BaseProvider  │   │ • EventStore    │
-│ • Registry    │   │ • LLM Adapters  │   │ • Projections   │
-│ • Router      │   │ • CircuitBreaker│   │ • SemanticCache │
-└───────────────┘   └─────────────────┘   └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  @tooloo/engine  │
-                    │                 │
-                    │ • Orchestrator  │
-                    │ • SkillExecutor │
-                    │ • ContextBuilder│
-                    └─────────────────┘
-```
-
-## 📦 Packages
-
-| Package | Description |
-|---------|-------------|
-| `@tooloo/core` | Types, context, TypedEventBus |
-| `@tooloo/contracts` | API schemas with Zod validation |
-| `@tooloo/skills` | Skill registry, loader, router |
-| `@tooloo/providers` | LLM adapters (Anthropic, DeepSeek, OpenAI, Ollama) |
-| `@tooloo/memory` | Event store, vector/graph projections |
-| `@tooloo/engine` | Orchestrator that ties everything together |
-| `@tooloo/evals` | Golden tests for cognitive evaluation |
+| Traditional Approach | Skills OS |
+|---------------------|-----------|
+| Hardcoded menu items | Dynamic UI from skill registry |
+| Routes for each feature | Single execute endpoint |
+| Add code for new features | Add YAML for new skills |
+| Tightly coupled | Loosely coupled |
 
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build:packages
-
-# Start development (API + Web)
+# Start Skills OS
 pnpm dev
 
-# Or start individually
-pnpm dev:api  # API on port 4001
-pnpm dev:web  # Web on port 5173
+# Stop Skills OS  
+pnpm stop
+
+# Check health
+pnpm health
+
+# List skills
+pnpm skills:list
 ```
+
+**URLs:**
+- 🖥️ Skills Shell: http://localhost:5173
+- 🔌 API Server: http://localhost:4001/api/v2
+- 🧠 Kernel: http://localhost:4002/synapsys
+
+## 📁 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SKILLS SHELL (UI)                           │
+│                   apps/web - Port 5173                          │
+│         "What skills do I have?" → Render dynamic UI            │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        API SERVER                               │
+│                    apps/api - Port 4001                         │
+│  /api/v2/skills  |  /api/v2/execute  |  /api/v2/route          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                          KERNEL                                 │
+│                    src/kernel - Port 4002                       │
+│       Registry → Router → Executor → Result                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    SKILL DEFINITIONS                            │
+│                      skills/*.yaml                              │
+│  coding-assistant | architect | research-analyst | ...          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📦 Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| `coding-assistant` | TypeScript/Node.js expert |
+| `architect` | System design & patterns |
+| `research-analyst` | Research & analysis |
+| `documentation-writer` | Technical docs |
+| `test-generator` | Unit & integration tests |
+| `refactoring-expert` | Code optimization |
+| `code-reviewer` | Code review |
 
 ## 🔌 API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/api/v2/chat` | POST | Send message, get AI response |
-| `/api/v2/chat/stream` | POST | Streaming AI response |
-| `/api/v2/skills` | GET | List available skills |
-| `/api/v2/skills/:id` | GET | Get skill details |
-| `/api/v2/projects` | GET/POST | Project management |
-| `/api/v2/auth/login` | POST | User authentication |
-| `/api/v2/auth/register` | POST | User registration |
+| `/api/v2/health` | GET | System health |
+| `/api/v2/skills` | GET | List all skills |
+| `/api/v2/execute` | POST | Execute a skill |
+| `/api/v2/route` | POST | Route intent to skill |
+| `/api/v2/chat` | POST | Chat (uses skills) |
 
-## 🧠 Skills System
+## 📝 Creating Skills
 
-Skills are defined in YAML files in the `skills/` directory:
+Create a YAML file in `skills/`:
 
 ```yaml
-# skills/coding-assistant.yaml
-id: coding-assistant
-name: Coding Assistant
+# skills/my-skill.yaml
+id: my-skill
+name: My Custom Skill
 version: 1.0.0
-description: Expert code generation and debugging
+description: What this skill does
 
-triggers:
-  keywords: [code, function, implement, debug, fix]
-  patterns: ["write.*code", "create.*function"]
+keywords:
+  - keyword1
+  - keyword2
 
-parameters:
-  temperature: 0.3
-  maxTokens: 4096
+schema:
+  type: object
+  properties:
+    task:
+      type: string
+  required: [task]
 
-systemPrompt: |
-  You are an expert software engineer...
-```
-
-## 🐳 Docker Deployment
-
-```bash
-# Build and start
-pnpm docker:build
-pnpm docker:up
-
-# Stop
-pnpm docker:down
+instructions: |
+  You are an expert at...
 ```
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-pnpm test
-
-# Run with coverage
-pnpm test -- --coverage
+pnpm test                    # All tests
+pnpm skills:validate         # Validate YAML files
 ```
 
 ## 📁 Project Structure
 
 ```
+TooLoo.ai/
+├── skills/              # 📦 YAML Skill Definitions (SOURCE OF TRUTH)
+├── src/kernel/          # 🧠 The Kernel
 ├── apps/
-│   ├── api/          # Express + Socket.IO server (port 4001)
-│   └── web/          # React + Vite frontend (port 5173)
-├── packages/
-│   ├── core/         # Core types and event bus
-│   ├── contracts/    # API schemas
-│   ├── skills/       # Skill system
-│   ├── providers/    # LLM adapters
-│   ├── memory/       # Event store
-│   ├── engine/       # Orchestrator
-│   └── evals/        # Testing framework
-├── skills/           # YAML skill definitions
-├── docker-compose.v2.yml
-└── package.json
+│   ├── api/             # 🌐 API Server (port 4001)
+│   └── web/             # 🖥️ Skills Shell (port 5173)
+├── packages/            # 📚 @tooloo/* packages
+├── version.json         # 📊 Auto-incrementing version
+└── SKILLS_OS.md         # 📖 Full documentation
 ```
 
-## 🔧 Environment Variables
+## ⚠️ Codespace Safety
 
-Copy `.env.v2.example` to `.env`:
+**NEVER run `pkill -f "node"` in Codespaces!** Use `pnpm stop` instead.
 
-```bash
-# Required for AI features
-DEEPSEEK_API_KEY=your-key
-ANTHROPIC_API_KEY=your-key
-OPENAI_API_KEY=your-key
+## 📚 Documentation
 
-# Optional
-OLLAMA_BASE_URL=http://localhost:11434
-```
+- [SKILLS_OS.md](SKILLS_OS.md) - Full system documentation
+- [.github/copilot-instructions.md](.github/copilot-instructions.md) - AI assistant guide
 
-## 📄 License
+---
 
-MIT © TooLoo.ai
+*Skills OS V1 - Genesis*  
+*Everything is a Skill*

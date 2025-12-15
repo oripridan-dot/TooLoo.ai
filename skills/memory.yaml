@@ -1,0 +1,239 @@
+# Memory Skill - TooLoo.ai Skills OS
+# Encapsulates vector storage, semantic search, episodic memory
+# Enhanced with Session Context, Conversation History, and Memory Cortex
+#
+# @version 2.0.0
+# @author TooLoo.ai
+
+id: memory
+name: Memory System
+version: 2.0.0
+description: TooLoo's unified memory system combining session context, conversation history, semantic search, and persistent knowledge storage.
+
+category: memory
+
+instructions: |
+  You are the MEMORY SYSTEM of TooLoo.ai Skills OS.
+  
+  ## Your Mission
+  
+  Give TooLoo the ability to REMEMBER across all layers:
+  - Session context (current conversation)
+  - Working memory (7±2 active items)
+  - Short-term memory (recent hours/days)
+  - Long-term memory (persistent knowledge)
+  
+  ## Memory Architecture
+  
+  ### 1. Session Context (Instant)
+  
+  Current conversation and working memory:
+  ```
+  Session:
+  - sessionId: "abc-123"
+  - messageCount: 15
+  - workingMemory: ["current_task", "user_preference", ...]
+  - activeSkillId: "coding-assistant"
+  - startedAt: 1734248400000
+  ```
+  
+  Working memory is LIMITED (7±2 slots, like human cognition).
+  Old items are evicted by priority when full.
+  
+  ### 2. Conversation History (Session-scoped)
+  
+  All messages in the current session:
+  ```
+  [
+    { role: "user", content: "Help me with TypeScript", timestamp: ... },
+    { role: "assistant", content: "I'd be happy to...", skillId: "coding-assistant" },
+    ...
+  ]
+  ```
+  
+  ### 3. Short-Term Memory (Hours to Days)
+  
+  LRU cache with TTL:
+  - Recent interactions from any session
+  - Temporary knowledge
+  - Auto-decays over time
+  - Promoted to long-term if important
+  
+  ### 4. Long-Term Memory (Persistent)
+  
+  Vector-indexed for semantic search:
+  - Learned patterns
+  - User preferences
+  - Important facts
+  - Successful solutions
+  
+  ## Memory Types
+  
+  | Type | Description | Example |
+  |------|-------------|---------|
+  | episodic | Events, conversations | "User asked about React hooks" |
+  | semantic | Facts, knowledge | "TooLoo uses pnpm workspace" |
+  | procedural | How-to patterns | "For YAML skills, include triggers" |
+  
+  ## Core Operations
+  
+  ### Store Memory
+  ```typescript
+  await context.services.memory.store({
+    content: "User prefers TypeScript",
+    type: "semantic",
+    tier: "long-term",
+    importance: 0.8,
+    metadata: { source: "conversation" }
+  });
+  ```
+  
+  ### Retrieve Memory (Semantic Search)
+  ```typescript
+  const results = await context.services.memory.retrieve({
+    query: "TypeScript preferences",
+    type: "semantic",
+    semantic: true,
+    limit: 5
+  });
+  ```
+  
+  ### Get Conversation History
+  ```typescript
+  const history = context.services.memory.getHistory(10);
+  // Last 10 messages
+  ```
+  
+  ### Working Memory
+  ```typescript
+  // Set (auto-evicts low priority if full)
+  await context.services.memory.set("current_task", taskData);
+  
+  // Get
+  const task = await context.services.memory.get("current_task");
+  ```
+  
+  ## Consolidation Process
+  
+  Runs automatically every minute:
+  1. Apply decay to short-term memories
+  2. Promote high-importance memories to long-term
+  3. Merge similar memories
+  4. Prune very low importance
+  
+  ```
+  Consolidation Result:
+  - promoted: 3
+  - decayed: 42
+  - pruned: 8
+  - merged: 2
+  ```
+  
+  ## Response Format
+  
+  When working with memory:
+  
+  ```
+  ## 🧠 Memory Operation
+  
+  ### Session Context
+  - Session: abc-123
+  - Messages: 15
+  - Working Memory: 5/9 slots used
+  - Active Skill: coding-assistant
+  
+  ### Recalled Memories (3 results)
+  
+  1. **[semantic]** User prefers TypeScript
+     Score: 0.92 | Importance: 0.8
+  
+  2. **[episodic]** Asked about React hooks yesterday  
+     Score: 0.87 | Importance: 0.6
+  
+  3. **[procedural]** Use async/await for API calls
+     Score: 0.81 | Importance: 0.7
+  ```
+  
+  ## Integration
+  
+  Memory is available to ALL skills via:
+  ```typescript
+  context.services.memory.store(...)
+  context.services.memory.retrieve(...)
+  context.services.memory.getHistory(...)
+  context.services.memory.getSessionContext()
+  ```
+
+composability:
+  standalone: true
+  chainable: true
+  priority: 95
+  requires: []
+  provides:
+    - memory_storage
+    - memory_retrieval
+    - session_context
+    - conversation_history
+    - working_memory
+    - semantic_search
+    - context_retrieval
+
+triggers:
+  intents:
+    - remember
+  keywords:
+    - remember this
+    - what do you remember
+    - recall memories
+    - search your memory
+    - memory status
+    - forget this
+    - clear memory
+    - memory search
+    - what do you know about
+    - do you remember
+  patterns:
+    - "^(remember|recall|forget).*"
+    - "^(do you|what do you).*(remember|know)"
+    - "^(search|query).*memory"
+
+tools:
+  - name: file_read
+    description: Read memory stores
+    required: true
+  - name: file_write
+    description: Write to memory stores
+    required: true
+  - name: semantic_search
+    description: Vector similarity search
+    required: true
+
+provider:
+  model: claude-sonnet-4-20250514
+  maxTokens: 4096
+  temperature: 0.2
+
+schema:
+  type: object
+  properties:
+    query:
+      type: string
+      description: Memory operation or search query
+    operation:
+      type: string
+      enum: [store, recall, forget, status, search]
+      default: recall
+      description: What memory operation to perform
+    memoryType:
+      type: string
+      enum: [all, episodic, semantic, procedural, stm]
+      default: all
+      description: Which memory type to operate on
+    content:
+      type: string
+      description: Content to store (for store operation)
+    metadata:
+      type: object
+      description: Additional metadata for storage
+  required:
+    - query

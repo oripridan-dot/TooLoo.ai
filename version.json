@@ -1,0 +1,33 @@
+{
+  "name": "TooLoo.ai Skills OS",
+  "version": "1.2.2",
+  "codename": "Awakening",
+  "major": 1,
+  "minor": 2,
+  "patch": 2,
+  "build": 1,
+  "releaseDate": "2025-12-15",
+  "lastUpdated": "2025-12-15T20:00:00Z",
+  "autoIncrement": true,
+  "changelog": [
+    "V1.2.2 - Phase 1 VERIFIED: All 4 Native Engines Boot Successfully",
+    "V1.2.2 - TypeScript strict mode compliance (fixed 'possibly undefined' errors)",
+    "V1.2.2 - Internal config types ensure required properties at runtime",
+    "V1.2.1 build 2 - Phase 1 COMPLETE: Native Engines (NO LEGACY DEPENDENCIES)",
+    "V1.2.1 - LearningEngine: Q-learning, epsilon-greedy exploration, rewards",
+    "V1.2.1 - EvolutionEngine: A/B testing, prompt strategies, improvement goals",
+    "V1.2.1 - EmergenceEngine: Pattern detection, skill synergies, emergent goals",
+    "V1.2.1 - RoutingEngine: Provider routing, waterfall fallback, health monitoring",
+    "V1.2.1 - Kernel integration: context.services.engines available to all skills",
+    "V1.2.0 build 1 - Phase 0 COMPLETE: ToolExecutor + 8 tools implemented",
+    "V1.2.0 - All 20 skill YAMLs now have full schema compliance",
+    "V1.2.0 - Safety checks: path validation, rate limiting, audit logging",
+    "V1.2.0 - Approval workflow for file writes and terminal commands",
+    "V1.2.0 - 13 tool execution tests, all passing",
+    "V1.1.0 build 1 - Fixed skill version format for YAML validator",
+    "V1.1.0 - Skills OS routing fix complete",
+    "V1.1.0 - Added 9 new meta/learning skills",
+    "V1.1.0 - Added Gemini provider support (4 LLM providers total)",
+    "V1.1.0 - Intent detection improved"
+  ]
+}

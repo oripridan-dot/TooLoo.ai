@@ -302,10 +302,10 @@ export const DEFAULT_CONFIG: OrchestratorConfig = {
   timeout: 60000,
   streaming: true,
   routing: {
-    semantic: true,
-    minConfidence: 0.6,
+    semantic: false,  // Disabled until embeddings service is implemented
+    minConfidence: 0.5, // Balanced for intent-based routing
     semanticWeight: 0.6,
-    keywordWeight: 0.4,
+    keywordWeight: 0.3,  // When semantic=false: keyword*0.4 + intent*0.6
   },
   memory: {
     maxShortTerm: 20,

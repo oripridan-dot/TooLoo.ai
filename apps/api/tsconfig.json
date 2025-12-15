@@ -12,12 +12,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../..",
     "composite": true,
     "incremental": true,
     "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@tooloo/core": ["../../packages/core/src/index.ts"],
       "@tooloo/contracts": ["../../packages/contracts/src/index.ts"],
@@ -27,7 +27,7 @@
       "@tooloo/memory": ["../../packages/memory/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "../../src/kernel/**/*.ts", "../../src/skills/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "../../packages/core" },

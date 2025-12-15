@@ -2781,17 +2781,8 @@ const TooLooSpaceV4 = memo(() => {
   const expandedCardData = expandedCard ? cards.find((c) => c.id === expandedCard) : null;
 
   return (
-    <div className="min-h-screen max-h-screen overflow-hidden bg-[#0a0a0f] text-white">
-      {/* Background */}
-      <div className="fixed inset-0 opacity-30 pointer-events-none">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
-                             radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 40%)`,
-          }}
-        />
-      </div>
+    <div className="min-h-screen max-h-screen overflow-hidden text-white">
+      {/* Living Canvas shows through as background - no opaque overlay needed */}
 
       {/* Header */}
       <HeaderBar

@@ -1,20 +1,48 @@
-# TooLoo.ai Skills Directory
-# Declarative skill definitions for Synapsys V2
+# TooLoo.ai Skills OS - Skill Definitions
 
-This directory contains skill definitions that define how TooLoo behaves for different tasks.
+> **Version:** 1.0.0 | Everything is a Skill
 
-## Skill File Format
+This directory contains YAML skill definitions - **the source of truth** for all TooLoo capabilities.
 
-Skills can be defined as:
+## 📦 Available Skills
 
-### YAML Files (.yaml, .yml)
+| Skill | Description |
+|-------|-------------|
+| `coding-assistant` | TypeScript/Node.js expert |
+| `architect` | System design & architecture |
+| `research-analyst` | Research & analysis |
+| `documentation-writer` | Technical documentation |
+| `test-generator` | Unit & integration tests |
+| `refactoring-expert` | Code optimization |
+| `code-reviewer` | Code review & feedback |
+
+## 📝 Skill File Format
 
 ```yaml
-id: my-skill
-name: My Custom Skill
-version: 1.0.0
+# skills/my-skill.yaml
+
+# Required fields
+id: my-skill                    # Unique identifier
+name: My Custom Skill           # Display name
+version: 1.0.0                  # Semantic version
 description: What this skill does
 
+# Intent routing
+keywords:
+  - keyword1
+  - keyword2
+
+# Input validation (Zod-compatible schema)
+schema:
+  type: object
+  properties:
+    task:
+      type: string
+      description: The task to perform
+  required:
+    - task
+
+# LLM instructions (the prompt)
 instructions: |
   You are an expert at...
   
@@ -22,32 +50,44 @@ instructions: |
   - Always do X
   - Never do Y
 
+# Available tools
 tools:
-  - name: file_read
-  - name: terminal_execute
-
-triggers:
-  intents: [code, fix]
-  keywords: [debug, error, fix]
-
-context:
-  maxTokens: 64000
-  ragSources: [codebase, docs]
-  memoryScope: project
-
-composability:
-  requires: []
-  enhances: [code-reviewer]
-  conflicts: []
+  - file_read
+  - file_write
+  - terminal_run
 ```
 
-### Markdown Files (.md)
+## 🔧 Schema Reference
 
-```markdown
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | ✅ | Unique skill identifier |
+| `name` | string | ✅ | Display name |
+| `version` | string | ✅ | Semantic version |
+| `description` | string | ✅ | What the skill does |
+| `keywords` | string[] | ❌ | Intent routing keywords |
+| `schema` | object | ❌ | Input validation schema |
+| `instructions` | string | ❌ | LLM system prompt |
+| `tools` | string[] | ❌ | Available tools |
+| `model` | string | ❌ | Preferred LLM model |
+| `temperature` | number | ❌ | LLM temperature (0-1) |
+
+## 🚀 Creating a New Skill
+
+1. Create `skills/my-skill.yaml`
+2. Define the required fields
+3. Restart Skills OS: `pnpm dev`
+4. Test: `curl http://localhost:4001/api/v2/skills`
+
+## 🧪 Validating Skills
+
+```bash
+pnpm skills:validate
+```
+
 ---
-name: My Custom Skill
-version: 1.0.0
-description: What this skill does
+
+*Skills OS V1 - Genesis*
 tools:
   - name: file_read
 triggers:

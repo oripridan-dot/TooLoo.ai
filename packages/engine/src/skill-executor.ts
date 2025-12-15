@@ -64,8 +64,14 @@ export class SkillExecutor {
       throw new Error(`Provider not found: ${providerSelection.providerId}`);
     }
 
+    console.log(`[SkillExecutor] Using provider: ${providerSelection.providerId}, model: ${providerSelection.model}`);
+    console.log(`[SkillExecutor] Provider available: ${provider.isAvailable()}`);
+    console.log(`[SkillExecutor] Provider ID: ${provider.id}, Name: ${provider.name}`);
+    console.log(`[SkillExecutor] Provider constructor: ${provider.constructor.name}`);
+
     // Build messages for the provider
     const messages = this.buildMessages(context);
+    console.log(`[SkillExecutor] System prompt preview: ${messages[0]?.content?.slice(0, 100)}...`);
 
     // Track current provider and model for fallback logic
     let currentProvider = provider;
@@ -77,6 +83,7 @@ export class SkillExecutor {
 
     while (attempts < this.config.maxRetries) {
       try {
+        console.log(`[SkillExecutor] Attempt ${attempts + 1}: calling ${currentProvider.constructor.name}.complete()`);
         const response = await currentProvider.complete({
           messages,
           model: currentModel,
@@ -101,6 +108,7 @@ export class SkillExecutor {
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
+        console.error(`[SkillExecutor] Attempt ${attempts + 1} failed:`, lastError.message);
         attempts++;
 
         // Try fallback provider

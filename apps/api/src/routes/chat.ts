@@ -1,8 +1,8 @@
 /**
  * @tooloo/api - Chat Routes
- * Conversation and messaging endpoints
+ * Conversation and messaging endpoints with Precog routing integration
  * 
- * @version 2.0.0-alpha.0
+ * @version 2.0.0-alpha.1
  */
 
 import { Router, type Request, type Response } from 'express';
@@ -11,9 +11,72 @@ import { createSessionId, type SessionId } from '@tooloo/core';
 import type { Orchestrator } from '@tooloo/engine';
 import type { APIResponse, ChatRequest, ChatResponse } from '../types.js';
 
+// =============================================================================
+// TYPES
+// =============================================================================
+
 interface ChatRouterDeps {
   io: SocketIOServer;
   orchestrator?: Orchestrator;
+}
+
+/**
+ * Complexity levels for routing decisions
+ */
+type ComplexityLevel = 'trivial' | 'low' | 'medium' | 'high' | 'critical';
+
+/**
+ * Routing context extracted from request headers
+ */
+interface RoutingContext {
+  complexityHint: ComplexityLevel;
+  sessionId: string;
+  requestCount: number;
+  conversationDepth: number;
+  preferredProvider?: string;
+  routingHints?: Record<string, unknown>;
+}
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+/**
+ * Extract routing context from request headers
+ * This enables frontend → Precog communication for intelligent routing
+ */
+function extractRoutingContext(req: Request): RoutingContext {
+  return {
+    complexityHint: (req.headers['x-complexity-hint'] as ComplexityLevel) || 'medium',
+    sessionId: (req.headers['x-session-id'] as string) || `session_${Date.now()}`,
+    requestCount: parseInt(req.headers['x-request-count'] as string) || 0,
+    conversationDepth: parseInt(req.headers['x-conversation-depth'] as string) || 0,
+    preferredProvider: req.headers['x-preferred-provider'] as string | undefined,
+    routingHints: req.headers['x-routing-hints'] 
+      ? JSON.parse(req.headers['x-routing-hints'] as string)
+      : undefined,
+  };
+}
+
+/**
+ * Map complexity to provider preference
+ * This is the "smart routing" logic that uses frontend hints
+ */
+function getProviderPreference(complexity: ComplexityLevel): { speed: number; quality: number } {
+  switch (complexity) {
+    case 'trivial':
+      return { speed: 1.0, quality: 0.3 };  // Fastest model
+    case 'low':
+      return { speed: 0.7, quality: 0.5 };
+    case 'medium':
+      return { speed: 0.5, quality: 0.7 };
+    case 'high':
+      return { speed: 0.3, quality: 0.9 };
+    case 'critical':
+      return { speed: 0.1, quality: 1.0 };  // Best model
+    default:
+      return { speed: 0.5, quality: 0.7 };
+  }
 }
 
 export function createChatRouter(deps: ChatRouterDeps): Router {
@@ -22,11 +85,23 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
 
   /**
    * POST /chat
-   * Send a chat message
+   * Send a chat message with intelligent routing
    */
   router.post('/', async (req: Request, res: Response) => {
     const startTime = Date.now();
     const body = req.body as ChatRequest;
+
+    // Extract routing context from headers (Precog integration)
+    const routingContext = extractRoutingContext(req);
+    const providerPrefs = getProviderPreference(routingContext.complexityHint);
+    
+    // Log routing decision for debugging/monitoring
+    console.log('[Chat] Routing context:', {
+      complexity: routingContext.complexityHint,
+      sessionId: routingContext.sessionId,
+      depth: routingContext.conversationDepth,
+      providerPrefs,
+    });
 
     // Validate request
     if (!body.message || typeof body.message !== 'string') {
@@ -41,14 +116,16 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
       return;
     }
 
-    // Generate session ID if not provided
-    const sessionId = (body.sessionId || createSessionId(`session_${Date.now()}`)) as SessionId;
+    // Use session ID from routing context (frontend-maintained continuity)
+    const sessionId = createSessionId(
+      body.sessionId || routingContext.sessionId
+    ) as SessionId;
 
     try {
       let chatResponse: ChatResponse;
 
       if (orchestrator) {
-        // Use the real orchestrator
+        // Use the real orchestrator with routing context
         const result = await orchestrator.process(body.message, sessionId, {
           userId: body.userId,
           projectId: body.projectId,
@@ -58,6 +135,14 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
             content: m.content,
             timestamp: new Date(),
           })),
+          // Pass routing hints to orchestrator
+          routingHints: {
+            complexity: routingContext.complexityHint,
+            preferredProvider: routingContext.preferredProvider,
+            speedWeight: providerPrefs.speed,
+            qualityWeight: providerPrefs.quality,
+            ...routingContext.routingHints,
+          },
         });
 
         chatResponse = {

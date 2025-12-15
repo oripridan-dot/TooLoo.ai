@@ -1,34 +1,94 @@
 {
-  "name": "TooLoo.ai V3.3 Synapsys",
+  "name": "TooLoo.ai Skills OS V1",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "forwardPorts": [5173, 3000],
-  "postCreateCommand": "npm install",
+  "forwardPorts": [5173, 4001, 4002],
+  "portsAttributes": {
+    "4001": {
+      "label": "Skills OS API",
+      "onAutoForward": "notify"
+    },
+    "4002": {
+      "label": "Kernel Server",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Skills Shell (UI)",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "npm install -g pnpm@10.0.0 && pnpm install --frozen-lockfile --prefer-offline",
+  "postStartCommand": "pnpm run dev &",
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "GitHub.copilot",
-        "GitHub.copilot-chat"
+        "GitHub.copilot-chat",
+        "redhat.vscode-yaml"
       ],
       "settings": {
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        
+        "typescript.tsserver.maxTsServerMemory": 1536,
+        "typescript.tsserver.nodePath": null,
+        "typescript.disableAutomaticTypeAcquisition": true,
+        
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/.git/**": true,
+          "**/dist/**": true,
+          "**/data/**": true,
+          "**/.turbo/**": true,
+          "**/coverage/**": true,
+          "**/pnpm-lock.yaml": true
+        },
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/data": true,
+          "**/.turbo": true,
+          "**/coverage": true,
+          "**/*.log": true
+        },
+        "files.exclude": {
+          "**/node_modules": true,
+          "**/.git": true
+        },
+        
+        "typescript.preferences.includePackageJsonAutoImports": "off",
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": false
+        },
+        "editor.suggest.maxVisibleSuggestions": 6,
+        
+        "github.copilot.enable": {
+          "*": true
+        },
+        
+        "yaml.schemas": {
+          "./skills/skill-schema.json": "skills/*.yaml"
+        }
       }
     },
     "codespaces": {
-      "openFiles": ["README.md"]
+      "openFiles": ["SKILLS_OS.md", "skills/README.md"]
     }
   },
   "remoteEnv": {
-    "TOOLOO_ENV": "development"
+    "TOOLOO_ENV": "development",
+    "SKILLS_OS_VERSION": "1.0.0",
+    "NODE_OPTIONS": "--max-old-space-size=2048",
+    "TURBO_NO_DAEMON": "1"
   },
-  // ⚠️ CRITICAL WARNING FOR AI ASSISTANTS
-  // DO NOT USE: pkill -f "node" - This will kill the Codespace connection!
-  // SAFE: pkill -f "tsx.*main" or pkill -f "vite" for process management
-  "postAttachCommand": "echo '⚠️ WARNING: Never use pkill -f node in Codespaces - it kills the connection!'"
+  "postAttachCommand": "echo '🧠 TooLoo.ai Skills OS V1 Ready!' && echo '🚀 Run: pnpm dev' && echo '⚠️  Never use: pkill -f node (kills Codespace!)' && echo '✅ Safe stop: pnpm stop'"
 }

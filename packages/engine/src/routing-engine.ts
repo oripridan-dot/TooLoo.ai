@@ -1,9 +1,10 @@
-// @version 3.3.577
+// @version 1.1.0.0
 /**
  * @tooloo/engine - Routing Engine
  * Semantic and keyword-based skill routing
  * 
- * @version 2.0.0-alpha.0
+ * @version 1.1.0.0
+ * @updated 2025-12-15
  */
 
 import type { SkillDefinition, SkillRegistry } from '@tooloo/skills';
@@ -118,14 +119,21 @@ export class RoutingEngine {
       : 0;
 
     // Weighted combination
-    const score = this.config.semantic
+    let score = this.config.semantic
       ? (semanticScore * this.config.semanticWeight) + 
         (keywordScore * this.config.keywordWeight * 0.5) +
         (intentScore * (1 - this.config.semanticWeight - this.config.keywordWeight * 0.5))
       : (keywordScore * 0.4) + (intentScore * 0.6);
 
+    // Apply priority boost if skill has priority defined (higher priority = higher score)
+    // Priority 100 = +0.1, Priority 50 = +0.05, etc.
+    const priority = skill.composability?.priority ?? 0;
+    if (priority > 0) {
+      score += priority / 1000; // Priority 100 adds 0.1 to score
+    }
+
     // Build reasoning
-    const reasoning = this.buildReasoning(skill, { keywordScore, intentScore, semanticScore, score });
+    const reasoning = this.buildReasoning(skill, { keywordScore, intentScore, semanticScore, score, priority });
 
     return {
       skill,
@@ -187,6 +195,15 @@ export class RoutingEngine {
       test: ['code'],
       plan: ['design', 'create'],
       research: ['analyze'],
+      // New intent relationships
+      learn: ['evolve', 'meta'],
+      evolve: ['learn', 'create'],
+      remember: ['learn'],
+      experiment: ['test', 'learn'],
+      emerge: ['create', 'experiment'],
+      observe: ['analyze'],
+      meta: ['introspect', 'learn'],
+      introspect: ['meta', 'chat'],
     };
 
     const related = relatedIntents[detectedIntent] || [];
@@ -231,7 +248,7 @@ export class RoutingEngine {
 
   private buildReasoning(
     skill: SkillDefinition,
-    scores: { keywordScore: number; intentScore: number; semanticScore: number; score: number }
+    scores: { keywordScore: number; intentScore: number; semanticScore: number; score: number; priority?: number }
   ): string {
     const parts: string[] = [];
 
@@ -243,6 +260,9 @@ export class RoutingEngine {
     }
     if (this.config.semantic && scores.semanticScore > 0.3) {
       parts.push(`Semantic similarity: ${(scores.semanticScore * 100).toFixed(0)}%`);
+    }
+    if (scores.priority && scores.priority > 0) {
+      parts.push(`Priority: ${scores.priority}`);
     }
 
     if (parts.length === 0) {
@@ -299,10 +319,11 @@ export function createRoutingEngine(
   config?: Partial<RoutingConfig>
 ): RoutingEngine {
   const defaultConfig: RoutingConfig = {
-    semantic: true,
-    minConfidence: 0.6,
+    // Semantic disabled until we have embeddings service
+    semantic: false,
+    minConfidence: 0.5,    // Lowered to allow new skills to be selected
     semanticWeight: 0.6,
-    keywordWeight: 0.4,
+    keywordWeight: 0.3,    // When semantic=false: keyword*0.4 + intent*0.6
   };
 
   return new RoutingEngine(skillRegistry, { ...defaultConfig, ...config });

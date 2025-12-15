@@ -1,12 +1,12 @@
 # Test Generator Skill
 # Creates comprehensive test suites for code
 #
-# @version 1.0.0
+# @version 1.1.0.0
 # @author TooLoo.ai V2
 
 id: test-generator
 name: Test Generator
-version: 1.0.0
+version: 1.1.0
 description: Creates comprehensive test suites with high coverage
 
 triggers:
@@ -96,3 +96,55 @@ examples:
     output: "HTTP request/response tests"
   - input: "Add coverage for this module"
     output: "Tests targeting uncovered branches"
+tools:
+  - name: file_read
+    description: Read source code to test
+    required: true
+  - name: file_write
+    description: Write test files
+    required: true
+  - name: grep_search
+    description: Search for existing tests and patterns
+    required: false
+  - name: semantic_search
+    description: Find related code for mocking
+    required: false
+  - name: terminal_execute
+    description: Run tests to verify they pass
+    required: true
+
+context:
+  maxTokens: 8192
+  ragSources:
+    - codebase
+    - tests
+  memoryScope: project
+  includeHistory: true
+  maxHistoryMessages: 10
+
+composability:
+  requires: []
+  enhances:
+    - coding-assistant
+    - refactoring-expert
+  conflicts: []
+  priority: 80
+
+modelRequirements:
+  minContext: 64000
+  capabilities:
+    - coding
+    - reasoning
+  preferredProviders:
+    - deepseek
+    - anthropic
+  temperature: 0.3
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - testing
+    - vitest
+    - unit-tests
+    - coverage

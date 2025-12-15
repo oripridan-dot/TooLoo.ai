@@ -1,12 +1,12 @@
 # Documentation Writer Skill
 # Creates comprehensive documentation for code and APIs
 #
-# @version 1.0.0
+# @version 1.1.0.0
 # @author TooLoo.ai V2
 
 id: documentation-writer
 name: Documentation Writer
-version: 1.0.0
+version: 1.1.0
 description: Creates clear, comprehensive documentation for code, APIs, and systems
 
 triggers:
@@ -85,3 +85,55 @@ examples:
     output: "Comprehensive README.md file"
   - input: "Generate API docs for these endpoints"
     output: "OpenAPI specification"
+tools:
+  - name: file_read
+    description: Read source code files to document
+    required: true
+  - name: file_write
+    description: Write documentation files
+    required: true
+  - name: grep_search
+    description: Search for patterns to document
+    required: false
+  - name: semantic_search
+    description: Find related code and documentation
+    required: false
+  - name: list_dir
+    description: List files in directories
+    required: false
+
+context:
+  maxTokens: 8192
+  ragSources:
+    - codebase
+    - docs
+  memoryScope: project
+  includeHistory: true
+  maxHistoryMessages: 10
+
+composability:
+  requires: []
+  enhances:
+    - coding-assistant
+    - architect
+  conflicts: []
+  priority: 80
+
+modelRequirements:
+  minContext: 32000
+  capabilities:
+    - coding
+    - writing
+  preferredProviders:
+    - anthropic
+    - deepseek
+  temperature: 0.4
+
+metadata:
+  author: TooLoo.ai
+  license: MIT
+  tags:
+    - documentation
+    - writing
+    - api-docs
+    - readme

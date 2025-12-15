@@ -1,12 +1,12 @@
 # Coding Assistant Skill
 # Expert TypeScript/Node.js developer with file and terminal access
 #
-# @version 1.0.0
+# @version 1.1.0.0
 # @author TooLoo.ai
 
 id: coding-assistant
 name: Coding Assistant
-version: 1.0.0
+version: 1.1.0
 description: Expert TypeScript and Node.js developer specializing in clean, type-safe code
 
 instructions: |
@@ -121,7 +121,7 @@ triggers:
     - "refactor.*"
 
 context:
-  maxTokens: 100000
+  maxTokens: 8192
   ragSources:
     - codebase
     - docs

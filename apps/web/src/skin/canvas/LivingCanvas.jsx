@@ -233,10 +233,13 @@ class GradientRenderer {
 // ============================================================================
 
 function CSSGradientLayer({ emotion }) {
+  // Debug: More visible gradients for testing
   const gradientStyle = useMemo(() => {
-    const primary = `hsl(${emotion.primaryHue}, 40%, ${5 + emotion.intensity * 8}%)`;
-    const secondary = `hsl(${emotion.secondaryHue}, 35%, ${3 + emotion.intensity * 5}%)`;
-    const dark = 'hsl(0, 0%, 2%)';
+    const primary = `hsl(${emotion.primaryHue}, 60%, ${15 + emotion.intensity * 15}%)`;
+    const secondary = `hsl(${emotion.secondaryHue}, 55%, ${12 + emotion.intensity * 12}%)`;
+    const dark = 'hsl(0, 0%, 3%)';
+    
+    console.log('[CSSGradientLayer] Rendering with emotion:', emotion.name, { primaryHue: emotion.primaryHue });
     
     return {
       background: `
@@ -247,7 +250,7 @@ function CSSGradientLayer({ emotion }) {
       `,
       transition: 'background 1.5s ease-in-out',
     };
-  }, [emotion.primaryHue, emotion.secondaryHue, emotion.intensity]);
+  }, [emotion.primaryHue, emotion.secondaryHue, emotion.intensity, emotion.name]);
   
   return (
     <motion.div
@@ -510,10 +513,21 @@ export default function LivingCanvas() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
   
+  // Debug: Log mount and budget info
+  useEffect(() => {
+    console.log('[LivingCanvas] Mounted', { 
+      canvasEnabled, 
+      budget: performanceBudget, 
+      useWebGL: effective.useWebGL,
+      emotion: emotion?.name 
+    });
+  }, [canvasEnabled, performanceBudget, effective.useWebGL, emotion]);
+  
   if (!canvasEnabled) {
     return (
       <div 
-        className="fixed inset-0 -z-10 bg-[#050505]"
+        className="fixed inset-0 bg-[#050505]"
+        style={{ zIndex: -1 }}
         onDoubleClick={() => setShowControls(true)}
       >
         <AnimatePresence>
@@ -525,7 +539,8 @@ export default function LivingCanvas() {
   
   return (
     <div 
-      className="fixed inset-0 -z-10 overflow-hidden"
+      className="fixed inset-0 overflow-hidden"
+      style={{ zIndex: -1 }}
       onDoubleClick={() => setShowControls(true)}
     >
       {/* WebGL Canvas */}

@@ -1,9 +1,10 @@
-// @version 3.3.577
+// @version 1.1.0.0
 /**
  * @tooloo/engine - Orchestrator
  * The brain that coordinates skills, providers, and memory
  * 
- * @version 2.0.0-alpha.0
+ * @version 1.1.0.0
+ * @updated 2025-12-15
  */
 
 import type { 
@@ -69,6 +70,13 @@ export class Orchestrator {
       conversation?: Message[];
       artifacts?: any[];
       stream?: boolean;
+      routingHints?: {
+        complexity?: string;
+        preferredProvider?: string;
+        speedWeight?: number;
+        qualityWeight?: number;
+        [key: string]: unknown;
+      };
     } = {}
   ): Promise<OrchestrationResult> {
     const startTime = Date.now();
@@ -142,6 +150,8 @@ export class Orchestrator {
 
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
+      console.error(`[Orchestrator] ❌ Execution error:`, err.message);
+      console.error(`[Orchestrator] Stack:`, err.stack);
       this.emit({ type: 'orchestration:error', error: err });
 
       return {
@@ -317,6 +327,23 @@ export class Orchestrator {
     const lowercased = message.toLowerCase();
     
     const intentPatterns: Array<{ type: Intent['type']; patterns: RegExp[]; keywords: string[] }> = [
+      // INTROSPECTION - highest priority for self-awareness questions
+      {
+        type: 'introspect' as Intent['type'],
+        patterns: [
+          /are you self[- ]?aware/i,
+          /are you (sentient|conscious|alive)/i,
+          /what are you/i,
+          /who are you/i,
+          /tell me about yourself/i,
+          /about yourself/i,
+          /what can you do/i,
+          /your (architecture|code|design)/i,
+          /do you (think|feel|have consciousness)/i,
+          /you (self[- ]?aware|sentient|conscious)/i,
+        ],
+        keywords: ['self', 'aware', 'yourself', 'you', 'consciousness', 'sentient', 'identity', 'who'],
+      },
       {
         type: 'code',
         patterns: [/write|create|implement|build|code|function|class|component/i],
@@ -352,24 +379,103 @@ export class Orchestrator {
         patterns: [/search|find|look up|documentation|docs/i],
         keywords: ['search', 'find', 'docs'],
       },
+      // NEW INTENTS FOR SKILLS OS
+      {
+        type: 'learn' as Intent['type'],
+        patterns: [
+          /learning|learned|feedback|reward|q-learning/i,
+          /how (fast|well) (are you|am i) learning/i,
+          /learning (status|progress|velocity)/i,
+        ],
+        keywords: ['learn', 'learning', 'feedback', 'reward'],
+      },
+      {
+        type: 'remember' as Intent['type'],
+        patterns: [
+          /remember|recall|memory|forget/i,
+          /do you remember/i,
+          /what do you (remember|know)/i,
+        ],
+        keywords: ['remember', 'recall', 'memory', 'forget'],
+      },
+      {
+        type: 'experiment' as Intent['type'],
+        patterns: [
+          /experiment|a\/b test|benchmark|shadow test/i,
+          /run (an? )?experiment/i,
+          /compare|which is better/i,
+        ],
+        keywords: ['experiment', 'test', 'benchmark', 'compare'],
+      },
+      {
+        type: 'emerge' as Intent['type'],
+        patterns: [
+          /synthesize|emergence|creative|predict/i,
+          /generate (idea|goal)/i,
+          /novel|breakthrough/i,
+        ],
+        keywords: ['emerge', 'synthesize', 'creative', 'predict'],
+      },
+      {
+        type: 'observe' as Intent['type'],
+        patterns: [
+          /health|metrics|status|monitor/i,
+          /how (is|are) (the|things) (system|running)/i,
+          /observability|dashboard/i,
+        ],
+        keywords: ['health', 'metrics', 'status', 'monitor', 'dashboard'],
+      },
+      {
+        type: 'meta' as Intent['type'],
+        patterns: [
+          /meta[- ]?cognition|thinking about thinking/i,
+          /learning velocity|strategy effectiveness/i,
+          /cognitive load|knowledge transfer/i,
+        ],
+        keywords: ['meta', 'cognition', 'velocity', 'strategy'],
+      },
+      {
+        type: 'evolve' as Intent['type'],
+        patterns: [
+          /evolve|evolution|improve yourself/i,
+          /skill (performance|metrics|evolution)/i,
+          /self[- ]?improvement/i,
+        ],
+        keywords: ['evolve', 'evolution', 'improve', 'skill'],
+      },
     ];
 
-    let bestMatch: { type: Intent['type']; confidence: number; keywords: string[] } = {
+    let bestMatch: { type: Intent['type']; confidence: number; keywords: string[]; matchCount: number } = {
       type: 'chat',
       confidence: 0.5,
       keywords: [],
+      matchCount: 0,
     };
 
     for (const pattern of intentPatterns) {
-      const matchCount = pattern.patterns.filter(p => p.test(lowercased)).length;
-      const confidence = matchCount / pattern.patterns.length;
+      const matchedPatterns = pattern.patterns.filter(p => p.test(lowercased));
+      const matchCount = matchedPatterns.length;
+      const keywordMatches = pattern.keywords.filter(k => lowercased.includes(k));
       
-      if (confidence > bestMatch.confidence) {
-        bestMatch = {
-          type: pattern.type,
-          confidence: Math.min(confidence + 0.3, 0.95),
-          keywords: pattern.keywords.filter(k => lowercased.includes(k)),
-        };
+      // If ANY pattern matches, consider this a valid intent
+      if (matchCount > 0) {
+        // Calculate confidence based on pattern matches + keyword matches
+        // Base: 0.7 for any pattern match, +0.1 for each additional pattern, +0.05 for each keyword
+        const confidence = Math.min(
+          0.7 + (matchCount - 1) * 0.1 + keywordMatches.length * 0.05,
+          0.95
+        );
+        
+        // Prefer this match if it has higher confidence OR same confidence but more matches
+        if (confidence > bestMatch.confidence || 
+            (confidence === bestMatch.confidence && matchCount > bestMatch.matchCount)) {
+          bestMatch = {
+            type: pattern.type,
+            confidence,
+            keywords: keywordMatches,
+            matchCount,
+          };
+        }
       }
     }
 
@@ -392,6 +498,9 @@ export class Orchestrator {
     // Normalize names to lowercase for comparison
     const availableProviderNamesLower = availableProviders.map(p => p.name.toLowerCase());
     
+    console.log(`[Orchestrator] Available providers: ${availableProviderNamesLower.join(', ')}`);
+    console.log(`[Orchestrator] Skill ${skill.name} prefers: ${preferredProviders.join(', ')}`);
+    
     // Select based on skill requirements and availability
     let selectedProvider = this.config.defaultProvider;
     let selectedModel = this.config.defaultModel;
@@ -404,14 +513,14 @@ export class Orchestrator {
     const getModelForProvider = (provider: string): string => {
       const defaults: Record<string, string> = {
         deepseek: 'deepseek-chat',
-        anthropic: 'claude-3-5-sonnet-20241022',
+        anthropic: 'claude-sonnet-4-20250514',
         openai: 'gpt-4o',
         ollama: 'llama3.2',
       };
       return defaults[provider.toLowerCase()] || 'default';
     };
 
-    // Check for skill-specific preferences
+    // Check for skill-specific preferences (HIGHEST PRIORITY)
     if (preferredProviders.length > 0) {
       for (const preferred of preferredProviders) {
         if (isAvailable(preferred)) {
@@ -423,67 +532,70 @@ export class Orchestrator {
       }
     }
 
-    // Check for intent-based routing (only if provider is available)
+    // Only use intent-based routing if NO skill preference was applied
+    // Check for intent-based routing (only if provider is available and no skill preference set)
     // Priority: DeepSeek for cost-efficiency, Anthropic for quality, OpenAI as fallback
-    const intentProviderMap: Record<string, Array<{ provider: string; model: string }>> = {
+    if (reason === 'Default provider selection') {
+      const intentProviderMap: Record<string, Array<{ provider: string; model: string }>> = {
       code: [
         { provider: 'deepseek', model: 'deepseek-chat' },
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       fix: [
         { provider: 'deepseek', model: 'deepseek-chat' },
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       analyze: [
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       refactor: [
         { provider: 'deepseek', model: 'deepseek-chat' },
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       test: [
         { provider: 'deepseek', model: 'deepseek-chat' },
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       plan: [
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
         { provider: 'deepseek', model: 'deepseek-chat' },
       ],
       research: [
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
         { provider: 'deepseek', model: 'deepseek-chat' },
       ],
       creative: [
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
         { provider: 'deepseek', model: 'deepseek-chat' },
       ],
       chat: [
         { provider: 'deepseek', model: 'deepseek-chat' },
-        { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
     };
 
-    const intentOptions = intentProviderMap[context.intent.type];
-    if (intentOptions) {
-      for (const option of intentOptions) {
-        if (isAvailable(option.provider)) {
-          selectedProvider = option.provider;
-          selectedModel = option.model;
-          reason = `Intent ${context.intent.type} mapped to ${selectedProvider}`;
-          break;
+      const intentOptions = intentProviderMap[context.intent.type];
+      if (intentOptions) {
+        for (const option of intentOptions) {
+          if (isAvailable(option.provider)) {
+            selectedProvider = option.provider;
+            selectedModel = option.model;
+            reason = `Intent ${context.intent.type} mapped to ${selectedProvider}`;
+            break;
+          }
         }
       }
-    }
+    }  // End of "if no skill preference" block
 
     // Build fallbacks
     const fallbacks = availableProviderNamesLower

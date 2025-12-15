@@ -160,7 +160,9 @@ export const SkillContextConfigSchema = z.object({
 export const SkillTriggersSchema = z.object({
   intents: z.array(z.enum([
     'code', 'design', 'analyze', 'research', 'plan', 'chat',
-    'execute', 'create', 'fix', 'refactor', 'test', 'document', 'unknown'
+    'execute', 'create', 'fix', 'refactor', 'test', 'document',
+    'introspect', 'evolve', 'learn', 'remember', 'experiment',
+    'emerge', 'observe', 'route', 'meta', 'unknown'
   ])),
   keywords: z.array(z.string()),
   patterns: z.array(z.string()).optional(),

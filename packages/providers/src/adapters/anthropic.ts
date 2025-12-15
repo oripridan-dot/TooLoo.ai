@@ -114,9 +114,9 @@ export class AnthropicProvider extends BaseProvider {
     const startTime = Date.now();
 
     const anthropicRequest: AnthropicRequest = {
-      model: request.model ?? 'claude-3-5-sonnet-20241022',
+      model: request.model ?? 'claude-sonnet-4-20250514',
       messages: this.formatMessages(request),
-      system: request.systemPrompt,
+      system: this.extractSystemMessage(request),
       max_tokens: request.maxTokens ?? 4096,
       temperature: request.temperature ?? 0.7,
       top_p: request.topP,
@@ -168,9 +168,9 @@ export class AnthropicProvider extends BaseProvider {
 
   protected async *doStream(request: CompletionRequest): AsyncGenerator<StreamChunk> {
     const anthropicRequest: AnthropicRequest = {
-      model: request.model ?? 'claude-3-5-sonnet-20241022',
+      model: request.model ?? 'claude-sonnet-4-20250514',
       messages: this.formatMessages(request),
-      system: request.systemPrompt,
+      system: this.extractSystemMessage(request),
       max_tokens: request.maxTokens ?? 4096,
       temperature: request.temperature ?? 0.7,
       top_p: request.topP,
@@ -278,6 +278,7 @@ export class AnthropicProvider extends BaseProvider {
 
     for (const msg of request.messages) {
       // Anthropic only supports 'user' and 'assistant' roles in messages array
+      // System messages are handled separately via the 'system' field
       if (msg.role === 'user' || msg.role === 'assistant') {
         messages.push({
           role: msg.role,
@@ -287,6 +288,20 @@ export class AnthropicProvider extends BaseProvider {
     }
 
     return messages;
+  }
+
+  /**
+   * Extract system message from messages array for Anthropic's system field
+   */
+  private extractSystemMessage(request: CompletionRequest): string | undefined {
+    // Use explicit systemPrompt if provided
+    if (request.systemPrompt) {
+      return request.systemPrompt;
+    }
+    
+    // Otherwise extract from messages array
+    const systemMsg = request.messages.find(msg => msg.role === 'system');
+    return systemMsg?.content;
   }
 
   private mapFinishReason(reason: string | undefined): CompletionResponse['finishReason'] {

@@ -1,8 +1,9 @@
 /**
  * @tooloo/core - The Soul
- * Core types, interfaces, and contracts for TooLoo.ai Synapsys V2
+ * Core types, interfaces, and contracts for TooLoo.ai Skills OS V1.1
  * 
- * @version 2.0.0-alpha.0
+ * @version 1.1.0.0
+ * @updated 2025-12-15
  * @description This file defines the foundational types that flow through
  *              every component of the TooLoo system. Change these carefully
  *              as they impact the entire architecture.
@@ -54,6 +55,15 @@ export type IntentType =
   | 'refactor'    // Improve existing code
   | 'test'        // Write or run tests
   | 'document'    // Documentation, comments
+  | 'introspect'  // Self-awareness, identity questions
+  | 'evolve'      // Self-improvement, evolution
+  | 'learn'       // Learning, feedback, rewards
+  | 'remember'    // Memory storage/retrieval
+  | 'experiment'  // A/B tests, benchmarks
+  | 'emerge'      // Creative synthesis, predictions
+  | 'observe'     // Monitoring, metrics, health
+  | 'route'       // Routing decisions
+  | 'meta'        // Meta-cognition, thinking about thinking
   | 'unknown';    // Could not determine intent
 
 /**

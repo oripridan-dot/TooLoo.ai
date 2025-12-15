@@ -1,8 +1,15 @@
 /**
  * @tooloo/skills - Main Entry Point
- * Skill registry, loader, router, and definitions
- * 
- * @version 2.0.0-alpha.0
+ * Skill registry, loader, router, tools, engines, and definitions
+ *
+ * @version 1.2.1
+ * @skill-os true
+ *
+ * This package provides:
+ * - Skill loading and registration
+ * - Intent-based routing
+ * - Tool execution (file, search, terminal)
+ * - Native engines (learning, evolution, emergence, routing)
  */
 
 // Types
@@ -12,9 +19,9 @@ export * from './types.js';
 export { SkillRegistry, skillRegistry } from './registry.js';
 
 // Loader
-export { 
-  SkillLoader, 
-  loadSkillsFromDirectory, 
+export {
+  SkillLoader,
+  loadSkillsFromDirectory,
   defineSkill,
   type SkillLoaderOptions,
 } from './loader.js';
@@ -37,5 +44,11 @@ export {
   type LoadedSkill,
 } from './hot-reloader.js';
 
+// Tools
+export * from './tools/index.js';
+
+// Native Engines - NO LEGACY DEPENDENCIES
+export * from './engines/index.js';
+
 // Version
-export const VERSION = '2.0.0-alpha.0';
+export const VERSION = '1.2.1';

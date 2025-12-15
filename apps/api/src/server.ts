@@ -26,6 +26,7 @@ import { createSkillsRouter } from './routes/skills.js';
 import { createProjectsRouter } from './routes/projects.js';
 import { createCapabilitiesRouter } from './routes/capabilities.js';
 import { createVisualsRouter } from './routes/visuals.js';
+import { createSystemRouter } from './routes/system.js';
 import authRouter from './routes/auth.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { createRateLimiter } from './middleware/rate-limiter.js';
@@ -162,8 +163,10 @@ export class TooLooServer {
       orchestrator: this.config.orchestrator,
     }));
 
-    // Skills routes
-    this.app.use(`${prefix}/skills`, createSkillsRouter());
+    // Skills routes - pass skillRegistry for dynamic skill listing
+    this.app.use(`${prefix}/skills`, createSkillsRouter({
+      skillRegistry: this.config.skillRegistry,
+    }));
 
     // Projects routes
     this.app.use(`${prefix}/projects`, createProjectsRouter());
@@ -173,6 +176,9 @@ export class TooLooServer {
 
     // Visuals routes
     this.app.use(`${prefix}/visuals`, createVisualsRouter());
+
+    // System routes (error reporting, metrics, etc.)
+    this.app.use(`${prefix}/system`, createSystemRouter({ io: this.io }));
 
     // Auth routes
     this.app.use(`${prefix}/auth`, authRouter);

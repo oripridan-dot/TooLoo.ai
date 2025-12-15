@@ -1,0 +1,82 @@
+# =======================================================================
+# .copilotignore - Exclude files from GitHub Copilot indexing
+# This significantly improves Copilot response times
+# =======================================================================
+
+# Dependencies - HUGE savings (1.5GB+ excluded)
+node_modules/
+**/node_modules/
+.pnpm/
+**/.pnpm/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+.turbo/
+**/.turbo/
+
+# Data and logs (not relevant for code suggestions)
+data/
+*.log
+*.jsonl
+temp/
+.cache/
+
+# Large binary/data files
+*.traineddata
+eng.traineddata
+*.wasm
+*.bin
+*.dat
+
+# Lock files (huge, not useful for suggestions)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Git internals
+.git/
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Test artifacts
+__snapshots__/
+*.snap
+*.test.ts.snap
+
+# Documentation that Copilot shouldn't learn from
+docs/*.md
+*.md
+!README.md
+!CONTRIBUTING.md
+
+# Config files (usually boilerplate)
+*.config.js
+*.config.ts
+tsconfig*.json
+.eslintrc*
+.prettierrc*
+
+# Images and assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+
+# Environment files
+.env*
+*.enc.json
+
+# Generated files
+*.generated.ts
+*-generated.ts
+openapi.json

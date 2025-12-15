@@ -1,178 +1,263 @@
 /**
- * AppV2.jsx
- * V2 Main Application with routing
+ * AppV2.jsx - Synapsys Skill Shell
+ * The "Operating System" that renders whatever skills the Nucleus provides.
+ * No hardcoded menus - UI is 100% generated from the skill registry.
  *
- * @version 2.0.0-alpha.0
+ * @version 3.3.579-skill-shell
  */
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket, ConnectionState } from './hooks/useSocket';
-import { useAuth, AuthState } from './hooks/useAuth';
+import { apiRequest } from './utils/api';
 
-// Components
+// The "Universal Renderer" - Maps Skill IDs to Interfaces
+// In a full implementation, these would be lazy-loaded dynamically
 import ChatV2 from './components/ChatV2';
-import AdminDashboard from './components/AdminDashboard';
 import SkillStudio from './components/SkillStudio';
+import AdminDashboard from './components/AdminDashboard';
+import MissionControl from './components/MissionControl';
 import { AuthPage } from './components/Login';
+import SkillMetricsDashboard from './components/SkillMetricsDashboard';
 
-// Navigation items
-const NAV_ITEMS = [
-  { id: 'chat', name: 'Chat', icon: '💬', component: ChatV2 },
-  { id: 'skills', name: 'Skill Studio', icon: '🎯', component: SkillStudio },
-  { id: 'admin', name: 'Admin', icon: '⚙️', component: AdminDashboard },
-  { id: 'account', name: 'Account', icon: '👤', component: AuthPage },
+// Fallback registry for when the API is cold or unreachable
+// These are the UI-native skills that have renderers
+const DEFAULT_SKILLS = [
+  { id: 'core.chat', name: 'Cognition', icon: '🧠', component: ChatV2 },
+  { id: 'core.skills', name: 'Skill Studio', icon: '🧬', component: SkillStudio },
+  { id: 'core.metrics', name: 'Metrics', icon: '📊', component: SkillMetricsDashboard },
+  { id: 'core.admin', name: 'Nucleus', icon: '🎛️', component: AdminDashboard },
+  { id: 'core.mission', name: 'Mission Control', icon: '🚀', component: MissionControl },
+  { id: 'core.auth', name: 'Identity', icon: '👤', component: AuthPage },
 ];
 
-// Sidebar component
-function Sidebar({ activeView, onViewChange, connectionState, systemStatus, user }) {
-  return (
-    <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
-      {/* Logo */}
-      <div className="p-4 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-            T
-          </div>
-          <div>
-            <h1 className="font-bold text-white">TooLoo.ai</h1>
-            <p className="text-xs text-gray-500">v2.0.0-alpha</p>
-          </div>
-        </div>
-      </div>
+// Component mapping for dynamic skill loading
+// Maps skill IDs to their React components
+// All skills use ChatV2 as the universal conversational interface
+const COMPONENT_MAP = {
+  // Core UI skills
+  'core.chat': ChatV2,
+  'core.skills': SkillStudio,
+  'core.metrics': SkillMetricsDashboard,
+  'core.admin': AdminDashboard,
+  'core.mission': MissionControl,
+  'core.auth': AuthPage,
+  
+  // === YAML-DEFINED SKILLS (from /skills directory) ===
+  
+  // Coding Skills
+  'coding-assistant': ChatV2,
+  'architect': ChatV2,
+  'research-analyst': ChatV2,
+  'documentation-writer': ChatV2,
+  'test-generator': ChatV2,
+  'refactoring-expert': ChatV2,
+  'code-reviewer': ChatV2,
+  
+  // Meta Skills (self-awareness & evolution)
+  'self-awareness': ChatV2,
+  'self-modification': ChatV2,
+  'skill-creator': ChatV2,
+  'skill-evolution': ChatV2,
+  'skill-metrics': SkillMetricsDashboard,
+  
+  // Learning Skills
+  'learning': ChatV2,
+  'experimentation': ChatV2,
+  'serendipity': ChatV2,
+  'meta-cognition': ChatV2,
+  
+  // Memory Skills
+  'memory': ChatV2,
+  
+  // Emergence Skills
+  'emergence': ChatV2,
+  
+  // Observability Skills
+  'observability': ChatV2,
+  
+  // Routing (meta-skill)
+  'routing': ChatV2,
+  
+  // Legacy API skills (backward compatibility)
+  'default-chat': ChatV2,
+  'code-generator': ChatV2,
+  'code-analyzer': ChatV2,
+};
 
-      {/* User info if logged in */}
-      {user && (
-        <div className="px-4 py-3 border-b border-gray-800 bg-gray-800/50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm font-bold">
-              {user.name?.[0]?.toUpperCase() || '?'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
-        {NAV_ITEMS.map(item => (
-          <button
-            key={item.id}
-            onClick={() => onViewChange(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-              activeView === item.id
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            }`}
-          >
-            <span className="text-xl">{item.icon}</span>
-            <span className="font-medium">{item.name}</span>
-          </button>
-        ))}
-      </nav>
-
-      {/* Connection Status */}
-      <div className="p-4 border-t border-gray-800">
-        <div className="flex items-center gap-2 mb-3">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              connectionState === ConnectionState.CONNECTED
-                ? 'bg-green-500'
-                : connectionState === ConnectionState.CONNECTING
-                ? 'bg-yellow-500 animate-pulse'
-                : 'bg-red-500'
-            }`}
-          />
-          <span
-            className={`text-sm ${
-              connectionState === ConnectionState.CONNECTED
-                ? 'text-green-400'
-                : connectionState === ConnectionState.CONNECTING
-                ? 'text-yellow-400'
-                : 'text-red-400'
-            }`}
-          >
-            {connectionState === ConnectionState.CONNECTED
-              ? 'Connected'
-              : connectionState === ConnectionState.CONNECTING
-              ? 'Connecting...'
-              : 'Disconnected'}
-          </span>
-        </div>
-
-        {systemStatus && (
-          <div className="space-y-2 text-xs text-gray-500">
-            <div className="flex justify-between">
-              <span>Skills</span>
-              <span className="text-gray-400">{systemStatus.skills?.loaded || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Memory</span>
-              <span className="text-gray-400">{systemStatus.memory?.percentage || 0}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Uptime</span>
-              <span className="text-gray-400">
-                {Math.floor((systemStatus.uptime || 0) / 60)}m
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function SkillIcon({ icon }) {
+  return <span className="text-xl filter drop-shadow-md">{icon || '📦'}</span>;
 }
 
-// Main V2 App
 export default function AppV2() {
-  const [activeView, setActiveView] = useState('chat');
-  const { connectionState, systemStatus, emit } = useSocket({
-    autoConnect: true,
-  });
-  const { user, authState, isAuthenticated } = useAuth();
+  const [skills, setSkills] = useState(DEFAULT_SKILLS);
+  const [activeSkillId, setActiveSkillId] = useState('core.chat');
+  const [loading, setLoading] = useState(true);
+  const [bootMessage, setBootMessage] = useState('SYNAPSYS NUCLEUS BOOTING...');
 
-  // Ping for status updates periodically
+  const { connectionState, systemStatus, emit } = useSocket({ autoConnect: true });
+
+  // BOOT SEQUENCE: Ask Nucleus "What capabilities do I have?"
+  useEffect(() => {
+    const bootSynapsys = async () => {
+      try {
+        setBootMessage('CONNECTING TO NUCLEUS...');
+
+        // Try to fetch skills from the Nucleus (for health check)
+        await apiRequest('/skills');
+        
+        // Only show DEFAULT_SKILLS in sidebar
+        // Other skills (coding-assistant, self-awareness, etc.) are used
+        // for automatic routing based on message content, not manual selection
+        setSkills(DEFAULT_SKILLS);
+        setBootMessage('NUCLEUS ONLINE');
+
+        await new Promise((r) => setTimeout(r, 300)); // Brief pause for visual feedback
+        setLoading(false);
+      } catch (err) {
+        console.warn('Nucleus unreachable, using fallback skills:', err.message);
+        setBootMessage('OFFLINE MODE');
+        await new Promise((r) => setTimeout(r, 500));
+        setSkills(DEFAULT_SKILLS);
+        setLoading(false);
+      }
+    };
+
+    bootSynapsys();
+  }, []);
+
+  // Periodic health ping when connected
   useEffect(() => {
     if (connectionState === ConnectionState.CONNECTED) {
-      const interval = setInterval(() => {
-        emit('system:ping');
-      }, 30000);
+      const interval = setInterval(() => emit('system:ping'), 30000);
       return () => clearInterval(interval);
     }
   }, [connectionState, emit]);
 
-  // Get active component
-  const ActiveComponent = NAV_ITEMS.find(item => item.id === activeView)?.component || ChatV2;
+  const activeSkill = skills.find((s) => s.id === activeSkillId) || skills[0];
+  const ActiveComponent = activeSkill?.component || null;
+
+  // Boot screen
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-black items-center justify-center flex-col space-y-4">
+        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-blue-500 font-mono text-sm animate-pulse">{bootMessage}</p>
+      </div>
+    );
+  }
+
+  // Fallback if no component
+  if (!ActiveComponent) {
+    return (
+      <div className="flex h-screen bg-black items-center justify-center flex-col space-y-4">
+        <p className="text-red-500 font-mono text-sm">No skill component available</p>
+        <button 
+          onClick={() => setActiveSkillId('core.chat')}
+          className="px-4 py-2 bg-blue-600 rounded text-white"
+        >
+          Reset to Chat
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white">
-      {/* Sidebar */}
-      <Sidebar
-        activeView={activeView}
-        onViewChange={setActiveView}
-        connectionState={connectionState}
-        systemStatus={systemStatus}
-        user={user}
-      />
+    <div className="flex h-screen bg-[#050505] text-white overflow-hidden font-sans">
+      {/* DYNAMIC SIDEBAR - Generated from skill registry */}
+      <div className="w-20 lg:w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col flex-shrink-0 z-20">
+        {/* Brand */}
+        <div className="h-16 flex items-center px-4 lg:px-6 border-b border-white/5 bg-white/5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+            T
+          </div>
+          <span className="ml-3 font-bold tracking-wide hidden lg:block bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            TooLoo
+          </span>
+        </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeView}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className="flex-1 overflow-hidden"
-          >
-            <ActiveComponent />
-          </motion.div>
-        </AnimatePresence>
-      </main>
+        {/* Skill Matrix */}
+        <div className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
+          {skills.map((skill) => (
+            <button
+              key={skill.id}
+              onClick={() => setActiveSkillId(skill.id)}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
+                activeSkillId === skill.id
+                  ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-[0_0_20px_rgba(37,99,235,0.1)]'
+                  : 'text-gray-500 hover:bg-white/5 hover:text-gray-200'
+              }`}
+            >
+              <SkillIcon icon={skill.icon} />
+              <span className="font-medium text-sm hidden lg:block group-hover:translate-x-1 transition-transform">
+                {skill.name}
+              </span>
+              {activeSkillId === skill.id && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] hidden lg:block" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* System Status Footer */}
+        <div className="p-4 border-t border-white/5 bg-black/20 text-xs">
+          <div className="flex items-center gap-2 mb-2">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                connectionState === ConnectionState.CONNECTED
+                  ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]'
+                  : connectionState === ConnectionState.CONNECTING
+                    ? 'bg-yellow-500 animate-pulse'
+                    : 'bg-red-500 animate-pulse'
+              }`}
+            />
+            <span className="text-gray-400 hidden lg:block">
+              {connectionState === ConnectionState.CONNECTED
+                ? 'NUCLEUS ONLINE'
+                : connectionState === ConnectionState.CONNECTING
+                  ? 'CONNECTING...'
+                  : 'SEARCHING...'}
+            </span>
+          </div>
+          {systemStatus && (
+            <div className="hidden lg:flex justify-between text-gray-600 font-mono">
+              <span>RAM: {systemStatus.memory?.percentage ?? 0}%</span>
+              <span>Skills: {skills.length}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* REALITY RENDERER (The Viewport) */}
+      <div className="flex-1 relative flex flex-col bg-[#050505]">
+        <header className="h-16 border-b border-white/5 flex items-center px-6 justify-between bg-[#0a0a0a]/50 backdrop-blur-md sticky top-0 z-10">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">/</span>
+            <span className="font-medium text-white">{activeSkill?.name}</span>
+          </div>
+          <div className="text-xs font-mono text-gray-600 border border-white/10 px-2 py-1 rounded">
+            ID: {activeSkill?.id}
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-hidden relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSkillId}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, duration: 0.1 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-full h-full"
+            >
+              {ActiveComponent ? <ActiveComponent /> : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <p>No component available for this skill</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   );
 }

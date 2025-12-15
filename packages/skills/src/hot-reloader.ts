@@ -199,6 +199,15 @@ export class SkillHotReloader {
       'refactor',
       'test',
       'document',
+      'introspect',
+      'evolve',
+      'learn',
+      'remember',
+      'experiment',
+      'emerge',
+      'observe',
+      'route',
+      'meta',
       'unknown',
     ];
     const triggers = {
