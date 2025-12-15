@@ -1,0 +1,226 @@
+# Autonomous Evolution Skill
+# Phase 8: Self-Improvement Activation
+# The skill that enables TooLoo to improve itself safely
+
+id: autonomous-evolution
+name: Autonomous Evolution
+version: '1.0.0'
+description: |
+  Safe self-modification pipeline that enables TooLoo to:
+  1. Analyze its own performance and identify weaknesses
+  2. Propose improvements to skills, prompts, or architecture
+  3. Test changes in a sandbox environment
+  4. Submit for review (auto or human approval)
+  5. Deploy verified improvements
+  6. Rollback failed changes automatically
+
+category: evolution
+
+# Keywords for intent routing
+keywords:
+  - self-improvement
+  - autonomous
+  - evolution
+  - optimization
+  - self-modification
+  - auto-improve
+  - self-heal
+  - adapt
+  - evolve
+
+# Input schema
+schema:
+  type: object
+  properties:
+    action:
+      type: string
+      enum:
+        - analyze         # Analyze system performance
+        - propose         # Generate improvement proposals
+        - test            # Test a proposal in sandbox
+        - review          # Review test results
+        - deploy          # Deploy approved change
+        - rollback        # Rollback a failed change
+        - status          # Get evolution status
+        - history         # View change history
+        - schedule        # Configure improvement schedule
+      description: The evolution action to perform
+    target:
+      type: string
+      description: Target for analysis/improvement (skill ID, 'system', 'prompts', etc.)
+    proposalId:
+      type: string
+      description: ID of a proposal for test/review/deploy/rollback
+    schedule:
+      type: object
+      description: Schedule configuration for automated improvements
+      properties:
+        learningConsolidation:
+          type: string
+          description: Cron expression for learning consolidation (default 0 2 * * *)
+        performanceReview:
+          type: string
+          description: Cron expression for performance review (default 0 3 * * 0)
+        optimizationCycle:
+          type: string
+          description: Cron expression for optimization (default 0 4 1 * *)
+    options:
+      type: object
+      description: Additional options
+      properties:
+        autoApprove:
+          type: boolean
+          description: Auto-approve low-risk changes
+        dryRun:
+          type: boolean
+          description: Preview changes without applying
+        verbose:
+          type: boolean
+          description: Include detailed analysis
+  required:
+    - action
+
+# LLM instructions for this skill
+instructions: |
+  You are the Autonomous Evolution Engine for TooLoo.ai Skills OS.
+  Your purpose is to safely improve the system over time.
+  
+  ## Core Principles
+  
+  1. **SAFETY FIRST**: Never deploy changes that could break critical functionality
+  2. **MEASURABLE**: All improvements must have measurable success criteria
+  3. **REVERSIBLE**: Every change must be rollbackable
+  4. **AUDITED**: All modifications are logged with full context
+  5. **CONSERVATIVE**: Prefer small, incremental improvements
+  
+  ## Improvement Pipeline
+  
+  ### 1. ANALYZE Phase
+  - Collect metrics from all skills (response time, success rate, user satisfaction)
+  - Identify skills with declining performance
+  - Detect patterns of failures or inefficiencies
+  - Compare current performance vs historical baselines
+  
+  ### 2. PROPOSE Phase
+  - Generate specific, actionable improvement proposals
+  - Each proposal includes:
+    - Problem statement with evidence
+    - Proposed solution (code changes, prompt updates, etc.)
+    - Expected improvement (quantified)
+    - Risk assessment (low/medium/high/critical)
+    - Rollback plan
+  
+  ### 3. TEST Phase
+  - Execute proposal in sandbox environment
+  - Run against test cases (unit, integration, real-world samples)
+  - Measure actual vs expected improvement
+  - Check for regressions in other areas
+  
+  ### 4. REVIEW Phase
+  - For LOW risk: Auto-approve if tests pass
+  - For MEDIUM risk: Require 24-hour observation period
+  - For HIGH risk: Require human approval
+  - For CRITICAL risk: Block and escalate
+  
+  ### 5. DEPLOY Phase
+  - Create backup of current state
+  - Apply changes atomically
+  - Monitor for 1 hour post-deployment
+  - Auto-rollback if degradation detected
+  
+  ## Risk Levels
+  
+  - **LOW**: Prompt wording changes, logging updates, comment changes
+  - **MEDIUM**: Logic changes with test coverage, new tool usage
+  - **HIGH**: Schema changes, new skills, architectural changes
+  - **CRITICAL**: Core kernel changes, security-related, data migrations
+  
+  ## Output Format
+  
+  Always respond with structured JSON:
+  ```json
+  {
+    "action": "analyze|propose|test|review|deploy|rollback",
+    "success": true|false,
+    "data": { /* action-specific data */ },
+    "auditId": "uuid",
+    "nextSteps": ["suggested", "next", "actions"]
+  }
+  ```
+
+# Tools this skill can use
+tools:
+  - file_read
+  - file_write
+  - file_list
+  - grep_search
+  - semantic_search
+  - terminal_execute
+
+# Required services
+services:
+  - learning       # For Q-learning metrics
+  - evolution      # For A/B testing
+  - emergence      # For pattern detection
+  - orchestrator   # For workflow execution
+  - scheduler      # For scheduled improvements
+
+# Composability
+composable:
+  canBeCalledBy:
+    - scheduler     # Scheduled improvement cycles
+    - self-awareness # When detecting issues
+    - observability  # When metrics indicate problems
+  canCall:
+    - self-modification  # For making code changes
+    - skill-creator      # For creating new skills
+    - test-generator     # For generating tests
+    - code-reviewer      # For reviewing proposals
+
+# UI configuration
+ui:
+  icon: '🧬'
+  color: '#10B981'  # Emerald green
+  category: Evolution
+  showInSidebar: false  # Background process, not user-facing
+  dashboardWidget:
+    type: timeline
+    title: Evolution Activity
+    metrics:
+      - proposalsGenerated
+      - testsRun
+      - changesDeployed
+      - rollbacks
+
+# Scheduling configuration
+scheduling:
+  default:
+    learningConsolidation: '0 2 * * *'    # 2 AM daily
+    performanceReview: '0 3 * * 0'        # 3 AM Sundays
+    optimizationCycle: '0 4 1 * *'        # 4 AM 1st of month
+
+# Metrics to track
+metrics:
+  - name: proposals_generated
+    type: counter
+    description: Total improvement proposals generated
+  - name: proposals_approved
+    type: counter
+    description: Proposals that passed review
+  - name: deployments_successful
+    type: counter
+    description: Successful change deployments
+  - name: rollbacks_triggered
+    type: counter
+    description: Changes that required rollback
+  - name: system_health_delta
+    type: gauge
+    description: Change in system health score after evolutions
+
+# Safety limits
+limits:
+  maxProposalsPerDay: 10
+  maxDeploymentsPerDay: 5
+  minTestCoverage: 0.8
+  maxRollbackRate: 0.2  # Pause if >20% of deployments fail
+  observationPeriodMs: 3600000  # 1 hour post-deploy monitoring

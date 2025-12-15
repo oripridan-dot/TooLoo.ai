@@ -59,6 +59,7 @@ const COMPONENT_MAP = {
   'skill-creator': ChatV2,
   'skill-evolution': ChatV2,
   'skill-metrics': SkillMetricsDashboard,
+  'autonomous-evolution': ChatV2,  // Phase 8: Self-improvement
   
   // Learning Skills
   'learning': ChatV2,
