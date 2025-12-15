@@ -1,8 +1,8 @@
 /**
  * @tooloo/skills - Main Entry Point
- * Skill registry, loader, router, tools, engines, and definitions
+ * Skill registry, loader, router, tools, engines, services, and definitions
  *
- * @version 1.2.1
+ * @version 1.3.0
  * @skill-os true
  *
  * This package provides:
@@ -10,6 +10,7 @@
  * - Intent-based routing
  * - Tool execution (file, search, terminal)
  * - Native engines (learning, evolution, emergence, routing)
+ * - Services (orchestrator, scheduler)
  */
 
 // Types
@@ -50,5 +51,8 @@ export * from './tools/index.js';
 // Native Engines - NO LEGACY DEPENDENCIES
 export * from './engines/index.js';
 
+// Services - Orchestration & Scheduling
+export * from './services/index.js';
+
 // Version
-export const VERSION = '1.2.1';
+export const VERSION = '1.3.0';
