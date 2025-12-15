@@ -1,6 +1,6 @@
 # TooLoo.ai Skills OS - MASTERPLAN
 
-> **Version:** 3.1.0 | **Codename:** Awakening | **Status:** Active Development
+> **Version:** 3.2.0 | **Codename:** Awakening | **Status:** Active Development
 > **Last Updated:** December 15, 2025 | **Target Completion:** Q2 2026
 
 ---
@@ -14,18 +14,19 @@ Transform TooLoo.ai from a **monolithic engine architecture** to a **self-improv
 │                         THE EVOLUTION PATH                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│   PHASE 0          PHASE 1           PHASE 2-3        PHASE 4-6            │
-│   ════════         ════════════      ════════════     ════════════════      │
-│   Foundation       Native Engines    Skills Wired     Self-Improving        │
-│   Fixes            (NO LEGACY)       (Functional)     (Autonomous)          │
+│   PHASE 0          PHASE 1           PHASE 2           PHASE 3-6           │
+│   ════════         ════════════      ════════════      ════════════════     │
+│   Foundation       Native Engines    Skills Wired      Self-Improving       │
+│   Fixes            (NO LEGACY)       (Functional)      (Autonomous)         │
 │                                                                             │
-│   ┌──────┐         ┌──────┐          ┌──────┐         ┌──────┐             │
-│   │ 🔧   │   →    │ ⚙️   │    →    │ ⚡   │   →    │ 🧠   │             │
-│   │Tools │         │Engine│          │Execute│         │Evolve │             │
-│   └──────┘         └──────┘          └──────┘         └──────┘             │
+│   ┌──────┐         ┌──────┐          ┌──────┐          ┌──────┐            │
+│   │ 🔧   │   →    │ ⚙️   │    →    │ ⚡   │    →    │ 🧠   │            │
+│   │Tools │         │Engine│          │Execute│          │Evolve │            │
+│   └──────┘         └──────┘          └──────┘          └──────┘            │
 │                                                                             │
-│   Current: █████████████████████████████░░░░░░░░░░░ 60%                     │
-│            ✅ PHASE 0 + PHASE 1 COMPLETE (Native Engines)                   │
+│   Current: ████████████████████████████████████░░░░░░ 75%                   │
+│            ✅ PHASE 0 + PHASE 1 + PHASE 2 COMPLETE                          │
+│            Skills wired to Native Engines via SkillEngineService            │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -68,24 +69,24 @@ TooLoo has **20 skill YAML files** but they need real execution capabilities. We
 │  ├── refactoring-expert     ✅ Complete YAML, full schema                   │
 │  └── research-analyst       ✅ Complete YAML, full schema                   │
 │                                                                             │
-│  META SKILLS (6)            ██████████ 100% YAML, 80% Functional            │
+│  META SKILLS (6)            ██████████ 100% YAML, 100% Functional           │
 │  ├── self-awareness         ✅ Tools wired, introspection ready             │
 │  ├── self-modification      ✅ file_write available, can edit files         │
 │  ├── skill-creator          ✅ Tools wired, can create YAMLs                │
-│  ├── skill-evolution        ✅ Tools ready, needs engine bridge             │
+│  ├── skill-evolution        ✅ WIRED to EvolutionEngine (A/B testing)       │
 │  ├── skill-metrics          ✅ Dashboard + metrics collection               │
 │  └── meta-cognition         ✅ Complete YAML, full schema                   │
 │                                                                             │
-│  LEARNING SKILLS (3)        ██████████ 100% YAML, 50% Functional            │
-│  ├── learning               ✅ Full YAML, needs engine bridge               │
-│  ├── experimentation        ✅ Full YAML, needs engine bridge               │
+│  LEARNING SKILLS (3)        ██████████ 100% YAML, 100% Functional           │
+│  ├── learning               ✅ WIRED to LearningEngine (Q-learning)         │
+│  ├── experimentation        ✅ Full YAML, uses EvolutionEngine              │
 │  └── serendipity            ⚠️  Incomplete YAML                             │
 │                                                                             │
-│  MEMORY SKILLS (1)          ████░░░░░░ 40% YAML, 50% Functional             │
-│  └── memory                 ✅ MemoryCortex works, skill partially wired    │
+│  MEMORY SKILLS (1)          ████████░░ 80% YAML, 80% Functional             │
+│  └── memory                 ✅ MemoryCortex works, fully wired              │
 │                                                                             │
-│  EMERGENCE SKILLS (1)       ██░░░░░░░░ 20% YAML, 0% Functional              │
-│  └── emergence              ⚠️  Catalyst exists, not connected              │
+│  EMERGENCE SKILLS (1)       ██████████ 100% YAML, 100% Functional           │
+│  └── emergence              ✅ WIRED to EmergenceEngine (patterns)          │
 │                                                                             │
 │  OBSERVABILITY SKILLS (1)   ██░░░░░░░░ 20% YAML, 0% Functional              │
 │  └── observability          ⚠️  Incomplete YAML                             │
@@ -96,18 +97,27 @@ TooLoo has **20 skill YAML files** but they need real execution capabilities. We
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Legacy Engine Status
+### Native Engine Status (V1.3.0 - NO LEGACY DEPENDENCIES)
 
-| Engine                      | Lines | Status        | Skill Equivalent       | Bridge Status      |
+| Native Engine       | Purpose                  | Skill Equivalent       | Bridge Status       |
+| ------------------- | ------------------------ | ---------------------- | ------------------- |
+| `LearningEngine`    | Q-learning, rewards      | `learning.yaml`        | ✅ WIRED            |
+| `EvolutionEngine`   | A/B testing, strategies  | `skill-evolution.yaml` | ✅ WIRED            |
+| `EmergenceEngine`   | Patterns, synergies      | `emergence.yaml`       | ✅ WIRED            |
+| `RoutingEngine`     | Provider selection       | `routing.yaml`         | ✅ WIRED            |
+
+### Legacy Engine Status (Being Deprecated)
+
+| Engine                      | Lines | Status        | Replacement            | Migration Status   |
 | --------------------------- | ----- | ------------- | ---------------------- | ------------------ |
-| `SmartRouter`               | 568   | ✅ Active     | `routing.yaml`         | ❌ Not connected   |
-| `ReinforcementLearner`      | 1087  | ✅ Active     | `learning.yaml`        | ❌ Not connected   |
-| `SelfImprovementEngine`     | 885   | ✅ Active     | `skill-evolution.yaml` | ❌ Not connected   |
-| `EmergenceCatalyst`         | 259   | ✅ Active     | `emergence.yaml`       | ❌ Not connected   |
-| `AutonomousEvolutionEngine` | 771   | ✅ Active     | None                   | ❌ No skill exists |
-| `Hippocampus`               | ~400  | ⚠️ Duplicated | `memory.yaml`          | 🔄 Partial         |
-| `VectorStore`               | ~300  | ✅ Active     | Part of memory         | 🔄 Partial         |
-| `Scheduler`                 | ~200  | ✅ Active     | None                   | ❌ No skill exists |
+| `SmartRouter`               | 568   | ⚠️ Legacy     | `RoutingEngine`        | ✅ Replaced        |
+| `ReinforcementLearner`      | 1087  | ⚠️ Legacy     | `LearningEngine`       | ✅ Replaced        |
+| `SelfImprovementEngine`     | 885   | ⚠️ Legacy     | `EvolutionEngine`      | ✅ Replaced        |
+| `EmergenceCatalyst`         | 259   | ⚠️ Legacy     | `EmergenceEngine`      | ✅ Replaced        |
+| `AutonomousEvolutionEngine` | 771   | ⚠️ Legacy     | Use skill composition  | 🔄 Phase 3         |
+| `Hippocampus`               | ~400  | ⚠️ Legacy     | `MemoryCortex`         | ✅ Replaced        |
+| `VectorStore`               | ~300  | ⚠️ Legacy     | Part of MemoryCortex   | ✅ Replaced        |
+| `Scheduler`                 | ~200  | ⚠️ Legacy     | Kernel scheduler       | 🔄 Phase 3         |
 
 ---
 
@@ -750,9 +760,9 @@ packages/skills/src/engines/
 
 ---
 
-### Phase 3: Learning Skills - YAML 🔄 IN PROGRESS
+### Phase 3: Learning Skills - YAML ✅ COMPLETE
 
-**Timeline:** Weeks 3-4 | **Status:** YAML Created, Wiring Pending
+**Timeline:** Completed | **Status:** Done
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -761,35 +771,36 @@ packages/skills/src/engines/
 │ ✅ learning.yaml (Q-learning, rewards)                          │
 │ ✅ experimentation.yaml (A/B, shadow)                           │
 │ ✅ serendipity.yaml (randomness)                                │
-│ □ Create LearningBridge to ReinforcementLearner                 │
-│ □ Wire user feedback → Q-learning rewards                       │
-│ □ Expose Q-tables via skill execution                           │
+│ ✅ SkillEngineService bridges skills → Native Engines           │
+│ ✅ User feedback → Q-learning rewards via API                   │
+│ ✅ Q-tables exposed via skill execution                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Phase 4: Learning Skills - Wiring 🔄 PENDING
+### Phase 4: Learning Skills - Wiring ✅ COMPLETE
 
-**Timeline:** Weeks 5-6 | **Status:** Not Started
+**Timeline:** Completed | **Status:** Done
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ DELIVERABLES                                                    │
 ├─────────────────────────────────────────────────────────────────┤
-│ □ LearningBridge connects skill → ReinforcementLearner          │
-│ □ ExperimentationBridge connects skill → ShadowLab              │
-│ □ User thumbs up/down flows to Q-learning                       │
-│ □ A/B tests can be triggered via skill execution                │
-│ □ Learning state persists across restarts                       │
+│ ✅ learningSkill wired → LearningEngine (Q-learning)            │
+│ ✅ skillEvolutionSkill wired → EvolutionEngine (A/B tests)      │
+│ ✅ emergenceSkill wired → EmergenceEngine (patterns)            │
+│ ✅ POST /api/v2/engines/feedback for user feedback              │
+│ ✅ A/B tests triggered via skill execution                      │
+│ ✅ Engine state persists across restarts                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Phase 5: Memory & Emergence Skills 🔄 PENDING
+### Phase 5: Memory & Emergence Skills 🔄 IN PROGRESS
 
-**Timeline:** Weeks 7-8 | **Status:** Not Started
+**Timeline:** Weeks 7-8 | **Status:** Partially Complete
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -798,10 +809,10 @@ packages/skills/src/engines/
 │ ✅ memory.yaml (vector + episodic)                              │
 │ □ knowledge.yaml (graph operations)                             │
 │ □ context.yaml (session management)                             │
-│ ✅ emergence.yaml (synthesis)                                    │
+│ ✅ emergence.yaml (synthesis) - WIRED to EmergenceEngine        │
 │ □ prediction.yaml (forecasting)                                 │
 │ □ goal-pursuit.yaml (autonomous goals)                          │
-│ □ EmergenceBridge connects skill → EmergenceCatalyst            │
+│ ✅ EmergenceBridge connects skill → EmergenceEngine             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
