@@ -1,6 +1,6 @@
 /**
  * @file Services Index - Export all skill services
- * @version 1.1.0
+ * @version 1.2.0 - Phase 9: Autonomous Operation
  * @skill-os true
  */
 
@@ -52,3 +52,46 @@ export {
   type AuditEntry,
   type DailyStats,
 } from './self-improvement.js';
+
+// Phase 9: Self-Healing
+export {
+  SelfHealingService,
+  getSelfHealingService,
+  resetSelfHealingService,
+  type IssueSeverity,
+  type ComponentStatus,
+  type HealingAction,
+  type DetectedIssue,
+  type HealingAttempt,
+  type HealthCheckResult,
+  type HealingRule,
+  type IssueCondition,
+  type SelfHealingConfig,
+  type HealingMetrics,
+} from './self-healing.js';
+
+// Phase 9: Skill Synthesizer
+export {
+  SkillSynthesizer,
+  getSkillSynthesizer,
+  resetSkillSynthesizer,
+  type CapabilityGap,
+  type InteractionPattern,
+  type SynthesizedSkill,
+  type SkillSynthesizerConfig,
+  type SynthesisMetrics,
+} from './skill-synthesizer.js';
+
+// Phase 9: Autonomous Learning Loop
+export {
+  AutonomousLearningLoop,
+  getAutonomousLearningLoop,
+  resetAutonomousLearningLoop,
+  type CyclePhase,
+  type LearningGoal,
+  type KnowledgeItem,
+  type LearningCycle,
+  type AutonomousLearningConfig,
+  type LearningMetrics as AutonomousLearningMetrics,
+  type InteractionRecord,
+} from './autonomous-learning.js';

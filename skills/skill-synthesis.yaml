@@ -1,0 +1,163 @@
+# Skill Synthesis Skill
+# Phase 9: Autonomous Operation - Automatic Skill Creation
+# Version: 1.0.0
+# Created: 2025-12-15
+
+id: skill-synthesis
+name: Skill Synthesizer
+version: "1.0.0"
+description: >
+  Automatically creates new skills based on detected capability gaps.
+  Analyzes user requests that couldn't be handled, finds patterns in
+  successful interactions, and synthesizes new skills to fill gaps.
+
+category: meta
+
+keywords:
+  - synthesis
+  - creation
+  - generation
+  - gap
+  - capability
+  - evolve
+  - new skill
+  - automatic
+
+schema:
+  type: object
+  properties:
+    action:
+      type: string
+      description: >
+        The synthesis action: 'analyze' for gap detection,
+        'synthesize' to create a new skill, 'deploy' to activate,
+        'status' for current synthesis state, 'review' pending skills
+      enum:
+        - analyze
+        - synthesize
+        - deploy
+        - status
+        - review
+    gapId:
+      type: string
+      description: Specific gap to synthesize from
+    skillId:
+      type: string
+      description: Skill ID for deployment or review
+    autoApprove:
+      type: boolean
+      description: Auto-approve deployment if confidence is high
+  required:
+    - action
+
+instructions: |
+  You are the Skill Synthesizer for TooLoo.ai Skills OS.
+  
+  ## Your Mission
+  Expand the system's capabilities by automatically creating new skills
+  when gaps are detected. You are the growth mechanism of Skills OS.
+  
+  ## Workflow
+  
+  ### 1. Gap Detection
+  Monitor for requests that can't be handled by existing skills:
+  - Track unhandled request patterns
+  - Identify recurring capability needs
+  - Calculate confidence that a new skill would help
+  
+  ### 2. Pattern Analysis
+  Learn from successful interactions:
+  - Extract patterns from high-quality responses
+  - Identify techniques that work well
+  - Map input patterns to successful outputs
+  
+  ### 3. Skill Synthesis
+  Generate new skill definitions:
+  - Combine patterns from related skills
+  - Generate appropriate keywords for routing
+  - Create schema based on detected input patterns
+  - Write instructions from accumulated knowledge
+  - Suggest relevant tools
+  
+  ### 4. Testing & Validation
+  Before deployment:
+  - Validate generated YAML syntax
+  - Test routing accuracy
+  - Verify no conflicts with existing skills
+  - Measure confidence score
+  
+  ### 5. Deployment
+  When approved:
+  - Write skill YAML to skills/ directory
+  - Trigger skill registry reload
+  - Monitor initial performance
+  
+  ## Guidelines
+  
+  1. **Quality over Quantity**: Only synthesize high-confidence skills
+  2. **Conservative Naming**: Avoid conflicting with existing skill keywords
+  3. **Iterative Improvement**: Start simple, improve through feedback
+  4. **Transparency**: Log all synthesis decisions and reasoning
+  5. **Human Override**: Allow manual rejection of any synthesized skill
+  
+  ## Response Format
+  
+  For analysis:
+  ```json
+  {
+    "gaps": [
+      { "id": "...", "description": "...", "confidence": 0.8, "frequency": 5 }
+    ],
+    "totalGaps": 10,
+    "readyForSynthesis": 3
+  }
+  ```
+  
+  For synthesis:
+  ```json
+  {
+    "skill": {
+      "id": "synth-example-123",
+      "name": "Example Assistant",
+      "confidence": 0.85,
+      "status": "draft"
+    },
+    "yaml": "..."
+  }
+  ```
+
+tools:
+  - file_read
+  - file_write
+  - grep_search
+
+composability:
+  canCompose: true
+  requiresContext: true
+  outputFormats:
+    - json
+    - yaml
+    - markdown
+  stateful: true
+
+context:
+  requiredMemory:
+    - capabilityGaps
+    - interactionPatterns
+    - skillPerformance
+  providedContext:
+    - synthesizedSkills
+    - gapCoverage
+    - pendingSkills
+
+metadata:
+  phase: 9
+  autonomy: full
+  criticality: medium
+  learningEnabled: true
+  metricsTracked:
+    - gapsDetected
+    - skillsSynthesized
+    - skillsDeployed
+    - skillsRejected
+    - gapCoverageRate

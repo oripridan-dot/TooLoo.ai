@@ -53,7 +53,7 @@ TooLoo.ai/
 │   ├── experimentation.yaml   # NEW: A/B testing
 │   ├── emergence.yaml         # NEW: Creative synthesis
 │   ├── self-awareness.yaml    # NEW: Introspection
-│   └── ...                    # 20+ skills total
+│   └── ...                    # 27+ skills total
 │
 ├── src/kernel/                # 🧠 The Kernel (Skill Execution Engine)
 │   ├── boot.ts                # Entry point: pnpm boot

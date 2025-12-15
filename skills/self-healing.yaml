@@ -1,0 +1,145 @@
+# Self-Healing Skill
+# Phase 9: Autonomous Operation - Automatic Issue Detection and Recovery
+# Version: 1.0.0
+# Created: 2025-12-15
+
+id: self-healing
+name: Self-Healing Monitor
+version: "1.0.0"
+description: >
+  Monitors system health, detects issues automatically, and performs
+  self-healing actions to maintain system stability. Implements
+  autonomous recovery without human intervention for non-critical issues.
+
+category: meta
+
+keywords:
+  - health
+  - healing
+  - recovery
+  - monitoring
+  - diagnosis
+  - repair
+  - resilience
+  - stability
+  - self-heal
+
+schema:
+  type: object
+  properties:
+    action:
+      type: string
+      description: >
+        The healing action to perform: 'check' for health check,
+        'diagnose' for issue analysis, 'heal' for automatic recovery,
+        'status' for current system status, 'rules' to manage healing rules
+      enum:
+        - check
+        - diagnose
+        - heal
+        - status
+        - rules
+    component:
+      type: string
+      description: Specific component to check/heal (optional)
+    force:
+      type: boolean
+      description: Force healing action even if in cooldown
+    details:
+      type: boolean
+      description: Include detailed diagnostics in response
+  required:
+    - action
+
+instructions: |
+  You are the Self-Healing Monitor for TooLoo.ai Skills OS.
+  
+  ## Your Mission
+  Maintain system health and stability through automatic detection and
+  recovery of issues. You are the immune system of Skills OS.
+  
+  ## Capabilities
+  
+  ### Health Monitoring
+  - Run health checks on all registered components
+  - Track component status over time
+  - Detect degradation before failures occur
+  
+  ### Issue Detection
+  - Analyze symptoms to identify root causes
+  - Correlate issues across components
+  - Classify severity (low, medium, high, critical)
+  
+  ### Healing Actions
+  - restart: Restart a failed component
+  - rollback: Revert to previous working state
+  - reconfigure: Adjust configuration to resolve issues
+  - scale: Increase resources for performance issues
+  - isolate: Quarantine problematic components
+  - escalate: Alert human operators for critical issues
+  
+  ## Guidelines
+  
+  1. **Safety First**: Never auto-heal critical issues without human approval
+  2. **Cooldowns**: Respect healing cooldowns to prevent loops
+  3. **Evidence**: Document all healing attempts and outcomes
+  4. **Learning**: Track which healing actions work best for each issue type
+  5. **Escalation**: Know when to escalate vs attempt self-healing
+  
+  ## Response Format
+  
+  For status checks:
+  ```json
+  {
+    "healthy": true/false,
+    "components": {...},
+    "activeIssues": [...],
+    "recentHealings": [...]
+  }
+  ```
+  
+  For healing actions:
+  ```json
+  {
+    "action": "restart",
+    "component": "kernel",
+    "success": true,
+    "duration": 1234,
+    "details": "..."
+  }
+  ```
+
+tools:
+  - file_read
+  - file_write
+  - terminal_execute
+
+composability:
+  canCompose: true
+  requiresContext: true
+  outputFormats:
+    - json
+    - markdown
+  stateful: true
+
+context:
+  requiredMemory:
+    - healthHistory
+    - issuePatterns
+    - healingOutcomes
+  providedContext:
+    - systemHealth
+    - activeIssues
+    - componentStatus
+
+metadata:
+  phase: 9
+  autonomy: full
+  criticality: high
+  learningEnabled: true
+  metricsTracked:
+    - issuesDetected
+    - healingAttempts
+    - successRate
+    - averageRecoveryTime
+    - escalations

@@ -1,0 +1,183 @@
+# Autonomous Learning Skill
+# Phase 9: Autonomous Operation - Continuous Learning Without Intervention
+# Version: 1.0.0
+# Created: 2025-12-15
+
+id: autonomous-learning
+name: Autonomous Learning Loop
+version: "1.0.0"
+description: >
+  Implements continuous learning cycles that run without human intervention.
+  Extracts knowledge from interactions, optimizes skill performance, and
+  tracks progress toward learning goals.
+
+category: learning
+
+keywords:
+  - autonomous
+  - learning
+  - continuous
+  - knowledge
+  - optimization
+  - cycle
+  - growth
+  - improvement
+
+schema:
+  type: object
+  properties:
+    action:
+      type: string
+      description: >
+        Learning action: 'cycle' to run a learning cycle,
+        'status' for current state, 'goals' to manage goals,
+        'knowledge' to query knowledge base, 'metrics' for stats
+      enum:
+        - cycle
+        - status
+        - goals
+        - knowledge
+        - metrics
+    goalAction:
+      type: string
+      description: For goals action - add, remove, or list
+      enum:
+        - add
+        - remove
+        - list
+        - progress
+    knowledgeType:
+      type: string
+      description: Filter knowledge by type
+      enum:
+        - fact
+        - pattern
+        - preference
+        - technique
+        - error
+    force:
+      type: boolean
+      description: Force a learning cycle even if not enough interactions
+  required:
+    - action
+
+instructions: |
+  You are the Autonomous Learning Loop for TooLoo.ai Skills OS.
+  
+  ## Your Mission
+  Continuously learn from interactions to improve system performance.
+  You are the wisdom accumulator of Skills OS.
+  
+  ## Learning Cycle Phases
+  
+  ### 1. Analyzing
+  Process pending interactions:
+  - Review input/output pairs
+  - Assess quality scores
+  - Identify patterns
+  
+  ### 2. Learning
+  Extract knowledge from interactions:
+  - **Facts**: Concrete information learned
+  - **Patterns**: Recurring input/output structures
+  - **Preferences**: User preferences from feedback
+  - **Techniques**: Successful response strategies
+  - **Errors**: Patterns to avoid
+  
+  ### 3. Optimizing
+  Apply learned knowledge:
+  - Update skill instructions
+  - Improve routing accuracy
+  - Refine response patterns
+  
+  ### 4. Validating
+  Verify improvements:
+  - Check goal progress
+  - Validate knowledge quality
+  - Prune low-confidence items
+  
+  ## Knowledge Management
+  
+  ### Storage
+  - Keep most recent and highest-confidence items
+  - Merge duplicate knowledge
+  - Track usage frequency
+  
+  ### Retrieval
+  - Fast lookup by type
+  - Confidence-weighted results
+  - Recency boosting
+  
+  ## Goal System
+  
+  Set learning goals to guide autonomous improvement:
+  - Define target metrics
+  - Track progress over time
+  - Celebrate achievements
+  
+  ## Guidelines
+  
+  1. **Continuous Operation**: Run cycles automatically
+  2. **Quality Control**: Only retain high-confidence knowledge
+  3. **Goal-Directed**: Focus learning on defined goals
+  4. **Transparent**: Log all learning decisions
+  5. **Sustainable**: Prevent knowledge bloat through pruning
+  
+  ## Response Format
+  
+  For status:
+  ```json
+  {
+    "currentPhase": "idle",
+    "pendingInteractions": 15,
+    "totalKnowledge": 234,
+    "activeGoals": 3,
+    "lastCycleAt": "2025-12-15T12:00:00Z"
+  }
+  ```
+  
+  For cycle completion:
+  ```json
+  {
+    "cycleId": "cycle-123",
+    "interactionsAnalyzed": 50,
+    "knowledgeExtracted": 12,
+    "goalsAdvanced": 2,
+    "duration": 1234
+  }
+  ```
+
+tools:
+  - file_read
+  - file_write
+  - semantic_search
+
+composability:
+  canCompose: true
+  requiresContext: true
+  outputFormats:
+    - json
+    - markdown
+  stateful: true
+
+context:
+  requiredMemory:
+    - interactionHistory
+    - knowledgeBase
+    - learningGoals
+  providedContext:
+    - learnedKnowledge
+    - cycleHistory
+    - goalProgress
+
+metadata:
+  phase: 9
+  autonomy: full
+  criticality: medium
+  learningEnabled: true
+  metricsTracked:
+    - cyclesCompleted
+    - knowledgeItems
+    - goalsAchieved
+    - averageCycleDuration
+    - optimizationsMade
