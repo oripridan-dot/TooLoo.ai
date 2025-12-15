@@ -185,8 +185,12 @@ schema:
     - operation
 
 tools:
-  - memory_store
-  - memory_recall
+  - name: memory_store
+    description: Store context items in memory
+    required: true
+  - name: memory_recall
+    description: Recall context from memory
+    required: true
 
 composability:
   requires: []

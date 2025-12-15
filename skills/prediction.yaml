@@ -187,8 +187,12 @@ schema:
     - operation
 
 tools:
-  - memory_recall
-  - semantic_search
+  - name: memory_recall
+    description: Recall historical data for predictions
+    required: true
+  - name: semantic_search
+    description: Search for patterns and trends
+    required: false
 
 composability:
   requires:

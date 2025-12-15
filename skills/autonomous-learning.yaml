@@ -148,9 +148,15 @@ instructions: |
   ```
 
 tools:
-  - file_read
-  - file_write
-  - semantic_search
+  - name: file_read
+    description: Read knowledge and interaction files
+    required: true
+  - name: file_write
+    description: Write learned knowledge to storage
+    required: true
+  - name: semantic_search
+    description: Search codebase for learning patterns
+    required: false
 
 composability:
   canCompose: true

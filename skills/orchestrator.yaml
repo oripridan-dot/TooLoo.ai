@@ -265,10 +265,18 @@ schema:
     - operation
 
 tools:
-  - skill_execute
-  - emit_event
-  - memory_store
-  - memory_recall
+  - name: skill_execute
+    description: Execute other skills in the workflow
+    required: true
+  - name: emit_event
+    description: Emit workflow events to the system
+    required: true
+  - name: memory_store
+    description: Store workflow state and artifacts
+    required: false
+  - name: memory_recall
+    description: Recall workflow history and patterns
+    required: false
 
 composability:
   requires: []

@@ -225,9 +225,15 @@ schema:
     - operation
 
 tools:
-  - memory_store
-  - memory_recall
-  - emit_event
+  - name: memory_store
+    description: Store goals and progress in memory
+    required: true
+  - name: memory_recall
+    description: Recall goals and history from memory
+    required: true
+  - name: emit_event
+    description: Emit goal events to the system
+    required: false
 
 composability:
   requires:

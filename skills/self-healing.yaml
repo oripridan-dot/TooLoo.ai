@@ -110,9 +110,15 @@ instructions: |
   ```
 
 tools:
-  - file_read
-  - file_write
-  - terminal_execute
+  - name: file_read
+    description: Read configuration and state files
+    required: true
+  - name: file_write
+    description: Write healing state and configurations
+    required: true
+  - name: terminal_execute
+    description: Execute healing commands
+    required: true
 
 composability:
   canCompose: true

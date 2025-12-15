@@ -186,9 +186,15 @@ schema:
     - operation
 
 tools:
-  - memory_store
-  - memory_recall
-  - semantic_search
+  - name: memory_store
+    description: Store knowledge entities and relationships
+    required: true
+  - name: memory_recall
+    description: Recall knowledge from the graph
+    required: true
+  - name: semantic_search
+    description: Search for related knowledge semantically
+    required: false
 
 composability:
   requires:

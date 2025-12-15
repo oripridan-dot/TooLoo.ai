@@ -117,7 +117,7 @@ context:
   maxTokens: 8192
   ragSources:
     - codebase
-    - tests
+    - docs
   memoryScope: project
   includeHistory: true
   maxHistoryMessages: 10

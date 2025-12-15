@@ -248,9 +248,15 @@ schema:
     - operation
 
 tools:
-  - skill_execute
-  - emit_event
-  - memory_store
+  - name: skill_execute
+    description: Execute scheduled skills
+    required: true
+  - name: emit_event
+    description: Emit schedule events to the system
+    required: true
+  - name: memory_store
+    description: Store schedule state and history
+    required: false
 
 composability:
   requires: []

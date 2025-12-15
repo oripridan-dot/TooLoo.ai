@@ -127,9 +127,15 @@ instructions: |
   ```
 
 tools:
-  - file_read
-  - file_write
-  - grep_search
+  - name: file_read
+    description: Read existing skill definitions
+    required: true
+  - name: file_write
+    description: Write synthesized skill YAML files
+    required: true
+  - name: grep_search
+    description: Search for skill patterns and keywords
+    required: false
 
 composability:
   canCompose: true
