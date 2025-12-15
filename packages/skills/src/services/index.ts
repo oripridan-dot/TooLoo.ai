@@ -95,3 +95,16 @@ export {
   type LearningMetrics as AutonomousLearningMetrics,
   type InteractionRecord,
 } from './autonomous-learning.js';
+
+// Phase 11: Safe Code Implementation
+export {
+  SafeImplementationService,
+  getSafeImplementationService,
+  type RiskLevel as ImplementationRiskLevel,
+  type FileAction,
+  type FileOperation,
+  type ImplementationRequest,
+  type PipelineState,
+  type VerificationResult,
+  type ImplementationResult,
+} from './SafeImplementationService.js';

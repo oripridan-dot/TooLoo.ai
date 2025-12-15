@@ -150,12 +150,24 @@ instructions: |
 
 # Tools this skill can use
 tools:
-  - file_read
-  - file_write
-  - file_list
-  - grep_search
-  - semantic_search
-  - terminal_execute
+  - name: file_read
+    description: Read files for analysis
+    required: true
+  - name: file_write
+    description: Write modified files
+    required: true
+  - name: file_list
+    description: List directory contents
+    required: true
+  - name: grep_search
+    description: Search for patterns in code
+    required: true
+  - name: semantic_search
+    description: Search for semantic matches
+    required: false
+  - name: terminal_execute
+    description: Run commands for testing
+    required: true
 
 # Required services
 services:

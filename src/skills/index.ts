@@ -16,6 +16,7 @@ import { SystemSkill } from './system/index.js';
 import { learningSkill } from './learning/index.js';
 import { skillEvolutionSkill } from './evolution/index.js';
 import { emergenceSkill } from './emergence/index.js';
+import { codeImplementationSkill, rollbackSkill } from './codeImplementation.js';
 
 // =============================================================================
 // SKILL MANIFEST
@@ -27,6 +28,8 @@ export const BUILT_IN_SKILLS = [
   learningSkill,
   skillEvolutionSkill,
   emergenceSkill,
+  codeImplementationSkill,
+  rollbackSkill,
 ] as const;
 
 // =============================================================================
@@ -60,6 +63,7 @@ export { SystemSkill } from './system/index.js';
 export { learningSkill } from './learning/index.js';
 export { skillEvolutionSkill } from './evolution/index.js';
 export { emergenceSkill } from './emergence/index.js';
+export { codeImplementationSkill, rollbackSkill } from './codeImplementation.js';
 export { createSkillEngineService } from './engine-service.js';
 
 // Export all skill types
