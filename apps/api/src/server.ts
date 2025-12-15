@@ -27,6 +27,7 @@ import { createProjectsRouter } from './routes/projects.js';
 import { createCapabilitiesRouter } from './routes/capabilities.js';
 import { createVisualsRouter } from './routes/visuals.js';
 import { createSystemRouter } from './routes/system.js';
+import { createEnginesRouter } from './routes/engines.js';
 import authRouter from './routes/auth.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { createRateLimiter } from './middleware/rate-limiter.js';
@@ -179,6 +180,9 @@ export class TooLooServer {
 
     // System routes (error reporting, metrics, etc.)
     this.app.use(`${prefix}/system`, createSystemRouter({ io: this.io }));
+
+    // Engines routes (learning, evolution, emergence, routing)
+    this.app.use(`${prefix}/engines`, createEnginesRouter(this.config.orchestrator!));
 
     // Auth routes
     this.app.use(`${prefix}/auth`, authRouter);

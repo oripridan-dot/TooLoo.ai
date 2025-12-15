@@ -382,6 +382,9 @@ export type SkillCategory =
   | 'core' // Essential system skills
   | 'coding' // Development-related
   | 'ai' // AI/ML features
+  | 'learning' // Learning and feedback skills
+  | 'evolution' // Self-improvement skills
+  | 'emergence' // Pattern detection skills
   | 'integration' // External service integrations
   | 'ui' // UI generation/manipulation
   | 'system' // System settings/config

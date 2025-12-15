@@ -12,3 +12,4 @@ export { createProjectsRouter } from './projects.js';
 export { createCapabilitiesRouter } from './capabilities.js';
 export { createVisualsRouter } from './visuals.js';
 export { createSystemRouter } from './system.js';
+export { createEnginesRouter } from './engines.js';

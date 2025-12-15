@@ -1,7 +1,7 @@
 /**
  * @file Skills Index
  * @description Auto-registers all built-in skills
- * @version 1.0.0
+ * @version 1.3.0
  *
  * This file imports and registers all skills with the kernel.
  * Add new skills here to make them available.
@@ -13,12 +13,21 @@ import type { Skill } from '../kernel/types.js';
 // Built-in skills
 import { ChatSkill } from './chat/index.js';
 import { SystemSkill } from './system/index.js';
+import { learningSkill } from './learning/index.js';
+import { skillEvolutionSkill } from './evolution/index.js';
+import { emergenceSkill } from './emergence/index.js';
 
 // =============================================================================
 // SKILL MANIFEST
 // =============================================================================
 
-export const BUILT_IN_SKILLS = [ChatSkill, SystemSkill] as const;
+export const BUILT_IN_SKILLS = [
+  ChatSkill,
+  SystemSkill,
+  learningSkill,
+  skillEvolutionSkill,
+  emergenceSkill,
+] as const;
 
 // =============================================================================
 // AUTO-REGISTRATION
@@ -48,7 +57,14 @@ export function registerBuiltInSkills(): void {
 
 export { ChatSkill } from './chat/index.js';
 export { SystemSkill } from './system/index.js';
+export { learningSkill } from './learning/index.js';
+export { skillEvolutionSkill } from './evolution/index.js';
+export { emergenceSkill } from './emergence/index.js';
+export { createSkillEngineService } from './engine-service.js';
 
 // Export all skill types
 export type { ChatInput, ChatOutput, ChatMessage } from './chat/index.js';
 export type { SystemInput, SystemOutput } from './system/index.js';
+export type { LearningOutput } from './learning/index.js';
+export type { EvolutionOutput } from './evolution/index.js';
+export type { EmergenceOutput } from './emergence/index.js';
