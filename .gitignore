@@ -105,3 +105,4 @@ chrome-extension-merged/**/*.zip
 
 *storybook.log
 storybook-static
+.turbo/

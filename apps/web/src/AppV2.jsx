@@ -18,10 +18,12 @@ import AdminDashboard from './components/AdminDashboard';
 import MissionControl from './components/MissionControl';
 import { AuthPage } from './components/Login';
 import SkillMetricsDashboard from './components/SkillMetricsDashboard';
+import TooLooObservatory from './components/TooLooObservatory';
 
 // Fallback registry for when the API is cold or unreachable
 // These are the UI-native skills that have renderers
 const DEFAULT_SKILLS = [
+  { id: 'core.observatory', name: 'Observatory', icon: '🔭', component: TooLooObservatory },
   { id: 'core.chat', name: 'Cognition', icon: '🧠', component: ChatV2 },
   { id: 'core.skills', name: 'Skill Studio', icon: '🧬', component: SkillStudio },
   { id: 'core.metrics', name: 'Metrics', icon: '📊', component: SkillMetricsDashboard },
@@ -35,58 +37,62 @@ const DEFAULT_SKILLS = [
 // All skills use ChatV2 as the universal conversational interface
 const COMPONENT_MAP = {
   // Core UI skills
+  'core.observatory': TooLooObservatory,
   'core.chat': ChatV2,
   'core.skills': SkillStudio,
   'core.metrics': SkillMetricsDashboard,
   'core.admin': AdminDashboard,
   'core.mission': MissionControl,
   'core.auth': AuthPage,
-  
+
   // === YAML-DEFINED SKILLS (from /skills directory) ===
-  
+
   // Coding Skills
   'coding-assistant': ChatV2,
-  'architect': ChatV2,
+  architect: ChatV2,
   'research-analyst': ChatV2,
   'documentation-writer': ChatV2,
   'test-generator': ChatV2,
   'refactoring-expert': ChatV2,
   'code-reviewer': ChatV2,
-  
+
   // Meta Skills (self-awareness & evolution)
   'self-awareness': ChatV2,
   'self-modification': ChatV2,
   'skill-creator': ChatV2,
   'skill-evolution': ChatV2,
   'skill-metrics': SkillMetricsDashboard,
-  'autonomous-evolution': ChatV2,  // Phase 8: Self-improvement
-  
+  'autonomous-evolution': ChatV2, // Phase 8: Self-improvement
+
   // Learning Skills
-  'learning': ChatV2,
-  'experimentation': ChatV2,
-  'serendipity': ChatV2,
+  learning: ChatV2,
+  experimentation: ChatV2,
+  serendipity: ChatV2,
   'meta-cognition': ChatV2,
-  
+
   // Memory Skills
-  'memory': ChatV2,
-  'knowledge': ChatV2,
-  'context': ChatV2,
-  
+  memory: ChatV2,
+  knowledge: ChatV2,
+  context: ChatV2,
+
   // Emergence Skills
-  'emergence': ChatV2,
-  'prediction': ChatV2,
+  emergence: ChatV2,
+  prediction: ChatV2,
   'goal-pursuit': ChatV2,
-  
+
+  // Execution Skills
+  'sandbox-execution': ChatV2, // Safe isolated code execution
+
   // Core Skills
-  'scheduler': ChatV2,
-  'orchestrator': ChatV2,
-  
+  scheduler: ChatV2,
+  orchestrator: ChatV2,
+
   // Observability Skills
-  'observability': ChatV2,
-  
+  observability: ChatV2,
+
   // Routing (meta-skill)
-  'routing': ChatV2,
-  
+  routing: ChatV2,
+
   // Legacy API skills (backward compatibility)
   'default-chat': ChatV2,
   'code-generator': ChatV2,
@@ -99,7 +105,7 @@ function SkillIcon({ icon }) {
 
 export default function AppV2() {
   const [skills, setSkills] = useState(DEFAULT_SKILLS);
-  const [activeSkillId, setActiveSkillId] = useState('core.chat');
+  const [activeSkillId, setActiveSkillId] = useState('core.observatory');
   const [loading, setLoading] = useState(true);
   const [bootMessage, setBootMessage] = useState('SYNAPSYS NUCLEUS BOOTING...');
 
@@ -113,7 +119,7 @@ export default function AppV2() {
 
         // Try to fetch skills from the Nucleus (for health check)
         await apiRequest('/skills');
-        
+
         // Only show DEFAULT_SKILLS in sidebar
         // Other skills (coding-assistant, self-awareness, etc.) are used
         // for automatic routing based on message content, not manual selection
@@ -160,7 +166,7 @@ export default function AppV2() {
     return (
       <div className="flex h-screen bg-black items-center justify-center flex-col space-y-4">
         <p className="text-red-500 font-mono text-sm">No skill component available</p>
-        <button 
+        <button
           onClick={() => setActiveSkillId('core.chat')}
           className="px-4 py-2 bg-blue-600 rounded text-white"
         >
@@ -258,7 +264,9 @@ export default function AppV2() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="w-full h-full"
             >
-              {ActiveComponent ? <ActiveComponent /> : (
+              {ActiveComponent ? (
+                <ActiveComponent />
+              ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <p>No component available for this skill</p>
                 </div>
