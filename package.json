@@ -25,7 +25,10 @@
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules .turbo packages/*/dist apps/*/dist",
-    "version:bump": "tsx scripts/version-bump.ts",
+    "version:bump": "./scripts/version-bump.sh",
+    "version:major": "./scripts/version-bump.sh major",
+    "version:minor": "./scripts/version-bump.sh minor",
+    "version:patch": "./scripts/version-bump.sh patch",
     "skills:list": "tsx scripts/skills-list.ts",
     "skills:validate": "tsx scripts/validate-skills.ts",
     "health": "curl -s http://localhost:4001/api/v2/health | jq"
