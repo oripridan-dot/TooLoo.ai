@@ -2,7 +2,7 @@
  * @tooloo/skills - Tools Index
  * Export all tool implementations and the executor
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @skill-os true
  */
 
@@ -45,6 +45,18 @@ export {
   type CheckCommandResult,
 } from './terminal-tools.js';
 
+// Sandbox Tools (Docker isolation)
+export {
+  sandboxExecuteTool,
+  runJavaScript,
+  runPython,
+  getSandboxStatus,
+  type SandboxLanguage,
+  type ExecutionMode,
+  type SandboxExecuteParams,
+  type SandboxExecuteResult,
+} from './sandbox.js';
+
 // =============================================================================
 // ALL TOOLS
 // =============================================================================
@@ -52,6 +64,7 @@ export {
 import { fileTools } from './file-tools.js';
 import { searchTools } from './search-tools.js';
 import { terminalTools } from './terminal-tools.js';
+import { sandboxExecuteTool } from './sandbox.js';
 import type { ToolImplementation } from './types.js';
 
 /**
@@ -61,6 +74,7 @@ export const allTools: ToolImplementation<unknown, unknown>[] = [
   ...fileTools as ToolImplementation<unknown, unknown>[],
   ...searchTools as ToolImplementation<unknown, unknown>[],
   ...terminalTools as ToolImplementation<unknown, unknown>[],
+  sandboxExecuteTool as ToolImplementation<unknown, unknown>,
 ];
 
 /**

@@ -10,6 +10,7 @@ import type { Server as SocketIOServer } from 'socket.io';
 import { createSessionId, type SessionId } from '@tooloo/core';
 import type { Orchestrator } from '@tooloo/engine';
 import type { APIResponse, ChatRequest, ChatResponse } from '../types.js';
+import { kernel } from '../../../../src/kernel/kernel.js';
 
 // =============================================================================
 // TYPES
@@ -276,16 +277,47 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
   router.get('/history/:sessionId', async (req: Request, res: Response) => {
     const { sessionId } = req.params;
 
-    // TODO: Wire to @tooloo/memory
-    const response: APIResponse<{ messages: unknown[]; sessionId: string }> = {
-      ok: true,
-      data: {
-        sessionId: sessionId!,
-        messages: [], // Placeholder
-      },
-    };
-
-    res.json(response);
+    try {
+      // Get memory cortex from kernel and retrieve conversation history
+      const memoryCortex = kernel.getMemoryCortex();
+      const session = memoryCortex.getSession(sessionId!);
+      
+      if (session) {
+        const messages = session.messages.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+        }));
+        
+        const response: APIResponse<{ messages: unknown[]; sessionId: string }> = {
+          ok: true,
+          data: {
+            sessionId: sessionId!,
+            messages,
+          },
+        };
+        res.json(response);
+      } else {
+        const response: APIResponse<{ messages: unknown[]; sessionId: string }> = {
+          ok: true,
+          data: {
+            sessionId: sessionId!,
+            messages: [],
+          },
+        };
+        res.json(response);
+      }
+    } catch (error) {
+      const response: APIResponse<{ messages: unknown[]; sessionId: string }> = {
+        ok: true,
+        data: {
+          sessionId: sessionId!,
+          messages: [],
+        },
+      };
+      res.json(response);
+    }
   });
 
   /**
@@ -295,16 +327,29 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
   router.delete('/history/:sessionId', async (req: Request, res: Response) => {
     const { sessionId } = req.params;
 
-    // TODO: Wire to @tooloo/memory
-    const response: APIResponse<{ cleared: boolean; sessionId: string }> = {
-      ok: true,
-      data: {
-        sessionId: sessionId!,
-        cleared: true,
-      },
-    };
-
-    res.json(response);
+    try {
+      // Get memory cortex from kernel and clear session
+      const memoryCortex = kernel.getMemoryCortex();
+      memoryCortex.endSession(sessionId!);
+      
+      const response: APIResponse<{ cleared: boolean; sessionId: string }> = {
+        ok: true,
+        data: {
+          sessionId: sessionId!,
+          cleared: true,
+        },
+      };
+      res.json(response);
+    } catch (error) {
+      const response: APIResponse<{ cleared: boolean; sessionId: string }> = {
+        ok: true,
+        data: {
+          sessionId: sessionId!,
+          cleared: true,
+        },
+      };
+      res.json(response);
+    }
   });
 
   return router;

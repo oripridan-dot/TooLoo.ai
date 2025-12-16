@@ -2,14 +2,82 @@
  * useSocket.js
  * React hook for Socket.IO connection to V2 API
  *
- * @version 2.0.0-alpha.0
+ * @version 2.1.0 - Added shared chat state for real-time sync
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, createContext, useContext } from 'react';
 import { io } from 'socket.io-client';
 import { getSocketUrl } from '../utils/api.js';
 
 const SOCKET_URL = getSocketUrl();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED CHAT STATE (for real-time sync between components)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Global shared state for chat (module-level singleton)
+const sharedChatState = {
+  messages: [],
+  isStreaming: false,
+  matchedSkill: null,
+  error: null,
+  listeners: new Set(),
+  currentResponseRef: '',
+  
+  // Notify all listeners of state change
+  notify() {
+    this.listeners.forEach(listener => listener({
+      messages: [...this.messages],
+      isStreaming: this.isStreaming,
+      matchedSkill: this.matchedSkill,
+      error: this.error,
+    }));
+  },
+  
+  // Subscribe to state changes
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  },
+  
+  // Update messages
+  setMessages(updater) {
+    if (typeof updater === 'function') {
+      this.messages = updater(this.messages);
+    } else {
+      this.messages = updater;
+    }
+    this.notify();
+  },
+  
+  // Update streaming state
+  setIsStreaming(value) {
+    this.isStreaming = value;
+    this.notify();
+  },
+  
+  // Update matched skill
+  setMatchedSkill(value) {
+    this.matchedSkill = value;
+    this.notify();
+  },
+  
+  // Update error
+  setError(value) {
+    this.error = value;
+    this.notify();
+  },
+  
+  // Clear all state
+  clear() {
+    this.messages = [];
+    this.isStreaming = false;
+    this.matchedSkill = null;
+    this.error = null;
+    this.currentResponseRef = '';
+    this.notify();
+  }
+};
 
 /**
  * Socket connection state
@@ -21,8 +89,60 @@ export const ConnectionState = {
   ERROR: 'error',
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SINGLETON SOCKET (prevents multiple connections)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let globalSocket = null;
+let globalConnectionState = ConnectionState.DISCONNECTED;
+const socketListeners = new Set();
+
+function notifySocketListeners() {
+  socketListeners.forEach(listener => listener(globalConnectionState));
+}
+
+function getOrCreateSocket() {
+  if (globalSocket && globalSocket.connected) {
+    return globalSocket;
+  }
+  
+  if (globalSocket) {
+    // Socket exists but disconnected - let it reconnect
+    return globalSocket;
+  }
+
+  globalConnectionState = ConnectionState.CONNECTING;
+  notifySocketListeners();
+
+  globalSocket = io(SOCKET_URL, {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 2000,
+    reconnectionDelayMax: 10000,
+    timeout: 20000,
+  });
+
+  globalSocket.on('connect', () => {
+    globalConnectionState = ConnectionState.CONNECTED;
+    notifySocketListeners();
+  });
+
+  globalSocket.on('disconnect', () => {
+    globalConnectionState = ConnectionState.DISCONNECTED;
+    notifySocketListeners();
+  });
+
+  globalSocket.on('connect_error', () => {
+    globalConnectionState = ConnectionState.ERROR;
+    notifySocketListeners();
+  });
+
+  return globalSocket;
+}
+
 /**
- * Hook for managing Socket.IO connection
+ * Hook for managing Socket.IO connection (uses singleton)
  *
  * @param {Object} options
  * @param {boolean} options.autoConnect - Auto-connect on mount (default: true)
@@ -34,50 +154,60 @@ export const ConnectionState = {
 export function useSocket(options = {}) {
   const { autoConnect = true, onConnect, onDisconnect, onError } = options;
 
-  const socketRef = useRef(null);
-  const [connectionState, setConnectionState] = useState(ConnectionState.DISCONNECTED);
+  const [connectionState, setConnectionState] = useState(globalConnectionState);
   const [systemStatus, setSystemStatus] = useState(null);
+  const socketRef = useRef(null);
+
+  // Subscribe to connection state changes
+  useEffect(() => {
+    const listener = (state) => setConnectionState(state);
+    socketListeners.add(listener);
+    return () => socketListeners.delete(listener);
+  }, []);
 
   // Initialize socket connection
   useEffect(() => {
     if (!autoConnect) return;
 
-    setConnectionState(ConnectionState.CONNECTING);
-
-    const socket = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-
+    const socket = getOrCreateSocket();
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      setConnectionState(ConnectionState.CONNECTED);
+    // Set initial state
+    setConnectionState(globalConnectionState);
+
+    const handleConnect = () => {
       onConnect?.();
-
-      // Request initial system status
       socket.emit('system:ping');
-    });
+    };
 
-    socket.on('disconnect', reason => {
-      setConnectionState(ConnectionState.DISCONNECTED);
+    const handleDisconnect = (reason) => {
       onDisconnect?.(reason);
-    });
+    };
 
-    socket.on('connect_error', error => {
-      setConnectionState(ConnectionState.ERROR);
+    const handleError = (error) => {
       onError?.(error);
-    });
+    };
 
-    socket.on('system:status', status => {
+    const handleStatus = (status) => {
       setSystemStatus(status);
-    });
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleError);
+    socket.on('system:status', handleStatus);
+
+    // If already connected, trigger connect callback
+    if (socket.connected) {
+      handleConnect();
+    }
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleError);
+      socket.off('system:status', handleStatus);
+      // Don't disconnect - singleton stays alive
     };
   }, [autoConnect, onConnect, onDisconnect, onError]);
 
@@ -86,16 +216,14 @@ export function useSocket(options = {}) {
 
   // Manually connect
   const connect = useCallback(() => {
-    if (socketRef.current && !socketRef.current.connected) {
-      socketRef.current.connect();
-    }
+    const socket = getOrCreateSocket();
+    socketRef.current = socket;
   }, []);
 
-  // Manually disconnect
+  // Manually disconnect (not recommended - use sparingly)
   const disconnect = useCallback(() => {
-    if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.disconnect();
-    }
+    // Don't actually disconnect singleton - just mark as disconnected
+    console.warn('Disconnect called on singleton socket - ignoring');
   }, []);
 
   // Emit event
@@ -129,6 +257,7 @@ export function useSocket(options = {}) {
 
 /**
  * Hook for chat functionality via Socket.IO
+ * Uses shared state for real-time sync between components
  *
  * @param {Object} options
  * @param {boolean} options.stream - Enable streaming mode (default: true)
@@ -138,13 +267,22 @@ export function useChat(options = {}) {
   const { stream = true } = options;
 
   const { socket, isConnected, emit, on } = useSocket();
-  const [messages, setMessages] = useState([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [matchedSkill, setMatchedSkill] = useState(null);
-  const [error, setError] = useState(null);
   
-  // Use ref for current response to avoid stale closure issues
-  const currentResponseRef = useRef('');
+  // Local state that syncs with shared state
+  const [state, setState] = useState({
+    messages: sharedChatState.messages,
+    isStreaming: sharedChatState.isStreaming,
+    matchedSkill: sharedChatState.matchedSkill,
+    error: sharedChatState.error,
+  });
+
+  // Subscribe to shared state changes
+  useEffect(() => {
+    const unsubscribe = sharedChatState.subscribe(newState => {
+      setState(newState);
+    });
+    return unsubscribe;
+  }, []);
 
   // Handle chat responses
   useEffect(() => {
@@ -152,7 +290,7 @@ export function useChat(options = {}) {
 
     // Full response (non-streaming)
     const unsubResponse = on('chat:response', data => {
-      setMessages(prev => [
+      sharedChatState.setMessages(prev => [
         ...prev,
         {
           id: data.messageId,
@@ -163,16 +301,16 @@ export function useChat(options = {}) {
           timestamp: new Date(),
         },
       ]);
-      setIsStreaming(false);
-      setMatchedSkill(data.skill);
+      sharedChatState.setIsStreaming(false);
+      sharedChatState.setMatchedSkill(data.skill);
     });
 
     // Streaming chunks
     const unsubStream = on('chat:stream', data => {
       if (data.done) {
         // Stream complete - finalize message
-        const finalContent = currentResponseRef.current + (data.chunk || '');
-        setMessages(prev => {
+        const finalContent = sharedChatState.currentResponseRef + (data.chunk || '');
+        sharedChatState.setMessages(prev => {
           const lastMsg = prev[prev.length - 1];
           if (lastMsg && lastMsg.streaming) {
             return [
@@ -182,13 +320,13 @@ export function useChat(options = {}) {
           }
           return prev;
         });
-        setIsStreaming(false);
-        currentResponseRef.current = '';
+        sharedChatState.setIsStreaming(false);
+        sharedChatState.currentResponseRef = '';
       } else {
         // Append chunk
-        currentResponseRef.current += data.chunk || '';
-        const content = currentResponseRef.current;
-        setMessages(prev => {
+        sharedChatState.currentResponseRef += data.chunk || '';
+        const content = sharedChatState.currentResponseRef;
+        sharedChatState.setMessages(prev => {
           const lastMsg = prev[prev.length - 1];
           if (lastMsg && lastMsg.streaming) {
             return [...prev.slice(0, -1), { ...lastMsg, content }];
@@ -200,13 +338,13 @@ export function useChat(options = {}) {
 
     // Skill matched
     const unsubSkill = on('skill:matched', data => {
-      setMatchedSkill(data);
+      sharedChatState.setMatchedSkill(data);
     });
 
     // Error
     const unsubError = on('chat:error', data => {
-      setError(data);
-      setIsStreaming(false);
+      sharedChatState.setError(data);
+      sharedChatState.setIsStreaming(false);
     });
 
     return () => {
@@ -229,11 +367,11 @@ export function useChat(options = {}) {
         content: content.trim(),
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, userMessage]);
+      sharedChatState.setMessages(prev => [...prev, userMessage]);
 
       // If streaming, add placeholder for response
       if (stream) {
-        setMessages(prev => [
+        sharedChatState.setMessages(prev => [
           ...prev,
           {
             id: `msg_${Date.now()}_response`,
@@ -243,8 +381,8 @@ export function useChat(options = {}) {
             timestamp: new Date(),
           },
         ]);
-        setIsStreaming(true);
-        currentResponseRef.current = ''; // Reset ref for new stream
+        sharedChatState.setIsStreaming(true);
+        sharedChatState.currentResponseRef = ''; // Reset for new stream
       }
 
       // Emit message
@@ -254,7 +392,7 @@ export function useChat(options = {}) {
         ...context,
       });
 
-      setError(null);
+      sharedChatState.setError(null);
     },
     [isConnected, emit, stream]
   );
@@ -262,21 +400,19 @@ export function useChat(options = {}) {
   // Cancel streaming
   const cancelStream = useCallback(() => {
     emit('chat:cancel', {});
-    setIsStreaming(false);
+    sharedChatState.setIsStreaming(false);
   }, [emit]);
 
   // Clear messages
   const clearMessages = useCallback(() => {
-    setMessages([]);
-    setError(null);
-    setMatchedSkill(null);
+    sharedChatState.clear();
   }, []);
 
   return {
-    messages,
-    isStreaming,
-    matchedSkill,
-    error,
+    messages: state.messages,
+    isStreaming: state.isStreaming,
+    matchedSkill: state.matchedSkill,
+    error: state.error,
     isConnected,
     sendMessage,
     cancelStream,

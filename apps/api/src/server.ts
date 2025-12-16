@@ -29,6 +29,9 @@ import { createVisualsRouter } from './routes/visuals.js';
 import { createSystemRouter } from './routes/system.js';
 import { createEnginesRouter } from './routes/engines.js';
 import { createImplementationRouter } from './routes/implementation.js';
+import { createObservatoryRouter } from './routes/observatory.js';
+import { createOrchestratorRouter } from './routes/orchestrator.js';
+import { createVisionRouter } from './routes/vision.js';
 import authRouter from './routes/auth.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { createRateLimiter } from './middleware/rate-limiter.js';
@@ -185,8 +188,17 @@ export class TooLooServer {
     // Engines routes (learning, evolution, emergence, routing)
     this.app.use(`${prefix}/engines`, createEnginesRouter(this.config.orchestrator!));
 
+    // Observatory routes (real-time system observability)
+    this.app.use(`${prefix}/observatory`, createObservatoryRouter(this.config.orchestrator!));
+
     // Implementation routes (safe code implementation)
     this.app.use(`${prefix}/implement`, createImplementationRouter());
+
+    // Orchestrator routes (legacy compatibility stubs)
+    this.app.use(`${prefix}/orchestrator`, createOrchestratorRouter());
+
+    // Vision routes (multi-modal image processing)
+    this.app.use(`${prefix}/vision`, createVisionRouter({ io: this.io }));
 
     // Auth routes
     this.app.use(`${prefix}/auth`, authRouter);

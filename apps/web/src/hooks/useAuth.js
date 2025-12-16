@@ -74,6 +74,14 @@ export function useAuth() {
       }
 
       const response = await fetch(`${API_BASE}/auth/me`, { headers });
+      
+      // Silently handle 401 - user is just not logged in
+      if (response.status === 401) {
+        saveSessionToken(null);
+        setAuthState(AuthState.UNAUTHENTICATED);
+        return null;
+      }
+      
       const data = await response.json();
 
       if (data.ok) {
@@ -87,7 +95,10 @@ export function useAuth() {
         return null;
       }
     } catch (err) {
-      console.error('Auth check failed:', err);
+      // Only log actual errors, not expected auth failures
+      if (err.name !== 'AbortError') {
+        console.warn('[Auth] Check failed:', err.message);
+      }
       setAuthState(AuthState.UNAUTHENTICATED);
       return null;
     }

@@ -2,14 +2,18 @@
  * @tooloo/api - Socket Handlers V2
  * Real-time WebSocket handlers with Orchestrator integration
  * V3.3.588: Added orchestration event forwarding for Cognitive Bridge
+ * V3.3.600: Added Observatory real-time events
  *
- * @version 2.0.0-alpha.0
+ * @version 2.0.0-alpha.1
  */
 
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { createSessionId, type Message } from '@tooloo/core';
 import type { Orchestrator, OrchestrationResult } from '@tooloo/engine';
 import type { SkillRegistry } from '@tooloo/skills';
+import { kernel } from '../../../../src/kernel/kernel.js';
+import { createSkillEngineService } from '../../../../src/skills/engine-service.js';
+import { getSelfHealingService } from '@tooloo/skills';
 import type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -99,6 +103,95 @@ function setupOrchestrationEvents(io: TypedIO, orchestrator: Orchestrator): void
   console.log('Orchestration event forwarding configured for Cognitive Bridge');
 }
 
+/**
+ * Setup Observatory real-time events
+ * Provides live system metrics, alerts, and proactive insights
+ */
+function setupObservatoryEvents(io: TypedIO): NodeJS.Timeout {
+  // Send pulse every 5 seconds to subscribed clients
+  const pulseInterval = setInterval(() => {
+    try {
+      // Get engine metrics
+      let engines = {
+        learning: { healthy: false, states: 0, explorationRate: 0 },
+        evolution: { healthy: false, activeTests: 0, improvements: 0 },
+        emergence: { healthy: false, patterns: 0, synergies: 0 },
+        routing: { healthy: false, providersOnline: 0, successRate: 0 },
+      };
+
+      try {
+        const context = (kernel as any).context;
+        const service = createSkillEngineService(context);
+        const metrics = service.getAllMetrics();
+        const health = service.getEngineHealth();
+
+        engines = {
+          learning: {
+            healthy: health.engines.learning,
+            states: metrics.learning.totalStates ?? 0,
+            explorationRate: metrics.learning.explorationRate ?? 0.1,
+          },
+          evolution: {
+            healthy: health.engines.evolution,
+            activeTests: metrics.evolution.activeTests ?? 0,
+            improvements: metrics.evolution.totalIterations ?? 0,
+          },
+          emergence: {
+            healthy: health.engines.emergence,
+            patterns: metrics.emergence.totalPatterns ?? 0,
+            synergies: metrics.emergence.totalSynergies ?? 0,
+          },
+          routing: {
+            healthy: health.engines.routing,
+            providersOnline: metrics.routing.providersOnline ?? 0,
+            successRate: metrics.routing.successRate ?? 1.0,
+          },
+        };
+      } catch (e) {
+        // Engines not available
+      }
+
+      // Get healing status
+      let healingStatus: { activeIssues: number; status: 'idle' | 'monitoring' | 'healing' } = { 
+        activeIssues: 0, 
+        status: 'idle' 
+      };
+      try {
+        const healingService = getSelfHealingService();
+        const activeIssues = healingService.getActiveIssues?.() ?? [];
+        healingStatus = {
+          activeIssues: activeIssues.length,
+          status: activeIssues.length > 0 ? 'healing' : 'monitoring',
+        };
+      } catch (e) {
+        // Self-healing not available
+      }
+
+      // Memory stats
+      const memUsage = process.memoryUsage();
+      const memoryStats = kernel.getMemoryStats?.() ?? { activeSessions: 0 };
+
+      // Emit to all connected clients (observatory:pulse is handled client-side)
+      // Since it's not in the typed events, we use emit with any
+      (io as any).emit('observatory:pulse', {
+        timestamp: new Date().toISOString(),
+        status: Object.values(engines).every(e => e.healthy) ? 'healthy' : 'degraded',
+        engines,
+        healing: healingStatus,
+        memory: {
+          percentage: Number(((memUsage.heapUsed / memUsage.heapTotal) * 100).toFixed(1)),
+          activeSessions: memoryStats.activeSessions,
+        },
+      });
+    } catch (e) {
+      // Silent fail - don't crash on pulse errors
+    }
+  }, 5000);
+
+  console.log('Observatory real-time events configured');
+  return pulseInterval;
+}
+
 export function setupSocketHandlers(
   io: TypedIO,
   orchestrator: Orchestrator,
@@ -106,6 +199,9 @@ export function setupSocketHandlers(
 ): void {
   // V3.3.588: Setup orchestration event forwarding for Cognitive Bridge
   setupOrchestrationEvents(io, orchestrator);
+
+  // V3.3.600: Setup Observatory real-time events
+  const pulseInterval = setupObservatoryEvents(io);
 
   io.on('connection', (socket: TypedSocket) => {
     console.log(`Socket connected: ${socket.id}`);
@@ -259,6 +355,23 @@ export function setupSocketHandlers(
     socket.on('system:ping', () => {
       const skills = skillRegistry.getAll();
 
+      // Get provider status from routing engine via kernel
+      let providers: Array<{ id: string; name: string; status: string }> = [];
+      try {
+        const context = (kernel as any).context;
+        const service = createSkillEngineService(context);
+        const metrics = service.getAllMetrics();
+        // Build provider list from routing metrics
+        const providerNames = ['deepseek', 'anthropic', 'openai', 'gemini'];
+        providers = providerNames.map(name => ({
+          id: name,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          status: metrics.routing.providersOnline > 0 ? 'available' : 'unavailable',
+        }));
+      } catch (e) {
+        // Fallback to empty providers
+      }
+
       socket.emit('system:status', {
         version: '2.0.0-alpha.0',
         environment: process.env.NODE_ENV || 'development',
@@ -270,7 +383,7 @@ export function setupSocketHandlers(
             (process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100
           ),
         },
-        providers: [], // TODO: Get from provider registry
+        providers,
         skills: {
           loaded: skills.length,
           enabled: skills.length, // All loaded skills are enabled

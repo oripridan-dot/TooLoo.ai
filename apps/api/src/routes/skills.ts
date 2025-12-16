@@ -90,16 +90,37 @@ export function createSkillsRouter(options: SkillsRouterOptions = {}): Router {
   router.get('/:skillId', (req: Request, res: Response) => {
     const { skillId } = req.params;
 
-    // TODO: Wire to @tooloo/skills registry
+    if (skillRegistry) {
+      const allSkills = skillRegistry.getAll();
+      const skill = allSkills.find((s: SkillDefinition) => s.id === skillId);
+      
+      if (skill) {
+        const response: APIResponse<SkillSummary> = {
+          ok: true,
+          data: {
+            id: skill.id,
+            name: skill.name,
+            description: skill.description,
+            version: skill.version,
+            enabled: true,
+            triggers: skill.triggers,
+            icon: (skill as any).icon,
+          },
+        };
+        res.json(response);
+        return;
+      }
+    }
+
     const response: APIResponse = {
       ok: false,
       error: {
-        code: 'NOT_IMPLEMENTED',
-        message: `Skill lookup not yet implemented for: ${skillId}`,
+        code: 'NOT_FOUND',
+        message: `Skill not found: ${skillId}`,
       },
     };
 
-    res.status(501).json(response);
+    res.status(404).json(response);
   });
 
   /**

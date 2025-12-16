@@ -18,7 +18,7 @@ import AdminDashboard from './components/AdminDashboard';
 import MissionControl from './components/MissionControl';
 import { AuthPage } from './components/Login';
 import SkillMetricsDashboard from './components/SkillMetricsDashboard';
-import TooLooObservatory from './components/TooLooObservatory';
+import TooLooObservatory from './components/TooLooObservatoryV2'; // V2 Proactive Observatory
 
 // Fallback registry for when the API is cold or unreachable
 // These are the UI-native skills that have renderers

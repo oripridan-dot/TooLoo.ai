@@ -1,7 +1,7 @@
 /**
  * @file TooLoo.ai Skills OS - Kernel Index
  * @description Main entry point for the Skills OS kernel
- * @version 1.1.0
+ * @version 1.2.0
  * @skill-os true
  */
 
@@ -26,6 +26,16 @@ export { kernel, Kernel, SkillNotFoundError, RequirementError } from './kernel.j
 
 // Server
 export { createKernelRouter, kernelErrorHandler, startKernelServer } from './server.js';
+
+// Worker Pool
+export {
+  WorkerPool,
+  getWorkerPool,
+  createWorkerPool,
+  type WorkerTask,
+  type WorkerResult,
+  type WorkerPoolConfig,
+} from './worker-pool.js';
 
 // Orchestrator Bridge - Seamless Kernel → Orchestrator integration
 export {
