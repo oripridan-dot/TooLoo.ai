@@ -495,9 +495,31 @@ function MessageInput({ onSend, mode, onModeChange }) {
   };
 
   return (
-    <div className="border-t border-gray-800 p-4 bg-[#0a0a0f] flex-shrink-0">
-      {/* Mode selector */}
-      <div className="flex gap-2 mb-3 justify-center">
+    <div className="border-t border-gray-800 p-4 bg-[#0a0a0f]">
+      {/* Input field FIRST - most important */}
+      <form onSubmit={handleSubmit} className="flex gap-3 mb-3">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={
+            mode === 'observe' ? 'TooLoo is working autonomously...' : 'Talk to TooLoo...'
+          }
+          disabled={mode === 'observe'}
+          autoFocus
+          className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+        />
+        <button
+          type="submit"
+          disabled={mode === 'observe' || !message.trim()}
+          className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-600/20"
+        >
+          Send
+        </button>
+      </form>
+
+      {/* Mode selector below */}
+      <div className="flex gap-2 justify-center">
         {modes.map((m) => (
           <button
             key={m}
@@ -516,27 +538,6 @@ function MessageInput({ onSend, mode, onModeChange }) {
           </button>
         ))}
       </div>
-
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-3">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={
-            mode === 'observe' ? 'TooLoo is working autonomously...' : 'Talk to TooLoo...'
-          }
-          disabled={mode === 'observe'}
-          className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-base"
-        />
-        <button
-          type="submit"
-          disabled={mode === 'observe' || !message.trim()}
-          className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-600/20"
-        >
-          Send
-        </button>
-      </form>
     </div>
   );
 }
@@ -698,9 +699,9 @@ export default function TooLooObservatory() {
   };
 
   return (
-    <div className="h-screen bg-[#050508] text-white flex flex-col">
+    <div className="h-full bg-[#050508] text-white flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="h-14 border-b border-gray-800 flex items-center px-6 bg-[#0a0a0f]">
+      <header className="h-14 flex-shrink-0 border-b border-gray-800 flex items-center px-6 bg-[#0a0a0f]">
         <div className="flex items-center gap-3">
           <motion.span
             className="text-2xl"
@@ -733,9 +734,9 @@ export default function TooLooObservatory() {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left panel - Soul & Process */}
-        <div className="w-80 border-r border-gray-800 flex flex-col overflow-hidden bg-[#08080c]">
+        <div className="w-80 flex-shrink-0 border-r border-gray-800 flex flex-col overflow-hidden bg-[#08080c]">
           {/* Soul */}
           <div className="p-4 border-b border-gray-800">
             <SoulCore soul={soul} isConnected={isConnected} />
@@ -747,20 +748,19 @@ export default function TooLooObservatory() {
           </div>
         </div>
 
-        {/* Center panel - Brain Activity */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto p-4">
+        {/* Center panel - Brain Activity + Input */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
+          {/* Brain Activity - scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 min-h-0">
             <BrainActivity thoughts={thoughts} />
           </div>
 
-          {/* Input - Always visible at bottom */}
-          <div className="flex-shrink-0">
-            <MessageInput onSend={handleSendMessage} mode={mode} onModeChange={setMode} />
-          </div>
+          {/* Input - ALWAYS visible, fixed at bottom */}
+          <MessageInput onSend={handleSendMessage} mode={mode} onModeChange={setMode} />
         </div>
 
         {/* Right panel - Skills & Evolution */}
-        <div className="w-80 border-l border-gray-800 flex flex-col overflow-hidden bg-[#08080c]">
+        <div className="w-80 flex-shrink-0 border-l border-gray-800 flex flex-col overflow-hidden bg-[#08080c]">
           {/* Skills */}
           <div className="p-4 border-b border-gray-800">
             <SkillFeed skills={skills} createdSkills={createdSkills} />
