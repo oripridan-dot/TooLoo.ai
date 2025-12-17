@@ -111,12 +111,13 @@ export class SkillExecutor {
         console.error(`[SkillExecutor] Attempt ${attempts + 1} failed:`, lastError.message);
         attempts++;
 
-        // Try fallback provider
+        // Try fallback provider from the selection
         if (attempts < this.config.maxRetries && providerSelection.fallbacks.length >= attempts) {
           const fallback = providerSelection.fallbacks[attempts - 1];
           if (fallback) {
             const fallbackProvider = this.providerRegistry.get(fallback.providerId as string);
             if (fallbackProvider && fallbackProvider.isAvailable()) {
+              console.log(`[SkillExecutor] Trying fallback provider: ${fallback.providerId}`);
               currentProvider = fallbackProvider;
               currentModel = fallback.model;
               continue;
@@ -124,7 +125,28 @@ export class SkillExecutor {
           }
         }
 
-        // If no fallbacks available, wait before retry with same provider
+        // CRITICAL: Try ALL available providers as last resort (Gemini first!)
+        // This handles the case where circuit breakers are open for preferred providers
+        const lastResortProviders = ['gemini', 'anthropic', 'openai', 'deepseek'];
+        for (const providerId of lastResortProviders) {
+          if (providerId === currentProvider.id) continue; // Skip current
+          const lastResort = this.providerRegistry.get(providerId);
+          if (lastResort && lastResort.isAvailable()) {
+            console.log(`[SkillExecutor] 🆘 Last resort fallback to: ${providerId}`);
+            currentProvider = lastResort;
+            // Default models for each provider
+            const defaultModels: Record<string, string> = {
+              gemini: 'gemini-2.0-flash',
+              anthropic: 'claude-sonnet-4-20250514',
+              openai: 'gpt-4o-mini',
+              deepseek: 'deepseek-chat'
+            };
+            currentModel = defaultModels[providerId] ?? currentModel;
+            break;
+          }
+        }
+
+        // If still no provider available, wait before retry
         if (attempts < this.config.maxRetries) {
           await this.delay(1000 * attempts);
         }
