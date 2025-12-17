@@ -44,11 +44,11 @@ interface RateLimitEntry {
 // =============================================================================
 
 const DEFAULT_CONFIG: RateLimitConfig = {
-  freeRpm: 20,
-  proRpm: 100,
+  freeRpm: 60,  // Increased from 20 to support dashboard polling
+  proRpm: 200,
   enterpriseRpm: 1000,
   windowMs: 60000,
-  skipPaths: ['/health', '/api/v2/health'],
+  skipPaths: ['/health', '/api/v2/health', '/api/v2/observatory/pulse'],
   headers: true,
 };
 

@@ -117,7 +117,7 @@ export function createImplementationRouter(): Router {
   router.get('/status/:id', (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const impl = service.getImplementation(id);
+      const impl = service.getImplementation(id ?? '');
 
       if (!impl) {
         return res.status(404).json({

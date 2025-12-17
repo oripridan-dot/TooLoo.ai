@@ -14,8 +14,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { kernel } from '../../kernel/kernel.js';
-import { createSkillEngineService } from '../../skills/engine-service.js';
+import { kernel } from '../kernel/kernel.js';
+import { createSkillEngineService } from '../skills/engine-service.js';
 
 // =============================================================================
 // TYPES
@@ -199,14 +199,14 @@ export class ObservatoryService extends EventEmitter {
 
       engines = {
         learning: {
-          qTableSize: metrics.learning.qTableSize ?? 0,
+          qTableSize: metrics.learning.totalStates ?? 0,
           explorationRate: metrics.learning.explorationRate ?? 0.1,
           totalRewards: metrics.learning.totalRewards ?? 0,
         },
         evolution: {
           activeTests: metrics.evolution.activeTests ?? 0,
-          completedTests: metrics.evolution.completedTests ?? 0,
-          improvementsDeployed: metrics.evolution.improvementsDeployed ?? 0,
+          completedTests: metrics.evolution.totalIterations ?? 0,
+          improvementsDeployed: metrics.evolution.bestPerformance ?? 0,
         },
         emergence: {
           totalPatterns: metrics.emergence.totalPatterns ?? 0,
@@ -214,7 +214,7 @@ export class ObservatoryService extends EventEmitter {
           signalCount: metrics.emergence.signalCount ?? 0,
         },
         routing: {
-          totalRequests: metrics.routing.totalRequests ?? 0,
+          totalRequests: metrics.routing.totalRoutes ?? 0,
           successRate: metrics.routing.successRate ?? 1.0,
           averageLatency: metrics.routing.averageLatency ?? 0,
         },
@@ -245,8 +245,11 @@ export class ObservatoryService extends EventEmitter {
       (sum, s) => sum + s.engines.routing.totalRequests,
       0
     );
-    const timeSpan =
-      recent[recent.length - 1].timestamp - recent[0].timestamp;
+    const lastSnapshot = recent[recent.length - 1];
+    const firstSnapshot = recent[0];
+    if (!lastSnapshot || !firstSnapshot) return 0;
+    
+    const timeSpan = lastSnapshot.timestamp - firstSnapshot.timestamp;
 
     return timeSpan > 0 ? (totalRequests / timeSpan) * 60000 : 0; // requests per minute
   }

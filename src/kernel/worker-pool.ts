@@ -480,12 +480,12 @@ export class WorkerPool extends EventEmitter {
 
     // If worker was busy, fail the current task
     if (state.busy && state.currentTask) {
-      const queuedIndex = this.taskQueue.findIndex(
-        (q) => q.task.id === state.currentTask
-      );
+      const queuedIndex = this.taskQueue.findIndex((q) => q.task.id === state.currentTask);
       if (queuedIndex !== -1) {
-        const queued = this.taskQueue.splice(queuedIndex, 1)[0];
-        queued.reject(new Error('Worker crashed during execution'));
+        const [queued] = this.taskQueue.splice(queuedIndex, 1);
+        if (queued) {
+          queued.reject(new Error('Worker crashed during execution'));
+        }
       }
     }
 

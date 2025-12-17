@@ -1,6 +1,6 @@
 # TooLoo.ai Skills OS - Copilot Instructions
 
-> **Version:** 1.1.0.0 | **Codename:** Genesis | **Updated:** December 15, 2025
+> **Version:** 1.1.0.0 | **Codename:** Genesis | **Updated:** December 16, 2025
 
 ## 🧠 What is Skills OS?
 
@@ -10,16 +10,16 @@
 - The API doesn't have hardcoded routes - it routes requests to Skills
 - New capabilities are added by creating YAML skill definitions
 
-## 🤖 LLM Providers (V1.1)
+## 🤖 LLM Providers
 
 Skills OS supports **4 LLM providers** - configure via environment variables:
 
-| Provider | Env Variable | Default Model |
-|----------|--------------|---------------|
-| DeepSeek | `DEEPSEEK_API_KEY` | deepseek-chat |
-| Anthropic | `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 |
-| OpenAI | `OPENAI_API_KEY` | gpt-4o |
-| Gemini | `GOOGLE_API_KEY` | gemini-2.0-flash |
+| Provider  | Env Variable        | Default Model            | Strengths                  |
+| --------- | ------------------- | ------------------------ | -------------------------- |
+| DeepSeek  | `DEEPSEEK_API_KEY`  | deepseek-chat            | Coding, cost-effective     |
+| Anthropic | `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 | Reasoning, analysis        |
+| OpenAI    | `OPENAI_API_KEY`    | gpt-4o-mini              | General purpose, vision    |
+| Gemini    | `GOOGLE_API_KEY`    | gemini-2.0-flash         | Multi-modal, large context |
 
 ---
 
@@ -112,13 +112,13 @@ pnpm health
 
 ## 🔌 API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v2/health` | GET | System health |
-| `/api/v2/skills` | GET | List all skills |
-| `/api/v2/skills/:id` | GET | Get skill details |
-| `/api/v2/execute` | POST | Execute a skill |
-| `/api/v2/route` | POST | Route intent to skill |
+| Endpoint             | Method | Description           |
+| -------------------- | ------ | --------------------- |
+| `/api/v2/health`     | GET    | System health         |
+| `/api/v2/skills`     | GET    | List all skills       |
+| `/api/v2/skills/:id` | GET    | Get skill details     |
+| `/api/v2/execute`    | POST   | Execute a skill       |
+| `/api/v2/route`      | POST   | Route intent to skill |
 
 ### Execute a Skill
 
@@ -164,7 +164,7 @@ schema:
 # LLM instructions
 instructions: |
   You are an expert at...
-  
+
   ## Guidelines
   - Always do X
   - Never do Y
@@ -206,7 +206,7 @@ import { kernel } from './kernel.js';
 // Execute a skill
 const result = await kernel.execute({
   skillId: 'coding-assistant',
-  input: { task: 'Write a function' }
+  input: { task: 'Write a function' },
 });
 
 // Listen to events
@@ -251,9 +251,9 @@ describe('coding-assistant skill', () => {
   it('should generate TypeScript code', async () => {
     const result = await kernel.execute({
       skillId: 'coding-assistant',
-      input: { task: 'Write a hello world function' }
+      input: { task: 'Write a hello world function' },
     });
-    
+
     expect(result.success).toBe(true);
     expect(result.data).toContain('function');
   });
@@ -264,16 +264,16 @@ describe('coding-assistant skill', () => {
 
 ## 📚 Key Files Reference
 
-| File | Purpose |
-|------|---------|
-| [src/kernel/boot.ts](../src/kernel/boot.ts) | System entry point |
-| [src/kernel/kernel.ts](../src/kernel/kernel.ts) | Skill execution engine |
-| [src/kernel/registry.ts](../src/kernel/registry.ts) | Skill registry |
-| [apps/web/src/AppV2.jsx](../apps/web/src/AppV2.jsx) | Skills Shell UI |
-| [skills/*.yaml](../skills/) | Skill definitions |
-| [version.json](../version.json) | System version |
-| [SKILLS_OS.md](../SKILLS_OS.md) | System documentation |
+| File                                                | Purpose                |
+| --------------------------------------------------- | ---------------------- |
+| [src/kernel/boot.ts](../src/kernel/boot.ts)         | System entry point     |
+| [src/kernel/kernel.ts](../src/kernel/kernel.ts)     | Skill execution engine |
+| [src/kernel/registry.ts](../src/kernel/registry.ts) | Skill registry         |
+| [apps/web/src/AppV2.jsx](../apps/web/src/AppV2.jsx) | Skills Shell UI        |
+| [skills/\*.yaml](../skills/)                        | Skill definitions      |
+| [version.json](../version.json)                     | System version         |
+| [SKILLS_OS.md](../SKILLS_OS.md)                     | System documentation   |
 
 ---
 
-*Skills OS V1 - Everything is a Skill*
+_Skills OS V1 - Everything is a Skill_

@@ -12,7 +12,7 @@ import {
   OpenAIEmbeddingProvider,
   createEmbeddingFunction,
   createEmbeddingProvider,
-} from '../../packages/providers/src/embeddings.js';
+} from '@tooloo/providers';
 
 describe('LocalEmbeddingProvider', () => {
   let provider: LocalEmbeddingProvider;

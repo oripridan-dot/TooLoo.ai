@@ -1,7 +1,7 @@
 /**
  * @tooloo/api - Chat Routes
  * Conversation and messaging endpoints with Precog routing integration
- * 
+ *
  * @version 2.0.0-alpha.1
  */
 
@@ -53,7 +53,7 @@ function extractRoutingContext(req: Request): RoutingContext {
     requestCount: parseInt(req.headers['x-request-count'] as string) || 0,
     conversationDepth: parseInt(req.headers['x-conversation-depth'] as string) || 0,
     preferredProvider: req.headers['x-preferred-provider'] as string | undefined,
-    routingHints: req.headers['x-routing-hints'] 
+    routingHints: req.headers['x-routing-hints']
       ? JSON.parse(req.headers['x-routing-hints'] as string)
       : undefined,
   };
@@ -66,7 +66,7 @@ function extractRoutingContext(req: Request): RoutingContext {
 function getProviderPreference(complexity: ComplexityLevel): { speed: number; quality: number } {
   switch (complexity) {
     case 'trivial':
-      return { speed: 1.0, quality: 0.3 };  // Fastest model
+      return { speed: 1.0, quality: 0.3 }; // Fastest model
     case 'low':
       return { speed: 0.7, quality: 0.5 };
     case 'medium':
@@ -74,7 +74,7 @@ function getProviderPreference(complexity: ComplexityLevel): { speed: number; qu
     case 'high':
       return { speed: 0.3, quality: 0.9 };
     case 'critical':
-      return { speed: 0.1, quality: 1.0 };  // Best model
+      return { speed: 0.1, quality: 1.0 }; // Best model
     default:
       return { speed: 0.5, quality: 0.7 };
   }
@@ -95,7 +95,7 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
     // Extract routing context from headers (Precog integration)
     const routingContext = extractRoutingContext(req);
     const providerPrefs = getProviderPreference(routingContext.complexityHint);
-    
+
     // Log routing decision for debugging/monitoring
     console.log('[Chat] Routing context:', {
       complexity: routingContext.complexityHint,
@@ -118,9 +118,7 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
     }
 
     // Use session ID from routing context (frontend-maintained continuity)
-    const sessionId = createSessionId(
-      body.sessionId || routingContext.sessionId
-    ) as SessionId;
+    const sessionId = createSessionId(body.sessionId || routingContext.sessionId) as SessionId;
 
     try {
       let chatResponse: ChatResponse;
@@ -150,24 +148,28 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
           content: result.response?.content || '',
           sessionId: sessionId as string,
           messageId: `msg_${Date.now()}`,
-          skill: result.routing ? {
-            id: result.routing.skill.id,
-            name: result.routing.skill.name,
-            confidence: result.routing.confidence,
-          } : {
-            id: 'unknown',
-            name: 'Unknown',
-            confidence: 0,
-          },
-          usage: result.response?.metadata?.tokenCount ? {
-            promptTokens: result.response.metadata.tokenCount.prompt,
-            completionTokens: result.response.metadata.tokenCount.completion,
-            totalTokens: result.response.metadata.tokenCount.total,
-          } : {
-            promptTokens: 0,
-            completionTokens: 0,
-            totalTokens: 0,
-          },
+          skill: result.routing
+            ? {
+                id: result.routing.skill.id,
+                name: result.routing.skill.name,
+                confidence: result.routing.confidence,
+              }
+            : {
+                id: 'unknown',
+                name: 'Unknown',
+                confidence: 0,
+              },
+          usage: result.response?.metadata?.tokenCount
+            ? {
+                promptTokens: result.response.metadata.tokenCount.prompt,
+                completionTokens: result.response.metadata.tokenCount.completion,
+                totalTokens: result.response.metadata.tokenCount.total,
+              }
+            : {
+                promptTokens: 0,
+                completionTokens: 0,
+                totalTokens: 0,
+              },
         };
       } else {
         // Fallback placeholder response
@@ -253,18 +255,22 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
         }
         res.write(`data: ${JSON.stringify({ chunk: '', done: true })}\n\n`);
       } catch (error) {
-        res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Stream error', done: true })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Stream error', done: true })}\n\n`
+        );
       }
     } else {
       // Fallback: simulate streaming
       const words = body.message.split(' ');
-      
+
       for (const word of words) {
         res.write(`data: ${JSON.stringify({ chunk: word + ' ', done: false })}\n\n`);
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
-      res.write(`data: ${JSON.stringify({ chunk: '\n\n*[Orchestrator not configured]*', done: true })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ chunk: '\n\n*[Orchestrator not configured]*', done: true })}\n\n`
+      );
     }
 
     res.end();
@@ -281,15 +287,15 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
       // Get memory cortex from kernel and retrieve conversation history
       const memoryCortex = kernel.getMemoryCortex();
       const session = memoryCortex.getSession(sessionId!);
-      
+
       if (session) {
-        const messages = session.messages.map(msg => ({
+        const messages = session.messages.map((msg) => ({
           id: msg.id,
           role: msg.role,
           content: msg.content,
           timestamp: msg.timestamp,
         }));
-        
+
         const response: APIResponse<{ messages: unknown[]; sessionId: string }> = {
           ok: true,
           data: {
@@ -330,8 +336,8 @@ export function createChatRouter(deps: ChatRouterDeps): Router {
     try {
       // Get memory cortex from kernel and clear session
       const memoryCortex = kernel.getMemoryCortex();
-      memoryCortex.endSession(sessionId!);
-      
+      memoryCortex.destroySession(sessionId!);
+
       const response: APIResponse<{ cleared: boolean; sessionId: string }> = {
         ok: true,
         data: {

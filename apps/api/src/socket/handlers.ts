@@ -23,8 +23,18 @@ import type {
   ChatResponse,
 } from '../types.js';
 
-type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
-type TypedIO = SocketIOServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
+type TypedSocket = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>;
+type TypedIO = SocketIOServer<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>;
 
 // Active requests for cancellation
 const activeRequests = new Map<string, AbortController>();
@@ -46,7 +56,7 @@ function toMessage(role: string, content: string): Message {
 function setupOrchestrationEvents(io: TypedIO, orchestrator: Orchestrator): void {
   // Forward orchestration lifecycle events to all connected clients
   // These events drive the SynapysDNA visual state via CognitiveBridge
-  
+
   orchestrator.on('orchestration:start', (event) => {
     if (event.type !== 'orchestration:start') return;
     io.emit('orchestration:start', {
@@ -152,9 +162,9 @@ function setupObservatoryEvents(io: TypedIO): NodeJS.Timeout {
       }
 
       // Get healing status
-      let healingStatus: { activeIssues: number; status: 'idle' | 'monitoring' | 'healing' } = { 
-        activeIssues: 0, 
-        status: 'idle' 
+      let healingStatus: { activeIssues: number; status: 'idle' | 'monitoring' | 'healing' } = {
+        activeIssues: 0,
+        status: 'idle',
       };
       try {
         const healingService = getSelfHealingService();
@@ -175,7 +185,7 @@ function setupObservatoryEvents(io: TypedIO): NodeJS.Timeout {
       // Since it's not in the typed events, we use emit with any
       (io as any).emit('observatory:pulse', {
         timestamp: new Date().toISOString(),
-        status: Object.values(engines).every(e => e.healthy) ? 'healthy' : 'degraded',
+        status: Object.values(engines).every((e) => e.healthy) ? 'healthy' : 'degraded',
         engines,
         healing: healingStatus,
         memory: {
@@ -226,7 +236,7 @@ export function setupSocketHandlers(
 
         // Convert to proper Message[] format for orchestrator
         const conversation: Message[] =
-          socket.data.conversation?.map(m => toMessage(m.role, m.content)) || [];
+          socket.data.conversation?.map((m) => toMessage(m.role, m.content)) || [];
 
         if (data.stream) {
           // STREAMING MODE - Use orchestrator's streaming API
@@ -337,7 +347,7 @@ export function setupSocketHandlers(
     });
 
     // Handle chat cancellation
-    socket.on('chat:cancel', data => {
+    socket.on('chat:cancel', (data) => {
       const requestId = data?.requestId;
       if (requestId && activeRequests.has(requestId)) {
         activeRequests.get(requestId)?.abort();
@@ -356,20 +366,33 @@ export function setupSocketHandlers(
       const skills = skillRegistry.getAll();
 
       // Get provider status from routing engine via kernel
-      let providers: Array<{ id: string; name: string; status: string }> = [];
+      let providers: Array<{
+        id: string;
+        name: string;
+        status: 'available' | 'degraded' | 'unavailable';
+        circuitState: 'closed' | 'open' | 'half-open';
+      }> = [];
       try {
         const context = (kernel as any).context;
         const service = createSkillEngineService(context);
         const metrics = service.getAllMetrics();
         // Build provider list from routing metrics
         const providerNames = ['deepseek', 'anthropic', 'openai', 'gemini'];
-        providers = providerNames.map(name => ({
+        const isAvailable = metrics.routing.providersOnline > 0;
+        providers = providerNames.map((name) => ({
           id: name,
           name: name.charAt(0).toUpperCase() + name.slice(1),
-          status: metrics.routing.providersOnline > 0 ? 'available' : 'unavailable',
+          status: isAvailable ? 'available' : 'unavailable',
+          circuitState: 'closed' as const,
         }));
-      } catch (e) {
-        // Fallback to empty providers
+      } catch (_e) {
+        // Fallback to default providers
+        providers = ['deepseek', 'anthropic', 'openai', 'gemini'].map((name) => ({
+          id: name,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          status: 'unavailable' as const,
+          circuitState: 'open' as const,
+        }));
       }
 
       socket.emit('system:status', {
@@ -392,7 +415,7 @@ export function setupSocketHandlers(
     });
 
     // Handle disconnect
-    socket.on('disconnect', reason => {
+    socket.on('disconnect', (reason) => {
       console.log(`Socket disconnected: ${socket.id} (${reason})`);
       // Cancel any active requests
       for (const [id, controller] of activeRequests) {

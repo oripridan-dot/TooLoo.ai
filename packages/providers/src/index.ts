@@ -2,7 +2,7 @@
 /**
  * @tooloo/providers - Main Entry Point
  * Unified LLM provider interface with circuit breakers and streaming
- * 
+ *
  * @version 1.1.0.0
  * @updated 2025-12-15
  */
@@ -36,11 +36,7 @@ export {
 } from './streaming.js';
 
 // Base Provider
-export {
-  BaseProvider,
-  ProviderRegistry,
-  providerRegistry,
-} from './base.js';
+export { BaseProvider, ProviderRegistry, providerRegistry } from './base.js';
 
 // Provider Adapters
 export {

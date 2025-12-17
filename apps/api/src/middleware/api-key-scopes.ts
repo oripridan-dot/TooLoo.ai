@@ -330,7 +330,8 @@ export function validateScopedApiKey(
 function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
+    const first = forwarded.split(',')[0];
+    return first ? first.trim() : 'unknown';
   }
   return req.socket.remoteAddress ?? 'unknown';
 }
@@ -502,7 +503,11 @@ export function autoScopeCheck(req: Request, res: Response, next: NextFunction):
     requiredScopes = ['execute:sandbox'];
   }
   // Analytics endpoints
-  else if (path.includes('/analytics') || path.includes('/metrics') || path.includes('/observatory')) {
+  else if (
+    path.includes('/analytics') ||
+    path.includes('/metrics') ||
+    path.includes('/observatory')
+  ) {
     requiredScopes = ['read:analytics'];
   }
   // Admin endpoints

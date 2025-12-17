@@ -1,8 +1,8 @@
 /**
  * @file TooLoo.ai Skills OS - Kernel
  * @description The universal execution endpoint for skills
- * @version 1.4.0.0
- * @updated 2025-12-15
+ * @version 1.5.0.0
+ * @updated 2025-12-16
  *
  * The Kernel has ONE job: find a skill and execute it.
  * It doesn't know what "chat" is or what "coding" means.
@@ -18,7 +18,15 @@
  * - EvolutionEngine: A/B testing, prompt optimization
  * - EmergenceEngine: Pattern detection, synergies
  * - RoutingEngine: Provider selection, waterfall fallback
+ *
+ * V1.5.0: Real LLM integration via @tooloo/providers
  */
+
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables FIRST (before kernel singleton initializes)
+config({ path: resolve(process.cwd(), '.env') });
 
 import { EventEmitter } from 'events';
 import { z } from 'zod';
@@ -37,6 +45,13 @@ import type {
 import { registry } from './registry.js';
 import { router } from './router.js';
 import { MemoryCortex, getMemoryCortex } from '@tooloo/memory';
+import {
+  DeepSeekProvider,
+  AnthropicProvider,
+  OpenAIProvider,
+  GeminiProvider,
+  type BaseProvider,
+} from '@tooloo/providers';
 import {
   ToolExecutor,
   getToolExecutor,
@@ -69,6 +84,9 @@ export class Kernel extends EventEmitter {
   private evolutionEngine: IEvolutionEngine;
   private emergenceEngine: IEmergenceEngine;
   private routingEngine: IRoutingEngine;
+
+  // LLM Providers
+  private llmProviders: Map<string, BaseProvider> = new Map();
 
   constructor() {
     super();
@@ -133,9 +151,71 @@ export class Kernel extends EventEmitter {
       healthCheckIntervalMs: 60000,
     });
 
+    // Initialize LLM Providers
+    this.initializeLLMProviders();
+
     // Initialize default context with a session
     const session = this.memoryCortex.createSession();
     this.context = this.createContext(session.sessionId);
+  }
+
+  /**
+   * Initialize LLM providers from environment variables
+   */
+  private initializeLLMProviders(): void {
+    // DeepSeek
+    if (process.env['DEEPSEEK_API_KEY']) {
+      this.llmProviders.set('deepseek', new DeepSeekProvider({
+        id: 'deepseek' as any,
+        name: 'deepseek',
+        apiKey: process.env['DEEPSEEK_API_KEY'],
+        defaultModel: 'deepseek-chat',
+        models: [],
+        enabled: true,
+      }));
+      console.log('[Kernel] 🧠 DeepSeek provider online');
+    }
+
+    // Anthropic
+    if (process.env['ANTHROPIC_API_KEY']) {
+      this.llmProviders.set('anthropic', new AnthropicProvider({
+        id: 'anthropic' as any,
+        name: 'anthropic',
+        apiKey: process.env['ANTHROPIC_API_KEY'],
+        defaultModel: 'claude-sonnet-4-20250514',
+        models: [],
+        enabled: true,
+      }));
+      console.log('[Kernel] 🧠 Anthropic provider online');
+    }
+
+    // OpenAI
+    if (process.env['OPENAI_API_KEY']) {
+      this.llmProviders.set('openai', new OpenAIProvider({
+        id: 'openai' as any,
+        name: 'openai',
+        apiKey: process.env['OPENAI_API_KEY'],
+        defaultModel: 'gpt-4o-mini',
+        models: [],
+        enabled: true,
+      }));
+      console.log('[Kernel] 🧠 OpenAI provider online');
+    }
+
+    // Gemini
+    if (process.env['GOOGLE_API_KEY']) {
+      this.llmProviders.set('gemini', new GeminiProvider({
+        id: 'gemini' as any,
+        name: 'gemini',
+        apiKey: process.env['GOOGLE_API_KEY'],
+        defaultModel: 'gemini-2.0-flash',
+        models: [],
+        enabled: true,
+      }));
+      console.log('[Kernel] 🧠 Gemini provider online');
+    }
+
+    console.log(`[Kernel] 🧠 ${this.llmProviders.size} LLM providers initialized`);
   }
 
   // ---------------------------------------------------------------------------
@@ -571,15 +651,59 @@ export class Kernel extends EventEmitter {
 
   /**
    * Simple LLM completion (skills can use this)
-   * In production, this would route to actual providers
+   * Routes to actual LLM providers
    */
   private async llmComplete(prompt: string, options?: LLMOptions): Promise<string> {
-    // This is a placeholder - integrate with your actual LLM providers
-    // For now, emit an event that external systems can handle
+    // Emit event for logging/monitoring
     this.emit('llm:complete', { prompt, options });
 
-    // Mock response for demo
-    return `[LLM Response to: "${prompt.slice(0, 50)}..."]`;
+    // Determine which provider to use (fallback chain)
+    // Use Anthropic as default (Claude is reliable and fast)
+    const providerName = options?.model?.split('/')[0] ?? 'anthropic';
+    const provider = this.llmProviders.get(providerName);
+
+    if (!provider) {
+      // Try fallback providers in order (Anthropic first, then OpenAI)
+      const fallbackOrder = ['anthropic', 'openai', 'gemini', 'deepseek'];
+      for (const fallback of fallbackOrder) {
+        const fallbackProvider = this.llmProviders.get(fallback);
+        if (fallbackProvider) {
+          console.log(`[Kernel] Using fallback provider: ${fallback}`);
+          return await this.callProvider(fallbackProvider, prompt, options);
+        }
+      }
+      
+      // No providers available
+      return `[No LLM providers configured]`;
+    }
+
+    return await this.callProvider(provider, prompt, options);
+  }
+
+  /**
+   * Call an LLM provider
+   */
+  private async callProvider(provider: BaseProvider, prompt: string, options?: LLMOptions): Promise<string> {
+    try {
+      const messages: any[] = options?.systemPrompt 
+        ? [
+            { role: 'system', content: options.systemPrompt },
+            { role: 'user', content: prompt }
+          ]
+        : [{ role: 'user', content: prompt }];
+
+      const result = await provider.complete({
+        model: options?.model ?? (provider as any).config.defaultModel,
+        messages,
+        temperature: options?.temperature,
+        maxTokens: options?.maxTokens,
+      });
+
+      return result.content;
+    } catch (error) {
+      console.error(`[Kernel] LLM call failed:`, error);
+      return `[Error: ${error instanceof Error ? error.message : 'Unknown error'}]`;
+    }
   }
 
   /**

@@ -2,14 +2,14 @@
 /**
  * DeepSeek Provider Adapter
  * High-performance, cost-effective code generation
- * 
+ *
  * @version 2.0.0-alpha.0
  */
 
 import { BaseProvider } from '../base.js';
-import type { 
-  CompletionRequest, 
-  CompletionResponse, 
+import type {
+  CompletionRequest,
+  CompletionResponse,
   StreamChunk,
   ProviderConfig,
 } from '../types.js';
@@ -86,7 +86,7 @@ export class DeepSeekProvider extends BaseProvider {
     const response = await fetch(`${this.baseUrl}/models`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
     });
 
@@ -112,7 +112,7 @@ export class DeepSeekProvider extends BaseProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(deepseekRequest),
     });
@@ -122,7 +122,19 @@ export class DeepSeekProvider extends BaseProvider {
       throw new Error(`DeepSeek API error: ${response.status} - ${error}`);
     }
 
-    const data = await response.json() as DeepSeekResponse;
+    // Check for empty response body
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      throw new Error('DeepSeek API returned empty response');
+    }
+
+    let data: DeepSeekResponse;
+    try {
+      data = JSON.parse(text) as DeepSeekResponse;
+    } catch (parseError) {
+      throw new Error(`DeepSeek API returned invalid JSON: ${text.substring(0, 200)}`);
+    }
+
     const latencyMs = Date.now() - startTime;
 
     return {
@@ -158,7 +170,7 @@ export class DeepSeekProvider extends BaseProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(deepseekRequest),
     });
@@ -188,7 +200,7 @@ export class DeepSeekProvider extends BaseProvider {
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed || !trimmed.startsWith('data: ')) continue;
-          
+
           const data = trimmed.slice(6);
           if (data === '[DONE]') {
             yield { id: 'stream-done', type: 'done', content: '' };
@@ -198,15 +210,15 @@ export class DeepSeekProvider extends BaseProvider {
           try {
             const parsed = JSON.parse(data) as DeepSeekStreamDelta;
             const delta = parsed.choices[0]?.delta;
-            
+
             if (delta?.content) {
               yield { id: parsed.id ?? 'stream', type: 'delta', content: delta.content };
             }
 
             if (parsed.choices[0]?.finish_reason) {
-              yield { 
+              yield {
                 id: parsed.id ?? 'stream-done',
-                type: 'done', 
+                type: 'done',
                 content: '',
                 finishReason: this.mapFinishReason(parsed.choices[0].finish_reason),
               };
@@ -245,11 +257,16 @@ export class DeepSeekProvider extends BaseProvider {
 
   private mapFinishReason(reason: string | undefined): CompletionResponse['finishReason'] {
     switch (reason) {
-      case 'stop': return 'stop';
-      case 'length': return 'length';
-      case 'tool_calls': return 'tool_use';
-      case 'content_filter': return 'content_filter';
-      default: return 'stop';
+      case 'stop':
+        return 'stop';
+      case 'length':
+        return 'length';
+      case 'tool_calls':
+        return 'tool_use';
+      case 'content_filter':
+        return 'content_filter';
+      default:
+        return 'stop';
     }
   }
 }

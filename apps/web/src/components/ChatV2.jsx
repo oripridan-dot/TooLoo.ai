@@ -135,7 +135,17 @@ const REACTIONS = [
 
 // Simple markdown parser for code blocks
 function parseMarkdown(text) {
+  // Safety: ensure text is a string
   if (!text) return [{ type: 'text', content: '' }];
+  if (typeof text !== 'string') {
+    // Handle object content gracefully
+    if (typeof text === 'object') {
+      const stringified = text.message || text.content || text.text || JSON.stringify(text);
+      text = String(stringified);
+    } else {
+      text = String(text);
+    }
+  }
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
   const parts = [];
   let lastIndex = 0;
@@ -158,7 +168,11 @@ function parseMarkdown(text) {
 
 // Format inline text
 function formatInlineText(text) {
-  if (!text) return text;
+  if (!text) return '';
+  // Safety: ensure text is a string
+  if (typeof text !== 'string') {
+    text = String(text);
+  }
   text = text.replace(/`([^`]+)`/g, '<code class="inline-code px-1.5 py-0.5 rounded bg-white/10 text-cyan-300 font-mono text-sm">$1</code>');
   text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold">$1</strong>');
   text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');

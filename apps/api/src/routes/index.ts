@@ -1,8 +1,8 @@
 /**
  * @tooloo/api - Routes Index
  * Export all route factories
- * 
- * @version 2.0.1
+ *
+ * @version 2.1.0
  */
 
 export { createHealthRouter } from './health.js';
@@ -17,3 +17,4 @@ export { createImplementationRouter } from './implementation.js';
 export { createObservatoryRouter, trackRequest, addAlert, addInsight } from './observatory.js';
 export { createOrchestratorRouter } from './orchestrator.js';
 export { createVisionRouter } from './vision.js';
+export { createGenesisRouter } from './genesis.js';

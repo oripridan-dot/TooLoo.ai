@@ -13,13 +13,10 @@
  */
 
 import { spawn, execSync } from 'child_process';
-import { writeFileSync, unlinkSync, mkdirSync, existsSync, rmSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
-import type {
-  ToolImplementation,
-  ToolExecutionContext,
-} from './types.js';
+import type { ToolImplementation, ToolExecutionContext } from './types.js';
 import { z } from 'zod';
 
 // =============================================================================
@@ -84,8 +81,8 @@ export const SandboxExecuteParamsSchema = z.object({
   language: z.enum(['javascript', 'typescript', 'python', 'bash']),
   mode: z.enum(['quick', 'standard', 'extended']).optional().default('quick'),
   stdin: z.string().max(10000).optional(),
-  files: z.record(z.string().max(50000)).optional(),
-  env: z.record(z.string().max(1000)).optional(),
+  files: z.record(z.string(), z.string().max(50000)).optional(),
+  env: z.record(z.string(), z.string().max(1000)).optional(),
 });
 
 // =============================================================================
@@ -95,12 +92,15 @@ export const SandboxExecuteParamsSchema = z.object({
 /**
  * Resource limits by execution mode
  */
-const MODE_LIMITS: Record<ExecutionMode, {
-  timeout: number;     // ms
-  memory: string;      // Docker memory limit
-  cpus: string;        // Docker CPU limit
-  pidsLimit: number;   // Max processes
-}> = {
+const MODE_LIMITS: Record<
+  ExecutionMode,
+  {
+    timeout: number; // ms
+    memory: string; // Docker memory limit
+    cpus: string; // Docker CPU limit
+    pidsLimit: number; // Max processes
+  }
+> = {
   quick: {
     timeout: 5000,
     memory: '128m',
@@ -184,7 +184,7 @@ async function ensureImage(image: string): Promise<void> {
  */
 async function executeSandbox(
   params: SandboxExecuteParams,
-  context: ToolExecutionContext
+  _context: ToolExecutionContext
 ): Promise<SandboxExecuteResult> {
   const startTime = Date.now();
   const executionId = randomUUID().slice(0, 8);
@@ -220,15 +220,17 @@ async function executeSandbox(
     // Build docker run command
     const dockerArgs: string[] = [
       'run',
-      '--rm',                           // Remove container after exit
-      '--network=none',                 // No network access
-      '--read-only',                    // Read-only root filesystem
-      `--memory=${limits.memory}`,      // Memory limit
-      `--cpus=${limits.cpus}`,          // CPU limit
+      '--rm', // Remove container after exit
+      '--network=none', // No network access
+      '--read-only', // Read-only root filesystem
+      `--memory=${limits.memory}`, // Memory limit
+      `--cpus=${limits.cpus}`, // CPU limit
       `--pids-limit=${limits.pidsLimit}`, // Process limit
       '--security-opt=no-new-privileges', // No privilege escalation
-      '-v', `${sandboxDir}:/sandbox:ro`, // Mount code read-only
-      '-w', '/sandbox',                 // Working directory
+      '-v',
+      `${sandboxDir}:/sandbox:ro`, // Mount code read-only
+      '-w',
+      '/sandbox', // Working directory
     ];
 
     // Add environment variables
@@ -344,7 +346,7 @@ async function executeSandbox(
  */
 async function executeFallback(
   params: SandboxExecuteParams,
-  context: ToolExecutionContext
+  _context: ToolExecutionContext
 ): Promise<SandboxExecuteResult> {
   const startTime = Date.now();
   const executionId = randomUUID().slice(0, 8);
@@ -410,7 +412,7 @@ async function executeFallback(
 
     proc.on('close', (code) => {
       clearTimeout(timer);
-      
+
       // Cleanup
       try {
         rmSync(tempDir, { recursive: true, force: true });

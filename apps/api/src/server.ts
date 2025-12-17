@@ -1,7 +1,7 @@
 /**
  * @tooloo/api - Server
  * Express + Socket.IO server setup
- * 
+ *
  * @version 2.0.0-alpha.0
  */
 
@@ -13,10 +13,10 @@ import { Server as SocketIOServer } from 'socket.io';
 
 import type { Orchestrator } from '@tooloo/engine';
 import type { SkillRegistry } from '@tooloo/skills';
-import type { 
-  ServerToClientEvents, 
-  ClientToServerEvents, 
-  InterServerEvents, 
+import type {
+  ServerToClientEvents,
+  ClientToServerEvents,
+  InterServerEvents,
   SocketData,
   APIResponse,
 } from './types.js';
@@ -32,6 +32,7 @@ import { createImplementationRouter } from './routes/implementation.js';
 import { createObservatoryRouter } from './routes/observatory.js';
 import { createOrchestratorRouter } from './routes/orchestrator.js';
 import { createVisionRouter } from './routes/vision.js';
+import { createGenesisRouter } from './routes/genesis.js';
 import authRouter from './routes/auth.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { createRateLimiter } from './middleware/rate-limiter.js';
@@ -53,7 +54,7 @@ const DEFAULT_CONFIG: ServerConfig = {
   port: 4001,
   host: '0.0.0.0',
   corsOrigins: [
-    'http://localhost:5173', 
+    'http://localhost:5173',
     'http://localhost:3000',
     // GitHub Codespaces - allow any .app.github.dev origin
   ],
@@ -61,27 +62,30 @@ const DEFAULT_CONFIG: ServerConfig = {
 };
 
 // Dynamic CORS origin function for Codespaces
-function getCorsOrigin(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+function getCorsOrigin(
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void
+) {
   // Allow requests with no origin (like mobile apps or curl)
   if (!origin) {
     return callback(null, true);
   }
-  
+
   // Allow localhost
   if (origin.includes('localhost')) {
     return callback(null, true);
   }
-  
+
   // Allow GitHub Codespaces
   if (origin.includes('.app.github.dev')) {
     return callback(null, true);
   }
-  
+
   // Allow any origin in development
   if (process.env.NODE_ENV !== 'production') {
     return callback(null, true);
   }
-  
+
   callback(new Error('Not allowed by CORS'));
 }
 
@@ -124,11 +128,13 @@ export class TooLooServer {
 
   private setupMiddleware(): void {
     // CORS
-    this.app.use(cors({
-      origin: getCorsOrigin,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-      credentials: true,
-    }));
+    this.app.use(
+      cors({
+        origin: getCorsOrigin,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        credentials: true,
+      })
+    );
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
@@ -163,15 +169,21 @@ export class TooLooServer {
     this.app.use(`${prefix}/health`, createHealthRouter(this));
 
     // Chat routes - pass orchestrator if available
-    this.app.use(`${prefix}/chat`, createChatRouter({
-      io: this.io,
-      orchestrator: this.config.orchestrator,
-    }));
+    this.app.use(
+      `${prefix}/chat`,
+      createChatRouter({
+        io: this.io,
+        orchestrator: this.config.orchestrator,
+      })
+    );
 
     // Skills routes - pass skillRegistry for dynamic skill listing
-    this.app.use(`${prefix}/skills`, createSkillsRouter({
-      skillRegistry: this.config.skillRegistry,
-    }));
+    this.app.use(
+      `${prefix}/skills`,
+      createSkillsRouter({
+        skillRegistry: this.config.skillRegistry,
+      })
+    );
 
     // Projects routes
     this.app.use(`${prefix}/projects`, createProjectsRouter());
@@ -199,6 +211,9 @@ export class TooLooServer {
 
     // Vision routes (multi-modal image processing)
     this.app.use(`${prefix}/vision`, createVisionRouter({ io: this.io }));
+
+    // Genesis routes (TooLoo Genesis autonomous system)
+    this.app.use(`${prefix}/genesis`, createGenesisRouter({ io: this.io }));
 
     // Auth routes
     this.app.use(`${prefix}/auth`, authRouter);

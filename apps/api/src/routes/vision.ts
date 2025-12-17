@@ -94,7 +94,7 @@ function parseImageInput(image: string): {
   // Check if it's a data URL (base64)
   if (image.startsWith('data:')) {
     const match = image.match(/^data:([^;]+);base64,(.+)$/);
-    if (match) {
+    if (match && match[1] && match[2]) {
       return {
         isUrl: false,
         mediaType: match[1],
@@ -307,7 +307,11 @@ async function callGeminiVision(
 
   const data = (await response.json()) as {
     candidates: Array<{ content: { parts: Array<{ text: string }> } }>;
-    usageMetadata?: { promptTokenCount: number; candidatesTokenCount: number; totalTokenCount: number };
+    usageMetadata?: {
+      promptTokenCount: number;
+      candidatesTokenCount: number;
+      totalTokenCount: number;
+    };
   };
 
   return {
@@ -363,7 +367,11 @@ export function createVisionRouter(deps: VisionRouterDeps): Router {
       providers.push({
         id: 'anthropic',
         name: 'Anthropic Claude',
-        models: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
+        models: [
+          'claude-sonnet-4-20250514',
+          'claude-3-5-sonnet-20241022',
+          'claude-3-opus-20240229',
+        ],
         default: 'claude-sonnet-4-20250514',
       });
     }
@@ -516,7 +524,8 @@ export function createVisionRouter(deps: VisionRouterDeps): Router {
     try {
       // Use Gemini Flash for speed, fallback to others
       let result: VisionResponse;
-      const prompt = 'Describe this image in detail. Include objects, text, colors, and any notable features.';
+      const prompt =
+        'Describe this image in detail. Include objects, text, colors, and any notable features.';
 
       if (process.env.GOOGLE_API_KEY) {
         result = await callGeminiVision(body.image, prompt, 'gemini-2.0-flash', 512);

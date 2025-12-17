@@ -74,7 +74,7 @@ describe('ToolExecutor', () => {
 
     it('should report correct tool count', () => {
       const stats = executor.getStats();
-      expect(stats.registeredTools).toBe(8);
+      expect(stats.registeredTools).toBe(9); // Includes sandbox_execute
     });
   });
 

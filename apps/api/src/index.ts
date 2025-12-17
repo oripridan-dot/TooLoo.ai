@@ -340,10 +340,10 @@ if (isMain) {
   const orchestrator = new Orchestrator(skillRegistry, providerRegistry, {
     defaultProvider: 'deepseek',
     routing: {
-      semantic: false,  // Disabled until embeddings service is implemented
-      minConfidence: 0.5,  // Balanced for intent-based routing
+      semantic: false, // Disabled until embeddings service is implemented
+      minConfidence: 0.5, // Balanced for intent-based routing
       semanticWeight: 0.6,
-      keywordWeight: 0.3,  // When semantic=false: keyword*0.4 + intent*0.6
+      keywordWeight: 0.3, // When semantic=false: keyword*0.4 + intent*0.6
     },
   });
   console.log('✓ Orchestrator initialized');
@@ -354,14 +354,16 @@ if (isMain) {
   // ==========================================================================
   orchestratorBridge.initialize(providerRegistry);
   orchestratorBridge.setOrchestrator(orchestrator);
-  
+
   // Import and connect to kernel
-  import('../../../src/kernel/kernel.js').then(({ kernel }) => {
-    orchestratorBridge.connect(kernel);
-    console.log('✓ Kernel-Orchestrator Bridge connected');
-  }).catch((err) => {
-    console.warn('⚠ Could not connect Kernel-Orchestrator Bridge:', err.message);
-  });
+  import('../../../src/kernel/kernel.js')
+    .then(({ kernel }) => {
+      orchestratorBridge.connect(kernel);
+      console.log('✓ Kernel-Orchestrator Bridge connected');
+    })
+    .catch((err) => {
+      console.warn('⚠ Could not connect Kernel-Orchestrator Bridge:', err.message);
+    });
   console.log('');
 
   // Create server with orchestrator
@@ -391,10 +393,7 @@ if (isMain) {
   });
 
   // Start the server and hot reloader
-  Promise.all([
-    server.start(),
-    hotReloader.start(),
-  ]).catch((error) => {
+  Promise.all([server.start(), hotReloader.start()]).catch((error) => {
     console.error('Failed to start server:', error);
     process.exit(1);
   });

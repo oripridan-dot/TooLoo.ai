@@ -1,9 +1,9 @@
 /**
  * Provider Adapters Index
  * Re-exports all provider implementations
- * 
- * @version 1.1.0.0
- * @updated 2025-12-15
+ *
+ * @version 1.2.0.0
+ * @updated 2025-12-16
  */
 
 export { DeepSeekProvider, default as deepseek } from './deepseek.js';

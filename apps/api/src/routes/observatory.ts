@@ -248,6 +248,27 @@ export function createObservatoryRouter(orchestrator: Orchestrator): Router {
       // Memory usage
       const memUsage = process.memoryUsage();
 
+      // Get skill count from orchestrator
+      let skillsTotal = 0;
+      let providersOnline = 0;
+      try {
+        // Get skills from orchestrator's skill registry
+        const skillRegistry = (orchestrator as any).skillRegistry;
+        if (skillRegistry?.getAll) {
+          const allSkills = skillRegistry.getAll();
+          skillsTotal = Array.isArray(allSkills) ? allSkills.length : 0;
+        }
+        
+        // Get provider count from orchestrator's provider registry
+        const providerRegistry = (orchestrator as any).providerRegistry;
+        if (providerRegistry?.getAll) {
+          const allProviders = providerRegistry.getAll();
+          providersOnline = Array.isArray(allProviders) ? allProviders.length : 0;
+        }
+      } catch (e) {
+        // Fallback - orchestrator not accessible
+      }
+
       // Determine overall status
       const allEnginesHealthy = Object.values(engines).every((e) => e.healthy);
       const noActiveIssues = healingStatus.activeIssues === 0;
@@ -256,6 +277,9 @@ export function createObservatoryRouter(orchestrator: Orchestrator): Router {
       let status: SystemPulse['status'] = 'healthy';
       if (!allEnginesHealthy || !goodSuccessRate) status = 'degraded';
       if (healingStatus.activeIssues > 3 || successRate < 0.7) status = 'critical';
+
+      // Override routing providersOnline with actual count
+      engines.routing.providersOnline = providersOnline;
 
       const pulse: SystemPulse = {
         timestamp: new Date().toISOString(),
@@ -278,8 +302,8 @@ export function createObservatoryRouter(orchestrator: Orchestrator): Router {
             percentage: Number(((memUsage.heapUsed / memUsage.heapTotal) * 100).toFixed(1)),
           },
           skills: {
-            active: 0, // Would come from orchestrator
-            total: 0, // Orchestrator skills count
+            active: skillsTotal, // Actual count from orchestrator
+            total: skillsTotal,
           },
           sessions: {
             active: memoryStats.activeSessions,

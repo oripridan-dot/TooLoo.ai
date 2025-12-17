@@ -1,0 +1,230 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# TooLoo Genesis - Parallel Execution Skill
+# ═══════════════════════════════════════════════════════════════════════════════
+# The Multiplier - Executes tasks in parallel to extract the best outcomes
+# This is TooLoo's ability to "think multiple thoughts at once"
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: parallel-execution
+name: Parallel Execution Engine
+version: '1.0.0'
+description: >
+  Spins up parallel execution paths to explore multiple solutions or process 
+  data concurrently. Uses competing strategies to find the best outcome or 
+  collaborative splitting to maximize throughput.
+
+category: meta
+icon: ⚡
+
+# Keywords for intent routing
+keywords:
+  - parallel
+  - concurrent
+  - multiple
+  - competing
+  - alternatives
+  - options
+  - compare
+  - race
+  - split
+  - batch
+
+# Input schema
+schema:
+  type: object
+  properties:
+    task:
+      type: string
+      description: The task to execute in parallel
+    parallelism:
+      type: number
+      minimum: 2
+      maximum: 5
+      default: 3
+      description: Number of parallel execution paths
+    strategy:
+      type: string
+      enum: [competing, collaborative, ensemble]
+      default: competing
+      description: |
+        - competing: Multiple approaches race to solve the same problem, best wins
+        - collaborative: Task is split into independent sub-tasks, results merged
+        - ensemble: All approaches contribute to a combined answer
+    timeout_ms:
+      type: number
+      default: 30000
+      description: Maximum time for parallel execution
+    selection_criteria:
+      type: string
+      enum: [fastest, best_quality, consensus, all]
+      default: best_quality
+      description: How to select the winning result
+    context:
+      type: object
+      description: Additional context for all parallel executions
+  required:
+    - task
+
+# Output schema
+output_schema:
+  type: object
+  properties:
+    best_outcome:
+      type: object
+      description: The selected best result
+    all_outcomes:
+      type: array
+      description: All parallel execution results
+    winning_strategy:
+      type: string
+      description: Which approach won (for competing strategy)
+    execution_stats:
+      type: object
+      properties:
+        total_time_ms:
+          type: number
+        paths_completed:
+          type: number
+        paths_failed:
+          type: number
+
+# LLM instructions
+instructions: |
+  You are the Parallel Execution Engine for TooLoo Genesis.
+
+  Your job is to MAXIMIZE OUTCOME QUALITY by exploring multiple solution paths.
+
+  ## STRATEGY IMPLEMENTATIONS
+
+  ### COMPETING Strategy (Default)
+  Use when: You want the BEST solution to a problem
+
+  1. Generate ${parallelism} DISTINCTLY DIFFERENT approaches to solve the task
+  2. Each approach should use different:
+     - Algorithms or methods
+     - Libraries or tools
+     - Design patterns
+     - Trade-offs (speed vs. quality vs. simplicity)
+  3. Execute all approaches in parallel
+  4. Evaluate results based on selection_criteria
+  5. Return the winner with explanation
+
+  Example approaches for "Write a sorting function":
+  - Approach 1: QuickSort (fast average case)
+  - Approach 2: MergeSort (stable, consistent)
+  - Approach 3: TimSort (hybrid, real-world optimized)
+
+  ### COLLABORATIVE Strategy
+  Use when: Task can be SPLIT into independent parts
+
+  1. Analyze the task for natural division points
+  2. Create ${parallelism} independent sub-tasks
+  3. Execute sub-tasks in parallel
+  4. Merge results into cohesive output
+
+  Example for "Document entire codebase":
+  - Path 1: Document src/core/*.ts
+  - Path 2: Document src/kernel/*.ts
+  - Path 3: Document apps/api/src/*.ts
+
+  ### ENSEMBLE Strategy
+  Use when: Multiple perspectives IMPROVE the answer
+
+  1. Give the same task to ${parallelism} different "personas"
+  2. Each persona approaches from different angle:
+     - The Pragmatist: Focus on practical, working solution
+     - The Perfectionist: Focus on edge cases and quality
+     - The Minimalist: Focus on simplicity and elegance
+  3. Synthesize insights from all perspectives
+
+  ## SELECTION CRITERIA
+
+  ### fastest
+  - Return the first result that completes successfully
+  - Good for: Simple tasks where any solution works
+
+  ### best_quality
+  - Score each result on: correctness, completeness, elegance
+  - Return the highest scoring result
+  - Good for: Complex problems where quality matters
+
+  ### consensus
+  - Identify common elements across all results
+  - Build answer from agreed-upon components
+  - Good for: Factual tasks where agreement = confidence
+
+  ### all
+  - Return all results for human selection
+  - Good for: Creative tasks with no single "right" answer
+
+  ## OUTPUT FORMAT
+
+  ```json
+  {
+    "best_outcome": {
+      "result": "The actual output...",
+      "approach": "Description of winning approach",
+      "score": 0.95
+    },
+    "all_outcomes": [
+      {"approach": "Approach 1", "result": "...", "score": 0.95, "time_ms": 1200},
+      {"approach": "Approach 2", "result": "...", "score": 0.87, "time_ms": 800},
+      {"approach": "Approach 3", "result": "...", "score": 0.91, "time_ms": 1500}
+    ],
+    "winning_strategy": "Approach 1 - QuickSort implementation",
+    "execution_stats": {
+      "total_time_ms": 1500,
+      "paths_completed": 3,
+      "paths_failed": 0
+    }
+  }
+  ```
+
+  ## FAILURE HANDLING
+
+  - If one path fails, others continue
+  - If all paths fail, return detailed error analysis
+  - If timeout reached, return best partial results
+
+  ## RESOURCE AWARENESS
+
+  - Each parallel path consumes tokens/compute
+  - Higher parallelism = higher cost
+  - Default to 3 unless task truly benefits from more
+  - Report token usage in execution_stats
+
+# Provider preferences
+providers:
+  preferred:
+    - deepseek # Fast and cheap for multiple calls
+    - openai # Good for diverse approaches
+  temperature: 0.7 # Higher creativity for diverse approaches
+
+# Tools available
+tools:
+  - name: file_read
+    description: Read file contents
+    required: false
+  - name: file_write
+    description: Write file contents
+    required: false
+  - name: grep_search
+    description: Search for patterns
+    required: false
+  - name: terminal_execute
+    description: Run terminal commands
+    required: false
+  - name: semantic_search
+    description: Semantic code search
+    required: false
+
+# Metadata
+metadata:
+  author: TooLoo Genesis
+  tags:
+    - parallel
+    - optimization
+    - meta
+    - performance
+  priority: high
+  execution_mode: parallel # This skill executes its subtasks in parallel

@@ -1,16 +1,20 @@
 /**
  * @file TooLoo.ai Skills OS - Bootstrap
  * @description Boots the complete Skills OS Kernel
- * @version 1.1.0.0
+ * @version 1.1.0.1
  * @skill-os true
- * @updated 2025-12-15
+ * @updated 2025-12-16
  *
  * This is the entry point for Skills OS.
  * Run with: pnpm boot
  */
 
+import { config } from 'dotenv';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
+
+// Load environment variables FIRST
+config({ path: resolve(process.cwd(), '.env') });
 import { fileURLToPath } from 'url';
 import { kernel } from './kernel.js';
 import { registry } from './registry.js';

@@ -512,12 +512,13 @@ export class Orchestrator {
     // Helper to get correct model for provider
     const getModelForProvider = (provider: string): string => {
       const defaults: Record<string, string> = {
+        gemini: 'gemini-2.0-flash',
         deepseek: 'deepseek-chat',
         anthropic: 'claude-sonnet-4-20250514',
         openai: 'gpt-4o',
         ollama: 'llama3.2',
       };
-      return defaults[provider.toLowerCase()] || 'default';
+      return defaults[provider.toLowerCase()] || 'gemini-2.0-flash';
     };
 
     // Check for skill-specific preferences (HIGHEST PRIORITY)
@@ -538,49 +539,64 @@ export class Orchestrator {
     if (reason === 'Default provider selection') {
       const intentProviderMap: Record<string, Array<{ provider: string; model: string }>> = {
       code: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       fix: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       analyze: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       refactor: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       test: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
       ],
       plan: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
         { provider: 'deepseek', model: 'deepseek-chat' },
       ],
       research: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
         { provider: 'deepseek', model: 'deepseek-chat' },
       ],
       creative: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
         { provider: 'deepseek', model: 'deepseek-chat' },
       ],
       chat: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
         { provider: 'deepseek', model: 'deepseek-chat' },
         { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
         { provider: 'openai', model: 'gpt-4o' },
+      ],
+      evolve: [
+        { provider: 'gemini', model: 'gemini-2.0-flash' },
+        { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+        { provider: 'openai', model: 'gpt-4o' },
+        { provider: 'deepseek', model: 'deepseek-chat' },
       ],
     };
 
