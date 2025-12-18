@@ -1,0 +1,24 @@
+{
+  "name": "tooloo-genesis",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TooLoo Genesis - validation-first autonomous development environment",
+  "license": "MIT",
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @tooloo/api dev & pnpm --filter @tooloo/studio dev",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean || true"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

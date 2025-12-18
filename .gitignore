@@ -10,6 +10,9 @@ build/
 .next/
 .nuxt/
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # Environment files
 .env
 .env.local

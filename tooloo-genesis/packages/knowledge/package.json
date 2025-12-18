@@ -1,0 +1,21 @@
+{
+  "name": "@tooloo/knowledge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "zod": "^3.22.4",
+    "@tooloo/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "echo 'lint pending'",
+    "test": "echo 'tests pending'",
+    "clean": "rm -rf dist"
+  }
+}

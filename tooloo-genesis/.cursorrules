@@ -1,0 +1,221 @@
+# TooLoo Genesis - Cursor AI Rules
+
+## Identity
+You are building TooLoo Genesis - a validation-first AI development platform.
+
+## Core Principle: Measure Twice, Chop Once
+Every suggestion must include validation BEFORE implementation.
+
+## Mandatory Pattern
+
+When suggesting ANY code:
+
+1. **Define the validation schema first**
+2. **Write the validator**
+3. **Create simulation test**
+4. **Implement the actual code**
+5. **Add iteration tracking**
+6. **Update memory network**
+
+## Example Flow
+
+USER: "Add a function to create users"
+
+YOUR RESPONSE:
+```typescript
+// Step 1: Define validation schema
+import { z } from 'zod';
+
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2).max(100),
+  role: z.enum(['user', 'admin'])
+});
+
+// Step 2: Create validator
+import { createValidator } from '@tooloo/validation';
+
+const validateCreateUser = createValidator({
+  schema: CreateUserSchema,
+  validators: ['syntax', 'security', 'business-logic']
+});
+
+// Step 3: Create simulation
+import { createSimulation } from '@tooloo/validation';
+
+const simulateCreateUser = createSimulation({
+  setup: async (sandbox) => {
+    // Setup test database
+    await sandbox.db.migrate();
+  },
+  teardown: async (sandbox) => {
+    // Cleanup
+    await sandbox.db.rollback();
+  }
+});
+
+// Step 4: Implement with tracking
+import { trackIteration } from '@tooloo/validation';
+
+export async function createUser(input: unknown) {
+  const iteration = await trackIteration('create-user');
+  
+  try {
+    // Validate
+    const validation = await validateCreateUser(input);
+    if (!validation.passed) {
+      await iteration.recordFailure(validation);
+      throw new ValidationError(validation.failures);
+    }
+    
+    const userData = validation.data;
+    
+    // Simulate
+    const simulation = await simulateCreateUser(() => 
+      db.users.create(userData)
+    );
+    
+    if (simulation.confidence < 0.9) {
+      await iteration.recordLowConfidence(simulation);
+      throw new SimulationError('Low confidence', simulation);
+    }
+    
+    // Execute
+    const user = await db.users.create(userData);
+    await iteration.recordSuccess({ duration: Date.now() - iteration.startTime });
+    
+    // Update memory
+    await memoryNetwork.record({
+      pattern: 'user-creation',
+      outcome: 'success',
+      duration: iteration.duration
+    });
+    
+    return user;
+    
+  } catch (error) {
+    await iteration.recordError(error);
+    throw error;
+  }
+}
+```
+
+## Rules for Components (Gestalt Compliance)
+
+Every React component must:
+
+1. Use semantic spacing tokens (never hard-coded values)
+2. Follow visual hierarchy (max 3 levels)
+3. Group related items with proximity
+4. Use consistent styling for similar functions
+5. Include Gestalt validation test
+
+Example:
+```typescript
+import { gestalt } from '@tooloo/gestalt';
+
+export function StatusCard({ status, metrics }: Props) {
+  return (
+    <Card>
+      {/* Proximity: Related items grouped */}
+      <Header spacing={gestalt.spacing.related}>
+        <StatusIcon status={status} />
+        <Title>{status.title}</Title>
+      </Header>
+      
+      {/* Section separation */}
+      <MetricsGroup spacing={gestalt.spacing.section}>
+        {metrics.map(m => (
+          <Metric key={m.id} variant={gestalt.variants.metric} />
+        ))}
+      </MetricsGroup>
+    </Card>
+  );
+}
+
+// REQUIRED: Gestalt validation test
+describe('StatusCard Gestalt Compliance', () => {
+  it('passes all Gestalt principles', () => {
+    const violations = validateGestalt(<StatusCard {...props} />);
+    expect(violations).toHaveLength(0);
+  });
+});
+```
+
+## Memory Network Integration
+
+Every significant action must update the memory network:
+
+```typescript
+// After successful operation
+await memoryNetwork.record({
+  nodeType: 'pattern' | 'decision' | 'outcome',
+  data: {},
+  connections: ['related-node-id'],
+  temporalMarkers: {
+    duration: number,
+    timestamp: Date,
+    iterationCount: number
+  }
+});
+```
+
+## Iteration Tracking
+
+Track attempts for everything:
+
+```typescript
+const iteration = await trackIteration('task-name');
+// ... do work
+await iteration.recordSuccess();
+// OR
+await iteration.recordFailure(reason);
+```
+
+## Questions to Ask Before Suggesting
+
+1. "How will this be validated?"
+2. "What could go wrong?"
+3. "How many iterations might this take?"
+4. "What Gestalt principles apply?"
+5. "What memory patterns are relevant?"
+
+## Forbidden Patterns
+
+❌ Hard-coded spacing values
+❌ Functions without validation
+❌ Components without Gestalt tests
+❌ Operations without iteration tracking
+❌ Actions without memory updates
+❌ Error handling without learning
+
+## File Organization
+
+- Types go in `packages/types`
+- Validation logic in `packages/validation`
+- UI components in `packages/gestalt`
+- Business logic in `apps/api`
+- Never mix concerns
+
+## Commit Messages
+
+Format: `type(scope): description`
+
+Types:
+- `feat`: New feature
+- `fix`: Bug fix
+- `validate`: Added validation
+- `gestalt`: UI/UX improvement
+- `memory`: Memory network update
+- `reflect`: Reflection/learning improvement
+
+Example: `feat(team): add proactive gap finder with validation`
+
+## The Sacred Rule
+
+**If you can't validate it, don't build it.**
+
+When in doubt:
+1. Ask for clarification
+2. Propose validation approach first
+3. Then suggest implementation
