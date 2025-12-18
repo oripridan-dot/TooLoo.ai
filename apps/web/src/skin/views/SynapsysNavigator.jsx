@@ -1,6 +1,4 @@
 // @version 3.3.575
-// @version 3.3.573
-// @version 3.3.573
 /**
  * Synapsys Navigator - The Cognitive Operating System Interface
  * 
