@@ -10,6 +10,14 @@ import knowledgeRouter from './routes/knowledge.js';
 export const createApp = (): Express => {
   const app = express();
   app.use(express.json());
+
+  app.get('/', (_req, res) => {
+    res
+      .status(200)
+      .type('text/plain')
+      .send('TooLoo Genesis API is running. Try GET /health or /api/v2/knowledge/search');
+  });
+
   app.use('/api/v2', knowledgeRouter);
 
   app.get('/health', (_req, res) => {
