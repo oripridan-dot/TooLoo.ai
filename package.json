@@ -1,14 +1,9 @@
 {
-<<<<<<< HEAD
-  "name": "tooloo-synapsys",
-  "version": "3.3.573",
-  "license": "MIT",
-=======
   "name": "@tooloo/monorepo",
-  "version": "2.0.0-alpha.0",
+  "version": "3.3.576",
   "description": "TooLoo.ai Synapsys V2 - Multi-agent AI Orchestration Platform",
   "private": true,
->>>>>>> origin/main
+  "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.0.0",
   "workspaces": [
