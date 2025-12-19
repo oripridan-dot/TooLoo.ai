@@ -1,4 +1,4 @@
-// @version 3.3.577
+// @version 3.3.578
 /**
  * @file Studio app shell
  * @version 1.5.0
@@ -1346,42 +1346,29 @@ export function StudioApp() {
                 Autonomy loop + activity feed + status snapshot.
               </div>
 
-        <div style={{ ...rowStyle, gridTemplateColumns: '1fr 1fr 1fr' }}>
-          <div>
-            <label style={labelStyle}>interval (ms)</label>
-
-          {stage.cta ? (
-            <div style={{ marginTop: 10 }}>
-              <button
-                style={stage.cta.variant === 'primary' ? buttonStyle : subtleButtonStyle}
-                disabled={stage.cta.disabled}
-                onClick={stage.cta.onClick}
-                title={stage.cta.disabled ? 'Busy…' : stage.cta.label}
-              >
-                {stage.cta.label}
-              </button>
-            </div>
-          ) : null}
-            <input
-              style={inputStyle}
-              type="number"
-              min={200}
-              max={60000}
-              value={loopIntervalMs}
-              onChange={(e) => setLoopIntervalMs(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>status</label>
-            <div style={{ fontFamily: tokens.font.mono, paddingTop: 10 }}>
-              {adeStatus ? (adeStatus.running ? 'running' : 'stopped') : 'connecting…'}
-            </div>
-          </div>
-          <div>
-            <label style={labelStyle}>iteration</label>
-            <div style={{ fontFamily: tokens.font.mono, paddingTop: 10 }}>{adeStatus?.iteration ?? '—'}</div>
-          </div>
-        </div>
+              <div style={{ ...rowStyle, gridTemplateColumns: '1fr 1fr 1fr' }}>
+                <div>
+                  <label style={labelStyle}>interval (ms)</label>
+                  <input
+                    style={inputStyle}
+                    type="number"
+                    min={200}
+                    max={60000}
+                    value={loopIntervalMs}
+                    onChange={(e) => setLoopIntervalMs(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>status</label>
+                  <div style={{ fontFamily: tokens.font.mono, paddingTop: 10 }}>
+                    {adeStatus ? (adeStatus.running ? 'running' : 'stopped') : 'connecting…'}
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>iteration</label>
+                  <div style={{ fontFamily: tokens.font.mono, paddingTop: 10 }}>{adeStatus?.iteration ?? '—'}</div>
+                </div>
+              </div>
 
         <div style={{ marginTop: tokens.space.md, display: 'flex', gap: tokens.space.sm, flexWrap: 'wrap' }}>
           <button
