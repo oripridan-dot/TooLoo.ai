@@ -1,4 +1,4 @@
-// @version 3.3.567 - UI mode selector + avoid duplicate SystemPulse
+// @version 3.3.568 - UI mode selector + avoid duplicate SystemPulse
 import { useState } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
