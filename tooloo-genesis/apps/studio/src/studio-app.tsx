@@ -1,4 +1,4 @@
-// @version 3.3.570
+// @version 3.3.573
 /**
  * @file Studio app shell
  * @version 1.4.0
@@ -17,6 +17,12 @@ type ApiResult = {
   ok: boolean;
   status: number;
   data: unknown;
+};
+
+type SseStatus = {
+  state: 'connecting' | 'connected' | 'error';
+  attempts: number;
+  lastErrorAt: number | null;
 };
 
 type AdeLoopStatus = {
@@ -131,6 +137,7 @@ export function StudioApp() {
   const [adeStatus, setAdeStatus] = React.useState<AdeLoopStatus | null>(null);
   const [adeEvents, setAdeEvents] = React.useState<AdeEvent[]>([]);
   const [genesisEvents, setGenesisEvents] = React.useState<GenesisEvent[]>([]);
+  const [sse, setSse] = React.useState<SseStatus>({ state: 'connecting', attempts: 0, lastErrorAt: null });
   const [loopIntervalMs, setLoopIntervalMs] = React.useState<number>(1500);
   const [autoScroll, setAutoScroll] = React.useState(true);
   const eventsEndRef = React.useRef<HTMLDivElement | null>(null);
@@ -182,6 +189,27 @@ export function StudioApp() {
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Always try to show loop state, even if SSE is down.
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const tick = async () => {
+      try {
+        const result = await api<AdeLoopStatus>('/api/v2/ade/loop/status', { method: 'GET' });
+        if (!cancelled && result.ok) setAdeStatus(result.data as AdeLoopStatus);
+      } catch {
+        // ignore
+      }
+    };
+
+    void tick();
+    const interval = setInterval(tick, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -271,76 +299,103 @@ export function StudioApp() {
   }
 
   React.useEffect(() => {
-    // Live stream ADE loop events so you can *see the cycles*.
-    const es = new EventSource('/api/v2/ade/events');
+    let cancelled = false;
+    let attempts = 0;
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const onSnapshot = (evt: MessageEvent) => {
-      try {
-        const payload = JSON.parse(String(evt.data)) as {
-          status?: AdeLoopStatus;
-          events?: AdeEvent[];
-          genesisEvents?: GenesisEvent[];
-          learning?: LearningStats;
-          policy?: ModelPolicy;
-        };
-        if (payload.status) setAdeStatus(payload.status);
-        if (Array.isArray(payload.events)) setAdeEvents(payload.events);
-        if (Array.isArray(payload.genesisEvents)) setGenesisEvents(payload.genesisEvents);
-        if (payload.learning) setLearning(payload.learning);
-        if (payload.policy) setPolicy(payload.policy);
-      } catch {
-        // ignore
-      }
+    const connect = () => {
+      if (cancelled) return;
+
+      setSse((prev) => ({ ...prev, state: 'connecting', attempts }));
+      es = new EventSource('/api/v2/ade/events');
+
+      // Live stream ADE loop events so you can *see the cycles*.
+      const onSnapshot = (evt: MessageEvent) => {
+        try {
+          const payload = JSON.parse(String(evt.data)) as {
+            status?: AdeLoopStatus;
+            events?: AdeEvent[];
+            genesisEvents?: GenesisEvent[];
+            learning?: LearningStats;
+            policy?: ModelPolicy;
+          };
+          if (payload.status) setAdeStatus(payload.status);
+          if (Array.isArray(payload.events)) setAdeEvents(payload.events);
+          if (Array.isArray(payload.genesisEvents)) setGenesisEvents(payload.genesisEvents);
+          if (payload.learning) setLearning(payload.learning);
+          if (payload.policy) setPolicy(payload.policy);
+
+          setSse((prev) => ({ ...prev, state: 'connected', lastErrorAt: null }));
+        } catch {
+          // ignore
+        }
+      };
+
+      const onAde = (evt: MessageEvent) => {
+        try {
+          const e = JSON.parse(String(evt.data)) as AdeEvent;
+          setAdeEvents((prev) => {
+            const next = [...prev, e].slice(-200);
+            return next;
+          });
+          // Keep status fresh (events include iteration/loopId).
+          setAdeStatus((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  loopId: e.loopId ?? prev.loopId,
+                  iteration: Math.max(prev.iteration ?? 0, e.iteration ?? 0),
+                  lastTickAt: e.type === 'tick:done' ? e.ts : prev.lastTickAt,
+                  lastError: e.type === 'tick:error' ? 'tick:error' : prev.lastError,
+                }
+              : prev,
+          );
+        } catch {
+          // ignore
+        }
+      };
+
+      const onGenesis = (evt: MessageEvent) => {
+        try {
+          const e = JSON.parse(String(evt.data)) as GenesisEvent;
+          setGenesisEvents((prev) => [...prev, e].slice(-200));
+        } catch {
+          // ignore
+        }
+      };
+
+      es.addEventListener('snapshot', onSnapshot as EventListener);
+      es.addEventListener('ade', onAde as EventListener);
+      es.addEventListener('genesis', onGenesis as EventListener);
+
+      es.onerror = () => {
+        if (cancelled) return;
+
+        setSse({ state: 'error', attempts: attempts + 1, lastErrorAt: Date.now() });
+
+        try {
+          es?.close();
+        } catch {
+          // ignore
+        }
+
+        attempts += 1;
+        const delayMs = Math.min(15_000, Math.round(800 * Math.pow(1.6, Math.min(attempts, 8))));
+        reconnectTimer = setTimeout(connect, delayMs);
+      };
     };
 
-    const onAde = (evt: MessageEvent) => {
-      try {
-        const e = JSON.parse(String(evt.data)) as AdeEvent;
-        setAdeEvents((prev) => {
-          const next = [...prev, e].slice(-200);
-          return next;
-        });
-        // Keep status fresh (events include iteration/loopId).
-        setAdeStatus((prev) =>
-          prev
-            ? {
-                ...prev,
-                loopId: e.loopId ?? prev.loopId,
-                iteration: Math.max(prev.iteration ?? 0, e.iteration ?? 0),
-                lastTickAt: e.type === 'tick:done' ? e.ts : prev.lastTickAt,
-                lastError: e.type === 'tick:error' ? 'tick:error' : prev.lastError,
-              }
-            : prev,
-        );
-      } catch {
-        // ignore
-      }
-    };
-
-    es.addEventListener('snapshot', onSnapshot as EventListener);
-    es.addEventListener('ade', onAde as EventListener);
-
-    const onGenesis = (evt: MessageEvent) => {
-      try {
-        const e = JSON.parse(String(evt.data)) as GenesisEvent;
-        setGenesisEvents((prev) => [...prev, e].slice(-200));
-      } catch {
-        // ignore
-      }
-    };
-
-    es.addEventListener('genesis', onGenesis as EventListener);
-
-    es.onerror = () => {
-      // Avoid spamming UI; a disconnected stream will be obvious.
-      // You can refresh after restarting API.
-    };
+    connect();
 
     return () => {
-      es.removeEventListener('snapshot', onSnapshot as EventListener);
-      es.removeEventListener('ade', onAde as EventListener);
-      es.removeEventListener('genesis', onGenesis as EventListener);
-      es.close();
+      cancelled = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      try {
+        es?.close();
+      } catch {
+        // ignore
+      }
     };
   }, []);
 
@@ -815,6 +870,7 @@ export function StudioApp() {
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <div style={badgeStyle}>{health ? `api:${health.status}` : 'api:…'}</div>
+            <div style={badgeStyle}>stream:{sse.state}</div>
             <div style={badgeStyle}>{adeStatus ? (adeStatus.running ? `loop:running` : `loop:stopped`) : 'loop:…'}</div>
             <div style={badgeStyle}>iter:{adeStatus?.iteration ?? '—'}</div>
           </div>
@@ -1566,7 +1622,7 @@ export function StudioApp() {
                             source: ingest.source,
                             createdAt: Date.now(),
                           }),
-                        }),
+                        })
                       )
                     }
                   >
@@ -1611,7 +1667,7 @@ export function StudioApp() {
                               .filter(Boolean),
                             limit: search.limit,
                           }),
-                        }),
+                        })
                       )
                     }
                   >
@@ -1649,7 +1705,7 @@ export function StudioApp() {
                       run(() =>
                         api(`/api/v2/knowledge/cite/${encodeURIComponent(cite.id)}?needle=${encodeURIComponent(cite.needle)}`, {
                           method: 'GET',
-                        }),
+                        })
                       )
                     }
                   >
@@ -1689,48 +1745,5 @@ export function StudioApp() {
             </div>
           </div>
         </div>
-
-      {/* Omnibox: single interaction textbox (always visible) */}
-      <div
-        style={{
-          borderTop: `1px solid ${tokens.color.border}`,
-          paddingTop: tokens.space.sm,
-          paddingBottom: tokens.space.sm,
-        }}
-      >
-        <div style={{ display: 'flex', gap: tokens.space.sm, alignItems: 'flex-end' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <label style={labelStyle}>{session ? 'Message / answers' : 'Start a mission'}</label>
-            <textarea
-              style={{ ...textareaStyle, minHeight: 54, maxHeight: 110, overflow: 'auto', fontFamily: tokens.font.family }}
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder={
-                session
-                  ? 'Type here. If there are questions, reply with numbered answers (or use Quick answers → Fill bottom textbox).'
-                  : 'Describe what you want Genesis to build…'
-              }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  void handleOmniSend();
-                }
-              }}
-            />
-            <div style={{ color: tokens.color.muted, fontSize: '0.8rem', marginTop: 4 }}>
-              Tip: Ctrl/⌘+Enter to send. Everything above updates live from the backend.
-            </div>
-          </div>
-
-          <button
-            style={buttonStyle}
-            disabled={busy || (!chatInput.trim() && !(session && Object.keys(quickAnswers).length > 0))}
-            onClick={() => void handleOmniSend()}
-          >
-            Send
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
