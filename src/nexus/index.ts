@@ -1,4 +1,4 @@
-// @version 3.3.564 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing
+// @version 3.3.571 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing + Optional Genesis UI redirect
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -137,6 +137,33 @@ export function createNexusApp() {
     bus.publish('nexus', 'system:stop_request', {});
     res.json({ ok: true, message: 'System stop initiated' });
   });
+
+  // Optional: when running Genesis Studio as the default UI, redirect browser navigation
+  // from the backend port (4000) to the Studio port (5173).
+  // This prevents the "wrong UI" confusion when users click the backend port.
+  const uiMode = (process.env['TOOLOO_UI_MODE'] ?? '').toLowerCase();
+  const uiUrl = process.env['TOOLOO_UI_URL'] ?? 'http://localhost:5173';
+  if (uiMode === 'genesis') {
+    app.get('*', (req, res, next) => {
+      // Never redirect APIs/health/sockets.
+      if (req.path.startsWith('/api') || req.path === '/health' || req.path.startsWith('/socket.io')) {
+        return next();
+      }
+
+      const accept = req.headers.accept;
+      // Only redirect HTML navigations (so fetches/assets don't get surprised).
+      if (typeof accept === 'string' && accept.includes('text/html')) {
+        try {
+          const target = new URL(req.originalUrl, uiUrl);
+          return res.redirect(302, target.toString());
+        } catch {
+          return res.redirect(302, uiUrl);
+        }
+      }
+
+      return next();
+    });
+  }
 
   // Serve React App Build
   const distPath = path.join(process.cwd(), 'src', 'web-app', 'dist');
