@@ -1,4 +1,4 @@
-// @version 3.3.569
+// @version 3.3.572
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -17,6 +17,7 @@ export default defineConfig(() => {
       strictPort: true,
       proxy: {
         '/health': apiTarget,
+        '/api/v2': apiTarget,
         '/api': apiTarget,
       },
     },
