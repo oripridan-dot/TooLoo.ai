@@ -1,4 +1,4 @@
-// @version 3.3.573
+// @version 3.3.574
 /**
  * @file Studio app shell
  * @version 1.4.0
@@ -578,6 +578,12 @@ export function StudioApp() {
     status: StageStatus;
     meter: number; // 0..1
     task: string;
+    cta?: {
+      label: string;
+      variant?: 'primary' | 'subtle';
+      disabled?: boolean;
+      onClick: () => void;
+    };
   };
 
   const stageColor = (status: StageStatus): string => {
@@ -609,7 +615,7 @@ export function StudioApp() {
     return Number.isFinite(max) ? max : null;
   }, [session]);
 
-  const pipeline: Stage[] = React.useMemo(() => {
+  const pipeline: Stage[] = (() => {
     // PLAN
     const answeredUnique = session
       ? new Set(session.answers.map((a) => a.questionId)).size
@@ -647,6 +653,28 @@ export function StudioApp() {
           ? 'Plan outdated (needs refresh)'
           : `Plan r${session.planBundle.revision} (${Math.round(session.planBundle.readinessScore * 100)}%)`;
 
+    const planCta: Stage['cta'] = !session
+      ? {
+          label: 'Start session',
+          variant: 'primary',
+          disabled: busy,
+          onClick: () => {
+            void run(async () => {
+              const result = await api<MissionSessionSnapshot>('/api/v2/ade/session', {
+                method: 'POST',
+                body: JSON.stringify({ prompt: missionPrompt, mode: 'producer' }),
+              });
+              if (result.ok) {
+                setSession(result.data as MissionSessionSnapshot);
+                setQuickAnswers({});
+                setChatInput('');
+              }
+              return result;
+            });
+          },
+        }
+      : undefined;
+
     // SIMULATE (mapped to ADE loop for now)
     const simulateStatus: StageStatus = adeStatus
       ? adeStatus.running
@@ -665,6 +693,27 @@ export function StudioApp() {
         ? `ADE loop running • iter ${adeStatus.iteration}`
         : 'ADE loop stopped'
       : 'ADE loop connecting…';
+
+    const loopTags = search.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const simulateCta: Stage['cta'] = {
+      label: adeStatus?.running ? 'Stop loop' : 'Start loop',
+      variant: adeStatus?.running ? 'subtle' : 'primary',
+      disabled: busy,
+      onClick: () => {
+        void run(() =>
+          api(adeStatus?.running ? '/api/v2/ade/loop/stop' : '/api/v2/ade/loop/start', {
+            method: adeStatus?.running ? 'POST' : 'POST',
+            body: adeStatus?.running
+              ? JSON.stringify({})
+              : JSON.stringify({ intervalMs: loopIntervalMs, queryText: search.text, tags: loopTags }),
+          }),
+        );
+      },
+    };
 
     // REFINE (questions + revisions)
     const refineNeedsUser = Boolean(session?.questions?.length);
@@ -763,14 +812,14 @@ export function StudioApp() {
       : `Events: ${learning.total} • last: ${learning.lastAt ? new Date(learning.lastAt).toLocaleTimeString() : '—'}`;
 
     return [
-      { id: 'plan', label: 'Plan', status: planStatus, meter: clamp01(planProgress), task: planTask },
-      { id: 'simulate', label: 'Simulate', status: simulateStatus, meter: clamp01(simulateMeter), task: simulateTask },
+      { id: 'plan', label: 'Plan', status: planStatus, meter: clamp01(planProgress), task: planTask, cta: planCta },
+      { id: 'simulate', label: 'Simulate', status: simulateStatus, meter: clamp01(simulateMeter), task: simulateTask, cta: simulateCta },
       { id: 'refine', label: 'Refine', status: refineStatus, meter: clamp01(refineMeter), task: refineTask },
       { id: 'execute', label: 'Execute', status: executeStatus, meter: clamp01(executeMeter), task: executeTask },
       { id: 'validate', label: 'Validate', status: validateStatus, meter: clamp01(validateMeter), task: validateTask },
       { id: 'learn', label: 'Learn', status: learnStatus, meter: clamp01(learnMeter), task: learnTask },
     ];
-  }, [adeStatus, lastUserMessageTs, learning, session]);
+  })();
 
   const StageCard = ({ stage }: { stage: Stage }) => {
     const color = stageColor(stage.status);
@@ -809,6 +858,18 @@ export function StudioApp() {
         <div style={{ marginTop: 8, color: tokens.color.muted, fontSize: '0.85rem', minHeight: 18, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {stage.task}
         </div>
+
+        {stage.cta ? (
+          <div style={{ marginTop: 10 }}>
+            <button
+              style={stage.cta.variant === 'subtle' ? subtleButtonStyle : buttonStyle}
+              disabled={Boolean(stage.cta.disabled)}
+              onClick={stage.cta.onClick}
+            >
+              {stage.cta.label}
+            </button>
+          </div>
+        ) : null}
       </div>
     );
   };
