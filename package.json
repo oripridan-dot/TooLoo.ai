@@ -1,6 +1,6 @@
 {
   "name": "tooloo-synapsys",
-  "version": "3.3.566",
+  "version": "3.3.567",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -9,18 +9,20 @@
     "predev:all": "node scripts/check-working-directory.cjs",
     "pretest": "node scripts/check-working-directory.cjs",
     "prebuild:frontend": "node scripts/check-working-directory.cjs",
-    "start": "concurrently \"npm run start:synapsys\" \"npm run dev:frontend\"",
+    "start": "concurrently \"pnpm run start:synapsys\" \"pnpm run dev:frontend\"",
     "start:synapsys": "tsx src/main.ts",
     "start:rnd": "bash scripts/dev-rnd.sh",
     "dev:all": "bash scripts/start-clean.sh",
     "dev:ensure": "bash scripts/ensure-running.sh",
     "dev": "bash scripts/dev.sh",
+    "dev:genesis": "bash scripts/dev-genesis.sh",
     "dev:rnd": "bash scripts/dev-rnd.sh",
     "dev:frontend": "vite --config src/web-app/vite.config.ts",
     "build:frontend": "vite build --config src/web-app/vite.config.ts",
     "preview:frontend": "vite preview --config src/web-app/vite.config.ts",
     "stop": "bash scripts/stop.sh",
     "stop:all": "bash scripts/stop.sh",
+    "stop:genesis": "bash scripts/stop-genesis.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -144,5 +146,14 @@
     "typescript": "^5.9.3",
     "vite": "^5.0.0",
     "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "sqlite3",
+      "sharp",
+      "tesseract.js",
+      "esbuild"
+    ]
   }
 }

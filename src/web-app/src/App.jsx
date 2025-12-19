@@ -1,4 +1,4 @@
-// @version 3.3.407 - Liquid Synapsys V1 + SystemPulse HUD
+// @version 3.3.567 - UI mode selector + avoid duplicate SystemPulse
 import { useState } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -21,9 +21,45 @@ import { TooLooApp } from './skin';
 // V3.3.407: SystemPulse HUD - Global file watcher visualization
 import { SystemPulse } from './skin/components/SystemPulse';
 
-// Feature flag for new Liquid Synapsys UI
-// Set to true to use the new liquid skin, false for legacy UI
-const USE_LIQUID_SYNAPSYS = true;
+const UI_MODE_STORAGE_KEY = 'tooloo.uiMode';
+
+/**
+ * Resolve the UI mode.
+ *
+ * Priority:
+ * 1) URL query: ?ui=liquid | ?ui=legacy (also persists to localStorage)
+ * 2) localStorage: tooloo.uiMode
+ * 3) Vite env: VITE_UI_MODE=liquid|legacy
+ * 4) default: liquid
+ */
+function resolveUiMode() {
+  /* eslint-disable-next-line no-undef */
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('ui');
+  if (fromQuery === 'liquid' || fromQuery === 'legacy') {
+    try {
+      /* eslint-disable-next-line no-undef */
+      window.localStorage.setItem(UI_MODE_STORAGE_KEY, fromQuery);
+    } catch {
+      // ignore storage failures (private mode, disabled storage, etc.)
+    }
+    return fromQuery;
+  }
+
+  try {
+    /* eslint-disable-next-line no-undef */
+    const fromStorage = window.localStorage.getItem(UI_MODE_STORAGE_KEY);
+    if (fromStorage === 'liquid' || fromStorage === 'legacy') return fromStorage;
+  } catch {
+    // ignore storage failures
+  }
+
+  // eslint-disable-next-line no-undef
+  const fromEnv = import.meta?.env?.VITE_UI_MODE;
+  if (fromEnv === 'liquid' || fromEnv === 'legacy') return fromEnv;
+
+  return 'liquid';
+}
 
 function LegacyApp() {
   // Check if we are on the visuals page
@@ -87,13 +123,17 @@ function LegacyApp() {
 }
 
 function App() {
-  // Use feature flag to switch between legacy and new Liquid Synapsys UI
-  // Toggle USE_LIQUID_SYNAPSYS at the top of this file
-  // V3.3.407: SystemPulse renders globally above both UIs
+  // UI mode can be changed without code edits:
+  // - Add `?ui=legacy` or `?ui=liquid` to the URL (persists)
+  // - Or set VITE_UI_MODE=legacy|liquid
+  const uiMode = resolveUiMode();
+  const useLiquidSynapsys = uiMode !== 'legacy';
+
   return (
     <>
-      <SystemPulse position="bottom-right" enabled={true} />
-      {USE_LIQUID_SYNAPSYS ? <TooLooApp /> : <LegacyApp />}
+      {/* Avoid duplicate HUD rendering: Liquid Synapsys mounts its own SystemPulse. */}
+      {!useLiquidSynapsys && <SystemPulse position="bottom-right" enabled={true} />}
+      {useLiquidSynapsys ? <TooLooApp /> : <LegacyApp />}
     </>
   );
 }
