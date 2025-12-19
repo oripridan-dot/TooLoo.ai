@@ -1,7 +1,7 @@
-// @version 3.3.574
+// @version 3.3.577
 /**
  * @file Studio app shell
- * @version 1.4.0
+ * @version 1.5.0
  */
 
 import React from 'react';
@@ -17,6 +17,14 @@ type ApiResult = {
   ok: boolean;
   status: number;
   data: unknown;
+};
+
+type DemoExecuteResponse = {
+  ok: boolean;
+  demo: boolean;
+  projectPath: string;
+  filesWritten: string[];
+  session: MissionSessionSnapshot;
 };
 
 type SseStatus = {
@@ -149,6 +157,13 @@ export function StudioApp() {
   const [session, setSession] = React.useState<MissionSessionSnapshot | null>(null);
   const [chatInput, setChatInput] = React.useState<string>('');
   const [quickAnswers, setQuickAnswers] = React.useState<Record<string, string>>({});
+
+  const [lastExecutionProof, setLastExecutionProof] = React.useState<null | {
+    projectPath: string;
+    filesWritten: string[];
+    sessionId?: string;
+    ts: number;
+  }>(null);
 
   const [learning, setLearning] = React.useState<LearningStats | null>(null);
   const [policy, setPolicy] = React.useState<ModelPolicy | null>(null);
@@ -771,6 +786,81 @@ export function StudioApp() {
                 ? 'Approve plan to unlock build'
                 : 'Need a plan first';
 
+    const executeCta: Stage['cta'] = (() => {
+      // If there is no session yet, offer a one-click demo that *writes code to disk*.
+      if (!session) {
+        return {
+          label: 'Demo execute (writes code)',
+          variant: 'primary',
+          disabled: busy,
+          onClick: () => {
+            void run(async () => {
+              const result = await api<DemoExecuteResponse>('/api/v2/ade/demo/execute', {
+                method: 'POST',
+                body: JSON.stringify({ prompt: missionPrompt, mode: 'producer' }),
+              });
+              if (result.ok) {
+                const payload = result.data as DemoExecuteResponse;
+                setSession(payload.session);
+                setLastExecutionProof({
+                  projectPath: payload.projectPath,
+                  filesWritten: payload.filesWritten,
+                  sessionId: payload.session.sessionId,
+                  ts: Date.now(),
+                });
+              }
+              return result;
+            });
+          },
+        };
+      }
+
+      // If we have a plan bundle but it's not approved, expose an approve action.
+      if (session.planBundle && !session.approvedAt) {
+        return {
+          label: 'Approve plan',
+          variant: 'primary',
+          disabled: busy,
+          onClick: () => {
+            void run(() => api(`/api/v2/ade/session/${encodeURIComponent(session.sessionId)}/approve`, { method: 'POST', body: JSON.stringify({}) }));
+          },
+        };
+      }
+
+      // Once approved, allow running (or retrying) execution.
+      const status = session.execution?.status ?? 'idle';
+      if (session.approvedAt && (status === 'idle' || status === 'error')) {
+        return {
+          label: status === 'error' ? 'Retry build' : 'Run build',
+          variant: 'primary',
+          disabled: busy,
+          onClick: () => {
+            void run(async () => {
+              const result = await api(`/api/v2/ade/session/${encodeURIComponent(session.sessionId)}/execute/start`, {
+                method: 'POST',
+                body: JSON.stringify({ kind: 'web' }),
+              });
+              if (result.ok) {
+                const s = result.data as MissionSessionSnapshot;
+                setSession(s);
+                if (s.execution?.projectPath) {
+                  setLastExecutionProof({
+                    projectPath: String(s.execution.projectPath),
+                    filesWritten: [],
+                    sessionId: s.sessionId,
+                    ts: Date.now(),
+                  });
+                }
+              }
+              return result;
+            });
+          },
+        };
+      }
+
+      return undefined;
+    })();
+
     // VALIDATE (plan gates)
     const gates = session?.planBundle?.gates ?? [];
     const anyFail = gates.some((g) => g.status === 'fail');
@@ -815,7 +905,7 @@ export function StudioApp() {
       { id: 'plan', label: 'Plan', status: planStatus, meter: clamp01(planProgress), task: planTask, cta: planCta },
       { id: 'simulate', label: 'Simulate', status: simulateStatus, meter: clamp01(simulateMeter), task: simulateTask, cta: simulateCta },
       { id: 'refine', label: 'Refine', status: refineStatus, meter: clamp01(refineMeter), task: refineTask },
-      { id: 'execute', label: 'Execute', status: executeStatus, meter: clamp01(executeMeter), task: executeTask },
+      { id: 'execute', label: 'Execute', status: executeStatus, meter: clamp01(executeMeter), task: executeTask, cta: executeCta },
       { id: 'validate', label: 'Validate', status: validateStatus, meter: clamp01(validateMeter), task: validateTask },
       { id: 'learn', label: 'Learn', status: learnStatus, meter: clamp01(learnMeter), task: learnTask },
     ];
@@ -1259,6 +1349,19 @@ export function StudioApp() {
         <div style={{ ...rowStyle, gridTemplateColumns: '1fr 1fr 1fr' }}>
           <div>
             <label style={labelStyle}>interval (ms)</label>
+
+          {stage.cta ? (
+            <div style={{ marginTop: 10 }}>
+              <button
+                style={stage.cta.variant === 'primary' ? buttonStyle : subtleButtonStyle}
+                disabled={stage.cta.disabled}
+                onClick={stage.cta.onClick}
+                title={stage.cta.disabled ? 'Busy…' : stage.cta.label}
+              >
+                {stage.cta.label}
+              </button>
+            </div>
+          ) : null}
             <input
               style={inputStyle}
               type="number"
