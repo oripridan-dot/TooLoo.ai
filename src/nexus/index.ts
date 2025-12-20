@@ -1,4 +1,4 @@
-// @version 3.3.600 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing + Optional Genesis UI redirect
+// @version 3.3.601 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing + Optional Genesis UI redirect
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -45,6 +45,7 @@ import usersRoutes from './routes/users.js'; // V3.3.530: User Management
 import usageRoutes from './routes/usage.js'; // V3.3.530: Usage Dashboard
 import billingRoutes from './routes/billing.js'; // V3.3.542: Stripe Billing
 import routingRoutes from './routes/routing.js'; // V3.3.550: Intelligent Routing
+import precogRoutes from './routes/precog.js'; // V3.3.598: Precog learning endpoints
 import { registry } from '../core/module-registry.js';
 import { SYSTEM_VERSION } from '../core/system-info.js';
 import { autoArchitect } from './auto-architect.js';
