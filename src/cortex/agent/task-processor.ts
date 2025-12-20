@@ -1,4 +1,4 @@
-// @version 2.2.676
+// @version 3.3.597
 /**
  * Task Processor - Task Queue Management
  *
@@ -273,6 +273,19 @@ export class TaskProcessor {
       averageDurationMs,
       byType,
     };
+  }
+
+  /**
+   * Get recent tasks for UI display
+   */
+  async getRecentTasks(): Promise<AgentTask[]> {
+    // Return recent tasks from queue and history
+    const allTasks = [...this.queue, ...this.history];
+    
+    // Sort by created date (most recent first) and limit to last 50
+    return allTasks
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 50);
   }
 
   /**
