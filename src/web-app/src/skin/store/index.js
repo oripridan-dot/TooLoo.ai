@@ -1,4 +1,4 @@
-// @version 3.3.566
+// @version 3.3.603
 /**
  * Skin Store Index
  * 
@@ -33,4 +33,12 @@ export {
 } from './projectStateStore.js';
 
 // System-wide state
-export { default as useSystemStore } from './systemStateStore';
+export { 
+  default as useSystemStore, 
+  selectIsProcessing,
+  selectConfidence,
+  selectActiveProvider,
+  selectEvaluation,
+  selectRetrievedContext,
+  selectSegments
+} from './systemStateStore';
