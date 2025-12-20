@@ -1,4 +1,4 @@
-// @version 3.3.532
+// @version 3.3.594
 /**
  * Agent API Routes
  *
@@ -79,6 +79,32 @@ router.post('/task', async (req: Request, res: Response) => {
     res.status(500).json({
       ok: false,
       error: errMsg,
+    });
+  }
+});
+
+/**
+ * @route GET /api/v1/agent/tasks
+ * @description Get list of tasks (for Workstation UI)
+ */
+router.get('/tasks', async (req: Request, res: Response) => {
+  try {
+    // Get recent tasks from task processor
+    const tasks = await taskProcessor.getRecentTasks();
+    
+    res.json({
+      ok: true,
+      data: {
+        tasks: tasks || [],
+        total: tasks?.length || 0,
+        status: 'active'
+      }
+    });
+  } catch (error: any) {
+    console.error('[Agent API] Error fetching tasks:', error);
+    res.status(500).json({
+      ok: false,
+      error: error.message || 'Failed to fetch tasks'
     });
   }
 });
