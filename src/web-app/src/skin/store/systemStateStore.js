@@ -1,4 +1,4 @@
-// @version 3.3.581
+// @version 3.3.598
 // TooLoo.ai SystemStateStore - Backend State Mirror
 // ═══════════════════════════════════════════════════════════════════════════
 // Single source of truth for frontend-backend synchronization
@@ -336,14 +336,6 @@ export const useSystemState = create(
             ...state.evaluation,
             lastTaskResult: data,
             totalTasksCompleted: (state.evaluation.totalTasksCompleted || 0) + 1,
-          },
-        }));
-      });
-              cognitiveLoad: cognitiveLoad ?? state.evaluation.cognitiveState.cognitiveLoad,
-              focusArea: data.focusArea || state.evaluation.cognitiveState.focusArea,
-            },
-            calibrationScore: calibration ?? state.evaluation.calibrationScore,
-            confidenceLevel: calibration > 0.8 ? 'high' : calibration > 0.6 ? 'medium' : 'low',
           },
         }));
       });
