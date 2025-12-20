@@ -1,4 +1,4 @@
-// @version 3.3.580
+// @version 3.3.584
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -13,6 +13,7 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LiquidPanel } from '../shell/LiquidShell';
+import { RealLearningMetrics, ProviderPerformanceChart } from '../components/RealLearningMetrics';
 
 // ============================================================================
 // CONSTANTS & TYPES
