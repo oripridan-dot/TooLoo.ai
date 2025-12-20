@@ -1,4 +1,4 @@
-// @version 3.3.571 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing + Optional Genesis UI redirect
+// @version 3.3.596 - Real metrics tracking + Figma/GitHub-style Projects + Vision/OCR Routes + RepoAutoOrg + Rate Limiting + User Management + Billing + Tier-Based Limits + Intelligent Routing + Optional Genesis UI redirect
 import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
@@ -114,6 +114,7 @@ export function createNexusApp() {
   app.use('/api/v1/usage', usageRoutes); // V3.3.530: Usage Dashboard
   app.use('/api/v1/billing', billingRoutes); // V3.3.542: Stripe Billing
   app.use('/api/v1/routing', routingRoutes); // V3.3.550: Intelligent Routing - Model selection, recipes, validation
+  app.use('/api/v1/precog', routingRoutes); // V3.3.594: Precog learning endpoints (aliased to routing)
   app.use('/api/v1', diagnosticRoutes);
 
   // Training & Sources Routes (Precog)
