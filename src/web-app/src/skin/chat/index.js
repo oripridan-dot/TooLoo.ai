@@ -1,4 +1,4 @@
-// @version 3.3.374
+// @version 3.3.583
 // TooLoo.ai Liquid Chat Module
 // Rich visual chat components with liquid skin integration
 // Now with emergent thought visualization and Gestalt-based design
@@ -68,11 +68,17 @@ export { default as MultiFormatRenderers } from './MultiFormatRenderers';
 
 export {
   IntelligentScene,
-  ArtisticPlaceholder,
+  ArtisticPlaceholder, // Deprecated: Use RealLearningMetrics instead
   VisualThinkingIndicator,
 } from './AdvancedVisualStudio';
 
 export { default as AdvancedVisualStudio } from './AdvancedVisualStudio';
+
+// NEW: Real learning metrics instead of placeholder
+export {
+  RealLearningMetrics,
+  ProviderPerformanceChart,
+} from '../components/RealLearningMetrics';
 
 // ============================================================================
 // ILLUSTRATION RENDERER - Full illustration display with controls

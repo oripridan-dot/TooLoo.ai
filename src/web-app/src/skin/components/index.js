@@ -20,3 +20,9 @@ export { CommandPalette, useCommandPalette } from './CommandPalette.jsx';
 // Visualization
 export { default as TaskDAG } from './TaskDAG.jsx';
 export { default as SystemPulse } from './SystemPulse.jsx';
+
+// NEW: Real learning metrics for crossing mock chasm  
+export {
+  RealLearningMetrics,
+  ProviderPerformanceChart,
+} from './RealLearningMetrics.jsx';

@@ -1,4 +1,4 @@
-// @version 3.3.369
+// @version 3.3.583
 // TooLoo.ai Advanced Visual Studio
 // Human-like illustration components with intelligent rendering
 // Features: Scene generation, artistic effects, interactive visuals
@@ -880,6 +880,6 @@ VisualThinkingIndicator.displayName = 'VisualThinkingIndicator';
 
 export default {
   IntelligentScene,
-  ArtisticPlaceholder,
+  ArtisticPlaceholder, // Deprecated: Use RealLearningMetrics instead for real data
   VisualThinkingIndicator,
 };
