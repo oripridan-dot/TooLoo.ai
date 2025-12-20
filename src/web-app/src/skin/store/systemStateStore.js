@@ -1,4 +1,4 @@
-// @version 3.3.598
+// @version 3.3.602
 // TooLoo.ai SystemStateStore - Backend State Mirror
 // ═══════════════════════════════════════════════════════════════════════════
 // Single source of truth for frontend-backend synchronization
@@ -587,6 +587,7 @@ export const useConnection = () => useSystemState((s) => s.connection);
 export const selectIsProcessing = (state) => state.orchestrator.isProcessing;
 export const selectConfidence = (state) => state.evaluation.calibrationScore;
 export const selectActiveProvider = (state) => state.orchestrator.activeProvider;
+export const selectEvaluation = (state) => state.evaluation;
 export const selectRetrievedContext = (state) => state.knowledge.retrievedContext;
 export const selectSegments = (state) => state.skills.segments;
 
