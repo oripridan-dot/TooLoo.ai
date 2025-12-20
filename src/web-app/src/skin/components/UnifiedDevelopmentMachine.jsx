@@ -1,4 +1,4 @@
-// @version 3.3.588
+// @version 3.3.593
 /**
  * @file Unified Development Machine - Single streamlined workflow
  * @intent Consolidate Genesis validation-first approach with Synapsys real-time monitoring
@@ -8,50 +8,41 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Unified workflow stages
-type WorkflowStage = 
-  | 'plan'      // Genesis: Generate plan with coverage gates
-  | 'simulate'  // Genesis: Sandbox simulation (confidence ≥ 0.9)
-  | 'execute'   // Genesis: Real code generation to filesystem
-  | 'monitor'   // Synapsys: Real-time metrics & learning data
-  | 'validate'  // Genesis: Gate validation & quality checks
-  | 'learn';    // Genesis: Reflection & memory updates
+/**
+ * Unified workflow stages:
+ * - 'plan': Genesis: Generate plan with coverage gates
+ * - 'simulate': Genesis: Sandbox simulation (confidence ≥ 0.9)
+ * - 'execute': Genesis: Real code generation to filesystem
+ * - 'monitor': Synapsys: Real-time metrics & learning data
+ * - 'validate': Genesis: Gate validation & quality checks
+ * - 'learn': Genesis: Reflection & memory updates
+ * 
+ * Stage status: 'idle' | 'running' | 'ok' | 'warn' | 'fail'
+ * 
+ * @typedef {Object} UnifiedStage
+ * @property {string} id - Stage identifier
+ * @property {string} label - Display label
+ * @property {string} status - Current status
+ * @property {number} confidence - Confidence score (0-1)
+ * @property {string} task - Task description
+ * @property {Object} [metrics] - Optional metrics data
+ * @property {Object} [cta] - Optional call-to-action button
+ * 
+ * @typedef {Object} UnifiedDevelopmentMachineProps
+ * @property {string} genesisApiUrl - Genesis API endpoint
+ * @property {string} synapsysApiUrl - Synapsys API endpoint
+ * @property {string} socketUrl - Socket.IO connection URL
+ */
 
-type StageStatus = 'idle' | 'running' | 'ok' | 'warn' | 'fail';
-
-interface UnifiedStage {
-  id: WorkflowStage;
-  label: string;
-  status: StageStatus;
-  confidence: number;
-  task: string;
-  metrics?: any;
-  cta?: {
-    label: string;
-    variant: 'primary' | 'secondary';
-    onClick: () => void;
-    disabled?: boolean;
-  };
-}
-
-interface UnifiedDevelopmentMachineProps {
-  // Genesis API endpoints
-  genesisApiUrl: string;
-  // Synapsys API endpoints  
-  synapsysApiUrl: string;
-  // Real-time socket connection
-  socketUrl: string;
-}
-
-export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps> = ({
+export const UnifiedDevelopmentMachine = ({
   genesisApiUrl,
   synapsysApiUrl,
   socketUrl
 }) => {
-  const [currentStage, setCurrentStage] = useState<WorkflowStage>('plan');
-  const [stages, setStages] = useState<UnifiedStage[]>([]);
-  const [session, setSession] = useState<any>(null);
-  const [learning, setLearning] = useState<any>(null);
+  const [currentStage, setCurrentStage] = useState('plan');
+  const [stages, setStages] = useState([]);
+  const [session, setSession] = useState(null);
+  const [learning, setLearning] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [missionPrompt, setMissionPrompt] = useState('');
 
@@ -148,7 +139,7 @@ export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps>
     }
   };
 
-  const handleSimulate = async (sessionData?: any) => {
+  const handleSimulate = async (sessionData) => {
     const targetSession = sessionData || session;
     if (!targetSession) return;
 
@@ -178,7 +169,7 @@ export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps>
     }
   };
 
-  const handleExecute = async (sessionData?: any) => {
+  const handleExecute = async (sessionData) => {
     const targetSession = sessionData || session;
     if (!targetSession) return;
 
@@ -208,7 +199,7 @@ export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps>
     }
   };
 
-  const handleMonitor = async (execResult?: any) => {
+  const handleMonitor = async (execResult) => {
     try {
       setCurrentStage('monitor');
       updateStageStatus('monitor', 'running', 0);
@@ -240,10 +231,10 @@ export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps>
       // Genesis validation gates
       if (session?.planBundle?.gates) {
         const gates = session.planBundle.gates;
-        const anyFail = gates.some((g: any) => g.status === 'fail');
-        const anyWarn = gates.some((g: any) => g.status === 'warn');
+        const anyFail = gates.some((g) => g.status === 'fail');
+        const anyWarn = gates.some((g) => g.status === 'warn');
         const gateScore = gates.length ? 
-          gates.reduce((a: number, g: any) => a + (g.score ?? 0), 0) / gates.length : 0;
+          gates.reduce((a, g) => a + (g.score ?? 0), 0) / gates.length : 0;
 
         if (anyFail) {
           updateStageStatus('validate', 'fail', gateScore);
@@ -281,7 +272,7 @@ export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps>
   };
 
   // Utility to update stage status
-  const updateStageStatus = (stageId: WorkflowStage, status: StageStatus, confidence: number) => {
+  const updateStageStatus = (stageId, status, confidence) => {
     setStages(prev => prev.map(stage => 
       stage.id === stageId 
         ? { ...stage, status, confidence }
@@ -290,7 +281,7 @@ export const UnifiedDevelopmentMachine: React.FC<UnifiedDevelopmentMachineProps>
   };
 
   // Get stage color based on status
-  const getStageColor = (status: StageStatus) => {
+  const getStageColor = (status) => {
     switch (status) {
       case 'ok': return '#10b981';
       case 'running': return '#3b82f6';
