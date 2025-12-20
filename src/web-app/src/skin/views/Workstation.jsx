@@ -1,4 +1,4 @@
-// @version 3.3.465
+// @version 3.3.580
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -556,24 +556,65 @@ const Workstation = memo(() => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        // Fetch orchestrator status
-        const statusRes = await fetch('/api/v1/orchestrator/status');
-        const statusData = await statusRes.json();
-        if (statusData.ok && statusData.data?.status) {
-          setTasks(statusData.data.status.planQueue?.map((goal, idx) => ({
-            id: `task-${idx}`,
-            name: goal,
-            status: idx === 0 ? 'running' : 'pending',
-          })) || []);
-          setCurrentGoal(statusData.data.status.currentFocus);
+        // Fetch tasks from backend
+        try {
+          const tasksRes = await fetch('/api/v1/agent/tasks');
+          const tasksData = await tasksRes.json();
+          if (tasksData.ok && tasksData.data) {
+            setTasks(tasksData.data.map(task => ({
+              id: task.id || `task-${Date.now()}`,
+              name: task.description || task.name || 'Untitled Task',
+              status: task.status || 'pending',
+              type: task.type || 'general',
+              createdAt: task.createdAt,
+              updatedAt: task.updatedAt
+            })));
+          }
+        } catch (error) {
+          console.warn('[Workstation] Tasks endpoint not available, using orchestrator status');
+          // Fallback to orchestrator status
+          const statusRes = await fetch('/api/v1/orchestrator/status');
+          const statusData = await statusRes.json();
+          if (statusData.ok && statusData.data?.status) {
+            setTasks(statusData.data.status.planQueue?.map((goal, idx) => ({
+              id: `task-${idx}`,
+              name: goal,
+              status: idx === 0 ? 'running' : 'pending',
+            })) || []);
+            setCurrentGoal(statusData.data.status.currentFocus);
+          }
         }
 
         // Fetch artifacts
         const artifactsRes = await fetch('/api/v1/agent/artifacts');
         const artifactsData = await artifactsRes.json();
         if (artifactsData.ok && artifactsData.data) {
-          setArtifacts(artifactsData.data);
+          // Backend returns { ok: true, data: { artifacts: [...], stats: {...} } }
+          const realArtifacts = artifactsData.data.artifacts || [];
+          setArtifacts(realArtifacts);
+          
+          // Show learning stats in console (can visualize later)
+          if (artifactsData.data.stats) {
+            console.log('[Workstation] Artifact stats:', artifactsData.data.stats);
+          }
         }
+        // Fetch context data
+        try {
+          const contextRes = await fetch('/api/v1/context/current');
+          const contextData = await contextRes.json();
+          if (contextData.ok && contextData.data) {
+            setContext({
+              activeFile: contextData.data.activeFile || null,
+              sessionId: contextData.data.sessionId || null,
+              knowledgeContext: contextData.data.knowledge || [],
+              recentActivity: contextData.data.recentActivity || [],
+              currentProject: contextData.data.currentProject || null
+            });
+          }
+        } catch (error) {
+          console.warn('[Workstation] Context endpoint not available:', error);
+        }
+        
       } catch (error) {
         console.error('[Workstation] Failed to fetch initial data:', error);
       }
