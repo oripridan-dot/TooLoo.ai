@@ -27,8 +27,8 @@ export {
 // === LIQUID SHELL - Full viewport wrapper ===
 export { LiquidShell, ViewportEdge, LiquidPanel, LiquidTransition } from './shell';
 
-// === VIEWS - The 6 main TooLoo views ===
-export { Cortex, Synaptic, Growth, Studio, Command, Workstation, VIEWS, VIEW_COMPONENTS } from './views';
+// === VIEWS - The 6 main TooLoo views + Unified Development ===
+export { Cortex, Synaptic, Growth, Studio, Command, Workstation, UnifiedDevelopment, VIEWS, VIEW_COMPONENTS } from './views';
 
 // === CHAT COMPONENTS - Rich visual chat with liquid skin ===
 export {
