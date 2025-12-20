@@ -1,4 +1,4 @@
-// @version 3.3.584
+// @version 3.3.585
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -343,11 +343,12 @@ const ChatPanel = memo(({ messages, onSendMessage, isProcessing }) => {
 ChatPanel.displayName = 'ChatPanel';
 
 // ============================================================================
-// CONTEXT PANEL - Vision Display
+// CONTEXT PANEL - Vision Display + Learning Metrics
 // ============================================================================
 
 const ContextPanel = memo(({ visionContext, onCaptureRequest }) => {
   const [isCapturing, setIsCapturing] = useState(false);
+  const [showMetrics, setShowMetrics] = useState(true);
 
   const handleCapture = async () => {
     setIsCapturing(true);
@@ -360,22 +361,36 @@ const ContextPanel = memo(({ visionContext, onCaptureRequest }) => {
 
   return (
     <LiquidPanel
-      title="Context"
+      title="Context & Learning"
       icon="👁"
       className="h-full flex flex-col"
       headerActions={
-        <button
-          onClick={handleCapture}
-          disabled={isCapturing}
-          className="
-            text-xs px-2 py-1 rounded
-            bg-white/5 border border-white/10
-            hover:bg-white/10 transition-colors
-            disabled:opacity-50
-          "
-        >
-          {isCapturing ? 'Capturing...' : 'Capture'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowMetrics(!showMetrics)}
+            className={`
+              text-xs px-2 py-1 rounded
+              ${showMetrics 
+                ? 'bg-cyan-600/30 text-cyan-400 border border-cyan-500/30'
+                : 'bg-white/5 text-white/50 border border-white/10'} 
+              hover:bg-white/10 transition-colors
+            `}
+          >
+            🧠 Metrics
+          </button>
+          <button
+            onClick={handleCapture}
+            disabled={isCapturing}
+            className="
+              text-xs px-2 py-1 rounded
+              bg-white/5 border border-white/10
+              hover:bg-white/10 transition-colors
+              disabled:opacity-50
+            "
+          >
+            {isCapturing ? 'Capturing...' : 'Capture'}
+          </button>
+        </div>
       }
     >
       <div className="flex-1 overflow-auto p-4">
