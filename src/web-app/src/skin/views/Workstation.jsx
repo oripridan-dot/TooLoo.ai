@@ -1,4 +1,4 @@
-// @version 3.3.585
+// @version 3.3.586
 // TooLoo.ai Workstation View - The 4-Panel Unified Development Interface
 // Phase 2d: The "Face" of TooLoo - making it feel like a real product
 // V3.3.462: Added Auto-Structure button for repo organization
@@ -393,7 +393,19 @@ const ContextPanel = memo(({ visionContext, onCaptureRequest }) => {
         </div>
       }
     >
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {/* Learning Metrics Section */}
+        {showMetrics && (
+          <div className="space-y-4">
+            <div className="text-xs text-cyan-400 uppercase tracking-wider border-b border-cyan-500/20 pb-2">
+              🧠 Real Learning Progress
+            </div>
+            <RealLearningMetrics width={320} height={200} showDetails={false} />
+            <ProviderPerformanceChart />
+          </div>
+        )}
+
+        {/* Vision Context Section */}
         {!visionContext ? (
           <div className="text-center text-white/40 py-8">
             <div className="text-2xl mb-2">👁</div>
@@ -402,6 +414,10 @@ const ContextPanel = memo(({ visionContext, onCaptureRequest }) => {
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="text-xs text-white/50 uppercase tracking-wider border-b border-white/10 pb-2">
+              👁 Vision Context
+            </div>
+            
             {/* Screenshot preview */}
             {visionContext.imagePath && (
               <div className="rounded-lg overflow-hidden border border-white/10">
