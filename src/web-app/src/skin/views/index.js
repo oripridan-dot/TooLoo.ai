@@ -1,4 +1,4 @@
-// @version 3.3.452
+// @version 3.3.590
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -41,6 +41,9 @@ export { default as Mirror } from './Mirror';
 
 // V3.3.450: Workstation - The 4-Panel Unified Development Interface (Phase 2d)
 export { default as Workstation } from './Workstation';
+
+// V3.3.586: UnifiedDevelopment - Single machine for Genesis + Synapsys
+export { default as UnifiedDevelopment } from './UnifiedDevelopment';
 
 // View registry for dynamic routing
 export const VIEWS = {
