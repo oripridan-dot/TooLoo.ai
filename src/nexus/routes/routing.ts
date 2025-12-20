@@ -1,4 +1,4 @@
-// @version 3.3.563
+// @version 3.3.595
 /**
  * Routing API Routes
  * 
@@ -433,6 +433,40 @@ router.post('/validate', async (req: Request, res: Response) => {
     });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
+    res.status(500).json({
+      ok: false,
+      error: errMsg,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Learning Status (for RealLearningMetrics component)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * @route GET /api/v1/precog/learning/status
+ * @description Get learning metrics and status for UI components
+ */
+router.get('/learning/status', async (req: Request, res: Response) => {
+  try {
+    // Get learning status from intelligent router and model services
+    const modelPerformance = await modelCapabilityService.getPerformanceMetrics();
+    const routingStats = intelligentRouter.getRoutingStats();
+    
+    res.json({
+      ok: true,
+      data: {
+        total: routingStats?.totalRoutes || 0,
+        lastAt: routingStats?.lastRouteTime || null,
+        models: modelPerformance || {},
+        confidence: routingStats?.averageConfidence || 0,
+        status: 'active'
+      }
+    });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('[Routing API] Error fetching learning status:', errMsg);
     res.status(500).json({
       ok: false,
       error: errMsg,
