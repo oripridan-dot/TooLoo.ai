@@ -1,10 +1,10 @@
-// @version 3.3.582
+// @version 3.3.604
 // TooLoo.ai Real Learning Metrics Component
 // Replaces ArtisticPlaceholder with actual backend learning data
 
 import React, { memo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSystemStore, selectEvaluation } from '../store';
+import { useSystemStore, selectEvaluation } from '../store/index.js';
 
 // ============================================================================
 // REAL LEARNING METRICS VISUALIZATION
