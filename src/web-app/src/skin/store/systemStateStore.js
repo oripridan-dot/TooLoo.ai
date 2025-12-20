@@ -1,4 +1,4 @@
-// @version 3.3.441
+// @version 3.3.581
 // TooLoo.ai SystemStateStore - Backend State Mirror
 // ═══════════════════════════════════════════════════════════════════════════
 // Single source of truth for frontend-backend synchronization
@@ -184,6 +184,35 @@ export const useSystemState = create(
         }));
       });
 
+      // NEW: Real orchestrator status updates
+      socket.on('orchestrator:status_change', (data) => {
+        console.log('[SystemState] Orchestrator status:', data);
+        set((state) => ({
+          orchestrator: {
+            ...state.orchestrator,
+            isProcessing: data.isProcessing || false,
+            currentCost: data.currentCost || state.orchestrator.currentCost,
+            status: data.status || 'idle',
+            activeProvider: data.activeProvider || state.orchestrator.activeProvider,
+          },
+        }));
+      });
+
+      // NEW: Real learning progress updates
+      socket.on('precog:learning_update', (data) => {
+        console.log('[SystemState] Learning update:', data);
+        set((state) => ({
+          evaluation: {
+            ...state.evaluation,
+            learningMetrics: {
+              qLearningScore: data.qLearningScore || state.evaluation.learningMetrics.qLearningScore,
+              providerSuccessRate: data.providerSuccessRate || state.evaluation.learningMetrics.providerSuccessRate,
+              totalExecutions: data.totalExecutions || state.evaluation.learningMetrics.totalExecutions,
+            },
+          },
+        }));
+      });
+
       socket.on('provider:routing_decision', (data) => {
         console.log('[SystemState] Routing decision:', data);
         set((state) => ({
@@ -271,13 +300,45 @@ export const useSystemState = create(
       // === EVALUATION/META EVENTS ===
       socket.on('meta:cognitive_state_change', (data) => {
         console.log('[SystemState] Cognitive state change:', data);
-        const { velocity, cognitiveLoad, calibration } = data;
+        const { velocity, cognitiveLoad, calibration, focusArea } = data;
 
         set((state) => ({
           evaluation: {
             ...state.evaluation,
             cognitiveState: {
               velocity: velocity || state.evaluation.cognitiveState.velocity,
+              cognitiveLoad: cognitiveLoad || state.evaluation.cognitiveState.cognitiveLoad,
+              focusArea: focusArea || state.evaluation.cognitiveState.focusArea,
+            },
+            calibrationScore: calibration || state.evaluation.calibrationScore,
+            confidenceLevel: 
+              (calibration || 0) > 0.8 ? 'high' : 
+              (calibration || 0) > 0.6 ? 'medium' : 'low',
+          },
+        }));
+      });
+
+      // NEW: Real artifact creation events
+      socket.on('agent:artifact_created', (data) => {
+        console.log('[SystemState] Artifact created:', data);
+        // Trigger refresh of artifacts in UI
+        set((state) => ({
+          ...state,
+          lastArtifactUpdate: Date.now(),
+        }));
+      });
+
+      // NEW: Real task completion events
+      socket.on('agent:task_completed', (data) => {
+        console.log('[SystemState] Task completed:', data);
+        set((state) => ({
+          evaluation: {
+            ...state.evaluation,
+            lastTaskResult: data,
+            totalTasksCompleted: (state.evaluation.totalTasksCompleted || 0) + 1,
+          },
+        }));
+      });
               cognitiveLoad: cognitiveLoad ?? state.evaluation.cognitiveState.cognitiveLoad,
               focusArea: data.focusArea || state.evaluation.cognitiveState.focusArea,
             },
