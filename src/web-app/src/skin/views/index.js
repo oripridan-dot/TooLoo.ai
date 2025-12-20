@@ -1,4 +1,4 @@
-// @version 3.3.590
+// @version 3.3.591
 // TooLoo.ai Views Index
 // The views of TooLoo - with professional Space V4 & Figma-style Projects
 
@@ -47,6 +47,16 @@ export { default as UnifiedDevelopment } from './UnifiedDevelopment';
 
 // View registry for dynamic routing
 export const VIEWS = {
+  unified: {
+    id: 'unified',
+    name: 'Unified Dev',
+    icon: '⚡',
+    description: 'ONE machine for development',
+    color: 'gradient',
+    shortcut: 'U',
+    isNew: true,
+    isPrimary: true, // The new primary unified view
+  },
   workstation: {
     id: 'workstation',
     name: 'Workstation',
@@ -55,7 +65,6 @@ export const VIEWS = {
     color: 'cyan',
     shortcut: 'W',
     isNew: true,
-    isPrimary: true, // Make this the new primary view
   },
   space: {
     id: 'space',
@@ -145,6 +154,7 @@ export const VIEWS = {
 
 // View component map for dynamic rendering
 export const VIEW_COMPONENTS = {
+  unified: () => import('./UnifiedDevelopment').then((m) => m.default),
   workstation: () => import('./Workstation').then((m) => m.default),
   space: () => import('./SpaceV4').then((m) => m.default),
   projects: () => import('./Projects').then((m) => m.default),
